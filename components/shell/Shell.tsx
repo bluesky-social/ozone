@@ -2,10 +2,12 @@ import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
+import { LoginModal } from './LoginModal'
 
 export function Shell({ children }: React.PropsWithChildren) {
   return (
     <MobileMenuProvider>
+      <LoginModal />
       <div className="flex h-full">
         {/* Narrow sidebar */}
         <div className="hidden w-28 overflow-y-auto bg-rose-700 md:block">
