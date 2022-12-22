@@ -1,18 +1,13 @@
 'use client'
 import { useEffect, useState, SyntheticEvent, Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
-import { AppBskyActorGetProfile as GetProfile } from '@atproto/api'
 import { classNames } from '../../lib/util'
 import Client from '../../lib/client'
 
 export function ProfileMenu() {
   const [isAuthed, setIsAuthed] = useState(false)
-  const [handle, setHandle] = useState<string>(
-    localStorage.cachedProfileHandle || ''
-  )
-  const [avatar, setAvatar] = useState<string>(
-    localStorage.cachedProfileAvatar || ''
-  )
+  const [handle, setHandle] = useState<string>('')
+  const [avatar, setAvatar] = useState<string>('')
 
   useEffect(() => {
     setIsAuthed(Client.isAuthed)
@@ -34,6 +29,8 @@ export function ProfileMenu() {
       Client.session.handle === localStorage.cachedProfileHandle &&
       localStorage.cachedProfileAvatar
     ) {
+      setHandle(localStorage.cachedProfileHandle)
+      setAvatar(localStorage.cachedProfileAvatar)
       return
     }
     Client.api.app.bsky.actor.getProfile({ actor: Client.session.did }).then(
@@ -65,11 +62,9 @@ export function ProfileMenu() {
         <div>
           <Menu.Button className="flex rounded-full bg-white text-sm items-center focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
             <span className="sr-only">Open user menu</span>
-            {handle ? (
-              <span className="hidden md:inline mr-2 font-semibold text-base text-gray-600">
-                {handle}
-              </span>
-            ) : undefined}
+            <span className="hidden md:inline mr-2 font-semibold text-base text-gray-600">
+              {handle || ''}
+            </span>
             <img
               className="h-10 w-10 rounded-full"
               src={avatar || '/img/default-avatar.jpg'}

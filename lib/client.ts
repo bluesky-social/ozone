@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import {
   sessionClient as AtpApi,
   SessionServiceClient,
@@ -11,9 +12,6 @@ interface ClientSession {
   handle: string
   did: string
 }
-
-// globals
-// =
 
 // exported api
 // =
@@ -114,6 +112,19 @@ class ClientManager extends EventTarget {
 }
 const clientManager = new ClientManager()
 export default clientManager
+
+export function useApi() {
+  const [isAuthed, setIsAuthed] = useState(false)
+
+  useEffect(() => {
+    setIsAuthed(clientManager.isAuthed)
+    const onClientChange = () => setIsAuthed(clientManager.isAuthed)
+    clientManager.addEventListener('change', onClientChange)
+    return () => clientManager.removeEventListener('change', onClientChange)
+  }, [])
+
+  return isAuthed ? clientManager.api : undefined
+}
 
 // helpers
 // =

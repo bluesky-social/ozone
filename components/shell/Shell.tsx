@@ -29,7 +29,7 @@ export function Shell({ children }: React.PropsWithChildren) {
         {/* Content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <header className="w-full">
-            <div className="relative z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white shadow-sm">
+            <div className="relative z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white">
               <MobileMenuBtn />
               <div className="flex flex-1 justify-between px-4 sm:px-6">
                 <div className="flex flex-1">
@@ -73,11 +73,6 @@ export function Shell({ children }: React.PropsWithChildren) {
                 {children}
               </section>
             </main>
-
-            {/* Secondary column (hidden on smaller screens) */}
-            <aside className="hidden w-96 overflow-y-auto border-l border-gray-200 bg-white lg:block">
-              {/* Your content */}
-            </aside>
           </div>
         </div>
       </div>
