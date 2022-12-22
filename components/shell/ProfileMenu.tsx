@@ -1,12 +1,60 @@
 'use client'
-
-import { Fragment } from 'react'
+import { useEffect, useState, SyntheticEvent, Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
+import { AppBskyActorGetProfile as GetProfile } from '@atproto/api'
 import { classNames } from '../../lib/util'
+import Client from '../../lib/client'
 
 export function ProfileMenu() {
-  const onClickSignout = () => {
-    localStorage.removeItem('debugIsAuthed')
+  const [isAuthed, setIsAuthed] = useState(false)
+  const [handle, setHandle] = useState<string>(
+    localStorage.cachedProfileHandle || ''
+  )
+  const [avatar, setAvatar] = useState<string>(
+    localStorage.cachedProfileAvatar || ''
+  )
+
+  useEffect(() => {
+    setIsAuthed(Client.isAuthed)
+    const onClientChange = () => setIsAuthed(Client.isAuthed)
+    Client.addEventListener('change', onClientChange)
+    return () => Client.removeEventListener('change', onClientChange)
+  }, [])
+
+  useEffect(() => {
+    let aborted = false
+    if (!Client.isAuthed) {
+      localStorage.cachedProfileHandle = ''
+      localStorage.cachedProfileAvatar = ''
+      setHandle('')
+      setAvatar('')
+      return
+    }
+    if (
+      Client.session.handle === localStorage.cachedProfileHandle &&
+      localStorage.cachedProfileAvatar
+    ) {
+      return
+    }
+    Client.api.app.bsky.actor.getProfile({ actor: Client.session.did }).then(
+      (res) => {
+        localStorage.cachedProfileHandle = res.data.handle
+        localStorage.cachedProfileAvatar = res.data.avatar
+        setHandle(res.data.handle)
+        setAvatar(res.data.avatar || '')
+      },
+      (err) => {
+        console.error('Failed to fetch user profile', err)
+      }
+    )
+    return () => {
+      aborted = true
+    }
+  }, [isAuthed])
+
+  const onClickSignout = (e: SyntheticEvent) => {
+    e.preventDefault()
+    Client.signout()
     window.location.reload()
   }
 
@@ -15,11 +63,16 @@ export function ProfileMenu() {
       {/* Profile dropdown */}
       <Menu as="div" className="relative flex-shrink-0">
         <div>
-          <Menu.Button className="flex rounded-full bg-white text-sm focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
+          <Menu.Button className="flex rounded-full bg-white text-sm items-center focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
             <span className="sr-only">Open user menu</span>
+            {handle ? (
+              <span className="hidden md:inline mr-2 font-semibold text-base text-gray-600">
+                {handle}
+              </span>
+            ) : undefined}
             <img
-              className="h-8 w-8 rounded-full"
-              src="https://images.unsplash.com/photo-1517365830460-955ce3ccd263?ixlib=rb-=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=8&w=256&h=256&q=80"
+              className="h-10 w-10 rounded-full"
+              src={avatar || '/img/default-avatar.jpg'}
               alt=""
             />
           </Menu.Button>

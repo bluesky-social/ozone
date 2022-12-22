@@ -1,15 +1,32 @@
 'use client'
-import { useState } from 'react'
-import { LockClosedIcon } from '@heroicons/react/20/solid'
+import { FormEvent, useState, useEffect } from 'react'
+import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
+import Client from '../../lib/client'
 
 export function LoginModal() {
-  const [isAuthed, setIsAuthed] = useState(
-    localStorage.debugIsAuthed ? true : false
-  )
-  const onClickSignin = () => {
-    // TODO
-    localStorage.debugIsAuthed = 1
-    setIsAuthed(true)
+  const [isAuthed, setIsAuthed] = useState(true) // immediately corrected in useEffect below
+  const [error, setError] = useState('')
+  const [service, setService] = useState('')
+  const [handle, setHandle] = useState('')
+  const [password, setPassword] = useState('')
+
+  useEffect(() => {
+    if (!Client.hasSetup) {
+      Client.setup()
+      setIsAuthed(Client.isAuthed)
+    }
+  }, [])
+
+  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
+    e.preventDefault()
+    e.stopPropagation()
+    try {
+      await Client.signin(service, handle, password)
+      setIsAuthed(Client.isAuthed)
+    } catch (e: any) {
+      console.error(e)
+      setError(e.toString())
+    }
   }
 
   if (isAuthed) {
@@ -32,9 +49,24 @@ export function LoginModal() {
               Sign into your account
             </p>
           </div>
-          <form className="mt-8 space-y-6" action="#" method="POST">
+          <form className="mt-8 space-y-6" onSubmit={onSubmit}>
             <input type="hidden" name="remember" defaultValue="true" />
             <div className="-space-y-px rounded-md shadow-sm">
+              <div>
+                <label htmlFor="service-url" className="sr-only">
+                  Service
+                </label>
+                <input
+                  id="service-url"
+                  name="service"
+                  type="text"
+                  required
+                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  placeholder="Service URL"
+                  value={service}
+                  onChange={(e) => setService(e.target.value)}
+                />
+              </div>
               <div>
                 <label htmlFor="account-handle" className="sr-only">
                   Account handle
@@ -42,11 +74,12 @@ export function LoginModal() {
                 <input
                   id="account-handle"
                   name="handle"
-                  type="handle"
-                  autoComplete="handle"
+                  type="text"
                   required
-                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Account handle"
+                  value={handle}
+                  onChange={(e) => setHandle(e.target.value)}
                 />
               </div>
               <div>
@@ -61,15 +94,34 @@ export function LoginModal() {
                   required
                   className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
+
+            {error ? (
+              <div className="rounded-md bg-red-50 p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <XCircleIcon
+                      className="h-5 w-5 text-red-400"
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-red-800">
+                      {error}
+                    </h3>
+                  </div>
+                </div>
+              </div>
+            ) : undefined}
 
             <div>
               <button
                 type="submit"
                 className="group relative flex w-full justify-center rounded-md border border-transparent bg-rose-600 py-2 px-4 text-sm font-medium text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
-                onClick={onClickSignin}
               >
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <LockClosedIcon
