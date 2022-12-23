@@ -4,6 +4,7 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
 } from '@atproto/api'
+import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
 import { isTrend, isRepost } from '../../../lib/types'
 
@@ -59,15 +60,26 @@ export function PostAsRow({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
         {isTrend(item.reason) ? (
           <span className="block text-gray-500">
-            Trended by @{item.reason.by.handle}
+            Trended by{' '}
+            <Link href={`/accounts/view/${item.reason.by.handle}`}>
+              @{item.reason.by.handle}
+            </Link>
           </span>
         ) : undefined}
         {isRepost(item.reason) ? (
           <span className="block text-gray-500">
-            Reposted by @{item.reason.by.handle}
+            Reposted by{' '}
+            <Link href={`/accounts/view/${item.reason.by.handle}`}>
+              @{item.reason.by.handle}
+            </Link>
           </span>
         ) : undefined}
-        <span className="block">@{item.post.author.handle}</span>
+        <Link
+          className="block"
+          href={`/accounts/view/${item.post.author.handle}`}
+        >
+          @{item.post.author.handle}
+        </Link>
         <dl className="font-normal lg:hidden">
           <dt className="sr-only">Content</dt>
           <dd className="mt-1">
@@ -105,9 +117,12 @@ function PostContent({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
       {item.reply ? (
         <span className="block text-gray-500 text-sm">
           Reply to{' '}
-          <a href="#" className="hover:underline">
+          <Link
+            href={`/accounts/view/${item.reply.parent.author.handle}`}
+            className="hover:underline"
+          >
             @{item.reply.parent.author.handle}
-          </a>
+          </Link>
         </span>
       ) : undefined}
       <span className="block">{item.post.record.text}</span>

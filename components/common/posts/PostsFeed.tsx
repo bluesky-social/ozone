@@ -4,6 +4,7 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
 } from '@atproto/api'
+import Link from 'next/link'
 import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
@@ -67,7 +68,10 @@ function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
             </p>
           ) : undefined}
           <p className="text-sm font-medium text-gray-900">
-            <a href="#" className="hover:underline">
+            <Link
+              href={`/accounts/view/${item.post.author.handle}`}
+              className="hover:underline"
+            >
               {item.post.author.displayName ? (
                 <>
                   <span className="font-bold">
@@ -80,7 +84,7 @@ function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
               ) : (
                 <span className="font-bold">@{item.post.author.handle}</span>
               )}
-            </a>
+            </Link>
             &nbsp;&middot;&nbsp;
             <a href="#" className="text-gray-500 hover:underline">
               {new Date(item.post.indexedAt).toLocaleString()}
@@ -89,9 +93,12 @@ function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
           {item.reply ? (
             <p className="text-gray-500 text-sm">
               Reply to{' '}
-              <a href="#" className="hover:underline">
+              <Link
+                href={`/accounts/view/${item.reply.parent.author.handle}`}
+                className="hover:underline"
+              >
                 @{item.reply.parent.author.handle}
-              </a>
+              </Link>
             </p>
           ) : undefined}
         </div>

@@ -1,6 +1,7 @@
 'use client'
 
 import { Fragment, createContext, useContext, useState } from 'react'
+import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dialog, Transition } from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
@@ -111,7 +112,7 @@ export function MobileMenu() {
                       {NAV_ITEMS.map((item) => {
                         const Icon = ICONS[item.icon]
                         return (
-                          <a
+                          <Link
                             key={item.name}
                             href={item.href}
                             className={classNames(
@@ -134,7 +135,7 @@ export function MobileMenu() {
                               aria-hidden="true"
                             />
                             <span>{item.name}</span>
-                          </a>
+                          </Link>
                         )
                       })}
                     </div>

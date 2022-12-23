@@ -4,7 +4,7 @@ import { AppBskyFeedFeedViewPost } from '@atproto/api'
 import { useApi } from '../../../lib/client'
 import { Posts } from '../posts/Posts'
 
-export function Timeline() {
+export function AuthorFeed({ id, title }: { id: string; title: string }) {
   const api = useApi()
   const [paginationCursor, setPaginationCursor] = useState<string | undefined>()
   const [needsMore, setNeedsMore] = useState(false)
@@ -13,7 +13,8 @@ export function Timeline() {
   const fetchMore = async () => {
     console.log('fetching')
     try {
-      const res = await api?.app.bsky.feed.getTimeline({
+      const res = await api?.app.bsky.feed.getAuthorFeed({
+        author: id,
         limit: 30,
         before: paginationCursor,
       })
@@ -36,6 +37,6 @@ export function Timeline() {
   }, [api, items.length, needsMore])
 
   return (
-    <Posts title="Posts" items={items} onLoadMore={() => setNeedsMore(true)} />
+    <Posts title={title} items={items} onLoadMore={() => setNeedsMore(true)} />
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
 import { classNames } from '../../lib/util'
 import { usePathname } from 'next/navigation'
@@ -11,7 +12,7 @@ export function SidebarNav() {
       {NAV_ITEMS.map((item) => {
         const Icon = ICONS[item.icon]
         return (
-          <a
+          <Link
             key={item.name}
             href={item.href}
             className={classNames(
@@ -32,7 +33,7 @@ export function SidebarNav() {
               aria-hidden="true"
             />
             <span className="mt-2">{item.name}</span>
-          </a>
+          </Link>
         )
       })}
     </div>
