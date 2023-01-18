@@ -18,7 +18,7 @@ export function isTrend(v: Reasons): v is AppBskyFeedFeedViewPost.ReasonTrend {
 }
 
 export function isRepost(
-  v: Reasons
+  v: Reasons,
 ): v is AppBskyFeedFeedViewPost.ReasonRepost {
   return isRecord(v) && v.$type === 'app.bsky.feed.feedViewPost#reasonRepost'
 }

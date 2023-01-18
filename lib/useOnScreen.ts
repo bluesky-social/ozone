@@ -5,7 +5,7 @@ export function useOnScreen<T extends Element>(ref: RefObject<T>) {
   const [isIntersecting, setIntersecting] = useState(false)
 
   const observer = new IntersectionObserver(([entry]) =>
-    setIntersecting(entry.isIntersecting)
+    setIntersecting(entry.isIntersecting),
   )
 
   useEffect(() => {

@@ -50,7 +50,10 @@ class ClientManager extends EventTarget {
 
   async signin(service: string, handle: string, password: string) {
     this._api = AtpApi.service(service)
-    const res = await this._api.com.atproto.session.create({ handle, password })
+    const res = await this._api.com.atproto.session.create({
+      handle,
+      password,
+    })
     if (res.data.accessJwt && res.data.refreshJwt) {
       this._session = {
         service: service,

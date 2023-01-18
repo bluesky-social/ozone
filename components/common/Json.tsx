@@ -11,7 +11,7 @@ export function Json({ label, value }: { label: string; value: any }) {
       <div
         className={classNames(
           'flex items-center rounded-t-lg bg-white border border-gray-200 px-2 py-2 sm:px-4 sm:py-3 text-sm cursor-pointer',
-          open ? 'rounded-t-lg' : 'rounded-lg'
+          open ? 'rounded-t-lg' : 'rounded-lg',
         )}
         onClick={onToggle}
       >

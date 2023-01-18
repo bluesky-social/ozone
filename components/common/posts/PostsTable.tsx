@@ -61,7 +61,7 @@ export function PostAsRow({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
         {isTrend(item.reason) ? (
           <span className="block text-gray-500">
             Trended by{' '}
-            <Link href={`/accounts/view/${item.reason.by.handle}`}>
+            <Link href={`/repositories/${item.reason.by.handle}`}>
               @{item.reason.by.handle}
             </Link>
           </span>
@@ -69,14 +69,14 @@ export function PostAsRow({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
         {isRepost(item.reason) ? (
           <span className="block text-gray-500">
             Reposted by{' '}
-            <Link href={`/accounts/view/${item.reason.by.handle}`}>
+            <Link href={`/repositories/${item.reason.by.handle}`}>
               @{item.reason.by.handle}
             </Link>
           </span>
         ) : undefined}
         <Link
           className="block"
-          href={`/accounts/view/${item.post.author.handle}`}
+          href={`/repositories/${item.post.author.handle}`}
         >
           @{item.post.author.handle}
         </Link>
@@ -118,7 +118,7 @@ function PostContent({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
         <span className="block text-gray-500 text-sm">
           Reply to{' '}
           <Link
-            href={`/accounts/view/${item.reply.parent.author.handle}`}
+            href={`/repositories/${item.reply.parent.author.handle}`}
             className="hover:underline"
           >
             @{item.reply.parent.author.handle}

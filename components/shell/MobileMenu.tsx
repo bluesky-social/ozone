@@ -119,7 +119,7 @@ export function MobileMenu() {
                               isCurrent(pathname, item)
                                 ? 'bg-rose-800 text-white'
                                 : 'text-rose-100 hover:bg-rose-800 hover:text-white',
-                              'group py-2 px-3 rounded-md flex items-center text-sm font-medium'
+                              'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
                             )}
                             aria-current={
                               isCurrent(pathname, item) ? 'page' : undefined
@@ -130,7 +130,7 @@ export function MobileMenu() {
                                 isCurrent(pathname, item)
                                   ? 'text-white'
                                   : 'text-rose-300 group-hover:text-white',
-                                'mr-3 h-6 w-6'
+                                'mr-3 h-6 w-6',
                               )}
                               aria-hidden="true"
                             />

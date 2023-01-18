@@ -67,7 +67,7 @@ export function Posts({
                 'relative inline-flex items-center rounded-l-md border px-4 py-2 text-sm font-medium',
                 mode === Mode.Feed
                   ? 'bg-rose-600 text-white border-rose-800'
-                  : 'bg-white text-gray-700 border-gray-300'
+                  : 'bg-white text-gray-700 border-gray-300',
               )}
               onClick={() => setMode(Mode.Feed)}
             >
@@ -80,7 +80,7 @@ export function Posts({
                 'relative -ml-px inline-flex items-center rounded-r-md border px-4 py-2 text-sm font-medium',
                 mode === Mode.Table
                   ? 'bg-rose-600 text-white border-rose-800'
-                  : 'bg-white text-gray-700 border-gray-300'
+                  : 'bg-white text-gray-700 border-gray-300',
               )}
               onClick={() => setMode(Mode.Table)}
             >

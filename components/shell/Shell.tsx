@@ -35,7 +35,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 <div className="flex flex-1">
                   <form className="flex w-full md:ml-0" action="#" method="GET">
                     <label htmlFor="search-field" className="sr-only">
-                      Search (TODO)
+                      Search
                     </label>
                     <div className="relative w-full text-gray-400 focus-within:text-gray-600">
                       <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center">
@@ -48,7 +48,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                         name="search-field"
                         id="search-field"
                         className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0"
-                        placeholder="Search (TODO)"
+                        placeholder="Search"
                         type="search"
                       />
                     </div>

@@ -19,7 +19,7 @@ export function SidebarNav() {
               isCurrent(pathname, item)
                 ? 'bg-rose-800 text-white'
                 : 'text-rose-100 hover:bg-rose-800 hover:text-white',
-              'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium'
+              'group w-full p-3 rounded-md flex flex-col items-center text-xs font-medium',
             )}
             aria-current={isCurrent(pathname, item) ? 'page' : undefined}
           >
@@ -28,7 +28,7 @@ export function SidebarNav() {
                 isCurrent(pathname, item)
                   ? 'text-white'
                   : 'text-rose-300 group-hover:text-white',
-                'h-6 w-6'
+                'h-6 w-6',
               )}
               aria-hidden="true"
             />

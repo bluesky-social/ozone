@@ -60,7 +60,7 @@ export function AccountView({ id }: { id: string }) {
   const [error, setError] = useState<string>('')
   const [currentView, setCurrentView] = useState<Views>(Views.Details)
   const [profile, setProfile] = useState<GetProfile.OutputSchema | undefined>(
-    undefined
+    undefined,
   )
 
   useEffect(() => {
@@ -79,7 +79,7 @@ export function AccountView({ id }: { id: string }) {
           if (!aborted) {
             setError(err.toString())
           }
-        }
+        },
       )
     }
 
@@ -98,14 +98,14 @@ export function AccountView({ id }: { id: string }) {
               aria-label="Breadcrumb"
             >
               <Link
-                href="/accounts"
+                href="/repositories"
                 className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900"
               >
                 <ChevronLeftIcon
                   className="-ml-2 h-5 w-5 text-gray-400"
                   aria-hidden="true"
                 />
-                <span>Accounts</span>
+                <span>Repositories</span>
               </Link>
             </nav>
 
@@ -227,7 +227,7 @@ function Tabs({
         view === currentView
           ? 'border-pink-500 text-gray-900'
           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer'
+        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
       )}
       aria-current={view === currentView ? 'page' : undefined}
       onClick={() => onSetCurrentView(view)}
@@ -300,7 +300,7 @@ function Follows({ id }: { id: string }) {
   const api = useApi()
   const [error, setError] = useState<string>('')
   const [follows, setFollows] = useState<GetFollows.OutputSchema | undefined>(
-    undefined
+    undefined,
   )
 
   useEffect(() => {
@@ -319,7 +319,7 @@ function Follows({ id }: { id: string }) {
           if (!aborted) {
             setError(err.toString())
           }
-        }
+        },
       )
     }
 
@@ -358,7 +358,7 @@ function Followers({ id }: { id: string }) {
           if (!aborted) {
             setError(err.toString())
           }
-        }
+        },
       )
     }
 
@@ -406,7 +406,7 @@ function AccountsGrid({
             </div>
             <div className="min-w-0 flex-1">
               <Link
-                href={`/accounts/view/${account.handle}`}
+                href={`/repositories/${account.handle}`}
                 className="focus:outline-none"
               >
                 <span className="absolute inset-0" aria-hidden="true" />

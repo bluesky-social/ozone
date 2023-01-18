@@ -31,7 +31,7 @@ const people = [
   },
 ]
 
-export function AccountsTable() {
+export function RepositoriesTable() {
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">

@@ -216,14 +216,14 @@ export function AccountsSideList() {
     <aside className="hidden w-96 flex-shrink-0 border-r border-gray-200 xl:order-first xl:flex xl:flex-col">
       <div className="px-6 pt-6 pb-4">
         <Link
-          href="/accounts"
+          href="/repositories"
           className="flex items-center text-lg font-medium text-gray-900"
         >
           <ChevronLeftIcon
             className="-ml-2 -mb-0.5 h-5 w-5 text-gray-400"
             aria-hidden="true"
           />
-          Accounts
+          Repositories
         </Link>
         <p className="mt-1 text-sm text-gray-600">
           Search directory of TODO accounts

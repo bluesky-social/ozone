@@ -69,7 +69,7 @@ function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
           ) : undefined}
           <p className="text-sm font-medium text-gray-900">
             <Link
-              href={`/accounts/view/${item.post.author.handle}`}
+              href={`/repositories/${item.post.author.handle}`}
               className="hover:underline"
             >
               {item.post.author.displayName ? (
@@ -94,7 +94,7 @@ function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
             <p className="text-gray-500 text-sm">
               Reply to{' '}
               <Link
-                href={`/accounts/view/${item.reply.parent.author.handle}`}
+                href={`/repositories/${item.reply.parent.author.handle}`}
                 className="hover:underline"
               >
                 @{item.reply.parent.author.handle}
