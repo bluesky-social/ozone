@@ -41,7 +41,7 @@ In the course of development there may be updates to the atproto client that are
    ❯ git checkout main
    ```
 
-3. Build the @aproto/api package in atproto/.
+3. Build the @atproto/api package in atproto/.
 
    ```
    ~/Documents/bluesky/atproto
