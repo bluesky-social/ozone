@@ -18,6 +18,56 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+## Working with unpublished changes to @atproto/api
+
+In the course of development there may be updates to the atproto client that are not yet published to npm, but you would like to use with Redsky. Here's the workflow for using unpublished changes to the @atproto/api package:
+
+1. Ensure the [atproto/](https://github.com/bluesky-social/atproto) project lives as a sibling to the [redsky/](https://github.com/bluesky-social/redsky) project on your filesystem (or adjust the path used in step 4).
+
+   ```
+   ~/Documents/bluesky
+   ❯ ls -l
+   total 19856
+   drwxr-xr-x  22 user  group  704 Jan 19 15:51 atproto
+   drwxr-xr-x  24 user  group  768 Jan 24 19:17 redsky
+   ```
+
+2. Checkout whichever branch you'd like to use in atproto/ for the @atproto/api package.
+
+   ```
+   ~/Documents/bluesky
+   ❯ cd atproto
+   ~/Documents/bluesky/atproto
+   ❯ git checkout main
+   ```
+
+3. Build the @aproto/api package in atproto/.
+
+   ```
+   ~/Documents/bluesky/atproto
+   ❯ yarn
+   ```
+
+4. Update the package.json file in redsky/ to reference the local build of @atproto/api.
+
+   ```diff
+      "dependencies": {
+   -    "@atproto/api": "^0.0.3",
+   +    "@atproto/api": "link:../atproto/packages/api/dist",
+        "@headlessui/react": "^1.7.7",
+   ```
+
+5. Ask yarn to reinstall, creating the link from redsky/ to the local build of @atproto/api.
+   ```
+   ~/Documents/bluesky/redsky
+   ❯ yarn
+   ```
+6. Take care not to check-in the changes to package.json and yarn.lock that came from the temporary linking. When you're done, you can reset everything with:
+   ```
+   ~/Documents/bluesky/redsky
+   ❯ git checkout package.json yarn.lock && yarn
+   ```
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
