@@ -1,7 +1,9 @@
 import Link from 'next/link'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
+import { formatDistanceToNow } from 'date-fns'
 import { AppBskyActorProfile, AppBskySystemDeclaration } from '@atproto/api'
 import { Repo } from '../../lib/types'
+import { LoadMoreButton } from '../common/LoadMoreButton'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -25,13 +27,7 @@ export function RepositoriesTable(props: {
       </div>
       {showLoadMore && (
         <div className="flex justify-center py-6">
-          <button
-            type="button"
-            className="inline-flex items-center rounded border border-gray-300 bg-white px-2.5 py-1.5 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
-            onClick={onLoadMore}
-          >
-            Load more
-          </button>
+          <LoadMoreButton onClick={onLoadMore} />
         </div>
       )}
     </div>
@@ -71,6 +67,9 @@ function RepoRow(props: { repo: Repo }) {
       <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
         {actorType}
       </td>
+      <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">
+        {formatDistanceToNow(new Date(repo.indexedAt), { addSuffix: true })}
+      </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
         {repo.moderation.takedownId && (
           <Link
@@ -106,6 +105,12 @@ function RepoRowHead() {
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
       >
         Type
+      </th>
+      <th
+        scope="col"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+      >
+        Indexed
       </th>
       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
         <span className="sr-only">Moderation</span>
