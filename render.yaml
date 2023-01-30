@@ -8,3 +8,5 @@ services:
     healthCheckPath: /
     plan: starter
     numInstances: 1
+    domains:
+      - admin.staging.bsky.dev
