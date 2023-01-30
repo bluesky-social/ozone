@@ -9,6 +9,7 @@ export function LoginModal() {
   const [service, setService] = useState('')
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
+  const [adminToken, setAdminToken] = useState('')
 
   useEffect(() => {
     if (!Client.hasSetup) {
@@ -21,7 +22,7 @@ export function LoginModal() {
     e.preventDefault()
     e.stopPropagation()
     try {
-      await Client.signin(service, handle, password)
+      await Client.signin(service, handle, password, adminToken)
       setIsAuthed(Client.isAuthed)
     } catch (e: any) {
       console.error(e)
@@ -92,10 +93,25 @@ export function LoginModal() {
                   type="password"
                   autoComplete="current-password"
                   required
-                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                />
+              </div>
+              <div>
+                <label htmlFor="password" className="sr-only">
+                  Admin Token
+                </label>
+                <input
+                  id="admin-token"
+                  name="admin-token"
+                  type="password"
+                  required
+                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  placeholder="Admin Token"
+                  value={adminToken}
+                  onChange={(e) => setAdminToken(e.target.value)}
                 />
               </div>
             </div>

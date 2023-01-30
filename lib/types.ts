@@ -1,4 +1,4 @@
-import { AppBskyFeedFeedViewPost } from '@atproto/api'
+import { AppBskyFeedFeedViewPost, ComAtprotoAdminRepo } from '@atproto/api'
 
 type Reasons =
   | AppBskyFeedFeedViewPost.ReasonTrend
@@ -22,3 +22,5 @@ export function isRepost(
 ): v is AppBskyFeedFeedViewPost.ReasonRepost {
   return isRecord(v) && v.$type === 'app.bsky.feed.feedViewPost#reasonRepost'
 }
+
+export type Repo = ComAtprotoAdminRepo.View

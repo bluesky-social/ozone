@@ -1,8 +1,14 @@
+'use client'
+import { useEffect, useRef, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useDebounce } from 'react-use'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
+
+import { useSyncedState } from '../../lib/useSyncedState'
 
 export function Shell({ children }: React.PropsWithChildren) {
   return (
@@ -44,13 +50,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                           aria-hidden="true"
                         />
                       </div>
-                      <input
-                        name="search-field"
-                        id="search-field"
-                        className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0"
-                        placeholder="Search"
-                        type="search"
-                      />
+                      <SearchInput />
                     </div>
                   </form>
                 </div>
@@ -77,5 +77,39 @@ export function Shell({ children }: React.PropsWithChildren) {
         </div>
       </div>
     </MobileMenuProvider>
+  )
+}
+
+function SearchInput() {
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useSearchParams()
+  // Input state for term, synced with params
+  const termParam = params.get('term') ?? ''
+  const [termInput, setTermInput] = useSyncedState(termParam)
+  // Channel for periodically updating term param based on input changes
+  const [termDebounced, setTermDebounced] = useState(termInput)
+  useDebounce(() => setTermDebounced(termInput), 200, [termInput])
+  // Periodically update term param based on input changes
+  const resources = useRef({ params, pathname, router })
+  useEffect(() => {
+    resources.current = { params, pathname, router }
+  })
+  useEffect(() => {
+    const { params, pathname, router } = resources.current
+    const nextParams = new URLSearchParams(params)
+    nextParams.set('term', termDebounced)
+    router.push((pathname ?? '') + '?' + nextParams.toString())
+  }, [termDebounced])
+  return (
+    <input
+      name="search-field"
+      id="search-field"
+      className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0"
+      placeholder="Search"
+      type="search"
+      value={termInput}
+      onChange={(ev) => setTermInput(ev.target.value)}
+    />
   )
 }

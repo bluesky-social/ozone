@@ -9,6 +9,7 @@ interface ClientSession {
   service: string
   refreshJwt: string
   accessJwt: string
+  adminToken: string
   handle: string
   did: string
 }
@@ -48,19 +49,30 @@ class ClientManager extends EventTarget {
     this._emit('change')
   }
 
-  async signin(service: string, handle: string, password: string) {
+  async signin(
+    service: string,
+    handle: string,
+    password: string,
+    adminToken: string,
+  ) {
     this._api = AtpApi.service(service)
     const res = await this._api.com.atproto.session.create({
       handle,
       password,
     })
+    // Check validity of admin token
+    await this._api.com.atproto.admin.getRepo(
+      { did: res.data.did },
+      { headers: this.adminHeaders(adminToken) },
+    )
     if (res.data.accessJwt && res.data.refreshJwt) {
       this._session = {
-        service: service,
+        service,
         accessJwt: res.data.accessJwt,
         refreshJwt: res.data.refreshJwt,
         handle: res.data.handle,
         did: res.data.did,
+        adminToken,
       }
       this._emit('change')
       _saveSession(this._session)
@@ -76,6 +88,11 @@ class ClientManager extends EventTarget {
     }
     this._emit('change')
     this._clear()
+  }
+
+  adminHeaders(override?: string) {
+    const adminToken = override ?? this.session.adminToken
+    return { authorization: `Basic ${btoa(`admin:${adminToken}`)}` }
   }
 
   private _setup() {
@@ -116,6 +133,9 @@ class ClientManager extends EventTarget {
 const clientManager = new ClientManager()
 export default clientManager
 
+// For debugging and low-level access
+;(globalThis as any).client = clientManager
+
 export function useApi() {
   const [isAuthed, setIsAuthed] = useState(false)
 
@@ -132,9 +152,11 @@ export function useApi() {
 // helpers
 // =
 
+const SESSION_KEY = 'redsky_session'
+
 function _loadSession(): ClientSession | undefined {
   try {
-    const str = localStorage.getItem('session')
+    const str = localStorage.getItem(SESSION_KEY)
     const obj = str ? JSON.parse(str) : undefined
     if (!obj || typeof obj === 'undefined') {
       return undefined
@@ -143,6 +165,7 @@ function _loadSession(): ClientSession | undefined {
       !obj.service ||
       !obj.refreshJwt ||
       !obj.accessJwt ||
+      !obj.adminToken ||
       !obj.handle ||
       !obj.did
     ) {
@@ -155,9 +178,9 @@ function _loadSession(): ClientSession | undefined {
 }
 
 function _saveSession(session: ClientSession) {
-  localStorage.setItem('session', JSON.stringify(session))
+  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
 }
 
 function _deleteSession() {
-  localStorage.removeItem('session')
+  localStorage.removeItem(SESSION_KEY)
 }
