@@ -6,7 +6,7 @@ import {
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
-import { isTrend, isRepost } from '../../../lib/types'
+import { isRepost } from '../../../lib/types'
 
 export function PostsTable({
   items,
@@ -66,14 +66,6 @@ export function PostAsRow({
   return (
     <tr className="align-top">
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
-        {isTrend(item.reason) ? (
-          <span className="block text-gray-500">
-            Trended by{' '}
-            <Link href={`/repositories/${item.reason.by.handle}`}>
-              @{item.reason.by.handle}
-            </Link>
-          </span>
-        ) : undefined}
         {isRepost(item.reason) ? (
           <span className="block text-gray-500">
             Reposted by{' '}

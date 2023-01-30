@@ -10,7 +10,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
-import { isTrend, isRepost } from '../../../lib/types'
+import { isRepost } from '../../../lib/types'
 
 export function PostsFeed({
   items,
@@ -77,11 +77,6 @@ function PostHeader({
           />
         </div>
         <div className="min-w-0 flex-1">
-          {isTrend(item.reason) ? (
-            <p className="block text-gray-500 text-sm">
-              Trended by @{item.reason.by.handle}
-            </p>
-          ) : undefined}
           {isRepost(item.reason) ? (
             <p className="block text-gray-500 text-sm">
               Reposted by @{item.reason.by.handle}

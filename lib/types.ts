@@ -8,7 +8,6 @@ import {
 import { ReactNode } from 'react'
 
 type Reasons =
-  | AppBskyFeedFeedViewPost.ReasonTrend
   | AppBskyFeedFeedViewPost.ReasonRepost
   | {
       $type: string
@@ -18,10 +17,6 @@ type Reasons =
 
 function isRecord(v: any): v is Record<string, any> {
   return !!v && typeof v === 'object'
-}
-
-export function isTrend(v: Reasons): v is AppBskyFeedFeedViewPost.ReasonTrend {
-  return isRecord(v) && v.$type === 'app.bsky.feed.feedViewPost#reasonTrend'
 }
 
 export function isRepost(
