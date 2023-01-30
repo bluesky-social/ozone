@@ -10,9 +10,11 @@ import { isTrend, isRepost } from '../../../lib/types'
 
 export function PostsTable({
   items,
+  onReport,
   onLoadMore,
 }: {
   items: AppBskyFeedFeedViewPost.Main[]
+  onReport: (uri: string) => void
   onLoadMore: () => void
 }) {
   return (
@@ -45,7 +47,7 @@ export function PostsTable({
         </thead>
         <tbody className="divide-y divide-gray-200 bg-white">
           {items.map((item, i) => (
-            <PostAsRow key={`post-${i}`} item={item} />
+            <PostAsRow key={`post-${i}`} item={item} onReport={onReport} />
           ))}
         </tbody>
       </table>
@@ -54,7 +56,13 @@ export function PostsTable({
   )
 }
 
-export function PostAsRow({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
+export function PostAsRow({
+  item,
+  onReport,
+}: {
+  item: AppBskyFeedFeedViewPost.Main
+  onReport?: (uri: string) => void
+}) {
   return (
     <tr className="align-top">
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
@@ -99,12 +107,19 @@ export function PostAsRow({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
         {new Date(item.post.indexedAt).toLocaleString()}
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-        <a href="#" className="text-gray-600 hover:text-blue-600 mr-4">
+        <Link
+          href={`/repositories/${item.post.uri.replace('at://', '')}`}
+          className="text-gray-600 hover:text-blue-600 mr-4"
+        >
           View
-        </a>
-        <a href="#" className="text-gray-600 hover:text-rose-600">
+        </Link>
+        <button
+          type="button"
+          onClick={() => onReport?.(item.post.uri)}
+          className="text-gray-600 hover:text-rose-600"
+        >
           Report
-        </a>
+        </button>
       </td>
     </tr>
   )
@@ -125,7 +140,7 @@ function PostContent({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
           </Link>
         </span>
       ) : undefined}
-      <span className="block">{item.post.record.text}</span>
+      <span className="block">{(item.post.record as any)?.text}</span>
       <PostEmbeds item={item} />
     </>
   )

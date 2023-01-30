@@ -19,7 +19,7 @@ export function RecordCard(props: { uri: string }) {
 
 function PostCard(props: { uri: string }) {
   const { uri } = props
-  const { data } = useQuery({
+  const { error, data } = useQuery({
     queryKey: ['postCard', { uri }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down posts
@@ -30,6 +30,10 @@ function PostCard(props: { uri: string }) {
       return post
     },
   })
+  if (error) {
+    // Temp fallback for taken-down posts, re: TODO above
+    return <GenericRecordCard uri={uri} />
+  }
   if (!data || !AppBskyFeedGetPostThread.isThreadViewPost(data.thread)) {
     return null
   }

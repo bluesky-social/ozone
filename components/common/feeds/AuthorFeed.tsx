@@ -1,42 +1,36 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { AppBskyFeedFeedViewPost } from '@atproto/api'
-import { useApi } from '../../../lib/client'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { Posts } from '../posts/Posts'
+import client from '../../../lib/client'
 
-export function AuthorFeed({ id, title }: { id: string; title: string }) {
-  const api = useApi()
-  const [paginationCursor, setPaginationCursor] = useState<string | undefined>()
-  const [needsMore, setNeedsMore] = useState(false)
-  const [items, setItems] = useState<AppBskyFeedFeedViewPost.Main[]>([])
-
-  const fetchMore = async () => {
-    console.log('fetching')
-    try {
-      const res = await api?.app.bsky.feed.getAuthorFeed({
+export function AuthorFeed({
+  id,
+  title,
+  onReport,
+}: {
+  id: string
+  title: string
+  onReport: (uri: string) => void
+}) {
+  const { data, fetchNextPage } = useInfiniteQuery({
+    queryKey: ['authorFeed', { id }],
+    queryFn: async ({ pageParam }) => {
+      const { data } = await client.api.app.bsky.feed.getAuthorFeed({
         author: id,
         limit: 30,
-        before: paginationCursor,
+        before: pageParam,
       })
-      console.log('done', res)
-      if (res?.data) {
-        setItems(items.concat(res.data.feed))
-        setPaginationCursor(res.data.cursor)
-      }
-    } catch (e) {
-      console.error('Error while fetching firehose', e)
-    } finally {
-      setNeedsMore(false)
-    }
-  }
-
-  useEffect(() => {
-    if (api && (items.length === 0 || needsMore)) {
-      fetchMore()
-    }
-  }, [api, items.length, needsMore])
-
+      return data
+    },
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  })
+  const items = data?.pages.flatMap((page) => page.feed) ?? []
   return (
-    <Posts title={title} items={items} onLoadMore={() => setNeedsMore(true)} />
+    <Posts
+      title={title}
+      items={items}
+      onReport={onReport}
+      onLoadMore={() => fetchNextPage()}
+    />
   )
 }

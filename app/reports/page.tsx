@@ -36,6 +36,9 @@ export default function Reports() {
   const reports = data?.pages.flatMap((page) => page.reports) ?? []
   const currentTab =
     resolved === undefined ? 'all' : resolved ? 'resolved' : 'unresolved'
+  const subjectOptions = unique(
+    reports.flatMap((report) => validSubjectString(report.subject) ?? []),
+  )
   return (
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
@@ -57,9 +60,8 @@ export default function Reports() {
       <ModActionPanel
         open={open}
         onClose={() => setOpen(false)}
-        subjectOptions={reports.flatMap(
-          (report) => validSubjectString(report.subject) ?? [],
-        )}
+        subject={subjectOptions.length === 1 ? subjectOptions[0] : undefined}
+        subjectOptions={subjectOptions}
         onSubmit={async (vals: ModActionFormValues) => {
           await takeActionAndResolveReports(vals)
           refetch()
@@ -116,4 +118,11 @@ async function takeActionAndResolveReports(vals: ModActionFormValues) {
       { headers: client.adminHeaders(), encoding: 'application/json' },
     )
   }
+}
+
+function unique<T>(arr: T[]) {
+  const set = new Set(arr)
+  const result: T[] = []
+  set.forEach((val) => result.push(val))
+  return result
 }

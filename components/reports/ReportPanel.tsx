@@ -1,30 +1,21 @@
-import { ComAtprotoAdminModerationAction } from '@atproto/api'
 import { useState } from 'react'
-import { ActionPanel } from '../../../components/common/ActionPanel'
-import {
-  ButtonPrimary,
-  ButtonSecondary,
-} from '../../../components/common/buttons'
-import {
-  FormLabel,
-  Input,
-  Select,
-  Textarea,
-} from '../../../components/common/forms'
-import { RecordCard, RepoCard } from '../../../components/common/RecordCard'
-import { PropsOf } from '../../../lib/types'
-import { ResolutionList } from './ResolutionList'
+import { ComAtprotoReportReasonType } from '@atproto/api'
+import { ActionPanel } from '../common/ActionPanel'
+import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
+import { FormLabel, Input, Select, Textarea } from '../common/forms'
+import { RecordCard, RepoCard } from '../common/RecordCard'
+import { PropsOf } from '../../lib/types'
 
-export function ModActionPanel(
+export function ReportPanel(
   props: PropsOf<typeof ActionPanel> & {
     subject?: string
     subjectOptions?: string[]
-    onSubmit: (vals: ModActionFormValues) => Promise<void>
+    onSubmit: (vals: ReportFormValues) => Promise<void>
   },
 ) {
   const { subject, subjectOptions, onSubmit, onClose, ...others } = props
   return (
-    <ActionPanel title="Take moderation action" onClose={onClose} {...others}>
+    <ActionPanel title="Create a report" onClose={onClose} {...others}>
       <Form
         onCancel={onClose}
         onSubmit={onSubmit}
@@ -39,7 +30,7 @@ function Form(props: {
   subject?: string
   subjectOptions?: string[]
   onCancel: () => void
-  onSubmit: (vals: ModActionFormValues) => Promise<void>
+  onSubmit: (vals: ReportFormValues) => Promise<void>
 }) {
   const {
     subject: fixedSubject,
@@ -59,11 +50,8 @@ function Form(props: {
           const formData = new FormData(ev.currentTarget)
           await onSubmit({
             subject: formData.get('subject')!.toString(),
-            action: formData.get('action')!.toString(),
-            reason: formData.get('reason')!.toString(),
-            resolveReportIds: formData
-              .getAll('resolveReportIds')
-              .map((id) => Number(id)),
+            reasonType: formData.get('reasonType')!.toString(),
+            reason: formData.get('reason')!.toString() || undefined,
           })
           onCancel() // Close
         } finally {
@@ -78,10 +66,10 @@ function Form(props: {
           id="subject"
           name="subject"
           required
-          readOnly={!!fixedSubject}
           list="subject-suggestions"
           placeholder="Subject"
           className="block w-full"
+          readOnly={!!fixedSubject}
           value={subject}
           onChange={(ev) => setSubject(ev.target.value)}
           autoComplete="off"
@@ -107,12 +95,12 @@ function Form(props: {
           <span className="text-xs text-gray-400">Preview</span>
         </div>
       )}
-      <FormLabel label="Action" htmlFor="action" className="mb-3">
-        <Select id="action" name="action" required>
+      <FormLabel label="Reason" htmlFor="reasonType" className="mb-3">
+        <Select id="reasonType" name="reasonType" required>
           <option hidden selected value="">
-            Action
+            Reason
           </option>
-          {Object.entries(actionOptions).map(([value, label]) => (
+          {Object.entries(reasonTypeOptions).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
             </option>
@@ -121,13 +109,9 @@ function Form(props: {
       </FormLabel>
       <Textarea
         name="reason"
-        required
         placeholder="Details"
         className="block w-full mb-3"
       />
-      <FormLabel label="Resolves" className="mb-6">
-        <ResolutionList subject={subject || null} name="resolveReportIds" />
-      </FormLabel>
       <div className="text-right">
         <ButtonSecondary
           className="mr-4"
@@ -144,15 +128,13 @@ function Form(props: {
   )
 }
 
-const actionOptions = {
-  [ComAtprotoAdminModerationAction.ACKNOWLEDGE]: 'Acknowledge',
-  [ComAtprotoAdminModerationAction.FLAG]: 'Flag',
-  [ComAtprotoAdminModerationAction.TAKEDOWN]: 'Takedown',
+const reasonTypeOptions = {
+  [ComAtprotoReportReasonType.SPAM]: 'Spam',
+  [ComAtprotoReportReasonType.OTHER]: 'Other',
 }
 
-export type ModActionFormValues = {
+export type ReportFormValues = {
   subject: string
-  action: string
-  reason: string
-  resolveReportIds: number[]
+  reasonType: string
+  reason?: string
 }

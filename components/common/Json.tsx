@@ -3,11 +3,19 @@ import { useState } from 'react'
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { classNames } from '../../lib/util'
 
-export function Json({ label, value }: { label: string; value: any }) {
+export function Json({
+  label,
+  value,
+  className,
+}: {
+  label: string
+  value: any
+  className?: string
+}) {
   const [open, setOpen] = useState(false)
   const onToggle = () => setOpen(!open)
   return (
-    <>
+    <div className={className}>
       <div
         className={classNames(
           'flex items-center rounded-t-lg bg-white border border-gray-200 px-2 py-2 sm:px-4 sm:py-3 text-sm cursor-pointer',
@@ -27,6 +35,6 @@ export function Json({ label, value }: { label: string; value: any }) {
           {JSON.stringify(value, null, 2)}
         </div>
       ) : undefined}
-    </>
+    </div>
   )
 }

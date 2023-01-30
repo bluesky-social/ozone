@@ -5,7 +5,7 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { RepositoriesTable } from '../../components/repositories/RepositoriesTable'
 import client from '../../lib/client'
 
-const TABS: { key: string; name: string; href: string }[] = []
+const TABS = [{ key: 'all', name: 'All', href: '/repositories' }]
 
 export default function Repositories() {
   const params = useSearchParams()
@@ -28,7 +28,7 @@ export default function Repositories() {
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
   return (
     <>
-      <SectionHeader title="Repositories" tabs={TABS} current="active" />
+      <SectionHeader title="Repositories" tabs={TABS} current="all" />
       <RepositoriesTable
         repos={repos}
         showLoadMore={!!hasNextPage}

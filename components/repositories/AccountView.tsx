@@ -1,100 +1,67 @@
 'use client'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
+import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyActorGetProfile as GetProfile,
+  ComAtprotoAdminGetRepo as GetRepo,
   AppBskyGraphGetFollows as GetFollows,
   AppBskyGraphGetFollowers as GetFollowers,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
   EnvelopeIcon,
-  PhoneIcon,
+  ExclamationCircleIcon,
 } from '@heroicons/react/20/solid'
-import { AccountsSideList } from './AccountsSideList'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
 import { classNames } from '../../lib/util'
-import { useApi } from '../../lib/client'
+import client from '../../lib/client'
+import { ReportFormValues, ReportPanel } from '../reports/ReportPanel'
+import { ReportsTable } from '../reports/ReportsTable'
 
 enum Views {
   Details,
   Posts,
   Follows,
   Followers,
+  Reports,
 }
 
-const team = [
-  {
-    name: 'Leslie Alexander',
-    handle: 'lesliealexander',
-    role: 'Co-Founder / CEO',
-    imageUrl:
-      'https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-  },
-  {
-    name: 'Michael Foster',
-    handle: 'michaelfoster',
-    role: 'Co-Founder / CTO',
-    imageUrl:
-      'https://images.unsplash.com/photo-1519244703995-f4e0f30006d5?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-  },
-  {
-    name: 'Dries Vincent',
-    handle: 'driesvincent',
-    role: 'Manager, Business Relations',
-    imageUrl:
-      'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-  },
-  {
-    name: 'Lindsay Walton',
-    handle: 'lindsaywalton',
-    role: 'Front-end Developer',
-    imageUrl:
-      'https://images.unsplash.com/photo-1517841905240-472988babdf9?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80',
-  },
-]
-
 export function AccountView({ id }: { id: string }) {
-  const api = useApi()
-  const [error, setError] = useState<string>('')
   const [currentView, setCurrentView] = useState<Views>(Views.Details)
-  const [profile, setProfile] = useState<GetProfile.OutputSchema | undefined>(
-    undefined,
-  )
+  const [reportUri, setReportUri] = useState<string>()
 
-  useEffect(() => {
-    let aborted = false
-
-    if (api && profile?.did !== id && profile?.handle !== id) {
-      setError('')
-      api.app.bsky.actor.getProfile({ actor: id }).then(
-        (res) => {
-          if (!aborted) {
-            setProfile(res.data)
-          }
-        },
-        (err) => {
-          console.error(err)
-          if (!aborted) {
-            setError(err.toString())
-          }
-        },
+  const { data: { repo, profile } = {}, refetch } = useQuery({
+    queryKey: ['repoAndProfile', { id }],
+    queryFn: async () => {
+      const { data: profile } = await client.api.app.bsky.actor.getProfile({
+        actor: id,
+      })
+      const { data: repo } = await client.api.com.atproto.admin.getRepo(
+        { did: profile.did },
+        { headers: client.adminHeaders() },
       )
-    }
-
-    return () => {
-      aborted = true
-    }
-  }, [api, id, profile])
+      return { repo, profile }
+    },
+  })
 
   return (
     <div className="flex h-full bg-white">
+      <ReportPanel
+        open={!!reportUri}
+        onClose={() => setReportUri(undefined)}
+        subject={reportUri}
+        onSubmit={async (vals) => {
+          await createReport(vals)
+          refetch()
+        }}
+      />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
             <nav
-              className="flex items-start px-4 py-3 sm:px-6 lg:px-8 xl:hidden"
+              className="flex items-start px-4 py-3 sm:px-6 lg:px-8"
               aria-label="Breadcrumb"
             >
               <Link
@@ -110,20 +77,31 @@ export function AccountView({ id }: { id: string }) {
             </nav>
 
             <article>
-              <Header id={id} profile={profile} />
-              {profile ? (
+              <Header
+                id={id}
+                repo={repo}
+                profile={profile}
+                onReport={setReportUri}
+              />
+              {profile && repo ? (
                 <>
                   <Tabs
                     currentView={currentView}
                     profile={profile}
+                    repo={repo}
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && (
-                    <Details profile={profile} />
+                    <Details profile={profile} repo={repo} />
                   )}
-                  {currentView === Views.Posts && <Posts id={id} />}
+                  {currentView === Views.Posts && (
+                    <Posts id={id} onReport={setReportUri} />
+                  )}
                   {currentView === Views.Follows && <Follows id={id} />}
                   {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Reports && (
+                    <Reports reports={repo.moderation.reports} />
+                  )}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -132,7 +110,6 @@ export function AccountView({ id }: { id: string }) {
               )}
             </article>
           </main>
-          <AccountsSideList />
         </div>
       </div>
     </div>
@@ -141,11 +118,22 @@ export function AccountView({ id }: { id: string }) {
 
 function Header({
   id,
+  repo,
   profile,
+  onReport,
 }: {
   id: string
+  repo?: GetRepo.OutputSchema
   profile?: GetProfile.OutputSchema
+  onReport: (did: string) => void
 }) {
+  const displayActorName = profile
+    ? profile.displayName
+      ? `${profile.displayName} @${profile.handle}`
+      : `@${profile.handle}`
+    : id.startsWith('did:')
+    ? id
+    : `@${id}`
   return (
     <div>
       <div>
@@ -167,36 +155,44 @@ function Header({
           <div className="mt-6 sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
             <div className="mt-6 min-w-0 flex-1 sm:hidden 2xl:block">
               <h1 className="truncate text-2xl font-bold text-gray-900">
-                {profile?.displayName || `@${profile?.handle || id}`}
+                {displayActorName}
               </h1>
             </div>
-            <div className="justify-stretch mt-6 flex flex-col space-y-3 sm:flex-row sm:space-y-0 sm:space-x-4">
+            <div className="justify-stretch mt-6 flex flex-row space-x-3">
+              {repo?.account?.email && (
+                <form
+                  action={`mailto:${repo.account.email}`}
+                  className="inline-block sm:flex-1"
+                >
+                  <button
+                    type="submit"
+                    className="w-full inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                  >
+                    <EnvelopeIcon
+                      className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                      aria-hidden="true"
+                    />
+                    <span>Message</span>
+                  </button>
+                </form>
+              )}
               <button
                 type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                onClick={() => repo && onReport(repo.did)}
               >
-                <EnvelopeIcon
+                <ExclamationCircleIcon
                   className="-ml-1 mr-2 h-5 w-5 text-gray-400"
                   aria-hidden="true"
                 />
-                <span>Message</span>
-              </button>
-              <button
-                type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-              >
-                <PhoneIcon
-                  className="-ml-1 mr-2 h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-                <span>Call</span>
+                <span>Report</span>
               </button>
             </div>
           </div>
         </div>
         <div className="mt-6 hidden min-w-0 flex-1 sm:block 2xl:hidden">
           <h1 className="truncate text-2xl font-bold text-gray-900">
-            {profile?.displayName || `@${profile?.handle || id}`}
+            {displayActorName}
           </h1>
         </div>
       </div>
@@ -207,10 +203,12 @@ function Header({
 function Tabs({
   currentView,
   profile,
+  repo,
   onSetCurrentView,
 }: {
   currentView: Views
   profile: GetProfile.OutputSchema
+  repo: GetRepo.OutputSchema
   onSetCurrentView: (v: Views) => void
 }) {
   const Tab = ({
@@ -260,6 +258,11 @@ function Tabs({
               label="Followers"
               sublabel={String(profile.followersCount)}
             />
+            <Tab
+              view={Views.Reports}
+              label="Reports"
+              sublabel={String(repo.moderation.reports.length)}
+            />
           </nav>
         </div>
       </div>
@@ -267,7 +270,13 @@ function Tabs({
   )
 }
 
-function Details({ profile }: { profile: GetProfile.OutputSchema }) {
+function Details({
+  profile,
+  repo,
+}: {
+  profile: GetProfile.OutputSchema
+  repo: GetRepo.OutputSchema
+}) {
   const Field = ({ label, value }: { label: string; value: string }) => (
     <div className="sm:col-span-1">
       <dt className="text-sm font-medium text-gray-500">{label}</dt>
@@ -279,7 +288,6 @@ function Details({ profile }: { profile: GetProfile.OutputSchema }) {
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
         <Field label="Handle" value={profile.handle} />
         <Field label="DID" value={profile.did} />
-        <Field label="Email" value="TODO" />
         <div className="sm:col-span-2">
           <dt className="text-sm font-medium text-gray-500">Description</dt>
           <dd className="mt-1 max-w-prose space-y-5 text-sm text-gray-900">
@@ -287,90 +295,68 @@ function Details({ profile }: { profile: GetProfile.OutputSchema }) {
           </dd>
         </div>
       </dl>
-      <Json label="GetProfile()" value={profile} />
+      <Json className="mb-3" label="GetProfile()" value={profile} />
+      <Json className="mb-3" label="GetRepo()" value={repo} />
     </div>
   )
 }
 
-function Posts({ id }: { id: string }) {
-  return <AuthorFeed title="" id={id} />
+function Posts({
+  id,
+  onReport,
+}: {
+  id: string
+  onReport: (uri: string) => void
+}) {
+  return <AuthorFeed title="" id={id} onReport={onReport} />
 }
 
 function Follows({ id }: { id: string }) {
-  const api = useApi()
-  const [error, setError] = useState<string>('')
-  const [follows, setFollows] = useState<GetFollows.OutputSchema | undefined>(
-    undefined,
-  )
-
-  useEffect(() => {
-    let aborted = false
-
-    if (api && !follows) {
-      setError('')
-      api.app.bsky.graph.getFollows({ user: id }).then(
-        (res) => {
-          if (!aborted) {
-            setFollows(res.data)
-          }
-        },
-        (err) => {
-          console.error(err)
-          if (!aborted) {
-            setError(err.toString())
-          }
-        },
-      )
-    }
-
-    return () => {
-      aborted = true
-    }
-  }, [api, id, follows])
-
+  const { error, data: follows } = useQuery({
+    queryKey: ['follows', { id }],
+    queryFn: async () => {
+      const { data } = await client.api.app.bsky.graph.getFollows({ user: id })
+      return data
+    },
+  })
   return (
     <div>
-      <AccountsGrid error={error} accounts={follows?.follows} />
+      <AccountsGrid error={String(error ?? '')} accounts={follows?.follows} />
     </div>
   )
 }
 
 function Followers({ id }: { id: string }) {
-  const api = useApi()
-  const [error, setError] = useState<string>('')
-  const [followers, setFollowers] = useState<
-    GetFollowers.OutputSchema | undefined
-  >(undefined)
-
-  useEffect(() => {
-    let aborted = false
-
-    if (api && !followers) {
-      setError('')
-      api.app.bsky.graph.getFollowers({ user: id }).then(
-        (res) => {
-          if (!aborted) {
-            setFollowers(res.data)
-          }
-        },
-        (err) => {
-          console.error(err)
-          if (!aborted) {
-            setError(err.toString())
-          }
-        },
-      )
-    }
-
-    return () => {
-      aborted = true
-    }
-  }, [api, id, followers])
-
+  const { error, data: followers } = useQuery({
+    queryKey: ['followers', { id }],
+    queryFn: async () => {
+      const { data } = await client.api.app.bsky.graph.getFollowers({
+        user: id,
+      })
+      return data
+    },
+  })
   return (
     <div>
-      <AccountsGrid error={error} accounts={followers?.followers} />
+      <AccountsGrid
+        error={String(error ?? '')}
+        accounts={followers?.followers}
+      />
     </div>
+  )
+}
+
+function Reports({
+  reports,
+}: {
+  reports: GetRepo.OutputSchema['moderation']['reports']
+}) {
+  return (
+    <ReportsTable
+      reports={reports}
+      showLoadMore={false}
+      onLoadMore={() => null}
+    />
   )
 }
 
@@ -400,7 +386,11 @@ function AccountsGrid({
             <div className="flex-shrink-0">
               <img
                 className="h-10 w-10 rounded-full"
-                src={account.avatar || '/img/default-avatar.jpg'}
+                src={
+                  typeof account.avatar === 'string'
+                    ? account.avatar
+                    : '/img/default-avatar.jpg'
+                }
                 alt=""
               />
             </div>
@@ -423,4 +413,19 @@ function AccountsGrid({
       </div>
     </div>
   )
+}
+
+async function createReport(vals: ReportFormValues) {
+  await client.api.com.atproto.report.create({
+    ...vals,
+    subject: vals.subject.startsWith('at://')
+      ? {
+          $type: 'com.atproto.repo.recordRef',
+          uri: vals.subject,
+        }
+      : {
+          $type: 'com.atproto.repo.repoRef',
+          did: vals.subject,
+        },
+  })
 }
