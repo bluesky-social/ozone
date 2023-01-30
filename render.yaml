@@ -1,5 +1,5 @@
 services:
-  - type: pserv
+  - type: web
     name: redsky-staging
     env: node
     repo: https://github.com/bluesky-social/redsky
