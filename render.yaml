@@ -1,0 +1,10 @@
+services:
+  - type: pserv
+    name: redsky-staging
+    env: node
+    repo: https://github.com/bluesky-social/redsky
+    buildCommand: yarn
+    startCommand: yarn start
+    healthCheckPath: /
+    plan: starter
+    numInstances: 1
