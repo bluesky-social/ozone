@@ -34,24 +34,40 @@ export function PostsFeed({
   )
 }
 
-export function PostAsCard({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
+export function PostAsCard({
+  item,
+  dense,
+  controls = true,
+  className = '',
+}: {
+  item: AppBskyFeedFeedViewPost.Main
+  dense?: boolean
+  controls?: boolean
+  className?: string
+}) {
   return (
-    <div className="bg-white">
-      <PostHeader item={item} />
-      <PostContent item={item} />
+    <div className={`bg-white ${className}`}>
+      <PostHeader item={item} dense={dense} />
+      <PostContent item={item} dense={dense} />
       <PostEmbeds item={item} />
-      <PostControls item={item} />
+      {controls && <PostControls item={item} />}
     </div>
   )
 }
 
-function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
+function PostHeader({
+  item,
+  dense,
+}: {
+  item: AppBskyFeedFeedViewPost.Main
+  dense?: boolean
+}) {
   return (
-    <div className="bg-white pb-5">
+    <div className={`bg-white ${dense ? '' : 'pb-5'}`}>
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
           <img
-            className="h-10 w-10 rounded-full"
+            className={`${dense ? 'h-6 w-6' : 'h-10 w-10'} rounded-full`}
             src={item.post.author.avatar || '/img/default-avatar.jpg'}
             alt=""
           />
@@ -107,9 +123,19 @@ function PostHeader({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
   )
 }
 
-function PostContent({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
+function PostContent({
+  item,
+  dense,
+}: {
+  item: AppBskyFeedFeedViewPost.Main
+  dense?: boolean
+}) {
   // TODO entities
-  return <div className="prose pl-14 pb-2">{item.post.record.text}</div>
+  return (
+    <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
+      {item.post.record.text}
+    </div>
+  )
 }
 
 function PostEmbeds({ item }: { item: AppBskyFeedFeedViewPost.Main }) {

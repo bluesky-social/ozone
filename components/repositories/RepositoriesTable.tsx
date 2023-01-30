@@ -45,6 +45,7 @@ function RepoRow(props: { repo: Repo }) {
     /^app\.bsky\.system\.actor/,
     '',
   )
+  const indexedAt = new Date(repo.indexedAt)
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
@@ -68,7 +69,9 @@ function RepoRow(props: { repo: Repo }) {
         {actorType}
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">
-        {formatDistanceToNow(new Date(repo.indexedAt), { addSuffix: true })}
+        <span title={indexedAt.toLocaleString()}>
+          {formatDistanceToNow(indexedAt, { addSuffix: true })}
+        </span>
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
         {repo.moderation.takedownId && (

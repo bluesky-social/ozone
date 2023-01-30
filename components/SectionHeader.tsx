@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
+import { ReactNode } from 'react'
 import { classNames } from '../lib/util'
 
 interface Tab {
@@ -12,10 +13,12 @@ export function SectionHeader({
   title,
   tabs,
   current,
+  children,
 }: {
   title: string
   tabs: Tab[]
   current: string
+  children?: ReactNode
 }) {
   const pathname = usePathname()
   const params = useSearchParams()
@@ -25,7 +28,7 @@ export function SectionHeader({
         <h3 className="text-lg font-medium leading-6 text-gray-900 ">
           {title}
         </h3>
-        <div className="mt-4 sm:mt-0 sm:ml-10">
+        <div className="mt-4 sm:mt-0 sm:ml-10 flex-1">
           <nav className="-mb-px flex space-x-8">
             {tabs.map((tab) => {
               const url = new URL(tab.href, 'http://x')
@@ -56,6 +59,7 @@ export function SectionHeader({
                 </Link>
               )
             })}
+            {children}
           </nav>
         </div>
       </div>

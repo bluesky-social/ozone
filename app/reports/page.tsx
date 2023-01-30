@@ -1,9 +1,13 @@
 'use client'
+import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { SectionHeader } from '../../components/SectionHeader'
+import { ModActionIcon } from '../../components/common/ModActionIcon'
 import { ReportsTable } from '../../components/reports/ReportsTable'
+import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
 import client from '../../lib/client'
+import { validSubjectString } from '../../lib/types'
 
 const TABS = [
   { key: 'unresolved', name: 'Unresolved', href: '/reports?resolved=false' },
@@ -12,24 +16,20 @@ const TABS = [
 ]
 
 export default function Reports() {
+  const [open, setOpen] = useState(false)
   const params = useSearchParams()
   const subject = params.get('term') ?? undefined // @TODO
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
-  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, refetch } = useInfiniteQuery({
     queryKey: ['reports', { subject, resolved }],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.com.atproto.admin.getModerationReports(
-        {
-          subject,
-          resolved,
-          limit: 25,
-          before: pageParam,
-        },
-        { headers: client.adminHeaders() },
-      )
-      return data
+      return await getReports({
+        subject,
+        resolved,
+        before: pageParam,
+      })
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
@@ -38,12 +38,82 @@ export default function Reports() {
     resolved === undefined ? 'all' : resolved ? 'resolved' : 'unresolved'
   return (
     <>
-      <SectionHeader title="Reports" tabs={TABS} current={currentTab} />
+      <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
+        <div className="flex-1 text-right lg:pr-2 pb-4 px-1">
+          <button
+            role="button"
+            className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom"
+            onClick={() => setOpen(true)}
+          >
+            Take Action <ModActionIcon className="h-4 w-4 align-text-bottom" />
+          </button>
+        </div>
+      </SectionHeader>
       <ReportsTable
         reports={reports}
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
       />
+      <ModActionPanel
+        open={open}
+        onClose={() => setOpen(false)}
+        subjectOptions={reports.flatMap(
+          (report) => validSubjectString(report.subject) ?? [],
+        )}
+        onSubmit={async (vals: ModActionFormValues) => {
+          await takeActionAndResolveReports(vals)
+          refetch()
+        }}
+      />
     </>
   )
+}
+
+async function getReports(opts: {
+  subject?: string
+  resolved?: boolean
+  before?: string
+}) {
+  const { subject, resolved, before } = opts
+  const { data } = await client.api.com.atproto.admin.getModerationReports(
+    {
+      subject,
+      resolved,
+      before,
+      limit: 25,
+    },
+    { headers: client.adminHeaders() },
+  )
+  return data
+}
+
+async function takeActionAndResolveReports(vals: ModActionFormValues) {
+  const { data: action } =
+    await client.api.com.atproto.admin.takeModerationAction(
+      {
+        subject: vals.subject.startsWith('at://')
+          ? {
+              $type: 'com.atproto.repo.recordRef',
+              uri: vals.subject,
+            }
+          : {
+              $type: 'com.atproto.repo.repoRef',
+              did: vals.subject,
+            },
+        action: vals.action,
+        reason: vals.reason,
+        createdBy: client.session.did,
+      },
+      { headers: client.adminHeaders(), encoding: 'application/json' },
+    )
+  if (vals.resolveReportIds.length) {
+    await client.api.com.atproto.admin.resolveModerationReports(
+      {
+        actionId: action.id,
+        reportIds: vals.resolveReportIds,
+        createdBy: client.session.did,
+      },
+      { headers: client.adminHeaders(), encoding: 'application/json' },
+    )
+  }
 }

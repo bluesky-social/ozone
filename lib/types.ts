@@ -2,7 +2,10 @@ import {
   AppBskyFeedFeedViewPost,
   ComAtprotoAdminRepo,
   ComAtprotoAdminModerationReport,
+  ComAtprotoRepoRepoRef,
+  ComAtprotoRepoStrongRef,
 } from '@atproto/api'
+import { ReactNode } from 'react'
 
 type Reasons =
   | AppBskyFeedFeedViewPost.ReasonTrend
@@ -30,3 +33,18 @@ export function isRepost(
 export type Repo = ComAtprotoAdminRepo.View
 
 export type Report = ComAtprotoAdminModerationReport.View
+
+export function validSubjectString(subject: Report['subject']) {
+  if (ComAtprotoRepoRepoRef.isMain(subject)) {
+    return subject.did
+  } else if (ComAtprotoRepoStrongRef.isMain(subject)) {
+    return subject.uri
+  }
+  return null
+}
+
+export type PropsOf<F extends Function> = F extends (
+  props: infer P,
+) => ReactNode
+  ? P
+  : never

@@ -45,6 +45,7 @@ export function ReportsTable(props: {
 function ReportRow(props: { report: Report }) {
   const { report, ...others } = props
   const resolved = !!report.resolvedByActionIds.length
+  const createdAt = new Date(report.createdAt)
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
@@ -88,7 +89,9 @@ function ReportRow(props: { report: Report }) {
         <SubjectOverview subject={report.subject} />
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
-        {formatDistanceToNow(new Date(report.createdAt), { addSuffix: true })}
+        <span title={createdAt.toLocaleString()}>
+          {formatDistanceToNow(createdAt, { addSuffix: true })}
+        </span>
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
         <Link
@@ -142,7 +145,7 @@ function ReportRowHead() {
   )
 }
 
-function ReasonBadge(props: { reasonType: string }) {
+export function ReasonBadge(props: { reasonType: string }) {
   const { reasonType } = props
   const readable = reasonType.replace('com.atproto.report.reasonType#', '')
   const color = reasonColors[reasonType] ?? reasonColors.default
