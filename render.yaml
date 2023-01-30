@@ -3,7 +3,7 @@ services:
     name: redsky-staging
     env: node
     repo: https://github.com/bluesky-social/redsky
-    buildCommand: yarn
+    buildCommand: yarn build
     startCommand: yarn start
     healthCheckPath: /
     plan: starter
