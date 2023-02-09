@@ -155,6 +155,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
             <img
               className="w-20 h-20 border border-gray-200 rounded"
               src={image.thumb}
+              alt={image.alt}
             />
           </a>
         ))}

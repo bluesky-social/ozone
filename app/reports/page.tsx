@@ -104,6 +104,9 @@ async function takeActionAndResolveReports(vals: ModActionFormValues) {
             },
         action: vals.action,
         reason: vals.reason,
+        subjectBlobCids: vals.subjectBlobCids.length
+          ? vals.subjectBlobCids
+          : undefined,
         createdBy: client.session.did,
       },
       { headers: client.adminHeaders(), encoding: 'application/json' },

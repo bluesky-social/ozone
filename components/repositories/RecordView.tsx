@@ -5,6 +5,7 @@ import {
   ComAtprotoAdminGetRecord as GetRecord,
   AppBskyFeedGetPostThread as GetPostThread,
   ComAtprotoAdminModerationAction as ModAction,
+  ComAtprotoAdminBlob as Blob,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -15,10 +16,12 @@ import { Json } from '../common/Json'
 import { classNames, parseAtUri } from '../../lib/util'
 import { ReportsTable } from '../reports/ReportsTable'
 import { PostAsCard } from '../common/posts/PostsFeed'
+import { BlobsTable } from './BlobsTable'
 
 enum Views {
   Details,
   Thread,
+  Blobs,
   Reports,
 }
 
@@ -66,6 +69,9 @@ export function RecordView({
                   {currentView === Views.Details && <Details record={record} />}
                   {currentView === Views.Thread && thread && (
                     <Thread thread={thread.thread} />
+                  )}
+                  {currentView === Views.Blobs && (
+                    <Blobs blobs={record.blobs} />
                   )}
                   {currentView === Views.Reports && (
                     <Reports reports={record.moderation.reports} />
@@ -179,6 +185,11 @@ function Tabs({
             <Tab view={Views.Details} label="Details" />
             {!!thread && <Tab view={Views.Thread} label="Post Thread" />}
             <Tab
+              view={Views.Blobs}
+              label="Blobs"
+              sublabel={String(record.blobs.length)}
+            />
+            <Tab
               view={Views.Reports}
               label="Reports"
               sublabel={String(record.moderation.reports.length)}
@@ -213,6 +224,10 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
       <Json className="mb-3" label="Contents" value={record.value} />
     </div>
   )
+}
+
+function Blobs({ blobs }: { blobs: Blob.View[] }) {
+  return <BlobsTable blobs={blobs} />
 }
 
 function Reports({

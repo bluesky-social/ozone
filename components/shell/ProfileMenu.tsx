@@ -36,7 +36,7 @@ export function ProfileMenu() {
     Client.api.app.bsky.actor.getProfile({ actor: Client.session.did }).then(
       (res) => {
         localStorage.cachedProfileHandle = res.data.handle
-        localStorage.cachedProfileAvatar = res.data.avatar
+        localStorage.cachedProfileAvatar = res.data.avatar || ''
         setHandle(res.data.handle)
         setAvatar(res.data.avatar || '')
       },

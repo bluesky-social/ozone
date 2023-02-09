@@ -22,7 +22,7 @@ export function Shell({ children }: React.PropsWithChildren) {
               <img
                 className="h-8 w-auto"
                 src="https://tailwindui.com/img/logos/mark.svg?color=white"
-                alt="Your Company"
+                alt="Bluesky Admin"
               />
             </div>
             <SidebarNav />

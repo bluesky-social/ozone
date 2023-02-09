@@ -48,7 +48,7 @@ export function ResolutionList(props: {
   })
   const reports = data?.pages.flatMap((page) => page.reports) ?? []
   return (
-    <fieldset className="space-y-5">
+    <fieldset className="space-y-5 min-w-0">
       {!reports.length && (
         <div className="text-sm text-gray-400">None found</div>
       )}

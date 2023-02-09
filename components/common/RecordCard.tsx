@@ -68,40 +68,58 @@ function GenericRecordCard(props: { uri: string }) {
 // Based on PostAsCard header
 export function RepoCard(props: { did: string }) {
   const { did } = props
-  const { data: profile } = useQuery({
+  const { data: { repo, profile } = {} } = useQuery({
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down profiles
-      const { data } = await client.api.app.bsky.actor.getProfile({
-        actor: did,
-      })
-      return data
+      const getRepo = async () => {
+        const { data: repo } = await client.api.com.atproto.admin.getRepo(
+          { did },
+          { headers: client.adminHeaders() },
+        )
+        return repo
+      }
+      const getProfile = async () => {
+        try {
+          const { data: profile } = await client.api.app.bsky.actor.getProfile({
+            actor: did,
+          })
+          return profile
+        } catch (err) {
+          if (err?.['error'] === 'AccountTakedown') {
+            return undefined
+          }
+          throw err
+        }
+      }
+      const [repo, profile] = await Promise.all([getRepo(), getProfile()])
+      return { repo, profile }
     },
   })
-  if (!profile) return null
+  if (!repo) return null
   return (
     <div className="bg-white">
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
           <img
             className="h-6 w-6 rounded-full"
-            src={profile.avatar || '/img/default-avatar.jpg'}
+            src={profile?.avatar || '/img/default-avatar.jpg'}
             alt=""
           />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900">
             <Link
-              href={`/repositories/${profile.handle}`}
+              href={`/repositories/${repo.handle}`}
               className="hover:underline"
             >
-              {profile.displayName ? (
+              {profile?.displayName ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
-                  <span className="ml-1 text-gray-500">@{profile.handle}</span>
+                  <span className="ml-1 text-gray-500">@{repo.handle}</span>
                 </>
               ) : (
-                <span className="font-bold">@{profile.handle}</span>
+                <span className="font-bold">@{repo.handle}</span>
               )}
             </Link>
           </p>
