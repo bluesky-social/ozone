@@ -20,6 +20,7 @@ export function RecordCard(props: { uri: string }) {
 function PostCard(props: { uri: string }) {
   const { uri } = props
   const { error, data } = useQuery({
+    retry: false,
     queryKey: ['postCard', { uri }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down posts

@@ -1,7 +1,11 @@
 import Link from 'next/link'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { formatDistanceToNow } from 'date-fns'
-import { AppBskyActorProfile, AppBskySystemDeclaration } from '@atproto/api'
+import {
+  AppBskyActorProfile,
+  AppBskySystemDeclaration,
+  ComAtprotoAdminModerationAction as ModAction,
+} from '@atproto/api'
 import { Repo } from '../../lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 
@@ -46,6 +50,15 @@ function RepoRow(props: { repo: Repo }) {
     '',
   )
   const indexedAt = new Date(repo.indexedAt)
+  const { currentAction } = repo.moderation
+  const actionColorClasses =
+    currentAction?.action === ModAction.TAKEDOWN
+      ? 'text-rose-600 hover:text-rose-700'
+      : 'text-indigo-600 hover:text-indigo-900'
+  const displayActionType = currentAction?.action.replace(
+    'com.atproto.admin.moderationAction#',
+    '',
+  )
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
@@ -74,13 +87,14 @@ function RepoRow(props: { repo: Repo }) {
         </span>
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-        {repo.moderation.takedownId && (
+        {currentAction && (
           <Link
-            href={`/actions/${repo.moderation.takedownId}`}
-            className="text-rose-600 hover:text-rose-900 whitespace-nowrap"
+            href={`/actions/${currentAction.id}`}
+            title={displayActionType}
+            className={`${actionColorClasses} whitespace-nowrap`}
           >
-            View{' '}
-            <ShieldExclamationIcon className="h-5 w-5 inline-block align-bottom" />
+            <ShieldExclamationIcon className="h-5 w-5 inline-block align-bottom" />{' '}
+            View #{currentAction.id}
           </Link>
         )}
       </td>

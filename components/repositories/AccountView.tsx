@@ -7,11 +7,13 @@ import {
   ComAtprotoAdminGetRepo as GetRepo,
   AppBskyGraphGetFollows as GetFollows,
   AppBskyGraphGetFollowers as GetFollowers,
+  ComAtprotoAdminModerationAction as ModAction,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
@@ -32,16 +34,42 @@ export function AccountView({ id }: { id: string }) {
   const [currentView, setCurrentView] = useState<Views>(Views.Details)
   const [reportUri, setReportUri] = useState<string>()
 
-  const { data: { repo, profile } = {}, refetch } = useQuery({
-    queryKey: ['repoAndProfile', { id }],
+  const {
+    error,
+    data: { repo, profile } = {},
+    refetch,
+  } = useQuery({
+    queryKey: ['accountView', { id }],
     queryFn: async () => {
-      const { data: profile } = await client.api.app.bsky.actor.getProfile({
-        actor: id,
-      })
-      const { data: repo } = await client.api.com.atproto.admin.getRepo(
-        { did: profile.did },
-        { headers: client.adminHeaders() },
-      )
+      const getRepo = async () => {
+        let did
+        if (id.startsWith('did:')) {
+          did = id
+        } else {
+          const { data: resolved } =
+            await client.api.com.atproto.handle.resolve({ handle: id })
+          did = resolved.did
+        }
+        const { data: repo } = await client.api.com.atproto.admin.getRepo(
+          { did },
+          { headers: client.adminHeaders() },
+        )
+        return repo
+      }
+      const getProfile = async () => {
+        try {
+          const { data: profile } = await client.api.app.bsky.actor.getProfile({
+            actor: id,
+          })
+          return profile
+        } catch (err) {
+          if (err?.['error'] === 'AccountTakedown') {
+            return undefined
+          }
+          throw err
+        }
+      }
+      const [repo, profile] = await Promise.all([getRepo(), getProfile()])
       return { repo, profile }
     },
   })
@@ -83,7 +111,7 @@ export function AccountView({ id }: { id: string }) {
                 profile={profile}
                 onReport={setReportUri}
               />
-              {profile && repo ? (
+              {repo ? (
                 <>
                   <Tabs
                     currentView={currentView}
@@ -105,7 +133,7 @@ export function AccountView({ id }: { id: string }) {
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
-                  Loading...
+                  {error ? 'An error occurred' : 'Loading...'}
                 </div>
               )}
             </article>
@@ -127,10 +155,19 @@ function Header({
   profile?: GetProfile.OutputSchema
   onReport: (did: string) => void
 }) {
-  const displayActorName = profile
-    ? profile.displayName
-      ? `${profile.displayName} @${profile.handle}`
-      : `@${profile.handle}`
+  const { currentAction } = repo?.moderation ?? {}
+  const actionColorClasses =
+    currentAction?.action === ModAction.TAKEDOWN
+      ? 'text-rose-600 hover:text-rose-700'
+      : 'text-indigo-600 hover:text-indigo-900'
+  const displayActionType = currentAction?.action.replace(
+    'com.atproto.admin.moderationAction#',
+    '',
+  )
+  const displayActorName = repo
+    ? profile?.displayName
+      ? `${profile.displayName} @${repo.handle}`
+      : `@${repo.handle}`
     : id.startsWith('did:')
     ? id
     : `@${id}`
@@ -155,26 +192,32 @@ function Header({
           <div className="mt-6 sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
             <div className="mt-6 min-w-0 flex-1 sm:hidden 2xl:block">
               <h1 className="truncate text-2xl font-bold text-gray-900">
-                {displayActorName}
+                {displayActorName}{' '}
+                {currentAction && (
+                  <Link
+                    href={`/actions/${currentAction.id}`}
+                    className={`text-lg ${actionColorClasses}`}
+                    title={displayActionType}
+                  >
+                    <ShieldExclamationIcon className="h-5 w-5 ml-1 inline-block align-text-top" />{' '}
+                    #{currentAction.id}
+                  </Link>
+                )}
               </h1>
             </div>
             <div className="justify-stretch mt-6 flex flex-row space-x-3">
               {repo?.account?.email && (
-                <form
-                  action={`mailto:${repo.account.email}`}
-                  className="inline-block sm:flex-1"
+                <a
+                  role="button"
+                  href={`mailto:${repo.account.email}`}
+                  className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
                 >
-                  <button
-                    type="submit"
-                    className="w-full inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-                  >
-                    <EnvelopeIcon
-                      className="-ml-1 mr-2 h-5 w-5 text-gray-400"
-                      aria-hidden="true"
-                    />
-                    <span>Message</span>
-                  </button>
-                </form>
+                  <EnvelopeIcon
+                    className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                  <span>Message</span>
+                </a>
               )}
               <button
                 type="button"
@@ -192,7 +235,17 @@ function Header({
         </div>
         <div className="mt-6 hidden min-w-0 flex-1 sm:block 2xl:hidden">
           <h1 className="truncate text-2xl font-bold text-gray-900">
-            {displayActorName}
+            {displayActorName}{' '}
+            {currentAction && (
+              <Link
+                href={`/actions/${currentAction.id}`}
+                className={`text-lg ${actionColorClasses}`}
+                title={displayActionType}
+              >
+                <ShieldExclamationIcon className="h-5 w-5 ml-1 inline-block align-text-top" />{' '}
+                #{currentAction.id}
+              </Link>
+            )}
           </h1>
         </div>
       </div>
@@ -207,7 +260,7 @@ function Tabs({
   onSetCurrentView,
 }: {
   currentView: Views
-  profile: GetProfile.OutputSchema
+  profile?: GetProfile.OutputSchema
   repo: GetRepo.OutputSchema
   onSetCurrentView: (v: Views) => void
 }) {
@@ -243,21 +296,27 @@ function Tabs({
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <Tab view={Views.Details} label="Profile" />
-            <Tab
-              view={Views.Posts}
-              label="Posts"
-              sublabel={String(profile.postsCount)}
-            />
-            <Tab
-              view={Views.Follows}
-              label="Follows"
-              sublabel={String(profile.followsCount)}
-            />
-            <Tab
-              view={Views.Followers}
-              label="Followers"
-              sublabel={String(profile.followersCount)}
-            />
+            {profile && (
+              <Tab
+                view={Views.Posts}
+                label="Posts"
+                sublabel={String(profile.postsCount)}
+              />
+            )}
+            {profile && (
+              <Tab
+                view={Views.Follows}
+                label="Follows"
+                sublabel={String(profile.followsCount)}
+              />
+            )}
+            {profile && (
+              <Tab
+                view={Views.Followers}
+                label="Followers"
+                sublabel={String(profile.followersCount)}
+              />
+            )}
             <Tab
               view={Views.Reports}
               label="Reports"
@@ -274,7 +333,7 @@ function Details({
   profile,
   repo,
 }: {
-  profile: GetProfile.OutputSchema
+  profile?: GetProfile.OutputSchema
   repo: GetRepo.OutputSchema
 }) {
   const Field = ({ label, value }: { label: string; value: string }) => (
@@ -286,17 +345,19 @@ function Details({
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <Field label="Handle" value={profile.handle} />
-        <Field label="DID" value={profile.did} />
-        <div className="sm:col-span-2">
-          <dt className="text-sm font-medium text-gray-500">Description</dt>
-          <dd className="mt-1 max-w-prose space-y-5 text-sm text-gray-900">
-            {profile.description || ''}
-          </dd>
-        </div>
+        <Field label="Handle" value={repo.handle} />
+        <Field label="DID" value={repo.did} />
+        {profile?.description && (
+          <div className="sm:col-span-2">
+            <dt className="text-sm font-medium text-gray-500">Description</dt>
+            <dd className="mt-1 max-w-prose space-y-5 text-sm text-gray-900">
+              {profile.description}
+            </dd>
+          </div>
+        )}
       </dl>
-      <Json className="mb-3" label="GetProfile()" value={profile} />
-      <Json className="mb-3" label="GetRepo()" value={repo} />
+      {profile && <Json className="mb-3" label="Profile" value={profile} />}
+      <Json className="mb-3" label="Repo" value={repo} />
     </div>
   )
 }

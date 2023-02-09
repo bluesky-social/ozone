@@ -1,6 +1,7 @@
 'use client'
-import { useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
+import { AppBskyFeedGetPostThread as GetPostThread } from '@atproto/api'
 import {
   ReportFormValues,
   ReportPanel,
@@ -31,15 +32,30 @@ export default function Record({
         did = data.did
       }
       const uri = createAtUri({ did, collection, rkey })
-      const [{ data: record }, { data: thread }] = await Promise.all([
-        client.api.com.atproto.admin.getRecord(
+      const getRecord = async () => {
+        const { data: record } = await client.api.com.atproto.admin.getRecord(
           { uri },
           { headers: client.adminHeaders() },
-        ),
-        collection === 'app.bsky.feed.post'
-          ? client.api.app.bsky.feed.getPostThread({ uri })
-          : { data: undefined },
-      ])
+        )
+        return record
+      }
+      const getThread = async () => {
+        if (collection !== 'app.bsky.feed.post') {
+          return undefined
+        }
+        try {
+          const { data: thread } = await client.api.app.bsky.feed.getPostThread(
+            { uri },
+          )
+          return thread
+        } catch (err) {
+          if (err instanceof GetPostThread.NotFoundError) {
+            return undefined
+          }
+          throw err
+        }
+      }
+      const [record, thread] = await Promise.all([getRecord(), getThread()])
       return { record, thread }
     },
   })

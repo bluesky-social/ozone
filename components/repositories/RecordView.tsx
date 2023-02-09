@@ -2,13 +2,14 @@
 import { ReactNode, useState } from 'react'
 import Link from 'next/link'
 import {
-  ComAtprotoAdminGetRepo as GetRepo,
   ComAtprotoAdminGetRecord as GetRecord,
   AppBskyFeedGetPostThread as GetPostThread,
+  ComAtprotoAdminModerationAction as ModAction,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
   ExclamationCircleIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import { Json } from '../common/Json'
 import { classNames, parseAtUri } from '../../lib/util'
@@ -92,10 +93,29 @@ function Header({
 }) {
   const collection = parseAtUri(record.uri)?.collection ?? ''
   const shortCollection = collection.replace('app.bsky.feed.', '')
+  const { currentAction } = record.moderation
+  const actionColorClasses =
+    currentAction?.action === ModAction.TAKEDOWN
+      ? 'text-rose-600 hover:text-rose-700'
+      : 'text-indigo-600 hover:text-indigo-900'
+  const displayActionType = currentAction?.action.replace(
+    'com.atproto.admin.moderationAction#',
+    '',
+  )
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8">
       <h1 className="flex-1 text-2xl font-bold text-gray-900">
-        {`${shortCollection} record by @${record.repo.handle}`}
+        {`${shortCollection} record by @${record.repo.handle}`}{' '}
+        {currentAction && (
+          <Link
+            href={`/actions/${currentAction.id}`}
+            className={`text-lg ${actionColorClasses}`}
+            title={displayActionType}
+          >
+            <ShieldExclamationIcon className="h-5 w-5 ml-1 inline-block align-text-top" />{' '}
+            #{currentAction.id}
+          </Link>
+        )}
       </h1>
       <div>
         <button

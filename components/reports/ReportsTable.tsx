@@ -8,6 +8,7 @@ import {
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/20/solid'
 import { Report } from '../../lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
@@ -182,6 +183,12 @@ function SubjectOverview(props: {
     return (
       <>
         <Link
+          href={`/repositories/${createAtUri(summary).replace('at://', '')}`}
+          target="_blank"
+        >
+          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
+        </Link>
+        <Link
           href={`/reports?term=${encodeURIComponent(createAtUri(summary))}`}
           className="text-gray-600 hover:text-gray-900 font-medium"
         >
@@ -198,11 +205,16 @@ function SubjectOverview(props: {
     )
   }
   return (
-    <Link
-      href={`/reports?term=${summary.did}`}
-      className="text-gray-600 hover:text-gray-900 font-medium"
-    >
-      repo {truncate(summary.did, withTruncation ? 26 : Infinity)}
-    </Link>
+    <>
+      <Link href={`/repositories/${summary.did}`} target="_blank">
+        <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
+      </Link>
+      <Link
+        href={`/reports?term=${summary.did}`}
+        className="text-gray-600 hover:text-gray-900 font-medium"
+      >
+        repo {truncate(summary.did, withTruncation ? 26 : Infinity)}
+      </Link>
+    </>
   )
 }
