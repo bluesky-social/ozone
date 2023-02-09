@@ -1,17 +1,8 @@
-import { useState, useEffect } from 'react'
-import {
-  sessionClient as AtpApi,
-  SessionServiceClient,
-  Session as AtpSession,
-} from '@atproto/api'
+import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
 
-interface ClientSession {
+interface ClientSession extends AtpSessionData {
   service: string
-  refreshJwt: string
-  accessJwt: string
   adminToken: string
-  handle: string
-  did: string
 }
 
 // exported api
@@ -19,16 +10,16 @@ interface ClientSession {
 
 class ClientManager extends EventTarget {
   hasSetup = false
-  private _api: SessionServiceClient | undefined
+  private _agent: AtpAgent | undefined
   private _session: ClientSession | undefined
 
   get isAuthed() {
-    return !!this._api && !!this._session
+    return !!this._agent && !!this._session
   }
 
-  get api(): SessionServiceClient {
-    if (this._api) {
-      return this._api
+  get api(): AtpServiceClient {
+    if (this._agent) {
+      return this._agent.api
     }
     throw new Error('Not authed')
   }
@@ -41,10 +32,10 @@ class ClientManager extends EventTarget {
   }
 
   // this gets called by the login modal during initial render
-  setup() {
+  async setup() {
     if (this.hasSetup) return
     this._session = _loadSession()
-    this._setup()
+    await this._setup()
     this.hasSetup = true
     this._emit('change')
   }
@@ -55,39 +46,42 @@ class ClientManager extends EventTarget {
     password: string,
     adminToken: string,
   ) {
-    this._api = AtpApi.service(service)
-    const res = await this._api.com.atproto.session.create({
-      handle,
+    const agent = new AtpAgent({
+      service,
+      persistSession: (_type, session) => {
+        this._onSessionChange(session)
+      },
+    })
+    const { data: login } = await agent.login({
+      identifier: handle,
       password,
     })
     // Check validity of admin token
-    await this._api.com.atproto.admin.getRepo(
-      { did: res.data.did },
+    await agent.api.com.atproto.admin.getRepo(
+      { did: login.did },
       { headers: this.adminHeaders(adminToken) },
     )
-    if (res.data.accessJwt && res.data.refreshJwt) {
-      this._session = {
-        service,
-        accessJwt: res.data.accessJwt,
-        refreshJwt: res.data.refreshJwt,
-        handle: res.data.handle,
-        did: res.data.did,
-        adminToken,
-      }
-      this._emit('change')
-      _saveSession(this._session)
-      this._api.sessionManager.on('session', this._onSessionChange.bind(this))
+    this._session = {
+      service,
+      accessJwt: login.accessJwt,
+      refreshJwt: login.refreshJwt,
+      handle: login.handle,
+      did: login.did,
+      adminToken,
     }
+    this._agent = agent
+    _saveSession(this._session)
+    this._emit('change')
   }
 
   async signout() {
-    if (this.isAuthed) {
-      this._api?.com.atproto.session.delete().catch((e: any) => {
-        console.error('(Minor issue) Failed to delete session on the server', e)
-      })
+    try {
+      this._agent?.api.com.atproto.session.delete()
+    } catch (err) {
+      console.error('(Minor issue) Failed to delete session on the server', err)
     }
-    this._emit('change')
     this._clear()
+    this._emit('change')
   }
 
   adminHeaders(override?: string) {
@@ -95,34 +89,34 @@ class ClientManager extends EventTarget {
     return { authorization: `Basic ${btoa(`admin:${adminToken}`)}` }
   }
 
-  private _setup() {
+  private async _setup() {
     if (this._session) {
-      this._api = AtpApi.service(this._session.service)
-      this._api.sessionManager.set({
-        refreshJwt: this._session.refreshJwt,
-        accessJwt: this._session.accessJwt,
+      const agent = new AtpAgent({
+        service: this._session.service,
+        persistSession: (_type, session) => {
+          this._onSessionChange(session)
+        },
       })
-      this._api.sessionManager.on('session', this._onSessionChange.bind(this))
+      await agent.resumeSession(this._session)
+      this._agent = agent
     } else {
-      this._api = undefined
+      this._agent = undefined
     }
   }
 
-  private _onSessionChange(newSession: AtpSession | undefined) {
+  private _onSessionChange(newSession?: AtpSessionData) {
     if (newSession && this._session) {
-      this._session.accessJwt = newSession.accessJwt
-      this._session.refreshJwt = newSession.refreshJwt
+      Object.assign(this._session, newSession)
       _saveSession(this._session)
     } else {
-      this._api?.sessionManager.removeAllListeners('session')
-      this._emit('change')
       this._clear()
+      this._emit('change')
     }
   }
 
   private _clear() {
     _deleteSession()
-    this._api = undefined
+    this._agent = undefined
     this._session = undefined
   }
 
@@ -135,19 +129,6 @@ export default clientManager
 
 // For debugging and low-level access
 ;(globalThis as any).client = clientManager
-
-export function useApi() {
-  const [isAuthed, setIsAuthed] = useState(false)
-
-  useEffect(() => {
-    setIsAuthed(clientManager.isAuthed)
-    const onClientChange = () => setIsAuthed(clientManager.isAuthed)
-    clientManager.addEventListener('change', onClientChange)
-    return () => clientManager.removeEventListener('change', onClientChange)
-  }, [])
-
-  return isAuthed ? clientManager.api : undefined
-}
 
 // helpers
 // =

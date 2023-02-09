@@ -13,8 +13,7 @@ export function LoginModal() {
 
   useEffect(() => {
     if (!Client.hasSetup) {
-      Client.setup()
-      setIsAuthed(Client.isAuthed)
+      Client.setup().then(() => setIsAuthed(Client.isAuthed))
     }
   }, [])
 
