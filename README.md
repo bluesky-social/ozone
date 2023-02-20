@@ -18,6 +18,27 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
+## Development flow
+
+Just an outline of the development flow, as we continue to solidify it:
+
+- Create feature branches from `develop`.
+- When you have completed a feature, create a PR from your feature branch into `develop`.
+- Post your PR for review from another team member, and merge once approved.
+- When a batch of work is complete, merge `develop` into the `staging` branch.
+  - **Note** this will be deployed _automatically_ to https://admin.staging.bsky.dev/ using Render.
+
+## Development setup
+
+1. In the separate [atproto project](https://github.com/bluesky-social/atproto), run the dev server using `yarn workspace @atproto/dev-env start`. This will run a PDS, seeded with some users and data for you.
+2. Run the development server for Redsky using `yarn dev`. This will start running the Redsky frontent at `http://localhost:3000`.
+3. Navigate to the login page in your browser, at [http://localhost:3000](http://localhost:3000).
+4. Login using the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would are:
+   - Service URL: http://localhost:2583
+   - Account handle: alice.test
+   - Password: hunter2
+   - Admin Token: password
+
 ## Working with unpublished changes to @atproto/api
 
 In the course of development there may be updates to the atproto client that are not yet published to npm, but you would like to use with Redsky. Here's the workflow for using unpublished changes to the @atproto/api package:
