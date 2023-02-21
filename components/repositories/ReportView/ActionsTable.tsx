@@ -1,0 +1,181 @@
+import Link from 'next/link'
+import { formatDistanceToNow } from 'date-fns'
+import {
+  ComAtprotoRepoStrongRef,
+  ComAtprotoRepoRepoRef,
+  ComAtprotoAdminModerationAction,
+} from '@atproto/api'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
+import { createAtUri, parseAtUri, truncate } from '../../../lib/util'
+
+export function ActionsTable(props: { actions }) {
+  const { actions } = props
+  return (
+    <div className="px-4 sm:px-6 lg:px-8">
+      <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
+        <table className="min-w-full divide-y divide-gray-300">
+          <thead className="bg-white">
+            <ActionRowHead />
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {actions.map((action) => (
+              <ActionRow key={action.id} action={action} />
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
+}
+// TODO: Type
+function ActionRow(props: { action: ModAction }) {
+  const { action, ...others } = props
+  const createdAt = new Date(action.createdAt)
+
+  return (
+    <tr {...others}>
+      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+        <dl className="font-normal">
+          <dt className="sr-only">Reason</dt>
+          <dd className="mt-1 truncate text-gray-700">
+            <ReasonBadge reasonType={action.action} /> {action.reason}
+          </dd>
+        </dl>
+      </td>
+      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+        <SubjectOverview subject={action.subject} />
+      </td>
+      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+        <span title={createdAt.toLocaleString()}>
+          {formatDistanceToNow(createdAt, { addSuffix: true })}
+        </span>
+      </td>
+      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium sm:w-auto sm:max-w-none sm:pl-6">
+        <Link
+          href={`/actions/${action.id}`}
+          className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
+        >
+          View #{action.id}
+        </Link>
+      </td>
+    </tr>
+  )
+}
+
+function ActionRowHead() {
+  const rows = [
+    {
+      id: 'reason',
+      label: 'Reason',
+    },
+    {
+      id: 'subject',
+      label: 'Subject',
+    },
+    {
+      id: 'created',
+      label: 'Created',
+    },
+    {
+      id: 'view',
+      label: 'Link',
+    },
+  ]
+
+  return (
+    <tr>
+      {rows.map((row) => (
+        <th
+          key={row.id}
+          scope="col"
+          className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        >
+          {row.label}
+        </th>
+      ))}
+    </tr>
+  )
+}
+
+// TODO: Move readon badge to common
+
+export function ReasonBadge(props: { reasonType: string }) {
+  const { reasonType } = props
+  if (!reasonType) {
+    return null
+  }
+  console.log('reasonType', reasonType)
+  const readable = reasonType?.split('#')?.[1]
+  const color = reasonColors[reasonType] ?? reasonColors.default
+  return (
+    <span
+      className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium`}
+    >
+      {readable}
+    </span>
+  )
+}
+
+// TODO: Move to common
+const reasonColors: Record<string, string> = {
+  [ComAtprotoAdminModerationAction.TAKEDOWN]: 'bg-pink-100 text-pink-800',
+  [ComAtprotoAdminModerationAction.FLAG]: 'bg-indigo-100 text-indigo-800',
+  [ComAtprotoAdminModerationAction.ACKNOWLEDGE]: 'bg-green-100 text-green-800',
+  default: 'bg-gray-100 text-gray-800',
+}
+
+// TODO: Move to common
+// TODO: type
+function SubjectOverview(props: {
+  subject: Report['subject']
+  withTruncation?: boolean
+}) {
+  const { subject, withTruncation = true } = props
+  const summary = ComAtprotoRepoRepoRef.isMain(subject)
+    ? { did: subject.did, collection: null, rkey: null }
+    : ComAtprotoRepoStrongRef.isMain(subject)
+    ? parseAtUri(subject.uri)
+    : null
+  if (!summary) {
+    return null
+  }
+  if (summary.collection) {
+    const shortCollection = summary.collection.replace('app.bsky.feed.', '')
+    return (
+      <>
+        <Link
+          href={`/repositories/${createAtUri(summary).replace('at://', '')}`}
+          target="_blank"
+        >
+          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
+        </Link>
+        <Link
+          href={`/reports?term=${encodeURIComponent(createAtUri(summary))}`}
+          className="text-gray-600 hover:text-gray-900 font-medium"
+        >
+          {shortCollection} record
+        </Link>{' '}
+        by{' '}
+        <Link
+          href={`/reports?term=${summary.did}`}
+          className="text-gray-600 hover:text-gray-900 font-medium"
+        >
+          {truncate(summary.did, withTruncation ? 16 : Infinity)}
+        </Link>
+      </>
+    )
+  }
+  return (
+    <>
+      <Link href={`/repositories/${summary.did}`} target="_blank">
+        <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
+      </Link>
+      <Link
+        href={`/reports?term=${summary.did}`}
+        className="text-gray-600 hover:text-gray-900 font-medium"
+      >
+        repo {truncate(summary.did, withTruncation ? 26 : Infinity)}
+      </Link>
+    </>
+  )
+}
