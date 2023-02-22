@@ -108,7 +108,6 @@ export function ReportView({ id }: { id: string }) {
               />
               {report ? (
                 <>
-                  {' '}
                   <Tabs
                     currentView={currentView}
                     report={report}
