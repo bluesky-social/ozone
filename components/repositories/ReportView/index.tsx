@@ -16,8 +16,6 @@ import {
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
 import { ReasonBadge } from '../../reports/ReasonBadge'
-import { useQuery } from '@tanstack/react-query'
-import client from '../../../lib/client'
 import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
@@ -34,23 +32,8 @@ function getType(obj: unknown): string {
   return ''
 }
 
-export function ReportView({ id }: { id: string }) {
-  const { data: report } = useQuery({
-    queryKey: ['report', { id }],
-    queryFn: async () => {
-      const { data } = await client.api.com.atproto.admin.getModerationReport(
-        { id: parseInt(id, 10) },
-        { headers: client.adminHeaders() },
-      )
-      return data
-    },
-  })
-
+export function ReportView({ report }: { report: GetReport.OutputSchema }) {
   const [currentView, setCurrentView] = useState(Views.Details)
-
-  if (!report || !report.subject) {
-    return null
-  }
 
   const headerTitle = `Report #${report?.id ?? ''}`
 
@@ -58,8 +41,8 @@ export function ReportView({ id }: { id: string }) {
     ComAtprotoAdminRecord.isView(report.subject) && report.subject.value
   const shortType = getType(reportSubjectValue).replace('app.bsky.feed.', '')
   const subHeaderTitle = ComAtprotoAdminRecord.isView(report.subject)
-    ? `${shortType} record of @${report?.subject?.repo?.handle ?? ''}`
-    : `repo of @${report?.subject?.handle ?? ''}`
+    ? `${shortType} record of @${report.subject.repo.handle}`
+    : `repo of @${report.subject.handle}`
 
   const resolved = !!report.resolvedByActions?.length
   const titleIcon = (
