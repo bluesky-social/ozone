@@ -2,12 +2,10 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  ComAtprotoAdminGetRecord as GetRecord,
   ComAtprotoAdminGetModerationReport as GetReport,
   AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminModerationAction as ModAction,
-  ComAtprotoAdminBlob as Blob,
   ComAtprotoAdminRecord,
+  ComAtprotoAdminRepo,
 } from '@atproto/api'
 
 import {
@@ -17,7 +15,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
-import { ReasonBadge } from '../../reports/ReportsTable'
+import { ReasonBadge } from '../../reports/ReasonBadge'
 import { useQuery } from '@tanstack/react-query'
 import client from '../../../lib/client'
 import { Header } from './Header'
@@ -210,14 +208,7 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
     </div>
   )
 
-  const {
-    createdAt,
-    reason,
-    reasonType: readonTypeRaw,
-    reportedByDid,
-    subject,
-  } = report
-  const reasonType = readonTypeRaw?.split('#')?.[1]
+  const { createdAt, reason, reasonType, reportedByDid, subject } = report
 
   const labels: { label: string; value: string }[] = [
     {
@@ -253,16 +244,18 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
       )}
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
-      {typeof subject.uri === 'string' && subject.uri.startsWith('at://') && (
-        <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
-          <RecordCard uri={subject.uri} />
-        </div>
-      )}
-      {typeof subject.did === 'string' && subject.did?.startsWith('did:') && (
-        <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-          <RepoCard did={reportedByDid} />
-        </div>
-      )}
+      {ComAtprotoAdminRecord.isView(subject) &&
+        subject.uri.startsWith('at://') && (
+          <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
+            <RecordCard uri={subject.uri} />
+          </div>
+        )}
+      {ComAtprotoAdminRepo.isView(subject) &&
+        subject.did?.startsWith('did:') && (
+          <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+            <RepoCard did={reportedByDid} />
+          </div>
+        )}
       <Json className="mt-6" label="Contents" value={report} />
     </div>
   )

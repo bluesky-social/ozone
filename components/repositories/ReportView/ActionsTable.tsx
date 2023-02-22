@@ -26,7 +26,6 @@ export function ActionsTable(props: { actions }) {
   )
 }
 
-// TODO: Type
 function ActionRow(props: { action: ModAction.OutputSchema }) {
   const { action, ...others } = props
   const createdAt = new Date(action.createdAt)
