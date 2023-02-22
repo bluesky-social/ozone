@@ -1,12 +1,10 @@
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import {
-  ComAtprotoRepoStrongRef,
-  ComAtprotoRepoRepoRef,
   ComAtprotoAdminModerationAction,
+  ComAtprotoAdminGetModerationAction as ModAction,
 } from '@atproto/api'
-import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
-import { createAtUri, parseAtUri, truncate } from '../../../lib/util'
+import { SubjectOverview } from '../../reports/SubjectOverview'
 
 export function ActionsTable(props: { actions }) {
   const { actions } = props
@@ -27,8 +25,9 @@ export function ActionsTable(props: { actions }) {
     </div>
   )
 }
+
 // TODO: Type
-function ActionRow(props: { action: ModAction }) {
+function ActionRow(props: { action: ModAction.OutputSchema }) {
   const { action, ...others } = props
   const createdAt = new Date(action.createdAt)
 
@@ -97,14 +96,11 @@ function ActionRowHead() {
   )
 }
 
-// TODO: Move readon badge to common
-
 export function ReasonBadge(props: { reasonType: string }) {
   const { reasonType } = props
   if (!reasonType) {
     return null
   }
-  console.log('reasonType', reasonType)
   const readable = reasonType?.split('#')?.[1]
   const color = reasonColors[reasonType] ?? reasonColors.default
   return (
@@ -116,66 +112,9 @@ export function ReasonBadge(props: { reasonType: string }) {
   )
 }
 
-// TODO: Move to common
 const reasonColors: Record<string, string> = {
   [ComAtprotoAdminModerationAction.TAKEDOWN]: 'bg-pink-100 text-pink-800',
   [ComAtprotoAdminModerationAction.FLAG]: 'bg-indigo-100 text-indigo-800',
   [ComAtprotoAdminModerationAction.ACKNOWLEDGE]: 'bg-green-100 text-green-800',
   default: 'bg-gray-100 text-gray-800',
-}
-
-// TODO: Move to common
-// TODO: type
-function SubjectOverview(props: {
-  subject: Report['subject']
-  withTruncation?: boolean
-}) {
-  const { subject, withTruncation = true } = props
-  const summary = ComAtprotoRepoRepoRef.isMain(subject)
-    ? { did: subject.did, collection: null, rkey: null }
-    : ComAtprotoRepoStrongRef.isMain(subject)
-    ? parseAtUri(subject.uri)
-    : null
-  if (!summary) {
-    return null
-  }
-  if (summary.collection) {
-    const shortCollection = summary.collection.replace('app.bsky.feed.', '')
-    return (
-      <>
-        <Link
-          href={`/repositories/${createAtUri(summary).replace('at://', '')}`}
-          target="_blank"
-        >
-          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
-        </Link>
-        <Link
-          href={`/reports?term=${encodeURIComponent(createAtUri(summary))}`}
-          className="text-gray-600 hover:text-gray-900 font-medium"
-        >
-          {shortCollection} record
-        </Link>{' '}
-        by{' '}
-        <Link
-          href={`/reports?term=${summary.did}`}
-          className="text-gray-600 hover:text-gray-900 font-medium"
-        >
-          {truncate(summary.did, withTruncation ? 16 : Infinity)}
-        </Link>
-      </>
-    )
-  }
-  return (
-    <>
-      <Link href={`/repositories/${summary.did}`} target="_blank">
-        <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
-      </Link>
-      <Link
-        href={`/reports?term=${summary.did}`}
-        className="text-gray-600 hover:text-gray-900 font-medium"
-      >
-        repo {truncate(summary.did, withTruncation ? 26 : Infinity)}
-      </Link>
-    </>
-  )
 }

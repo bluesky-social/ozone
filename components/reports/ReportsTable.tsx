@@ -1,18 +1,14 @@
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
-import {
-  ComAtprotoReportReasonType,
-  ComAtprotoRepoStrongRef,
-  ComAtprotoRepoRepoRef,
-} from '@atproto/api'
+import { ComAtprotoReportReasonType } from '@atproto/api'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
-  ArrowTopRightOnSquareIcon,
 } from '@heroicons/react/20/solid'
 import { Report } from '../../lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { createAtUri, parseAtUri, truncate } from '../../lib/util'
+import { truncate } from '../../lib/util'
+import { SubjectOverview } from './SubjectOverview'
 
 export function ReportsTable(props: {
   reports: Report[]
@@ -163,58 +159,4 @@ const reasonColors: Record<string, string> = {
   [ComAtprotoReportReasonType.SPAM]: 'bg-pink-100 text-pink-800',
   [ComAtprotoReportReasonType.OTHER]: 'bg-indigo-100 text-indigo-800',
   default: 'bg-gray-100 text-gray-800',
-}
-
-function SubjectOverview(props: {
-  subject: Report['subject']
-  withTruncation?: boolean
-}) {
-  const { subject, withTruncation = true } = props
-  const summary = ComAtprotoRepoRepoRef.isMain(subject)
-    ? { did: subject.did, collection: null, rkey: null }
-    : ComAtprotoRepoStrongRef.isMain(subject)
-    ? parseAtUri(subject.uri)
-    : null
-  if (!summary) {
-    return null
-  }
-  if (summary.collection) {
-    const shortCollection = summary.collection.replace('app.bsky.feed.', '')
-    return (
-      <>
-        <Link
-          href={`/repositories/${createAtUri(summary).replace('at://', '')}`}
-          target="_blank"
-        >
-          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
-        </Link>
-        <Link
-          href={`/reports?term=${encodeURIComponent(createAtUri(summary))}`}
-          className="text-gray-600 hover:text-gray-900 font-medium"
-        >
-          {shortCollection} record
-        </Link>{' '}
-        by{' '}
-        <Link
-          href={`/reports?term=${summary.did}`}
-          className="text-gray-600 hover:text-gray-900 font-medium"
-        >
-          {truncate(summary.did, withTruncation ? 16 : Infinity)}
-        </Link>
-      </>
-    )
-  }
-  return (
-    <>
-      <Link href={`/repositories/${summary.did}`} target="_blank">
-        <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
-      </Link>
-      <Link
-        href={`/reports?term=${summary.did}`}
-        className="text-gray-600 hover:text-gray-900 font-medium"
-      >
-        repo {truncate(summary.did, withTruncation ? 26 : Infinity)}
-      </Link>
-    </>
-  )
 }

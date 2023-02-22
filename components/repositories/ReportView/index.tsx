@@ -7,6 +7,7 @@ import {
   AppBskyFeedGetPostThread as GetPostThread,
   ComAtprotoAdminModerationAction as ModAction,
   ComAtprotoAdminBlob as Blob,
+  ComAtprotoAdminRecord,
 } from '@atproto/api'
 
 import {
@@ -28,6 +29,13 @@ enum Views {
   Actions,
 }
 
+function getType(obj: unknown): string {
+  if (obj && typeof obj['$type'] === 'string') {
+    return obj['$type']
+  }
+  return ''
+}
+
 export function ReportView({ id }: { id: string }) {
   const { data: report } = useQuery({
     queryKey: ['report', { id }],
@@ -39,23 +47,22 @@ export function ReportView({ id }: { id: string }) {
       return data
     },
   })
-  console.log(report)
 
   const [currentView, setCurrentView] = useState(Views.Details)
 
-  if (!report) {
-    // TODO: Show loading state
+  if (!report || !report.subject) {
     return null
   }
 
-  // TODO: Type
   const headerTitle = `Report #${report?.id ?? ''}`
-  const isReportForRecord = report?.subject?.$type?.includes('admin.record')
-  const shortType =
-    report?.subject?.value?.$type?.replace('app.bsky.feed.', '') ?? ''
-  const subHeaderTitle = isReportForRecord
+
+  const reportSubjectValue =
+    ComAtprotoAdminRecord.isView(report.subject) && report.subject.value
+  const shortType = getType(reportSubjectValue).replace('app.bsky.feed.', '')
+  const subHeaderTitle = ComAtprotoAdminRecord.isView(report.subject)
     ? `${shortType} record of @${report?.subject?.repo?.handle ?? ''}`
     : `repo of @${report?.subject?.handle ?? ''}`
+
   const resolved = !!report.resolvedByActions?.length
   const titleIcon = (
     <span className="flex items-center">
@@ -141,10 +148,12 @@ function Tabs({
     view,
     label,
     sublabel,
+    report,
   }: {
     view: Views
     label: string
     sublabel?: string
+    report: GetReport.OutputSchema
   }) => (
     <span
       className={classNames(
@@ -168,11 +177,10 @@ function Tabs({
       <div className="border-b border-gray-200">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" />
+            <Tab view={Views.Details} label="Details" report={report} />
             <Tab
               view={Views.Actions}
               label="Actions"
-              // TODO: Type
               report={report}
               sublabel={report?.resolvedByActions?.length.toString() ?? '0'}
             />
@@ -183,9 +191,14 @@ function Tabs({
   )
 }
 
-// TODO: Type
-function Details({ report }: { record: GetRecord.OutputSchema }) {
-  const Field = ({ label, value }: { label: string; value: string }) => (
+function Details({ report }: { report: GetReport.OutputSchema }) {
+  const Field = ({
+    label,
+    value,
+  }: {
+    label: string
+    value: string | React.ReactNode
+  }) => (
     <div className="sm:col-span-1">
       <dt className="text-sm font-medium text-gray-500">{label}</dt>
       <dd
@@ -229,7 +242,6 @@ function Details({ report }: { record: GetRecord.OutputSchema }) {
         {labels.map(({ label, value }, index) => (
           <Field key={index} label={label} value={value} />
         ))}
-        {/* TODO: type */}
         <Field label="Reason" value={reasonComponent} />
       </dl>
 
@@ -241,12 +253,12 @@ function Details({ report }: { record: GetRecord.OutputSchema }) {
       )}
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
-      {subject.uri?.startsWith('at://') && (
+      {typeof subject.uri === 'string' && subject.uri.startsWith('at://') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject.uri} />
         </div>
       )}
-      {subject.did?.startsWith('did:') && (
+      {typeof subject.did === 'string' && subject.did?.startsWith('did:') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={reportedByDid} />
         </div>
