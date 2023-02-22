@@ -1,4 +1,5 @@
 'use client'
+import { ReportView } from '../../../components/repositories/ReportView'
 import { useQuery } from '@tanstack/react-query'
 import client from '../../../lib/client'
 
@@ -14,9 +15,10 @@ export default function Report({ params }: { params: { id: string } }) {
       return data
     },
   })
+
   if (!report) {
     return null
   }
-  // Just some temp UI!
-  return <pre className="text-sm m-4">{JSON.stringify(report, null, 2)}</pre>
+
+  return <ReportView report={report} />
 }
