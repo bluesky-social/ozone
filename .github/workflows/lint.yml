@@ -1,0 +1,24 @@
+name: Lint
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - staging
+
+jobs:
+  linting:
+    name: Run linters
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+      - name: Yarn install
+        run: yarn
+      - name: Lint Reporter
+        uses: wearerequired/lint-action@v2.2.0
+        with:
+          eslint: true
+      - name: Typescript & Lint check
+        run: yarn lint
