@@ -5,6 +5,7 @@ import {
   ComAtprotoAdminGetModerationAction as GetAction,
   ComAtprotoAdminRecord as AdminRecord,
   ComAtprotoAdminRepo as AdminRepo,
+  ComAtprotoAdminModerationAction as ModAction,
 } from '@atproto/api'
 
 import {
@@ -41,18 +42,22 @@ export function ActionView({ action }: { action: GetAction.OutputSchema }) {
 
   const resolved = !!action.resolvedReports?.length
   const wasReversed = !!action.reversal
+  const actionColorClasses =
+    action.action === ModAction.TAKEDOWN
+      ? 'text-rose-600 hover:text-rose-700'
+      : 'text-indigo-600 hover:text-indigo-900'
 
   const titleIcon = (
     <span className="flex items-center">
       {resolved ? (
         <CheckCircleIcon
           title="Resolved"
-          className="h-6 w-6 inline-block text-green-500 align-text-bottom"
+          className={`h-6 w-6 inline-block align-text-bottom ${actionColorClasses}`}
         />
       ) : (
         <ExclamationCircleIcon
           title="Unresolved"
-          className="h-6 w-6 inline-block text-yellow-500 align-text-bottom"
+          className={`h-6 w-6 inline-block align-text-bottom ${actionColorClasses}`}
         />
       )}
       {wasReversed ? (
