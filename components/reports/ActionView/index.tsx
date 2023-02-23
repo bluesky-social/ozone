@@ -20,18 +20,12 @@ import { Header } from '../ReportView/Header'
 import { actionOptions } from '../../../app/actions/ModActionPanel'
 import { BlobsTable } from '../../repositories/BlobsTable'
 import { Reports } from '../../repositories/RecordView'
+import { getType } from '../ReportView/getType'
 
 enum Views {
   Details,
   Blobs,
   Reports,
-}
-
-function getType(obj: unknown): string {
-  if (obj && typeof obj['$type'] === 'string') {
-    return obj['$type']
-  }
-  return ''
 }
 
 export function ActionView({ action }: { action: GetAction.OutputSchema }) {
@@ -249,7 +243,6 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
         </div>
       )}
 
-      {/* TODO: These parts could be shared too */}
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
       {AdminRecord.isView(subject) && subject.uri.startsWith('at://') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">

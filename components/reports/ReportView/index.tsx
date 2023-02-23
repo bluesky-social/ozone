@@ -19,17 +19,11 @@ import { ReasonBadge } from '../ReasonBadge'
 import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
+import { getType } from './getType'
 
 enum Views {
   Details,
   Actions,
-}
-
-function getType(obj: unknown): string {
-  if (obj && typeof obj['$type'] === 'string') {
-    return obj['$type']
-  }
-  return ''
 }
 
 export function ReportView({ report }: { report: GetReport.OutputSchema }) {
