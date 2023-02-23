@@ -20,6 +20,5 @@ jobs:
         uses: wearerequired/lint-action@v2.2.0
         with:
           eslint: true
-          prettier: true
       - name: Typescript & Lint check
         run: yarn lint
