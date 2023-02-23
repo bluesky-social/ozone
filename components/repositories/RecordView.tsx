@@ -230,7 +230,7 @@ function Blobs({ blobs }: { blobs: Blob.View[] }) {
   return <BlobsTable blobs={blobs} />
 }
 
-function Reports({
+export function Reports({
   reports,
 }: {
   reports: GetRecord.OutputSchema['moderation']['reports']

@@ -2,10 +2,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  ComAtprotoAdminGetModerationReport as GetReport,
-  AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminRecord,
-  ComAtprotoAdminRepo,
+  ComAtprotoAdminGetModerationAction as GetAction,
+  ComAtprotoAdminRecord as AdminRecord,
+  ComAtprotoAdminRepo as AdminRepo,
 } from '@atproto/api'
 
 import {
@@ -15,14 +14,17 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
-import { ReasonBadge } from '../../reports/ReasonBadge'
-import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
-import { ActionsTable } from './ActionsTable'
+import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
+import { Header } from '../ReportView/Header'
+import { actionOptions } from '../../../app/actions/ModActionPanel'
+import { BlobsTable } from '../../repositories/BlobsTable'
+import { Reports } from '../../repositories/RecordView'
 
 enum Views {
   Details,
-  Actions,
+  Blobs,
+  Reports,
 }
 
 function getType(obj: unknown): string {
@@ -32,19 +34,20 @@ function getType(obj: unknown): string {
   return ''
 }
 
-export function ReportView({ report }: { report: GetReport.OutputSchema }) {
+export function ActionView({ action }: { action: GetAction.OutputSchema }) {
   const [currentView, setCurrentView] = useState(Views.Details)
 
-  const headerTitle = `Report #${report?.id ?? ''}`
-
+  const headerTitle = `Action #${action?.id ?? ''}`
   const reportSubjectValue =
-    ComAtprotoAdminRecord.isView(report.subject) && report.subject.value
+    AdminRecord.isView(action.subject) && action.subject.value
   const shortType = getType(reportSubjectValue).replace('app.bsky.feed.', '')
-  const subHeaderTitle = ComAtprotoAdminRecord.isView(report.subject)
-    ? `${shortType} record of @${report.subject.repo.handle}`
-    : `repo of @${report.subject.handle}`
+  const subHeaderTitle = AdminRecord.isView(action.subject)
+    ? `${shortType} record of @${action.subject.repo.handle}`
+    : `repo of @${action.subject.handle}`
 
-  const resolved = !!report.resolvedByActions?.length
+  const resolved = !!action.resolvedReports?.length
+  const wasReversed = !!action.reversal
+
   const titleIcon = (
     <span className="flex items-center">
       {resolved ? (
@@ -58,6 +61,12 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
           className="h-6 w-6 inline-block text-yellow-500 align-text-bottom"
         />
       )}
+      {wasReversed ? (
+        <ArrowUturnDownIcon
+          title="Reversed"
+          className="h-6 w-6 inline-block text-red-500 align-text-bottom"
+        />
+      ) : null}
     </span>
   )
 
@@ -87,18 +96,27 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
                 titleIcon={titleIcon}
                 headerTitle={headerTitle}
                 subHeaderTitle={subHeaderTitle}
-                action={{ title: 'Resolve Report', onClick: () => {} }}
+                action={{
+                  title: 'Reverse Action',
+                  onClick: () => {
+                    /* TODO: issues/12 */
+                  },
+                }}
               />
-              {report ? (
+              {action ? (
                 <>
                   <Tabs
                     currentView={currentView}
-                    report={report}
+                    action={action}
                     onSetCurrentView={setCurrentView}
                   />
-                  {currentView === Views.Details && <Details report={report} />}
-                  {currentView === Views.Actions && (
-                    <ActionsTable actions={report.resolvedByActions} />
+                  {currentView === Views.Details && <Details action={action} />}
+
+                  {currentView === Views.Blobs && (
+                    <BlobsTable blobs={action.subjectBlobs} />
+                  )}
+                  {currentView === Views.Reports && (
+                    <Reports reports={action.resolvedReports} />
                   )}
                 </>
               ) : (
@@ -116,24 +134,21 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
 
 function Tabs({
   currentView,
-  report,
+  action,
   onSetCurrentView,
 }: {
   currentView: Views
-  report: GetReport.OutputSchema
-  actions?: GetPostThread.OutputSchema
+  action: GetAction.OutputSchema
   onSetCurrentView: (v: Views) => void
 }) {
   const Tab = ({
     view,
     label,
     sublabel,
-    report,
   }: {
     view: Views
     label: string
     sublabel?: string
-    report: GetReport.OutputSchema
   }) => (
     <span
       className={classNames(
@@ -157,12 +172,16 @@ function Tabs({
       <div className="border-b border-gray-200">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" report={report} />
+            <Tab view={Views.Details} label="Details" />
             <Tab
-              view={Views.Actions}
-              label="Actions"
-              report={report}
-              sublabel={report?.resolvedByActions?.length.toString() ?? '0'}
+              view={Views.Blobs}
+              label="Blobs"
+              sublabel={action?.subjectBlobs.length.toString() ?? '0'}
+            />
+            <Tab
+              view={Views.Reports}
+              label="Reports"
+              sublabel={action?.resolvedReports.length.toString() ?? '0'}
             />
           </nav>
         </div>
@@ -171,7 +190,7 @@ function Tabs({
   )
 }
 
-function Details({ report }: { report: GetReport.OutputSchema }) {
+function Details({ action }: { action: GetAction.OutputSchema }) {
   const Field = ({
     label,
     value,
@@ -190,7 +209,13 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
     </div>
   )
 
-  const { createdAt, reason, reasonType, reportedByDid, subject } = report
+  const { createdAt, reason, subject, createdBy } = action
+
+  const actionType =
+    (AdminRepo.isView(subject) || AdminRecord.isView(subject)) &&
+    subject.moderation.currentAction &&
+    subject.moderation.currentAction.action
+  const readableActionType = actionType ? actionOptions[actionType] : ''
 
   const labels: { label: string; value: string }[] = [
     {
@@ -198,16 +223,16 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
       value: new Date(createdAt).toLocaleString(),
     },
     {
-      label: 'Reported By DID',
-      value: reportedByDid,
+      label: 'reason',
+      value: reason,
+    },
+    {
+      label: 'Action',
+      value: readableActionType,
     },
   ]
 
-  const reasonComponent = (
-    <dd className="mt-1 truncate text-gray-700">
-      <ReasonBadge reasonType={reasonType} /> {reason}
-    </dd>
-  )
+  console.log('action', action)
 
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -215,30 +240,28 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
         {labels.map(({ label, value }, index) => (
           <Field key={index} label={label} value={value} />
         ))}
-        <Field label="Reason" value={reasonComponent} />
       </dl>
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Reported By:</dt>
-      {reportedByDid && (
+      {createdBy && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-          <RepoCard did={reportedByDid} />
+          <RepoCard did={createdBy} />
         </div>
       )}
 
+      {/* TODO: These parts could be shared too */}
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
-      {ComAtprotoAdminRecord.isView(subject) &&
-        subject.uri.startsWith('at://') && (
-          <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
-            <RecordCard uri={subject.uri} />
-          </div>
-        )}
-      {ComAtprotoAdminRepo.isView(subject) &&
-        subject.did?.startsWith('did:') && (
-          <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-            <RepoCard did={reportedByDid} />
-          </div>
-        )}
-      <Json className="mt-6" label="Contents" value={report} />
+      {AdminRecord.isView(subject) && subject.uri.startsWith('at://') && (
+        <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
+          <RecordCard uri={subject.uri} />
+        </div>
+      )}
+      {AdminRepo.isView(subject) && subject.did?.startsWith('did:') && (
+        <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+          <RepoCard did={subject.did} />
+        </div>
+      )}
+      <Json className="mt-6" label="Contents" value={action} />
     </div>
   )
 }
