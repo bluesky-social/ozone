@@ -210,28 +210,23 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
 
   const { createdAt, reason, subject, createdBy } = action
 
-  const actionType =
-    (AdminRepo.isView(subject) || AdminRecord.isView(subject)) &&
-    subject.moderation.currentAction &&
-    subject.moderation.currentAction.action
+  const actionType = action.action
   const readableActionType = actionType ? actionOptions[actionType] : ''
 
   const labels: { label: string; value: string }[] = [
+    {
+      label: 'Action',
+      value: readableActionType,
+    },
     {
       label: 'Created At',
       value: new Date(createdAt).toLocaleString(),
     },
     {
-      label: 'reason',
+      label: 'Reason',
       value: reason,
     },
-    {
-      label: 'Action',
-      value: readableActionType,
-    },
   ]
-
-  console.log('action', action)
 
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -241,7 +236,7 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
         ))}
       </dl>
 
-      <dt className="text-sm font-medium text-gray-500 mb-3">Reported By:</dt>
+      <dt className="text-sm font-medium text-gray-500 mb-3">Created By:</dt>
       {createdBy && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={createdBy} />
