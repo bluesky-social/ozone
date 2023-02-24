@@ -1,5 +1,6 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
+import { ActionView } from '../../../components/reports/ActionView'
 import client from '../../../lib/client'
 
 export default function Action({ params }: { params: { id: string } }) {
@@ -18,5 +19,5 @@ export default function Action({ params }: { params: { id: string } }) {
     return null
   }
   // Just some temp UI!
-  return <pre className="text-sm m-4">{JSON.stringify(action, null, 2)}</pre>
+  return <ActionView action={action} />
 }

@@ -15,21 +15,15 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
-import { ReasonBadge } from '../../reports/ReasonBadge'
+import { ReasonBadge } from '../ReasonBadge'
 import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
+import { getType } from './getType'
 
 enum Views {
   Details,
   Actions,
-}
-
-function getType(obj: unknown): string {
-  if (obj && typeof obj['$type'] === 'string') {
-    return obj['$type']
-  }
-  return ''
 }
 
 export function ReportView({ report }: { report: GetReport.OutputSchema }) {
@@ -128,12 +122,10 @@ function Tabs({
     view,
     label,
     sublabel,
-    report,
   }: {
     view: Views
     label: string
     sublabel?: string
-    report: GetReport.OutputSchema
   }) => (
     <span
       className={classNames(
@@ -157,11 +149,10 @@ function Tabs({
       <div className="border-b border-gray-200">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" report={report} />
+            <Tab view={Views.Details} label="Details" />
             <Tab
               view={Views.Actions}
               label="Actions"
-              report={report}
               sublabel={report?.resolvedByActions?.length.toString() ?? '0'}
             />
           </nav>
@@ -235,7 +226,7 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
       {ComAtprotoAdminRepo.isView(subject) &&
         subject.did?.startsWith('did:') && (
           <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-            <RepoCard did={reportedByDid} />
+            <RepoCard did={subject.did} />
           </div>
         )}
       <Json className="mt-6" label="Contents" value={report} />

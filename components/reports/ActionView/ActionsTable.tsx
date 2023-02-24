@@ -4,7 +4,7 @@ import {
   ComAtprotoAdminModerationAction,
   ComAtprotoAdminGetModerationAction as ModAction,
 } from '@atproto/api'
-import { SubjectOverview } from '../../reports/SubjectOverview'
+import { SubjectOverview } from '../SubjectOverview'
 
 export function ActionsTable(props: { actions }) {
   const { actions } = props

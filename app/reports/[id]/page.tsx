@@ -1,5 +1,5 @@
 'use client'
-import { ReportView } from '../../../components/repositories/ReportView'
+import { ReportView } from '../../../components/reports/ReportView'
 import { useQuery } from '@tanstack/react-query'
 import client from '../../../lib/client'
 
