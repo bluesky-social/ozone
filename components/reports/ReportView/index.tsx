@@ -149,11 +149,10 @@ function Tabs({
       <div className="border-b border-gray-200">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" report={report} />
+            <Tab view={Views.Details} label="Details" />
             <Tab
               view={Views.Actions}
               label="Actions"
-              report={report}
               sublabel={report?.resolvedByActions?.length.toString() ?? '0'}
             />
           </nav>
