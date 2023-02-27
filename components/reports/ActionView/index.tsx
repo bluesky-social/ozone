@@ -264,6 +264,10 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
     },
   ]
 
+  const reversedAt = action.reversal
+    ? new Date(action.reversal.createdAt).toLocaleString()
+    : undefined
+
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-6">
@@ -296,10 +300,7 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
         <div className="mt-6">
           <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-6">
             <Field label={'Reversed Reason'} value={action.reversal.reason} />
-            <Field
-              label={'Reversed At'}
-              value={new Date(action.reversal.createdAt).toLocaleString()}
-            />
+            <Field label={'Reversed At'} value={reversedAt} />
           </dl>
           {action.reversal.createdBy && (
             <>

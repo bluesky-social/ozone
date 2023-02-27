@@ -73,18 +73,7 @@ function Form(props: {
           <span className="text-xs text-gray-400">Preview</span>
         </div>
       )}
-      <FormLabel label="Reason" htmlFor="reasonType" className="mb-3">
-        <Select id="reasonType" name="reasonType" required>
-          <option hidden selected value="">
-            Reason
-          </option>
-          {Object.entries(reasonTypeOptions).map(([value, label]) => (
-            <option key={value} value={value}>
-              {label}
-            </option>
-          ))}
-        </Select>
-      </FormLabel>
+
       <Textarea
         name="reason"
         placeholder="Details"
