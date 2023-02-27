@@ -5,6 +5,7 @@ import {
   ComAtprotoAdminGetModerationAction as ModAction,
 } from '@atproto/api'
 import { SubjectOverview } from '../SubjectOverview'
+import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
 
 export function ActionsTable(props: { actions }) {
   const { actions } = props
@@ -29,6 +30,7 @@ export function ActionsTable(props: { actions }) {
 function ActionRow(props: { action: ModAction.OutputSchema }) {
   const { action, ...others } = props
   const createdAt = new Date(action.createdAt)
+  const wasReversed = !!action.reversal
 
   return (
     <tr {...others}>
@@ -36,7 +38,16 @@ function ActionRow(props: { action: ModAction.OutputSchema }) {
         <dl className="font-normal">
           <dt className="sr-only">Reason</dt>
           <dd className="mt-1 truncate text-gray-700">
-            <ReasonBadge reasonType={action.action} /> {action.reason}
+            <ReasonBadge reasonType={action.action} />{' '}
+            {wasReversed ? (
+              <>
+                <ArrowUturnDownIcon
+                  title="Reversed"
+                  className="h-4 w-4 inline-block text-red-500 align-text-bottom"
+                />{' '}
+              </>
+            ) : null}
+            {action.reason}
           </dd>
         </dl>
       </td>
