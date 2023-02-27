@@ -24,6 +24,7 @@ import { BlobsTable } from '../../repositories/BlobsTable'
 import { Reports } from '../../repositories/RecordView'
 import { getType } from '../ReportView/getType'
 import { ReverseActionPanel } from '../ReverseActionPanel'
+import { getSubjectString } from './getSubjectString'
 
 enum Views {
   Details,
@@ -78,19 +79,12 @@ export function ActionView({
     </span>
   )
 
-  let subjectString = ''
-  if (AdminRecord.isView(action.subject)) {
-    subjectString = action.subject.uri
-  } else if (AdminRepo.isView(action.subject)) {
-    subjectString = action.subject.did
-  }
-
   return (
     <div className="flex h-full bg-white">
       <ReverseActionPanel
         open={reverseActionPanelOpen}
         onClose={() => setReverseActionPanelOpen(false)}
-        subject={subjectString}
+        subject={getSubjectString(action.subject)}
         onSubmit={async (vals) => {
           await client.api.com.atproto.admin.reverseModerationAction(
             {

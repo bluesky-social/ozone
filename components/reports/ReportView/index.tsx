@@ -20,14 +20,27 @@ import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
 import { getType } from './getType'
+import {
+  ModActionFormValues,
+  ModActionPanel,
+} from '../../../app/actions/ModActionPanel'
+import { takeActionAndResolveReports } from '../takeActionAndResolveReports'
+import { getSubjectString } from '../ActionView/getSubjectString'
 
 enum Views {
   Details,
   Actions,
 }
 
-export function ReportView({ report }: { report: GetReport.OutputSchema }) {
+export function ReportView({
+  report,
+  refetch,
+}: {
+  report: GetReport.OutputSchema
+  refetch?: any
+}) {
   const [currentView, setCurrentView] = useState(Views.Details)
+  const [resolveReportPanelOpen, setResolveReportPanelOpen] = useState(false)
 
   const headerTitle = `Report #${report?.id ?? ''}`
 
@@ -39,6 +52,9 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
     : `repo of @${report.subject.handle}`
 
   const resolved = !!report.resolvedByActions?.length
+
+  let subjectString = getSubjectString(report.subject)
+
   const titleIcon = (
     <span className="flex items-center">
       {resolved ? (
@@ -55,8 +71,22 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
     </span>
   )
 
+  const onResolveReport = () => {
+    setResolveReportPanelOpen(true)
+  }
+
   return (
     <div className="flex h-full bg-white">
+      <ModActionPanel
+        open={resolveReportPanelOpen}
+        onClose={() => setResolveReportPanelOpen(false)}
+        subject={subjectString}
+        subjectOptions={[subjectString]}
+        onSubmit={async (vals: ModActionFormValues) => {
+          await takeActionAndResolveReports(vals)
+          refetch()
+        }}
+      />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
@@ -81,7 +111,7 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
                 titleIcon={titleIcon}
                 headerTitle={headerTitle}
                 subHeaderTitle={subHeaderTitle}
-                action={{ title: 'Resolve Report', onClick: () => {} }}
+                action={{ title: 'Resolve Report', onClick: onResolveReport }}
               />
               {report ? (
                 <>
