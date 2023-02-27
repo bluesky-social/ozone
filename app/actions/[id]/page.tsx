@@ -5,7 +5,7 @@ import client from '../../../lib/client'
 
 export default function Action({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)
-  const { data: action } = useQuery({
+  const { data: action, refetch: actionRefetch } = useQuery({
     queryKey: ['action', { id }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getModerationAction(
@@ -19,5 +19,5 @@ export default function Action({ params }: { params: { id: string } }) {
     return null
   }
   // Just some temp UI!
-  return <ActionView action={action} />
+  return <ActionView action={action} refetch={actionRefetch} />
 }

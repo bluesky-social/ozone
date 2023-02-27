@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
+import client from '../../../lib/client'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
 import { Header } from '../ReportView/Header'
@@ -22,6 +23,7 @@ import { actionOptions } from '../../../app/actions/ModActionPanel'
 import { BlobsTable } from '../../repositories/BlobsTable'
 import { Reports } from '../../repositories/RecordView'
 import { getType } from '../ReportView/getType'
+import { ReverseActionPanel } from '../ReverseActionPanel'
 
 enum Views {
   Details,
@@ -29,8 +31,15 @@ enum Views {
   Reports,
 }
 
-export function ActionView({ action }: { action: GetAction.OutputSchema }) {
+export function ActionView({
+  action,
+  refetch,
+}: {
+  action: GetAction.OutputSchema
+  refetch?: any
+}) {
   const [currentView, setCurrentView] = useState(Views.Details)
+  const [reverseActionPanelOpen, setReverseActionPanelOpen] = useState(false)
 
   const headerTitle = `Action #${action?.id ?? ''}`
   const reportSubjectValue =
@@ -69,8 +78,31 @@ export function ActionView({ action }: { action: GetAction.OutputSchema }) {
     </span>
   )
 
+  let subjectString = ''
+  if (AdminRecord.isView(action.subject)) {
+    subjectString = action.subject.uri
+  } else if (AdminRepo.isView(action.subject)) {
+    subjectString = action.subject.did
+  }
+
   return (
     <div className="flex h-full bg-white">
+      <ReverseActionPanel
+        open={reverseActionPanelOpen}
+        onClose={() => setReverseActionPanelOpen(false)}
+        subject={subjectString}
+        onSubmit={async (vals) => {
+          await client.api.com.atproto.admin.reverseModerationAction(
+            {
+              id: action.id,
+              reason: vals.reason || '',
+              createdBy: client.session.did,
+            },
+            { headers: client.adminHeaders(), encoding: 'application/json' },
+          )
+          refetch()
+        }}
+      />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
@@ -95,12 +127,16 @@ export function ActionView({ action }: { action: GetAction.OutputSchema }) {
                 titleIcon={titleIcon}
                 headerTitle={headerTitle}
                 subHeaderTitle={subHeaderTitle}
-                action={{
-                  title: 'Reverse Action',
-                  onClick: () => {
-                    /* TODO: issues/12 */
-                  },
-                }}
+                action={
+                  wasReversed
+                    ? undefined
+                    : {
+                        title: 'Reverse Action',
+                        onClick: () => {
+                          setReverseActionPanelOpen(true)
+                        },
+                      }
+                }
               />
               {action ? (
                 <>
@@ -244,6 +280,7 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
       )}
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
+
       {AdminRecord.isView(subject) && subject.uri.startsWith('at://') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject.uri} />
@@ -252,6 +289,28 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
       {AdminRepo.isView(subject) && subject.did?.startsWith('did:') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={subject.did} />
+        </div>
+      )}
+
+      {!!action.reversal && (
+        <div className="mt-6">
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-6">
+            <Field label={'Reversed Reason'} value={action.reversal.reason} />
+            <Field
+              label={'Reversed At'}
+              value={new Date(action.reversal.createdAt).toLocaleString()}
+            />
+          </dl>
+          {action.reversal.createdBy && (
+            <>
+              <dt className="text-sm font-medium text-gray-500 mb-3">
+                Reversed By:
+              </dt>
+              <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+                <RepoCard did={action.reversal.createdBy} />
+              </div>
+            </>
+          )}
         </div>
       )}
       <Json className="mt-6" label="Contents" value={action} />
