@@ -20,8 +20,6 @@ import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
 import { getType } from './getType'
-import { ModActionPanel } from '../../../app/actions/ModActionPanel'
-import { getSubjectString } from '../ActionView/getSubjectString'
 
 enum Views {
   Details,
@@ -30,13 +28,12 @@ enum Views {
 
 export function ReportView({
   report,
-  onSubmit,
+  setResolveReportPanelOpen,
 }: {
   report: GetReport.OutputSchema
-  onSubmit: (any) => Promise<void>
+  setResolveReportPanelOpen: (open: boolean) => void
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
-  const [resolveReportPanelOpen, setResolveReportPanelOpen] = useState(false)
 
   const headerTitle = `Report #${report?.id ?? ''}`
 
@@ -48,8 +45,6 @@ export function ReportView({
     : `repo of @${report.subject.handle}`
 
   const resolved = !!report.resolvedByActions?.length
-
-  let subjectString = getSubjectString(report.subject)
 
   const titleIcon = (
     <span className="flex items-center">
@@ -73,13 +68,6 @@ export function ReportView({
 
   return (
     <div className="flex h-full bg-white">
-      <ModActionPanel
-        open={resolveReportPanelOpen}
-        onClose={() => setResolveReportPanelOpen(false)}
-        subject={subjectString}
-        subjectOptions={[subjectString]}
-        onSubmit={onSubmit}
-      />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">

@@ -9,30 +9,23 @@ import { PropsOf } from '../../lib/types'
 export function ReverseActionPanel(
   props: PropsOf<typeof ActionPanel> & {
     subject: string
-    subjectOptions?: string[]
     onSubmit: (vals: ReportFormValues) => Promise<void>
   },
 ) {
-  const { subject, subjectOptions, onSubmit, onClose, ...others } = props
+  const { subject, onSubmit, onClose, ...others } = props
   return (
     <ActionPanel title="Create a report" onClose={onClose} {...others}>
-      <Form
-        onCancel={onClose}
-        onSubmit={onSubmit}
-        subject={subject}
-        subjectOptions={subjectOptions}
-      />
+      <Form onCancel={onClose} onSubmit={onSubmit} subject={subject} />
     </ActionPanel>
   )
 }
 
 function Form(props: {
   subject: string
-  subjectOptions?: string[]
   onCancel: () => void
   onSubmit: (vals: ReportFormValues) => Promise<void>
 }) {
-  const { subject, subjectOptions, onCancel, onSubmit, ...others } = props
+  const { subject, onCancel, onSubmit, ...others } = props
   const [submitting, setSubmitting] = useState(false)
   return (
     <form
@@ -51,13 +44,6 @@ function Form(props: {
       }}
       {...others}
     >
-      <FormLabel label="Subject" htmlFor="subject" className="mb-3">
-        <datalist id="subject-suggestions">
-          {subjectOptions?.map((subject) => (
-            <option key={subject} value={subject} />
-          ))}
-        </datalist>
-      </FormLabel>
       {subject.startsWith('at://') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject} />
@@ -78,6 +64,7 @@ function Form(props: {
         name="reason"
         placeholder="Details"
         className="block w-full mb-3"
+        required
       />
       <div className="text-right">
         <ButtonSecondary
@@ -93,11 +80,6 @@ function Form(props: {
       </div>
     </form>
   )
-}
-
-const reasonTypeOptions = {
-  [ComAtprotoReportReasonType.SPAM]: 'Spam',
-  [ComAtprotoReportReasonType.OTHER]: 'Other',
 }
 
 export type ReportFormValues = {
