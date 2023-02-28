@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
+import client from '../../../lib/client'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
 import { Header } from '../ReportView/Header'
@@ -22,6 +23,7 @@ import { actionOptions } from '../../../app/actions/ModActionPanel'
 import { BlobsTable } from '../../repositories/BlobsTable'
 import { Reports } from '../../repositories/RecordView'
 import { getType } from '../ReportView/getType'
+import { ReverseActionPanel } from '../ReverseActionPanel'
 
 enum Views {
   Details,
@@ -29,7 +31,13 @@ enum Views {
   Reports,
 }
 
-export function ActionView({ action }: { action: GetAction.OutputSchema }) {
+export function ActionView({
+  action,
+  setReverseActionPanelOpen,
+}: {
+  action: GetAction.OutputSchema
+  setReverseActionPanelOpen: (open: boolean) => void
+}) {
   const [currentView, setCurrentView] = useState(Views.Details)
 
   const headerTitle = `Action #${action?.id ?? ''}`
@@ -69,6 +77,13 @@ export function ActionView({ action }: { action: GetAction.OutputSchema }) {
     </span>
   )
 
+  let subjectString = ''
+  if (AdminRecord.isView(action.subject)) {
+    subjectString = action.subject.uri
+  } else if (AdminRepo.isView(action.subject)) {
+    subjectString = action.subject.did
+  }
+
   return (
     <div className="flex h-full bg-white">
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -95,12 +110,16 @@ export function ActionView({ action }: { action: GetAction.OutputSchema }) {
                 titleIcon={titleIcon}
                 headerTitle={headerTitle}
                 subHeaderTitle={subHeaderTitle}
-                action={{
-                  title: 'Reverse Action',
-                  onClick: () => {
-                    /* TODO: issues/12 */
-                  },
-                }}
+                action={
+                  wasReversed
+                    ? undefined
+                    : {
+                        title: 'Reverse Action',
+                        onClick: () => {
+                          setReverseActionPanelOpen(true)
+                        },
+                      }
+                }
               />
               {action ? (
                 <>
@@ -228,6 +247,10 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
     },
   ]
 
+  const reversedAt = action.reversal
+    ? new Date(action.reversal.createdAt).toLocaleString()
+    : undefined
+
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-6">
@@ -244,6 +267,7 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
       )}
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
+
       {AdminRecord.isView(subject) && subject.uri.startsWith('at://') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject.uri} />
@@ -252,6 +276,23 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
       {AdminRepo.isView(subject) && subject.did?.startsWith('did:') && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={subject.did} />
+        </div>
+      )}
+
+      {!!action.reversal && (
+        <div className="mt-6">
+          <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-6">
+            <Field label={'Reversed Reason'} value={action.reversal.reason} />
+            <Field label={'Reversed At'} value={reversedAt} />
+          </dl>
+          <>
+            <dt className="text-sm font-medium text-gray-500 mb-3">
+              Reversed By:
+            </dt>
+            <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+              <RepoCard did={action.reversal.createdBy} />
+            </div>
+          </>
         </div>
       )}
       <Json className="mt-6" label="Contents" value={action} />
