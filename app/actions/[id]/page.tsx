@@ -1,5 +1,7 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
+
 import { useState } from 'react'
 import { ActionView } from '../../../components/reports/ActionView'
 import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
@@ -30,13 +32,20 @@ export default function Action({ params }: { params: { id: string } }) {
         onClose={() => setReverseActionPanelOpen(false)}
         subject={getSubjectString(action.subject)}
         onSubmit={async (vals) => {
-          await client.api.com.atproto.admin.reverseModerationAction(
+          toast.promise(
+            client.api.com.atproto.admin.reverseModerationAction(
+              {
+                id: action.id,
+                reason: vals.reason || '',
+                createdBy: client.session.did,
+              },
+              { headers: client.adminHeaders(), encoding: 'application/json' },
+            ),
             {
-              id: action.id,
-              reason: vals.reason || '',
-              createdBy: client.session.did,
+              pending: 'Reversing action...',
+              success: 'Action reversed!',
+              error: 'Error reversing action!',
             },
-            { headers: client.adminHeaders(), encoding: 'application/json' },
           )
           refetch()
         }}

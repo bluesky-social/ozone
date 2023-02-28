@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '../../components/common/ModActionIcon'
 import { ReportsTable } from '../../components/reports/ReportsTable'
@@ -64,7 +65,11 @@ export default function Reports() {
         subject={subjectOptions.length === 1 ? subjectOptions[0] : undefined}
         subjectOptions={subjectOptions}
         onSubmit={async (vals: ModActionFormValues) => {
-          await takeActionAndResolveReports(vals)
+          await toast.promise(takeActionAndResolveReports(vals), {
+            pending: 'Taking action...',
+            success: 'Action taken',
+            error: 'Error taking action',
+          })
           refetch()
         }}
       />
