@@ -1,20 +1,13 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import {
-  ComAtprotoAdminGetModerationAction as GetAction,
-  ComAtprotoAdminRecord as AdminRecord,
-  ComAtprotoAdminRepo as AdminRepo,
-  ComAtprotoAdminModerationAction as ModAction,
-} from '@atproto/api'
+import { ComAtprotoAdminRecord as AdminRecord } from '@atproto/api'
 import { useState } from 'react'
 import { ActionView } from '../../../components/reports/ActionView'
 import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
 import { ReverseActionPanel } from '../../../components/reports/ReverseActionPanel'
 import client from '../../../lib/client'
 import { actionOptions } from '../ModActionPanel'
-import { isIdRecord } from '../../../components/reports/helpers/isIdRecord'
-import Link from 'next/link'
 
 export default function Action({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)
