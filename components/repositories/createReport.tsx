@@ -6,7 +6,6 @@ import { isIdRecord } from '../reports/helpers/isIdRecord'
 import { ReportFormValues } from '../reports/ReportPanel'
 
 export async function createReport(vals: ReportFormValues) {
-  console.log('createReport', vals)
   const isRecord = isIdRecord(vals.subject)
   const subject = createSubjectFromId(vals.subject)
   const createReportAsync = async () =>

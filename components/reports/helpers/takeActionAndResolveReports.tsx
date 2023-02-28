@@ -42,7 +42,6 @@ export const takeActionAndResolveReports = async (
       render({ data }) {
         const newAction = data?.data
         const actionId = newAction?.id
-
         const actionType = newAction?.action
         const actionTypeString = actionType && actionOptions[actionType]
         const title = `${isRecord ? 'Record' : 'Repo'} was ${actionTypeString}`

@@ -47,7 +47,6 @@ export default function Action({ params }: { params: { id: string } }) {
               success: {
                 render({ data }) {
                   const newAction = data?.data
-
                   const actionType = newAction?.action
                   const actionTypeString =
                     actionType && actionOptions[actionType]
