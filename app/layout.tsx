@@ -17,7 +17,7 @@ export default function RootLayout({
       <body className="h-full overflow-hidden">
         <ToastContainer
           position="bottom-right"
-          autoClose={2500}
+          autoClose={4000}
           hideProgressBar={false}
           closeOnClick
         />

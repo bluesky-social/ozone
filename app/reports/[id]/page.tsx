@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { ReportView } from '../../../components/reports/ReportView'
 import { useQuery } from '@tanstack/react-query'
 import client from '../../../lib/client'
-import { takeActionAndResolveReports } from '../../../components/reports/takeActionAndResolveReports'
+import { takeActionAndResolveReports } from '../../../components/reports/helpers/takeActionAndResolveReports'
 import {
   ModActionFormValues,
   ModActionPanel,

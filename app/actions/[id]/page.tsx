@@ -1,12 +1,20 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-
+import {
+  ComAtprotoAdminGetModerationAction as GetAction,
+  ComAtprotoAdminRecord as AdminRecord,
+  ComAtprotoAdminRepo as AdminRepo,
+  ComAtprotoAdminModerationAction as ModAction,
+} from '@atproto/api'
 import { useState } from 'react'
 import { ActionView } from '../../../components/reports/ActionView'
 import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
 import { ReverseActionPanel } from '../../../components/reports/ReverseActionPanel'
 import client from '../../../lib/client'
+import { actionOptions } from '../ModActionPanel'
+import { isIdRecord } from '../../../components/reports/helpers/isIdRecord'
+import Link from 'next/link'
 
 export default function Action({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)
@@ -43,8 +51,27 @@ export default function Action({ params }: { params: { id: string } }) {
             ),
             {
               pending: 'Reversing action...',
-              success: 'Action reversed!',
-              error: 'Error reversing action!',
+              success: {
+                render({ data }) {
+                  const newAction = data?.data
+
+                  const actionType = newAction?.action
+                  const actionTypeString =
+                    actionType && actionOptions[actionType]
+
+                  const title = `${actionTypeString} on ${
+                    AdminRecord.isView(action.subject) ? 'record' : 'repo'
+                  } has been reversed`
+
+                  return title
+                },
+              },
+              error: {
+                render({ data }: any) {
+                  const errorMessage = data?.message ?? ''
+                  return `Action could not be reversed: ${errorMessage}`
+                },
+              },
             },
           )
           refetch()
