@@ -32,7 +32,7 @@ export default function Action({ params }: { params: { id: string } }) {
         onClose={() => setReverseActionPanelOpen(false)}
         subject={getSubjectString(action.subject)}
         onSubmit={async (vals) => {
-          toast.promise(
+          await toast.promise(
             client.api.com.atproto.admin.reverseModerationAction(
               {
                 id: action.id,
