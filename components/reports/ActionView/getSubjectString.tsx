@@ -1,4 +1,3 @@
-'use client'
 import {
   ComAtprotoAdminRecord as AdminRecord,
   ComAtprotoAdminRepo as AdminRepo,

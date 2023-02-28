@@ -20,11 +20,7 @@ import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
 import { getType } from './getType'
-import {
-  ModActionFormValues,
-  ModActionPanel,
-} from '../../../app/actions/ModActionPanel'
-import { takeActionAndResolveReports } from '../takeActionAndResolveReports'
+import { ModActionPanel } from '../../../app/actions/ModActionPanel'
 import { getSubjectString } from '../ActionView/getSubjectString'
 
 enum Views {
@@ -34,10 +30,10 @@ enum Views {
 
 export function ReportView({
   report,
-  refetch,
+  onSubmit,
 }: {
   report: GetReport.OutputSchema
-  refetch?: any
+  onSubmit: (any) => Promise<void>
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
   const [resolveReportPanelOpen, setResolveReportPanelOpen] = useState(false)
@@ -82,10 +78,7 @@ export function ReportView({
         onClose={() => setResolveReportPanelOpen(false)}
         subject={subjectString}
         subjectOptions={[subjectString]}
-        onSubmit={async (vals: ModActionFormValues) => {
-          await takeActionAndResolveReports(vals)
-          refetch()
-        }}
+        onSubmit={onSubmit}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
