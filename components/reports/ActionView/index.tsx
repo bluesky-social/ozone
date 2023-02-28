@@ -33,13 +33,12 @@ enum Views {
 
 export function ActionView({
   action,
-  refetch,
+  setReverseActionPanelOpen,
 }: {
   action: GetAction.OutputSchema
-  refetch?: any
+  setReverseActionPanelOpen: (open: boolean) => void
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
-  const [reverseActionPanelOpen, setReverseActionPanelOpen] = useState(false)
 
   const headerTitle = `Action #${action?.id ?? ''}`
   const reportSubjectValue =
@@ -87,22 +86,6 @@ export function ActionView({
 
   return (
     <div className="flex h-full bg-white">
-      <ReverseActionPanel
-        open={reverseActionPanelOpen}
-        onClose={() => setReverseActionPanelOpen(false)}
-        subject={subjectString}
-        onSubmit={async (vals) => {
-          await client.api.com.atproto.admin.reverseModerationAction(
-            {
-              id: action.id,
-              reason: vals.reason || '',
-              createdBy: client.session.did,
-            },
-            { headers: client.adminHeaders(), encoding: 'application/json' },
-          )
-          refetch()
-        }}
-      />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
@@ -302,16 +285,14 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
             <Field label={'Reversed Reason'} value={action.reversal.reason} />
             <Field label={'Reversed At'} value={reversedAt} />
           </dl>
-          {action.reversal.createdBy && (
-            <>
-              <dt className="text-sm font-medium text-gray-500 mb-3">
-                Reversed By:
-              </dt>
-              <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-                <RepoCard did={action.reversal.createdBy} />
-              </div>
-            </>
-          )}
+          <>
+            <dt className="text-sm font-medium text-gray-500 mb-3">
+              Reversed By:
+            </dt>
+            <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+              <RepoCard did={action.reversal.createdBy} />
+            </div>
+          </>
         </div>
       )}
       <Json className="mt-6" label="Contents" value={action} />
