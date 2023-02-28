@@ -19,8 +19,9 @@ import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
 import { classNames } from '../../lib/util'
 import client from '../../lib/client'
-import { ReportFormValues, ReportPanel } from '../reports/ReportPanel'
+import { ReportPanel } from '../reports/ReportPanel'
 import { ReportsTable } from '../reports/ReportsTable'
+import React from 'react'
 
 enum Views {
   Details,
@@ -30,49 +31,21 @@ enum Views {
   Reports,
 }
 
-export function AccountView({ id }: { id: string }) {
+export function AccountView({
+  repo,
+  profile,
+  error,
+  id,
+  onSubmit,
+}: {
+  id: string
+  repo?: GetRepo.OutputSchema
+  profile?: GetProfile.OutputSchema
+  error?: unknown
+  onSubmit: (vals: any) => Promise<void>
+}) {
   const [currentView, setCurrentView] = useState<Views>(Views.Details)
   const [reportUri, setReportUri] = useState<string>()
-
-  const {
-    error,
-    data: { repo, profile } = {},
-    refetch,
-  } = useQuery({
-    queryKey: ['accountView', { id }],
-    queryFn: async () => {
-      const getRepo = async () => {
-        let did
-        if (id.startsWith('did:')) {
-          did = id
-        } else {
-          const { data: resolved } =
-            await client.api.com.atproto.handle.resolve({ handle: id })
-          did = resolved.did
-        }
-        const { data: repo } = await client.api.com.atproto.admin.getRepo(
-          { did },
-          { headers: client.adminHeaders() },
-        )
-        return repo
-      }
-      const getProfile = async () => {
-        try {
-          const { data: profile } = await client.api.app.bsky.actor.getProfile({
-            actor: id,
-          })
-          return profile
-        } catch (err) {
-          if (err?.['error'] === 'AccountTakedown') {
-            return undefined
-          }
-          throw err
-        }
-      }
-      const [repo, profile] = await Promise.all([getRepo(), getProfile()])
-      return { repo, profile }
-    },
-  })
 
   return (
     <div className="flex h-full bg-white">
@@ -80,10 +53,7 @@ export function AccountView({ id }: { id: string }) {
         open={!!reportUri}
         onClose={() => setReportUri(undefined)}
         subject={reportUri}
-        onSubmit={async (vals) => {
-          await createReport(vals)
-          refetch()
-        }}
+        onSubmit={onSubmit}
       />
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
@@ -474,19 +444,4 @@ function AccountsGrid({
       </div>
     </div>
   )
-}
-
-async function createReport(vals: ReportFormValues) {
-  await client.api.com.atproto.report.create({
-    ...vals,
-    subject: vals.subject.startsWith('at://')
-      ? {
-          $type: 'com.atproto.repo.recordRef',
-          uri: vals.subject,
-        }
-      : {
-          $type: 'com.atproto.repo.repoRef',
-          did: vals.subject,
-        },
-  })
 }
