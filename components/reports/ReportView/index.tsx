@@ -26,7 +26,13 @@ enum Views {
   Actions,
 }
 
-export function ReportView({ report }: { report: GetReport.OutputSchema }) {
+export function ReportView({
+  report,
+  setResolveReportPanelOpen,
+}: {
+  report: GetReport.OutputSchema
+  setResolveReportPanelOpen: (open: boolean) => void
+}) {
   const [currentView, setCurrentView] = useState(Views.Details)
 
   const headerTitle = `Report #${report?.id ?? ''}`
@@ -39,6 +45,7 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
     : `repo of @${report.subject.handle}`
 
   const resolved = !!report.resolvedByActions?.length
+
   const titleIcon = (
     <span className="flex items-center">
       {resolved ? (
@@ -54,6 +61,10 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
       )}
     </span>
   )
+
+  const onResolveReport = () => {
+    setResolveReportPanelOpen(true)
+  }
 
   return (
     <div className="flex h-full bg-white">
@@ -81,7 +92,7 @@ export function ReportView({ report }: { report: GetReport.OutputSchema }) {
                 titleIcon={titleIcon}
                 headerTitle={headerTitle}
                 subHeaderTitle={subHeaderTitle}
-                action={{ title: 'Resolve Report', onClick: () => {} }}
+                action={{ title: 'Resolve Report', onClick: onResolveReport }}
               />
               {report ? (
                 <>

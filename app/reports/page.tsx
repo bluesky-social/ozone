@@ -8,6 +8,7 @@ import { ReportsTable } from '../../components/reports/ReportsTable'
 import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
 import client from '../../lib/client'
 import { validSubjectString } from '../../lib/types'
+import { takeActionAndResolveReports } from '../../components/reports/takeActionAndResolveReports'
 
 const TABS = [
   { key: 'unresolved', name: 'Unresolved', href: '/reports?resolved=false' },
@@ -87,40 +88,6 @@ async function getReports(opts: {
     { headers: client.adminHeaders() },
   )
   return data
-}
-
-async function takeActionAndResolveReports(vals: ModActionFormValues) {
-  const { data: action } =
-    await client.api.com.atproto.admin.takeModerationAction(
-      {
-        subject: vals.subject.startsWith('at://')
-          ? {
-              $type: 'com.atproto.repo.recordRef',
-              uri: vals.subject,
-            }
-          : {
-              $type: 'com.atproto.repo.repoRef',
-              did: vals.subject,
-            },
-        action: vals.action,
-        reason: vals.reason,
-        subjectBlobCids: vals.subjectBlobCids.length
-          ? vals.subjectBlobCids
-          : undefined,
-        createdBy: client.session.did,
-      },
-      { headers: client.adminHeaders(), encoding: 'application/json' },
-    )
-  if (vals.resolveReportIds.length) {
-    await client.api.com.atproto.admin.resolveModerationReports(
-      {
-        actionId: action.id,
-        reportIds: vals.resolveReportIds,
-        createdBy: client.session.did,
-      },
-      { headers: client.adminHeaders(), encoding: 'application/json' },
-    )
-  }
 }
 
 function unique<T>(arr: T[]) {

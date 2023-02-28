@@ -15,7 +15,6 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
 import { classNames } from '../../../lib/util'
-import client from '../../../lib/client'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
 import { Header } from '../ReportView/Header'
@@ -23,7 +22,6 @@ import { actionOptions } from '../../../app/actions/ModActionPanel'
 import { BlobsTable } from '../../repositories/BlobsTable'
 import { Reports } from '../../repositories/RecordView'
 import { getType } from '../ReportView/getType'
-import { ReverseActionPanel } from '../ReverseActionPanel'
 
 enum Views {
   Details,
@@ -76,13 +74,6 @@ export function ActionView({
       ) : null}
     </span>
   )
-
-  let subjectString = ''
-  if (AdminRecord.isView(action.subject)) {
-    subjectString = action.subject.uri
-  } else if (AdminRepo.isView(action.subject)) {
-    subjectString = action.subject.did
-  }
 
   return (
     <div className="flex h-full bg-white">
