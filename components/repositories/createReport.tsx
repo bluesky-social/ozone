@@ -1,4 +1,3 @@
-'use client'
 import client from '../../lib/client'
 import { ReportFormValues } from '../reports/ReportPanel'
 
