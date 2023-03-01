@@ -50,7 +50,7 @@ export const takeActionAndResolveReports = async (
           <div>
             {title} -{' '}
             <Link
-              href={`actions/${actionId}`}
+              href={`/actions/${actionId}`}
               className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
             >
               View #{actionId}
