@@ -2,14 +2,13 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '../../components/common/ModActionIcon'
 import { ReportsTable } from '../../components/reports/ReportsTable'
 import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
 import client from '../../lib/client'
 import { validSubjectString } from '../../lib/types'
-import { takeActionAndResolveReports } from '../../components/reports/takeActionAndResolveReports'
+import { takeActionAndResolveReports } from '../../components/reports/helpers/takeActionAndResolveReports'
 
 const TABS = [
   { key: 'unresolved', name: 'Unresolved', href: '/reports?resolved=false' },
@@ -65,11 +64,7 @@ export default function Reports() {
         subject={subjectOptions.length === 1 ? subjectOptions[0] : undefined}
         subjectOptions={subjectOptions}
         onSubmit={async (vals: ModActionFormValues) => {
-          await toast.promise(takeActionAndResolveReports(vals), {
-            pending: 'Taking action...',
-            success: 'Action taken',
-            error: 'Error taking action',
-          })
+          await takeActionAndResolveReports(vals)
           refetch()
         }}
       />

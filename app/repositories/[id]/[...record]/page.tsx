@@ -9,6 +9,7 @@ import {
 import { RecordView } from '../../../../components/repositories/RecordView'
 import client from '../../../../lib/client'
 import { createAtUri } from '../../../../lib/util'
+import { createReport } from '../../../../components/repositories/createReport'
 
 export default function Record({
   params,
@@ -80,19 +81,4 @@ export default function Record({
       />
     </>
   )
-}
-
-async function createReport(vals: ReportFormValues) {
-  await client.api.com.atproto.report.create({
-    ...vals,
-    subject: vals.subject.startsWith('at://')
-      ? {
-          $type: 'com.atproto.repo.recordRef',
-          uri: vals.subject,
-        }
-      : {
-          $type: 'com.atproto.repo.repoRef',
-          did: vals.subject,
-        },
-  })
 }
