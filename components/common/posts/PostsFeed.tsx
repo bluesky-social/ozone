@@ -3,6 +3,7 @@ import {
   AppBskyFeedFeedViewPost,
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
+  AppBskyFeedPost,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -11,6 +12,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '../../../lib/types'
+import { RichText } from '../RichText'
 
 export function PostsFeed({
   items,
@@ -135,7 +137,7 @@ function PostContent({
   // TODO entities
   return (
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
-      {(item.post.record as any)?.text}
+      <RichText richText={item.post.record as AppBskyFeedPost.Record} />
     </div>
   )
 }
