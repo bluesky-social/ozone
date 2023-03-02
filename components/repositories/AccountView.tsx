@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyActorGetProfile as GetProfile,
   ComAtprotoAdminGetRepo as GetRepo,
-  AppBskyGraphGetFollows as GetFollows,
-  AppBskyGraphGetFollowers as GetFollowers,
+  AppBskyActorRef as ActorRef,
   ComAtprotoAdminModerationAction as ModAction,
 } from '@atproto/api'
 import {
@@ -391,7 +390,7 @@ function Reports({
   )
 }
 
-type FollowOrFollower = GetFollows.Follow | GetFollowers.Follower
+type FollowOrFollower = ActorRef.WithInfo
 function AccountsGrid({
   error,
   accounts,
