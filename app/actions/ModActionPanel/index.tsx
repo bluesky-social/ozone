@@ -187,7 +187,7 @@ function Form(props: {
   )
 }
 
-const actionOptions = {
+export const actionOptions = {
   [ModAction.ACKNOWLEDGE]: 'Acknowledge',
   [ModAction.FLAG]: 'Flag',
   [ModAction.TAKEDOWN]: 'Takedown',

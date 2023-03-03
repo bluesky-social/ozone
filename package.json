@@ -9,10 +9,11 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@atproto/api": "^0.1.0",
+    "@atproto/api": "^0.1.2",
     "@headlessui/react": "^1.7.7",
     "@heroicons/react": "^2.0.13",
     "@next/font": "13.0.7",
@@ -26,6 +27,7 @@
     "next": "13.0.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-toastify": "^9.1.1",
     "react-use": "^17.4.0",
     "typescript": "4.9.4"
   },

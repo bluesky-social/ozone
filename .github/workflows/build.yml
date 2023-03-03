@@ -1,0 +1,26 @@
+name: Build
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+      - staging
+
+jobs:
+  building:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install node 18
+        uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Check out Git repository
+        uses: actions/checkout@v3
+      - name: Yarn install
+        run: yarn
+      - name: Typescript Check
+        run: yarn type-check
+      - name: Build
+        run: yarn build

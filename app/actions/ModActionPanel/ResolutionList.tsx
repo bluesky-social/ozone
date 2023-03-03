@@ -1,7 +1,7 @@
 import { ComAtprotoRepoRepoRef, ComAtprotoRepoStrongRef } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { LoadMoreButton } from '../../../components/common/LoadMoreButton'
-import { ReasonBadge } from '../../../components/reports/ReportsTable'
+import { ReasonBadge } from '../../../components/reports/ReasonBadge'
 import { validSubjectString } from '../../../lib/types'
 import { parseAtUri } from '../../../lib/util'
 import client from '../../../lib/client'
