@@ -184,7 +184,7 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
     <div className="sm:col-span-1">
       <dt className="text-sm font-medium text-gray-500">{label}</dt>
       <dd
-        className="mt-1 text-sm text-gray-900 truncate"
+        className="mt-1 text-sm text-gray-900"
         title={typeof value === 'string' ? value : undefined}
       >
         {value}
@@ -206,9 +206,9 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
   ]
 
   const reasonComponent = (
-    <dd className="mt-1 truncate text-gray-700">
+    <span>
       <ReasonBadge reasonType={reasonType} /> {reason}
-    </dd>
+    </span>
   )
 
   return (

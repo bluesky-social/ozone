@@ -6,6 +6,7 @@ import {
 } from '@atproto/api'
 import { SubjectOverview } from '../SubjectOverview'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
+import { truncate } from '../../../lib/util'
 
 export function ActionsTable(props: { actions }) {
   const { actions } = props
@@ -37,7 +38,7 @@ function ActionRow(props: { action: ModAction.OutputSchema }) {
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
         <dl className="font-normal">
           <dt className="sr-only">Reason</dt>
-          <dd className="mt-1 truncate text-gray-700">
+          <dd className="mt-1 truncate text-gray-700 w-[250px]">
             <ReasonBadge reasonType={action.action} />{' '}
             {wasReversed ? (
               <>
@@ -47,7 +48,7 @@ function ActionRow(props: { action: ModAction.OutputSchema }) {
                 />{' '}
               </>
             ) : null}
-            {action.reason}
+            {truncate(action.reason, 100)}
           </dd>
         </dl>
       </td>
