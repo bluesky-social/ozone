@@ -5,7 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import { createReport } from '../../../components/repositories/createReport'
 
 export default function Repository({ params }: { params: { id: string } }) {
-  const { id } = params
+  const { id: rawId } = params
+  const id = decodeURIComponent(rawId)
 
   const {
     error,
