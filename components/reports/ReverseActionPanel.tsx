@@ -14,7 +14,7 @@ export function ReverseActionPanel(
 ) {
   const { subject, onSubmit, onClose, ...others } = props
   return (
-    <ActionPanel title="Create a report" onClose={onClose} {...others}>
+    <ActionPanel title="Reverse Action" onClose={onClose} {...others}>
       <Form onCancel={onClose} onSubmit={onSubmit} subject={subject} />
     </ActionPanel>
   )
