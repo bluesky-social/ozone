@@ -4,10 +4,8 @@ import Link from 'next/link'
 import {
   ComAtprotoAdminGetModerationReport as GetReport,
   AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminRecord,
-  ComAtprotoAdminRepo,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
-
 import {
   ChevronLeftIcon,
   CheckCircleIcon,
@@ -38,9 +36,9 @@ export function ReportView({
   const headerTitle = `Report #${report?.id ?? ''}`
 
   const reportSubjectValue =
-    ComAtprotoAdminRecord.isView(report.subject) && report.subject.value
+    ComAtprotoAdminDefs.isRecordView(report.subject) && report.subject.value
   const shortType = getType(reportSubjectValue).replace('app.bsky.feed.', '')
-  const subHeaderTitle = ComAtprotoAdminRecord.isView(report.subject)
+  const subHeaderTitle = ComAtprotoAdminDefs.isRecordView(report.subject)
     ? `${shortType} record of @${report.subject.repo.handle}`
     : `repo of @${report.subject.handle}`
 
@@ -192,7 +190,7 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
     </div>
   )
 
-  const { createdAt, reason, reasonType, reportedByDid, subject } = report
+  const { createdAt, reason, reasonType, reportedBy, subject } = report
 
   const labels: { label: string; value: string }[] = [
     {
@@ -201,7 +199,7 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
     },
     {
       label: 'Reported By DID',
-      value: reportedByDid,
+      value: reportedBy,
     },
   ]
 
@@ -221,20 +219,20 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
       </dl>
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Reported By:</dt>
-      {reportedByDid && (
+      {reportedBy && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-          <RepoCard did={reportedByDid} />
+          <RepoCard did={reportedBy} />
         </div>
       )}
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
-      {ComAtprotoAdminRecord.isView(subject) &&
+      {ComAtprotoAdminDefs.isRecordView(subject) &&
         subject.uri.startsWith('at://') && (
           <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
             <RecordCard uri={subject.uri} />
           </div>
         )}
-      {ComAtprotoAdminRepo.isView(subject) &&
+      {ComAtprotoAdminDefs.isRepoView(subject) &&
         subject.did?.startsWith('did:') && (
           <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
             <RepoCard did={subject.did} />

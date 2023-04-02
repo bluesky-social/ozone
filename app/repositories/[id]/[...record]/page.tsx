@@ -2,10 +2,7 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AppBskyFeedGetPostThread as GetPostThread } from '@atproto/api'
-import {
-  ReportFormValues,
-  ReportPanel,
-} from '../../../../components/reports/ReportPanel'
+import { ReportPanel } from '../../../../components/reports/ReportPanel'
 import { RecordView } from '../../../../components/repositories/RecordView'
 import client from '../../../../lib/client'
 import { createAtUri } from '../../../../lib/util'
@@ -27,7 +24,7 @@ export default function Record({
       if (id.startsWith('did:')) {
         did = id
       } else {
-        const { data } = await client.api.com.atproto.handle.resolve({
+        const { data } = await client.api.com.atproto.identity.resolveHandle({
           handle: id,
         })
         did = data.did

@@ -21,7 +21,7 @@ export default function Repository({ params }: { params: { id: string } }) {
           did = id
         } else {
           const { data: resolved } =
-            await client.api.com.atproto.handle.resolve({ handle: id })
+            await client.api.com.atproto.identity.resolveHandle({ handle: id })
           did = resolved.did
         }
         const { data: repo } = await client.api.com.atproto.admin.getRepo(

@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import {
-  ComAtprotoAdminModerationAction,
+  ComAtprotoAdminDefs,
   ComAtprotoAdminGetModerationAction as ModAction,
 } from '@atproto/api'
 import { SubjectOverview } from '../SubjectOverview'
@@ -124,8 +124,8 @@ export function ReasonBadge(props: { reasonType: string }) {
 }
 
 const reasonColors: Record<string, string> = {
-  [ComAtprotoAdminModerationAction.TAKEDOWN]: 'bg-pink-100 text-pink-800',
-  [ComAtprotoAdminModerationAction.FLAG]: 'bg-indigo-100 text-indigo-800',
-  [ComAtprotoAdminModerationAction.ACKNOWLEDGE]: 'bg-green-100 text-green-800',
+  [ComAtprotoAdminDefs.TAKEDOWN]: 'bg-pink-100 text-pink-800',
+  [ComAtprotoAdminDefs.FLAG]: 'bg-indigo-100 text-indigo-800',
+  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'bg-green-100 text-green-800',
   default: 'bg-gray-100 text-gray-800',
 }

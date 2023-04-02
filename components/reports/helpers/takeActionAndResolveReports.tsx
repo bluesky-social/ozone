@@ -1,8 +1,4 @@
-import {
-  ComAtprotoAdminRepo as AdminRepo,
-  ComAtprotoAdminRecord as AdminRecord,
-  ComAtprotoAdminModerationAction as ModAction,
-} from '@atproto/api'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 import Link from 'next/link'
 import { toast } from 'react-toastify'
 import { ModActionFormValues } from '../../../app/actions/ModActionPanel'
@@ -13,11 +9,9 @@ import { isIdRecord } from './isIdRecord'
 export const takeActionAndResolveReports = async (
   vals: ModActionFormValues,
 ) => {
-  const isRecord = isIdRecord(vals.subject)
-  const subject = createSubjectFromId(vals.subject)
-
-  const takeModerationActionAsync = async () =>
-    client.api.com.atproto.admin.takeModerationAction(
+  const takeModerationActionAsync = async () => {
+    const subject = await createSubjectFromId(vals.subject)
+    return client.api.com.atproto.admin.takeModerationAction(
       {
         subject,
         action: vals.action,
@@ -29,6 +23,7 @@ export const takeActionAndResolveReports = async (
       },
       { headers: client.adminHeaders(), encoding: 'application/json' },
     )
+  }
 
   const { data: action } = await toast.promise(takeModerationActionAsync, {
     pending: 'Taking action...',
@@ -44,6 +39,7 @@ export const takeActionAndResolveReports = async (
         const actionId = newAction?.id
         const actionType = newAction?.action
         const actionTypeString = actionType && actionOptions[actionType]
+        const isRecord = isIdRecord(vals.subject)
         const title = `${isRecord ? 'Record' : 'Repo'} was ${actionTypeString}`
 
         return (
@@ -73,7 +69,7 @@ export const takeActionAndResolveReports = async (
 }
 
 const actionOptions = {
-  [ModAction.ACKNOWLEDGE]: 'acknowledged',
-  [ModAction.FLAG]: 'flagged',
-  [ModAction.TAKEDOWN]: 'taken-down',
+  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'acknowledged',
+  [ComAtprotoAdminDefs.FLAG]: 'flagged',
+  [ComAtprotoAdminDefs.TAKEDOWN]: 'taken-down',
 }

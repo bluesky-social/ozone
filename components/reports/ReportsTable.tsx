@@ -4,7 +4,6 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/20/solid'
-import { ComAtprotoAdminGetRecord as GetRecord } from '@atproto/api'
 import { Report } from '../../lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { truncate } from '../../lib/util'

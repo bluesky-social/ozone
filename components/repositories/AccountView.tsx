@@ -5,8 +5,8 @@ import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyActorGetProfile as GetProfile,
   ComAtprotoAdminGetRepo as GetRepo,
-  AppBskyActorRef as ActorRef,
-  ComAtprotoAdminModerationAction as ModAction,
+  AppBskyActorDefs,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -126,11 +126,11 @@ function Header({
 }) {
   const { currentAction } = repo?.moderation ?? {}
   const actionColorClasses =
-    currentAction?.action === ModAction.TAKEDOWN
+    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
   const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.moderationAction#',
+    'com.atproto.admin.defs#',
     '',
   )
   const displayActorName = repo
@@ -175,10 +175,10 @@ function Header({
               </h1>
             </div>
             <div className="justify-stretch mt-6 flex flex-row space-x-3">
-              {repo?.account?.email && (
+              {repo?.email && (
                 <a
                   role="button"
-                  href={`mailto:${repo.account.email}`}
+                  href={`mailto:${repo.email}`}
                   className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
                 >
                   <EnvelopeIcon
@@ -345,7 +345,7 @@ function Follows({ id }: { id: string }) {
   const { error, data: follows } = useQuery({
     queryKey: ['follows', { id }],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollows({ user: id })
+      const { data } = await client.api.app.bsky.graph.getFollows({ actor: id })
       return data
     },
   })
@@ -361,7 +361,7 @@ function Followers({ id }: { id: string }) {
     queryKey: ['followers', { id }],
     queryFn: async () => {
       const { data } = await client.api.app.bsky.graph.getFollowers({
-        user: id,
+        actor: id,
       })
       return data
     },
@@ -390,7 +390,7 @@ function Reports({
   )
 }
 
-type FollowOrFollower = ActorRef.WithInfo
+type FollowOrFollower = AppBskyActorDefs.ProfileView
 function AccountsGrid({
   error,
   accounts,

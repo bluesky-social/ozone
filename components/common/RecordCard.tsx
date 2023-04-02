@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedGetPostThread } from '@atproto/api'
+import { AppBskyFeedDefs } from '@atproto/api'
 import { parseAtUri } from '../../lib/util'
 import client from '../../lib/client'
 import { PostAsCard } from './posts/PostsFeed'
@@ -35,7 +35,7 @@ function PostCard(props: { uri: string }) {
     // Temp fallback for taken-down posts, re: TODO above
     return <GenericRecordCard uri={uri} />
   }
-  if (!data || !AppBskyFeedGetPostThread.isThreadViewPost(data.thread)) {
+  if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
   }
   return <PostAsCard dense controls={false} item={{ post: data.thread.post }} />

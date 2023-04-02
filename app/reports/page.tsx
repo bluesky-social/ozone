@@ -29,7 +29,7 @@ export default function Reports() {
       return await getReports({
         subject,
         resolved,
-        before: pageParam,
+        cursor: pageParam,
       })
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
@@ -75,14 +75,14 @@ export default function Reports() {
 async function getReports(opts: {
   subject?: string
   resolved?: boolean
-  before?: string
+  cursor?: string
 }) {
-  const { subject, resolved, before } = opts
+  const { subject, resolved, cursor } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
       resolved,
-      before,
+      cursor,
       limit: 25,
     },
     { headers: client.adminHeaders() },

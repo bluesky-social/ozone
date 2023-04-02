@@ -1,7 +1,7 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
-import { ComAtprotoAdminRecord as AdminRecord } from '@atproto/api'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 import { useState } from 'react'
 import { ActionView } from '../../../components/reports/ActionView'
 import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
@@ -52,7 +52,9 @@ export default function Action({ params }: { params: { id: string } }) {
                     actionType && actionOptions[actionType]
 
                   const title = `${actionTypeString} on ${
-                    AdminRecord.isView(action.subject) ? 'record' : 'repo'
+                    ComAtprotoAdminDefs.isRecordView(action.subject)
+                      ? 'record'
+                      : 'repo'
                   } has been reversed`
 
                   return title

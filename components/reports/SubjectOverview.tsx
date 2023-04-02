@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { ComAtprotoRepoStrongRef, ComAtprotoRepoRepoRef } from '@atproto/api'
+import { ComAtprotoRepoStrongRef, ComAtprotoAdminDefs } from '@atproto/api'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { Report } from '../../lib/types'
 import { createAtUri, parseAtUri, truncate } from '../../lib/util'
@@ -9,7 +9,7 @@ export function SubjectOverview(props: {
   withTruncation?: boolean
 }) {
   const { subject, withTruncation = true } = props
-  const summary = ComAtprotoRepoRepoRef.isMain(subject)
+  const summary = ComAtprotoAdminDefs.isRepoRef(subject)
     ? { did: subject.did, collection: null, rkey: null }
     : ComAtprotoRepoStrongRef.isMain(subject)
     ? parseAtUri(subject.uri)

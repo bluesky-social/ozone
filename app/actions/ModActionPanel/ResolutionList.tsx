@@ -1,4 +1,4 @@
-import { ComAtprotoRepoRepoRef, ComAtprotoRepoStrongRef } from '@atproto/api'
+import { ComAtprotoRepoStrongRef, ComAtprotoAdminDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { LoadMoreButton } from '../../../components/common/LoadMoreButton'
 import { ReasonBadge } from '../../../components/reports/ReasonBadge'
@@ -24,7 +24,7 @@ export function ResolutionList(props: {
         {
           subject: subjectDid,
           limit: 25,
-          before: pageParam,
+          cursor: pageParam,
         },
         { headers: client.adminHeaders() },
       )
@@ -53,7 +53,7 @@ export function ResolutionList(props: {
         <div className="text-sm text-gray-400">None found</div>
       )}
       {reports.map((report) => {
-        const summary = ComAtprotoRepoRepoRef.isMain(report.subject)
+        const summary = ComAtprotoAdminDefs.isRepoRef(report.subject)
           ? { did: report.subject.did, collection: null, rkey: null }
           : ComAtprotoRepoStrongRef.isMain(report.subject)
           ? parseAtUri(report.subject.uri)

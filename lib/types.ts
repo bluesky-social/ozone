@@ -1,36 +1,22 @@
 import {
-  AppBskyFeedFeedViewPost,
-  ComAtprotoAdminRepo,
-  ComAtprotoAdminModerationReport,
-  ComAtprotoRepoRepoRef,
   ComAtprotoRepoStrongRef,
+  ComAtprotoAdminDefs,
+  AppBskyFeedDefs,
 } from '@atproto/api'
 import { ReactNode } from 'react'
 
-type Reasons =
-  | AppBskyFeedFeedViewPost.ReasonRepost
-  | {
-      $type: string
-      [k: string]: unknown
-    }
-  | undefined
+type Reason = AppBskyFeedDefs.FeedViewPost['reason']
 
-function isRecord(v: any): v is Record<string, any> {
-  return !!v && typeof v === 'object'
+export function isRepost(v: Reason): v is AppBskyFeedDefs.ReasonRepost {
+  return AppBskyFeedDefs.isReasonRepost(v)
 }
 
-export function isRepost(
-  v: Reasons,
-): v is AppBskyFeedFeedViewPost.ReasonRepost {
-  return isRecord(v) && v.$type === 'app.bsky.feed.feedViewPost#reasonRepost'
-}
+export type Repo = ComAtprotoAdminDefs.RepoView
 
-export type Repo = ComAtprotoAdminRepo.View
-
-export type Report = ComAtprotoAdminModerationReport.View
+export type Report = ComAtprotoAdminDefs.ReportView
 
 export function validSubjectString(subject: Report['subject']) {
-  if (ComAtprotoRepoRepoRef.isMain(subject)) {
+  if (ComAtprotoAdminDefs.isRepoRef(subject)) {
     return subject.did
   } else if (ComAtprotoRepoStrongRef.isMain(subject)) {
     return subject.uri

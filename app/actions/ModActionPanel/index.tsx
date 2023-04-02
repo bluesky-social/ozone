@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { ComAtprotoAdminModerationAction as ModAction } from '@atproto/api'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 import { useState } from 'react'
 import { ActionPanel } from '../../../components/common/ActionPanel'
 import {
@@ -61,11 +61,11 @@ function Form(props: {
   })
   const { currentAction } = record?.moderation ?? repo?.moderation ?? {}
   const actionColorClasses =
-    currentAction?.action === ModAction.TAKEDOWN
+    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
   const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.moderationAction#',
+    'com.atproto.admin.defs#',
     '',
   )
   return (
@@ -188,9 +188,9 @@ function Form(props: {
 }
 
 export const actionOptions = {
-  [ModAction.ACKNOWLEDGE]: 'Acknowledge',
-  [ModAction.FLAG]: 'Flag',
-  [ModAction.TAKEDOWN]: 'Takedown',
+  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
+  [ComAtprotoAdminDefs.FLAG]: 'Flag',
+  [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
 }
 
 export type ModActionFormValues = {

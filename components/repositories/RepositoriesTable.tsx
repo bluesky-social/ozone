@@ -1,11 +1,7 @@
 import Link from 'next/link'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { formatDistanceToNow } from 'date-fns'
-import {
-  AppBskyActorProfile,
-  AppBskySystemDeclaration,
-  ComAtprotoAdminModerationAction as ModAction,
-} from '@atproto/api'
+import { AppBskyActorProfile, ComAtprotoAdminDefs } from '@atproto/api'
 import { Repo } from '../../lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 
@@ -41,22 +37,15 @@ export function RepositoriesTable(props: {
 function RepoRow(props: { repo: Repo }) {
   const { repo, ...others } = props
   const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
-  const declaration = repo.relatedRecords.find(
-    AppBskySystemDeclaration.isRecord,
-  )
   const displayName = profile?.displayName
-  const actorType = declaration?.actorType.replace(
-    /^app\.bsky\.system\.actor/,
-    '',
-  )
   const indexedAt = new Date(repo.indexedAt)
   const { currentAction } = repo.moderation
   const actionColorClasses =
-    currentAction?.action === ModAction.TAKEDOWN
+    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
   const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.moderationAction#',
+    'com.atproto.admin.defs#',
     '',
   )
   return (
@@ -72,14 +61,10 @@ function RepoRow(props: { repo: Repo }) {
           <dt className="sr-only">Name</dt>
           <dd className="mt-1 truncate text-gray-700">{displayName}</dd>
           <dt className="sr-only sm:hidden">Type</dt>
-          <dd className="mt-1 truncate text-gray-500 sm:hidden">{actorType}</dd>
         </dl>
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">
         {displayName}
-      </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
-        {actorType}
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 lg:table-cell">
         <span title={indexedAt.toLocaleString()}>
@@ -116,12 +101,6 @@ function RepoRowHead() {
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
       >
         Name
-      </th>
-      <th
-        scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
-      >
-        Type
       </th>
       <th
         scope="col"

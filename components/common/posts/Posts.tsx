@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { AppBskyFeedFeedViewPost } from '@atproto/api'
+import { AppBskyFeedDefs } from '@atproto/api'
 import { TableCellsIcon, ListBulletIcon } from '@heroicons/react/20/solid'
 import { PostsFeed } from './PostsFeed'
 import { PostsTable } from './PostsTable'
@@ -16,7 +16,7 @@ export function Posts({
   onReport,
   onLoadMore,
 }: {
-  items: AppBskyFeedFeedViewPost.Main[]
+  items: AppBskyFeedDefs.FeedViewPost[]
   title: string
   onReport: (uri: string) => void
   onLoadMore: () => void

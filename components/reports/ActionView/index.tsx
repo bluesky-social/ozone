@@ -3,11 +3,8 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
   ComAtprotoAdminGetModerationAction as GetAction,
-  ComAtprotoAdminRecord as AdminRecord,
-  ComAtprotoAdminRepo as AdminRepo,
-  ComAtprotoAdminModerationAction as ModAction,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
-
 import {
   ChevronLeftIcon,
   CheckCircleIcon,
@@ -40,16 +37,16 @@ export function ActionView({
 
   const headerTitle = `Action #${action?.id ?? ''}`
   const reportSubjectValue =
-    AdminRecord.isView(action.subject) && action.subject.value
+    ComAtprotoAdminDefs.isRecordView(action.subject) && action.subject.value
   const shortType = getType(reportSubjectValue).replace('app.bsky.feed.', '')
-  const subHeaderTitle = AdminRecord.isView(action.subject)
+  const subHeaderTitle = ComAtprotoAdminDefs.isRecordView(action.subject)
     ? `${shortType} record of @${action.subject.repo.handle}`
     : `repo of @${action.subject.handle}`
 
   const resolved = !!action.resolvedReports?.length
   const wasReversed = !!action.reversal
   const actionColorClasses =
-    action.action === ModAction.TAKEDOWN
+    action.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
 
@@ -259,12 +256,12 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
 
-      {AdminRecord.isView(subject) && subject.uri.startsWith('at://') && (
+      {ComAtprotoAdminDefs.isRecordView(subject) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject.uri} />
         </div>
       )}
-      {AdminRepo.isView(subject) && subject.did?.startsWith('did:') && (
+      {ComAtprotoAdminDefs.isRepoView(subject) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={subject.did} />
         </div>

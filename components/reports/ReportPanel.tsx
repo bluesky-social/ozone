@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ComAtprotoReportReasonType } from '@atproto/api'
+import { ComAtprotoModerationDefs } from '@atproto/api'
 import { ActionPanel } from '../common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
 import { FormLabel, Input, Select, Textarea } from '../common/forms'
@@ -129,8 +129,8 @@ function Form(props: {
 }
 
 const reasonTypeOptions = {
-  [ComAtprotoReportReasonType.SPAM]: 'Spam',
-  [ComAtprotoReportReasonType.OTHER]: 'Other',
+  [ComAtprotoModerationDefs.REASONSPAM]: 'Spam',
+  [ComAtprotoModerationDefs.REASONOTHER]: 'Other',
 }
 
 export type ReportFormValues = {

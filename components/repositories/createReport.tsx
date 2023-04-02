@@ -6,13 +6,14 @@ import { isIdRecord } from '../reports/helpers/isIdRecord'
 import { ReportFormValues } from '../reports/ReportPanel'
 
 export async function createReport(vals: ReportFormValues) {
-  const isRecord = isIdRecord(vals.subject)
-  const subject = createSubjectFromId(vals.subject)
-  const createReportAsync = async () =>
-    client.api.com.atproto.report.create({
+  const createReportAsync = async () => {
+    const subject = await createSubjectFromId(vals.subject)
+    return client.api.com.atproto.moderation.createReport({
       ...vals,
       subject,
     })
+  }
+
   await toast.promise(createReportAsync(), {
     pending: 'Submitting report...',
     error: {
@@ -25,6 +26,7 @@ export async function createReport(vals: ReportFormValues) {
       render({ data }) {
         const newReport = data?.data
         const reportId = newReport?.id
+        const isRecord = isIdRecord(vals.subject)
         const title = `${isRecord ? 'Record' : 'Repo'} has been reported`
 
         return (

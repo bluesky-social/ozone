@@ -1,14 +1,11 @@
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
-import {
-  ComAtprotoAdminBlob as Blob,
-  ComAtprotoAdminModerationAction as ModAction,
-} from '@atproto/api'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ComponentProps } from 'react'
 import { formatBytes } from '../../lib/util'
 
-export function BlobsTable(props: { blobs: Blob.View[] }) {
+export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
   const { blobs } = props
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -28,16 +25,16 @@ export function BlobsTable(props: { blobs: Blob.View[] }) {
   )
 }
 
-function BlobRow(props: { blob: Blob.View }) {
+function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
   const { blob, ...others } = props
   const createdAt = new Date(blob.createdAt)
   const { currentAction } = blob.moderation ?? {}
   const actionColorClasses =
-    currentAction?.action === ModAction.TAKEDOWN
+    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
   const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.moderationAction#',
+    'com.atproto.admin.defs#',
     '',
   )
   return (
@@ -48,8 +45,8 @@ function BlobRow(props: { blob: Blob.View }) {
       <td className="px-3 py-4 text-sm text-gray-500">
         <Chip>{blob.mimeType}</Chip>
         <Chip>{formatBytes(blob.size)}</Chip>
-        {(Blob.isImageDetails(blob.details) ||
-          Blob.isVideoDetails(blob.details)) && (
+        {(ComAtprotoAdminDefs.isImageDetails(blob.details) ||
+          ComAtprotoAdminDefs.isVideoDetails(blob.details)) && (
           <Chip>
             {blob.details.height}x{blob.details.width}px
           </Chip>

@@ -1,8 +1,9 @@
 'use client'
 import {
-  AppBskyFeedFeedViewPost,
+  AppBskyFeedDefs,
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
+  AppBskyEmbedRecordWithMedia,
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
@@ -13,7 +14,7 @@ export function PostsTable({
   onReport,
   onLoadMore,
 }: {
-  items: AppBskyFeedFeedViewPost.Main[]
+  items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
   onLoadMore: () => void
 }) {
@@ -60,7 +61,7 @@ export function PostAsRow({
   item,
   onReport,
 }: {
-  item: AppBskyFeedFeedViewPost.Main
+  item: AppBskyFeedDefs.FeedViewPost
   onReport?: (uri: string) => void
 }) {
   return (
@@ -117,7 +118,7 @@ export function PostAsRow({
   )
 }
 
-function PostContent({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
+function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   // TODO entities
   return (
     <>
@@ -138,9 +139,12 @@ function PostContent({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
   )
 }
 
-function PostEmbeds({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
-  if (item.post.embed?.$type === 'app.bsky.embed.images#presented') {
-    const embed = item.post.embed as AppBskyEmbedImages.Presented
+// @TODO record embeds
+function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+  const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
+    ? item.post.embed.media
+    : item.post.embed
+  if (AppBskyEmbedImages.isView(embed)) {
     return (
       <span className="flex gap-2 pt-2">
         {embed.images.map((image, i) => (
@@ -159,8 +163,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
       </span>
     )
   }
-  if (item.post.embed?.$type === 'app.bsky.embed.external#presented') {
-    const embed = item.post.embed as AppBskyEmbedExternal.Presented
+  if (AppBskyEmbedExternal.isView(embed)) {
     return (
       <span className="flex gap-2 pt-2">
         {embed.external.thumb ? (

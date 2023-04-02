@@ -1,8 +1,8 @@
-import { ComAtprotoReportReasonType } from '@atproto/api'
+import { ComAtprotoModerationDefs } from '@atproto/api'
 
 export function ReasonBadge(props: { reasonType: string }) {
   const { reasonType } = props
-  const readable = reasonType.replace('com.atproto.report.reasonType#', '')
+  const readable = reasonType.replace('com.atproto.moderation.defs#reason', '')
   const color = reasonColors[reasonType] ?? reasonColors.default
   return (
     <span
@@ -13,7 +13,7 @@ export function ReasonBadge(props: { reasonType: string }) {
   )
 }
 const reasonColors: Record<string, string> = {
-  [ComAtprotoReportReasonType.SPAM]: 'bg-pink-100 text-pink-800',
-  [ComAtprotoReportReasonType.OTHER]: 'bg-indigo-100 text-indigo-800',
+  [ComAtprotoModerationDefs.REASONSPAM]: 'bg-pink-100 text-pink-800',
+  [ComAtprotoModerationDefs.REASONOTHER]: 'bg-indigo-100 text-indigo-800',
   default: 'bg-gray-100 text-gray-800',
 }

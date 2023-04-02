@@ -16,9 +16,9 @@ export function AuthorFeed({
     queryKey: ['authorFeed', { id }],
     queryFn: async ({ pageParam }) => {
       const { data } = await client.api.app.bsky.feed.getAuthorFeed({
-        author: id,
+        actor: id,
         limit: 30,
-        before: pageParam,
+        cursor: pageParam,
       })
       return data
     },

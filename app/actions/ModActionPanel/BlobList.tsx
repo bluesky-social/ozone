@@ -1,13 +1,13 @@
 import { ComponentProps } from 'react'
 import Link from 'next/link'
-import {
-  ComAtprotoAdminBlob as Blob,
-  ComAtprotoAdminModerationAction as ModAction,
-} from '@atproto/api'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { formatBytes } from '../../../lib/util'
 
-export function BlobList(props: { name: string; blobs: Blob.View[] }) {
+export function BlobList(props: {
+  name: string
+  blobs: ComAtprotoAdminDefs.BlobView[]
+}) {
   const { name, blobs } = props
   return (
     <fieldset className="space-y-5 min-w-0">
@@ -15,11 +15,11 @@ export function BlobList(props: { name: string; blobs: Blob.View[] }) {
       {blobs.map((blob) => {
         const { currentAction } = blob.moderation ?? {}
         const actionColorClasses =
-          currentAction?.action === ModAction.TAKEDOWN
+          currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
             ? 'text-rose-600 hover:text-rose-700'
             : 'text-indigo-600 hover:text-indigo-900'
         const displayActionType = currentAction?.action.replace(
-          'com.atproto.admin.moderationAction#',
+          'com.atproto.admin.defs#',
           '',
         )
         return (
@@ -57,8 +57,8 @@ export function BlobList(props: { name: string; blobs: Blob.View[] }) {
               <p id={`blob-${blob.cid}-description`}>
                 <Chip>{blob.mimeType}</Chip>
                 <Chip>{formatBytes(blob.size)}</Chip>
-                {(Blob.isImageDetails(blob.details) ||
-                  Blob.isVideoDetails(blob.details)) && (
+                {(ComAtprotoAdminDefs.isImageDetails(blob.details) ||
+                  ComAtprotoAdminDefs.isVideoDetails(blob.details)) && (
                   <Chip>
                     {blob.details.height}x{blob.details.width}px
                   </Chip>

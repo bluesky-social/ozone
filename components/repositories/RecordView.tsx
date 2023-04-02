@@ -4,8 +4,8 @@ import Link from 'next/link'
 import {
   ComAtprotoAdminGetRecord as GetRecord,
   AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminModerationAction as ModAction,
-  ComAtprotoAdminBlob as Blob,
+  ComAtprotoAdminDefs,
+  AppBskyFeedDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -101,11 +101,11 @@ function Header({
   const shortCollection = collection.replace('app.bsky.feed.', '')
   const { currentAction } = record.moderation
   const actionColorClasses =
-    currentAction?.action === ModAction.TAKEDOWN
+    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
   const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.moderationAction#',
+    'com.atproto.admin.defs#',
     '',
   )
   return (
@@ -226,7 +226,7 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
   )
 }
 
-function Blobs({ blobs }: { blobs: Blob.View[] }) {
+function Blobs({ blobs }: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
   return <BlobsTable blobs={blobs} />
 }
 
@@ -261,7 +261,7 @@ function ThreadPost({
   thread: GetPostThread.OutputSchema['thread']
   highlight?: boolean
 }) {
-  if (GetPostThread.isThreadViewPost(thread)) {
+  if (AppBskyFeedDefs.isThreadViewPost(thread)) {
     return (
       <>
         {thread.parent && (
@@ -284,7 +284,7 @@ function ThreadPost({
         ))}
       </>
     )
-  } else if (GetPostThread.isNotFoundPost(thread)) {
+  } else if (AppBskyFeedDefs.isNotFoundPost(thread)) {
     return (
       <ThreadPostWrapper depth={depth}>
         Not found: ${thread.uri}
@@ -316,7 +316,7 @@ function ThreadPostWrapper({
 
 function getThreadDepth(thread: GetPostThread.OutputSchema['thread']) {
   let depth = 0
-  while (GetPostThread.isThreadViewPost(thread.parent)) {
+  while (AppBskyFeedDefs.isThreadViewPost(thread.parent)) {
     thread = thread.parent
     depth++
   }

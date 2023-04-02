@@ -1,8 +1,9 @@
 'use client'
 import {
-  AppBskyFeedFeedViewPost,
+  AppBskyFeedDefs,
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
+  AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
 } from '@atproto/api'
 import Link from 'next/link'
@@ -19,7 +20,7 @@ export function PostsFeed({
   onReport,
   onLoadMore,
 }: {
-  items: AppBskyFeedFeedViewPost.Main[]
+  items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
   onLoadMore: () => void
 }) {
@@ -45,7 +46,7 @@ export function PostAsCard({
   onReport,
   className = '',
 }: {
-  item: AppBskyFeedFeedViewPost.Main
+  item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
   controls?: boolean
   onReport?: (uri: string) => void
@@ -65,7 +66,7 @@ function PostHeader({
   item,
   dense,
 }: {
-  item: AppBskyFeedFeedViewPost.Main
+  item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
 }) {
   return (
@@ -131,20 +132,22 @@ function PostContent({
   item,
   dense,
 }: {
-  item: AppBskyFeedFeedViewPost.Main
+  item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
 }) {
-  // TODO entities
   return (
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
-      <RichText richText={item.post.record as AppBskyFeedPost.Record} />
+      <RichText post={item.post.record as AppBskyFeedPost.Record} />
     </div>
   )
 }
 
-function PostEmbeds({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
-  if (item.post.embed?.$type === 'app.bsky.embed.images#presented') {
-    const embed = item.post.embed as AppBskyEmbedImages.Presented
+// @TODO record embeds
+function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+  const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
+    ? item.post.embed.media
+    : item.post.embed
+  if (AppBskyEmbedImages.isView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
         {embed.images.map((image, i) => (
@@ -164,8 +167,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedFeedViewPost.Main }) {
       </div>
     )
   }
-  if (item.post.embed?.$type === 'app.bsky.embed.external#presented') {
-    const embed = item.post.embed as AppBskyEmbedExternal.Presented
+  if (AppBskyEmbedExternal.isView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
         {embed.external.thumb ? (
@@ -198,7 +200,7 @@ function PostControls({
   item,
   onReport,
 }: {
-  item: AppBskyFeedFeedViewPost.Main
+  item: AppBskyFeedDefs.FeedViewPost
   onReport?: (uri: string) => void
 }) {
   return (

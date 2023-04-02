@@ -1,17 +1,14 @@
-import {
-  ComAtprotoAdminRecord as AdminRecord,
-  ComAtprotoAdminRepo as AdminRepo,
-} from '@atproto/api'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 
 export const getSubjectString = (
   subject:
-    | AdminRecord.View
-    | AdminRepo.View
+    | ComAtprotoAdminDefs.RecordView
+    | ComAtprotoAdminDefs.RepoView
     | { [k: string]: unknown; $type: string },
 ) => {
-  if (AdminRecord.isView(subject)) {
+  if (ComAtprotoAdminDefs.isRecordView(subject)) {
     return subject.uri
-  } else if (AdminRepo.isView(subject)) {
+  } else if (ComAtprotoAdminDefs.isRepoView(subject)) {
     return subject.did
   }
   return ''

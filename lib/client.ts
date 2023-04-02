@@ -76,7 +76,7 @@ class ClientManager extends EventTarget {
 
   async signout() {
     try {
-      this._agent?.api.com.atproto.session.delete()
+      this._agent?.api.com.atproto.server.deleteSession()
     } catch (err) {
       console.error('(Minor issue) Failed to delete session on the server', err)
     }

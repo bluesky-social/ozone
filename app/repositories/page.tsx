@@ -17,7 +17,7 @@ export default function Repositories() {
         {
           term,
           limit: 25,
-          before: pageParam,
+          cursor: pageParam,
         },
         { headers: client.adminHeaders() },
       )
