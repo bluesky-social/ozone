@@ -13,12 +13,14 @@ import {
   EnvelopeIcon,
   ExclamationCircleIcon,
   ShieldExclamationIcon,
+  XCircleIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
 import { classNames } from '../../lib/util'
 import client from '../../lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
+import { InviteCodesTable } from '../invites/InviteCodesTable'
 import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
 
@@ -27,6 +29,7 @@ enum Views {
   Posts,
   Follows,
   Followers,
+  Invites,
   Reports,
 }
 
@@ -96,6 +99,7 @@ export function AccountView({
                   )}
                   {currentView === Views.Follows && <Follows id={id} />}
                   {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Reports && (
                     <Reports reports={repo.moderation.reports} />
                   )}
@@ -259,6 +263,11 @@ function Tabs({
     </span>
   )
 
+  const numInvited = (repo.invites || []).reduce(
+    (acc, invite) => acc + invite.uses.length,
+    0,
+  )
+
   return (
     <div className="mt-6 sm:mt-2 2xl:mt-5">
       <div className="border-b border-gray-200">
@@ -284,6 +293,13 @@ function Tabs({
                 view={Views.Followers}
                 label="Followers"
                 sublabel={String(profile.followersCount)}
+              />
+            )}
+            {profile && (
+              <Tab
+                view={Views.Invites}
+                label="Invites"
+                sublabel={String(numInvited)}
               />
             )}
             <Tab
@@ -324,6 +340,21 @@ function Details({
             </dd>
           </div>
         )}
+        <div className="sm:col-span-1">
+          <dt className="text-sm font-medium text-gray-500">Invited by</dt>
+          <dd className="mt-1 text-sm text-gray-900">
+            {repo.invitedBy?.createdBy ? (
+              <Link
+                href={`/repositories/${repo.invitedBy?.createdBy}`}
+                className="focus:outline-none"
+              >
+                {repo.invitedBy?.createdBy}
+              </Link>
+            ) : (
+              '(Admin)'
+            )}
+          </dd>
+        </div>
       </dl>
       {profile && <Json className="mb-3" label="Profile" value={profile} />}
       <Json className="mb-3" label="Repo" value={repo} />
@@ -372,6 +403,74 @@ function Followers({ id }: { id: string }) {
         error={String(error ?? '')}
         accounts={followers?.followers}
       />
+    </div>
+  )
+}
+
+function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
+  const { error, data: invitedUsers } = useQuery({
+    queryKey: ['invitedUsers', { id: repo.did }],
+    queryFn: async () => {
+      const actors: string[] = []
+      if (repo.invites?.length) {
+        for (const invite of repo.invites) {
+          for (const use of invite.uses) {
+            actors.push(use.usedBy)
+          }
+        }
+      }
+      if (actors.length === 0) {
+        return { profiles: [] }
+      }
+      const { data } = await client.api.app.bsky.actor.getProfiles({
+        actors,
+      })
+      return data
+    },
+  })
+
+  const onClickRevoke = React.useCallback(async () => {
+    if (!confirm('Are you sure you want to revoke their invite codes?')) {
+      return
+    }
+    await client.api.com.atproto.admin.disableInviteCodes(
+      {
+        accounts: [repo.did],
+      },
+      { encoding: 'application/json', headers: client.adminHeaders() },
+    )
+  }, [client])
+
+  return (
+    <div>
+      <div className="mx-auto mt-8 max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10">
+          <button
+            type="button"
+            className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+            onClick={onClickRevoke}
+          >
+            <XCircleIcon
+              className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+              aria-hidden="true"
+            />
+            <span>Revoke unused invite codes</span>
+          </button>
+        </div>
+        <h3 className="text-xl font-medium text-black">Invited users</h3>
+      </div>
+      <AccountsGrid
+        error={String(error ?? '')}
+        accounts={invitedUsers?.profiles}
+      />
+      <div className="mx-auto mt-8 max-w-5xl px-4 sm:px-6 lg:px-8">
+        <h3 className="text-xl font-medium text-black">Invite codes</h3>
+      </div>
+      <div className="mb-20">
+        {Array.isArray(repo.invites) && (
+          <InviteCodesTable codes={repo.invites} />
+        )}
+      </div>
     </div>
   )
 }

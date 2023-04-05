@@ -1,6 +1,7 @@
 import {
   ComAtprotoRepoStrongRef,
   ComAtprotoAdminDefs,
+  ComAtprotoServerDefs,
   AppBskyFeedDefs,
 } from '@atproto/api'
 import { ReactNode } from 'react'
@@ -14,6 +15,8 @@ export function isRepost(v: Reason): v is AppBskyFeedDefs.ReasonRepost {
 export type Repo = ComAtprotoAdminDefs.RepoView
 
 export type Report = ComAtprotoAdminDefs.ReportView
+
+export type InviteCode = ComAtprotoServerDefs.InviteCode
 
 export function validSubjectString(subject: Report['subject']) {
   if (ComAtprotoAdminDefs.isRepoRef(subject)) {
