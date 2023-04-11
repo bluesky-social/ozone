@@ -343,12 +343,12 @@ function Details({
         <div className="sm:col-span-1">
           <dt className="text-sm font-medium text-gray-500">Invited by</dt>
           <dd className="mt-1 text-sm text-gray-900">
-            {repo.invitedBy?.createdBy ? (
+            {repo.invitedBy?.forAccount ? (
               <Link
                 href={`/repositories/${repo.invitedBy?.createdBy}`}
                 className="focus:outline-none"
               >
-                {repo.invitedBy?.createdBy}
+                {repo.invitedBy.forAccount}
               </Link>
             ) : (
               '(Admin)'
