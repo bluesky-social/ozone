@@ -23,7 +23,8 @@ export function ResolutionList(props: {
       const { data } = await client.api.com.atproto.admin.getModerationReports(
         {
           subject: subjectDid,
-          limit: 25,
+          resolved: false,
+          limit: 50,
           cursor: pageParam,
         },
         { headers: client.adminHeaders() },
@@ -31,16 +32,7 @@ export function ResolutionList(props: {
       return {
         cursor: data.cursor,
         reports: data.reports.filter((report) => {
-          // Only resolvable reports are for matching did, or exact record.
-          const reportSubject = validSubjectString(report.subject)
-          if (!reportSubject) return false
-          if (
-            subject.startsWith('at://') &&
-            reportSubject.startsWith('at://')
-          ) {
-            return subject === reportSubject
-          }
-          return true
+          return subject === validSubjectString(report.subject)
         }),
       }
     },
@@ -72,6 +64,7 @@ export function ResolutionList(props: {
                 value={report.id}
                 aria-describedby={`report-${report.id}-description`}
                 type="checkbox"
+                defaultChecked
                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
               />
             </div>

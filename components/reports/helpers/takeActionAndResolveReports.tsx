@@ -10,22 +10,43 @@ export const takeActionAndResolveReports = async (
   vals: ModActionFormValues,
 ) => {
   const takeModerationActionAsync = async () => {
-    const subject = await createSubjectFromId(vals.subject)
-    return client.api.com.atproto.admin.takeModerationAction(
-      {
-        subject,
-        action: vals.action,
-        reason: vals.reason,
-        subjectBlobCids: vals.subjectBlobCids.length
-          ? vals.subjectBlobCids
-          : undefined,
-        createdBy: client.session.did,
-      },
-      { headers: client.adminHeaders(), encoding: 'application/json' },
-    )
+    let actionId: number
+    let action: ComAtprotoAdminDefs.ActionView | undefined
+    if (vals.currentActionId) {
+      actionId = vals.currentActionId
+    } else {
+      const subject = await createSubjectFromId(vals.subject)
+      const result = await client.api.com.atproto.admin.takeModerationAction(
+        {
+          subject,
+          action: vals.action,
+          reason: vals.reason,
+          subjectBlobCids: vals.subjectBlobCids.length
+            ? vals.subjectBlobCids
+            : undefined,
+          createdBy: client.session.did,
+        },
+        { headers: client.adminHeaders(), encoding: 'application/json' },
+      )
+      action = result.data
+      actionId = action.id
+    }
+    if (vals.resolveReportIds.length) {
+      const result =
+        await client.api.com.atproto.admin.resolveModerationReports(
+          {
+            actionId: actionId,
+            reportIds: vals.resolveReportIds,
+            createdBy: client.session.did,
+          },
+          { headers: client.adminHeaders(), encoding: 'application/json' },
+        )
+      action = result.data
+    }
+    return action
   }
 
-  const { data: action } = await toast.promise(takeModerationActionAsync, {
+  return await toast.promise(takeModerationActionAsync, {
     pending: 'Taking action...',
     error: {
       render({ data }: any) {
@@ -34,11 +55,11 @@ export const takeActionAndResolveReports = async (
       },
     },
     success: {
-      render({ data }) {
-        const newAction = data?.data
+      render({ data: newAction }) {
         const actionId = newAction?.id
         const actionType = newAction?.action
         const actionTypeString = actionType && actionOptions[actionType]
+
         const isRecord = isIdRecord(vals.subject)
         const title = `${isRecord ? 'Record' : 'Repo'} was ${actionTypeString}`
 
@@ -56,20 +77,14 @@ export const takeActionAndResolveReports = async (
       },
     },
   })
-  if (vals.resolveReportIds.length) {
-    await client.api.com.atproto.admin.resolveModerationReports(
-      {
-        actionId: action.id,
-        reportIds: vals.resolveReportIds,
-        createdBy: client.session.did,
-      },
-      { headers: client.adminHeaders(), encoding: 'application/json' },
-    )
-  }
 }
 
 const actionOptions = {
   [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'acknowledged',
   [ComAtprotoAdminDefs.FLAG]: 'flagged',
   [ComAtprotoAdminDefs.TAKEDOWN]: 'taken-down',
+  // Legacy
+  'com.atproto.admin.moderationAction#acknowledge': 'acknowledged',
+  'com.atproto.admin.moderationAction#flag': 'flagged',
+  'com.atproto.admin.moderationAction#takedown': 'taken-down',
 }

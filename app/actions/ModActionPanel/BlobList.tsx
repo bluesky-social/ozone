@@ -6,9 +6,10 @@ import { formatBytes } from '../../../lib/util'
 
 export function BlobList(props: {
   name: string
+  disabled?: boolean
   blobs: ComAtprotoAdminDefs.BlobView[]
 }) {
-  const { name, blobs } = props
+  const { name, disabled, blobs } = props
   return (
     <fieldset className="space-y-5 min-w-0">
       {!blobs.length && <div className="text-sm text-gray-400">None found</div>}
@@ -32,7 +33,7 @@ export function BlobList(props: {
                 aria-describedby={`report-${blob.cid}-description`}
                 type="checkbox"
                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                disabled={!!currentAction}
+                disabled={!!currentAction || disabled}
               />
             </div>
             <div className="ml-3 text-sm min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">

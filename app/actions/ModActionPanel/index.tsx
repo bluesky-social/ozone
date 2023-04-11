@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { ComAtprotoAdminDefs } from '@atproto/api'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '../../../components/common/ActionPanel'
 import {
   ButtonPrimary,
@@ -55,10 +55,12 @@ function Form(props: {
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
   const [submitting, setSubmitting] = useState(false)
+  const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
   const { data: { record, repo } = {} } = useQuery({
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
+  // @TODO consider pulling current action details, e.g. description here
   const { currentAction } = record?.moderation ?? repo?.moderation ?? {}
   const actionColorClasses =
     currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
@@ -68,6 +70,40 @@ function Form(props: {
     'com.atproto.admin.defs#',
     '',
   )
+  // Left/right arrows to nav through report subjects
+  const evtRef = useRef({ subject, subjectOptions })
+  useEffect(() => {
+    evtRef.current = { subject, subjectOptions }
+  })
+  useEffect(() => {
+    const downHandler = (ev: WindowEventMap['keydown']) => {
+      if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') {
+        return
+      }
+      if (ev.target && ev.target !== document.body) {
+        return
+      }
+      if (!evtRef.current.subjectOptions?.length) {
+        return
+      }
+      const subjectIndex = evtRef.current.subjectOptions.indexOf(
+        evtRef.current.subject,
+      )
+      if (subjectIndex !== -1) {
+        const optionsLength = evtRef.current.subjectOptions.length
+        const nextIndex =
+          (optionsLength + subjectIndex + (ev.key === 'ArrowLeft' ? -1 : 1)) %
+          optionsLength
+        setSubject(evtRef.current.subjectOptions[nextIndex])
+      } else {
+        setSubject(evtRef.current.subjectOptions[0])
+      }
+    }
+    window.addEventListener('keydown', downHandler)
+    return () => {
+      window.removeEventListener('keydown', downHandler)
+    }
+  }, [])
   return (
     <form
       onSubmit={async (ev) => {
@@ -76,6 +112,7 @@ function Form(props: {
           setSubmitting(true)
           const formData = new FormData(ev.currentTarget)
           await onSubmit({
+            currentActionId: currentAction?.id,
             subject: formData.get('subject')!.toString(),
             action: formData.get('action')!.toString(),
             reason: formData.get('reason')!.toString(),
@@ -141,35 +178,57 @@ function Form(props: {
           </Link>
         </div>
       )}
-      {!currentAction && (
-        <>
-          {record?.blobs && (
-            <FormLabel label="Blobs" className="mb-3">
-              <BlobList blobs={record.blobs} name="subjectBlobCids" />
-            </FormLabel>
-          )}
-          <FormLabel label="Action" htmlFor="action" className="mb-3">
-            <Select id="action" name="action" required>
-              <option hidden selected value="">
-                Action
-              </option>
-              {Object.entries(actionOptions).map(([value, label]) => (
-                <option key={value} value={value}>
-                  {label}
-                </option>
-              ))}
-            </Select>
-          </FormLabel>
-          <Textarea
-            name="reason"
-            required
-            placeholder="Details"
-            className="block w-full mb-3"
+      {record?.blobs && (
+        <FormLabel label="Blobs" className="mb-3">
+          <BlobList
+            blobs={record.blobs}
+            disabled={!!currentAction}
+            name="subjectBlobCids"
           />
-          <FormLabel label="Resolves" className="mb-6">
-            <ResolutionList subject={subject || null} name="resolveReportIds" />
-          </FormLabel>
-        </>
+        </FormLabel>
+      )}
+      <FormLabel label="Action" htmlFor="action" className="mb-3">
+        <Select
+          id="action"
+          name="action"
+          disabled={!!currentAction}
+          value={currentAction ? currentAction.action : action}
+          onChange={(ev) => {
+            if (!currentAction) {
+              setAction(ev.target.value)
+            }
+          }}
+          required
+        >
+          <option hidden selected value="">
+            Action
+          </option>
+          {Object.entries(actionOptions).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </Select>
+      </FormLabel>
+      {/* Hidden field exists so that form always has same fields, useful during submission */}
+      {currentAction && <input name="action" type="hidden" />}
+      {!currentAction && (
+        <Textarea
+          name="reason"
+          required={action !== ComAtprotoAdminDefs.ACKNOWLEDGE}
+          placeholder="Details"
+          className="block w-full mb-3"
+        />
+      )}
+      {/* Hidden field exists so that form always has same fields, useful during submission */}
+      {currentAction && <input name="reason" type="hidden" />}
+      <FormLabel label="Resolves" className="mb-6">
+        <ResolutionList subject={subject || null} name="resolveReportIds" />
+      </FormLabel>
+      {currentAction && (
+        <div className="text-base text-gray-600 mb-3 text-right">
+          Resolve with current action?
+        </div>
       )}
       <div className="text-right">
         <ButtonSecondary
@@ -179,7 +238,7 @@ function Form(props: {
         >
           Cancel
         </ButtonSecondary>
-        <ButtonPrimary type="submit" disabled={!!currentAction || submitting}>
+        <ButtonPrimary type="submit" disabled={submitting}>
           Submit
         </ButtonPrimary>
       </div>
@@ -199,6 +258,7 @@ export type ModActionFormValues = {
   reason: string
   resolveReportIds: number[]
   subjectBlobCids: string[]
+  currentActionId?: number
 }
 
 async function getSubject(subject: string) {
