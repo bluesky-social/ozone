@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -7,6 +7,7 @@ import {
   ComAtprotoAdminGetRepo as GetRepo,
   AppBskyActorDefs,
   ComAtprotoAdminDefs,
+  AppBskyActorProfile,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -23,6 +24,13 @@ import { ReportPanel } from '../reports/ReportPanel'
 import { InviteCodesTable } from '../invites/InviteCodesTable'
 import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
+import {
+  LabelChip,
+  LabelList,
+  LabelListEmpty,
+  displayLabel,
+  toLabelVal,
+} from '../common/labels'
 
 enum Views {
   Details,
@@ -321,12 +329,23 @@ function Details({
   profile?: GetProfile.OutputSchema
   repo: GetRepo.OutputSchema
 }) {
-  const Field = ({ label, value }: { label: string; value: string }) => (
+  const Field = ({
+    label,
+    value,
+    children,
+  }: {
+    label: string
+    value?: string
+    children?: ReactNode
+  }) => (
     <div className="sm:col-span-1">
       <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900">{value}</dd>
+      <dd className="mt-1 text-sm text-gray-900" title={value}>
+        {children ?? value}
+      </dd>
     </div>
   )
+  const labels = ((repo.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -340,23 +359,44 @@ function Details({
             </dd>
           </div>
         )}
-        <div className="sm:col-span-1">
-          <dt className="text-sm font-medium text-gray-500">Invited by</dt>
-          <dd className="mt-1 text-sm text-gray-900">
-            {repo.invitedBy?.forAccount ? (
-              <Link
-                href={`/repositories/${repo.invitedBy?.createdBy}`}
-                className="focus:outline-none"
-              >
-                {repo.invitedBy.forAccount}
-              </Link>
-            ) : (
-              '(Admin)'
-            )}
-          </dd>
-        </div>
+        <Field label="Labels">
+          <LabelList>
+            {!labels.length && <LabelListEmpty />}
+            {labels.map((label) => (
+              <LabelChip key={label}>{displayLabel(label)}</LabelChip>
+            ))}
+          </LabelList>
+        </Field>
+        <Field label="Invited by">
+          {repo.invitedBy?.forAccount ? (
+            <Link
+              href={`/repositories/${repo.invitedBy?.createdBy}`}
+              className="focus:outline-none"
+            >
+              {repo.invitedBy.forAccount}
+            </Link>
+          ) : (
+            '(Admin)'
+          )}
+        </Field>
       </dl>
-      {profile && <Json className="mb-3" label="Profile" value={profile} />}
+      {profile && (
+        <Json
+          className="mb-3"
+          label={
+            <>
+              <span className="mr-1">Profile</span>
+              <Link
+                className="underline"
+                href={`/repositories/${repo.did}/app.bsky.actor.profile/self`}
+              >
+                (view record)
+              </Link>
+            </>
+          }
+          value={profile}
+        />
+      )}
       <Json className="mb-3" label="Repo" value={repo} />
     </div>
   )

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { useEffect, useRef, useState } from 'react'
+import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { ActionPanel } from '../../../components/common/ActionPanel'
 import {
   ButtonPrimary,
@@ -17,8 +18,14 @@ import { RecordCard, RepoCard } from '../../../components/common/RecordCard'
 import { PropsOf } from '../../../lib/types'
 import { ResolutionList } from './ResolutionList'
 import client from '../../../lib/client'
-import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { BlobList } from './BlobList'
+import {
+  LabelsInput,
+  diffLabels,
+  toLabelVal,
+} from '../../../components/common/labels'
+
+const FORM_ID = 'mod-action-panel'
 
 export function ModActionPanel(
   props: PropsOf<typeof ActionPanel> & {
@@ -62,6 +69,10 @@ function Form(props: {
   })
   // @TODO consider pulling current action details, e.g. description here
   const { currentAction } = record?.moderation ?? repo?.moderation ?? {}
+  // @TODO client types
+  const currentLabels = (
+    (record?.labels ?? repo?.labels ?? []) as { val: string }[]
+  ).map(toLabelVal)
   const actionColorClasses =
     currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
@@ -106,11 +117,15 @@ function Form(props: {
   }, [])
   return (
     <form
+      id={FORM_ID}
       onSubmit={async (ev) => {
         ev.preventDefault()
         try {
           setSubmitting(true)
           const formData = new FormData(ev.currentTarget)
+          const nextLabels = formData
+            .getAll('labels')!
+            .map((val) => String(val))
           await onSubmit({
             currentActionId: currentAction?.id,
             subject: formData.get('subject')!.toString(),
@@ -122,6 +137,7 @@ function Form(props: {
             subjectBlobCids: formData
               .getAll('subjectBlobCids')
               .map((cid) => String(cid)),
+            ...diffLabels(currentLabels, nextLabels),
           })
           onCancel() // Close
         } finally {
@@ -220,6 +236,15 @@ function Form(props: {
           className="block w-full mb-3"
         />
       )}
+      <FormLabel label="Labels" className="mb-3">
+        <LabelsInput
+          id="labels"
+          name="labels"
+          formId={FORM_ID}
+          disabled={!!currentAction}
+          defaultLabels={currentLabels}
+        />
+      </FormLabel>
       {/* Hidden field exists so that form always has same fields, useful during submission */}
       {currentAction && <input name="reason" type="hidden" />}
       <FormLabel label="Resolves" className="mb-6">
@@ -259,6 +284,8 @@ export type ModActionFormValues = {
   resolveReportIds: number[]
   subjectBlobCids: string[]
   currentActionId?: number
+  createLabelVals: string[]
+  negateLabelVals: string[]
 }
 
 async function getSubject(subject: string) {

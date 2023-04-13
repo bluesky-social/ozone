@@ -25,6 +25,9 @@ export const takeActionAndResolveReports = async (
             ? vals.subjectBlobCids
             : undefined,
           createdBy: client.session.did,
+          // @TODO update client to ensure these fields are typechecked
+          createLabelVals: vals.createLabelVals,
+          negateLabelVals: vals.negateLabelVals,
         },
         { headers: client.adminHeaders(), encoding: 'application/json' },
       )

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { ReactNode, useState } from 'react'
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { classNames } from '../../lib/util'
 
@@ -8,7 +8,7 @@ export function Json({
   value,
   className,
 }: {
-  label: string
+  label: ReactNode
   value: any
   className?: string
 }) {

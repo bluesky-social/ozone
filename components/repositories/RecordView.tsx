@@ -17,6 +17,13 @@ import { classNames, parseAtUri } from '../../lib/util'
 import { ReportsTable } from '../reports/ReportsTable'
 import { PostAsCard } from '../common/posts/PostsFeed'
 import { BlobsTable } from './BlobsTable'
+import {
+  LabelChip,
+  LabelList,
+  LabelListEmpty,
+  displayLabel,
+  toLabelVal,
+} from '../common/labels'
 
 enum Views {
   Details,
@@ -202,24 +209,41 @@ function Tabs({
 }
 
 function Details({ record }: { record: GetRecord.OutputSchema }) {
-  const Field = ({ label, value }: { label: string; value: string }) => (
+  const Field = ({
+    label,
+    value,
+    children,
+  }: {
+    label: string
+    value?: string
+    children?: ReactNode
+  }) => (
     <div className="sm:col-span-1">
       <dt className="text-sm font-medium text-gray-500">{label}</dt>
       <dd className="mt-1 text-sm text-gray-900 truncate" title={value}>
-        {value}
+        {children ?? value}
       </dd>
     </div>
   )
   const { collection, rkey } = parseAtUri(record.uri) ?? {}
+  const labels = ((record.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
         <Field label="Handle" value={record.repo.handle} />
         <Field label="DID" value={record.repo.did} />
-        <Field label="Collection" value={collection || ''} />
-        <Field label="Rkey" value={rkey || ''} />
+        <Field label="Collection" value={collection ?? ''} />
+        <Field label="Rkey" value={rkey ?? ''} />
         <Field label="URI" value={record.uri} />
         <Field label="CID" value={record.cid} />
+        <Field label="Labels">
+          <LabelList>
+            {!labels.length && <LabelListEmpty />}
+            {labels.map((label) => (
+              <LabelChip key={label}>{displayLabel(label)}</LabelChip>
+            ))}
+          </LabelList>
+        </Field>
       </dl>
       <Json className="mb-3" label="Contents" value={record.value} />
     </div>
