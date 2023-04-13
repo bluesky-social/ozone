@@ -6,7 +6,7 @@ import Client from '../../lib/client'
 export function LoginModal() {
   const [isAuthed, setIsAuthed] = useState(true) // immediately corrected in useEffect below
   const [error, setError] = useState('')
-  const [service, setService] = useState('')
+  const [service, setService] = useState('https://bsky.social')
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
   const [adminToken, setAdminToken] = useState('')
@@ -63,9 +63,14 @@ export function LoginModal() {
                   required
                   className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Service URL"
+                  list="service-url-suggestions"
                   value={service}
                   onChange={(e) => setService(e.target.value)}
                 />
+                <datalist id="service-url-suggestions">
+                  <option value="https://bsky.social" />
+                  <option value="https://staging.bsky.dev" />
+                </datalist>
               </div>
               <div>
                 <label htmlFor="account-handle" className="sr-only">
