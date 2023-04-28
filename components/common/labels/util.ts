@@ -41,4 +41,5 @@ export const labelOptions = [
   'csam',
   'dmca-violation',
   'nudity-nonconsentual',
+  '!no-promote',
 ]
