@@ -89,18 +89,21 @@ function SearchInput() {
   const [termInput, setTermInput] = useSyncedState(termParam)
   // Channel for periodically updating term param based on input changes
   const [termDebounced, setTermDebounced] = useState(termInput)
-  useDebounce(() => setTermDebounced(termInput), 200, [termInput])
+  useDebounce(() => setTermDebounced(termInput), 50, [termInput])
   // Periodically update term param based on input changes
   const resources = useRef({ params, pathname, router })
   useEffect(() => {
     resources.current = { params, pathname, router }
-  })
+  }, [params, pathname, router])
   useEffect(() => {
-    const { params, pathname, router } = resources.current
-    const nextParams = new URLSearchParams(params)
-    nextParams.set('term', termDebounced)
-    router.push((pathname ?? '') + '?' + nextParams.toString())
-  }, [termDebounced])
+    if (termDebounced === termInput) { // Only update if input is stable
+      const { params, pathname, router } = resources.current
+      const nextParams = new URLSearchParams(params)
+      nextParams.set('term', termDebounced)
+      router.push((pathname ?? '') + '?' + nextParams.toString())
+    }
+  }, [termDebounced, termInput])
+
   return (
     <input
       id="term"
