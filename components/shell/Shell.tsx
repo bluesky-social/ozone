@@ -87,7 +87,6 @@ function SearchInput() {
   // Input state for term, synced with params
   const termParam = params.get('term') ?? ''
   const [termInput, setTermInput] = useSyncedState(termParam)
-  // Channel for periodically updating term param based on input changes
 
   const updateParams = useCallback((s: string) => {
     const nextParams = new URLSearchParams(params)
