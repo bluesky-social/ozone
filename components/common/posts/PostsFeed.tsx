@@ -110,6 +110,14 @@ function PostHeader({
             >
               {new Date(item.post.indexedAt).toLocaleString()}
             </Link>
+            &nbsp;&middot;&nbsp;
+            <a
+              href={`https://staging.bsky.app/profile/${item.post.uri
+                .replace('at://', '')
+                .replace('app.bsky.feed.post', 'post')}`}
+            >
+              Peek
+            </a>
           </p>
           {item.reply ? (
             <p className="text-gray-500 text-sm">
