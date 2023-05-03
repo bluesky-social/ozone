@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useDebounce } from 'react-use'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
@@ -87,20 +87,13 @@ function SearchInput() {
   // Input state for term, synced with params
   const termParam = params.get('term') ?? ''
   const [termInput, setTermInput] = useSyncedState(termParam)
-  // Channel for periodically updating term param based on input changes
-  const [termDebounced, setTermDebounced] = useState(termInput)
-  useDebounce(() => setTermDebounced(termInput), 200, [termInput])
-  // Periodically update term param based on input changes
-  const resources = useRef({ params, pathname, router })
-  useEffect(() => {
-    resources.current = { params, pathname, router }
-  })
-  useEffect(() => {
-    const { params, pathname, router } = resources.current
+
+  const updateParams = useCallback((s: string) => {
     const nextParams = new URLSearchParams(params)
-    nextParams.set('term', termDebounced)
+    nextParams.set('term', s)
     router.push((pathname ?? '') + '?' + nextParams.toString())
-  }, [termDebounced])
+  }, [params, pathname, router])
+
   return (
     <input
       id="term"
@@ -109,7 +102,10 @@ function SearchInput() {
       placeholder="Search"
       type="search"
       value={termInput}
-      onChange={(ev) => setTermInput(ev.target.value)}
+      onChange={(ev) => {
+        setTermInput(ev.target.value)
+        updateParams(ev.target.value)
+      }}
     />
   )
 }
