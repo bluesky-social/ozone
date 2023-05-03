@@ -370,7 +370,7 @@ function Details({
         <Field label="Invited by">
           {repo.invitedBy?.forAccount ? (
             <Link
-              href={`/repositories/${repo.invitedBy?.createdBy}`}
+              href={`/repositories/${repo.invitedBy?.forAccount}`}
               className="focus:outline-none"
             >
               {repo.invitedBy.forAccount}
