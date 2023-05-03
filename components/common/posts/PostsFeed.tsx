@@ -147,6 +147,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
+
   if (AppBskyEmbedImages.isView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
