@@ -115,6 +115,7 @@ function PostHeader({
               href={`https://staging.bsky.app/profile/${item.post.uri
                 .replace('at://', '')
                 .replace('app.bsky.feed.post', 'post')}`}
+              target="_blank" rel="noreferrer"
             >
               Peek
             </a>
