@@ -277,7 +277,7 @@ function Form(props: {
           />
         )}
         <FormLabel label="Labels" className="mb-3">
-          <LabelsInput
+          <LabelsGrid
             id="labels"
             name="labels"
             formId={FORM_ID}
