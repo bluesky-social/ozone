@@ -1,6 +1,5 @@
-import { Fragment } from 'react'
+import { Fragment, useState, useEffect } from 'react'
 import { Disclosure, Transition } from '@headlessui/react'
-import { useSyncedState } from '../../../lib/useSyncedState'
 import { LabelChip, LabelList, LabelListEmpty } from './List'
 import { labelOptions, displayLabel } from './util'
 
@@ -18,18 +17,31 @@ export function LabelsGrid(props: LabelsProps) {
     ...others
   } = props
   const allOptions = unique([...defaultLabels, ...options]).sort()
-  const [packedCurrent, setPackedCurrent] = useSyncedState(
-    packMemo(defaultLabels),
-  )
-  const current = unpackMemo<string[]>(packedCurrent)
+  const [current, setCurrent] = useState<string[]>(defaultLabels)
+
+  // update the current list when the current labels prop changes
+  useEffect(() => {
+    setCurrent(defaultLabels)
+  }, [defaultLabels])
+
+  const handleCheckboxChange = (opt: string) => {
+    setCurrent(prev => {
+      if (prev.includes(opt)) {
+        return prev.filter(item => item !== opt)
+      } else {
+        return [...prev, opt]
+      }
+    })
+  }
+
   return (
     <Disclosure as="div">
       <Disclosure.Button
-        as={"div"}
         className={`${disabled ? '' : 'cursor-pointer'}	${className}`}
+        disabled={disabled}
         {...others}
       >
-        {!current.length && <button>(click to add)</button>}
+        {!current.length && <LabelListEmpty>(click to add)</LabelListEmpty>}
         {current.map((label) => (
           <LabelChip key={label}> 
             {displayLabel(label)}
@@ -45,14 +57,6 @@ export function LabelsGrid(props: LabelsProps) {
         leave="transition ease-in duration-150"
         leaveFrom="opacity-100 translate-y-0"
         leaveTo="opacity-0 translate-y-1"
-        beforeLeave={() => {
-          const form = document.getElementById(formId) as HTMLFormElement
-          if (!form) throw new Error(`Form with id ${formId} doesn't exist`)
-          const nextLabels = new FormData(form)
-            .getAll(`${name}-staged`)
-            .map((val) => String(val))
-          setPackedCurrent(packMemo(nextLabels))
-        }}
       >
         <Disclosure.Panel>
           <div
@@ -68,7 +72,8 @@ export function LabelsGrid(props: LabelsProps) {
                       name={`${name}-staged`}
                       type="checkbox"
                       value={opt}
-                      defaultChecked={current.includes(opt)}
+                      checked={current.includes(opt)}
+                      onChange={() => handleCheckboxChange(opt)}
                       className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                       onKeyDown={(e) => {
                         if (e.key === 'Enter') {
@@ -107,12 +112,4 @@ type LabelsProps = {
 function unique<T>(arr: T[]) {
   const set = new Set(arr)
   return [...set]
-}
-
-function packMemo(val: unknown) {
-  return JSON.stringify(val)
-}
-
-function unpackMemo<T>(memo: string) {
-  return JSON.parse(memo) as T
 }
