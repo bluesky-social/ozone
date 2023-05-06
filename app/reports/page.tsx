@@ -9,6 +9,7 @@ import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
 import client from '../../lib/client'
 import { validSubjectString } from '../../lib/types'
 import { takeActionAndResolveReports } from '../../components/reports/helpers/takeActionAndResolveReports'
+import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 
 const TABS = [
   { key: 'unresolved', name: 'Unresolved', href: '/reports?resolved=false' },
@@ -18,6 +19,7 @@ const TABS = [
 
 export default function Reports() {
   const [open, setOpen] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(false)
   const params = useSearchParams()
   const subject = params.get('term') ?? undefined // @TODO
   const resolved = params.get('resolved')
@@ -44,6 +46,13 @@ export default function Reports() {
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
         <div className="flex-1 text-right lg:pr-2 pb-4 px-1">
+        <button
+            role="button"
+            className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom mr-4"
+            onClick={() => setQuickOpen(true)}
+          >
+            Quick Take Action <ModActionIcon className="h-4 w-4 align-text-bottom" />
+          </button>
           <button
             role="button"
             className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom"
@@ -67,6 +76,17 @@ export default function Reports() {
           await takeActionAndResolveReports(vals)
           refetch()
         }}
+      />
+      <ModActionPanelQuick
+        open={quickOpen}
+        onClose={() => setQuickOpen(false)}
+        subject={subjectOptions.length >= 1 ? subjectOptions[0] : undefined} // select first subject if there are multiple
+        subjectOptions={subjectOptions}
+        onSubmit={async (vals: ModActionFormValues) => {
+          await takeActionAndResolveReports(vals)
+          refetch()
+        }}
+        goToNextReport={true}
       />
     </>
   )
