@@ -18,28 +18,40 @@ export function toLabelVal(label: { val: string }): string {
 
 // @NOTE not deduped
 export const labelOptions = [
-  // bsky-calm
+  // sexuality
   'porn',
   'nudity',
   'sexual',
+
+  // violence/graphic
   'gore',
   'self-harm',
   'torture',
+  'nsfl',
+
+  // intolerance
   'icon-kkk',
   'icon-nazi',
-  'icon-confederate',
-  'spam',
-  'impersonation',
-  // bsky-default
-  'porn',
-  'nudity',
-  'gore',
-  'self-harm',
-  'torture',
-  'spam',
-  // base
+  'icon-intolerant',
+
+  // bad behavior ("subjective")
+  //'troll',
+  //'threat',
+
+  // violations/illegal
   'csam',
   'dmca-violation',
   'nudity-nonconsensual',
+
+  // other policy/behavior issues
+  'spam',
+  'impersonation',
+  'misleading',
+  //'scam',
+  //'account-security',
+
+  // direct action
   '!no-promote',
+  '!filter',
+  '!warn',
 ]
