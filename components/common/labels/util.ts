@@ -6,10 +6,7 @@ export function diffLabels(current: string[], next: string[]) {
 }
 
 export function displayLabel(label: string) {
-  const words = label.split('-')
-  return words
-    .map((word) => word.replace(/^./, (x) => x.toUpperCase()))
-    .join(' ')
+  return label
 }
 
 export function toLabelVal(label: { val: string }): string {
