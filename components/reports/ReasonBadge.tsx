@@ -15,5 +15,9 @@ export function ReasonBadge(props: { reasonType: string }) {
 const reasonColors: Record<string, string> = {
   [ComAtprotoModerationDefs.REASONSPAM]: 'bg-pink-100 text-pink-800',
   [ComAtprotoModerationDefs.REASONOTHER]: 'bg-indigo-100 text-indigo-800',
+  [ComAtprotoModerationDefs.REASONVIOLATION]: 'bg-red-100 text-red-800',
+  //[ComAtprotoModerationDefs.REASONMISLEADING]: '',
+  //[ComAtprotoModerationDefs.REASONSEXUAL]: '',
+  //[ComAtprotoModerationDefs.REASONRUDE]: '',
   default: 'bg-gray-100 text-gray-800',
 }
