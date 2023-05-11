@@ -13,7 +13,11 @@ export function ReasonBadge(props: { reasonType: string }) {
   )
 }
 const reasonColors: Record<string, string> = {
-  [ComAtprotoModerationDefs.REASONSPAM]: 'bg-pink-100 text-pink-800',
-  [ComAtprotoModerationDefs.REASONOTHER]: 'bg-indigo-100 text-indigo-800',
-  default: 'bg-gray-100 text-gray-800',
+  [ComAtprotoModerationDefs.REASONSPAM]: 'bg-amber-100 text-amber-800',
+  [ComAtprotoModerationDefs.REASONOTHER]: 'bg-violet-100 text-violet-800',
+  [ComAtprotoModerationDefs.REASONVIOLATION]: 'bg-red-100 text-red-800',
+  [ComAtprotoModerationDefs.REASONMISLEADING]: 'bg-amber-100 text-amber-800',
+  [ComAtprotoModerationDefs.REASONSEXUAL]: 'bg-amber-100 text-amber-800',
+  [ComAtprotoModerationDefs.REASONRUDE]: 'bg-orange-100 text-orange-800',
+  default: 'bg-gray-200 text-gray-800',
 }

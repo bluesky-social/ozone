@@ -130,7 +130,11 @@ function Form(props: {
 
 const reasonTypeOptions = {
   [ComAtprotoModerationDefs.REASONSPAM]: 'Spam',
-  [ComAtprotoModerationDefs.REASONOTHER]: 'Other',
+  [ComAtprotoModerationDefs.REASONVIOLATION]: 'Violation of Terms',
+  [ComAtprotoModerationDefs.REASONMISLEADING]: 'Misleading',
+  [ComAtprotoModerationDefs.REASONSEXUAL]: 'Sexual',
+  [ComAtprotoModerationDefs.REASONRUDE]: 'Rude or Hassment',
+  [ComAtprotoModerationDefs.REASONOTHER]: 'Other Reason',
 }
 
 export type ReportFormValues = {
