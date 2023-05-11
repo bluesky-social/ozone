@@ -183,6 +183,9 @@ function Form(props: {
   useKeyPressEvent('a', () => {
     setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
   })
+  useKeyPressEvent('e', () => {
+    setAction(ComAtprotoAdminDefs.ESCALATE)
+  })
   useKeyPressEvent('f', () => {
     setAction(ComAtprotoAdminDefs.FLAG)
   })
@@ -317,6 +320,14 @@ function Form(props: {
             </ButtonSecondary>
             <ButtonSecondary
               color="text-white"
+              className="text-white bg-green-600 hover:bg-green-700 mr-4"
+              disabled={submitting}
+              onClick={() => setAction(ComAtprotoAdminDefs.ESCALATE)}
+            >
+              (E)scalate
+            </ButtonSecondary>
+            <ButtonSecondary
+              color="text-white"
               className="text-white bg-amber-600 hover:bg-amber-700 mr-4"
               disabled={submitting}
               onClick={() => setAction(ComAtprotoAdminDefs.FLAG)}
@@ -350,6 +361,7 @@ function Form(props: {
 
 export const actionOptions = {
   [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
+  [ComAtprotoAdminDefs.ESCALATE]: 'Esclate',
   [ComAtprotoAdminDefs.FLAG]: 'Flag',
   [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
 }

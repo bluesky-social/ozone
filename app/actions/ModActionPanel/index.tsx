@@ -273,6 +273,7 @@ function Form(props: {
 
 export const actionOptions = {
   [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
+  [ComAtprotoAdminDefs.ESCALATE]: 'Escalate',
   [ComAtprotoAdminDefs.FLAG]: 'Flag',
   [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
 }

@@ -84,6 +84,7 @@ export const takeActionAndResolveReports = async (
 
 const actionOptions = {
   [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'acknowledged',
+  [ComAtprotoAdminDefs.ESCALATE]: 'esclated',
   [ComAtprotoAdminDefs.FLAG]: 'flagged',
   [ComAtprotoAdminDefs.TAKEDOWN]: 'taken-down',
   // Legacy
