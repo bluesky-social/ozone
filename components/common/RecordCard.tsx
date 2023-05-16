@@ -46,6 +46,7 @@ function GenericRecordCard(props: { uri: string }) {
   const { uri } = props
   const parsed = parseAtUri(uri)
   const { data: record, error } = useQuery({
+    retry: false,
     queryKey: ['recordCard', { uri }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getRecord(
@@ -81,6 +82,7 @@ function GenericRecordCard(props: { uri: string }) {
 export function RepoCard(props: { did: string }) {
   const { did } = props
   const { data: { repo, profile } = {}, error } = useQuery({
+    retry: false,
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down profiles

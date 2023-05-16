@@ -256,12 +256,14 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
 
-      {ComAtprotoAdminDefs.isRecordView(subject) && (
+      {(ComAtprotoAdminDefs.isRecordView(subject) ||
+        ComAtprotoAdminDefs.isRecordViewNotFound(subject)) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject.uri} />
         </div>
       )}
-      {ComAtprotoAdminDefs.isRepoView(subject) && (
+      {(ComAtprotoAdminDefs.isRepoView(subject) ||
+        ComAtprotoAdminDefs.isRepoViewNotFound(subject)) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={subject.did} />
         </div>
