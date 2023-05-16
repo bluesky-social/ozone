@@ -46,13 +46,6 @@ export default function Reports() {
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
         <div className="flex-1 text-right lg:pr-2 pb-4 px-1">
-        <button
-            role="button"
-            className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom mr-4"
-            onClick={() => setQuickOpen(true)}
-          >
-            Quick Take Action <ModActionIcon className="h-4 w-4 align-text-bottom" />
-          </button>
           <button
             role="button"
             className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom"
@@ -77,6 +70,7 @@ export default function Reports() {
           refetch()
         }}
       />
+      {/* @TODO there's temporarily no way to open this panel while we finalize some functionality */}
       <ModActionPanelQuick
         open={quickOpen}
         onClose={() => setQuickOpen(false)}
