@@ -67,9 +67,18 @@ function Form(props: {
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
+  // This handles a special case where a deleted subject has a current action,
+  // but we weren't able to detect that before form submission. When this happens,
+  // we go spelunking for the current action and let the moderator retry.
+  const { data: currentActionFallback, refetch: fetchCurrentActionFallback } =
+    useQuery({
+      enabled: false,
+      queryKey: ['subjectCurrentAction', { subject }],
+      queryFn: () => getCurrentAction(subject),
+    })
   // @TODO consider pulling current action details, e.g. description here
-  const { currentAction } = record?.moderation ?? repo?.moderation ?? {}
-  // @TODO client types
+  const { currentAction = currentActionFallback } =
+    record?.moderation ?? repo?.moderation ?? {}
   const currentLabels = (
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
   ).map(toLabelVal)
@@ -140,6 +149,11 @@ function Form(props: {
             ...diffLabels(currentLabels, nextLabels),
           })
           onCancel() // Close
+        } catch (err) {
+          if (err?.['error'] === 'SubjectHasAction') {
+            fetchCurrentActionFallback()
+          }
+          throw err
         } finally {
           setSubmitting(false)
         }
@@ -304,4 +318,16 @@ async function getSubject(subject: string) {
   } else {
     return {}
   }
+}
+
+async function getCurrentAction(subject: string) {
+  const result = await client.api.com.atproto.admin.getModerationActions(
+    { subject },
+    { headers: client.adminHeaders() },
+  )
+  return result.data.actions.find(
+    (action) =>
+      !action.reversal &&
+      (action.subject.did === subject || action.subject.uri === subject),
+  )
 }
