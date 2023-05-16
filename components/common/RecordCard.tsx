@@ -4,6 +4,7 @@ import { parseAtUri } from '../../lib/util'
 import client from '../../lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
+import { LoadingDense, LoadingFailedDense } from './Loader'
 
 export function RecordCard(props: { uri: string }) {
   const { uri } = props
@@ -44,7 +45,7 @@ function PostCard(props: { uri: string }) {
 function GenericRecordCard(props: { uri: string }) {
   const { uri } = props
   const parsed = parseAtUri(uri)
-  const { data: record } = useQuery({
+  const { data: record, error } = useQuery({
     queryKey: ['recordCard', { uri }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getRecord(
@@ -54,7 +55,18 @@ function GenericRecordCard(props: { uri: string }) {
       return data
     },
   })
-  if (!record) return null
+  if (error) {
+    return (
+      <LoadingFailedDense
+        className="text-gray-600 mb-2"
+        noPadding
+        error={error}
+      />
+    )
+  }
+  if (!record) {
+    return <LoadingDense />
+  }
   return (
     <>
       {parsed && <RepoCard did={parsed.did} />}
@@ -68,7 +80,7 @@ function GenericRecordCard(props: { uri: string }) {
 // Based on PostAsCard header
 export function RepoCard(props: { did: string }) {
   const { did } = props
-  const { data: { repo, profile } = {} } = useQuery({
+  const { data: { repo, profile } = {}, error } = useQuery({
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down profiles
@@ -86,7 +98,7 @@ export function RepoCard(props: { did: string }) {
           })
           return profile
         } catch (err) {
-          if (err?.['error'] === 'AccountTakedown') {
+          if (err?.['status'] === 400) {
             return undefined
           }
           throw err
@@ -96,7 +108,18 @@ export function RepoCard(props: { did: string }) {
       return { repo, profile }
     },
   })
-  if (!repo) return null
+  if (error) {
+    return (
+      <LoadingFailedDense
+        className="text-gray-600 mb-2"
+        noPadding
+        error={error}
+      />
+    )
+  }
+  if (!repo) {
+    return <LoadingDense />
+  }
   return (
     <div className="bg-white">
       <div className="flex w-full space-x-4">
