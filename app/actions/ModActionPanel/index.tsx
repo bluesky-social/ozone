@@ -61,6 +61,8 @@ function Form(props: {
     ...others
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
+  const [replacingAction, setReplacingAction] = useState(false)
+  useEffect(() => setReplacingAction(false), [subject])
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
   const { data: { record, repo } = {} } = useQuery({
@@ -68,16 +70,18 @@ function Form(props: {
     queryFn: () => getSubject(subject),
   })
   // @TODO consider pulling current action details, e.g. description here
-  const { currentAction } = record?.moderation ?? repo?.moderation ?? {}
+  const { currentAction: currActionMaybeReplace } =
+    record?.moderation ?? repo?.moderation ?? {}
+  const currentAction = replacingAction ? undefined : currActionMaybeReplace
   // @TODO client types
   const currentLabels = (
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
   ).map(toLabelVal)
   const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
+    currActionMaybeReplace?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
       : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
+  const displayActionType = currActionMaybeReplace?.action.replace(
     'com.atproto.admin.defs#',
     '',
   )
@@ -127,7 +131,8 @@ function Form(props: {
             .getAll('labels')!
             .map((val) => String(val))
           await onSubmit({
-            currentActionId: currentAction?.id,
+            replacingAction,
+            currentActionId: currActionMaybeReplace?.id,
             subject: formData.get('subject')!.toString(),
             action: formData.get('action')!.toString(),
             reason: formData.get('reason')!.toString(),
@@ -192,6 +197,37 @@ function Form(props: {
             <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
             #{currentAction.id}
           </Link>
+          . Click{' '}
+          <span
+            role="button"
+            className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
+            onClick={() => setReplacingAction(true)}
+          >
+            here
+          </span>{' '}
+          to replace this action.
+        </div>
+      )}
+      {currActionMaybeReplace && replacingAction && (
+        <div className="text-base text-gray-600 mb-3">
+          Replacing the current action{' '}
+          <Link
+            href={`/actions/${currActionMaybeReplace.id}`}
+            title={displayActionType}
+            className={actionColorClasses}
+          >
+            <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
+            #{currActionMaybeReplace.id}
+          </Link>
+          . Click{' '}
+          <span
+            role="button"
+            className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
+            onClick={() => setReplacingAction(false)}
+          >
+            here
+          </span>{' '}
+          to stop replacing.
         </div>
       )}
       {record?.blobs && (
@@ -250,9 +286,10 @@ function Form(props: {
       <FormLabel label="Resolves" className="mb-6">
         <ResolutionList subject={subject || null} name="resolveReportIds" />
       </FormLabel>
-      {currentAction && (
+      {currActionMaybeReplace && (
         <div className="text-base text-gray-600 mb-3 text-right">
-          Resolve with current action?
+          {!replacingAction && 'Resolve with current action?'}
+          {replacingAction && 'Replace current action?'}
         </div>
       )}
       <div className="text-right">
@@ -285,6 +322,7 @@ export type ModActionFormValues = {
   resolveReportIds: number[]
   subjectBlobCids: string[]
   currentActionId?: number
+  replacingAction: boolean
   createLabelVals: string[]
   negateLabelVals: string[]
 }
