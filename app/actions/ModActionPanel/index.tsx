@@ -197,41 +197,22 @@ function Form(props: {
             <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
             #{currentAction.id}
           </Link>
-          . Click{' '}
+          .<br />
           <span
             role="button"
-            className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
+            className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
             onClick={() => setReplacingAction(true)}
           >
-            here
+            Click here
           </span>{' '}
           to replace this action.
         </div>
       )}
-      {currActionMaybeReplace && replacingAction && (
-        <div className="text-base text-gray-600 mb-3">
-          Replacing the current action{' '}
-          <Link
-            href={`/actions/${currActionMaybeReplace.id}`}
-            title={displayActionType}
-            className={actionColorClasses}
-          >
-            <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-            #{currActionMaybeReplace.id}
-          </Link>
-          . Click{' '}
-          <span
-            role="button"
-            className="text-indigo-600 hover:text-indigo-900 cursor-pointer"
-            onClick={() => setReplacingAction(false)}
-          >
-            here
-          </span>{' '}
-          to stop replacing.
-        </div>
-      )}
       {record?.blobs && (
-        <FormLabel label="Blobs" className="mb-3">
+        <FormLabel
+          label="Blobs"
+          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+        >
           <BlobList
             blobs={record.blobs}
             disabled={!!currentAction}
@@ -239,7 +220,11 @@ function Form(props: {
           />
         </FormLabel>
       )}
-      <FormLabel label="Action" htmlFor="action" className="mb-3">
+      <FormLabel
+        label="Action"
+        htmlFor="action"
+        className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+      >
         <Select
           id="action"
           name="action"
@@ -272,7 +257,10 @@ function Form(props: {
           className="block w-full mb-3"
         />
       )}
-      <FormLabel label="Labels" className="mb-3">
+      <FormLabel
+        label="Labels"
+        className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+      >
         <LabelsInput
           id="labels"
           name="labels"
@@ -283,13 +271,37 @@ function Form(props: {
       </FormLabel>
       {/* Hidden field exists so that form always has same fields, useful during submission */}
       {currentAction && <input name="reason" type="hidden" />}
-      <FormLabel label="Resolves" className="mb-6">
+      <FormLabel
+        label="Resolves"
+        className={`mb-6 ${currentAction ? 'opacity-75' : ''}`}
+      >
         <ResolutionList subject={subject || null} name="resolveReportIds" />
       </FormLabel>
       {currActionMaybeReplace && (
         <div className="text-base text-gray-600 mb-3 text-right">
           {!replacingAction && 'Resolve with current action?'}
-          {replacingAction && 'Replace current action?'}
+          {replacingAction && (
+            <>
+              Replacing the current action{' '}
+              <Link
+                href={`/actions/${currActionMaybeReplace.id}`}
+                title={displayActionType}
+                className={actionColorClasses}
+              >
+                <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
+                #{currActionMaybeReplace.id}
+              </Link>
+              .<br />
+              <span
+                role="button"
+                className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
+                onClick={() => setReplacingAction(false)}
+              >
+                Click here
+              </span>{' '}
+              to stop replacing.
+            </>
+          )}
         </div>
       )}
       <div className="text-right">
