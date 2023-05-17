@@ -5,6 +5,7 @@ import { ReasonBadge } from '../../../components/reports/ReasonBadge'
 import { validSubjectString } from '../../../lib/types'
 import { parseAtUri } from '../../../lib/util'
 import client from '../../../lib/client'
+import { ReportItemAccordian } from './ReportItemAccordian'
 
 export function ResolutionList(props: {
   name?: string
@@ -56,42 +57,14 @@ export function ResolutionList(props: {
         )
         const resolved = !!report.resolvedByActionIds.length
         return (
-          <div key={report.id} className="relative flex items-start">
-            <div className="flex h-5 items-center">
-              <input
-                id={`report-${report.id}`}
-                name={name}
-                value={report.id}
-                aria-describedby={`report-${report.id}-description`}
-                type="checkbox"
-                defaultChecked
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label
-                htmlFor={`report-${report.id}`}
-                className="font-medium text-gray-700"
-              >
-                <span
-                  className={`font-bold ${
-                    resolved ? 'text-green-500' : 'text-yellow-500'
-                  }`}
-                >
-                  #{report.id}
-                </span>{' '}
-                {shortCollection &&
-                  `${shortCollection} record by ${summary?.did}`}
-                {!shortCollection && `repo ${summary?.did}`}
-              </label>
-              <p
-                id={`report-${report.id}-description`}
-                className="text-gray-500"
-              >
-                <ReasonBadge reasonType={report.reasonType} /> {report.reason}
-              </p>
-            </div>
-          </div>
+          <ReportItemAccordian
+            name={name}
+            key={report.id}
+            report={report}
+            resolved={resolved}
+            shortCollection={shortCollection}
+            summary={summary}
+          />
         )
       })}
       {hasNextPage && (

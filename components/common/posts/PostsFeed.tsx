@@ -5,6 +5,7 @@ import {
   AppBskyEmbedExternal,
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
+  AppBskyEmbedRecord,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -110,6 +111,15 @@ function PostHeader({
             >
               {new Date(item.post.indexedAt).toLocaleString()}
             </Link>
+            &nbsp;&middot;&nbsp;
+            <a
+              href={`https://staging.bsky.app/profile/${item.post.uri
+                .replace('at://', '')
+                .replace('app.bsky.feed.post', 'post')}`}
+              target="_blank" rel="noreferrer"
+            >
+              Peek
+            </a>
           </p>
           {item.reply ? (
             <p className="text-gray-500 text-sm">
@@ -147,6 +157,8 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
+
+  // render image embeds
   if (AppBskyEmbedImages.isView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
@@ -167,6 +179,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
       </div>
     )
   }
+  // render external link embeds
   if (AppBskyEmbedExternal.isView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
@@ -192,6 +205,58 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
         </div>
       </div>
     )
+  }
+  // render quote posts embeds
+  if (AppBskyEmbedRecord.isView(embed)) {
+    if (
+      AppBskyEmbedRecord.isViewRecord(embed.record) &&
+      AppBskyFeedPost.isRecord(embed.record.value) &&
+      AppBskyFeedPost.validateRecord(embed.record.value).success
+    ) {
+      console.log(embed)
+      return (
+        <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
+          <div className="flex flex-row">
+            <img
+              className="w-6 h-6 rounded-full"
+              src={embed.record.author.avatar || '/img/default-avatar.jpg'}
+              alt={embed.record.author.avatar}
+            />
+            <p className="text-sm font-medium text-gray-900">
+              <Link
+                href={`/repositories/${embed.record.author.handle}`}
+                className="hover:underline"
+              >
+                {embed.record.author.displayName ? (
+                  <>
+                    <span className="font-bold">
+                      {embed.record.author.displayName}
+                    </span>
+                    <span className="ml-1 text-gray-500">
+                      @{embed.record.author.handle}
+                    </span>
+                  </>
+                ) : (
+                  <span className="font-bold">
+                    @{embed.record.author.handle}
+                  </span>
+                )}
+              </Link>
+              &nbsp;&middot;&nbsp;
+              <Link
+                href={`/repositories/${embed.record.uri.replace('at://', '')}`}
+                className="text-gray-500 hover:underline"
+              >
+                {new Date(embed.record.indexedAt).toLocaleString()}
+              </Link>
+            </p>
+          </div>
+          <div className={`prose-sm pl-10 pb-2`}>
+            <RichText post={embed.record.value} />
+          </div>
+        </div>
+      )
+    }
   }
   return <span />
 }

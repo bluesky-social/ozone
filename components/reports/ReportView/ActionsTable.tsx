@@ -125,6 +125,7 @@ export function ReasonBadge(props: { reasonType: string }) {
 
 const reasonColors: Record<string, string> = {
   [ComAtprotoAdminDefs.TAKEDOWN]: 'bg-pink-100 text-pink-800',
+  [ComAtprotoAdminDefs.ESCALATE]: 'bg-orange-100 text-orange-800',
   [ComAtprotoAdminDefs.FLAG]: 'bg-indigo-100 text-indigo-800',
   [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'bg-green-100 text-green-800',
   default: 'bg-gray-100 text-gray-800',

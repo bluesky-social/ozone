@@ -6,10 +6,7 @@ export function diffLabels(current: string[], next: string[]) {
 }
 
 export function displayLabel(label: string) {
-  const words = label.split('-')
-  return words
-    .map((word) => word.replace(/^./, (x) => x.toUpperCase()))
-    .join(' ')
+  return label
 }
 
 export function toLabelVal(label: { val: string }): string {
@@ -18,28 +15,40 @@ export function toLabelVal(label: { val: string }): string {
 
 // @NOTE not deduped
 export const labelOptions = [
-  // bsky-calm
+  // sexuality
   'porn',
   'nudity',
   'sexual',
+
+  // violence/graphic
   'gore',
   'self-harm',
   'torture',
+  'nsfl',
+
+  // intolerance
   'icon-kkk',
   'icon-nazi',
-  'icon-confederate',
-  'spam',
-  'impersonation',
-  // bsky-default
-  'porn',
-  'nudity',
-  'gore',
-  'self-harm',
-  'torture',
-  'spam',
-  // base
+  'icon-intolerant',
+
+  // bad behavior ("subjective")
+  //'troll',
+  //'threat',
+
+  // violations/illegal
   'csam',
   'dmca-violation',
-  'nudity-nonconsentual',
+  'nudity-nonconsensual',
+
+  // other policy/behavior issues
+  'spam',
+  'impersonation',
+  'misleading',
+  //'scam',
+  //'account-security',
+
+  // direct action
   '!no-promote',
+  '!filter',
+  '!warn',
 ]
