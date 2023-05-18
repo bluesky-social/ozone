@@ -37,17 +37,9 @@ export function ModActionPanelQuick(
     subject?: string
     subjectOptions?: string[]
     onSubmit: (vals: ModActionFormValues) => Promise<void>
-    goToNextReport?: boolean
   },
 ) {
-  const {
-    subject,
-    subjectOptions,
-    onSubmit,
-    onClose,
-    goToNextReport,
-    ...others
-  } = props
+  const { subject, subjectOptions, onSubmit, onClose, ...others } = props
   return (
     <FullScreenActionPanel
       title={`Take moderation action`}
@@ -59,7 +51,6 @@ export function ModActionPanelQuick(
         onSubmit={onSubmit}
         subject={subject}
         subjectOptions={subjectOptions}
-        goToNextReport={goToNextReport}
       />
     </FullScreenActionPanel>
   )
@@ -70,14 +61,12 @@ function Form(props: {
   subjectOptions?: string[]
   onCancel: () => void
   onSubmit: (vals: ModActionFormValues) => Promise<void>
-  goToNextReport?: boolean
 }) {
   const {
     subject: fixedSubject,
     subjectOptions,
     onCancel,
     onSubmit,
-    goToNextReport,
     ...others
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
@@ -102,52 +91,50 @@ function Form(props: {
     'com.atproto.admin.defs#',
     '',
   )
+  // navigate to next or prev report
+  const navigateReports = (delta: 1 | -1) => {
+    const len = subjectOptions?.length
+    if (len) {
+      // if we have a next report, go to it
+      const currentSubjectIndex = subjectOptions.indexOf(subject)
+      if (currentSubjectIndex !== -1) {
+        const nextSubjectIndex = (currentSubjectIndex + len + delta) % len // loop around if we're at the end
+        setSubject(subjectOptions[nextSubjectIndex])
+      } else {
+        setSubject(subjectOptions[0])
+      }
+    } else {
+      // otherwise, just close the panel
+      onCancel()
+    }
+  }
   // Left/right arrows to nav through report subjects
-  const evtRef = useRef({ subject, subjectOptions })
+  const evtRef = useRef({ navigateReports })
   useEffect(() => {
-    evtRef.current = { subject, subjectOptions }
+    evtRef.current = { navigateReports }
   })
   useEffect(() => {
     const downHandler = (ev: WindowEventMap['keydown']) => {
-      if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') {
+      if (
+        ev.key !== 'ArrowLeft' &&
+        ev.key !== 'ArrowRight' &&
+        ev.key !== 'ArrowDown' &&
+        ev.key !== 'ArrowUp'
+      ) {
         return
       }
       if (takesKeyboardEvt(ev.target)) {
         return
       }
-      if (!evtRef.current.subjectOptions?.length) {
-        return
-      }
-      const subjectIndex = evtRef.current.subjectOptions.indexOf(
-        evtRef.current.subject,
+      evtRef.current.navigateReports(
+        ev.key === 'ArrowLeft' || ev.key === 'ArrowUp' ? -1 : 1,
       )
-      if (subjectIndex !== -1) {
-        const optionsLength = evtRef.current.subjectOptions.length
-        const nextIndex =
-          (optionsLength + subjectIndex + (ev.key === 'ArrowLeft' ? -1 : 1)) %
-          optionsLength
-        setSubject(evtRef.current.subjectOptions[nextIndex])
-      } else {
-        setSubject(evtRef.current.subjectOptions[0])
-      }
     }
     window.addEventListener('keydown', downHandler)
     return () => {
       window.removeEventListener('keydown', downHandler)
     }
   }, [])
-  // go to next report
-  const goToNextReportButton = () => {
-    if (goToNextReport && subjectOptions && subjectOptions.length > 1) {
-      // if we have a next report, go to it
-      const currentSubjectIndex = subjectOptions.indexOf(subject)
-      const nextSubjectIndex = (currentSubjectIndex + 1) % subjectOptions.length // loop around if we're at the end
-      setSubject(subjectOptions[nextSubjectIndex])
-      return
-    }
-    // otherwise, just close the panel
-    onCancel()
-  }
   // on form submit
   const onFormSubmit = async (ev: FormEvent<HTMLFormElement>) => {
     ev.preventDefault()
@@ -168,7 +155,7 @@ function Form(props: {
           .map((cid) => String(cid)),
         ...diffLabels(currentLabels, nextLabels),
       })
-      goToNextReportButton()
+      navigateReports(1)
     } finally {
       setSubmitting(false)
     }
@@ -312,7 +299,10 @@ function Form(props: {
         </div>
       )} */}
         <div className="mt-auto mb-4 flex flex-row justify-between">
-          <ButtonSecondary>
+          <ButtonSecondary
+            onClick={() => navigateReports(-1)}
+            disabled={submitting}
+          >
             <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
           <div className="mx-auto">
@@ -363,7 +353,10 @@ function Form(props: {
               (S)ubmit
             </ButtonPrimary>
           </div>
-          <ButtonSecondary onClick={goToNextReportButton} disabled={submitting}>
+          <ButtonSecondary
+            onClick={() => navigateReports(1)}
+            disabled={submitting}
+          >
             <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
         </div>

@@ -87,7 +87,6 @@ export default function Reports() {
           await takeActionAndResolveReports(vals)
           refetch()
         }}
-        goToNextReport={true}
       />
     </>
   )
