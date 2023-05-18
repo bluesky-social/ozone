@@ -8,12 +8,17 @@ import { getSubjectString } from '../../../components/reports/ActionView/getSubj
 import { ReverseActionPanel } from '../../../components/reports/ReverseActionPanel'
 import client from '../../../lib/client'
 import { actionOptions } from '../ModActionPanel'
+import { Loading, LoadingFailed } from '../../../components/common/Loader'
 
 export default function Action({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)
   const [reverseActionPanelOpen, setReverseActionPanelOpen] = useState(false)
 
-  const { data: action, refetch } = useQuery({
+  const {
+    data: action,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['action', { id }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getModerationAction(
@@ -23,8 +28,11 @@ export default function Action({ params }: { params: { id: string } }) {
       return data
     },
   })
+  if (error) {
+    return <LoadingFailed error={error} />
+  }
   if (!action) {
-    return null
+    return <Loading />
   }
   return (
     <>

@@ -9,12 +9,17 @@ import {
   ModActionPanel,
 } from '../../actions/ModActionPanel'
 import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
+import { Loading, LoadingFailed } from '../../../components/common/Loader'
 
 export default function Report({ params }: { params: { id: string } }) {
   const [resolveReportPanelOpen, setResolveReportPanelOpen] = useState(false)
 
   const id = decodeURIComponent(params.id)
-  const { data: report, refetch } = useQuery({
+  const {
+    data: report,
+    error,
+    refetch,
+  } = useQuery({
     queryKey: ['report', { id }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getModerationReport(
@@ -25,8 +30,12 @@ export default function Report({ params }: { params: { id: string } }) {
     },
   })
 
+  if (error) {
+    return <LoadingFailed error={error} />
+  }
+
   if (!report) {
-    return null
+    return <Loading />
   }
 
   const subjectString = getSubjectString(report.subject)

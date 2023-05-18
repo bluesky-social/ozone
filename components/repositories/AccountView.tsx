@@ -7,7 +7,6 @@ import {
   ComAtprotoAdminGetRepo as GetRepo,
   AppBskyActorDefs,
   ComAtprotoAdminDefs,
-  AppBskyActorProfile,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -31,6 +30,7 @@ import {
   displayLabel,
   toLabelVal,
 } from '../common/labels'
+import { Loading, LoadingFailed } from '../common/Loader'
 
 enum Views {
   Details,
@@ -114,7 +114,7 @@ export function AccountView({
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
-                  {error ? 'An error occurred' : 'Loading...'}
+                  {error ? <LoadingFailed error={error} /> : <Loading />}
                 </div>
               )}
             </article>
