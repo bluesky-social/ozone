@@ -151,7 +151,7 @@ export function RepoCard(props: { did: string }) {
             </Link>{' '}
             {takendown && (
               <LoadingFailedDense
-                className="inline-block text-gray-600"
+                className="inline-block font-normal text-gray-600"
                 noPadding
                 error="Account taken down"
               />
