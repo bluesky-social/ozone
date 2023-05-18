@@ -1,6 +1,6 @@
+import Link from 'next/link'
 import { Disclosure } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
-import { RecordCard, RepoCard } from '../../../components/common/RecordCard'
 import { ReasonBadge } from '../../../components/reports/ReasonBadge'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { PreviewCard } from '../../../components/common/PreviewCard'
@@ -24,7 +24,7 @@ export function ReportItemAccordian(props: Props) {
       {({ open }) => (
         <>
           <Disclosure.Button className="flex justify-between w-full px-4 py-2 text-sm font-medium text-left text-gray-500 bg-gray-100 rounded-lg hover:bg-gray-200 focus:outline-none focus-visible:ring focus-visible:ring-gray-500 focus-visible:ring-opacity-75">
-            <div className="flex items-center">
+            <div className="flex items-center overflow-hidden">
               <input
                 id={`report-${report.id}`}
                 name={name}
@@ -41,17 +41,20 @@ export function ReportItemAccordian(props: Props) {
                   }
                 }}
               />
-              <ReasonBadge reasonType={report.reasonType} /> {report.reason}
-              <p className="ml-2 font-medium text-gray-700">
-                <span
-                  className={`font-bold ${
-                    resolved ? 'text-green-500' : 'text-yellow-500'
-                  }`}
-                >
-                  #{report.id}
-                </span>{' '}
+              <Link
+                role="button"
+                href={`/reports/${report.id}`}
+                className={`mr-2 rounded bg-white px-2 py-1 text-xs font-semibold shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50`}
+              >
+                #{report.id}
+              </Link>
+              <ReasonBadge className="mr-1" reasonType={report.reasonType} />{' '}
+              <p className="mr-2 min-w-0 overflow-hidden text-ellipsis">
+                {report.reason}
+              </p>
+              <p className="font-medium text-gray-700 min-w-0 overflow-hidden text-ellipsis">
                 {shortCollection &&
-                  `${shortCollection} record by ${summary?.did} reported by ${report.reportedBy}`}
+                  `${shortCollection} record reported by ${report.reportedBy}`}
                 {!shortCollection &&
                   `repo ${summary?.did} reported by ${report.reportedBy}`}
               </p>
