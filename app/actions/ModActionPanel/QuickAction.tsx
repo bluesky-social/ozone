@@ -28,6 +28,7 @@ import { PreviewCard } from '../../../components/common/PreviewCard'
 import { useKeyPressEvent } from 'react-use'
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { LabelsGrid } from '../../../components/common/labels/Grid'
+import { takesKeyboardEvt } from '../../../lib/util'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -111,7 +112,7 @@ function Form(props: {
       if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') {
         return
       }
-      if (ev.target && ev.target !== document.body) {
+      if (takesKeyboardEvt(ev.target)) {
         return
       }
       if (!evtRef.current.subjectOptions?.length) {
@@ -178,20 +179,32 @@ function Form(props: {
     if (!submitButton.current) return
     submitButton.current.click()
   }
-  useKeyPressEvent('c', onCancel)
-  useKeyPressEvent('s', submitForm)
-  useKeyPressEvent('a', () => {
-    setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
-  })
-  useKeyPressEvent('e', () => {
-    setAction(ComAtprotoAdminDefs.ESCALATE)
-  })
-  useKeyPressEvent('f', () => {
-    setAction(ComAtprotoAdminDefs.FLAG)
-  })
-  useKeyPressEvent('t', () => {
-    setAction(ComAtprotoAdminDefs.TAKEDOWN)
-  })
+  useKeyPressEvent('c', safeKeyHandler(onCancel))
+  useKeyPressEvent('s', safeKeyHandler(submitForm))
+  useKeyPressEvent(
+    'a',
+    safeKeyHandler(() => {
+      setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
+    }),
+  )
+  useKeyPressEvent(
+    'e',
+    safeKeyHandler(() => {
+      setAction(ComAtprotoAdminDefs.ESCALATE)
+    }),
+  )
+  useKeyPressEvent(
+    'f',
+    safeKeyHandler(() => {
+      setAction(ComAtprotoAdminDefs.FLAG)
+    }),
+  )
+  useKeyPressEvent(
+    't',
+    safeKeyHandler(() => {
+      setAction(ComAtprotoAdminDefs.TAKEDOWN)
+    }),
+  )
 
   return (
     <form
@@ -393,5 +406,13 @@ async function getSubject(subject: string) {
     return { record }
   } else {
     return {}
+  }
+}
+
+function safeKeyHandler(handler: (_ev: KeyboardEvent) => void) {
+  return (ev: KeyboardEvent) => {
+    if (!takesKeyboardEvt(ev.target)) {
+      handler(ev)
+    }
   }
 }
