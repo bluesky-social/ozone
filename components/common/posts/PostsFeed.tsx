@@ -113,7 +113,7 @@ function PostHeader({
             </Link>
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://staging.bsky.app/profile/${item.post.uri
+              href={`https://bsky.app/profile/${item.post.uri
                 .replace('at://', '')
                 .replace('app.bsky.feed.post', 'post')}`}
               target="_blank" rel="noreferrer"
