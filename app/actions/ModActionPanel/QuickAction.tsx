@@ -239,7 +239,10 @@ function Form(props: {
           </div>
         )}
         {record?.blobs && (
-          <FormLabel label="Blobs" className="mb-3">
+          <FormLabel
+            label="Blobs"
+            className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+          >
             <BlobList
               blobs={record.blobs}
               disabled={!!currentAction}
@@ -247,7 +250,11 @@ function Form(props: {
             />
           </FormLabel>
         )}
-        <FormLabel label="Action" htmlFor="action" className="mb-3">
+        <FormLabel
+          label="Action"
+          htmlFor="action"
+          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+        >
           <Select
             id="action"
             name="action"
@@ -272,14 +279,10 @@ function Form(props: {
         </FormLabel>
         {/* Hidden field exists so that form always has same fields, useful during submission */}
         {currentAction && <input name="action" type="hidden" />}
-        {!currentAction && (
-          <Textarea
-            name="reason"
-            placeholder="Details"
-            className="block w-full mb-3"
-          />
-        )}
-        <FormLabel label="Labels" className="mb-3">
+        <FormLabel
+          label="Labels"
+          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+        >
           <LabelsGrid
             id="labels"
             name="labels"
@@ -290,7 +293,10 @@ function Form(props: {
         </FormLabel>
         {/* Hidden field exists so that form always has same fields, useful during submission */}
         {currentAction && <input name="reason" type="hidden" />}
-        <FormLabel label="Resolves" className="mb-6">
+        <FormLabel
+          label="Resolves"
+          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+        >
           <ResolutionList subject={subject || null} name="resolveReportIds" />
         </FormLabel>
         {/* {currentAction && (
@@ -298,7 +304,16 @@ function Form(props: {
           Resolve with current action?
         </div>
       )} */}
-        <div className="mt-auto mb-4 flex flex-row justify-between">
+        <div className="mt-auto">
+          {!currentAction && (
+            <Textarea
+              name="reason"
+              placeholder="Reason for action (optional)"
+              className="block w-full mb-3"
+            />
+          )}
+        </div>
+        <div className="mb-4 flex flex-row justify-between">
           <ButtonSecondary
             onClick={() => navigateReports(-1)}
             disabled={submitting}
