@@ -373,6 +373,7 @@ export type ModActionFormValues = {
   resolveReportIds: number[]
   subjectBlobCids: string[]
   currentActionId?: number
+  replacingAction?: boolean
   createLabelVals: string[]
   negateLabelVals: string[]
 }

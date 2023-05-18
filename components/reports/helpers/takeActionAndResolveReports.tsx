@@ -12,10 +12,24 @@ export const takeActionAndResolveReports = async (
   const takeModerationActionAsync = async () => {
     let actionId: number
     let action: ComAtprotoAdminDefs.ActionView | undefined
-    if (vals.currentActionId) {
+    let resolveAddlReportIds: number[] = []
+
+    if (vals.currentActionId && !vals.replacingAction) {
       actionId = vals.currentActionId
     } else {
       const subject = await createSubjectFromId(vals.subject)
+      if (vals.currentActionId && vals.replacingAction) {
+        const { data: replacedAction } =
+          await client.api.com.atproto.admin.reverseModerationAction(
+            {
+              id: vals.currentActionId,
+              reason: 'Replacing action',
+              createdBy: client.session.did,
+            },
+            { headers: client.adminHeaders(), encoding: 'application/json' },
+          )
+        resolveAddlReportIds = replacedAction.resolvedReportIds
+      }
       const result = await client.api.com.atproto.admin.takeModerationAction(
         {
           subject,
@@ -34,12 +48,13 @@ export const takeActionAndResolveReports = async (
       action = result.data
       actionId = action.id
     }
-    if (vals.resolveReportIds.length) {
+    const resolveReportIds = [...vals.resolveReportIds, ...resolveAddlReportIds]
+    if (resolveReportIds.length) {
       const result =
         await client.api.com.atproto.admin.resolveModerationReports(
           {
             actionId: actionId,
-            reportIds: vals.resolveReportIds,
+            reportIds: resolveReportIds,
             createdBy: client.session.did,
           },
           { headers: client.adminHeaders(), encoding: 'application/json' },
