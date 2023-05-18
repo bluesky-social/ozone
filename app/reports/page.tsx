@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '../../components/common/ModActionIcon'
 import { ReportsTable } from '../../components/reports/ReportsTable'
@@ -12,33 +13,51 @@ import { takeActionAndResolveReports } from '../../components/reports/helpers/ta
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 
 const TABS = [
-  { key: 'unresolved', name: 'Unresolved', href: '/reports?resolved=false' },
-  { key: 'resolved', name: 'Resolved', href: '/reports?resolved=true' },
-  { key: 'all', name: 'All', href: '/reports?resolved=' },
+  {
+    key: 'unresolved',
+    name: 'Unresolved',
+    href: '/reports?resolved=false&actionType=',
+  },
+  {
+    key: 'escalated',
+    name: 'Escalated',
+    href: `/reports?resolved=&actionType=${encodeURIComponent(
+      ComAtprotoAdminDefs.ESCALATE,
+    )}`,
+  },
+  {
+    key: 'resolved',
+    name: 'Resolved',
+    href: '/reports?resolved=true&actionType=',
+  },
+  { key: 'all', name: 'All', href: '/reports?resolved=&actionType=' },
 ]
 
 export default function Reports() {
   const [open, setOpen] = useState(false)
   const [quickOpen, setQuickOpen] = useState(false)
   const params = useSearchParams()
-  const subject = params.get('term') ?? undefined // @TODO
+  const subject = params.get('term') ?? undefined
+  const actionType = params.get('actionType')
+    ? decodeURIComponent(String(params.get('actionType')))
+    : undefined
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
   const { data, fetchNextPage, hasNextPage, refetch } = useInfiniteQuery({
-    queryKey: ['reports', { subject, resolved }],
+    queryKey: ['reports', { subject, resolved, actionType }],
     queryFn: async ({ pageParam }) => {
       return await getReports({
         subject,
         resolved,
+        actionType,
         cursor: pageParam,
       })
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
   const reports = data?.pages.flatMap((page) => page.reports) ?? []
-  const currentTab =
-    resolved === undefined ? 'all' : resolved ? 'resolved' : 'unresolved'
+  const currentTab = getTabFromParams({ resolved, actionType })
   const subjectOptions = unique(
     reports.flatMap((report) => validSubjectString(report.subject) ?? []),
   )
@@ -86,17 +105,32 @@ export default function Reports() {
   )
 }
 
+function getTabFromParams(params: { resolved?: boolean; actionType?: string }) {
+  const { resolved, actionType } = params
+  if (resolved === undefined && actionType === ComAtprotoAdminDefs.ESCALATE) {
+    return 'escalated'
+  } else if (resolved === true && actionType === undefined) {
+    return 'resolved'
+  } else if (resolved === false && actionType === undefined) {
+    return 'unresolved'
+  } else {
+    return 'all'
+  }
+}
+
 async function getReports(opts: {
   subject?: string
   resolved?: boolean
+  actionType?: string
   cursor?: string
 }) {
-  const { subject, resolved, cursor } = opts
+  const { subject, resolved, actionType, cursor } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
       resolved,
       cursor,
+      actionType,
       limit: 25,
     },
     { headers: client.adminHeaders() },
