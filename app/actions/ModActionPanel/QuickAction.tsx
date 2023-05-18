@@ -11,6 +11,8 @@ import {
 import {
   FormLabel,
   Input,
+  RadioGroup,
+  RadioGroupOption,
   Select,
   Textarea,
 } from '../../../components/common/forms'
@@ -67,9 +69,12 @@ function Form(props: {
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
   const [replacingAction, setReplacingAction] = useState(false)
-  useEffect(() => setReplacingAction(false), [subject])
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
+  useEffect(() => {
+    setReplacingAction(false)
+    setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
+  }, [subject])
   const { data: { record, repo } = {} } = useQuery({
     // subject of the report
     queryKey: ['modActionSubject', { subject }],
@@ -277,27 +282,29 @@ function Form(props: {
           htmlFor="action"
           className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
         >
-          <Select
-            id="action"
-            name="action"
-            disabled={!!currentAction}
-            value={currentAction ? currentAction.action : action}
-            onChange={(ev) => {
-              if (!currentAction) {
-                setAction(ev.target.value)
-              }
-            }}
-            required
-          >
-            <option hidden selected value="">
-              Action
-            </option>
+          <RadioGroup>
             {Object.entries(actionOptions).map(([value, label]) => (
-              <option key={value} value={value}>
+              <RadioGroupOption
+                key={value}
+                name="action"
+                value={value}
+                required
+                disabled={!!currentAction}
+                checked={
+                  currentAction
+                    ? value === currentAction.action
+                    : value === action
+                }
+                onChange={(ev) => {
+                  if (!currentAction) {
+                    setAction(ev.target.value)
+                  }
+                }}
+              >
                 {label}
-              </option>
+              </RadioGroupOption>
             ))}
-          </Select>
+          </RadioGroup>
         </FormLabel>
         {/* Hidden field exists so that form always has same fields, useful during submission */}
         {currentAction && <input name="action" type="hidden" />}
