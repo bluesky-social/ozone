@@ -252,7 +252,6 @@ function Form(props: {
       {!currentAction && (
         <Textarea
           name="reason"
-          required={action !== ComAtprotoAdminDefs.ACKNOWLEDGE}
           placeholder="Details"
           className="block w-full mb-3"
         />

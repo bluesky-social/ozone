@@ -63,7 +63,6 @@ function Form(props: {
         name="reason"
         placeholder="Details"
         className="block w-full mb-3"
-        required
       />
       <div className="text-right">
         <ButtonSecondary
