@@ -18,11 +18,7 @@ import { PropsOf } from '../../../lib/types'
 import { ResolutionList } from './ResolutionList'
 import client from '../../../lib/client'
 import { BlobList } from './BlobList'
-import {
-  LabelsInput,
-  diffLabels,
-  toLabelVal,
-} from '../../../components/common/labels'
+import { diffLabels, toLabelVal } from '../../../components/common/labels'
 import { FullScreenActionPanel } from '../../../components/common/FullScreenActionPanel'
 import { PreviewCard } from '../../../components/common/PreviewCard'
 import { useKeyPressEvent } from 'react-use'
@@ -70,6 +66,8 @@ function Form(props: {
     ...others
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
+  const [replacingAction, setReplacingAction] = useState(false)
+  useEffect(() => setReplacingAction(false), [subject])
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
   const { data: { record, repo } = {} } = useQuery({
@@ -77,9 +75,18 @@ function Form(props: {
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
-  // @TODO consider pulling current action details, e.g. description here
-  const { currentAction } = record?.moderation ?? repo?.moderation ?? {}
-  // @TODO client types
+  // This handles a special case where a deleted subject has a current action,
+  // but we weren't able to detect that before form submission. When this happens,
+  // we go spelunking for the current action and let the moderator retry.
+  const { data: currentActionFallback, refetch: fetchCurrentActionFallback } =
+    useQuery({
+      enabled: false,
+      queryKey: ['subjectCurrentAction', { subject }],
+      queryFn: () => getCurrentAction(subject),
+    })
+  const { currentAction: currActionMaybeReplace = currentActionFallback } =
+    record?.moderation ?? repo?.moderation ?? {}
+  const currentAction = replacingAction ? undefined : currActionMaybeReplace
   const currentLabels = (
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
   ).map(toLabelVal)
@@ -143,7 +150,8 @@ function Form(props: {
       const formData = new FormData(ev.currentTarget)
       const nextLabels = formData.getAll('labels')!.map((val) => String(val))
       await onSubmit({
-        currentActionId: currentAction?.id,
+        replacingAction,
+        currentActionId: currActionMaybeReplace?.id,
         subject: formData.get('subject')!.toString(),
         action: formData.get('action')!.toString(),
         reason: formData.get('reason')!.toString(),
@@ -156,6 +164,11 @@ function Form(props: {
         ...diffLabels(currentLabels, nextLabels),
       })
       navigateReports(1)
+    } catch (err) {
+      if (err?.['error'] === 'SubjectHasAction') {
+        fetchCurrentActionFallback()
+      }
+      throw err
     } finally {
       setSubmitting(false)
     }
@@ -236,6 +249,15 @@ function Form(props: {
               <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
               #{currentAction.id}
             </Link>
+            .<br />
+            <span
+              role="button"
+              className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
+              onClick={() => setReplacingAction(true)}
+            >
+              Click here
+            </span>{' '}
+            to replace this action.
           </div>
         )}
         {record?.blobs && (
@@ -299,12 +321,34 @@ function Form(props: {
         >
           <ResolutionList subject={subject || null} name="resolveReportIds" />
         </FormLabel>
-        {/* {currentAction && (
-        <div className="text-base text-gray-600 mb-3 text-right">
-          Resolve with current action?
-        </div>
-      )} */}
         <div className="mt-auto">
+          {currActionMaybeReplace && (
+            <div className="text-base text-gray-600 mb-3 text-right">
+              {!replacingAction && 'Resolve with current action?'}
+              {replacingAction && (
+                <>
+                  Replacing the current action{' '}
+                  <Link
+                    href={`/actions/${currActionMaybeReplace.id}`}
+                    title={displayActionType}
+                    className={actionColorClasses}
+                  >
+                    <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
+                    #{currActionMaybeReplace.id}
+                  </Link>
+                  .<br />
+                  <span
+                    role="button"
+                    className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setReplacingAction(false)}
+                  >
+                    Click here
+                  </span>{' '}
+                  to stop replacing.
+                </>
+              )}
+            </div>
+          )}
           {!currentAction && (
             <Textarea
               name="reason"
@@ -423,4 +467,16 @@ function safeKeyHandler(handler: (_ev: KeyboardEvent) => void) {
       handler(ev)
     }
   }
+}
+
+async function getCurrentAction(subject: string) {
+  const result = await client.api.com.atproto.admin.getModerationActions(
+    { subject },
+    { headers: client.adminHeaders() },
+  )
+  return result.data.actions.find(
+    (action) =>
+      !action.reversal &&
+      (action.subject.did === subject || action.subject.uri === subject),
+  )
 }
