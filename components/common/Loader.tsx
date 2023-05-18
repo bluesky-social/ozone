@@ -4,10 +4,10 @@ import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 export function Loading(
   props: { noPadding?: boolean } & ComponentProps<'div'>,
 ) {
-  const { className, noPadding, ...others } = props
+  const { className = '', noPadding, ...others } = props
   return (
     <div
-      className={`text-center ${noPadding ? '' : 'p-10'} ${className}`}
+      className={`${className} text-center ${noPadding ? '' : 'p-10'}`}
       {...others}
     >
       <div
@@ -24,10 +24,10 @@ export function Loading(
 export function LoadingDense(
   props: { noPadding?: boolean } & ComponentProps<'div'>,
 ) {
-  const { className, noPadding, ...others } = props
+  const { className = '', noPadding, ...others } = props
   return (
     <div
-      className={`text-center text-sm ${noPadding ? '' : 'p-1'} ${className}`}
+      className={`${className} text-center text-sm ${noPadding ? '' : 'p-1'}`}
       {...others}
     >
       <div
@@ -44,10 +44,10 @@ export function LoadingDense(
 export function LoadingFailed(
   props: { error: unknown; noPadding?: boolean } & ComponentProps<'div'>,
 ) {
-  const { error, className, noPadding, ...others } = props
+  const { error, className = '', noPadding, ...others } = props
   return (
     <div
-      className={`text-center ${noPadding ? '' : 'p-10'} ${className}`}
+      className={`${className} text-center ${noPadding ? '' : 'p-10'}`}
       {...others}
     >
       <ExclamationTriangleIcon className="h-8 w-8 inline-block" />
@@ -60,10 +60,10 @@ export function LoadingFailed(
 export function LoadingFailedDense(
   props: { error: unknown; noPadding?: boolean } & ComponentProps<'div'>,
 ) {
-  const { error, className, noPadding, ...others } = props
+  const { error, className = '', noPadding, ...others } = props
   return (
     <div
-      className={`text-center text-sm ${noPadding ? '' : 'p-1'} ${className}`}
+      className={`${className} text-center text-sm ${noPadding ? '' : 'p-1'}`}
       {...others}
     >
       <ExclamationTriangleIcon className="h-4 w-4 inline-block mr-1" />
@@ -82,8 +82,7 @@ export function displayError(err: unknown) {
   if (!originalMessage) {
     return displayErrorMapping.$default
   }
-  originalMessage = originalMessage.toLowerCase()
-  return displayErrorMapping[originalMessage] ?? originalMessage
+  return displayErrorMapping[originalMessage.toLowerCase()] ?? originalMessage
 }
 
 const displayErrorMapping = {

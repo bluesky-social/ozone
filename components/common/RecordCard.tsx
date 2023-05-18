@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedDefs } from '@atproto/api'
+import { AppBskyFeedDefs, ComAtprotoAdminDefs } from '@atproto/api'
 import { parseAtUri } from '../../lib/util'
 import client from '../../lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
-import { LoadingDense, LoadingFailedDense } from './Loader'
+import { LoadingDense, LoadingFailed, LoadingFailedDense } from './Loader'
 
 export function RecordCard(props: { uri: string }) {
   const { uri } = props
@@ -122,6 +122,8 @@ export function RepoCard(props: { did: string }) {
   if (!repo) {
     return <LoadingDense />
   }
+  const takendown =
+    repo.moderation.currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
   return (
     <div className="bg-white">
       <div className="flex w-full space-x-4">
@@ -146,7 +148,14 @@ export function RepoCard(props: { did: string }) {
               ) : (
                 <span className="font-bold">@{repo.handle}</span>
               )}
-            </Link>
+            </Link>{' '}
+            {takendown && (
+              <LoadingFailedDense
+                className="inline-block text-gray-600"
+                noPadding
+                error="Account taken down"
+              />
+            )}
           </p>
         </div>
       </div>
