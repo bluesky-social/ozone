@@ -1,19 +1,18 @@
 import Link from 'next/link'
-import { ComAtprotoRepoStrongRef, ComAtprotoAdminDefs } from '@atproto/api'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
-import { Report } from '../../lib/types'
 import { createAtUri, parseAtUri, truncate } from '../../lib/util'
 
 export function SubjectOverview(props: {
-  subject: Report['subject']
+  subject: { did: string } | { uri: string } | Record<string, unknown>
   withTruncation?: boolean
 }) {
   const { subject, withTruncation = true } = props
-  const summary = ComAtprotoAdminDefs.isRepoRef(subject)
-    ? { did: subject.did, collection: null, rkey: null }
-    : ComAtprotoRepoStrongRef.isMain(subject)
-    ? parseAtUri(subject.uri)
-    : null
+  const summary =
+    typeof subject['did'] === 'string'
+      ? { did: subject['did'], collection: null, rkey: null }
+      : typeof subject['uri'] === 'string'
+      ? parseAtUri(subject['uri'])
+      : null
   if (!summary) {
     return null
   }

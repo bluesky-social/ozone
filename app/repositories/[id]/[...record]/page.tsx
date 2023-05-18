@@ -7,6 +7,7 @@ import { RecordView } from '../../../../components/repositories/RecordView'
 import client from '../../../../lib/client'
 import { createAtUri } from '../../../../lib/util'
 import { createReport } from '../../../../components/repositories/createReport'
+import { Loading, LoadingFailed } from '../../../../components/common/Loader'
 
 export default function Record({
   params,
@@ -17,7 +18,7 @@ export default function Record({
   const collection = params.record[0] && decodeURIComponent(params.record[0])
   const rkey = params.record[1] && decodeURIComponent(params.record[1])
   const [reportUri, setReportUri] = useState<string>()
-  const { data, refetch } = useQuery({
+  const { data, error, refetch } = useQuery({
     queryKey: ['record', { id, collection, rkey }],
     queryFn: async () => {
       let did: string
@@ -57,8 +58,11 @@ export default function Record({
       return { record, thread }
     },
   })
+  if (error) {
+    return <LoadingFailed error={error} />
+  }
   if (!data) {
-    return null
+    return <Loading />
   }
   return (
     <>

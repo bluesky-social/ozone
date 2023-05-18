@@ -1,10 +1,11 @@
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import Link from 'next/link'
-import { toast } from 'react-toastify'
+import { toast, Icons } from 'react-toastify'
 import { ModActionFormValues } from '../../../app/actions/ModActionPanel'
 import client from '../../../lib/client'
 import { createSubjectFromId } from './createSubjectFromId'
 import { isIdRecord } from './isIdRecord'
+import { displayError } from '../../common/Loader'
 
 export const takeActionAndResolveReports = async (
   vals: ModActionFormValues,
@@ -61,40 +62,47 @@ export const takeActionAndResolveReports = async (
         )
       action = result.data
     }
-    return action
+    return { id: actionId, ...action }
   }
 
-  return await toast.promise(takeModerationActionAsync, {
-    pending: 'Taking action...',
-    error: {
-      render({ data }: any) {
-        const errorMessage = data?.message ?? ''
-        return `Error taking action: ${errorMessage}`
-      },
-    },
-    success: {
-      render({ data: newAction }) {
-        const actionId = newAction?.id
-        const actionType = newAction?.action
-        const actionTypeString = actionType && actionOptions[actionType]
+  try {
+    await toast.promise(takeModerationActionAsync, {
+      pending: 'Taking action...',
+      success: {
+        render({ data }) {
+          const actionId = data?.id
+          const actionType = data?.action
+          const actionTypeString = actionType && actionOptions[actionType]
 
-        const isRecord = isIdRecord(vals.subject)
-        const title = `${isRecord ? 'Record' : 'Repo'} was ${actionTypeString}`
+          const isRecord = isIdRecord(vals.subject)
+          const title = `${isRecord ? 'Record' : 'Repo'} was ${
+            actionTypeString ?? 'actioned'
+          }`
 
-        return (
-          <div>
-            {title} -{' '}
-            <Link
-              href={`/actions/${actionId}`}
-              className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
-            >
-              View #{actionId}
-            </Link>
-          </div>
-        )
+          return (
+            <div>
+              {title} -{' '}
+              <Link
+                href={`/actions/${actionId}`}
+                className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
+              >
+                View #{actionId}
+              </Link>
+            </div>
+          )
+        },
       },
-    },
-  })
+    })
+  } catch (err) {
+    if (err?.['error'] === 'SubjectHasAction') {
+      toast.warn(
+        'We found that subject already has a current action. You may proceed by resolving with that action, or replacing it.',
+      )
+    } else {
+      toast.error(`Error taking action: ${displayError(err)}`)
+    }
+    throw err
+  }
 }
 
 const actionOptions = {
