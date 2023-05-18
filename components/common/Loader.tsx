@@ -52,9 +52,7 @@ export function LoadingFailed(
     >
       <ExclamationTriangleIcon className="h-8 w-8 inline-block" />
       <br />
-      {typeof error === 'string' && error}
-      {typeof error !== 'string' &&
-        (error?.['message'] || 'Something went wrong')}
+      {displayError(error)}
     </div>
   )
 }
@@ -69,9 +67,27 @@ export function LoadingFailedDense(
       {...others}
     >
       <ExclamationTriangleIcon className="h-4 w-4 inline-block mr-1" />
-      {typeof error === 'string' && error}
-      {typeof error !== 'string' &&
-        (error?.['message'] || 'Something went wrong')}
+      {displayError(error)}
     </div>
   )
+}
+
+export function displayError(err: unknown) {
+  let originalMessage = ''
+  if (typeof err === 'string') {
+    originalMessage = err
+  } else if (typeof err?.['message'] === 'string') {
+    originalMessage = err['message']
+  }
+  if (!originalMessage) {
+    return displayErrorMapping.$default
+  }
+  originalMessage = originalMessage.toLowerCase()
+  return displayErrorMapping[originalMessage] ?? originalMessage
+}
+
+const displayErrorMapping = {
+  'record not found': 'Record not available',
+  'repo not found': 'Repo not available',
+  $default: 'Something went wrong',
 }
