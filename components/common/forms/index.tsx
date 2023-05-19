@@ -30,6 +30,57 @@ export function Textarea(props: ComponentProps<'textarea'>) {
   )
 }
 
+export function RadioGroup(props: ComponentProps<'ul'>) {
+  const { className = '', ...others } = props
+  return (
+    <ul
+      className={`items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex ${className}`}
+      {...others}
+    />
+  )
+}
+
+export function RadioGroupOption(
+  props: ComponentProps<'input'> & {
+    name: string
+    value: string
+  },
+) {
+  const {
+    className = '',
+    value,
+    name,
+    required,
+    disabled,
+    children,
+    ...others
+  } = props
+  return (
+    <li
+      className={`w-full border-b border-gray-200 sm:border-b-0 sm:border-r ${className}`}
+    >
+      <div className="flex items-center pl-3">
+        <input
+          id={`radio-group--${name}--${value}`}
+          type="radio"
+          value={value}
+          name={name}
+          required={required}
+          disabled={disabled}
+          className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 focus:ring-2"
+          {...others}
+        />
+        <label
+          htmlFor={`radio-group--${name}--${value}`}
+          className="w-full py-3 ml-2 text-sm font-medium text-gray-900"
+        >
+          {children}
+        </label>
+      </div>
+    </li>
+  )
+}
+
 export function FormLabel(props: ComponentProps<'label'> & { label: string }) {
   const { label, className, children, ...others } = props
   return (

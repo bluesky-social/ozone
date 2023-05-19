@@ -24,6 +24,7 @@ import {
   diffLabels,
   toLabelVal,
 } from '../../../components/common/labels'
+import { takesKeyboardEvt } from '../../../lib/util'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -62,9 +63,12 @@ function Form(props: {
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
   const [replacingAction, setReplacingAction] = useState(false)
-  useEffect(() => setReplacingAction(false), [subject])
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
+  useEffect(() => {
+    setReplacingAction(false)
+    setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
+  }, [subject])
   const { data: { record, repo } = {} } = useQuery({
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
@@ -103,7 +107,7 @@ function Form(props: {
       if (ev.key !== 'ArrowLeft' && ev.key !== 'ArrowRight') {
         return
       }
-      if (ev.target && ev.target !== document.body) {
+      if (takesKeyboardEvt(ev.target)) {
         return
       }
       if (!evtRef.current.subjectOptions?.length) {
