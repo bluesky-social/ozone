@@ -44,6 +44,7 @@ export function RadioGroupOption(
   props: ComponentProps<'input'> & {
     name: string
     value: string
+    last?: boolean
   },
 ) {
   const {
@@ -52,12 +53,15 @@ export function RadioGroupOption(
     name,
     required,
     disabled,
+    last,
     children,
     ...others
   } = props
   return (
     <li
-      className={`w-full border-b border-gray-200 sm:border-b-0 sm:border-r ${className}`}
+      className={`w-full border-b border-gray-200 sm:border-b-0 ${
+        last ? '' : 'sm:border-r'
+      } ${className}`}
     >
       <div className="flex items-center pl-3">
         <input
