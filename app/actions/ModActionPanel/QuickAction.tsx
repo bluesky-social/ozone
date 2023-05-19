@@ -277,35 +277,6 @@ function Form(props: {
             />
           </FormLabel>
         )}
-        <FormLabel
-          label="Action"
-          htmlFor="action"
-          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
-        >
-          <RadioGroup>
-            {Object.entries(actionOptions).map(([value, label]) => (
-              <RadioGroupOption
-                key={value}
-                name="action"
-                value={value}
-                required
-                disabled={!!currentAction}
-                checked={
-                  currentAction
-                    ? value === currentAction.action
-                    : value === action
-                }
-                onChange={(ev) => {
-                  if (!currentAction) {
-                    setAction(ev.target.value)
-                  }
-                }}
-              >
-                {label}
-              </RadioGroupOption>
-            ))}
-          </RadioGroup>
-        </FormLabel>
         {/* Hidden field exists so that form always has same fields, useful during submission */}
         {currentAction && <input name="action" type="hidden" />}
         <FormLabel
@@ -371,50 +342,43 @@ function Form(props: {
           >
             <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
-          <div className="mx-auto">
+          <div className="flex flex-1">
             <ButtonSecondary
-              className="mr-4"
+              className="ml-2 mr-4"
               disabled={submitting}
               onClick={onCancel}
             >
               (C)ancel
             </ButtonSecondary>
-            <ButtonSecondary
-              color="text-white"
-              className="text-white bg-green-600 hover:bg-green-700 mr-4"
-              disabled={submitting}
-              onClick={() => setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)}
-            >
-              (A)cknowledge
-            </ButtonSecondary>
-            <ButtonSecondary
-              color="text-white"
-              className="text-white bg-green-600 hover:bg-green-700 mr-4"
-              disabled={submitting}
-              onClick={() => setAction(ComAtprotoAdminDefs.ESCALATE)}
-            >
-              (E)scalate
-            </ButtonSecondary>
-            <ButtonSecondary
-              color="text-white"
-              className="text-white bg-amber-600 hover:bg-amber-700 mr-4"
-              disabled={submitting}
-              onClick={() => setAction(ComAtprotoAdminDefs.FLAG)}
-            >
-              (F)lag
-            </ButtonSecondary>
-            <ButtonSecondary
-              color="text-white"
-              className="text-white bg-red-600 hover:bg-red-700 mr-4"
-              disabled={submitting}
-              onClick={() => setAction(ComAtprotoAdminDefs.TAKEDOWN)}
-            >
-              (T)akedown
-            </ButtonSecondary>
+            <RadioGroup className={`${currentAction ? 'opacity-75' : ''}`}>
+              {Object.entries(actionOptions).map(([value, label], i, arr) => (
+                <RadioGroupOption
+                  key={value}
+                  name="action"
+                  value={value}
+                  required
+                  disabled={!!currentAction}
+                  last={arr.length - 1 === i}
+                  checked={
+                    currentAction
+                      ? value === currentAction.action
+                      : value === action
+                  }
+                  onChange={(ev) => {
+                    if (!currentAction) {
+                      setAction(ev.target.value)
+                    }
+                  }}
+                >
+                  {label}
+                </RadioGroupOption>
+              ))}
+            </RadioGroup>
             <ButtonPrimary
               ref={submitButton}
               type="submit"
               disabled={submitting}
+              className="ml-4 mr-2"
             >
               (S)ubmit
             </ButtonPrimary>
