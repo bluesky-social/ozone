@@ -37,7 +37,7 @@ Just an outline of the development flow, as we continue to solidify it:
    - Service URL: http://localhost:2583
    - Account handle: alice.test
    - Password: hunter2
-   - Admin Token: password
+   - Admin Token: admin-pass
 
 ## Working with unpublished changes to @atproto/api
 
