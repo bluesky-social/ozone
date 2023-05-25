@@ -6,6 +6,7 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
+  ComAtprotoLabelDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -15,6 +16,7 @@ import {
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '../../../lib/types'
 import { RichText } from '../RichText'
+import { LabelChip, LabelList, getLabelGroupInfo } from '../labels'
 
 export function PostsFeed({
   items,
@@ -46,18 +48,21 @@ export function PostAsCard({
   controls = true,
   onReport,
   className = '',
+  showLabels = true,
 }: {
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
   controls?: boolean
   onReport?: (uri: string) => void
   className?: string
+  showLabels?: boolean
 }) {
   return (
     <div className={`bg-white ${className}`}>
       <PostHeader item={item} dense={dense} />
       <PostContent item={item} dense={dense} />
       <PostEmbeds item={item} />
+      {showLabels && <PostLabels item={item} dense={dense} />}
       {controls && <PostControls item={item} onReport={onReport} />}
     </div>
   )
@@ -116,7 +121,8 @@ function PostHeader({
               href={`https://bsky.app/profile/${item.post.uri
                 .replace('at://', '')
                 .replace('app.bsky.feed.post', 'post')}`}
-              target="_blank" rel="noreferrer"
+              target="_blank"
+              rel="noreferrer"
             >
               Peek
             </a>
@@ -213,7 +219,6 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
       AppBskyFeedPost.isRecord(embed.record.value) &&
       AppBskyFeedPost.validateRecord(embed.record.value).success
     ) {
-      console.log(embed)
       return (
         <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
           <div className="flex flex-row">
@@ -286,5 +291,35 @@ function PostControls({
         <span className="text-sm">Report</span>
       </button>
     </div>
+  )
+}
+
+function PostLabels({
+  item,
+  dense,
+}: {
+  item: AppBskyFeedDefs.FeedViewPost
+  dense?: boolean
+}) {
+  const { labels, cid } = item.post
+  if (!labels?.length) return null
+  return (
+    <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
+      {labels?.map(({ val }, i) => {
+        const labelGroup = getLabelGroupInfo(val)
+
+        return (
+          <LabelChip
+            className={`${i === 0 ? 'ml-0' : ''} text-[${labelGroup.color}]`}
+            // TODO: Ideally, we should just use inline class name but it only works when the class names are static
+            // so trying to work around that with style prop for now
+            style={{ color: labelGroup.color }}
+            key={`${cid}_${val}`}
+          >
+            {val}
+          </LabelChip>
+        )
+      })}
+    </LabelList>
   )
 }

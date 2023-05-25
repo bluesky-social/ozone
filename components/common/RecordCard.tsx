@@ -6,20 +6,20 @@ import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, LoadingFailed, LoadingFailedDense } from './Loader'
 
-export function RecordCard(props: { uri: string }) {
-  const { uri } = props
+export function RecordCard(props: { uri: string; showLabels?: boolean }) {
+  const { uri, showLabels = false } = props
   const parsed = parseAtUri(uri)
   if (!parsed) {
     return null
   }
   if (parsed.collection === 'app.bsky.feed.post') {
-    return <PostCard uri={uri} />
+    return <PostCard uri={uri} showLabels={showLabels} />
   }
   return <GenericRecordCard uri={uri} />
 }
 
-function PostCard(props: { uri: string }) {
-  const { uri } = props
+function PostCard(props: { uri: string; showLabels?: boolean }) {
+  const { uri, showLabels } = props
   const { error, data } = useQuery({
     retry: false,
     queryKey: ['postCard', { uri }],
@@ -39,7 +39,14 @@ function PostCard(props: { uri: string }) {
   if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
   }
-  return <PostAsCard dense controls={false} item={{ post: data.thread.post }} />
+  return (
+    <PostAsCard
+      dense
+      controls={false}
+      item={{ post: data.thread.post }}
+      showLabels={showLabels}
+    />
+  )
 }
 
 function GenericRecordCard(props: { uri: string }) {

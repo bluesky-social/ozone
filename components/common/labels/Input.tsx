@@ -2,7 +2,12 @@ import { Fragment } from 'react'
 import { Popover, Transition } from '@headlessui/react'
 import { useSyncedState } from '../../../lib/useSyncedState'
 import { LabelChip, LabelList, LabelListEmpty } from './List'
-import { labelOptions, displayLabel } from './util'
+import {
+  labelOptions,
+  displayLabel,
+  groupLabelList,
+  getLabelGroupInfo,
+} from './util'
 
 const EMPTY_ARR = []
 
@@ -22,6 +27,7 @@ export function LabelsInput(props: LabelsProps) {
     packMemo(defaultLabels),
   )
   const current = unpackMemo<string[]>(packedCurrent)
+  const groupedLabelList = groupLabelList(allOptions)
   return (
     <Popover className="relative">
       <Popover.Button
@@ -32,12 +38,15 @@ export function LabelsInput(props: LabelsProps) {
         {...others}
       >
         {!current.length && <LabelListEmpty>(click to add)</LabelListEmpty>}
-        {current.map((label) => (
-          <LabelChip key={label}>
-            {displayLabel(label)}
-            <input type="hidden" name={name} value={label} />
-          </LabelChip>
-        ))}
+        {current.map((label) => {
+          const labelGroup = getLabelGroupInfo(label)
+          return (
+            <LabelChip key={label} style={{ color: labelGroup.color }}>
+              {displayLabel(label)}
+              <input type="hidden" name={name} value={label} />
+            </LabelChip>
+          )
+        })}
       </Popover.Button>
       <Transition
         as={Fragment}
@@ -58,26 +67,48 @@ export function LabelsInput(props: LabelsProps) {
       >
         <Popover.Panel className="absolute left-1/2 z-10 mt-1 flex w-screen max-w-max -translate-x-1/2 px-4">
           <div className="w-screen max-w-sm flex-auto rounded bg-white p-4 text-sm leading-6 shadow-lg ring-1 ring-gray-900/5">
-            <div className="space-y-1" id={`${id}-staged-container`}>
-              {allOptions.map((opt, i) => {
+            <div
+              className="space-y-1 flex flex-row flex-wrap justify-between"
+              id={`${id}-staged-container`}
+            >
+              {Object.values(groupedLabelList).map((group, groupIndex) => {
                 return (
-                  <div key={opt} className="relative flex items-start">
-                    <div className="flex h-6 items-center">
-                      <input
-                        id={`${id}-opt-${i}`}
-                        name={`${name}-staged`}
-                        type="checkbox"
-                        value={opt}
-                        defaultChecked={current.includes(opt)}
-                        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                      />
+                  <div
+                    key={`label_group_${group.title}`}
+                    className={`w-1/2 ${
+                      [0, 1].includes(groupIndex) ? '' : 'pt-2'
+                    }`}
+                  >
+                    <p className="pb-1" style={{ color: group.color }}>
+                      {group.title}
+                    </p>
+                    <div className="flex flex-col">
+                      {group.labels.map((opt, i) => {
+                        return (
+                          <div
+                            key={opt}
+                            className="relative flex items-start mr-2"
+                          >
+                            <div className="flex h-6 items-center">
+                              <input
+                                id={`${id}-opt-${i}`}
+                                name={`${name}-staged`}
+                                type="checkbox"
+                                value={opt}
+                                defaultChecked={current.includes(opt)}
+                                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                              />
+                            </div>
+                            <label
+                              htmlFor={`${id}-opt-${i}`}
+                              className="ml-3 text-sm leading-6 font-medium text-gray-900"
+                            >
+                              {displayLabel(opt)}
+                            </label>
+                          </div>
+                        )
+                      })}
                     </div>
-                    <label
-                      htmlFor={`${id}-opt-${i}`}
-                      className="ml-3 text-sm leading-6 font-medium text-gray-900"
-                    >
-                      {displayLabel(opt)}
-                    </label>
                   </div>
                 )
               })}
