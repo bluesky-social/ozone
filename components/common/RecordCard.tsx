@@ -156,6 +156,14 @@ export function RepoCard(props: { did: string }) {
                 <span className="font-bold">@{repo.handle}</span>
               )}
             </Link>{' '}
+            &nbsp;&middot;&nbsp;
+            <a
+              href={`https://bsky.app/profile/${did}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              Peek
+            </a>
             {takendown && (
               <LoadingFailedDense
                 className="inline-block font-normal text-gray-600"
