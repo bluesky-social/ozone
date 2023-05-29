@@ -38,6 +38,7 @@ export default function Reports() {
   const [quickOpen, setQuickOpen] = useState(false)
   const params = useSearchParams()
   const subject = params.get('term') ?? undefined
+  const reverse = params.get('reverse') ?? undefined
   const actionType = params.get('actionType')
     ? decodeURIComponent(String(params.get('actionType')))
     : undefined
@@ -45,13 +46,14 @@ export default function Reports() {
     ? params.get('resolved') === 'true'
     : undefined
   const { data, fetchNextPage, hasNextPage, refetch } = useInfiniteQuery({
-    queryKey: ['reports', { subject, resolved, actionType }],
+    queryKey: ['reports', { subject, resolved, actionType, reverse }],
     queryFn: async ({ pageParam }) => {
       return await getReports({
         subject,
         resolved,
         actionType,
         cursor: pageParam,
+        reverse,
       })
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
@@ -124,13 +126,12 @@ function getTabFromParams(params: { resolved?: boolean; actionType?: string }) {
   }
 }
 
-async function getReports(opts: {
-  subject?: string
-  resolved?: boolean
-  actionType?: string
-  cursor?: string
-}) {
-  const { subject, resolved, actionType, cursor } = opts
+async function getReports(
+  opts: Parameters<
+    typeof client.api.com.atproto.admin.getModerationReports
+  >[0] = {},
+) {
+  const { subject, resolved, actionType, cursor, reverse } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
@@ -138,6 +139,7 @@ async function getReports(opts: {
       cursor,
       actionType,
       limit: 25,
+      reverse,
     },
     { headers: client.adminHeaders() },
   )

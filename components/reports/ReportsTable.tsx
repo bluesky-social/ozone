@@ -3,12 +3,32 @@ import { formatDistanceToNow } from 'date-fns'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/20/solid'
 import { Report } from '../../lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { truncate } from '../../lib/util'
 import { SubjectOverview } from './SubjectOverview'
 import { ReasonBadge } from './ReasonBadge'
+import { useSearchParams, usePathname } from 'next/navigation'
+
+const useSortOrder = () => {
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+
+  const key = 'reverse'
+  // Force convert to boolean
+  const reverseOrder = !!searchParams.get(key)
+
+  function getToggleReverseOrderLink() {
+    const params = new URLSearchParams(searchParams)
+    params.set(key, reverseOrder ? '' : 'true')
+    return `${pathname}?${params}`
+  }
+
+  return { reverseOrder, getToggleReverseOrderLink }
+}
 
 export function ReportsTable(props: {
   reports: Report[]
@@ -103,6 +123,8 @@ function ReportRow(props: { report: Report }) {
 }
 
 function ReportRowHead() {
+  const { reverseOrder, getToggleReverseOrderLink } = useSortOrder()
+
   return (
     <tr>
       <th
@@ -133,7 +155,14 @@ function ReportRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
       >
-        Created
+        <Link href={getToggleReverseOrderLink()}>
+          Created
+          {reverseOrder ? (
+            <ChevronUpIcon className="h-4 w-4 inline-block align-text-bottom" />
+          ) : (
+            <ChevronDownIcon className="h-4 w-4 inline-block align-text-bottom" />
+          )}
+        </Link>
       </th>
       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
         <span className="sr-only">View</span>
