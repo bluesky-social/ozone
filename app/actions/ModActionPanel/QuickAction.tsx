@@ -148,7 +148,9 @@ function Form(props: {
     }
   }, [])
   // on form submit
-  const onFormSubmit = async (ev: FormEvent<HTMLFormElement>) => {
+  const onFormSubmit = async (
+    ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
+  ) => {
     ev.preventDefault()
     try {
       setSubmitting(true)
@@ -168,6 +170,11 @@ function Form(props: {
           .map((cid) => String(cid)),
         ...diffLabels(currentLabels, nextLabels),
       })
+
+      // After successful submission, reset the form state to clear inputs for previous submission
+      ev.target.reset()
+
+      // Then navigate to the next report in queue
       navigateReports(1)
     } catch (err) {
       if (err?.['error'] === 'SubjectHasAction') {
