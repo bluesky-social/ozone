@@ -91,7 +91,7 @@ export function LabelsInput(props: LabelsProps) {
                           >
                             <div className="flex h-6 items-center">
                               <input
-                                id={`${id}-opt-${i}`}
+                                id={`${groupIndex}-${id}-opt-${i}`}
                                 name={`${name}-staged`}
                                 type="checkbox"
                                 value={opt}
@@ -100,7 +100,7 @@ export function LabelsInput(props: LabelsProps) {
                               />
                             </div>
                             <label
-                              htmlFor={`${id}-opt-${i}`}
+                              htmlFor={`${groupIndex}-${id}-opt-${i}`}
                               className="ml-3 text-sm leading-6 font-medium text-gray-900"
                             >
                               {displayLabel(opt)}
