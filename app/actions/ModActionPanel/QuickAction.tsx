@@ -27,6 +27,7 @@ import { useKeyPressEvent } from 'react-use'
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { LabelsGrid } from '../../../components/common/labels/Grid'
 import { takesKeyboardEvt } from '../../../lib/util'
+import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -87,7 +88,10 @@ function Form(props: {
     useQuery({
       enabled: false,
       queryKey: ['subjectCurrentAction', { subject }],
-      queryFn: () => getCurrentAction(subject),
+      queryFn: () => {
+        console.log('querying')
+        return getCurrentAction(subject)
+      },
     })
   const { currentAction: currActionMaybeReplace = currentActionFallback } =
     record?.moderation ?? repo?.moderation ?? {}
@@ -95,6 +99,7 @@ function Form(props: {
   const currentLabels = (
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
   ).map(toLabelVal)
+  const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
   const actionColorClasses =
     currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'
@@ -250,28 +255,6 @@ function Form(props: {
         <div className="max-w-xl">
           <PreviewCard did={subject} />
         </div>
-        {currentAction && (
-          <div className="text-base text-gray-600 mb-3">
-            Subject already has current action{' '}
-            <Link
-              href={`/actions/${currentAction.id}`}
-              title={displayActionType}
-              className={actionColorClasses}
-            >
-              <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-              #{currentAction.id}
-            </Link>
-            .<br />
-            <span
-              role="button"
-              className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-              onClick={() => setReplacingAction(true)}
-            >
-              Click here
-            </span>{' '}
-            to replace this action.
-          </div>
-        )}
         {record?.blobs && (
           <FormLabel
             label="Blobs"
@@ -284,8 +267,6 @@ function Form(props: {
             />
           </FormLabel>
         )}
-        {/* Hidden field exists so that form always has same fields, useful during submission */}
-        {currentAction && <input name="action" type="hidden" />}
         <FormLabel
           label="Labels"
           className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
@@ -307,30 +288,81 @@ function Form(props: {
           <ResolutionList subject={subject || null} name="resolveReportIds" />
         </FormLabel>
         <div className="mt-auto">
-          {currActionMaybeReplace && (
-            <div className="text-base text-gray-600 mb-3 text-right">
-              {!replacingAction && 'Resolve with current action?'}
-              {replacingAction && (
-                <>
-                  Replacing the current action{' '}
+          {currentAction && (
+            <div className="flex flex-row justify-end">
+              <div className="text-base text-gray-600 mb-3 mr-1 text-right border-b border-gray-800 pb-1">
+                <p>
+                  Subject already has current action{' '}
                   <Link
-                    href={`/actions/${currActionMaybeReplace.id}`}
+                    href={`/actions/${currentAction.id}`}
                     title={displayActionType}
                     className={actionColorClasses}
                   >
                     <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-                    #{currActionMaybeReplace.id}
+                    #{currentAction.id}
                   </Link>
                   .<br />
                   <span
                     role="button"
                     className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setReplacingAction(false)}
+                    onClick={() => setReplacingAction(true)}
                   >
                     Click here
                   </span>{' '}
-                  to stop replacing.
-                </>
+                  to replace this action.
+                </p>
+
+                {currentActionDetail && (
+                  <p className="mt-1">
+                    Reason:{' '}
+                    <span className="text-gray-400">
+                      {currentActionDetail.reason}
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Hidden field exists so that form always has same fields, useful during submission */}
+          {currentAction && <input name="action" type="hidden" />}
+          {currActionMaybeReplace && (
+            <div className="text-base text-gray-600 mb-3 text-right">
+              {!replacingAction && 'Resolve with current action?'}
+              {replacingAction && (
+                <div className="flex flex-row justify-end">
+                  <div className="text-base text-gray-600 mb-3 mr-1 text-right">
+                    <p>
+                      Replacing the current action{' '}
+                      <Link
+                        href={`/actions/${currActionMaybeReplace.id}`}
+                        title={displayActionType}
+                        className={actionColorClasses}
+                      >
+                        <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
+                        #{currActionMaybeReplace.id}
+                      </Link>
+                      .<br />
+                      <span
+                        role="button"
+                        className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setReplacingAction(false)}
+                      >
+                        Click here
+                      </span>{' '}
+                      to stop replacing.
+                    </p>
+
+                    {currentActionDetail && (
+                      <p className="mt-1">
+                        Reason:{' '}
+                        <span className="text-gray-400">
+                          {currentActionDetail.reason}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
               )}
             </div>
           )}
@@ -452,6 +484,7 @@ async function getCurrentAction(subject: string) {
     { subject },
     { headers: client.adminHeaders() },
   )
+
   return result.data.actions.find(
     (action) =>
       !action.reversal &&

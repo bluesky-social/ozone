@@ -25,6 +25,7 @@ import {
   toLabelVal,
 } from '../../../components/common/labels'
 import { takesKeyboardEvt } from '../../../lib/util'
+import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -82,9 +83,10 @@ function Form(props: {
       queryKey: ['subjectCurrentAction', { subject }],
       queryFn: () => getCurrentAction(subject),
     })
-  // @TODO consider pulling current action details, e.g. description here
+
   const { currentAction: currActionMaybeReplace = currentActionFallback } =
     record?.moderation ?? repo?.moderation ?? {}
+  const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
   const currentAction = replacingAction ? undefined : currActionMaybeReplace
   const currentLabels = (
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
