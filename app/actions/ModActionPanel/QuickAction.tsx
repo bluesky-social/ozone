@@ -89,7 +89,6 @@ function Form(props: {
       enabled: false,
       queryKey: ['subjectCurrentAction', { subject }],
       queryFn: () => {
-        console.log('querying')
         return getCurrentAction(subject)
       },
     })

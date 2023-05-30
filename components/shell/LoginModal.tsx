@@ -36,7 +36,7 @@ export function LoginModal() {
             Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
           ),
         )
-        .catch((err) => console.log(err))
+        .catch(() => setAuthState(AuthState.LoggedOut))
     }
   }, [])
 
