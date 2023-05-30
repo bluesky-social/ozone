@@ -38,7 +38,7 @@ export default function Reports() {
   const [quickOpen, setQuickOpen] = useState(false)
   const params = useSearchParams()
   const subject = params.get('term') ?? undefined
-  const reverse = params.get('reverse') ?? undefined
+  const reverse = !!params.get('reverse')
   const actionType = params.get('actionType')
     ? decodeURIComponent(String(params.get('actionType')))
     : undefined
