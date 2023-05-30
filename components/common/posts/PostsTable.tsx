@@ -4,6 +4,7 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
   AppBskyEmbedRecordWithMedia,
+  AppBskyActorDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
@@ -126,10 +127,17 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
         <span className="block text-gray-500 text-sm">
           Reply to{' '}
           <Link
-            href={`/repositories/${item.reply.parent.author.handle}`}
+            href={`/repositories/${
+              (item.reply.parent.author as AppBskyActorDefs.ProfileViewBasic)
+                .handle
+            }`}
             className="hover:underline"
           >
-            @{item.reply.parent.author.handle}
+            @
+            {
+              (item.reply.parent.author as AppBskyActorDefs.ProfileViewBasic)
+                .handle
+            }
           </Link>
         </span>
       ) : undefined}

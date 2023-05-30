@@ -6,7 +6,7 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  ComAtprotoLabelDefs,
+  AppBskyActorDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -131,10 +131,21 @@ function PostHeader({
             <p className="text-gray-500 text-sm">
               Reply to{' '}
               <Link
-                href={`/repositories/${item.reply.parent.author.handle}`}
+                href={`/repositories/${
+                  (
+                    item.reply.parent
+                      .author as AppBskyActorDefs.ProfileViewBasic
+                  ).handle
+                }`}
                 className="hover:underline"
               >
-                @{item.reply.parent.author.handle}
+                @
+                {
+                  (
+                    item.reply.parent
+                      .author as AppBskyActorDefs.ProfileViewBasic
+                  ).handle
+                }
               </Link>
             </p>
           ) : undefined}
