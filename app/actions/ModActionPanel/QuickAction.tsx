@@ -26,7 +26,10 @@ import { LabelsGrid } from '../../../components/common/labels/Grid'
 import { takesKeyboardEvt } from '../../../lib/util'
 import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
 import { CurrentModerationAction } from '../../../components/reports/ModerationView/CurrentModerationAction'
-import { actionOptions } from '../../../components/reports/ModerationView/ActionHelpers'
+import {
+  actionOptions,
+  getActionClassNames,
+} from '../../../components/reports/ModerationView/ActionHelpers'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -320,28 +323,34 @@ function Form(props: {
               (C)ancel
             </ButtonSecondary>
             <RadioGroup className={`${currentAction ? 'opacity-75' : ''}`}>
-              {Object.entries(actionOptions).map(([value, label], i, arr) => (
-                <RadioGroupOption
-                  key={value}
-                  name="action"
-                  value={value}
-                  required
-                  disabled={!!currentAction}
-                  last={arr.length - 1 === i}
-                  checked={
-                    currentAction
-                      ? value === currentAction.action
-                      : value === action
-                  }
-                  onChange={(ev) => {
-                    if (!currentAction) {
-                      setAction(ev.target.value)
+              {Object.entries(actionOptions).map(([value, label], i, arr) => {
+                const actionTextClassNames = getActionClassNames({
+                  action: value,
+                })
+                return (
+                  <RadioGroupOption
+                    key={value}
+                    name="action"
+                    value={value}
+                    required
+                    disabled={!!currentAction}
+                    last={arr.length - 1 === i}
+                    checked={
+                      currentAction
+                        ? value === currentAction.action
+                        : value === action
                     }
-                  }}
-                >
-                  {label}
-                </RadioGroupOption>
-              ))}
+                    onChange={(ev) => {
+                      if (!currentAction) {
+                        setAction(ev.target.value)
+                      }
+                    }}
+                    labelClassName={actionTextClassNames}
+                  >
+                    {label}
+                  </RadioGroupOption>
+                )
+              })}
             </RadioGroup>
             <ButtonPrimary
               ref={submitButton}

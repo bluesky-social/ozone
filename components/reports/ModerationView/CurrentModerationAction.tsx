@@ -53,7 +53,11 @@ export const CurrentModerationAction = ({
 
   let containerClassName =
     'flex flex-row justify-between max-w-xl rounded border-2 border-dashed p-2 pb-0 mb-3 '
-  const replaceButtonClassName = `text-indigo-700 border-indigo-700 inline-flex items-center rounded border bg-white disabled:bg-gray-100 px-3 py-1 text-sm disabled:text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 focus:ring-offset-1`
+  const replaceButtonClassName = `inline-flex items-center rounded border disabled:bg-gray-100 px-3 py-1 text-sm disabled:text-gray-700 focus:outline-none focus:ring-1 focus:ring-gray-500 focus:ring-offset-1 ${
+    replacingAction
+      ? 'bg-indigo-700 text-white'
+      : 'text-indigo-700 border-indigo-700 bg-white'
+  }`
 
   containerClassName += replacingAction
     ? getActionClassNames({

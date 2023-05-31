@@ -45,6 +45,7 @@ export function RadioGroupOption(
     name: string
     value: string
     last?: boolean
+    labelClassName?: string
   },
 ) {
   const {
@@ -55,6 +56,7 @@ export function RadioGroupOption(
     disabled,
     last,
     children,
+    labelClassName = '',
     ...others
   } = props
   return (
@@ -76,7 +78,9 @@ export function RadioGroupOption(
         />
         <label
           htmlFor={`radio-group--${name}--${value}`}
-          className="w-full py-3 ml-2 text-sm font-medium text-gray-900"
+          className={`w-full py-3 ml-2 text-sm font-medium ${
+            labelClassName || 'text-gray-900'
+          }`}
         >
           {children}
         </label>
