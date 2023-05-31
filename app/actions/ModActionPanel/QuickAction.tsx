@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
-import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { ActionPanel } from '../../../components/common/ActionPanel'
 import {
   ButtonPrimary,
@@ -13,7 +11,6 @@ import {
   Input,
   RadioGroup,
   RadioGroupOption,
-  Select,
   Textarea,
 } from '../../../components/common/forms'
 import { PropsOf } from '../../../lib/types'
@@ -28,6 +25,8 @@ import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { LabelsGrid } from '../../../components/common/labels/Grid'
 import { takesKeyboardEvt } from '../../../lib/util'
 import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
+import { CurrentModerationAction } from '../../../components/reports/ModerationView/CurrentModerationAction'
+import { actionOptions } from '../../../components/reports/ModerationView/ActionHelpers'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -99,14 +98,7 @@ function Form(props: {
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
   ).map(toLabelVal)
   const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
-  const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
-      ? 'text-rose-600 hover:text-rose-700'
-      : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.defs#',
-    '',
-  )
+
   // navigate to next or prev report
   const navigateReports = (delta: 1 | -1) => {
     const len = subjectOptions?.length
@@ -287,82 +279,21 @@ function Form(props: {
           <ResolutionList subject={subject || null} name="resolveReportIds" />
         </FormLabel>
         <div className="mt-auto">
-          {currentAction && (
-            <div className="flex flex-row justify-end">
-              <div className="text-base text-gray-600 mb-3 mr-1 text-right border-b border-gray-800 pb-1">
-                <p>
-                  Subject already has current action{' '}
-                  <Link
-                    href={`/actions/${currentAction.id}`}
-                    title={displayActionType}
-                    className={actionColorClasses}
-                  >
-                    <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-                    #{currentAction.id}
-                  </Link>
-                  .<br />
-                  <span
-                    role="button"
-                    className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setReplacingAction(true)}
-                  >
-                    Click here
-                  </span>{' '}
-                  to replace this action.
-                </p>
-
-                {currentActionDetail && (
-                  <p className="mt-1">
-                    Reason:{' '}
-                    <span className="text-gray-400">
-                      {currentActionDetail.reason}
-                    </span>
-                  </p>
-                )}
-              </div>
-            </div>
-          )}
+          <CurrentModerationAction
+            currentAction={currentAction}
+            replacingAction={replacingAction}
+            currentActionDetail={currentActionDetail}
+            currentActionMaybeReplace={currActionMaybeReplace}
+            toggleReplaceMode={() => {
+              setReplacingAction((replacing) => !replacing)
+            }}
+          />
 
           {/* Hidden field exists so that form always has same fields, useful during submission */}
           {currentAction && <input name="action" type="hidden" />}
           {currActionMaybeReplace && (
-            <div className="text-base text-gray-600 mb-3 text-right">
+            <div className="text-base text-gray-600 mb-3">
               {!replacingAction && 'Resolve with current action?'}
-              {replacingAction && (
-                <div className="flex flex-row justify-end">
-                  <div className="text-base text-gray-600 mb-3 mr-1 text-right">
-                    <p>
-                      Replacing the current action{' '}
-                      <Link
-                        href={`/actions/${currActionMaybeReplace.id}`}
-                        title={displayActionType}
-                        className={actionColorClasses}
-                      >
-                        <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-                        #{currActionMaybeReplace.id}
-                      </Link>
-                      .<br />
-                      <span
-                        role="button"
-                        className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-                        onClick={() => setReplacingAction(false)}
-                      >
-                        Click here
-                      </span>{' '}
-                      to stop replacing.
-                    </p>
-
-                    {currentActionDetail && (
-                      <p className="mt-1">
-                        Reason:{' '}
-                        <span className="text-gray-400">
-                          {currentActionDetail.reason}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              )}
             </div>
           )}
           {!currentAction && (
@@ -431,13 +362,6 @@ function Form(props: {
       </div>
     </form>
   )
-}
-
-export const actionOptions = {
-  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
-  [ComAtprotoAdminDefs.ESCALATE]: 'Escalate',
-  [ComAtprotoAdminDefs.FLAG]: 'Flag',
-  [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
 }
 
 export type ModActionFormValues = {
