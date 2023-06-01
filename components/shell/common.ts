@@ -17,7 +17,7 @@ export interface SidebarNavItem {
 }
 
 export const NAV_ITEMS: SidebarNavItem[] = [
-  { name: 'Reports', href: '/', icon: 'reports' },
+  { name: 'Reports', href: '/reports', icon: 'reports' },
   { name: 'Repositories', href: '/repositories', icon: 'repositories' },
 ]
 

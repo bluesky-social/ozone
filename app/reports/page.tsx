@@ -6,10 +6,15 @@ import { ComAtprotoAdminDefs } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '../../components/common/ModActionIcon'
 import { ReportsTable } from '../../components/reports/ReportsTable'
+import { SnoozeListPopup } from '../../components/reports/SnoozeListPopup'
 import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
 import client from '../../lib/client'
 import { validSubjectString } from '../../lib/types'
 import { takeActionAndResolveReports } from '../../components/reports/helpers/takeActionAndResolveReports'
+import {
+  snoozeSubject,
+  getSnoozedSubjects,
+} from '../../components/reports/helpers/snoozeSubject'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 
 const TABS = [
@@ -48,11 +53,13 @@ export default function Reports() {
   const { data, fetchNextPage, hasNextPage, refetch } = useInfiniteQuery({
     queryKey: ['reports', { subject, resolved, actionType, reverse }],
     queryFn: async ({ pageParam }) => {
+      const ignoreSubjects = getSnoozedSubjects()
       return await getReports({
         subject,
         resolved,
         actionType,
         cursor: pageParam,
+        ignoreSubjects,
         reverse,
       })
     },
@@ -67,6 +74,7 @@ export default function Reports() {
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
         <div className="flex-1 text-right lg:pr-2 pb-4 px-1">
+          <SnoozeListPopup onChange={() => refetch()} />
           <button
             role="button"
             className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom mr-4"
@@ -98,6 +106,10 @@ export default function Reports() {
           await takeActionAndResolveReports(vals)
           refetch()
         }}
+        onSnooze={(vals: { snoozeDuration: number; subject: string }) => {
+          snoozeSubject(vals)
+          refetch()
+        }}
       />
       <ModActionPanelQuick
         open={quickOpen}
@@ -106,6 +118,10 @@ export default function Reports() {
         subjectOptions={subjectOptions}
         onSubmit={async (vals: ModActionFormValues) => {
           await takeActionAndResolveReports(vals)
+          refetch()
+        }}
+        onSnooze={(vals: { snoozeDuration: number; subject: string }) => {
+          snoozeSubject(vals)
           refetch()
         }}
       />
@@ -131,7 +147,7 @@ async function getReports(
     typeof client.api.com.atproto.admin.getModerationReports
   >[0] = {},
 ) {
-  const { subject, resolved, actionType, cursor, reverse } = opts
+  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
@@ -139,6 +155,7 @@ async function getReports(
       cursor,
       actionType,
       limit: 25,
+      ignoreSubjects,
       reverse,
     },
     { headers: client.adminHeaders() },

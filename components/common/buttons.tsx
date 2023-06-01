@@ -1,6 +1,9 @@
 import { ComponentProps, forwardRef, LegacyRef } from 'react'
 
-export const ButtonPrimary = forwardRef(function ButtonPrimary(props: ComponentProps<'button'>, ref: LegacyRef<HTMLButtonElement>) {
+export const ButtonPrimary = forwardRef(function ButtonPrimary(
+  props: ComponentProps<'button'>,
+  ref: LegacyRef<HTMLButtonElement>,
+) {
   const { className = '', ...others } = props
   return (
     <button
@@ -23,3 +26,26 @@ export function ButtonSecondary(props: ComponentProps<'button'>) {
     />
   )
 }
+
+type ButtonAppearance = 'outlined' | 'primary' | 'secondary'
+type ActionButtonProps = {
+  appearance: ButtonAppearance
+}
+
+const appearanceClassNames = {
+  outlined: 'bg-transparent disabled:bg-gray-300 text-black hover:bg-gray-500 focus:ring-gray-500 border-gray-700',
+  primary:
+    'bg-indigo-600 disabled:bg-gray-400 text-white hover:bg-indigo-700 focus:ring-indigo-500 border-transparent',
+}
+
+export const ActionButton = forwardRef(function ActionButton(
+  props: ComponentProps<'button'> & ActionButtonProps,
+  ref: LegacyRef<HTMLButtonElement>,
+) {
+  const { className = '', appearance, ...others } = props
+  const appearanceClassName =
+    appearanceClassNames[appearance] || appearanceClassNames.primary
+  const classNames = `inline-flex items-center rounded border px-4 py-2 text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${className} ${appearanceClassName}`
+
+  return <button ref={ref} type="button" className={classNames} {...others} />
+})

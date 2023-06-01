@@ -25,6 +25,7 @@ import {
   toLabelVal,
 } from '../../../components/common/labels'
 import { takesKeyboardEvt } from '../../../lib/util'
+import { SnoozeAction } from '../../../components/reports/SnoozeAction'
 import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
 
 const FORM_ID = 'mod-action-panel'
@@ -34,9 +35,11 @@ export function ModActionPanel(
     subject?: string
     subjectOptions?: string[]
     onSubmit: (vals: ModActionFormValues) => Promise<void>
+    onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
   },
 ) {
-  const { subject, subjectOptions, onSubmit, onClose, ...others } = props
+  const { subject, subjectOptions, onSubmit, onClose, onSnooze, ...others } =
+    props
   return (
     <ActionPanel title="Take moderation action" onClose={onClose} {...others}>
       <Form
@@ -44,6 +47,7 @@ export function ModActionPanel(
         onSubmit={onSubmit}
         subject={subject}
         subjectOptions={subjectOptions}
+        onSnooze={onSnooze}
       />
     </ActionPanel>
   )
@@ -54,12 +58,14 @@ function Form(props: {
   subjectOptions?: string[]
   onCancel: () => void
   onSubmit: (vals: ModActionFormValues) => Promise<void>
+  onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
 }) {
   const {
     subject: fixedSubject,
     subjectOptions,
     onCancel,
     onSubmit,
+    onSnooze,
     ...others
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
@@ -322,17 +328,31 @@ function Form(props: {
           )}
         </div>
       )}
-      <div className="text-right">
-        <ButtonSecondary
-          className="mr-4"
-          disabled={submitting}
-          onClick={onCancel}
-        >
-          Cancel
-        </ButtonSecondary>
-        <ButtonPrimary type="submit" disabled={submitting}>
-          Submit
-        </ButtonPrimary>
+      <div className="flex flex-row justify-between">
+        {subject && onSnooze ? (
+          <SnoozeAction
+            panelClassName="-translate-y-full -top-1 pb-1 -left-1"
+            onConfirm={(snoozeDuration) => {
+              onSnooze({ snoozeDuration, subject })
+              onCancel()
+            }}
+          />
+        ) : (
+          // Placeholder to ensure the primary action buttons are always aligned on the right
+          <div />
+        )}
+        <div className="flex flex-row justify-end">
+          <ButtonSecondary
+            className="mr-4"
+            disabled={submitting}
+            onClick={onCancel}
+          >
+            Cancel
+          </ButtonSecondary>
+          <ButtonPrimary type="submit" disabled={submitting}>
+            Submit
+          </ButtonPrimary>
+        </div>
       </div>
     </form>
   )

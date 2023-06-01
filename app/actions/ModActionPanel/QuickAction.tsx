@@ -24,6 +24,7 @@ import { useKeyPressEvent } from 'react-use'
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { LabelsGrid } from '../../../components/common/labels/Grid'
 import { takesKeyboardEvt } from '../../../lib/util'
+import { SnoozeAction } from '../../../components/reports/SnoozeAction'
 import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
 import { CurrentModerationAction } from '../../../components/reports/ModerationView/CurrentModerationAction'
 import {
@@ -38,9 +39,11 @@ export function ModActionPanelQuick(
     subject?: string
     subjectOptions?: string[]
     onSubmit: (vals: ModActionFormValues) => Promise<void>
+    onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
   },
 ) {
-  const { subject, subjectOptions, onSubmit, onClose, ...others } = props
+  const { subject, subjectOptions, onSubmit, onClose, onSnooze, ...others } =
+    props
   return (
     <FullScreenActionPanel
       title={`Take moderation action`}
@@ -52,6 +55,7 @@ export function ModActionPanelQuick(
         onSubmit={onSubmit}
         subject={subject}
         subjectOptions={subjectOptions}
+        onSnooze={onSnooze}
       />
     </FullScreenActionPanel>
   )
@@ -62,12 +66,14 @@ function Form(props: {
   subjectOptions?: string[]
   onCancel: () => void
   onSubmit: (vals: ModActionFormValues) => Promise<void>
+  onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
 }) {
   const {
     subject: fixedSubject,
     subjectOptions,
     onCancel,
     onSubmit,
+    onSnooze,
     ...others
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
@@ -225,26 +231,39 @@ function Form(props: {
       className="flex flex-col h-full"
     >
       <div className="flex flex-col h-full">
-        <FormLabel label="Subject" htmlFor="subject" className="mb-3">
-          <Input
-            type="text"
-            id="subject"
-            name="subject"
-            required
-            readOnly={!!fixedSubject}
-            list="subject-suggestions"
-            placeholder="Subject"
-            className="block w-full"
-            value={subject}
-            onChange={(ev) => setSubject(ev.target.value)}
-            autoComplete="off"
-          />
-          <datalist id="subject-suggestions">
-            {subjectOptions?.map((subject) => (
-              <option key={subject} value={subject} />
-            ))}
-          </datalist>
-        </FormLabel>
+        <div className="flex flex-row items-end mb-3">
+          <FormLabel label="Subject" htmlFor="subject" className="flex-1">
+            <Input
+              type="text"
+              id="subject"
+              name="subject"
+              required
+              readOnly={!!fixedSubject}
+              list="subject-suggestions"
+              placeholder="Subject"
+              className="block w-full"
+              value={subject}
+              onChange={(ev) => setSubject(ev.target.value)}
+              autoComplete="off"
+            />
+            <datalist id="subject-suggestions">
+              {subjectOptions?.map((subject) => (
+                <option key={subject} value={subject} />
+              ))}
+            </datalist>
+          </FormLabel>
+          {subject && onSnooze && (
+            <div className="ml-4 mr-2">
+              <SnoozeAction
+                panelClassName="-right-2 px-2 mt-2"
+                onConfirm={(snoozeDuration) => {
+                  onSnooze({ snoozeDuration, subject })
+                  onCancel()
+                }}
+              />
+            </div>
+          )}
+        </div>
         {/* PREVIEWS */}
         <div className="max-w-xl">
           <PreviewCard did={subject} />
