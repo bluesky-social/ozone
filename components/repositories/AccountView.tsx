@@ -520,11 +520,13 @@ function Reports({
 }: {
   reports: GetRepo.OutputSchema['moderation']['reports']
 }) {
+  // We show reports loaded from repo view so separately showing loading state here is not necessary
   return (
     <ReportsTable
       reports={reports}
       showLoadMore={false}
       onLoadMore={() => null}
+      isInitialLoading={false}
     />
   )
 }

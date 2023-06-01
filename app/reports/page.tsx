@@ -50,7 +50,7 @@ export default function Reports() {
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
-  const { data, fetchNextPage, hasNextPage, refetch } = useInfiniteQuery({
+  const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } = useInfiniteQuery({
     queryKey: ['reports', { subject, resolved, actionType, reverse }],
     queryFn: async ({ pageParam }) => {
       const ignoreSubjects = getSnoozedSubjects()
@@ -96,6 +96,7 @@ export default function Reports() {
         reports={reports}
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
+        isInitialLoading={isInitialLoading}
       />
       <ModActionPanel
         open={open}
@@ -116,6 +117,7 @@ export default function Reports() {
         onClose={() => setQuickOpen(false)}
         subject={subjectOptions.length >= 1 ? subjectOptions[0] : undefined} // select first subject if there are multiple
         subjectOptions={subjectOptions}
+        isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ModActionFormValues) => {
           await takeActionAndResolveReports(vals)
           refetch()

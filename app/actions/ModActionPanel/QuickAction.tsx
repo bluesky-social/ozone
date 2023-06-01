@@ -21,7 +21,11 @@ import { diffLabels, toLabelVal } from '../../../components/common/labels'
 import { FullScreenActionPanel } from '../../../components/common/FullScreenActionPanel'
 import { PreviewCard } from '../../../components/common/PreviewCard'
 import { useKeyPressEvent } from 'react-use'
-import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
+import {
+  ArrowLeftIcon,
+  ArrowRightIcon,
+  CheckCircleIcon,
+} from '@heroicons/react/24/outline'
 import { LabelsGrid } from '../../../components/common/labels/Grid'
 import { takesKeyboardEvt } from '../../../lib/util'
 import { SnoozeAction } from '../../../components/reports/SnoozeAction'
@@ -31,43 +35,73 @@ import {
   actionOptions,
   getActionClassNames,
 } from '../../../components/reports/ModerationView/ActionHelpers'
+import { Loading } from '../../../components/common/Loader'
 
 const FORM_ID = 'mod-action-panel'
 
+type Props = {
+  subject?: string
+  subjectOptions?: string[]
+  isInitialLoading: boolean
+  onSubmit: (vals: ModActionFormValues) => Promise<void>
+  onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
+}
+
 export function ModActionPanelQuick(
-  props: PropsOf<typeof ActionPanel> & {
-    subject?: string
-    subjectOptions?: string[]
-    onSubmit: (vals: ModActionFormValues) => Promise<void>
-    onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
-  },
+  props: PropsOf<typeof ActionPanel> & Props,
 ) {
-  const { subject, subjectOptions, onSubmit, onClose, onSnooze, ...others } =
-    props
+  const {
+    subject,
+    subjectOptions,
+    onSubmit,
+    onClose,
+    onSnooze,
+    isInitialLoading,
+    ...others
+  } = props
   return (
     <FullScreenActionPanel
       title={`Take moderation action`}
       onClose={onClose}
       {...others}
     >
-      <Form
-        onCancel={onClose}
-        onSubmit={onSubmit}
-        subject={subject}
-        subjectOptions={subjectOptions}
-        onSnooze={onSnooze}
-      />
+      {!subjectOptions?.length ? (
+        <div className="flex flex-col flex-1 h-full item-center justify-center">
+          {isInitialLoading ? (
+            <>
+              <Loading />{' '}
+              <p className="pb-4 text-center text-gray-400">
+                Loading reports...
+              </p>
+            </>
+          ) : (
+            <>
+              <CheckCircleIcon
+                title="No reports"
+                className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
+              />
+              <p className="pb-4 text-center text-gray-400">No reports found</p>
+            </>
+          )}
+        </div>
+      ) : (
+        <Form
+          onCancel={onClose}
+          onSubmit={onSubmit}
+          subject={subject}
+          subjectOptions={subjectOptions}
+          onSnooze={onSnooze}
+        />
+      )}
     </FullScreenActionPanel>
   )
 }
 
-function Form(props: {
-  subject?: string
-  subjectOptions?: string[]
-  onCancel: () => void
-  onSubmit: (vals: ModActionFormValues) => Promise<void>
-  onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
-}) {
+function Form(
+  props: {
+    onCancel: () => void
+  } & Pick<Props, 'subject' | 'subjectOptions' | 'onSubmit' | 'onSnooze'>,
+) {
   const {
     subject: fixedSubject,
     subjectOptions,

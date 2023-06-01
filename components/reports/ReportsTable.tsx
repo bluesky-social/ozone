@@ -11,6 +11,7 @@ import { LoadMoreButton } from '../common/LoadMoreButton'
 import { truncate } from '../../lib/util'
 import { SubjectOverview } from './SubjectOverview'
 import { ReasonBadge } from './ReasonBadge'
+import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname } from 'next/navigation'
 
 const useSortOrder = () => {
@@ -33,9 +34,10 @@ const useSortOrder = () => {
 export function ReportsTable(props: {
   reports: Report[]
   showLoadMore: boolean
+  isInitialLoading: boolean
   onLoadMore: () => void
 }) {
-  const { reports, showLoadMore, onLoadMore } = props
+  const { reports, showLoadMore, onLoadMore, isInitialLoading } = props
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
@@ -44,6 +46,9 @@ export function ReportsTable(props: {
             <ReportRowHead />
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
+            {!reports.length && (
+              <EmptyRows isInitialLoading={isInitialLoading} />
+            )}
             {reports.map((report) => (
               <ReportRow key={report.id} report={report} />
             ))}
@@ -167,6 +172,29 @@ function ReportRowHead() {
       <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
         <span className="sr-only">View</span>
       </th>
+    </tr>
+  )
+}
+
+function EmptyRows({ isInitialLoading }: { isInitialLoading: boolean }) {
+  return (
+    <tr>
+      <td colSpan={5} className="text-center">
+        {isInitialLoading ? (
+          <>
+            <Loading />
+            <p className="pb-4 text-gray-400">Loading reports...</p>
+          </>
+        ) : (
+          <p className="py-4 text-gray-400 text-center">
+            <CheckCircleIcon
+              title="No reports"
+              className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
+            />
+            No reports found
+          </p>
+        )}
+      </td>
     </tr>
   )
 }
