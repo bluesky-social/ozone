@@ -3,17 +3,40 @@ import { FormEvent, useState, useEffect } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import Client from '../../lib/client'
 
+enum AuthState {
+  Validating,
+  LoggedIn,
+  LoggedOut,
+}
+
 export function LoginModal() {
-  const [isAuthed, setIsAuthed] = useState(true) // immediately corrected in useEffect below
+  const [authState, setAuthState] = useState<AuthState>(AuthState.Validating) // immediately corrected in useEffect below
   const [error, setError] = useState('')
   const [service, setService] = useState('https://bsky.social')
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
   const [adminToken, setAdminToken] = useState('')
+  const isValidatingAuth = authState === AuthState.Validating
+  const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
+    isValidatingAuth
+      ? 'bg-gray-500 hover:bg-gray-600'
+      : 'bg-rose-600 hover:bg-rose-700'
+  }`
+  const submitButtonIconClassNames = `h-5 w-5 ${
+    isValidatingAuth
+      ? 'text-gray-800 group-hover:text-gray-700'
+      : 'text-rose-500 group-hover:text-rose-400'
+  }`
 
   useEffect(() => {
     if (!Client.hasSetup) {
-      Client.setup().then(() => setIsAuthed(Client.isAuthed))
+      Client.setup()
+        .then(() =>
+          setAuthState(
+            Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
+          ),
+        )
+        .catch(() => setAuthState(AuthState.LoggedOut))
     }
   }, [])
 
@@ -21,15 +44,16 @@ export function LoginModal() {
     e.preventDefault()
     e.stopPropagation()
     try {
+      setAuthState(AuthState.Validating)
       await Client.signin(service, handle, password, adminToken)
-      setIsAuthed(Client.isAuthed)
+      setAuthState(Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut)
     } catch (e: any) {
       console.error(e)
       setError(e.toString())
     }
   }
 
-  if (isAuthed) {
+  if (authState === AuthState.LoggedIn) {
     return <></>
   }
   return (
@@ -61,6 +85,7 @@ export function LoginModal() {
                   name="service"
                   type="text"
                   required
+                  disabled={isValidatingAuth}
                   className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Service URL"
                   list="service-url-suggestions"
@@ -81,6 +106,7 @@ export function LoginModal() {
                   name="handle"
                   type="text"
                   required
+                  disabled={isValidatingAuth}
                   className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Account handle"
                   value={handle}
@@ -97,6 +123,7 @@ export function LoginModal() {
                   type="password"
                   autoComplete="current-password"
                   required
+                  disabled={isValidatingAuth}
                   className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Password"
                   value={password}
@@ -112,6 +139,7 @@ export function LoginModal() {
                   name="admin-token"
                   type="password"
                   required
+                  disabled={isValidatingAuth}
                   className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
                   placeholder="Admin Token"
                   value={adminToken}
@@ -141,15 +169,16 @@ export function LoginModal() {
             <div>
               <button
                 type="submit"
-                className="group relative flex w-full justify-center rounded-md border border-transparent bg-rose-600 py-2 px-4 text-sm font-medium text-white hover:bg-rose-700 focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2"
+                disabled={isValidatingAuth}
+                className={submitButtonClassNames}
               >
                 <span className="absolute inset-y-0 left-0 flex items-center pl-3">
                   <LockClosedIcon
-                    className="h-5 w-5 text-rose-500 group-hover:text-rose-400"
+                    className={submitButtonIconClassNames}
                     aria-hidden="true"
                   />
                 </span>
-                Sign in
+                {isValidatingAuth ? 'Authenticating...' : 'Sign in'}
               </button>
             </div>
           </form>

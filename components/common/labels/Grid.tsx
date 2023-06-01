@@ -25,9 +25,13 @@ export function LabelsGrid(props: LabelsProps) {
   const [current, setCurrent] = useState<string[]>(defaultLabels)
 
   // update the current list when the current labels prop changes
+  // default labels are an array of strings so passing that as dependency to the useEffect hook will
+  // cause the current state to change everytime some other prop changes. the string conversion shields
+  // us from that. only caveat is that it won't work when the labels don't change just their order is changed
+  const defaultLabelsKey = defaultLabels.join('_')
   useEffect(() => {
     setCurrent(defaultLabels)
-  }, [defaultLabels])
+  }, [defaultLabelsKey])
 
   const handleCheckboxChange = (opt: string) => {
     setCurrent((prev) => {

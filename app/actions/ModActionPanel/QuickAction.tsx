@@ -1,8 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
-import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { ActionPanel } from '../../../components/common/ActionPanel'
 import {
   ButtonPrimary,
@@ -13,7 +11,6 @@ import {
   Input,
   RadioGroup,
   RadioGroupOption,
-  Select,
   Textarea,
 } from '../../../components/common/forms'
 import { PropsOf } from '../../../lib/types'
@@ -27,6 +24,12 @@ import { useKeyPressEvent } from 'react-use'
 import { ArrowLeftIcon, ArrowRightIcon } from '@heroicons/react/24/outline'
 import { LabelsGrid } from '../../../components/common/labels/Grid'
 import { takesKeyboardEvt } from '../../../lib/util'
+import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
+import { CurrentModerationAction } from '../../../components/reports/ModerationView/CurrentModerationAction'
+import {
+  actionOptions,
+  getActionClassNames,
+} from '../../../components/reports/ModerationView/ActionHelpers'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -87,7 +90,9 @@ function Form(props: {
     useQuery({
       enabled: false,
       queryKey: ['subjectCurrentAction', { subject }],
-      queryFn: () => getCurrentAction(subject),
+      queryFn: () => {
+        return getCurrentAction(subject)
+      },
     })
   const { currentAction: currActionMaybeReplace = currentActionFallback } =
     record?.moderation ?? repo?.moderation ?? {}
@@ -95,14 +100,8 @@ function Form(props: {
   const currentLabels = (
     (record?.labels ?? repo?.labels ?? []) as { val: string }[]
   ).map(toLabelVal)
-  const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
-      ? 'text-rose-600 hover:text-rose-700'
-      : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.defs#',
-    '',
-  )
+  const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
+
   // navigate to next or prev report
   const navigateReports = (delta: 1 | -1) => {
     const len = subjectOptions?.length
@@ -148,7 +147,9 @@ function Form(props: {
     }
   }, [])
   // on form submit
-  const onFormSubmit = async (ev: FormEvent<HTMLFormElement>) => {
+  const onFormSubmit = async (
+    ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
+  ) => {
     ev.preventDefault()
     try {
       setSubmitting(true)
@@ -168,6 +169,11 @@ function Form(props: {
           .map((cid) => String(cid)),
         ...diffLabels(currentLabels, nextLabels),
       })
+
+      // After successful submission, reset the form state to clear inputs for previous submission
+      ev.target.reset()
+
+      // Then navigate to the next report in queue
       navigateReports(1)
     } catch (err) {
       if (err?.['error'] === 'SubjectHasAction') {
@@ -243,28 +249,6 @@ function Form(props: {
         <div className="max-w-xl">
           <PreviewCard did={subject} />
         </div>
-        {currentAction && (
-          <div className="text-base text-gray-600 mb-3">
-            Subject already has current action{' '}
-            <Link
-              href={`/actions/${currentAction.id}`}
-              title={displayActionType}
-              className={actionColorClasses}
-            >
-              <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-              #{currentAction.id}
-            </Link>
-            .<br />
-            <span
-              role="button"
-              className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-              onClick={() => setReplacingAction(true)}
-            >
-              Click here
-            </span>{' '}
-            to replace this action.
-          </div>
-        )}
         {record?.blobs && (
           <FormLabel
             label="Blobs"
@@ -277,8 +261,6 @@ function Form(props: {
             />
           </FormLabel>
         )}
-        {/* Hidden field exists so that form always has same fields, useful during submission */}
-        {currentAction && <input name="action" type="hidden" />}
         <FormLabel
           label="Labels"
           className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
@@ -300,31 +282,21 @@ function Form(props: {
           <ResolutionList subject={subject || null} name="resolveReportIds" />
         </FormLabel>
         <div className="mt-auto">
+          <CurrentModerationAction
+            currentAction={currentAction}
+            replacingAction={replacingAction}
+            currentActionDetail={currentActionDetail}
+            currentActionMaybeReplace={currActionMaybeReplace}
+            toggleReplaceMode={() => {
+              setReplacingAction((replacing) => !replacing)
+            }}
+          />
+
+          {/* Hidden field exists so that form always has same fields, useful during submission */}
+          {currentAction && <input name="action" type="hidden" />}
           {currActionMaybeReplace && (
-            <div className="text-base text-gray-600 mb-3 text-right">
+            <div className="text-base text-gray-600 mb-3">
               {!replacingAction && 'Resolve with current action?'}
-              {replacingAction && (
-                <>
-                  Replacing the current action{' '}
-                  <Link
-                    href={`/actions/${currActionMaybeReplace.id}`}
-                    title={displayActionType}
-                    className={actionColorClasses}
-                  >
-                    <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-                    #{currActionMaybeReplace.id}
-                  </Link>
-                  .<br />
-                  <span
-                    role="button"
-                    className="rounded bg-white px-1.5 py-1 shadow-sm ring-1 ring-inset ring-gray-300 hover:bg-gray-50 cursor-pointer"
-                    onClick={() => setReplacingAction(false)}
-                  >
-                    Click here
-                  </span>{' '}
-                  to stop replacing.
-                </>
-              )}
             </div>
           )}
           {!currentAction && (
@@ -351,28 +323,34 @@ function Form(props: {
               (C)ancel
             </ButtonSecondary>
             <RadioGroup className={`${currentAction ? 'opacity-75' : ''}`}>
-              {Object.entries(actionOptions).map(([value, label], i, arr) => (
-                <RadioGroupOption
-                  key={value}
-                  name="action"
-                  value={value}
-                  required
-                  disabled={!!currentAction}
-                  last={arr.length - 1 === i}
-                  checked={
-                    currentAction
-                      ? value === currentAction.action
-                      : value === action
-                  }
-                  onChange={(ev) => {
-                    if (!currentAction) {
-                      setAction(ev.target.value)
+              {Object.entries(actionOptions).map(([value, label], i, arr) => {
+                const actionTextClassNames = getActionClassNames({
+                  action: value,
+                })
+                return (
+                  <RadioGroupOption
+                    key={value}
+                    name="action"
+                    value={value}
+                    required
+                    disabled={!!currentAction}
+                    last={arr.length - 1 === i}
+                    checked={
+                      currentAction
+                        ? value === currentAction.action
+                        : value === action
                     }
-                  }}
-                >
-                  {label}
-                </RadioGroupOption>
-              ))}
+                    onChange={(ev) => {
+                      if (!currentAction) {
+                        setAction(ev.target.value)
+                      }
+                    }}
+                    labelClassName={actionTextClassNames}
+                  >
+                    {label}
+                  </RadioGroupOption>
+                )
+              })}
             </RadioGroup>
             <ButtonPrimary
               ref={submitButton}
@@ -393,13 +371,6 @@ function Form(props: {
       </div>
     </form>
   )
-}
-
-export const actionOptions = {
-  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
-  [ComAtprotoAdminDefs.ESCALATE]: 'Escalate',
-  [ComAtprotoAdminDefs.FLAG]: 'Flag',
-  [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
 }
 
 export type ModActionFormValues = {
@@ -445,6 +416,7 @@ async function getCurrentAction(subject: string) {
     { subject },
     { headers: client.adminHeaders() },
   )
+
   return result.data.actions.find(
     (action) =>
       !action.reversal &&
