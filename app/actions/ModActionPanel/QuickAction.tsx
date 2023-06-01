@@ -267,6 +267,20 @@ function Form(props: {
         {/* PREVIEWS */}
         <div className="max-w-xl">
           <PreviewCard did={subject} />
+
+          {/* User who reported  */}
+          {record?.moderation?.reports[0]?.reportedBy && (
+            <PreviewCard
+              did={record.moderation.reports[0].reportedBy}
+              title="Most recently reported by user"
+            />
+          )}
+          {repo?.moderation?.reports[0]?.reportedBy && (
+            <PreviewCard
+              did={repo.moderation.reports[0].reportedBy}
+              title="Most recently reported by user"
+            />
+          )}
         </div>
         {record?.blobs && (
           <FormLabel
