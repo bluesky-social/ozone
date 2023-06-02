@@ -336,6 +336,7 @@ function Form(
             id="labels"
             name="labels"
             formId={FORM_ID}
+            subject={subject}
             disabled={!!currentAction}
             defaultLabels={currentLabels}
           />
