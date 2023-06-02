@@ -142,6 +142,7 @@ function Form(
   ).map(toLabelVal)
   const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
 
+  console.log({ currentLabels })
   // navigate to next or prev report
   const navigateReports = (delta: 1 | -1) => {
     const len = subjectOptions?.length
@@ -336,6 +337,7 @@ function Form(
             id="labels"
             name="labels"
             formId={FORM_ID}
+            subject={subject}
             disabled={!!currentAction}
             defaultLabels={currentLabels}
           />
