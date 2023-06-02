@@ -9,8 +9,11 @@ import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
 import { useSyncedState } from '../../lib/useSyncedState'
+import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
 
 export function Shell({ children }: React.PropsWithChildren) {
+  useCommandPaletteAsyncSearch()
+  
   return (
     <MobileMenuProvider>
       <LoginModal />
@@ -88,11 +91,14 @@ function SearchInput() {
   const termParam = params.get('term') ?? ''
   const [termInput, setTermInput] = useSyncedState(termParam)
 
-  const updateParams = useCallback((s: string) => {
-    const nextParams = new URLSearchParams(params)
-    nextParams.set('term', s)
-    router.push((pathname ?? '') + '?' + nextParams.toString())
-  }, [params, pathname, router])
+  const updateParams = useCallback(
+    (s: string) => {
+      const nextParams = new URLSearchParams(params)
+      nextParams.set('term', s)
+      router.push((pathname ?? '') + '?' + nextParams.toString())
+    },
+    [params, pathname, router],
+  )
 
   return (
     <input

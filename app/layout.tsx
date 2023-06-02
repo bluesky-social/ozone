@@ -6,6 +6,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Shell } from '../components/shell/Shell'
 import { useEffectOnce, useInterval } from 'react-use'
 import { reEvaluateSnoozeSubjectList } from '../components/reports/helpers/snoozeSubject'
+import { CommandPaletteRoot } from '../components/shell/CommandPalette/Root'
 
 const queryClient = new QueryClient()
 
@@ -30,9 +31,11 @@ export default function RootLayout({
           hideProgressBar={false}
           closeOnClick
         />
-        <QueryClientProvider client={queryClient}>
-          <Shell>{children}</Shell>
-        </QueryClientProvider>
+        <CommandPaletteRoot>
+          <QueryClientProvider client={queryClient}>
+            <Shell>{children}</Shell>
+          </QueryClientProvider>
+        </CommandPaletteRoot>
       </body>
     </html>
   )
