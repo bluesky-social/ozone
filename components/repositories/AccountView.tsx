@@ -31,6 +31,9 @@ import {
   toLabelVal,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
+import { ButtonGroup } from '../common/buttons'
+import { UserCircleIcon } from '@heroicons/react/24/outline'
+import { ReportsView } from './ReportsView'
 
 enum Views {
   Details,
@@ -109,7 +112,10 @@ export function AccountView({
                   {currentView === Views.Followers && <Followers id={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Reports && (
-                    <Reports reports={repo.moderation.reports} />
+                    <ReportsView
+                      preloadedReports={repo.moderation.reports}
+                      did={repo.did}
+                    />
                   )}
                 </>
               ) : (
@@ -512,22 +518,6 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
         )}
       </div>
     </div>
-  )
-}
-
-function Reports({
-  reports,
-}: {
-  reports: GetRepo.OutputSchema['moderation']['reports']
-}) {
-  // We show reports loaded from repo view so separately showing loading state here is not necessary
-  return (
-    <ReportsTable
-      reports={reports}
-      showLoadMore={false}
-      onLoadMore={() => null}
-      isInitialLoading={false}
-    />
   )
 }
 
