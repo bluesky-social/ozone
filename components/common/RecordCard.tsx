@@ -164,14 +164,16 @@ export function RepoCard(props: { did: string }) {
             >
               Peek
             </a>
-            {takendown && (
+          </p>
+          {takendown && (
+            <p className="pt-1 pb-1">
               <LoadingFailedDense
                 className="inline-block font-normal text-gray-600"
                 noPadding
                 error="Account taken down"
               />
-            )}
-          </p>
+            </p>
+          )}
         </div>
       </div>
     </div>
