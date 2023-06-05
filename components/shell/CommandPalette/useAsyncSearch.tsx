@@ -1,4 +1,4 @@
-import { useKBar, ActionImpl, useRegisterActions, createAction } from 'kbar'
+import { useKBar, Action, useRegisterActions, createAction } from 'kbar'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import {
@@ -14,7 +14,7 @@ export const useCommandPaletteAsyncSearch = () => {
   }))
 
   const memoizedActions = useMemo(() => {
-    const actions: Partial<ActionImpl>[] = []
+    const actions: Action[] = []
     if (search?.length < 2) {
       return actions
     }

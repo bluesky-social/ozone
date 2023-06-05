@@ -1,22 +1,18 @@
 'use client'
-import { FormEvent, useState, useEffect } from 'react'
+import { FormEvent, useState, useEffect, useContext } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import Client from '../../lib/client'
-
-enum AuthState {
-  Validating,
-  LoggedIn,
-  LoggedOut,
-}
+import { AuthChangeContext, AuthContext, AuthState } from './AuthContext'
 
 export function LoginModal() {
-  const [authState, setAuthState] = useState<AuthState>(AuthState.Validating) // immediately corrected in useEffect below
+  const { isValidatingAuth, isLoggedIn } = useContext(AuthContext)
+  const setAuthContextData = useContext(AuthChangeContext)
   const [error, setError] = useState('')
   const [service, setService] = useState('https://bsky.social')
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
   const [adminToken, setAdminToken] = useState('')
-  const isValidatingAuth = authState === AuthState.Validating
+
   const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
     isValidatingAuth
       ? 'bg-gray-500 hover:bg-gray-600'
@@ -32,11 +28,11 @@ export function LoginModal() {
     if (!Client.hasSetup) {
       Client.setup()
         .then(() =>
-          setAuthState(
+          setAuthContextData(
             Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
           ),
         )
-        .catch(() => setAuthState(AuthState.LoggedOut))
+        .catch(() => setAuthContextData(AuthState.LoggedOut))
     }
   }, [])
 
@@ -44,16 +40,18 @@ export function LoginModal() {
     e.preventDefault()
     e.stopPropagation()
     try {
-      setAuthState(AuthState.Validating)
+      setAuthContextData(AuthState.Validating)
       await Client.signin(service, handle, password, adminToken)
-      setAuthState(Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut)
+      setAuthContextData(
+        Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
+      )
     } catch (e: any) {
       console.error(e)
       setError(e.toString())
     }
   }
 
-  if (authState === AuthState.LoggedIn) {
+  if (isLoggedIn) {
     return <></>
   }
   return (

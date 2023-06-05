@@ -7,6 +7,7 @@ import { Shell } from '../components/shell/Shell'
 import { useEffectOnce, useInterval } from 'react-use'
 import { reEvaluateSnoozeSubjectList } from '../components/reports/helpers/snoozeSubject'
 import { CommandPaletteRoot } from '../components/shell/CommandPalette/Root'
+import { AuthProvider } from '../components/shell/AuthContext'
 
 const queryClient = new QueryClient()
 
@@ -31,11 +32,13 @@ export default function RootLayout({
           hideProgressBar={false}
           closeOnClick
         />
-        <CommandPaletteRoot>
-          <QueryClientProvider client={queryClient}>
-            <Shell>{children}</Shell>
-          </QueryClientProvider>
-        </CommandPaletteRoot>
+        <AuthProvider>
+          <CommandPaletteRoot>
+            <QueryClientProvider client={queryClient}>
+              <Shell>{children}</Shell>
+            </QueryClientProvider>
+          </CommandPaletteRoot>
+        </AuthProvider>
       </body>
     </html>
   )

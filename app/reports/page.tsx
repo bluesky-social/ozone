@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
@@ -16,6 +16,7 @@ import {
   getSnoozedSubjects,
 } from '../../components/reports/helpers/snoozeSubject'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
+import { AuthContext, AuthState } from '../../components/shell/AuthContext'
 
 const TABS = [
   {
@@ -50,21 +51,24 @@ export default function Reports() {
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
-  const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } = useInfiniteQuery({
-    queryKey: ['reports', { subject, resolved, actionType, reverse }],
-    queryFn: async ({ pageParam }) => {
-      const ignoreSubjects = getSnoozedSubjects()
-      return await getReports({
-        subject,
-        resolved,
-        actionType,
-        cursor: pageParam,
-        ignoreSubjects,
-        reverse,
-      })
-    },
-    getNextPageParam: (lastPage) => lastPage.cursor,
-  })
+  const { isLoggedIn } = useContext(AuthContext)
+  const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
+    useInfiniteQuery({
+      enabled: isLoggedIn,
+      queryKey: ['reports', { subject, resolved, actionType, reverse }],
+      queryFn: async ({ pageParam }) => {
+        const ignoreSubjects = getSnoozedSubjects()
+        return await getReports({
+          subject,
+          resolved,
+          actionType,
+          cursor: pageParam,
+          ignoreSubjects,
+          reverse,
+        })
+      },
+      getNextPageParam: (lastPage) => lastPage.cursor,
+    })
   const reports = data?.pages.flatMap((page) => page.reports) ?? []
   const currentTab = getTabFromParams({ resolved, actionType })
   const subjectOptions = unique(
@@ -149,7 +153,8 @@ async function getReports(
     typeof client.api.com.atproto.admin.getModerationReports
   >[0] = {},
 ) {
-  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } = opts
+  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } =
+    opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
