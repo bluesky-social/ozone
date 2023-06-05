@@ -40,9 +40,9 @@ const TABS = [
 ]
 
 export default function Reports() {
-  const [open, setOpen] = useState(false)
-  const [quickOpen, setQuickOpen] = useState(false)
   const params = useSearchParams()
+  const [open, setOpen] = useState(false)
+  const [quickOpen, setQuickOpen] = useState(!!params.get('quickOpen'))
   const subject = params.get('term') ?? undefined
   const reverse = !!params.get('reverse')
   const actionType = params.get('actionType')

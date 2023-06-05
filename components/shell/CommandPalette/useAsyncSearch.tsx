@@ -11,7 +11,6 @@ import {
   getFragmentsFromBlueSkyAppUrl,
 } from '../../../lib/util'
 
-const ReportIcon = ExclamationCircleIcon
 const PostIcon = ChatBubbleLeftIcon
 const RepoIcon = UserGroupIcon
 const iconClassName = 'h-7 w-7'

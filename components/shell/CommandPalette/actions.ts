@@ -6,8 +6,7 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
     name: 'Open Quick Action Panel',
     shortcut: ['q'],
     keywords: 'quick,action,panel',
-    // TODO: how do we navigate to the reports page and open the panel here?
-    perform: () => (window.location.pathname = 'contact'),
+    perform: () => router.push('/reports?quickOpen=true'),
   },
   {
     id: 'resolved-reports',
