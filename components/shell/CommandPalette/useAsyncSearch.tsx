@@ -1,3 +1,8 @@
+import {
+  ChatBubbleLeftIcon,
+  ExclamationCircleIcon,
+  UserGroupIcon,
+} from '@heroicons/react/24/outline'
 import { useKBar, Action, useRegisterActions, createAction } from 'kbar'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
@@ -5,6 +10,11 @@ import {
   isBlueSkyAppUrl,
   getFragmentsFromBlueSkyAppUrl,
 } from '../../../lib/util'
+
+const ReportIcon = ExclamationCircleIcon
+const PostIcon = ChatBubbleLeftIcon
+const RepoIcon = UserGroupIcon
+const iconClassName = 'h-7 w-7'
 
 // TODO: Improve shortcut
 export const useCommandPaletteAsyncSearch = () => {
@@ -27,9 +37,10 @@ export const useCommandPaletteAsyncSearch = () => {
           {
             id: 'search-reports-by-did',
             name: `Reports for ${fragments.did}`,
-            shortcut: ['1'],
             keywords: `${search},search,did`,
+            icon: <RepoIcon className={iconClassName} />,
             subtitle: 'Go to reports page and filter by this DID',
+            section: 'Report',
             perform: () => {
               router.push(`/reports?term=${fragments.did}`)
             },
@@ -37,8 +48,9 @@ export const useCommandPaletteAsyncSearch = () => {
           {
             id: 'view-profile-by-did',
             name: `Profile for ${fragments.did}`,
-            shortcut: ['2'],
+            section: 'Details',
             keywords: `${search},view,did`,
+            icon: <RepoIcon className={iconClassName} />,
             subtitle: 'Go to profile page and of this DID',
             perform: () => {
               router.push(`/repositories/${fragments.did}`)
@@ -52,9 +64,10 @@ export const useCommandPaletteAsyncSearch = () => {
           {
             id: 'search-reports-by-handle',
             name: `Reports for @${fragments.handle}`,
-            shortcut: ['3'],
+            section: 'Report',
+            icon: <RepoIcon className={iconClassName} />,
             keywords: `${search},search,handle`,
-            subtitle: 'Go to reports page and filter by this DID',
+            subtitle: 'Go to reports page and filter by this handle',
             perform: () => {
               router.push('/reports')
             },
@@ -62,7 +75,8 @@ export const useCommandPaletteAsyncSearch = () => {
           {
             id: 'view-profile-by-handle',
             name: `Profile for ${fragments.handle}`,
-            shortcut: ['4'],
+            section: 'Details',
+            icon: <RepoIcon className={iconClassName} />,
             keywords: `${search},view,profile,handle`,
             subtitle: 'Go to profile page and of this handle',
             perform: () => {
@@ -76,8 +90,9 @@ export const useCommandPaletteAsyncSearch = () => {
         actions.push(
           {
             id: 'search-reports-by-post',
-            name: `Reports for @${fragments.cid}`,
-            shortcut: ['5'],
+            name: `Reports for post ${fragments.cid}`,
+            section: 'Report',
+            icon: <PostIcon className={iconClassName} />,
             keywords: `${search},search,report,post`,
             subtitle: 'Go to reports page and filter by this post',
             perform: () => {
@@ -91,7 +106,8 @@ export const useCommandPaletteAsyncSearch = () => {
           {
             id: 'view-post',
             name: `View post ${fragments.cid}`,
-            shortcut: ['6'],
+            section: 'Details',
+            icon: <PostIcon className={iconClassName} />,
             keywords: `${search},view,post`,
             subtitle: 'Go to post record',
             perform: () => {
