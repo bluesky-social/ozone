@@ -17,7 +17,7 @@ export function PostsTable({
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
-  onLoadMore: () => void
+  onLoadMore?: () => void
 }) {
   return (
     <>
@@ -53,7 +53,7 @@ export function PostsTable({
           ))}
         </tbody>
       </table>
-      <LoadMore onLoadMore={onLoadMore} />
+      {onLoadMore && <LoadMore onLoadMore={onLoadMore} />}
     </>
   )
 }
