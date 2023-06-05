@@ -87,3 +87,7 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
 
   return parts
 }
+
+export const isValidDid = (did?: string | null) => did?.startsWith('did:')
+export const isValidHandle = (handle?: string | null) =>
+  handle?.startsWith('@') && handle?.includes('.')

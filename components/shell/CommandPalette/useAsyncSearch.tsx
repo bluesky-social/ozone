@@ -4,18 +4,63 @@ import {
   UserGroupIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar, Action, useRegisterActions, createAction } from 'kbar'
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import {
   isBlueSkyAppUrl,
   getFragmentsFromBlueSkyAppUrl,
+  isValidDid,
+  isValidHandle,
 } from '../../../lib/util'
 
 const PostIcon = ChatBubbleLeftIcon
 const RepoIcon = UserGroupIcon
 const iconClassName = 'h-7 w-7'
 
-// TODO: Improve shortcut
+const buildItemForProfile = ({
+  type,
+  search,
+  profileKey,
+  router,
+}: {
+  type: 'did' | 'handle'
+  profileKey: string
+  search: string
+  router: AppRouterInstance
+}): Action[] => {
+  const actions = [
+    {
+      id: `view-profile-by-${type}`,
+      name: `Profile for ${profileKey}`,
+      section: 'Details',
+      keywords: `${search},view,${type}`,
+      icon: <RepoIcon className={iconClassName} />,
+      subtitle: `Go to profile page and of this ${type}`,
+      perform: () => {
+        router.push(`/repositories/${profileKey}`)
+      },
+    },
+  ]
+
+  // Right now, we can't search reports by a handle
+  if (type !== 'handle') {
+    actions.push({
+      id: `search-reports-by-${type}`,
+      name: `Reports for ${profileKey}`,
+      keywords: `${search},search,${type}`,
+      icon: <RepoIcon className={iconClassName} />,
+      subtitle: `Go to reports page and filter by this ${type}`,
+      section: 'Report',
+      perform: () => {
+        router.push(`/reports?term=${profileKey}`)
+      },
+    })
+  }
+
+  return actions
+}
+
 export const useCommandPaletteAsyncSearch = () => {
   const router = useRouter()
   const { search } = useKBar<{ search: string }>((state) => ({
@@ -33,55 +78,23 @@ export const useCommandPaletteAsyncSearch = () => {
 
       if (fragments?.did) {
         actions.push(
-          {
-            id: 'search-reports-by-did',
-            name: `Reports for ${fragments.did}`,
-            keywords: `${search},search,did`,
-            icon: <RepoIcon className={iconClassName} />,
-            subtitle: 'Go to reports page and filter by this DID',
-            section: 'Report',
-            perform: () => {
-              router.push(`/reports?term=${fragments.did}`)
-            },
-          },
-          {
-            id: 'view-profile-by-did',
-            name: `Profile for ${fragments.did}`,
-            section: 'Details',
-            keywords: `${search},view,did`,
-            icon: <RepoIcon className={iconClassName} />,
-            subtitle: 'Go to profile page and of this DID',
-            perform: () => {
-              router.push(`/repositories/${fragments.did}`)
-            },
-          },
+          ...buildItemForProfile({
+            search,
+            router,
+            type: 'did',
+            profileKey: fragments.did,
+          }),
         )
       }
 
       if (fragments?.handle) {
         actions.push(
-          {
-            id: 'search-reports-by-handle',
-            name: `Reports for @${fragments.handle}`,
-            section: 'Report',
-            icon: <RepoIcon className={iconClassName} />,
-            keywords: `${search},search,handle`,
-            subtitle: 'Go to reports page and filter by this handle',
-            perform: () => {
-              router.push('/reports')
-            },
-          },
-          {
-            id: 'view-profile-by-handle',
-            name: `Profile for ${fragments.handle}`,
-            section: 'Details',
-            icon: <RepoIcon className={iconClassName} />,
-            keywords: `${search},view,profile,handle`,
-            subtitle: 'Go to profile page and of this handle',
-            perform: () => {
-              router.push(`/repositories/${fragments.handle}`)
-            },
-          },
+          ...buildItemForProfile({
+            search,
+            router,
+            type: 'handle',
+            profileKey: fragments.handle,
+          }),
         )
       }
 
@@ -119,6 +132,24 @@ export const useCommandPaletteAsyncSearch = () => {
           },
         )
       }
+    } else if (isValidDid(search)) {
+      actions.push(
+        ...buildItemForProfile({
+          search,
+          router,
+          type: 'did',
+          profileKey: search,
+        }),
+      )
+    } else if (isValidHandle(search)) {
+      actions.push(
+        ...buildItemForProfile({
+          search,
+          router,
+          type: 'handle',
+          profileKey: search,
+        }),
+      )
     }
 
     return actions.map(createAction)
