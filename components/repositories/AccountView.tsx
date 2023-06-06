@@ -31,6 +31,7 @@ import {
   toLabelVal,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
+import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 
 enum Views {
   Details,
@@ -100,7 +101,7 @@ export function AccountView({
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && (
-                    <Details profile={profile} repo={repo} />
+                    <Details profile={profile} repo={repo} id={id} />
                   )}
                   {currentView === Views.Posts && (
                     <Posts id={id} onReport={setReportUri} />
@@ -325,9 +326,11 @@ function Tabs({
 function Details({
   profile,
   repo,
+  id,
 }: {
   profile?: GetProfile.OutputSchema
   repo: GetRepo.OutputSchema
+  id: string
 }) {
   const Field = ({
     label,
@@ -379,6 +382,11 @@ function Details({
             '(Admin)'
           )}
         </Field>
+        <InviteCodeGenerationStatus
+          id={id}
+          did={repo.did}
+          invitesDisabled={repo.invitesDisabled}
+        />
       </dl>
       {profile && (
         <Json
