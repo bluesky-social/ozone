@@ -8,6 +8,7 @@ import { ModActionIcon } from '../../components/common/ModActionIcon'
 import { ReportsTable } from '../../components/reports/ReportsTable'
 import { SnoozeListPopup } from '../../components/reports/SnoozeListPopup'
 import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
+import { useSyncedState } from '../../lib/useSyncedState'
 import client from '../../lib/client'
 import { validSubjectString } from '../../lib/types'
 import { takeActionAndResolveReports } from '../../components/reports/helpers/takeActionAndResolveReports'
@@ -42,7 +43,8 @@ const TABS = [
 export default function Reports() {
   const params = useSearchParams()
   const [open, setOpen] = useState(false)
-  const [quickOpen, setQuickOpen] = useState(!!params.get('quickOpen'))
+  const quickOpenParam = !!params.get('quickOpen')
+  const [quickOpen, setQuickOpen] = useSyncedState(quickOpenParam)
   const subject = params.get('term') ?? undefined
   const reverse = !!params.get('reverse')
   const actionType = params.get('actionType')

@@ -67,11 +67,8 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
     .split('/')
 
   identifiers.forEach((part, i) => {
-    if (part.includes('did:')) {
+    if (isValidDid(part)) {
       parts.did = part
-    }
-    if (part.includes('.')) {
-      parts.handle = part
     }
     if (part.includes('.')) {
       parts.handle = part
