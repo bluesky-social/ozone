@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { CheckCircleIcon, XCircleIcon } from '@heroicons/react/20/solid'
-import { InviteCode } from '../../lib/types'
-import { truncate } from '../../lib/util'
+import { InviteCode } from '@/lib/types'
+import { truncate } from '@/lib/util'
 
 export function InviteCodesTable(props: { codes: InviteCode[] }) {
   const { codes } = props

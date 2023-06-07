@@ -2,7 +2,7 @@ import { ComponentProps } from 'react'
 import Link from 'next/link'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
-import { formatBytes } from '../../../lib/util'
+import { formatBytes } from '@/lib/util'
 
 export function BlobList(props: {
   name: string

@@ -4,7 +4,7 @@ import { Fragment, useState } from 'react'
 
 import { ActionButton } from '../common/buttons'
 import { LabelChip } from '../common/labels'
-import client from '../../lib/client'
+import client from '@/lib/client'
 
 const useInviteCodeMutation = ({ did, id }) => {
   const queryClient = useQueryClient()

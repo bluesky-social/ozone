@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
-import { createAtUri, parseAtUri, truncate } from '../../lib/util'
+import { createAtUri, parseAtUri, truncate } from '@/lib/util'
 
 export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>

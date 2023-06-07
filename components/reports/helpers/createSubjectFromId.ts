@@ -1,6 +1,6 @@
 import {} from '@atproto/api'
 import { isIdRecord } from './isIdRecord'
-import client from '../../../lib/client'
+import client from '@/lib/client'
 
 export const createSubjectFromId = async (id: string) => {
   if (isIdRecord(id)) {

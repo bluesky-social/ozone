@@ -12,7 +12,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
-import { classNames } from '../../../lib/util'
+import { classNames } from '@/lib/util'
 import { ReasonBadge } from '../ReasonBadge'
 import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'

@@ -8,7 +8,7 @@ import {
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '../../../lib/types'
+import { isRepost } from '@/lib/types'
 
 export function PostsTable({
   items,

@@ -1,7 +1,7 @@
 'use client'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Posts } from '../posts/Posts'
-import client from '../../../lib/client'
+import client from '@/lib/client'
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline'
 
 export function AuthorFeed({

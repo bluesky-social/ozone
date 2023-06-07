@@ -1,7 +1,7 @@
 'use client'
 import { FormEvent, useState, useEffect } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
-import Client from '../../lib/client'
+import Client from '@/lib/client'
 
 enum AuthState {
   Validating,

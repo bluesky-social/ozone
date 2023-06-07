@@ -1,7 +1,7 @@
 'use client'
 import { ReactNode, useState } from 'react'
 import { ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
-import { classNames } from '../../lib/util'
+import { classNames } from '@/lib/util'
 
 export function Json({
   label,

@@ -6,9 +6,9 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from '@heroicons/react/20/solid'
-import { Report } from '../../lib/types'
+import { Report } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { truncate } from '../../lib/util'
+import { truncate } from '@/lib/util'
 import { SubjectOverview } from './SubjectOverview'
 import { ReasonBadge } from './ReasonBadge'
 import { Loading } from '../common/Loader'

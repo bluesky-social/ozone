@@ -1,41 +1,41 @@
 import { useQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
-import { ActionPanel } from '../../../components/common/ActionPanel'
+import { ActionPanel } from '@/common/ActionPanel'
 import {
   ButtonPrimary,
   ButtonSecondary,
-} from '../../../components/common/buttons'
+} from '@/common/buttons'
 import {
   FormLabel,
   Input,
   RadioGroup,
   RadioGroupOption,
   Textarea,
-} from '../../../components/common/forms'
-import { PropsOf } from '../../../lib/types'
+} from '@/common/forms'
+import { PropsOf } from '@/lib/types'
 import { ResolutionList } from './ResolutionList'
-import client from '../../../lib/client'
+import client from '@/lib/client'
 import { BlobList } from './BlobList'
-import { diffLabels, toLabelVal } from '../../../components/common/labels'
-import { FullScreenActionPanel } from '../../../components/common/FullScreenActionPanel'
-import { PreviewCard } from '../../../components/common/PreviewCard'
+import { diffLabels, toLabelVal } from '@/common/labels'
+import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
+import { PreviewCard } from '@/common/PreviewCard'
 import { useKeyPressEvent } from 'react-use'
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
-import { LabelsGrid } from '../../../components/common/labels/Grid'
-import { takesKeyboardEvt } from '../../../lib/util'
-import { SnoozeAction } from '../../../components/reports/SnoozeAction'
-import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
-import { CurrentModerationAction } from '../../../components/reports/ModerationView/CurrentModerationAction'
+import { LabelsGrid } from '@/common/labels/Grid'
+import { takesKeyboardEvt } from '@/lib/util'
+import { SnoozeAction } from '@/reports/SnoozeAction'
+import { getCurrentActionFromRepoOrRecord } from '@/reports/helpers/getCurrentActionFromRepoOrRecord'
+import { CurrentModerationAction } from '@/reports/ModerationView/CurrentModerationAction'
 import {
   actionOptions,
   getActionClassNames,
-} from '../../../components/reports/ModerationView/ActionHelpers'
-import { Loading } from '../../../components/common/Loader'
+} from '@/reports/ModerationView/ActionHelpers'
+import { Loading } from '@/common/Loader'
 
 const FORM_ID = 'mod-action-panel'
 

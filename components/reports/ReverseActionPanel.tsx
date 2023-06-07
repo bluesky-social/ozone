@@ -3,7 +3,7 @@ import { ActionPanel } from '../common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
 import { Textarea } from '../common/forms'
 import { RecordCard, RepoCard } from '../common/RecordCard'
-import { PropsOf } from '../../lib/types'
+import { PropsOf } from '@/lib/types'
 
 export function ReverseActionPanel(
   props: PropsOf<typeof ActionPanel> & {

@@ -3,7 +3,7 @@ import { AppBskyFeedDefs } from '@atproto/api'
 import { TableCellsIcon, ListBulletIcon } from '@heroicons/react/20/solid'
 import { PostsFeed } from './PostsFeed'
 import { PostsTable } from './PostsTable'
-import { classNames } from '../../../lib/util'
+import { classNames } from '@/lib/util'
 import { EmptyFeed } from '../feeds/EmptyFeed'
 
 enum Mode {

@@ -3,30 +3,30 @@ import Link from 'next/link'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { useEffect, useRef, useState } from 'react'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
-import { ActionPanel } from '../../../components/common/ActionPanel'
+import { ActionPanel } from '@/common/ActionPanel'
 import {
   ButtonPrimary,
   ButtonSecondary,
-} from '../../../components/common/buttons'
+} from '@/common/buttons'
 import {
   FormLabel,
   Input,
   Select,
   Textarea,
-} from '../../../components/common/forms'
-import { RecordCard, RepoCard } from '../../../components/common/RecordCard'
-import { PropsOf } from '../../../lib/types'
+} from '@/common/forms'
+import { RecordCard, RepoCard } from '@/common/RecordCard'
+import { PropsOf } from '@/lib/types'
 import { ResolutionList } from './ResolutionList'
-import client from '../../../lib/client'
+import client from '@/lib/client'
 import { BlobList } from './BlobList'
 import {
   LabelsInput,
   diffLabels,
   toLabelVal,
-} from '../../../components/common/labels'
-import { takesKeyboardEvt } from '../../../lib/util'
-import { SnoozeAction } from '../../../components/reports/SnoozeAction'
-import { getCurrentActionFromRepoOrRecord } from '../../../components/reports/helpers/getCurrentActionFromRepoOrRecord'
+} from '@/common/labels'
+import { takesKeyboardEvt } from '@/lib/util'
+import { SnoozeAction } from '@/reports/SnoozeAction'
+import { getCurrentActionFromRepoOrRecord } from '@/reports/helpers/getCurrentActionFromRepoOrRecord'
 
 const FORM_ID = 'mod-action-panel'
 

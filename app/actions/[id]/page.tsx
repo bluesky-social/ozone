@@ -3,12 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { useState } from 'react'
-import { ActionView } from '../../../components/reports/ActionView'
-import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
-import { ReverseActionPanel } from '../../../components/reports/ReverseActionPanel'
-import client from '../../../lib/client'
+import { ActionView } from '@/reports/ActionView'
+import { ReverseActionPanel } from '@/reports/ReverseActionPanel'
+import client from '@/lib/client'
 import { actionOptions } from '../ModActionPanel'
-import { Loading, LoadingFailed } from '../../../components/common/Loader'
+import { Loading, LoadingFailed } from '@/common/Loader'
+import { getSubjectString } from '@/reports/ActionView/getSubjectString'
 
 export default function Action({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)

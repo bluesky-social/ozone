@@ -4,17 +4,17 @@ import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
-import { ModActionIcon } from '../../components/common/ModActionIcon'
-import { ReportsTable } from '../../components/reports/ReportsTable'
-import { SnoozeListPopup } from '../../components/reports/SnoozeListPopup'
+import { ModActionIcon } from '@/common/ModActionIcon'
+import { ReportsTable } from '@/reports/ReportsTable'
+import { SnoozeListPopup } from '@/reports/SnoozeListPopup'
 import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
-import client from '../../lib/client'
-import { validSubjectString } from '../../lib/types'
-import { takeActionAndResolveReports } from '../../components/reports/helpers/takeActionAndResolveReports'
+import client from '@/lib/client'
+import { validSubjectString } from '@/lib/types'
+import { takeActionAndResolveReports } from '@/reports/helpers/takeActionAndResolveReports'
 import {
   snoozeSubject,
   getSnoozedSubjects,
-} from '../../components/reports/helpers/snoozeSubject'
+} from '@/reports/helpers/snoozeSubject'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 
 const TABS = [

@@ -8,7 +8,7 @@ import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
-import { useSyncedState } from '../../lib/useSyncedState'
+import { useSyncedState } from '@/lib/useSyncedState'
 
 export function Shell({ children }: React.PropsWithChildren) {
   return (

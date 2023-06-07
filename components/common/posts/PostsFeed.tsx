@@ -14,7 +14,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '../../../lib/types'
+import { isRepost } from '@/lib/types'
 import { RichText } from '../RichText'
 import { LabelChip, LabelList, getLabelGroupInfo } from '../labels'
 

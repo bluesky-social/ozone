@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { ReactNode } from 'react'
-import { classNames } from '../lib/util'
+import { classNames } from '@/lib/util'
 
 interface Tab {
   key: string
