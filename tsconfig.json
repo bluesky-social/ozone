@@ -30,6 +30,6 @@
       "@/repositories/*": ["components/repositories/*"],
     }
   },
-  "include": ["next-env.d.ts", "app/*", "lib/*", "components/*", ".next/types/**/*.ts"],
+  "include": ["next-env.d.ts", "**/**/**/*.tsx", "**/**/**/*.ts", ".next/types/**/*.ts"],
   "exclude": ["node_modules"]
 }
