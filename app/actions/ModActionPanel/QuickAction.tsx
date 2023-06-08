@@ -2,10 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
-import {
-  ButtonPrimary,
-  ButtonSecondary,
-} from '@/common/buttons'
+import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import {
   FormLabel,
   Input,
@@ -471,9 +468,13 @@ async function getSubject(subject: string) {
   }
 }
 
+function isMultiPress(ev: KeyboardEvent) {
+  return ev.metaKey || ev.shiftKey || ev.ctrlKey || ev.altKey
+}
+
 function safeKeyHandler(handler: (_ev: KeyboardEvent) => void) {
   return (ev: KeyboardEvent) => {
-    if (!takesKeyboardEvt(ev.target)) {
+    if (!takesKeyboardEvt(ev.target) && !isMultiPress(ev)) {
       handler(ev)
     }
   }
