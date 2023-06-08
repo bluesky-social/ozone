@@ -11,7 +11,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { Json } from '../../common/Json'
-import { classNames } from '../../../lib/util'
+import { classNames } from '@/lib/util'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
 import { Header } from '../ReportView/Header'

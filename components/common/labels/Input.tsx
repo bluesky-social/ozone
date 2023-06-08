@@ -1,6 +1,6 @@
 import { Fragment } from 'react'
 import { Popover, Transition } from '@headlessui/react'
-import { useSyncedState } from '../../../lib/useSyncedState'
+import { useSyncedState } from '@/lib/useSyncedState'
 import { LabelChip, LabelList, LabelListEmpty } from './List'
 import {
   labelOptions,

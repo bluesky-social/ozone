@@ -1,15 +1,15 @@
 'use client'
 import { useState } from 'react'
-import { ReportView } from '../../../components/reports/ReportView'
+import { ReportView } from '@/reports/ReportView'
 import { useQuery } from '@tanstack/react-query'
-import client from '../../../lib/client'
-import { takeActionAndResolveReports } from '../../../components/reports/helpers/takeActionAndResolveReports'
+import client from '@/lib/client'
+import { takeActionAndResolveReports } from '@/reports/helpers/takeActionAndResolveReports'
 import {
   ModActionFormValues,
   ModActionPanel,
 } from '../../actions/ModActionPanel'
-import { getSubjectString } from '../../../components/reports/ActionView/getSubjectString'
-import { Loading, LoadingFailed } from '../../../components/common/Loader'
+import { getSubjectString } from '@/reports/ActionView/getSubjectString'
+import { Loading, LoadingFailed } from '@/common/Loader'
 
 export default function Report({ params }: { params: { id: string } }) {
   const [resolveReportPanelOpen, setResolveReportPanelOpen] = useState(false)

@@ -3,7 +3,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ComponentProps } from 'react'
-import { formatBytes } from '../../lib/util'
+import { formatBytes } from '@/lib/util'
 
 export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
   const { blobs } = props

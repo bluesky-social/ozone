@@ -1,8 +1,14 @@
 'use client'
 import { FormEvent, useState, useEffect, useContext } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
-import Client from '../../lib/client'
-import { AuthChangeContext, AuthContext, AuthState } from './AuthContext'
+import { AuthChangeContext, AuthContext } from './AuthContext'
+import Client from '@/lib/client'
+
+enum AuthState {
+  Validating,
+  LoggedIn,
+  LoggedOut,
+}
 
 export function LoginModal() {
   const { isValidatingAuth, isLoggedIn } = useContext(AuthContext)

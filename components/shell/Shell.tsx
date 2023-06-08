@@ -1,19 +1,18 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useDebounce } from 'react-use'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
-import { useSyncedState } from '../../lib/useSyncedState'
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
+import { useSyncedState } from '@/lib/useSyncedState'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
-  
+
   return (
     <MobileMenuProvider>
       <LoginModal />

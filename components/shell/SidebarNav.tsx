@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
-import { classNames } from '../../lib/util'
+import { classNames } from '@/lib/util'
 import { usePathname } from 'next/navigation'
 
 export function SidebarNav() {

@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { Dialog, Transition } from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
-import { classNames } from '../../lib/util'
+import { classNames } from '@/lib/util'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
 
 interface MobileMenuOpen {

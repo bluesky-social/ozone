@@ -1,6 +1,6 @@
 'use client'
 import { useRef, useEffect } from 'react'
-import { useOnScreen } from '../../lib/useOnScreen'
+import { useOnScreen } from '@/lib/useOnScreen'
 
 export function LoadMore({ onLoadMore }: { onLoadMore: () => void }) {
   const ref = useRef(null)

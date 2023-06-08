@@ -17,10 +17,9 @@ import {
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { classNames } from '../../lib/util'
-import client from '../../lib/client'
+import { classNames } from '@/lib/util'
+import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
-import { InviteCodesTable } from '../invites/InviteCodesTable'
 import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
 import {
@@ -31,9 +30,9 @@ import {
   toLabelVal,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
-import { ButtonGroup } from '../common/buttons'
-import { UserCircleIcon } from '@heroicons/react/24/outline'
 import { ReportsView } from './ReportsView'
+import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
+import { InviteCodesTable } from '@/invites/InviteCodesTable'
 
 enum Views {
   Details,
@@ -103,7 +102,7 @@ export function AccountView({
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && (
-                    <Details profile={profile} repo={repo} />
+                    <Details profile={profile} repo={repo} id={id} />
                   )}
                   {currentView === Views.Posts && (
                     <Posts id={id} onReport={setReportUri} />
@@ -331,9 +330,11 @@ function Tabs({
 function Details({
   profile,
   repo,
+  id,
 }: {
   profile?: GetProfile.OutputSchema
   repo: GetRepo.OutputSchema
+  id: string
 }) {
   const Field = ({
     label,
@@ -385,6 +386,11 @@ function Details({
             '(Admin)'
           )}
         </Field>
+        <InviteCodeGenerationStatus
+          id={id}
+          did={repo.did}
+          invitesDisabled={repo.invitesDisabled}
+        />
       </dl>
       {profile && (
         <Json

@@ -2,12 +2,12 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { AppBskyFeedGetPostThread as GetPostThread } from '@atproto/api'
-import { ReportPanel } from '../../../../components/reports/ReportPanel'
-import { RecordView } from '../../../../components/repositories/RecordView'
-import client from '../../../../lib/client'
-import { createAtUri } from '../../../../lib/util'
-import { createReport } from '../../../../components/repositories/createReport'
-import { Loading, LoadingFailed } from '../../../../components/common/Loader'
+import { ReportPanel } from '@/reports/ReportPanel'
+import { RecordView } from '@/repositories/RecordView'
+import client from '@/lib/client'
+import { createAtUri } from '@/lib/util'
+import { createReport } from '@/repositories/createReport'
+import { Loading, LoadingFailed } from '@/common/Loader'
 
 export default function Record({
   params,

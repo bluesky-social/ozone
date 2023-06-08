@@ -1,9 +1,9 @@
 import Link from 'next/link'
 import { Disclosure } from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
-import { ReasonBadge } from '../../../components/reports/ReasonBadge'
+import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ComAtprotoAdminDefs } from '@atproto/api'
-import { PreviewCard } from '../../../components/common/PreviewCard'
+import { PreviewCard } from '@/common/PreviewCard'
 
 interface Props {
   shortCollection?: string

@@ -14,7 +14,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '../../../lib/types'
+import { isRepost } from '@/lib/types'
 import { RichText } from '../RichText'
 import { LabelChip, LabelList, getLabelGroupInfo } from '../labels'
 
@@ -25,7 +25,7 @@ export function PostsFeed({
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
-  onLoadMore: () => void
+  onLoadMore?: () => void
 }) {
   return (
     <div className="border border-gray-200 border-b-0">
@@ -37,7 +37,7 @@ export function PostsFeed({
           <PostAsCard item={item} onReport={onReport} />
         </div>
       ))}
-      <LoadMore onLoadMore={onLoadMore} />
+      {onLoadMore && <LoadMore onLoadMore={onLoadMore} />}
     </div>
   )
 }

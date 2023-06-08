@@ -2,8 +2,8 @@
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { SectionHeader } from '../../components/SectionHeader'
-import { RepositoriesTable } from '../../components/repositories/RepositoriesTable'
-import client from '../../lib/client'
+import { RepositoriesTable } from '@/repositories/RepositoriesTable'
+import client from '@/lib/client'
 
 const TABS = [{ key: 'all', name: 'All', href: '/repositories' }]
 

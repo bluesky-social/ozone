@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 import { AppBskyFeedDefs, ComAtprotoAdminDefs } from '@atproto/api'
-import { parseAtUri } from '../../lib/util'
-import client from '../../lib/client'
+import { parseAtUri } from '@/lib/util'
+import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, LoadingFailed, LoadingFailedDense } from './Loader'
@@ -164,14 +164,16 @@ export function RepoCard(props: { did: string }) {
             >
               Peek
             </a>
-            {takendown && (
+          </p>
+          {takendown && (
+            <p className="pt-1 pb-1">
               <LoadingFailedDense
                 className="inline-block font-normal text-gray-600"
                 noPadding
                 error="Account taken down"
               />
-            )}
-          </p>
+            </p>
+          )}
         </div>
       </div>
     </div>

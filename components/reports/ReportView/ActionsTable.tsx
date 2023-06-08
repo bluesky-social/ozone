@@ -6,7 +6,7 @@ import {
 } from '@atproto/api'
 import { SubjectOverview } from '../SubjectOverview'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
-import { truncate } from '../../../lib/util'
+import { truncate } from '@/lib/util'
 
 export function ActionsTable(props: { actions }) {
   const { actions } = props

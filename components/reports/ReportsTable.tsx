@@ -6,9 +6,9 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
 } from '@heroicons/react/20/solid'
-import { Report } from '../../lib/types'
+import { Report } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { truncate } from '../../lib/util'
+import { truncate } from '@/lib/util'
 import { SubjectOverview } from './SubjectOverview'
 import { ReasonBadge } from './ReasonBadge'
 import { Loading } from '../common/Loader'
@@ -68,6 +68,7 @@ function ReportRow(props: { report: Report }) {
   const { report, ...others } = props
   const resolved = !!report.resolvedByActionIds.length
   const createdAt = new Date(report.createdAt)
+  
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
@@ -82,7 +83,11 @@ function ReportRow(props: { report: Report }) {
             className="h-4 w-4 inline-block text-yellow-500 align-text-bottom"
           />
         )}{' '}
-        <SubjectOverview subject={report.subject} withTruncation={false} />
+        <SubjectOverview
+          subject={report.subject}
+          subjectRepoHandle={report.subjectRepoHandle}
+          withTruncation={false}
+        />
         <dl className="font-normal">
           <dt className="sr-only">Reason</dt>
           <dd className="mt-1 truncate text-gray-700">
@@ -108,7 +113,10 @@ function ReportRow(props: { report: Report }) {
         {truncate(report.reason ?? '', 100)}
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
-        <SubjectOverview subject={report.subject} />
+        <SubjectOverview
+          subject={report.subject}
+          subjectRepoHandle={report.subjectRepoHandle}
+        />
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
         <span title={createdAt.toLocaleString()}>
