@@ -3,11 +3,11 @@ import '../styles/globals.css'
 import 'react-toastify/dist/ReactToastify.css'
 import { ToastContainer } from 'react-toastify'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Shell } from '../components/shell/Shell'
+import { Shell } from '@/shell/Shell'
 import { useEffectOnce, useInterval } from 'react-use'
-import { reEvaluateSnoozeSubjectList } from '../components/reports/helpers/snoozeSubject'
-import { CommandPaletteRoot } from '../components/shell/CommandPalette/Root'
-import { AuthProvider } from '../components/shell/AuthContext'
+import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
+import { AuthProvider } from '@/shell/AuthContext'
+import { reEvaluateSnoozeSubjectList } from '@/reports/helpers/snoozeSubject'
 
 const queryClient = new QueryClient()
 

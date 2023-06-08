@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { toast } from 'react-toastify'
-import client from '../../lib/client'
+import client from '@/lib/client'
 import { createSubjectFromId } from '../reports/helpers/createSubjectFromId'
 import { isIdRecord } from '../reports/helpers/isIdRecord'
 import { ReportFormValues } from '../reports/ReportPanel'

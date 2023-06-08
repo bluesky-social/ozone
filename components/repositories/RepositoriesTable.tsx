@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { formatDistanceToNow } from 'date-fns'
 import { AppBskyActorProfile, ComAtprotoAdminDefs } from '@atproto/api'
-import { Repo } from '../../lib/types'
+import { Repo } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 
 export function RepositoriesTable(props: {

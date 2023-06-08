@@ -1,8 +1,8 @@
 'use client'
-import { AccountView } from '../../../components/repositories/AccountView'
-import client from '../../../lib/client'
+import { AccountView } from '@/repositories/AccountView'
+import client from '@/lib/client'
 import { useQuery } from '@tanstack/react-query'
-import { createReport } from '../../../components/repositories/createReport'
+import { createReport } from '@/repositories/createReport'
 
 export default function Repository({ params }: { params: { id: string } }) {
   const { id: rawId } = params

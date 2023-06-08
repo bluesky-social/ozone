@@ -13,7 +13,7 @@ import {
   ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import { Json } from '../common/Json'
-import { classNames, parseAtUri } from '../../lib/util'
+import { classNames, parseAtUri } from '@/lib/util'
 import { ReportsTable } from '../reports/ReportsTable'
 import { PostAsCard } from '../common/posts/PostsFeed'
 import { BlobsTable } from './BlobsTable'

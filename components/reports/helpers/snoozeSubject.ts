@@ -4,7 +4,7 @@ import { addHours, isBefore } from 'date-fns'
 import {
   getLocalStorageData,
   setLocalStorageData,
-} from '../../../lib/local-storage'
+} from '@/lib/local-storage'
 
 const SNOOZE_STORAGE_KEY = 'snoozed_subjects'
 export type SnoozeLocalStorageRecord = Record<

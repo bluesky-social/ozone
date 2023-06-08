@@ -1,10 +1,10 @@
 import { ComAtprotoRepoStrongRef, ComAtprotoAdminDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { LoadMoreButton } from '../../../components/common/LoadMoreButton'
-import { ReasonBadge } from '../../../components/reports/ReasonBadge'
-import { validSubjectString } from '../../../lib/types'
-import { parseAtUri } from '../../../lib/util'
-import client from '../../../lib/client'
+import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { validSubjectString } from '@/lib/types'
+import { parseAtUri } from '@/lib/util'
+import client from '@/lib/client'
 import { ReportItemAccordian } from './ReportItemAccordian'
 
 export function ResolutionList(props: {

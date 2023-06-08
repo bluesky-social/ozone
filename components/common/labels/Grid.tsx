@@ -19,6 +19,7 @@ export function LabelsGrid(props: LabelsProps) {
     defaultLabels = EMPTY_ARR,
     options = labelOptions,
     disabled,
+    subject,
     ...others
   } = props
   const allOptions = unique([...defaultLabels, ...options]).sort()
@@ -31,7 +32,7 @@ export function LabelsGrid(props: LabelsProps) {
   const defaultLabelsKey = defaultLabels.join('_')
   useEffect(() => {
     setCurrent(defaultLabels)
-  }, [defaultLabelsKey])
+  }, [defaultLabelsKey, subject])
 
   const handleCheckboxChange = (opt: string) => {
     setCurrent((prev) => {
@@ -129,6 +130,7 @@ type LabelsProps = {
   className?: string
   defaultLabels?: string[]
   options?: string[]
+  subject?: string
 }
 
 function unique<T>(arr: T[]) {

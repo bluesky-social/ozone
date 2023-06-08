@@ -8,7 +8,7 @@ import {
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '../../../lib/types'
+import { isRepost } from '@/lib/types'
 
 export function PostsTable({
   items,
@@ -17,7 +17,7 @@ export function PostsTable({
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
-  onLoadMore: () => void
+  onLoadMore?: () => void
 }) {
   return (
     <>
@@ -53,7 +53,7 @@ export function PostsTable({
           ))}
         </tbody>
       </table>
-      <LoadMore onLoadMore={onLoadMore} />
+      {onLoadMore && <LoadMore onLoadMore={onLoadMore} />}
     </>
   )
 }

@@ -3,7 +3,8 @@ import { AppBskyFeedDefs } from '@atproto/api'
 import { TableCellsIcon, ListBulletIcon } from '@heroicons/react/20/solid'
 import { PostsFeed } from './PostsFeed'
 import { PostsTable } from './PostsTable'
-import { classNames } from '../../../lib/util'
+import { classNames } from '@/lib/util'
+import { EmptyFeed } from '../feeds/EmptyFeed'
 
 enum Mode {
   Feed,
@@ -15,11 +16,13 @@ export function Posts({
   title,
   onReport,
   onLoadMore,
+  isFetching,
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   title: string
   onReport: (uri: string) => void
-  onLoadMore: () => void
+  onLoadMore?: () => void
+  isFetching: boolean
 }) {
   const [mode, setMode] = useState<Mode>(Mode.Feed)
 
@@ -58,16 +61,26 @@ export function Posts({
           </span>
         </div>
       </div>
-      {mode === Mode.Feed ? (
-        <div className="mx-auto max-w-3xl w-full py-2 sm:py-4 sm:px-6 lg:px-8">
-          <PostsFeed
-            items={items}
-            onReport={onReport}
-            onLoadMore={onLoadMore}
-          />
-        </div>
+      {!isFetching && !items.length ? (
+        <EmptyFeed />
       ) : (
-        <PostsTable items={items} onReport={onReport} onLoadMore={onLoadMore} />
+        <>
+          {mode === Mode.Feed ? (
+            <div className="mx-auto max-w-3xl w-full py-2 sm:py-4 sm:px-6 lg:px-8">
+              <PostsFeed
+                items={items}
+                onReport={onReport}
+                onLoadMore={onLoadMore}
+              />
+            </div>
+          ) : (
+            <PostsTable
+              items={items}
+              onReport={onReport}
+              onLoadMore={onLoadMore}
+            />
+          )}
+        </>
       )}
     </div>
   )

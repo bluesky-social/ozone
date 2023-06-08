@@ -1,8 +1,8 @@
 'use client'
 import { useEffect, useState, SyntheticEvent, Fragment } from 'react'
 import { Menu, Transition } from '@headlessui/react'
-import { classNames } from '../../lib/util'
-import Client from '../../lib/client'
+import { classNames } from '@/lib/util'
+import Client from '@/lib/client'
 
 export function ProfileMenu() {
   const [isAuthed, setIsAuthed] = useState(false)

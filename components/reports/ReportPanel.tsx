@@ -4,7 +4,7 @@ import { ActionPanel } from '../common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
 import { FormLabel, Input, Select, Textarea } from '../common/forms'
 import { RecordCard, RepoCard } from '../common/RecordCard'
-import { PropsOf } from '../../lib/types'
+import { PropsOf } from '@/lib/types'
 
 export function ReportPanel(
   props: PropsOf<typeof ActionPanel> & {
