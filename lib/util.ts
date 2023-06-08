@@ -70,7 +70,7 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
     if (isValidDid(part)) {
       parts.did = part
     }
-    if (part.includes('.')) {
+    if (isValidHandle(part)) {
       parts.handle = part
     }
     if (part === 'post' || part === 'app.bsky.feed.post') {
@@ -86,5 +86,4 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
 }
 
 export const isValidDid = (did?: string | null) => did?.startsWith('did:')
-export const isValidHandle = (handle?: string | null) =>
-  handle?.startsWith('@') && handle?.includes('.')
+export const isValidHandle = (handle?: string | null) => handle?.includes('.')

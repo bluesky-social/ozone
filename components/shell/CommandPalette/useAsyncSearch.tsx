@@ -51,7 +51,7 @@ const buildItemForProfile = ({
       keywords: `${search},search,${type}`,
       icon: <RepoIcon className={iconClassName} />,
       subtitle: `Go to reports page and filter by this ${type}`,
-      section: 'Report',
+      section: 'Reports',
       perform: () => {
         router.push(`/reports?term=${profileKey}`)
       },
@@ -76,6 +76,41 @@ export const useCommandPaletteAsyncSearch = () => {
     if (isBlueSkyAppUrl(search)) {
       const fragments = getFragmentsFromBlueSkyAppUrl(search)
 
+      if (fragments?.cid) {
+        actions.push(
+          {
+            id: 'view-post',
+            name: `View post ${fragments.cid}`,
+            section: 'Details',
+            icon: <PostIcon className={iconClassName} />,
+            keywords: `${search},view,post`,
+            subtitle: 'Go to post record',
+            perform: () => {
+              router.push(
+                `/repositories/${
+                  fragments.did || fragments.handle
+                }/app.bsky.feed.post/${fragments.cid}`,
+              )
+            },
+          },
+          {
+            id: 'search-reports-by-post',
+            name: `Reports for post ${fragments.cid}`,
+            section: 'Reports',
+            icon: <PostIcon className={iconClassName} />,
+            keywords: `${search},search,report,post`,
+            subtitle: 'Go to reports page and filter by this post',
+            perform: () => {
+              router.push(
+                `/reports?term=at://${
+                  fragments.did || fragments.handle
+                }/app.bsky.feed.post/${fragments.cid}`,
+              )
+            },
+          },
+        )
+      }
+
       if (fragments?.did) {
         actions.push(
           ...buildItemForProfile({
@@ -95,41 +130,6 @@ export const useCommandPaletteAsyncSearch = () => {
             type: 'handle',
             profileKey: fragments.handle,
           }),
-        )
-      }
-
-      if (fragments?.cid) {
-        actions.push(
-          {
-            id: 'search-reports-by-post',
-            name: `Reports for post ${fragments.cid}`,
-            section: 'Report',
-            icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},search,report,post`,
-            subtitle: 'Go to reports page and filter by this post',
-            perform: () => {
-              router.push(
-                `/reports?term=at://${
-                  fragments.did || fragments.handle
-                }/app.bsky.feed.post/${fragments.cid}`,
-              )
-            },
-          },
-          {
-            id: 'view-post',
-            name: `View post ${fragments.cid}`,
-            section: 'Details',
-            icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},view,post`,
-            subtitle: 'Go to post record',
-            perform: () => {
-              router.push(
-                `/repositories/${
-                  fragments.did || fragments.handle
-                }/app.bsky.feed.post/${fragments.cid}`,
-              )
-            },
-          },
         )
       }
     } else if (isValidDid(search)) {

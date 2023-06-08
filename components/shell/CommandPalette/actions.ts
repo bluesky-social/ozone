@@ -6,7 +6,14 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
     name: 'Open Quick Action Panel',
     shortcut: ['q'],
     keywords: 'quick,action,panel',
-    perform: () => router.push('/reports?quickOpen=true'),
+    perform: () => router.push('/reports?resolved=false&quickOpen=true'),
+  },
+  {
+    id: 'unresolved-reports',
+    name: 'Open Unresolved Reports',
+    shortcut: ['r'],
+    keywords: 'unresolved,reports',
+    perform: () => router.push('/reports?resolved=false'),
   },
   {
     id: 'resolved-reports',
