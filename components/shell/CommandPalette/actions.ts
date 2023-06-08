@@ -11,7 +11,7 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'unresolved-reports',
     name: 'Open Unresolved Reports',
-    shortcut: ['r'],
+    shortcut: ['u'],
     keywords: 'unresolved,reports',
     perform: () => router.push('/reports?resolved=false'),
   },
