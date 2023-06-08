@@ -1,4 +1,3 @@
-import { ComAtprotoAdminGetRepo } from '@atproto/api'
 import {
   ExclamationCircleIcon,
   UserCircleIcon,
@@ -35,13 +34,7 @@ const useUserReports = ({ view, did }: { view: ReportViews; did: string }) => {
   return { fetchNextPage, reports, hasNextPage, isInitialLoading }
 }
 
-export const ReportsView = ({
-  did,
-  preloadedReports,
-}: {
-  did: string
-  preloadedReports: ComAtprotoAdminGetRepo.OutputSchema['moderation']['reports']
-}) => {
+export const ReportsView = ({ did }: { did: string }) => {
   // We show reports loaded from repo view so separately showing loading state here is not necessary
   const [currentView, setCurrentView] = useState(ReportViews.ForUser)
   const { fetchNextPage, reports, hasNextPage, isInitialLoading } =

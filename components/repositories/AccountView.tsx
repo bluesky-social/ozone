@@ -111,10 +111,7 @@ export function AccountView({
                   {currentView === Views.Followers && <Followers id={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Reports && (
-                    <ReportsView
-                      preloadedReports={repo.moderation.reports}
-                      did={repo.did}
-                    />
+                    <ReportsView did={repo.did} />
                   )}
                 </>
               ) : (
