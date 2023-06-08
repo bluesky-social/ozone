@@ -49,3 +49,41 @@ export function takesKeyboardEvt(el?: EventTarget | null) {
     !htmlEl.getAttribute('disabled')
   )
 }
+
+const blueSkyUrlMatcher = new RegExp('(https?://)?.*bsky.app')
+
+export const isBlueSkyAppUrl = (url: string) => blueSkyUrlMatcher.test(url)
+
+export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
+  const fragments = url.match(blueSkyUrlMatcher)
+  if (!fragments) return null
+
+  const parts: { did?: string; handle?: string; cid?: string } = {}
+
+  let postIndex = -1
+  const identifiers = url
+    .replace(fragments[0], '')
+    .replace('/profile', '')
+    .split('/')
+
+  identifiers.forEach((part, i) => {
+    if (isValidDid(part)) {
+      parts.did = part
+    }
+    if (isValidHandle(part)) {
+      parts.handle = part
+    }
+    if (part === 'post' || part === 'app.bsky.feed.post') {
+      postIndex = i
+    }
+  })
+
+  if (postIndex >= 0) {
+    parts.cid = identifiers[postIndex + 1]
+  }
+
+  return parts
+}
+
+export const isValidDid = (did?: string | null) => did?.startsWith('did:')
+export const isValidHandle = (handle?: string | null) => handle?.includes('.')

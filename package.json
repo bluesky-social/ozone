@@ -24,6 +24,7 @@
     "date-fns": "^2.29.3",
     "eslint": "8.30.0",
     "eslint-config-next": "13.0.7",
+    "kbar": "^0.1.0-beta.40",
     "next": "13.0.7",
     "react": "18.2.0",
     "react-dom": "18.2.0",

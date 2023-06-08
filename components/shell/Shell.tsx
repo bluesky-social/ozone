@@ -1,16 +1,18 @@
 'use client'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useDebounce } from 'react-use'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
+import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 
 export function Shell({ children }: React.PropsWithChildren) {
+  useCommandPaletteAsyncSearch()
+
   return (
     <MobileMenuProvider>
       <LoginModal />
@@ -88,11 +90,14 @@ function SearchInput() {
   const termParam = params.get('term') ?? ''
   const [termInput, setTermInput] = useSyncedState(termParam)
 
-  const updateParams = useCallback((s: string) => {
-    const nextParams = new URLSearchParams(params)
-    nextParams.set('term', s)
-    router.push((pathname ?? '') + '?' + nextParams.toString())
-  }, [params, pathname, router])
+  const updateParams = useCallback(
+    (s: string) => {
+      const nextParams = new URLSearchParams(params)
+      nextParams.set('term', s)
+      router.push((pathname ?? '') + '?' + nextParams.toString())
+    },
+    [params, pathname, router],
+  )
 
   return (
     <input

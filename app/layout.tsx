@@ -5,6 +5,8 @@ import { ToastContainer } from 'react-toastify'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { Shell } from '@/shell/Shell'
 import { useEffectOnce, useInterval } from 'react-use'
+import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
+import { AuthProvider } from '@/shell/AuthContext'
 import { reEvaluateSnoozeSubjectList } from '@/reports/helpers/snoozeSubject'
 
 const queryClient = new QueryClient()
@@ -30,9 +32,13 @@ export default function RootLayout({
           hideProgressBar={false}
           closeOnClick
         />
-        <QueryClientProvider client={queryClient}>
-          <Shell>{children}</Shell>
-        </QueryClientProvider>
+        <AuthProvider>
+          <CommandPaletteRoot>
+            <QueryClientProvider client={queryClient}>
+              <Shell>{children}</Shell>
+            </QueryClientProvider>
+          </CommandPaletteRoot>
+        </AuthProvider>
       </body>
     </html>
   )

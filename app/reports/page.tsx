@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
@@ -8,6 +8,7 @@ import { ModActionIcon } from '@/common/ModActionIcon'
 import { ReportsTable } from '@/reports/ReportsTable'
 import { SnoozeListPopup } from '@/reports/SnoozeListPopup'
 import { ModActionFormValues, ModActionPanel } from '../actions/ModActionPanel'
+import { useSyncedState } from '@/lib/useSyncedState'
 import client from '@/lib/client'
 import { validSubjectString } from '@/lib/types'
 import { takeActionAndResolveReports } from '@/reports/helpers/takeActionAndResolveReports'
@@ -16,6 +17,7 @@ import {
   getSnoozedSubjects,
 } from '@/reports/helpers/snoozeSubject'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
+import { AuthContext } from '@/shell/AuthContext'
 
 const TABS = [
   {
@@ -39,9 +41,10 @@ const TABS = [
 ]
 
 export default function Reports() {
-  const [open, setOpen] = useState(false)
-  const [quickOpen, setQuickOpen] = useState(false)
   const params = useSearchParams()
+  const [open, setOpen] = useState(false)
+  const quickOpenParam = !!params.get('quickOpen')
+  const [quickOpen, setQuickOpen] = useSyncedState(quickOpenParam)
   const subject = params.get('term') ?? undefined
   const reverse = !!params.get('reverse')
   const actionType = params.get('actionType')
@@ -50,21 +53,24 @@ export default function Reports() {
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
-  const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } = useInfiniteQuery({
-    queryKey: ['reports', { subject, resolved, actionType, reverse }],
-    queryFn: async ({ pageParam }) => {
-      const ignoreSubjects = getSnoozedSubjects()
-      return await getReports({
-        subject,
-        resolved,
-        actionType,
-        cursor: pageParam,
-        ignoreSubjects,
-        reverse,
-      })
-    },
-    getNextPageParam: (lastPage) => lastPage.cursor,
-  })
+  const { isLoggedIn } = useContext(AuthContext)
+  const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
+    useInfiniteQuery({
+      enabled: isLoggedIn,
+      queryKey: ['reports', { subject, resolved, actionType, reverse }],
+      queryFn: async ({ pageParam }) => {
+        const ignoreSubjects = getSnoozedSubjects()
+        return await getReports({
+          subject,
+          resolved,
+          actionType,
+          cursor: pageParam,
+          ignoreSubjects,
+          reverse,
+        })
+      },
+      getNextPageParam: (lastPage) => lastPage.cursor,
+    })
   const reports = data?.pages.flatMap((page) => page.reports) ?? []
   const currentTab = getTabFromParams({ resolved, actionType })
   const subjectOptions = unique(
@@ -149,7 +155,8 @@ async function getReports(
     typeof client.api.com.atproto.admin.getModerationReports
   >[0] = {},
 ) {
-  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } = opts
+  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } =
+    opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
