@@ -16,7 +16,12 @@ import {
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
 import { RichText } from '../RichText'
-import { LabelChip, LabelList, getLabelGroupInfo } from '../labels'
+import {
+  LabelChip,
+  LabelList,
+  getLabelGroupInfo,
+  doesLabelNeedBlur,
+} from '../labels'
 
 export function PostsFeed({
   items,
@@ -175,6 +180,13 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     ? item.post.embed.media
     : item.post.embed
 
+  const imageRequiresBlur = doesLabelNeedBlur(
+    item.post.labels?.map(({ val }) => val),
+  )
+  const imageClassName = `w-20 h-20 border border-gray-200 rounded ${
+    imageRequiresBlur ? 'blur-sm hover:blur-none' : ''
+  }`
+
   // render image embeds
   if (AppBskyEmbedImages.isView(embed)) {
     return (
@@ -186,11 +198,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             target="_blank"
             rel="noreferrer"
           >
-            <img
-              className="w-20 h-20 border border-gray-200 rounded"
-              src={image.thumb}
-              alt={image.alt}
-            />
+            <img className={imageClassName} src={image.thumb} alt={image.alt} />
           </a>
         ))}
       </div>
@@ -201,10 +209,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
         {embed.external.thumb ? (
-          <img
-            className="w-20 h-20 border border-gray-200 rounded"
-            src={embed.external.thumb}
-          />
+          <img className={imageClassName} src={embed.external.thumb} />
         ) : undefined}
         <div>
           <div>{embed.external.title}</div>

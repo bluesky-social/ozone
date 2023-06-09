@@ -9,6 +9,7 @@ import {
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
+import { doesLabelNeedBlur } from '../labels'
 
 export function PostsTable({
   items,
@@ -152,6 +153,13 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
+  const imageRequiresBlur = doesLabelNeedBlur(
+    item.post.labels?.map(({ val }) => val),
+  )
+  const imageClassName = `w-20 h-20 border border-gray-200 rounded ${
+    imageRequiresBlur ? 'blur-sm hover:blur-none' : ''
+  }`
+
   if (AppBskyEmbedImages.isView(embed)) {
     return (
       <span className="flex gap-2 pt-2">
@@ -162,10 +170,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             target="_blank"
             rel="noreferrer"
           >
-            <img
-              className="w-20 h-20 border border-gray-200 rounded"
-              src={image.thumb}
-            />
+            <img className={imageClassName} src={image.thumb} />
           </a>
         ))}
       </span>
@@ -175,10 +180,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     return (
       <span className="flex gap-2 pt-2">
         {embed.external.thumb ? (
-          <img
-            className="w-20 h-20 border border-gray-200 rounded"
-            src={embed.external.thumb}
-          />
+          <img className={imageClassName} src={embed.external.thumb} />
         ) : undefined}
         <span className="block">
           <span className="block">{embed.external.title}</span>
