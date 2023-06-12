@@ -68,7 +68,7 @@ export const ReportsView = ({ did }: { did: string }) => {
         </div>
       </div>
       <ReportsTable
-        reports={isInitialLoading ? preloadedReports : reports}
+        reports={reports}
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
         isInitialLoading={isInitialLoading}
