@@ -192,25 +192,25 @@ function Header({
                 <a
                   role="button"
                   href={`mailto:${repo.email}`}
-                  className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
                 >
                   <EnvelopeIcon
                     className="-ml-1 mr-2 h-5 w-5 text-gray-400"
                     aria-hidden="true"
                   />
-                  <span>Message</span>
+                  <span>Email Account</span>
                 </a>
               )}
               <button
                 type="button"
-                className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
                 onClick={() => repo && onReport(repo.did)}
               >
                 <ExclamationCircleIcon
                   className="-ml-1 mr-2 h-5 w-5 text-gray-400"
                   aria-hidden="true"
                 />
-                <span>Report</span>
+                <span>Report Account</span>
               </button>
             </div>
           </div>
