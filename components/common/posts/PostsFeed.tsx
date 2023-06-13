@@ -15,6 +15,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
+import { classNames } from '@/lib/util'
 import { RichText } from '../RichText'
 import {
   LabelChip,
@@ -174,6 +175,9 @@ function PostContent({
   )
 }
 
+const getImageSizeClass = (imageCount: number) =>
+  imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
+
 // @TODO record embeds
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
@@ -183,12 +187,17 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const imageRequiresBlur = doesLabelNeedBlur(
     item.post.labels?.map(({ val }) => val),
   )
-  const imageClassName = `w-20 h-20 border border-gray-200 rounded ${
-    imageRequiresBlur ? 'blur-sm hover:blur-none' : ''
-  }`
+  const imageClassName = classNames(
+    `border border-gray-200 rounded`,
+    imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
+  )
 
   // render image embeds
   if (AppBskyEmbedImages.isView(embed)) {
+    const embeddedImageClassName = classNames(
+      imageClassName,
+      getImageSizeClass(embed.images?.length || 0),
+    )
     return (
       <div className="flex gap-2 pb-2 pl-14">
         {embed.images.map((image, i) => (
@@ -198,7 +207,11 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             target="_blank"
             rel="noreferrer"
           >
-            <img className={imageClassName} src={image.thumb} alt={image.alt} />
+            <img
+              className={embeddedImageClassName}
+              src={image.thumb}
+              alt={image.alt}
+            />
           </a>
         ))}
       </div>
@@ -209,7 +222,10 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
         {embed.external.thumb ? (
-          <img className={imageClassName} src={embed.external.thumb} />
+          <img
+            className={classNames(imageClassName, getImageSizeClass(1))}
+            src={embed.external.thumb}
+          />
         ) : undefined}
         <div>
           <div>{embed.external.title}</div>

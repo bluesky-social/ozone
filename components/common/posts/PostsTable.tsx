@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
 import { doesLabelNeedBlur } from '../labels'
+import { classNames } from '@/lib/util'
 
 export function PostsTable({
   items,
@@ -148,6 +149,9 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   )
 }
 
+const getImageSizeClass = (imageCount: number) =>
+  imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
+
 // @TODO record embeds
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
@@ -156,11 +160,16 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const imageRequiresBlur = doesLabelNeedBlur(
     item.post.labels?.map(({ val }) => val),
   )
-  const imageClassName = `w-20 h-20 border border-gray-200 rounded ${
-    imageRequiresBlur ? 'blur-sm hover:blur-none' : ''
-  }`
+  const imageClassName = classNames(
+    `border border-gray-200 rounded`,
+    imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
+  )
 
   if (AppBskyEmbedImages.isView(embed)) {
+    const embeddedImageClassName = classNames(
+      imageClassName,
+      getImageSizeClass(embed.images?.length || 0),
+    )
     return (
       <span className="flex gap-2 pt-2">
         {embed.images.map((image, i) => (
@@ -170,7 +179,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             target="_blank"
             rel="noreferrer"
           >
-            <img className={imageClassName} src={image.thumb} />
+            <img className={embeddedImageClassName} src={image.thumb} />
           </a>
         ))}
       </span>
