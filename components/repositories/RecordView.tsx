@@ -140,7 +140,7 @@ function Header({
             className="-ml-1 mr-2 h-5 w-5 text-gray-400"
             aria-hidden="true"
           />
-          <span>Report</span>
+          <span>Report Post</span>
         </button>
       </div>
     </div>
@@ -230,8 +230,19 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <Field label="Handle" value={record.repo.handle} />
-        <Field label="DID" value={record.repo.did} />
+        <Field label="Handle">
+          <Link
+            href={`/repositories/${record.repo.handle}`}
+            className="underline"
+          >
+            {record.repo.handle}
+          </Link>
+        </Field>
+        <Field label="DID">
+          <Link href={`/repositories/${record.repo.did}`} className="underline">
+            {record.repo.did}
+          </Link>
+        </Field>
         <Field label="Collection" value={collection ?? ''} />
         <Field label="Rkey" value={rkey ?? ''} />
         <Field label="URI" value={record.uri} />

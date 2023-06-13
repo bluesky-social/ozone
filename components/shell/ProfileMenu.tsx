@@ -1,17 +1,27 @@
 'use client'
-import { useEffect, useState, SyntheticEvent, Fragment } from 'react'
+import {
+  useEffect,
+  useState,
+  SyntheticEvent,
+  Fragment,
+  useContext,
+} from 'react'
 import { Menu, Transition } from '@headlessui/react'
 import { classNames } from '@/lib/util'
 import Client from '@/lib/client'
+import { AuthChangeContext, AuthContext, AuthState } from './AuthContext'
 
 export function ProfileMenu() {
-  const [isAuthed, setIsAuthed] = useState(false)
+  const { isLoggedIn } = useContext(AuthContext)
+  const setAuthContextData = useContext(AuthChangeContext)
   const [handle, setHandle] = useState<string>('')
   const [avatar, setAvatar] = useState<string>('')
 
   useEffect(() => {
-    setIsAuthed(Client.isAuthed)
-    const onClientChange = () => setIsAuthed(Client.isAuthed)
+    const onClientChange = () =>
+      setAuthContextData(
+        Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
+      )
     Client.addEventListener('change', onClientChange)
     return () => Client.removeEventListener('change', onClientChange)
   }, [])
@@ -47,7 +57,7 @@ export function ProfileMenu() {
     return () => {
       aborted = true
     }
-  }, [isAuthed])
+  }, [isLoggedIn])
 
   const onClickSignout = (e: SyntheticEvent) => {
     e.preventDefault()
