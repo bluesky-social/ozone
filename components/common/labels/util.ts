@@ -142,6 +142,8 @@ export const labelToGroupMap = {
   '!warn': LabelGroup.DirectAction,
 }
 
+const labelGroupsRequiringBlur = [LabelGroup.Violence, LabelGroup.Sexuality]
+
 export const groupLabelList = (labels: string[]): GroupedLabelList => {
   const groupedList: GroupedLabelList = {}
 
@@ -151,7 +153,6 @@ export const groupLabelList = (labels: string[]): GroupedLabelList => {
     const group = labelToGroupMap.hasOwnProperty(label)
       ? labelToGroupMap[label]
       : LabelGroup.UnCategorized
-
 
     if (!groupedList[group]) {
       groupedList[group] = { ...LabelGroupInfo[group], labels: [label] }
@@ -164,7 +165,7 @@ export const groupLabelList = (labels: string[]): GroupedLabelList => {
 }
 
 export const getLabelGroupInfo = (label: string): LabelGroupInfoRecord => {
-  // We need to check the property's existence because the value may be simply 0 
+  // We need to check the property's existence because the value may be simply 0
   // in which case it will be falsy even though it's a valid value
   const group = labelToGroupMap.hasOwnProperty(label)
     ? labelToGroupMap[label]
@@ -172,3 +173,9 @@ export const getLabelGroupInfo = (label: string): LabelGroupInfoRecord => {
 
   return LabelGroupInfo[group]
 }
+
+// If even one of the
+export const doesLabelNeedBlur = (labels?: string[]): boolean =>
+  !!labels?.find((label) =>
+    labelGroupsRequiringBlur.includes(labelToGroupMap[label]),
+  )
