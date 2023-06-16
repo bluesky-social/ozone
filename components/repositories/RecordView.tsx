@@ -196,11 +196,7 @@ function Tabs({
               label="Blobs"
               sublabel={String(record.blobs.length)}
             />
-            <Tab
-              view={Views.Reports}
-              label="Reports"
-              sublabel={String(record.moderation.reports.length)}
-            />
+            <Tab view={Views.Reports} label="Reports" />
           </nav>
         </div>
       </div>

@@ -1,4 +1,6 @@
-import { ComponentProps, forwardRef, LegacyRef } from 'react'
+import { ComponentProps, forwardRef, LegacyRef, ReactElement } from 'react'
+
+import { classNames } from '../../lib/util'
 
 export const ButtonPrimary = forwardRef(function ButtonPrimary(
   props: ComponentProps<'button'>,
@@ -33,7 +35,8 @@ type ActionButtonProps = {
 }
 
 const appearanceClassNames = {
-  outlined: 'bg-transparent disabled:bg-gray-300 text-black hover:bg-gray-500 focus:ring-gray-500 border-gray-700',
+  outlined:
+    'bg-transparent disabled:bg-gray-300 text-black hover:bg-gray-500 focus:ring-gray-500 border-gray-700',
   primary:
     'bg-indigo-600 disabled:bg-gray-400 text-white hover:bg-indigo-700 focus:ring-indigo-500 border-transparent',
 }
@@ -49,3 +52,40 @@ export const ActionButton = forwardRef(function ActionButton(
 
   return <button ref={ref} type="button" className={classNames} {...others} />
 })
+
+type ButtonGroupItem = ComponentProps<'button'> & {
+  Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>
+  text: string
+  id: string
+  isActive: boolean
+}
+
+export const ButtonGroup = ({
+  appearance,
+  items,
+}: ComponentProps<'span'> &
+  ActionButtonProps & { items: ButtonGroupItem[] }) => {
+  return (
+    <span className="isolate inline-flex rounded-md shadow-sm sm:ml-4 my-2 sm:my-0">
+      {items.map(({ id, className, Icon, text, isActive, ...rest }, i) => (
+        <button
+          key={id}
+          type="button"
+          className={classNames(
+            'relative inline-flex items-center  border px-4 py-2 text-sm font-medium',
+            i === 0 ? 'rounded-l-md' : '',
+            i === items.length - 1 ? '-ml-px rounded-r-md' : '',
+            isActive
+              ? 'bg-rose-600 text-white border-rose-800'
+              : 'bg-white text-gray-700 border-gray-300',
+            className,
+          )}
+          {...rest}
+        >
+          {Icon && <Icon className="w-5 h-5 mr-1" aria-hidden="true" />}
+          {text}
+        </button>
+      ))}
+    </span>
+  )
+}
