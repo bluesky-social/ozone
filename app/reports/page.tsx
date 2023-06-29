@@ -1,6 +1,6 @@
 'use client'
-import { useState, useContext } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useContext, useCallback } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
@@ -18,6 +18,7 @@ import {
 } from '@/reports/helpers/snoozeSubject'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 import { AuthContext } from '@/shell/AuthContext'
+import { ButtonGroup } from '@/common/buttons'
 
 const TABS = [
   {
@@ -39,6 +40,48 @@ const TABS = [
   },
   { key: 'all', name: 'All', href: '/reports?resolved=&actionType=' },
 ]
+
+const ResolvedFilters = () => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useSearchParams()
+  const actionType = params.get('actionType')
+
+  const updateParams = useCallback(
+    (type: string) => {
+      const nextParams = new URLSearchParams(params)
+      nextParams.set('actionType', type)
+      router.push((pathname ?? '') + '?' + nextParams.toString())
+    },
+    [params, pathname, router],
+  )
+
+  return (
+    <ButtonGroup
+      appearance="primary"
+      items={[
+        {
+          id: 'acknowldedged',
+          text: 'Acknowledged',
+          onClick: () => updateParams(ComAtprotoAdminDefs.ACKNOWLEDGE),
+          isActive: actionType === ComAtprotoAdminDefs.ACKNOWLEDGE,
+        },
+        {
+          id: 'escalated',
+          text: 'Escalated',
+          onClick: () => updateParams(ComAtprotoAdminDefs.ESCALATE),
+          isActive: actionType === ComAtprotoAdminDefs.ESCALATE,
+        },
+        {
+          id: 'flagged',
+          text: 'Flagged',
+          onClick: () => updateParams(ComAtprotoAdminDefs.FLAG),
+          isActive: actionType === ComAtprotoAdminDefs.FLAG,
+        },
+      ]}
+    />
+  )
+}
 
 export default function Reports() {
   const params = useSearchParams()
@@ -98,6 +141,11 @@ export default function Reports() {
           </button>
         </div>
       </SectionHeader>
+      {['resolved', 'all'].includes(currentTab) && (
+        <div className="flex mt-4 flex-row justify-end px-4 sm:px-6 lg:px-8">
+          <ResolvedFilters />
+        </div>
+      )}
       <ReportsTable
         reports={reports}
         showLoadMore={!!hasNextPage}
@@ -141,9 +189,9 @@ function getTabFromParams(params: { resolved?: boolean; actionType?: string }) {
   const { resolved, actionType } = params
   if (resolved === undefined && actionType === ComAtprotoAdminDefs.ESCALATE) {
     return 'escalated'
-  } else if (resolved === true && actionType === undefined) {
+  } else if (resolved === true) {
     return 'resolved'
-  } else if (resolved === false && actionType === undefined) {
+  } else if (resolved === false) {
     return 'unresolved'
   } else {
     return 'all'
