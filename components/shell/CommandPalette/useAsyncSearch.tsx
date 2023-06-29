@@ -1,7 +1,7 @@
 import {
   ChatBubbleLeftIcon,
-  ExclamationCircleIcon,
   UserGroupIcon,
+  PuzzlePieceIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar, Action, useRegisterActions, createAction } from 'kbar'
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context'
@@ -73,7 +73,18 @@ export const useCommandPaletteAsyncSearch = () => {
       return actions
     }
 
-    if (isBlueSkyAppUrl(search)) {
+    if (search.trim() === 'tetris') {
+      actions.push({
+        id: 'tetris',
+        name: `Tetris`,
+        icon: <PuzzlePieceIcon className={iconClassName} />,
+        keywords: `tetris, surprise`,
+        subtitle: 'Take a quick break!',
+        perform: () => {
+          router.push(`/surprise-me`)
+        },
+      })
+    } else if (isBlueSkyAppUrl(search)) {
       const fragments = getFragmentsFromBlueSkyAppUrl(search)
 
       if (fragments?.cid) {
