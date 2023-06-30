@@ -1,4 +1,4 @@
-import { InlineRepo, RepoCard } from '@/common/RecordCard'
+import { InlineRepo } from '@/common/RecordCard'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
