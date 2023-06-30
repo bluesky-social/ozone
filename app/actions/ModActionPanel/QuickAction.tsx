@@ -29,7 +29,6 @@ import { SnoozeAction } from '@/reports/SnoozeAction'
 import { getCurrentActionFromRepoOrRecord } from '@/reports/helpers/getCurrentActionFromRepoOrRecord'
 import { CurrentModerationAction } from '@/reports/ModerationView/CurrentModerationAction'
 import {
-  actionOptionPassive,
   actionOptions,
   getActionClassNames,
 } from '@/reports/ModerationView/ActionHelpers'
@@ -311,21 +310,6 @@ function Form(
             <PreviewCard
               did={repo.moderation.reports[0].reportedBy}
               title="Most recently reported by user"
-            />
-          )}
-          {currentActionDetail?.createdBy && (
-            <PreviewCard
-              did={currentActionDetail?.createdBy}
-              title={
-                <span
-                  className={getActionClassNames({
-                    action: currentActionDetail.action,
-                    prop: 'text',
-                  })}
-                >
-                  {actionOptionPassive[currentActionDetail.action]} by user
-                </span>
-              }
             />
           )}
         </div>

@@ -1,12 +1,5 @@
 import { ComAtprotoAdminDefs } from '@atproto/api'
 
-export const actionOptionPassive = {
-  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledged',
-  [ComAtprotoAdminDefs.ESCALATE]: 'Escalated',
-  [ComAtprotoAdminDefs.FLAG]: 'Flagged',
-  [ComAtprotoAdminDefs.TAKEDOWN]: 'Taken down',
-}
-
 export const actionOptions = {
   [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
   [ComAtprotoAdminDefs.ESCALATE]: 'Escalate',

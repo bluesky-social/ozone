@@ -1,3 +1,4 @@
+import { InlineRepo, RepoCard } from '@/common/RecordCard'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
@@ -29,12 +30,19 @@ const ActionLink = ({
     <Link
       href={`/actions/${currentAction.id}`}
       title={displayActionType}
-      className={actionColorClasses}
+      className={`${actionColorClasses} flex flex-row ml-1 items-center`}
     >
       <ShieldExclamationIcon className="h-4 w-4 inline-block align-text-bottom" />{' '}
-      #{currentAction.id}
-      {currentActionDetail && (
-        <> ({actionOptions[currentActionDetail.action]})</>
+      <div className='flex-shrink-0 mr-1'>
+        #{currentAction.id}
+        {currentActionDetail && (
+          <> ({actionOptions[currentActionDetail.action]})</>
+        )}
+      </div>
+      {currentActionDetail?.createdBy && (
+        <InlineRepo
+          did={currentActionDetail?.createdBy}
+        />
       )}
     </Link>
   )
@@ -69,7 +77,7 @@ export const CurrentModerationAction = ({
   return (
     <div className={containerClassName}>
       <div className="text-sm text-gray-600 mb-2 mr-1">
-        <p className="font-medium text-gray-500 mb-2">
+        <p className="font-medium text-gray-500 mb-2 flex flex-row">
           {currentAction && !replacingAction ? (
             <>
               Current Action{' '}
