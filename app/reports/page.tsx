@@ -68,16 +68,16 @@ const ResolvedFilters = () => {
           isActive: actionType === ComAtprotoAdminDefs.ACKNOWLEDGE,
         },
         {
-          id: 'escalated',
-          text: 'Escalated',
-          onClick: () => updateParams(ComAtprotoAdminDefs.ESCALATE),
-          isActive: actionType === ComAtprotoAdminDefs.ESCALATE,
-        },
-        {
           id: 'flagged',
           text: 'Flagged',
           onClick: () => updateParams(ComAtprotoAdminDefs.FLAG),
           isActive: actionType === ComAtprotoAdminDefs.FLAG,
+        },
+        {
+          id: 'takendown',
+          text: 'Taken Down',
+          onClick: () => updateParams(ComAtprotoAdminDefs.TAKEDOWN),
+          isActive: actionType === ComAtprotoAdminDefs.TAKEDOWN,
         },
       ]}
     />
