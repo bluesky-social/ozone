@@ -8,11 +8,12 @@ import {
 } from '@heroicons/react/20/solid'
 import { Report } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { truncate } from '@/lib/util'
+import { classNames, truncate } from '@/lib/util'
 import { SubjectOverview } from './SubjectOverview'
 import { ReasonBadge } from './ReasonBadge'
 import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname } from 'next/navigation'
+import { HTMLAttributes } from 'react'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
@@ -31,16 +32,18 @@ const useSortOrder = () => {
   return { reverseOrder, getToggleReverseOrderLink }
 }
 
-export function ReportsTable(props: {
-  reports: Report[]
-  showLoadMore: boolean
-  isInitialLoading: boolean
-  onLoadMore: () => void
-}) {
-  const { reports, showLoadMore, onLoadMore, isInitialLoading } = props
+export function ReportsTable(
+  props: {
+    reports: Report[]
+    showLoadMore: boolean
+    isInitialLoading: boolean
+    onLoadMore: () => void
+  } & HTMLAttributes<HTMLDivElement>,
+) {
+  const { reports, showLoadMore, onLoadMore, isInitialLoading, className, ...rest } = props
   return (
-    <div className="px-4 sm:px-6 lg:px-8">
-      <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
+    <div className={classNames("px-4 sm:px-6 lg:px-8", className)} {...rest}>
+      <div className="-mx-4 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-white">
             <ReportRowHead />
@@ -68,7 +71,7 @@ function ReportRow(props: { report: Report }) {
   const { report, ...others } = props
   const resolved = !!report.resolvedByActionIds.length
   const createdAt = new Date(report.createdAt)
-  
+
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">

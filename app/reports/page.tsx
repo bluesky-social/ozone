@@ -58,6 +58,7 @@ const ResolvedFilters = () => {
 
   return (
     <ButtonGroup
+      size="xs"
       appearance="primary"
       items={[
         {
@@ -119,6 +120,8 @@ export default function Reports() {
   const subjectOptions = unique(
     reports.flatMap((report) => validSubjectString(report.subject) ?? []),
   )
+  const shouldShowActionFilterTab = ['resolved', 'all'].includes(currentTab)
+
   return (
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
@@ -141,8 +144,8 @@ export default function Reports() {
           </button>
         </div>
       </SectionHeader>
-      {['resolved', 'all'].includes(currentTab) && (
-        <div className="flex mt-4 flex-row justify-end px-4 sm:px-6 lg:px-8">
+      {shouldShowActionFilterTab && (
+        <div className="flex mt-2 mb-2 flex-row justify-end px-4 sm:px-6 lg:px-8">
           <ResolvedFilters />
         </div>
       )}
@@ -151,6 +154,7 @@ export default function Reports() {
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
         isInitialLoading={isInitialLoading}
+        className={!shouldShowActionFilterTab ? 'mt-8' : ''}
       />
       <ModActionPanel
         open={open}

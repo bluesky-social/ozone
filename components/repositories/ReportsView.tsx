@@ -47,6 +47,7 @@ export const ReportsView = ({ did }: { did: string }) => {
 
         <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
           <ButtonGroup
+            size="xs"
             appearance="primary"
             items={[
               {
@@ -68,6 +69,7 @@ export const ReportsView = ({ did }: { did: string }) => {
         </div>
       </div>
       <ReportsTable
+        className="mt-4"
         reports={reports}
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
