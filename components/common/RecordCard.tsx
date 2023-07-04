@@ -142,7 +142,10 @@ export function InlineRepo(props: { did: string }) {
           alt=""
         />
       </div>
-      <Link href={`/repositories/${repo.handle}`} className="hover:underline mr-1">
+      <Link
+        href={`/repositories/${repo.handle}`}
+        className="hover:underline mr-1"
+      >
         {profile?.displayName ? (
           <>
             <span className="font-bold">{profile.displayName}</span>
@@ -152,15 +155,6 @@ export function InlineRepo(props: { did: string }) {
           <span className="font-bold">@{repo.handle}</span>
         )}
       </Link>
-      &middot;
-      <a
-        href={`https://bsky.app/profile/${did}`}
-        target="_blank"
-        rel="noreferrer"
-        className='ml-1'
-      >
-        Peek
-      </a>
     </div>
   )
 }

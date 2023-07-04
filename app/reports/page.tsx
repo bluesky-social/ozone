@@ -50,7 +50,11 @@ const ResolvedFilters = () => {
   const updateParams = useCallback(
     (type: string) => {
       const nextParams = new URLSearchParams(params)
-      nextParams.set('actionType', type)
+      if (nextParams.get('actionType') === type) {
+        nextParams.delete('actionType')
+      } else {
+        nextParams.set('actionType', type)
+      }
       router.push((pathname ?? '') + '?' + nextParams.toString())
     },
     [params, pathname, router],
