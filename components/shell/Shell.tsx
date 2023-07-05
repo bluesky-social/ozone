@@ -1,5 +1,5 @@
 'use client'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
@@ -8,6 +8,10 @@ import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
+import {
+  useFluentReportSearch,
+  useFluentSearch,
+} from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 
 export function Shell({ children }: React.PropsWithChildren) {
@@ -83,21 +87,9 @@ export function Shell({ children }: React.PropsWithChildren) {
 }
 
 function SearchInput() {
-  const router = useRouter()
-  const pathname = usePathname()
   const params = useSearchParams()
-  // Input state for term, synced with params
-  const termParam = params.get('term') ?? ''
-  const [termInput, setTermInput] = useSyncedState(termParam)
-
-  const updateParams = useCallback(
-    (s: string) => {
-      const nextParams = new URLSearchParams(params)
-      nextParams.set('term', s)
-      router.push((pathname ?? '') + '?' + nextParams.toString())
-    },
-    [params, pathname, router],
-  )
+  const { updateParams } = useFluentReportSearch()
+  const [termInput, setTermInput] = useSyncedState(params.get('term') ?? '')
 
   return (
     <input

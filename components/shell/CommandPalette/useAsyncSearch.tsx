@@ -38,7 +38,7 @@ const buildItemForProfile = ({
       icon: <RepoIcon className={iconClassName} />,
       subtitle: `Go to profile page and of this ${type}`,
       perform: () => {
-        router.push(`/repositories/${profileKey}`)
+        router.push(`/repositories/${profileKey.replace('@', '')}`)
       },
     },
   ]
