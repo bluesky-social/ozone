@@ -30,9 +30,12 @@ export const buildParamsFromQuery = (
 
   fragments?.forEach((fragment) => {
     allPrefixes.forEach((prefix) => {
-      if (fragment.startsWith(prefix)) {
+      if (fragment.startsWith(`${prefix}:`)) {
+        // We are doing this weird join thing because the separator between dids is also :
+        // so a search for actionedBy:did:example:etc would end up creating multiple fragments when split by :
+        // which is why, we need to only take the first fragment as the key and put the rest back together as value
         const [_, ...rest] = fragment.split(`:`)
-        params[prefix] = rest?.join(':') || ''
+        params[prefix] = rest.join(':')
       }
     })
   })
