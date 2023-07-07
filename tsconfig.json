@@ -28,6 +28,7 @@
       "@/reports/*": ["components/reports/*"],
       "@/invites/*": ["components/invites/*"],
       "@/repositories/*": ["components/repositories/*"],
+      "@/entertainment/*": ["components/entertainment/*"],
     }
   },
   "include": ["next-env.d.ts", "**/**/**/*.tsx", "**/**/**/*.ts", ".next/types/**/*.ts"],

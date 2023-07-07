@@ -23,8 +23,22 @@ export default function RootLayout({
   useEffectOnce(reEvaluateSnoozeSubjectList)
   useInterval(reEvaluateSnoozeSubjectList, 60_000)
 
+  // Since we're doing everything client side and not using RSC, we can't use `Metadata` feature from next
+  // to have these head tags from the server
+  const isLocal =
+    typeof window !== 'undefined'
+      ? window?.location.host.includes('localhost:')
+      : false
+
   return (
     <html lang="en" className="h-full bg-gray-50">
+      <title>Redsky</title>
+      <link
+        rel="icon"
+        href={`/img/logo-${isLocal ? 'white' : 'colorful'}.png`}
+        sizes="any"
+      />
+      <meta name="viewport" content="width=device-width, initial-scale=1" />
       <body className="h-full overflow-hidden">
         <ToastContainer
           position="bottom-right"

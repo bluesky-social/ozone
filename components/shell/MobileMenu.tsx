@@ -7,6 +7,7 @@ import { Dialog, Transition } from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { classNames } from '@/lib/util'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
+import Image from 'next/image'
 
 interface MobileMenuOpen {
   open: boolean
@@ -100,10 +101,13 @@ export function MobileMenu() {
                   </div>
                 </Transition.Child>
                 <div className="flex flex-shrink-0 items-center px-4">
-                  <img
+                  <Image
+                    width={200}
+                    height={200}
+                    title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
                     className="h-8 w-auto"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=white"
-                    alt="Your Company"
+                    src="/img/logo-white.png"
+                    alt="RedSky - Bluesky Admin"
                   />
                 </div>
                 <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">
