@@ -1,6 +1,13 @@
+import { ReactNode } from 'react'
 import { RecordCard, RepoCard } from './RecordCard'
 
-export function PreviewCard({ did, title }: { did: string; title?: string }) {
+export function PreviewCard({
+  did,
+  title,
+}: {
+  did: string
+  title?: string | ReactNode
+}) {
   if (did.startsWith('at://')) {
     return (
       <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">

@@ -269,6 +269,7 @@ export function Reports({
   // We show reports loaded from repo view so separately showing loading state here is not necessary
   return (
     <ReportsTable
+      className="mt-8"
       reports={reports}
       showLoadMore={false}
       onLoadMore={() => null}

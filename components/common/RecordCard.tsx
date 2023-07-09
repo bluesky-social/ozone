@@ -4,7 +4,7 @@ import { parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
-import { LoadingDense, LoadingFailed, LoadingFailedDense } from './Loader'
+import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -85,10 +85,8 @@ function GenericRecordCard(props: { uri: string }) {
   )
 }
 
-// Based on PostAsCard header
-export function RepoCard(props: { did: string }) {
-  const { did } = props
-  const { data: { repo, profile } = {}, error } = useQuery({
+const useRepoAndProfile = ({ did }: { did: string }) => {
+  return useQuery({
     retry: false,
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
@@ -117,6 +115,54 @@ export function RepoCard(props: { did: string }) {
       return { repo, profile }
     },
   })
+}
+
+export function InlineRepo(props: { did: string }) {
+  const { did } = props
+  const {
+    data: { repo, profile } = {},
+    error,
+    isLoading,
+  } = useRepoAndProfile({ did })
+
+  // Since this is meant to be inline, we are not bothering with nice loading states for now
+  // Feel free to add this in the future as needed.
+  if (error) {
+    return <span className="text-red-500">{displayError(error)}</span>
+  }
+
+  if (isLoading || !repo) return null
+
+  return (
+    <div className="flex">
+      <div className="flex-shrink-0 mr-1">
+        <img
+          className="h-4 w-4 rounded-full"
+          src={profile?.avatar || '/img/default-avatar.jpg'}
+          alt=""
+        />
+      </div>
+      <Link
+        href={`/repositories/${repo.handle}`}
+        className="hover:underline mr-1"
+      >
+        {profile?.displayName ? (
+          <>
+            <span className="font-bold">{profile.displayName}</span>
+            <span className="ml-1">@{repo.handle}</span>
+          </>
+        ) : (
+          <span className="font-bold">@{repo.handle}</span>
+        )}
+      </Link>
+    </div>
+  )
+}
+
+// Based on PostAsCard header
+export function RepoCard(props: { did: string }) {
+  const { did } = props
+  const { data: { repo, profile } = {}, error } = useRepoAndProfile({ did })
   if (error) {
     return (
       <LoadingFailedDense
