@@ -1,4 +1,4 @@
-import { ComponentProps } from 'react'
+import { ComponentProps, forwardRef } from 'react'
 
 export function Input(props: ComponentProps<'input'>) {
   const { className = '', ...others } = props
@@ -20,15 +20,19 @@ export function Select(props: ComponentProps<'select'>) {
   )
 }
 
-export function Textarea(props: ComponentProps<'textarea'>) {
+export const Textarea = forwardRef<
+  HTMLTextAreaElement,
+  ComponentProps<'textarea'>
+>(function Textarea(props, ref) {
   const { className = '', ...others } = props
   return (
     <textarea
+      ref={ref}
       className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
       {...others}
     />
   )
-}
+})
 
 export function RadioGroup(props: ComponentProps<'ul'>) {
   const { className = '', ...others } = props
@@ -89,12 +93,15 @@ export function RadioGroupOption(
   )
 }
 
-export function FormLabel(props: ComponentProps<'label'> & { label: string }) {
-  const { label, className, children, ...others } = props
+export function FormLabel(
+  props: ComponentProps<'label'> & { label: string; required?: boolean },
+) {
+  const { label, required, className, children, ...others } = props
   return (
     <div className={className}>
       <label {...others} className="block text-sm font-medium text-gray-700">
         {label}
+        {required && <sup className="text-red-500">*</sup>}
       </label>
       <div className="mt-1">{children}</div>
     </div>
