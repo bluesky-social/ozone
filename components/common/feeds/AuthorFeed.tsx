@@ -2,7 +2,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { Posts } from '../posts/Posts'
 import client from '@/lib/client'
-import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline'
 
 export function AuthorFeed({
   id,
@@ -16,11 +15,14 @@ export function AuthorFeed({
   const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
     queryKey: ['authorFeed', { id }],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.app.bsky.feed.getAuthorFeed({
-        actor: id,
-        limit: 30,
-        cursor: pageParam,
-      })
+      const { data } = await client.api.app.bsky.feed.getAuthorFeed(
+        {
+          actor: id,
+          limit: 30,
+          cursor: pageParam,
+        },
+        { headers: client.adminHeaders() },
+      )
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
