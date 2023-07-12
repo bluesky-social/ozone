@@ -5,7 +5,11 @@ import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
 import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 import client from '@/lib/client'
-import { getTemplateString, TemplateNames, Templates } from './helpers'
+import {
+  compileTemplate,
+  TemplateNames,
+  Templates,
+} from './helpers'
 
 export const EmailComposer = ({ did }: { did: string }) => {
   const [isSending, setIsSending] = useState(false)
@@ -16,11 +20,10 @@ export const EmailComposer = ({ did }: { did: string }) => {
     setIsSending(true)
     const formData = new FormData(e.currentTarget)
     const topic = formData.get('topic')
-    const subject = formData.get('subject')
+    const subject = formData.get('subject')?.toString() ?? undefined
     const message = formData.get('message') as string
     const templateName = formData.get('template')
-    let content = getTemplateString(templateName as Templates)
-    content = content.replace('{{message}}', message || '')
+    const content = compileTemplate(templateName as Templates, { message })
 
     await toast.promise(
       client.api.com.atproto.admin.sendEmail(

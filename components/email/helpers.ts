@@ -24,3 +24,22 @@ export const getTemplateString = (templateName?: string): string => {
 
   return template
 }
+
+export const compileTemplate = (
+  templateName?: string,
+  // A bit too flexible here. Ideally, we should maintain a mapping of required replacements per template to make it more typesafe
+  replacements?: Record<string, any>,
+): string => {
+  let templateString = getTemplateString(templateName)
+  if (!replacements) return templateString
+
+  Object.entries(replacements).forEach(
+    ([key, val]) =>
+      (templateString = templateString.replace(
+        new RegExp(`{{${key}}}`, 'ig'),
+        val,
+      )),
+  )
+
+  return templateString
+}
