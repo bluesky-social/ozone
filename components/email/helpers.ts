@@ -1,18 +1,18 @@
-import { TakeDownWarningTemplate } from './templates/take-down-warning'
+import { AccountBehaviorTemplate } from './templates/account-behavior'
 
 export enum Templates {
   None = 'None',
-  TakeDownWarning = 'TakeDownWarning',
+  AccountBehavior = 'AccountBehavior',
 }
 
 export const TemplateNames = {
   [Templates.None]: 'No template/Raw message',
-  [Templates.TakeDownWarning]: 'Take down warning',
+  [Templates.AccountBehavior]: 'Bluesky Account Behavior',
 }
 
 export const TemplateValues = {
-  [Templates.None]: '{{message}}',
-  [Templates.TakeDownWarning]: TakeDownWarningTemplate,
+  [Templates.None]: '',
+  [Templates.AccountBehavior]: AccountBehaviorTemplate,
 }
 
 export const getTemplateString = (templateName?: string): string => {

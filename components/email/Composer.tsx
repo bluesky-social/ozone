@@ -5,11 +5,7 @@ import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
 import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 import client from '@/lib/client'
-import {
-  compileTemplate,
-  TemplateNames,
-  Templates,
-} from './helpers'
+import { compileTemplate, TemplateNames, Templates } from './helpers'
 
 export const EmailComposer = ({ did }: { did: string }) => {
   const [isSending, setIsSending] = useState(false)
@@ -19,11 +15,8 @@ export const EmailComposer = ({ did }: { did: string }) => {
     e.preventDefault()
     setIsSending(true)
     const formData = new FormData(e.currentTarget)
-    const topic = formData.get('topic')
     const subject = formData.get('subject')?.toString() ?? undefined
-    const message = formData.get('message') as string
-    const templateName = formData.get('template')
-    const content = compileTemplate(templateName as Templates, { message })
+    const content = formData.get('message') as string
 
     await toast.promise(
       client.api.com.atproto.admin.sendEmail(
@@ -52,16 +45,6 @@ export const EmailComposer = ({ did }: { did: string }) => {
 
   return (
     <form onSubmit={onSubmit}>
-      <FormLabel label="Topic" htmlFor="topic" className="mb-3">
-        <Input
-          type="text"
-          id="topic"
-          name="topic"
-          placeholder="Post url or user DID"
-          className="block w-full"
-          autoComplete="off"
-        />
-      </FormLabel>
       <FormLabel label="Template" htmlFor="template" className="mb-3">
         <Select
           id="template"
@@ -70,9 +53,11 @@ export const EmailComposer = ({ did }: { did: string }) => {
           className="block w-full"
           autoComplete="off"
           disabled={isSending}
-          onChange={() => {
+          onChange={(e) => {
             // When templates are changed, force reset message
-            if (messageField.current) messageField.current.value = ''
+            const templateName = e.currentTarget.value as Templates
+            const content = compileTemplate(templateName)
+            if (messageField.current) messageField.current.value = content
           }}
         >
           {Object.values(Templates).map((template) => (

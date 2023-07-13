@@ -1,14 +1,16 @@
 import { ComponentProps, forwardRef } from 'react'
 
-export function Input(props: ComponentProps<'input'>) {
-  const { className = '', ...others } = props
-  return (
-    <input
-      className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
-      {...others}
-    />
-  )
-}
+export const Input = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
+  function Input(props: ComponentProps<'input'>) {
+    const { className = '', ...others } = props
+    return (
+      <input
+        className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
+        {...others}
+      />
+    )
+  },
+)
 
 export function Select(props: ComponentProps<'select'>) {
   const { className = '', ...others } = props
