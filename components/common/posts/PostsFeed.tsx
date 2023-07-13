@@ -173,7 +173,7 @@ function PostContent({
   return (
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
-      {item.post.takedownId && (
+      {!!item.post.takedownId && (
         <p className='text-xs mt-0'>
           <Link
             className={`${getActionClassNames({
