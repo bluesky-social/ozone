@@ -6,10 +6,13 @@ import { ActionButton } from '@/common/buttons'
 import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 import client from '@/lib/client'
 import { compileTemplate, TemplateNames, Templates } from './helpers'
+import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 
 export const EmailComposer = ({ did }: { did: string }) => {
   const [isSending, setIsSending] = useState(false)
   const messageField = useRef<HTMLTextAreaElement>(null)
+
+  const { data: { repo } = {} } = useRepoAndProfile({ id: did })
 
   const onSubmit = async (e) => {
     e.preventDefault()
@@ -18,27 +21,31 @@ export const EmailComposer = ({ did }: { did: string }) => {
     const subject = formData.get('subject')?.toString() ?? undefined
     const content = formData.get('message') as string
 
-    await toast.promise(
-      client.api.com.atproto.admin.sendEmail(
-        { content, recipientDid: did, subject },
-        { headers: client.adminHeaders(), encoding: 'application/json' },
-      ),
-      {
-        pending: 'Sending email...',
-        success: {
-          render() {
-            // TODO: better success message?
-            return 'Email sent to user'
+    try {
+      await toast.promise(
+        client.api.com.atproto.admin.sendEmail(
+          { content, recipientDid: did, subject },
+          { headers: client.adminHeaders(), encoding: 'application/json' },
+        ),
+        {
+          pending: 'Sending email...',
+          success: {
+            render() {
+              return 'Email sent to user'
+            },
+          },
+          error: {
+            render() {
+              return 'Error sending email'
+            },
           },
         },
-        error: {
-          render({ data }: any) {
-            // TODO: better error?
-            return 'Error sending email'
-          },
-        },
-      },
-    )
+      )
+      // Reset the form if email is sent successfully
+      e.target.reset()
+      // On error, we are already showing a generic error message within the toast so
+      // swallowing actual error here and resetting local state back afterwards
+    } catch (err) {}
 
     setIsSending(false)
   }
@@ -56,7 +63,9 @@ export const EmailComposer = ({ did }: { did: string }) => {
           onChange={(e) => {
             // When templates are changed, force reset message
             const templateName = e.currentTarget.value as Templates
-            const content = compileTemplate(templateName)
+            const content = compileTemplate(templateName, {
+              handle: repo?.handle,
+            })
             if (messageField.current) messageField.current.value = content
           }}
         >
