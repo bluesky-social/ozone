@@ -8,10 +8,7 @@ import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
-import {
-  useFluentReportSearch,
-  useFluentSearch,
-} from '@/reports/useFluentReportSearch'
+import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 
 export function Shell({ children }: React.PropsWithChildren) {
