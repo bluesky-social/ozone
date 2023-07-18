@@ -19,6 +19,7 @@ import {
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 import { AuthContext } from '@/shell/AuthContext'
 import { ButtonGroup } from '@/common/buttons'
+import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 
 const TABS = [
   {
@@ -93,7 +94,6 @@ export default function Reports() {
   const [open, setOpen] = useState(false)
   const quickOpenParam = !!params.get('quickOpen')
   const [quickOpen, setQuickOpen] = useSyncedState(quickOpenParam)
-  const subject = params.get('term') ?? undefined
   const reverse = !!params.get('reverse')
   const actionType = params.get('actionType')
     ? decodeURIComponent(String(params.get('actionType')))
@@ -101,11 +101,17 @@ export default function Reports() {
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
+  const {getReportSearchParams} = useFluentReportSearch();
+  const {actionedBy, subject} = getReportSearchParams();
+
   const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
     useInfiniteQuery({
       enabled: isLoggedIn,
-      queryKey: ['reports', { subject, resolved, actionType, reverse }],
+      queryKey: [
+        'reports',
+        { subject, resolved, actionType, reverse, actionedBy },
+      ],
       queryFn: async ({ pageParam }) => {
         const ignoreSubjects = getSnoozedSubjects()
         return await getReports({
@@ -114,6 +120,7 @@ export default function Reports() {
           actionType,
           cursor: pageParam,
           ignoreSubjects,
+          actionedBy,
           reverse,
         })
       },
@@ -211,8 +218,15 @@ async function getReports(
     typeof client.api.com.atproto.admin.getModerationReports
   >[0] = {},
 ) {
-  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } =
-    opts
+  const {
+    subject,
+    resolved,
+    actionType,
+    cursor,
+    reverse,
+    ignoreSubjects,
+    actionedBy,
+  } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
@@ -222,6 +236,7 @@ async function getReports(
       limit: 25,
       ignoreSubjects,
       reverse,
+      actionedBy,
     },
     { headers: client.adminHeaders() },
   )

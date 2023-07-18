@@ -15,7 +15,7 @@
     "e2e:run": "$(yarn bin)/cypress run"
   },
   "dependencies": {
-    "@atproto/api": "^0.3.12",
+    "@atproto/api": "^0.4.1",
     "@headlessui/react": "^1.7.7",
     "@heroicons/react": "^2.0.13",
     "@next/font": "13.4.8",
