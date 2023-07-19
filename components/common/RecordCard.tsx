@@ -5,6 +5,7 @@ import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
+import { profileCollectionId } from '@/reports/helpers/subject'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -74,6 +75,15 @@ function GenericRecordCard(props: { uri: string }) {
   }
   if (!record) {
     return <LoadingDense />
+  }
+  if (parsed?.collection === profileCollectionId) {
+    const { description } = record.value as { description: string }
+    return (
+      <>
+        <RepoCard did={parsed.did} />
+        <p className="text-sm text-gray-500 pl-10 pb-2">{description}</p>
+      </>
+    )
   }
   return (
     <>

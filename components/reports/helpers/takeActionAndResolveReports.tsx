@@ -3,8 +3,8 @@ import Link from 'next/link'
 import { toast, Icons } from 'react-toastify'
 import { ModActionFormValues } from '../../../app/actions/ModActionPanel'
 import client from '@/lib/client'
-import { createSubjectFromId } from './createSubjectFromId'
-import { isIdRecord } from './isIdRecord'
+import { createSubjectFromId } from './subject'
+import { isIdRecord } from './subject'
 import { displayError } from '../../common/Loader'
 
 export const takeActionAndResolveReports = async (

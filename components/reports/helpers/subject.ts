@@ -1,6 +1,6 @@
-import {} from '@atproto/api'
-import { isIdRecord } from './isIdRecord'
 import client from '@/lib/client'
+
+export const isIdRecord = (id: string) => id.startsWith('at://')
 
 export const createSubjectFromId = async (id: string) => {
   if (isIdRecord(id)) {
@@ -41,3 +41,7 @@ export const createSubjectFromId = async (id: string) => {
     did: id,
   }
 }
+
+export const profileCollectionId = 'app.bsky.actor.profile'
+export const getProfileUriForDid = (did: string) =>
+  `at://${did}/${profileCollectionId}/self`
