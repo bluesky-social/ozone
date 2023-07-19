@@ -33,7 +33,7 @@ import { Loading, LoadingFailed } from '../common/Loader'
 import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
-import { Dropdown } from '@/common/Dropdown'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 
 enum Views {
@@ -156,6 +156,20 @@ function Header({
     : id.startsWith('did:')
     ? id
     : `@${id}`
+  const reportOptions: DropdownItem[] = []
+  if (repo) {
+    reportOptions.push({
+      text: 'Report Account',
+      onClick: () => onReport(repo.did),
+    })
+  }
+  if (profile) {
+    reportOptions.push({
+      text: 'Report Profile',
+      onClick: () => onReport(getProfileUriForDid(profile.did)),
+    })
+  }
+
   return (
     <div>
       <div>
@@ -204,26 +218,18 @@ function Header({
                   <span>Email Account</span>
                 </a>
               )}
-              <Dropdown
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-                items={[
-                  {
-                    text: 'Report Account',
-                    onClick: () => repo && onReport(repo.did),
-                  },
-                  {
-                    text: 'Report Profile',
-                    onClick: () =>
-                      profile && onReport(getProfileUriForDid(profile.did)),
-                  },
-                ]}
-              >
-                <ExclamationCircleIcon
-                  className="-ml-1 mr-2 h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-                <span>Report</span>
-              </Dropdown>
+              {!!reportOptions.length && (
+                <Dropdown
+                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                  items={reportOptions}
+                >
+                  <ExclamationCircleIcon
+                    className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                  <span>Report</span>
+                </Dropdown>
+              )}
             </div>
           </div>
         </div>
