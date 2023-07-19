@@ -18,6 +18,7 @@ import { Header } from './Header'
 import { RecordCard, RepoCard } from '../../common/RecordCard'
 import { ActionsTable } from './ActionsTable'
 import { getType } from './getType'
+import { DataField, DataFieldProps } from '@/common/DataField'
 
 enum Views {
   Details,
@@ -172,33 +173,16 @@ function Tabs({
 }
 
 function Details({ report }: { report: GetReport.OutputSchema }) {
-  const Field = ({
-    label,
-    value,
-  }: {
-    label: string
-    value: string | React.ReactNode
-  }) => (
-    <div className="sm:col-span-1">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd
-        className="mt-1 text-sm text-gray-900"
-        title={typeof value === 'string' ? value : undefined}
-      >
-        {value}
-      </dd>
-    </div>
-  )
-
   const { createdAt, reason, reasonType, reportedBy, subject } = report
 
-  const labels: { label: string; value: string }[] = [
+  const labels: DataFieldProps[] = [
     {
       label: 'Created At',
       value: new Date(createdAt).toLocaleString(),
     },
     {
       label: 'Reported By DID',
+      showCopyButton: true,
       value: reportedBy,
     },
   ]
@@ -212,10 +196,12 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-6">
-        {labels.map(({ label, value }, index) => (
-          <Field key={index} label={label} value={value} />
+        {labels.map((label, index) => (
+          <DataField key={index} {...label} />
         ))}
-        <Field label="Reason" value={reasonComponent} />
+        <DataField label="Reason" value={reason}>
+          {reasonComponent}
+        </DataField>
       </dl>
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Reported By:</dt>

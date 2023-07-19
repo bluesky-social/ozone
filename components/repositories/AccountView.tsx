@@ -33,6 +33,7 @@ import { Loading, LoadingFailed } from '../common/Loader'
 import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
+import { DataField } from '@/common/DataField'
 
 enum Views {
   Details,
@@ -333,28 +334,12 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
-  const Field = ({
-    label,
-    value,
-    children,
-  }: {
-    label: string
-    value?: string
-    children?: ReactNode
-  }) => (
-    <div className="sm:col-span-1">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900" title={value}>
-        {children ?? value}
-      </dd>
-    </div>
-  )
   const labels = ((repo.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <Field label="Handle" value={repo.handle} />
-        <Field label="DID" value={repo.did} />
+        <DataField label="Handle" value={repo.handle} showCopyButton />
+        <DataField label="DID" value={repo.did} showCopyButton />
         {profile?.description && (
           <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500">Description</dt>
@@ -363,15 +348,15 @@ function Details({
             </dd>
           </div>
         )}
-        <Field label="Labels">
+        <DataField label="Labels">
           <LabelList>
             {!labels.length && <LabelListEmpty />}
             {labels.map((label) => (
               <LabelChip key={label}>{displayLabel(label)}</LabelChip>
             ))}
           </LabelList>
-        </Field>
-        <Field label="Invited by">
+        </DataField>
+        <DataField label="Invited by">
           {repo.invitedBy?.forAccount ? (
             <Link
               href={`/repositories/${repo.invitedBy?.forAccount}`}
@@ -382,7 +367,7 @@ function Details({
           ) : (
             '(Admin)'
           )}
-        </Field>
+        </DataField>
         <InviteCodeGenerationStatus
           id={id}
           did={repo.did}

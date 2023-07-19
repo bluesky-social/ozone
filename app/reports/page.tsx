@@ -103,7 +103,6 @@ export default function Reports() {
     : undefined
   const { getReportSearchParams } = useFluentReportSearch()
   const { actionedBy, subject, reporters } = getReportSearchParams()
-  console.log({ actionedBy, subject, reporters })
 
   const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
