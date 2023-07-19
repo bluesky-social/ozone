@@ -101,8 +101,9 @@ export default function Reports() {
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
-  const {getReportSearchParams} = useFluentReportSearch();
-  const {actionedBy, subject} = getReportSearchParams();
+  const { getReportSearchParams } = useFluentReportSearch()
+  const { actionedBy, subject, reporters } = getReportSearchParams()
+  console.log({ actionedBy, subject, reporters })
 
   const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
@@ -110,7 +111,7 @@ export default function Reports() {
       enabled: isLoggedIn,
       queryKey: [
         'reports',
-        { subject, resolved, actionType, reverse, actionedBy },
+        { subject, resolved, actionType, reverse, actionedBy, reporters },
       ],
       queryFn: async ({ pageParam }) => {
         const ignoreSubjects = getSnoozedSubjects()
@@ -122,6 +123,7 @@ export default function Reports() {
           ignoreSubjects,
           actionedBy,
           reverse,
+          reporters,
         })
       },
       getNextPageParam: (lastPage) => lastPage.cursor,
@@ -226,6 +228,7 @@ async function getReports(
     reverse,
     ignoreSubjects,
     actionedBy,
+    reporters,
   } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
@@ -237,6 +240,7 @@ async function getReports(
       ignoreSubjects,
       reverse,
       actionedBy,
+      reporters,
     },
     { headers: client.adminHeaders() },
   )

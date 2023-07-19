@@ -2,6 +2,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 const ParamPrefixes = {
   subject: 'subject',
+  reporters: 'reporters',
   actionedBy: 'actionedBy',
   actionType: 'actionType',
 }
@@ -56,7 +57,7 @@ export const useFluentReportSearch = () => {
     },
     getReportSearchParams: () => {
       let subject = params.get('term') ?? undefined
-      let actionedBy
+      let actionedBy, reporters, actionType
 
       const paramsFromQuery = buildParamsFromQuery(subject)
 
@@ -64,9 +65,11 @@ export const useFluentReportSearch = () => {
       if (Object.keys(paramsFromQuery).length) {
         subject = paramsFromQuery.subject
         actionedBy = paramsFromQuery.actionedBy
+        reporters = paramsFromQuery.reporters
+        actionType = paramsFromQuery.actionType
       }
 
-      return { subject, actionedBy }
+      return { subject, actionedBy, reporters, actionType }
     },
   }
 }
