@@ -306,13 +306,11 @@ function Tabs({
                 sublabel={String(profile.followersCount)}
               />
             )}
-            {profile && (
-              <Tab
-                view={Views.Invites}
-                label="Invites"
-                sublabel={String(numInvited)}
-              />
-            )}
+            <Tab
+              view={Views.Invites}
+              label="Invites"
+              sublabel={String(numInvited)}
+            />
             <Tab
               view={Views.Reports}
               label="Reports"
