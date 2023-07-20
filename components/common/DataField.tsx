@@ -19,7 +19,7 @@ export const DataField = ({
 }: DataFieldProps) => {
   const dataClasses = classNames(
     'mt-1 text-sm text-gray-900',
-    shouldTruncateValue ? 'truncate' : 'break-normal',
+    shouldTruncateValue ? 'truncate' : 'break-words',
   )
   return (
     <div className="sm:col-span-1">
