@@ -386,6 +386,7 @@ function Details({
         <InviteCodeGenerationStatus
           id={id}
           did={repo.did}
+          inviteNote={repo.inviteNote}
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
