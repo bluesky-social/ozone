@@ -3,6 +3,7 @@ import {
   UserGroupIcon,
   PuzzlePieceIcon,
   LifebuoyIcon,
+  MegaphoneIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar, Action, useRegisterActions, createAction } from 'kbar'
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context'
@@ -42,17 +43,28 @@ const buildItemForProfile = ({
         router.push(`/repositories/${profileKey.replace('@', '')}`)
       },
     },
+    {
+      id: `search-reports-by-${type}`,
+      name: `Reports by ${profileKey}`,
+      keywords: `${search},search,reports-by,${type}`,
+      icon: <MegaphoneIcon className={iconClassName} />,
+      subtitle: `See all reports created by this ${type}`,
+      section: 'Reports',
+      perform: () => {
+        router.push(`/reports?term=reporters:${profileKey}`)
+      },
+    },
   ]
 
   // Right now, we can't search reports by a handle
   if (type !== 'handle') {
     actions.push(
       {
-        id: `search-reports-by-${type}`,
+        id: `search-reports-for-${type}`,
         name: `Reports for ${profileKey}`,
-        keywords: `${search},search,${type}`,
+        keywords: `${search},search,reports-for,${type}`,
         icon: <RepoIcon className={iconClassName} />,
-        subtitle: `Go to reports page and filter by this ${type}`,
+        subtitle: `See all reports for this ${type}`,
         section: 'Reports',
         perform: () => {
           router.push(`/reports?term=${profileKey}`)
