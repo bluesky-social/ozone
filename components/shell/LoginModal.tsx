@@ -1,4 +1,5 @@
 'use client'
+import Image from 'next/image'
 import { FormEvent, useState, useEffect, useContext } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import { AuthChangeContext, AuthContext } from './AuthContext'
@@ -65,10 +66,13 @@ export function LoginModal() {
       <div className="flex min-h-full items-center justify-center bg-gradient-to-b from-rose-600 to-rose-800">
         <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
           <div>
-            <img
-              className="mx-auto h-12 w-auto"
-              src="https://tailwindui.com/img/logos/mark.svg?color=rose&shade=600"
-              alt="Your Company"
+            <Image
+              className="mx-auto h-20 w-auto"
+              title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
+              src="/img/logo-colorful.png"
+              alt="RedSky - Bluesky Admin"
+              width={200}
+              height={200}
             />
             <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
               Bluesky Admin Tools

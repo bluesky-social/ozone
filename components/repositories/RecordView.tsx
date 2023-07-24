@@ -24,6 +24,7 @@ import {
   displayLabel,
   toLabelVal,
 } from '../common/labels'
+import { DataField } from '@/common/DataField'
 
 enum Views {
   Details,
@@ -205,52 +206,46 @@ function Tabs({
 }
 
 function Details({ record }: { record: GetRecord.OutputSchema }) {
-  const Field = ({
-    label,
-    value,
-    children,
-  }: {
-    label: string
-    value?: string
-    children?: ReactNode
-  }) => (
-    <div className="sm:col-span-1">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900 truncate" title={value}>
-        {children ?? value}
-      </dd>
-    </div>
-  )
   const { collection, rkey } = parseAtUri(record.uri) ?? {}
   const labels = ((record.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <Field label="Handle">
+        <DataField label="Handle" value={record.repo.handle} showCopyButton>
           <Link
             href={`/repositories/${record.repo.handle}`}
             className="underline"
           >
             {record.repo.handle}
           </Link>
-        </Field>
-        <Field label="DID">
+        </DataField>
+        <DataField label="DID" value={record.repo.did} showCopyButton>
           <Link href={`/repositories/${record.repo.did}`} className="underline">
             {record.repo.did}
           </Link>
-        </Field>
-        <Field label="Collection" value={collection ?? ''} />
-        <Field label="Rkey" value={rkey ?? ''} />
-        <Field label="URI" value={record.uri} />
-        <Field label="CID" value={record.cid} />
-        <Field label="Labels">
+        </DataField>
+        <DataField label="Collection" value={collection ?? ''} />
+        <DataField label="Rkey" value={rkey ?? ''} />
+        <DataField
+          label="URI"
+          value={record.uri}
+          showCopyButton
+          shouldTruncateValue
+        />
+        <DataField
+          label="CID"
+          value={record.cid}
+          showCopyButton
+          shouldTruncateValue
+        />
+        <DataField label="Labels">
           <LabelList>
             {!labels.length && <LabelListEmpty />}
             {labels.map((label) => (
               <LabelChip key={label}>{displayLabel(label)}</LabelChip>
             ))}
           </LabelList>
-        </Field>
+        </DataField>
       </dl>
       <Json className="mb-3" label="Contents" value={record.value} />
     </div>
@@ -269,6 +264,7 @@ export function Reports({
   // We show reports loaded from repo view so separately showing loading state here is not necessary
   return (
     <ReportsTable
+      className="mt-8"
       reports={reports}
       showLoadMore={false}
       onLoadMore={() => null}

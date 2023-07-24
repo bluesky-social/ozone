@@ -1,5 +1,5 @@
 'use client'
-import { useCallback } from 'react'
+import { useCallback, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
@@ -8,7 +8,9 @@ import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
+import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
+import Image from 'next/image'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
@@ -21,10 +23,13 @@ export function Shell({ children }: React.PropsWithChildren) {
         <div className="hidden w-28 overflow-y-auto bg-rose-700 md:block">
           <div className="flex w-full flex-col items-center py-6">
             <div className="flex flex-shrink-0 items-center">
-              <img
+              <Image
+                width={100}
+                height={100}
                 className="h-8 w-auto"
-                src="https://tailwindui.com/img/logos/mark.svg?color=white"
-                alt="Bluesky Admin"
+                src="/img/logo-white.png"
+                alt="RedSky - Bluesky Admin"
+                title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
               />
             </div>
             <SidebarNav />
@@ -83,21 +88,9 @@ export function Shell({ children }: React.PropsWithChildren) {
 }
 
 function SearchInput() {
-  const router = useRouter()
-  const pathname = usePathname()
   const params = useSearchParams()
-  // Input state for term, synced with params
-  const termParam = params.get('term') ?? ''
-  const [termInput, setTermInput] = useSyncedState(termParam)
-
-  const updateParams = useCallback(
-    (s: string) => {
-      const nextParams = new URLSearchParams(params)
-      nextParams.set('term', s)
-      router.push((pathname ?? '') + '?' + nextParams.toString())
-    },
-    [params, pathname, router],
-  )
+  const { updateParams } = useFluentReportSearch()
+  const [termInput, setTermInput] = useSyncedState(params.get('term') ?? '')
 
   return (
     <input

@@ -7,6 +7,8 @@ import { Dialog, Transition } from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { classNames } from '@/lib/util'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
+import Image from 'next/image'
+import { useKBar } from 'kbar'
 
 interface MobileMenuOpen {
   open: boolean
@@ -44,6 +46,7 @@ export function MobileMenuBtn() {
 export function MobileMenu() {
   const pathname = usePathname() || '/'
   const mobileMenuOpen = useContext(MobileMenuOpenCtx)
+  const kbar = useKBar()
   return (
     <>
       {/* Mobile menu */}
@@ -100,10 +103,13 @@ export function MobileMenu() {
                   </div>
                 </Transition.Child>
                 <div className="flex flex-shrink-0 items-center px-4">
-                  <img
+                  <Image
+                    width={200}
+                    height={200}
+                    title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
                     className="h-8 w-auto"
-                    src="https://tailwindui.com/img/logos/mark.svg?color=white"
-                    alt="Your Company"
+                    src="/img/logo-white.png"
+                    alt="RedSky - Bluesky Admin"
                   />
                 </div>
                 <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">
@@ -111,20 +117,8 @@ export function MobileMenu() {
                     <div className="space-y-1">
                       {NAV_ITEMS.map((item) => {
                         const Icon = ICONS[item.icon]
-                        return (
-                          <Link
-                            key={item.name}
-                            href={item.href}
-                            className={classNames(
-                              isCurrent(pathname, item)
-                                ? 'bg-rose-800 text-white'
-                                : 'text-rose-100 hover:bg-rose-800 hover:text-white',
-                              'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
-                            )}
-                            aria-current={
-                              isCurrent(pathname, item) ? 'page' : undefined
-                            }
-                          >
+                        const children = (
+                          <>
                             <Icon
                               className={classNames(
                                 isCurrent(pathname, item)
@@ -135,7 +129,44 @@ export function MobileMenu() {
                               aria-hidden="true"
                             />
                             <span>{item.name}</span>
-                          </Link>
+                          </>
+                        )
+                        if ('href' in item) {
+                          return (
+                            <Link
+                              key={item.name}
+                              href={item.href}
+                              className={classNames(
+                                isCurrent(pathname, item)
+                                  ? 'bg-rose-800 text-white'
+                                  : 'text-rose-100 hover:bg-rose-800 hover:text-white',
+                                'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
+                              )}
+                              aria-current={
+                                isCurrent(pathname, item) ? 'page' : undefined
+                              }
+                            >
+                              {children}
+                            </Link>
+                          )
+                        }
+
+                        return (
+                          <button
+                            key={item.name}
+                            className={classNames(
+                              isCurrent(pathname, item)
+                                ? 'bg-rose-800 text-white'
+                                : 'text-rose-100 hover:bg-rose-800 hover:text-white',
+                              'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
+                            )}
+                            onClick={(e) => {
+                              mobileMenuOpen.set(false)
+                              if ('onClick' in item) item.onClick({ kbar })?.(e)
+                            }}
+                          >
+                            {children}
+                          </button>
                         )
                       })}
                     </div>

@@ -33,6 +33,7 @@ import {
   getActionClassNames,
 } from '@/reports/ModerationView/ActionHelpers'
 import { Loading } from '@/common/Loader'
+import { AllReportsLinkForSubject } from '@/reports/AllReportsLinkForSubject'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -295,6 +296,15 @@ function Form(
             </div>
           )}
         </div>
+        {currentAction && (
+          <div className="mb-4 -mt-2">
+            <AllReportsLinkForSubject
+              className="underline text-black"
+              onClick={() => onCancel()}
+              subject={subject}
+            />
+          </div>
+        )}
         {/* PREVIEWS */}
         <div className="max-w-xl">
           <PreviewCard did={subject} />

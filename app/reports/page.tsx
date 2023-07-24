@@ -1,6 +1,6 @@
 'use client'
-import { useState, useContext } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useState, useContext, useCallback } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
@@ -18,6 +18,8 @@ import {
 } from '@/reports/helpers/snoozeSubject'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 import { AuthContext } from '@/shell/AuthContext'
+import { ButtonGroup } from '@/common/buttons'
+import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 
 const TABS = [
   {
@@ -40,12 +42,58 @@ const TABS = [
   { key: 'all', name: 'All', href: '/reports?resolved=&actionType=' },
 ]
 
+const ResolvedFilters = () => {
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useSearchParams()
+  const actionType = params.get('actionType')
+
+  const updateParams = useCallback(
+    (type: string) => {
+      const nextParams = new URLSearchParams(params)
+      if (nextParams.get('actionType') === type) {
+        nextParams.delete('actionType')
+      } else {
+        nextParams.set('actionType', type)
+      }
+      router.push((pathname ?? '') + '?' + nextParams.toString())
+    },
+    [params, pathname, router],
+  )
+
+  return (
+    <ButtonGroup
+      size="xs"
+      appearance="primary"
+      items={[
+        {
+          id: 'acknowldedged',
+          text: 'Acknowledged',
+          onClick: () => updateParams(ComAtprotoAdminDefs.ACKNOWLEDGE),
+          isActive: actionType === ComAtprotoAdminDefs.ACKNOWLEDGE,
+        },
+        {
+          id: 'flagged',
+          text: 'Flagged',
+          onClick: () => updateParams(ComAtprotoAdminDefs.FLAG),
+          isActive: actionType === ComAtprotoAdminDefs.FLAG,
+        },
+        {
+          id: 'takendown',
+          text: 'Taken Down',
+          onClick: () => updateParams(ComAtprotoAdminDefs.TAKEDOWN),
+          isActive: actionType === ComAtprotoAdminDefs.TAKEDOWN,
+        },
+      ]}
+    />
+  )
+}
+
 export default function Reports() {
   const params = useSearchParams()
   const [open, setOpen] = useState(false)
   const quickOpenParam = !!params.get('quickOpen')
   const [quickOpen, setQuickOpen] = useSyncedState(quickOpenParam)
-  const subject = params.get('term') ?? undefined
   const reverse = !!params.get('reverse')
   const actionType = params.get('actionType')
     ? decodeURIComponent(String(params.get('actionType')))
@@ -53,11 +101,17 @@ export default function Reports() {
   const resolved = params.get('resolved')
     ? params.get('resolved') === 'true'
     : undefined
+  const { getReportSearchParams } = useFluentReportSearch()
+  const { actionedBy, subject, reporters } = getReportSearchParams()
+
   const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
     useInfiniteQuery({
       enabled: isLoggedIn,
-      queryKey: ['reports', { subject, resolved, actionType, reverse }],
+      queryKey: [
+        'reports',
+        { subject, resolved, actionType, reverse, actionedBy, reporters },
+      ],
       queryFn: async ({ pageParam }) => {
         const ignoreSubjects = getSnoozedSubjects()
         return await getReports({
@@ -66,7 +120,9 @@ export default function Reports() {
           actionType,
           cursor: pageParam,
           ignoreSubjects,
+          actionedBy,
           reverse,
+          reporters,
         })
       },
       getNextPageParam: (lastPage) => lastPage.cursor,
@@ -76,6 +132,8 @@ export default function Reports() {
   const subjectOptions = unique(
     reports.flatMap((report) => validSubjectString(report.subject) ?? []),
   )
+  const shouldShowActionFilterTab = ['resolved', 'all'].includes(currentTab)
+
   return (
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
@@ -98,11 +156,17 @@ export default function Reports() {
           </button>
         </div>
       </SectionHeader>
+      {shouldShowActionFilterTab && (
+        <div className="flex mt-2 mb-2 flex-row justify-end px-4 sm:px-6 lg:px-8">
+          <ResolvedFilters />
+        </div>
+      )}
       <ReportsTable
         reports={reports}
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
         isInitialLoading={isInitialLoading}
+        className={!shouldShowActionFilterTab ? 'mt-8' : ''}
       />
       <ModActionPanel
         open={open}
@@ -141,9 +205,9 @@ function getTabFromParams(params: { resolved?: boolean; actionType?: string }) {
   const { resolved, actionType } = params
   if (resolved === undefined && actionType === ComAtprotoAdminDefs.ESCALATE) {
     return 'escalated'
-  } else if (resolved === true && actionType === undefined) {
+  } else if (resolved === true) {
     return 'resolved'
-  } else if (resolved === false && actionType === undefined) {
+  } else if (resolved === false) {
     return 'unresolved'
   } else {
     return 'all'
@@ -155,8 +219,16 @@ async function getReports(
     typeof client.api.com.atproto.admin.getModerationReports
   >[0] = {},
 ) {
-  const { subject, resolved, actionType, cursor, reverse, ignoreSubjects } =
-    opts
+  const {
+    subject,
+    resolved,
+    actionType,
+    cursor,
+    reverse,
+    ignoreSubjects,
+    actionedBy,
+    reporters,
+  } = opts
   const { data } = await client.api.com.atproto.admin.getModerationReports(
     {
       subject,
@@ -166,6 +238,8 @@ async function getReports(
       limit: 25,
       ignoreSubjects,
       reverse,
+      actionedBy,
+      reporters,
     },
     { headers: client.adminHeaders() },
   )
