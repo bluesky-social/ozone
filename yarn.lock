@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.3.12":
-  version "0.3.12"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.3.12.tgz#495c48789cdd387cc8154454650369116480b2a0"
-  integrity sha512-dLXIHmxTutSVN3xu5GC8Nl3rVfUpKEeR8txloKb3ITQNxW4d8PFesS9+Vvup7gFNhaA0biusHr0ib05tC7aAfQ==
+"@atproto/api@^0.4.1":
+  version "0.4.1"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.4.1.tgz#daeda4ba5c70e27120f90ae5a5bf1a8961c4632e"
+  integrity sha512-aQ+yLFk1PF9FQKB0yCwdTwXaPIwZuvfPbvB1fZlHHv2+3o8ryeCTrMrrw7T9gZ7gyRqI27J9EYcimJbks7SHgw==
   dependencies:
     "@atproto/common-web" "*"
     "@atproto/uri" "*"
@@ -186,11 +186,6 @@
   integrity sha512-cmfVHpxWjjcETFt2WHnoFU6EmY69QcPJRlRNAooQlNe53Ke90vg1Ci/dkPffryJZaxxiRziP9bQrV8lDVCn3Fw==
   dependencies:
     glob "7.1.7"
-
-"@next/font@13.4.8":
-  version "13.4.8"
-  resolved "https://registry.yarnpkg.com/@next/font/-/font-13.4.8.tgz#76b6211f53fc673a6b8a8da5f580e12f4cb9d6c1"
-  integrity sha512-LQ/58mU8N0FDfNGbre1JeL9WAOup10TIy8Nr8P+gX+OKigLok21kxAj8Bi4pxNqfs31ePsdIpzr52WN1dZlPWg==
 
 "@next/swc-darwin-arm64@13.4.8":
   version "13.4.8"
