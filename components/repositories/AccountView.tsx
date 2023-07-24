@@ -34,6 +34,7 @@ import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { DataField } from '@/common/DataField'
+import { useDidHistory } from './useDidHistory'
 
 enum Views {
   Details,
@@ -333,14 +334,11 @@ function Details({
   id: string
 }) {
   const labels = ((repo.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
+  const didHistory = useDidHistory(repo.did)
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <DataField
-          label="Handle"
-          value={repo.handle}
-          showCopyButton
-        />
+        <DataField label="Handle" value={repo.handle} showCopyButton />
         <DataField label="DID" value={repo.did} showCopyButton />
         {profile?.description && (
           <div className="sm:col-span-2">
@@ -394,6 +392,9 @@ function Details({
         />
       )}
       <Json className="mb-3" label="Repo" value={repo} />
+      {didHistory.data && (
+        <Json className="mb-3" label="DID History" value={didHistory.data} />
+      )}
     </div>
   )
 }
