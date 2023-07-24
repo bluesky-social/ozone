@@ -1,10 +1,11 @@
 import { ComponentProps, forwardRef } from 'react'
 
 export const Input = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
-  function Input(props: ComponentProps<'input'>) {
+  function Input(props: ComponentProps<'input'>, ref) {
     const { className = '', ...others } = props
     return (
       <input
+        ref={ref}
         className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
         {...others}
       />

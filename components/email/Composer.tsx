@@ -5,12 +5,14 @@ import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
 import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 import client from '@/lib/client'
-import { compileTemplate, TemplateNames, Templates } from './helpers'
+import { compileTemplateContent, getTemplate } from './helpers'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+import { EmailTemplates } from './templates'
 
 export const EmailComposer = ({ did }: { did: string }) => {
   const [isSending, setIsSending] = useState(false)
   const messageField = useRef<HTMLTextAreaElement>(null)
+  const subjectField = useRef<HTMLInputElement>(null)
 
   const { data: { repo } = {} } = useRepoAndProfile({ id: did })
 
@@ -62,16 +64,18 @@ export const EmailComposer = ({ did }: { did: string }) => {
           disabled={isSending}
           onChange={(e) => {
             // When templates are changed, force reset message
-            const templateName = e.currentTarget.value as Templates
-            const content = compileTemplate(templateName, {
+            const templateName = e.currentTarget.value
+            const subject = getTemplate(templateName).subject
+            const content = compileTemplateContent(templateName, {
               handle: repo?.handle,
             })
             if (messageField.current) messageField.current.value = content
+            if (subjectField.current) subjectField.current.value = subject
           }}
         >
-          {Object.values(Templates).map((template) => (
+          {Object.keys(EmailTemplates).map((template) => (
             <option value={template} key={template}>
-              {TemplateNames[template]}
+              {template}
             </option>
           ))}
         </Select>
@@ -81,6 +85,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
           type="text"
           id="subject"
           name="subject"
+          ref={subjectField}
           placeholder="Subject line for the email"
           className="block w-full"
           autoComplete="off"
