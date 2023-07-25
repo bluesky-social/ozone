@@ -5,7 +5,6 @@ import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
-import { avatarClassNames } from './labels'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
