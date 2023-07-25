@@ -1,3 +1,5 @@
+import { AppBskyActorDefs, ComAtprotoAdminDefs } from '@atproto/api'
+
 type LabelGroupInfoRecord = {
   title: string
   color: string
@@ -179,3 +181,20 @@ export const doesLabelNeedBlur = (labels?: string[]): boolean =>
   !!labels?.find((label) =>
     labelGroupsRequiringBlur.includes(labelToGroupMap[label]),
   )
+
+export const doesProfileNeedBlur = ({
+  profile,
+  repo,
+}: {
+  profile?: AppBskyActorDefs.ProfileViewBasic
+  repo?: ComAtprotoAdminDefs.RepoView
+}) => {
+  const labels: string[] = []
+  if (profile?.labels) {
+    labels.push(...profile.labels?.map(({ val }) => val))
+  }
+  if (repo?.labels && Array.isArray(repo?.labels)) {
+    labels.push(...repo.labels?.map(({ val }) => val))
+  }
+  return doesLabelNeedBlur(labels)
+}
