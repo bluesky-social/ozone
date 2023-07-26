@@ -20,7 +20,6 @@ import { Json } from '../common/Json'
 import { classNames } from '@/lib/util'
 import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
-import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
 import {
   LabelChip,
@@ -34,7 +33,7 @@ import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { DataField } from '@/common/DataField'
-import { useDidHistory } from './useDidHistory'
+import { DidHistory } from './DidHistory'
 
 enum Views {
   Details,
@@ -334,7 +333,6 @@ function Details({
   id: string
 }) {
   const labels = ((repo.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
-  const didHistory = useDidHistory(repo.did)
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -374,6 +372,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <DidHistory did={repo.did} />
       {profile && (
         <Json
           className="mb-3"
@@ -392,9 +391,6 @@ function Details({
         />
       )}
       <Json className="mb-3" label="Repo" value={repo} />
-      {didHistory.data && (
-        <Json className="mb-3" label="DID History" value={didHistory.data} />
-      )}
     </div>
   )
 }
