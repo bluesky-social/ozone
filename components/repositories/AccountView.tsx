@@ -1,5 +1,5 @@
 'use client'
-import { ReactNode, useState } from 'react'
+import { ComponentProps, ReactNode, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -33,6 +33,7 @@ import { Loading, LoadingFailed } from '../common/Loader'
 import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
+import { EmailComposer } from 'components/email/Composer'
 import { DataField } from '@/common/DataField'
 
 enum Views {
@@ -42,6 +43,7 @@ enum Views {
   Followers,
   Invites,
   Reports,
+  Email,
 }
 
 export function AccountView({
@@ -114,6 +116,7 @@ export function AccountView({
                   {currentView === Views.Reports && (
                     <ReportsView did={repo.did} />
                   )}
+                  {currentView === Views.Email && <EmailView did={repo.did} />}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -316,6 +319,7 @@ function Tabs({
               label="Reports"
               sublabel={String(repo.moderation.reports.length)}
             />
+            <Tab view={Views.Email} label="Email" />
           </nav>
         </div>
       </div>
@@ -562,6 +566,14 @@ function AccountsGrid({
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
+  return (
+    <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      <EmailComposer {...props} />
     </div>
   )
 }
