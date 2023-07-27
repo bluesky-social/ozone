@@ -6,6 +6,7 @@ import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
 import { CollectionId } from '@/reports/helpers/subject'
+import { ListRecordCard } from 'components/list/RecordCard'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -21,7 +22,7 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
       <BaseRecordCard
         uri={uri}
         renderRecord={(record) => (
-          <ProfileRecordCard {...{ did: parsed?.did, record }} />
+          <ListRecordCard {...{ did: parsed?.did, record }} />
         )}
       />
     )
