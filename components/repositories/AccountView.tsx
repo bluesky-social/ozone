@@ -20,7 +20,6 @@ import { Json } from '../common/Json'
 import { classNames } from '@/lib/util'
 import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
-import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
 import {
   LabelChip,
@@ -35,6 +34,7 @@ import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { EmailComposer } from 'components/email/Composer'
 import { DataField } from '@/common/DataField'
+import { DidHistory } from './DidHistory'
 
 enum Views {
   Details,
@@ -340,11 +340,7 @@ function Details({
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <DataField
-          label="Handle"
-          value={repo.handle}
-          showCopyButton
-        />
+        <DataField label="Handle" value={repo.handle} showCopyButton />
         <DataField label="DID" value={repo.did} showCopyButton />
         {profile?.description && (
           <div className="sm:col-span-2">
@@ -380,6 +376,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <DidHistory did={repo.did} />
       {profile && (
         <Json
           className="mb-3"
