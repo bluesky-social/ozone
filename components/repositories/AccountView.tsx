@@ -1,5 +1,5 @@
 'use client'
-import { ReactNode, useState } from 'react'
+import { ComponentProps, ReactNode, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -20,7 +20,6 @@ import { Json } from '../common/Json'
 import { classNames } from '@/lib/util'
 import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
-import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
 import {
   LabelChip,
@@ -35,7 +34,9 @@ import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { EmailComposer } from 'components/email/Composer'
 import { DataField } from '@/common/DataField'
+import { DidHistory } from './DidHistory'
 
 enum Views {
   Details,
@@ -44,6 +45,7 @@ enum Views {
   Followers,
   Invites,
   Reports,
+  Email,
 }
 
 export function AccountView({
@@ -116,6 +118,7 @@ export function AccountView({
                   {currentView === Views.Reports && (
                     <ReportsView did={repo.did} />
                   )}
+                  {currentView === Views.Email && <EmailView did={repo.did} />}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -333,6 +336,7 @@ function Tabs({
               label="Reports"
               sublabel={String(repo.moderation.reports.length)}
             />
+            <Tab view={Views.Email} label="Email" />
           </nav>
         </div>
       </div>
@@ -353,11 +357,7 @@ function Details({
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <DataField
-          label="Handle"
-          value={repo.handle}
-          showCopyButton
-        />
+        <DataField label="Handle" value={repo.handle} showCopyButton />
         <DataField label="DID" value={repo.did} showCopyButton />
         {profile?.description && (
           <div className="sm:col-span-2">
@@ -393,6 +393,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <DidHistory did={repo.did} />
       {profile && (
         <Json
           className="mb-3"
@@ -579,6 +580,14 @@ function AccountsGrid({
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
+  return (
+    <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      <EmailComposer {...props} />
     </div>
   )
 }
