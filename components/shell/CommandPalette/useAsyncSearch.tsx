@@ -1,3 +1,4 @@
+import { CollectionId } from '@/reports/helpers/subject'
 import {
   ChatBubbleLeftIcon,
   UserGroupIcon,
@@ -124,9 +125,9 @@ export const useCommandPaletteAsyncSearch = () => {
             subtitle: 'Go to post record',
             perform: () => {
               router.push(
-                `/repositories/${
-                  fragments.did || fragments.handle
-                }/app.bsky.feed.post/${fragments.cid}`,
+                `/repositories/${fragments.did || fragments.handle}/${
+                  CollectionId.Post
+                }/${fragments.cid}`,
               )
             },
           },
@@ -139,9 +140,9 @@ export const useCommandPaletteAsyncSearch = () => {
             subtitle: 'Go to reports page and filter by this post',
             perform: () => {
               router.push(
-                `/reports?term=at://${
-                  fragments.did || fragments.handle
-                }/app.bsky.feed.post/${fragments.cid}`,
+                `/reports?term=at://${fragments.did || fragments.handle}/${
+                  CollectionId.Post
+                }/${fragments.cid}`,
               )
             },
           },

@@ -5,8 +5,7 @@ import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
-import { profileCollectionId } from '@/reports/helpers/subject'
-import { ReactNode } from 'react'
+import { CollectionId } from '@/reports/helpers/subject'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -14,10 +13,20 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   if (!parsed) {
     return null
   }
-  if (parsed.collection === 'app.bsky.feed.post') {
+  if (parsed.collection === CollectionId.Post) {
     return <PostCard uri={uri} showLabels={showLabels} />
   }
-  if (parsed?.collection === profileCollectionId) {
+  if (parsed.collection === CollectionId.List) {
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => (
+          <ProfileRecordCard {...{ did: parsed?.did, record }} />
+        )}
+      />
+    )
+  }
+  if (parsed?.collection === CollectionId.Profile) {
     return (
       <BaseRecordCard
         uri={uri}

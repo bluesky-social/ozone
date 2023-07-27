@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { createAtUri, parseAtUri, truncate } from '@/lib/util'
-import { profileCollectionId } from './helpers/subject'
+import { CollectionId } from './helpers/subject'
 
 export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>
@@ -21,7 +21,7 @@ export function SubjectOverview(props: {
   }
 
   if (summary.collection) {
-    const isProfileCollection = summary.collection === profileCollectionId
+    const isProfileCollection = summary.collection === CollectionId.Profile
     const shortCollection = summary.collection.replace('app.bsky.feed.', '')
     const repoText = subjectRepoHandle
       ? `@${subjectRepoHandle}`

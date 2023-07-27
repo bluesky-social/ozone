@@ -23,6 +23,7 @@ import {
   getLabelGroupInfo,
   doesLabelNeedBlur,
 } from '../labels'
+import { CollectionId } from '@/reports/helpers/subject'
 
 export function PostsFeed({
   items,
@@ -126,7 +127,7 @@ function PostHeader({
             <a
               href={`https://bsky.app/profile/${item.post.uri
                 .replace('at://', '')
-                .replace('app.bsky.feed.post', 'post')}`}
+                .replace(CollectionId.Post, 'post')}`}
               target="_blank"
               rel="noreferrer"
             >
