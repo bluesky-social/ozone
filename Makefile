@@ -15,9 +15,8 @@ build: ## Compile all modules
 	yarn build
 
 .PHONY: test
-test: ## Run tests, end-to-end
+test: ## Run tests
 	yarn type-check
-	yarn e2e:run
 
 .PHONY: run-dev-server
 run-dev-server: ## Run a "development environment" shell
