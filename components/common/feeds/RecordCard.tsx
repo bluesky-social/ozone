@@ -1,19 +1,50 @@
-import { AppBskyGraphDefs, ComAtprotoAdminDefs } from '@atproto/api'
+import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
+import { Loading, LoadingFailed } from '@/common/Loader'
+import client from '@/lib/client'
 
-export const ListRecordCard = ({
-  record,
-  did,
-}: {
-  did?: string
-  record: ComAtprotoAdminDefs.RecordViewDetail
-}) => {
-  const { description, name, avatar, createdAt, purpose } =
-    record.value as AppBskyGraphDefs.ListView
-  const meta: string[] = [purpose.split('#')[1]]
+export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
+  const { error, data, isFetching } = useQuery({
+    retry: false,
+    queryKey: ['feed-generator', uri],
+    queryFn: async () => {
+      const { data } = await client.api.app.bsky.feed.getFeedGenerator({
+        feed: uri,
+      })
+      return data
+    },
+  })
 
-  if (createdAt) {
-    meta.push(new Date(createdAt as string).toLocaleString())
+  if (isFetching) {
+    return <Loading />
+  }
+
+  if (error) {
+    return <LoadingFailed error={error} />
+  }
+
+  if (!data) {
+    return <LoadingFailed error="Feed generator data not found!" />
+  }
+
+  const {
+    isOnline,
+    isValid,
+    view: { displayName, likeCount, avatar, description, creator, indexedAt },
+  } = data
+
+  const meta: string[] = [`${likeCount} likes`]
+
+  if (!isOnline) {
+    meta.push('Offline')
+  }
+
+  if (!isValid) {
+    meta.push('Invalid')
+  }
+
+  if (indexedAt) {
+    meta.push(new Date(indexedAt as string).toLocaleString())
   }
 
   return (
@@ -22,29 +53,28 @@ export const ListRecordCard = ({
         <div className="flex-shrink-0">
           <img
             className="h-6 w-6 rounded-full"
+            // Probably should use a different default avatar for all feed generator app-wide
             src={avatar || '/img/default-avatar.jpg'}
-            alt=""
+            alt={`Avatar of feed generator ${displayName}`}
           />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900">
             <>
               <Link
-                href={`/repositories/${record.uri?.replace('at://', '')}`}
+                href={`/repositories/${uri?.replace('at://', '')}`}
                 className="hover:underline"
               >
-                <span className="font-bold">{name}</span>
+                <span className="font-bold">{displayName}</span>
               </Link>
               <span className="ml-1">by</span>
-              <Link href={`/repositories/${record.repo.handle}`}>
-                <span className="ml-1 text-gray-500">
-                  @{record.repo.handle}
-                </span>
+              <Link href={`/repositories/${creator.handle}`}>
+                <span className="ml-1 text-gray-500">@{creator.handle}</span>
               </Link>
             </>{' '}
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${did}`}
+              href={`https://bsky.app/profile/${creator.did}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -53,12 +83,12 @@ export const ListRecordCard = ({
           </p>
         </div>
       </div>
-      {description && (
-        <p className="text-sm text-gray-500 pl-10 pb-2">{description}</p>
-      )}
-      {!!createdAt && (
-        <p className="text-sm text-gray-500 pl-10 pb-2">{meta.join(' | ')}</p>
-      )}
+      <div className="pb-2 pl-10">
+        {description && <p className="text-sm text-gray-500">{description}</p>}
+        {!!meta.length && (
+          <p className="text-sm text-gray-500">{meta.join(' - ')}</p>
+        )}
+      </div>
     </div>
   )
 }

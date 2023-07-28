@@ -28,7 +28,6 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
     return <LoadingFailed error="List data not found!" />
   }
 
-  console.log(data)
   const { name, purpose, indexedAt, avatar, creator, description } = data.list
 
   const meta: string[] = [purpose.split('#')[1]]

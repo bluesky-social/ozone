@@ -83,6 +83,12 @@ export function SubjectOverview(props: {
             uri={createAtUri(summary)}
             collectionName="feed generator"
           />
+          by
+          <OtherReportsForAuthorLink
+            did={summary.did}
+            repoText={repoText}
+            className="ml-1"
+          />
         </div>
       )
     }

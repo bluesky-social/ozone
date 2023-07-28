@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ListRecordCard } from 'components/list/RecordCard'
+import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -16,6 +17,9 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   }
   if (parsed.collection === CollectionId.Post) {
     return <PostCard uri={uri} showLabels={showLabels} />
+  }
+  if (parsed.collection === CollectionId.FeedGenerator) {
+    return <FeedGeneratorRecordCard uri={uri} />
   }
   if (parsed.collection === CollectionId.List) {
     return <ListRecordCard uri={uri} />

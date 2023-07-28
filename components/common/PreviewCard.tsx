@@ -3,19 +3,21 @@ import { CollectionId } from '@/reports/helpers/subject'
 import { ReactNode } from 'react'
 import { RecordCard, RepoCard } from './RecordCard'
 
-const getPreviewTitleForAtUri = (uri: string): string => {
-  let title: string
-  const { collection } = parseAtUri(uri) || {}
-  if (collection === CollectionId.List) {
-    title = 'Reported list'
-  } else if (collection === CollectionId.Profile) {
-    title = 'Reported profile'
-  } else {
-    // Default to post
-    title = 'Reported post'
-  }
+const PreviewTitleMap = {
+  [CollectionId.Post]: 'Reported post',
+  [CollectionId.FeedGenerator]: 'Reported feed',
+  [CollectionId.List]: 'Reported list',
+  [CollectionId.Profile]: 'Reported profile',
+}
 
-  return title
+const getPreviewTitleForAtUri = (uri: string): string => {
+  const { collection } = parseAtUri(uri) || {}
+
+  // If the collection is not in the map or collection isn't available, default to post
+  return (
+    PreviewTitleMap[collection || CollectionId.Post] ||
+    PreviewTitleMap[CollectionId.Post]
+  )
 }
 
 export function PreviewCard({
