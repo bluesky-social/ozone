@@ -43,6 +43,7 @@ export const createSubjectFromId = async (id: string) => {
 }
 
 export enum CollectionId {
+  FeedGenerator = 'app.bsky.feed.generator',
   Profile = 'app.bsky.actor.profile',
   List = 'app.bsky.graph.list',
   Post = 'app.bsky.feed.post',

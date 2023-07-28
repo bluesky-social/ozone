@@ -75,6 +75,18 @@ export function SubjectOverview(props: {
       ? `@${subjectRepoHandle}`
       : truncate(summary.did, withTruncation ? 16 : Infinity)
 
+    if (summary.collection === CollectionId.FeedGenerator) {
+      return (
+        <div className="flex flex-row items-center">
+          <CollectionLink
+            repoUrl={createAtUri(summary).replace('at://', '')}
+            uri={createAtUri(summary)}
+            collectionName="feed generator"
+          />
+        </div>
+      )
+    }
+
     if (summary.collection === CollectionId.List) {
       return (
         <div className="flex flex-row items-center">

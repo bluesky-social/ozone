@@ -18,14 +18,7 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
     return <PostCard uri={uri} showLabels={showLabels} />
   }
   if (parsed.collection === CollectionId.List) {
-    return (
-      <BaseRecordCard
-        uri={uri}
-        renderRecord={(record) => (
-          <ListRecordCard {...{ did: parsed?.did, record }} />
-        )}
-      />
-    )
+    return <ListRecordCard uri={uri} />
   }
   if (parsed?.collection === CollectionId.Profile) {
     return (
