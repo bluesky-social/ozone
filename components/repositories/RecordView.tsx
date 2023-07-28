@@ -106,7 +106,9 @@ function Header({
   onReport: (uri: string) => void
 }) {
   const collection = parseAtUri(record.uri)?.collection ?? ''
-  let shortCollection = collection.replace('app.bsky.feed.', '')
+  let shortCollection = collection
+    .replace('app.bsky.feed.', '')
+    .replace('app.bsky.graph.', '')
   if (shortCollection === 'generator') shortCollection = 'feed generator'
   const { currentAction } = record.moderation
   const actionColorClasses =
