@@ -1,5 +1,5 @@
 'use client'
-import { ReactNode, useState } from 'react'
+import { ComponentProps, ReactNode, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -20,7 +20,6 @@ import { Json } from '../common/Json'
 import { classNames } from '@/lib/util'
 import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
-import { ReportsTable } from '../reports/ReportsTable'
 import React from 'react'
 import {
   LabelChip,
@@ -33,6 +32,11 @@ import { Loading, LoadingFailed } from '../common/Loader'
 import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
+import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { EmailComposer } from 'components/email/Composer'
+import { DataField } from '@/common/DataField'
+import { DidHistory } from './DidHistory'
 
 enum Views {
   Details,
@@ -41,6 +45,7 @@ enum Views {
   Followers,
   Invites,
   Reports,
+  Email,
 }
 
 export function AccountView({
@@ -113,6 +118,7 @@ export function AccountView({
                   {currentView === Views.Reports && (
                     <ReportsView did={repo.did} />
                   )}
+                  {currentView === Views.Email && <EmailView did={repo.did} />}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -154,6 +160,20 @@ function Header({
     : id.startsWith('did:')
     ? id
     : `@${id}`
+  const reportOptions: DropdownItem[] = []
+  if (repo) {
+    reportOptions.push({
+      text: 'Report Account',
+      onClick: () => onReport(repo.did),
+    })
+  }
+  if (profile) {
+    reportOptions.push({
+      text: 'Report Profile',
+      onClick: () => onReport(getProfileUriForDid(profile.did)),
+    })
+  }
+
   return (
     <div>
       <div>
@@ -202,17 +222,18 @@ function Header({
                   <span>Email Account</span>
                 </a>
               )}
-              <button
-                type="button"
-                className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-                onClick={() => repo && onReport(repo.did)}
-              >
-                <ExclamationCircleIcon
-                  className="-ml-1 mr-2 h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-                <span>Report Account</span>
-              </button>
+              {!!reportOptions.length && (
+                <Dropdown
+                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                  items={reportOptions}
+                >
+                  <ExclamationCircleIcon
+                    className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                  <span>Report</span>
+                </Dropdown>
+              )}
             </div>
           </div>
         </div>
@@ -305,18 +326,17 @@ function Tabs({
                 sublabel={String(profile.followersCount)}
               />
             )}
-            {profile && (
-              <Tab
-                view={Views.Invites}
-                label="Invites"
-                sublabel={String(numInvited)}
-              />
-            )}
+            <Tab
+              view={Views.Invites}
+              label="Invites"
+              sublabel={String(numInvited)}
+            />
             <Tab
               view={Views.Reports}
               label="Reports"
               sublabel={String(repo.moderation.reports.length)}
             />
+            <Tab view={Views.Email} label="Email" />
           </nav>
         </div>
       </div>
@@ -333,28 +353,12 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
-  const Field = ({
-    label,
-    value,
-    children,
-  }: {
-    label: string
-    value?: string
-    children?: ReactNode
-  }) => (
-    <div className="sm:col-span-1">
-      <dt className="text-sm font-medium text-gray-500">{label}</dt>
-      <dd className="mt-1 text-sm text-gray-900" title={value}>
-        {children ?? value}
-      </dd>
-    </div>
-  )
   const labels = ((repo.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        <Field label="Handle" value={repo.handle} />
-        <Field label="DID" value={repo.did} />
+        <DataField label="Handle" value={repo.handle} showCopyButton />
+        <DataField label="DID" value={repo.did} showCopyButton />
         {profile?.description && (
           <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500">Description</dt>
@@ -363,15 +367,15 @@ function Details({
             </dd>
           </div>
         )}
-        <Field label="Labels">
+        <DataField label="Labels">
           <LabelList>
             {!labels.length && <LabelListEmpty />}
             {labels.map((label) => (
               <LabelChip key={label}>{displayLabel(label)}</LabelChip>
             ))}
           </LabelList>
-        </Field>
-        <Field label="Invited by">
+        </DataField>
+        <DataField label="Invited by">
           {repo.invitedBy?.forAccount ? (
             <Link
               href={`/repositories/${repo.invitedBy?.forAccount}`}
@@ -382,7 +386,7 @@ function Details({
           ) : (
             '(Admin)'
           )}
-        </Field>
+        </DataField>
         <InviteCodeGenerationStatus
           id={id}
           did={repo.did}
@@ -390,6 +394,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <DidHistory did={repo.did} />
       {profile && (
         <Json
           className="mb-3"
@@ -576,6 +581,14 @@ function AccountsGrid({
           </div>
         ))}
       </div>
+    </div>
+  )
+}
+
+const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
+  return (
+    <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      <EmailComposer {...props} />
     </div>
   )
 }

@@ -5,6 +5,8 @@ import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
+import { profileCollectionId } from '@/reports/helpers/subject'
+import { ReactNode } from 'react'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -15,7 +17,40 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   if (parsed.collection === 'app.bsky.feed.post') {
     return <PostCard uri={uri} showLabels={showLabels} />
   }
-  return <GenericRecordCard uri={uri} />
+  if (parsed?.collection === profileCollectionId) {
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => (
+          <ProfileRecordCard {...{ did: parsed?.did, record }} />
+        )}
+      />
+    )
+  }
+  return (
+    <BaseRecordCard
+      uri={uri}
+      renderRecord={(record) => (
+        <GenericRecordCard {...{ did: parsed?.did, record }} />
+      )}
+    />
+  )
+}
+
+function ProfileRecordCard({
+  record,
+  did,
+}: {
+  did?: string
+  record: ComAtprotoAdminDefs.RecordViewDetail
+}) {
+  const { description } = record.value as { description: string }
+  return (
+    <>
+      {did && <RepoCard did={did} />}
+      <p className="text-sm text-gray-500 pl-10 pb-2">{description}</p>
+    </>
+  )
 }
 
 function PostCard(props: { uri: string; showLabels?: boolean }) {
@@ -34,7 +69,12 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
   })
   if (error) {
     // Temp fallback for taken-down posts, re: TODO above
-    return <GenericRecordCard uri={uri} />
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => <GenericRecordCard {...{ record }} />}
+      />
+    )
   }
   if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
@@ -49,9 +89,11 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
   )
 }
 
-function GenericRecordCard(props: { uri: string }) {
-  const { uri } = props
-  const parsed = parseAtUri(uri)
+function BaseRecordCard(props: {
+  uri: string
+  renderRecord: (record: ComAtprotoAdminDefs.RecordViewDetail) => JSX.Element
+}) {
+  const { uri, renderRecord } = props
   const { data: record, error } = useQuery({
     retry: false,
     queryKey: ['recordCard', { uri }],
@@ -75,9 +117,20 @@ function GenericRecordCard(props: { uri: string }) {
   if (!record) {
     return <LoadingDense />
   }
+
+  return renderRecord(record)
+}
+
+function GenericRecordCard({
+  record,
+  did,
+}: {
+  record: ComAtprotoAdminDefs.RecordViewDetail
+  did?: string
+}) {
   return (
     <>
-      {parsed && <RepoCard did={parsed.did} />}
+      {did && <RepoCard did={did} />}
       <pre className="text-xs overflow-auto max-h-36">
         {JSON.stringify(record, null, 2)}
       </pre>

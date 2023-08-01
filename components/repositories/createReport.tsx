@@ -1,8 +1,8 @@
 import Link from 'next/link'
 import { toast } from 'react-toastify'
 import client from '@/lib/client'
-import { createSubjectFromId } from '../reports/helpers/createSubjectFromId'
-import { isIdRecord } from '../reports/helpers/isIdRecord'
+import { createSubjectFromId } from '../reports/helpers/subject'
+import { isIdRecord } from '../reports/helpers/subject'
 import { ReportFormValues } from '../reports/ReportPanel'
 
 export async function createReport(vals: ReportFormValues) {
