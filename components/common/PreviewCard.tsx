@@ -16,7 +16,11 @@ const getPreviewTitleForAtUri = (uri: string): string => {
   // If the collection is not in the map or collection isn't available, default to post
   return (
     PreviewTitleMap[collection || CollectionId.Post] ||
-    PreviewTitleMap[CollectionId.Post]
+    (collection
+      ? // If the collection is a string, use the last two segments as the title
+        // so app.bsky.graph.list -> graph list
+        `Reported ${collection.split('.').slice(-2).join(' ')}`
+      : PreviewTitleMap[CollectionId.Post])
   )
 }
 

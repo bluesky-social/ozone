@@ -144,7 +144,7 @@ function Header({
             className="-ml-1 mr-2 h-5 w-5 text-gray-400"
             aria-hidden="true"
           />
-          <span>Report {shortCollection || 'pÌost'}</span>
+          <span>Report {shortCollection || 'post'}</span>
         </button>
       </div>
     </div>
