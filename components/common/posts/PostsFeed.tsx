@@ -7,6 +7,7 @@ import {
   AppBskyFeedPost,
   AppBskyEmbedRecord,
   AppBskyActorDefs,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -16,6 +17,7 @@ import {
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
 import { classNames } from '@/lib/util'
+import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
 import {
   LabelChip,
@@ -171,6 +173,19 @@ function PostContent({
   return (
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
+      {!!item.post.takedownId && (
+        <p className='text-xs mt-0'>
+          <Link
+            className={`${getActionClassNames({
+              action: ComAtprotoAdminDefs.TAKEDOWN,
+              prop: 'text',
+            })}`}
+            href={`/actions/${item.post.takedownId}`}
+          >
+            Taken Down
+          </Link>
+        </p>
+      )}
     </div>
   )
 }

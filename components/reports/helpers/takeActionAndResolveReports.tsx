@@ -3,9 +3,10 @@ import Link from 'next/link'
 import { toast, Icons } from 'react-toastify'
 import { ModActionFormValues } from '../../../app/actions/ModActionPanel'
 import client from '@/lib/client'
-import { createSubjectFromId } from './createSubjectFromId'
-import { isIdRecord } from './isIdRecord'
+import { createSubjectFromId } from './subject'
+import { isIdRecord } from './subject'
 import { displayError } from '../../common/Loader'
+import { queryClient } from 'components/QueryClient'
 
 export const takeActionAndResolveReports = async (
   vals: ModActionFormValues,
@@ -93,6 +94,10 @@ export const takeActionAndResolveReports = async (
         },
       },
     })
+    if (vals.subject?.startsWith('did')) {
+      // This may not be all encompassing because in the accountView query, the id may be a did or a handle
+      queryClient.invalidateQueries(['accountView', { id: vals.subject }])
+    }
   } catch (err) {
     if (err?.['error'] === 'SubjectHasAction') {
       toast.warn(
