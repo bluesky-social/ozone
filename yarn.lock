@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.4.2":
-  version "0.4.2"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.4.2.tgz#7790eb049f72437e7454c8ecc29a5ef4201c1ade"
-  integrity sha512-bwaT+kIJp6wpzlHc1Rus3yi29GKlwvYp4wOWAFmcyYT4qH2ZlE6NfElgi6QwdQD285EhiIKYTv7CAMRp/QO7DQ==
+"@atproto/api@^0.4.4":
+  version "0.4.4"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.4.4.tgz#24870e10d05a4193b2d1e9d05f5af995ea11ff12"
+  integrity sha512-U/6LiCzXioldGvuHauen9q7uUFn7b2agHkYsKCmdvGHB1CvIUmo+jTA8nynC5/XXJH8rAeZCg9gKcpAKV8noZA==
   dependencies:
     "@atproto/common-web" "*"
     "@atproto/uri" "*"

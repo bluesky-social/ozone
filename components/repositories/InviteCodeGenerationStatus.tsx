@@ -2,20 +2,29 @@ import { Dialog, Transition } from '@headlessui/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useState } from 'react'
 
-import { ActionButton } from '../common/buttons'
-import { LabelChip } from '../common/labels'
+import { ActionButton } from '@/common/buttons'
+import { LabelChip } from '@/common/labels'
 import client from '@/lib/client'
+import { Textarea } from '@/common/forms'
 
 const useInviteCodeMutation = ({ did, id }) => {
   const queryClient = useQueryClient()
-  const mutation = useMutation<{ success: boolean }, unknown, boolean, unknown>(
-    async (disableInvites = true) => {
+  const mutation = useMutation<
+    { success: boolean },
+    unknown,
+    {
+      disableInvites: boolean
+      note?: string
+    },
+    unknown
+  >(
+    async ({ disableInvites = true, note }) => {
       const mutator = disableInvites
         ? 'disableAccountInvites'
         : 'enableAccountInvites'
 
       const result = await client.api.com.atproto.admin[mutator](
-        { account: did },
+        { account: did, note },
         {
           headers: client.adminHeaders(),
           encoding: 'application/json',
@@ -38,13 +47,16 @@ export const InviteCodeGenerationStatus = ({
   id,
   did,
   invitesDisabled = false,
+  inviteNote,
 }: {
   id: string
   did: string
+  inviteNote?: string
   invitesDisabled?: boolean
 }) => {
   const currentStatus = invitesDisabled ? 'Disabled' : 'Enabled'
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [note, setNote] = useState('')
   const toggleInviteCodes = useInviteCodeMutation({ did, id })
   let buttonText = invitesDisabled
     ? toggleInviteCodes.isLoading
@@ -95,11 +107,24 @@ export const InviteCodeGenerationStatus = ({
                   </Dialog.Title>
 
                   <Dialog.Description className="text-gray-600 mt-4">
-                    This will {invitesDisabled ? 'enable' : 'stop'} invite
-                    code generation for this user.
+                    This will {invitesDisabled ? 'enable' : 'stop'} invite code
+                    generation for this user.
                     <br />
                     Remember, already generated invite codes will not be
                     activated/deactivated by this action.
+                  </Dialog.Description>
+
+                  <Dialog.Description>
+                    <Textarea
+                      autoFocus
+                      name="note"
+                      value={note}
+                      className="w-full mt-4"
+                      onChange={(e) => setNote(e.target.value)}
+                      placeholder={`Provide a reason for ${
+                        invitesDisabled ? 'enabling' : 'disabling'
+                      } invite code generation`}
+                    />
                   </Dialog.Description>
 
                   <div className="mt-4 flex flex-row justify-end">
@@ -114,8 +139,14 @@ export const InviteCodeGenerationStatus = ({
                       appearance="primary"
                       onClick={() =>
                         toggleInviteCodes
-                          .mutateAsync(invitesDisabled ? false : true)
-                          .then(() => setIsDialogOpen(false))
+                          .mutateAsync({
+                            disableInvites: invitesDisabled ? false : true,
+                            note,
+                          })
+                          .then(() => {
+                            setIsDialogOpen(false)
+                            setNote('')
+                          })
                       }
                       disabled={toggleInviteCodes.isLoading ? true : false}
                     >
@@ -142,6 +173,7 @@ export const InviteCodeGenerationStatus = ({
               {currentStatus}
             </LabelChip>
           </button>
+          {!!inviteNote && <p className="mt-1">{inviteNote}</p>}
         </dd>
       </div>
     </>

@@ -8,6 +8,7 @@ import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
+import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -196,10 +197,9 @@ export function InlineRepo(props: { did: string }) {
   return (
     <div className="flex">
       <div className="flex-shrink-0 mr-1">
-        <img
+        <ProfileAvatar
+          {...{ profile, repo }}
           className="h-4 w-4 rounded-full"
-          src={profile?.avatar || '/img/default-avatar.jpg'}
-          alt=""
         />
       </div>
       <Link
@@ -241,10 +241,10 @@ export function RepoCard(props: { did: string }) {
     <div className="bg-white">
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
-          <img
+          <ProfileAvatar
+            profile={profile}
+            repo={repo}
             className="h-6 w-6 rounded-full"
-            src={profile?.avatar || '/img/default-avatar.jpg'}
-            alt=""
           />
         </div>
         <div className="min-w-0 flex-1">
