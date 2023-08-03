@@ -36,6 +36,7 @@ import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { EmailComposer } from 'components/email/Composer'
 import { DataField } from '@/common/DataField'
+import { ProfileAvatar } from './ProfileAvatar'
 import { DidHistory } from './DidHistory'
 
 enum Views {
@@ -186,10 +187,9 @@ function Header({
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="-mt-12 sm:-mt-16 sm:flex sm:items-end sm:space-x-5">
           <div className="flex">
-            <img
+            <ProfileAvatar
               className="h-24 w-24 rounded-full ring-4 ring-white sm:h-32 sm:w-32"
-              src={profile?.avatar || '/img/default-avatar.jpg'}
-              alt=""
+              {...{ profile, repo }}
             />
           </div>
           <div className="mt-6 sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
@@ -553,14 +553,9 @@ function AccountsGrid({
             className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-offset-2 hover:border-gray-400"
           >
             <div className="flex-shrink-0">
-              <img
+              <ProfileAvatar
                 className="h-10 w-10 rounded-full"
-                src={
-                  typeof account.avatar === 'string'
-                    ? account.avatar
-                    : '/img/default-avatar.jpg'
-                }
-                alt=""
+                profile={account}
               />
             </div>
             <div className="min-w-0 flex-1">

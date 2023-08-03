@@ -25,6 +25,7 @@ import {
   getLabelGroupInfo,
   doesLabelNeedBlur,
 } from '../labels'
+import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 
 export function PostsFeed({
   items,
@@ -87,10 +88,9 @@ function PostHeader({
     <div className={`${dense ? '' : 'pb-5'}`}>
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
-          <img
+          <ProfileAvatar
+            profile={item.post.author}
             className={`${dense ? 'h-6 w-6' : 'h-10 w-10'} rounded-full`}
-            src={item.post.author.avatar || '/img/default-avatar.jpg'}
-            alt=""
           />
         </div>
         <div className="min-w-0 flex-1">
@@ -269,10 +269,9 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
       return (
         <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
           <div className="flex flex-row">
-            <img
+            <ProfileAvatar
+              profile={embed.record.author}
               className="w-6 h-6 rounded-full"
-              src={embed.record.author.avatar || '/img/default-avatar.jpg'}
-              alt={embed.record.author.avatar}
             />
             <p className="text-sm font-medium text-gray-900">
               <Link
