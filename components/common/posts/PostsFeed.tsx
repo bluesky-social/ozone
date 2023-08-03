@@ -25,6 +25,7 @@ import {
   getLabelGroupInfo,
   doesLabelNeedBlur,
 } from '../labels'
+import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 
 export function PostsFeed({
@@ -128,7 +129,7 @@ function PostHeader({
             <a
               href={`https://bsky.app/profile/${item.post.uri
                 .replace('at://', '')
-                .replace('app.bsky.feed.post', 'post')}`}
+                .replace(CollectionId.Post, 'post')}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -174,7 +175,7 @@ function PostContent({
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
       {!!item.post.takedownId && (
-        <p className='text-xs mt-0'>
+        <p className="text-xs mt-0">
           <Link
             className={`${getActionClassNames({
               action: ComAtprotoAdminDefs.TAKEDOWN,

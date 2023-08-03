@@ -42,6 +42,11 @@ export const createSubjectFromId = async (id: string) => {
   }
 }
 
-export const profileCollectionId = 'app.bsky.actor.profile'
+export enum CollectionId {
+  FeedGenerator = 'app.bsky.feed.generator',
+  Profile = 'app.bsky.actor.profile',
+  List = 'app.bsky.graph.list',
+  Post = 'app.bsky.feed.post',
+}
 export const getProfileUriForDid = (did: string) =>
-  `at://${did}/${profileCollectionId}/self`
+  `at://${did}/${CollectionId.Profile}/self`

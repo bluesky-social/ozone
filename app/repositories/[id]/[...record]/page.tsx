@@ -8,6 +8,7 @@ import client from '@/lib/client'
 import { createAtUri } from '@/lib/util'
 import { createReport } from '@/repositories/createReport'
 import { Loading, LoadingFailed } from '@/common/Loader'
+import { CollectionId } from '@/reports/helpers/subject'
 
 export default function Record({
   params,
@@ -39,7 +40,7 @@ export default function Record({
         return record
       }
       const getThread = async () => {
-        if (collection !== 'app.bsky.feed.post') {
+        if (collection !== CollectionId.Post) {
           return undefined
         }
         try {

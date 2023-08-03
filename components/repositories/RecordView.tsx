@@ -106,7 +106,10 @@ function Header({
   onReport: (uri: string) => void
 }) {
   const collection = parseAtUri(record.uri)?.collection ?? ''
-  const shortCollection = collection.replace('app.bsky.feed.', '')
+  let shortCollection = collection
+    .replace('app.bsky.feed.', '')
+    .replace('app.bsky.graph.', '')
+  if (shortCollection === 'generator') shortCollection = 'feed generator'
   const { currentAction } = record.moderation
   const actionColorClasses =
     currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
@@ -141,7 +144,7 @@ function Header({
             className="-ml-1 mr-2 h-5 w-5 text-gray-400"
             aria-hidden="true"
           />
-          <span>Report Post</span>
+          <span>Report {shortCollection || 'post'}</span>
         </button>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { CollectionId } from "@/reports/helpers/subject";
+
 export function classNames(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(' ')
 }
@@ -73,7 +75,7 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
     if (isValidHandle(part)) {
       parts.handle = part
     }
-    if (part === 'post' || part === 'app.bsky.feed.post') {
+    if (part === 'post' || part === CollectionId.Post) {
       postIndex = i
     }
   })
