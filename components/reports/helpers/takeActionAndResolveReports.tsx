@@ -15,6 +15,8 @@ export const takeActionAndResolveReports = async (
     let actionId: number
     let action: ComAtprotoAdminDefs.ActionView | undefined
     let resolveAddlReportIds: number[] = []
+    let replacedCreateLabelVals: string[] = []
+    let replacedNegateLabelVals: string[] = []
 
     if (vals.currentActionId && !vals.replacingAction) {
       actionId = vals.currentActionId
@@ -31,6 +33,8 @@ export const takeActionAndResolveReports = async (
             { headers: client.adminHeaders(), encoding: 'application/json' },
           )
         resolveAddlReportIds = replacedAction.resolvedReportIds
+        replacedCreateLabelVals = replacedAction.createLabelVals ?? []
+        replacedNegateLabelVals = replacedAction.negateLabelVals ?? []
       }
       const result = await client.api.com.atproto.admin.takeModerationAction(
         {
@@ -41,9 +45,17 @@ export const takeActionAndResolveReports = async (
             ? vals.subjectBlobCids
             : undefined,
           createdBy: client.session.did,
-          // @TODO update client to ensure these fields are typechecked
-          createLabelVals: vals.createLabelVals,
-          negateLabelVals: vals.negateLabelVals,
+          ...dedupeLabels({
+            // account for label applications from the reversal
+            createLabelVals: [
+              ...vals.createLabelVals,
+              ...replacedCreateLabelVals,
+            ],
+            negateLabelVals: [
+              ...vals.negateLabelVals,
+              ...replacedNegateLabelVals,
+            ],
+          }),
         },
         { headers: client.adminHeaders(), encoding: 'application/json' },
       )
@@ -120,3 +132,25 @@ const actionOptions = {
   'com.atproto.admin.moderationAction#flag': 'flagged',
   'com.atproto.admin.moderationAction#takedown': 'taken-down',
 }
+
+// handles cases where same label appears multiple times across both createLabelVals and negateLabelVals.
+// this can happen because of the way we coordinate labels when there's an action reversal/replacement.
+const dedupeLabels = (labels: {
+  createLabelVals: string[]
+  negateLabelVals: string[]
+}) => {
+  return {
+    createLabelVals: dedupe(
+      minus(labels.createLabelVals, labels.negateLabelVals),
+    ),
+    negateLabelVals: dedupe(
+      minus(labels.negateLabelVals, labels.createLabelVals),
+    ),
+  }
+}
+
+const minus = (a: string[], b: string[]) => {
+  return a.filter((item) => !b.includes(item))
+}
+
+const dedupe = (list: string[]) => [...new Set(list)]
