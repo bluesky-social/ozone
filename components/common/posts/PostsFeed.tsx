@@ -24,6 +24,7 @@ import {
   LabelList,
   getLabelGroupInfo,
   doesLabelNeedBlur,
+  toLabelVal,
 } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
@@ -352,7 +353,8 @@ function PostLabels({
   if (!labels?.length) return null
   return (
     <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
-      {labels?.map(({ val }, i) => {
+      {labels?.map((label, i) => {
+        const { val } = label
         const labelGroup = getLabelGroupInfo(val)
 
         return (
@@ -363,7 +365,7 @@ function PostLabels({
             style={{ color: labelGroup.color }}
             key={`${cid}_${val}`}
           >
-            {val}
+            {toLabelVal(label, item.post.author.did)}
           </LabelChip>
         )
       })}

@@ -4,16 +4,8 @@ import { ComAtprotoAdminDefs } from '@atproto/api'
 import { useEffect, useRef, useState } from 'react'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { ActionPanel } from '@/common/ActionPanel'
-import {
-  ButtonPrimary,
-  ButtonSecondary,
-} from '@/common/buttons'
-import {
-  FormLabel,
-  Input,
-  Select,
-  Textarea,
-} from '@/common/forms'
+import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
+import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 import { RecordCard, RepoCard } from '@/common/RecordCard'
 import { PropsOf } from '@/lib/types'
 import { ResolutionList } from './ResolutionList'
@@ -23,10 +15,10 @@ import {
   LabelsInput,
   diffLabels,
   toLabelVal,
+  getLabelsForSubject,
 } from '@/common/labels'
 import { takesKeyboardEvt } from '@/lib/util'
 import { SnoozeAction } from '@/reports/SnoozeAction'
-import { getCurrentActionFromRepoOrRecord } from '@/reports/helpers/getCurrentActionFromRepoOrRecord'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -92,11 +84,11 @@ function Form(props: {
 
   const { currentAction: currActionMaybeReplace = currentActionFallback } =
     record?.moderation ?? repo?.moderation ?? {}
-  const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
   const currentAction = replacingAction ? undefined : currActionMaybeReplace
-  const currentLabels = (
-    (record?.labels ?? repo?.labels ?? []) as { val: string }[]
-  ).map(toLabelVal)
+  const allLabels = getLabelsForSubject({ repo, record })
+  const currentLabels = allLabels.map((label) =>
+    toLabelVal(label, repo?.did ?? record?.repo.did),
+  )
   const actionColorClasses =
     currActionMaybeReplace?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'

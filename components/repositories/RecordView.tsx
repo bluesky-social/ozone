@@ -23,6 +23,7 @@ import {
   LabelListEmpty,
   displayLabel,
   toLabelVal,
+  getLabelsForSubject,
 } from '../common/labels'
 import { DataField } from '@/common/DataField'
 
@@ -210,7 +211,9 @@ function Tabs({
 
 function Details({ record }: { record: GetRecord.OutputSchema }) {
   const { collection, rkey } = parseAtUri(record.uri) ?? {}
-  const labels = ((record.labels ?? []) as { val: string }[]).map(toLabelVal) // @TODO client types
+  const labels = getLabelsForSubject({ record }).map((label) =>
+    toLabelVal(label, record.repo.did),
+  )
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
