@@ -19,6 +19,7 @@ import { actionOptions } from '../../../app/actions/ModActionPanel'
 import { BlobsTable } from '../../repositories/BlobsTable'
 import { Reports } from '../../repositories/RecordView'
 import { getType } from '../ReportView/getType'
+import { getActionDurationWithRemainingTime } from './ActionDurationBadge'
 
 enum Views {
   Details,
@@ -215,10 +216,14 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
     </div>
   )
 
-  const { createdAt, reason, subject, createdBy } = action
+  const { createdAt, reason, subject, createdBy, durationInHours } = action
 
   const actionType = action.action
-  const readableActionType = actionType ? actionOptions[actionType] : ''
+  let readableActionType = actionType ? actionOptions[actionType] : ''
+
+  if (durationInHours) {
+    readableActionType = `${readableActionType} (Temporary)`
+  }
 
   const labels: { label: string; value: string }[] = [
     {
@@ -234,6 +239,13 @@ function Details({ action }: { action: GetAction.OutputSchema }) {
       value: reason,
     },
   ]
+
+  if (durationInHours) {
+    labels.push({
+      label: 'Duration',
+      value: getActionDurationWithRemainingTime(durationInHours),
+    })
+  }
 
   const reversedAt = action.reversal
     ? new Date(action.reversal.createdAt).toLocaleString()

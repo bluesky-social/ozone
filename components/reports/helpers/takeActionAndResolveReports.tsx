@@ -1,6 +1,6 @@
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import Link from 'next/link'
-import { toast, Icons } from 'react-toastify'
+import { toast } from 'react-toastify'
 import { ModActionFormValues } from '../../../app/actions/ModActionPanel'
 import client from '@/lib/client'
 import { createSubjectFromId } from './subject'
@@ -45,6 +45,7 @@ export const takeActionAndResolveReports = async (
             ? vals.subjectBlobCids
             : undefined,
           createdBy: client.session.did,
+          durationInHours: vals.durationInHours ?? undefined,
           ...dedupeLabels({
             // account for label applications from the reversal
             createLabelVals: [
