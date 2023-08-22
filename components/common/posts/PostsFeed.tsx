@@ -13,6 +13,7 @@ import Link from 'next/link'
 import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
+  LanguageIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
@@ -27,6 +28,7 @@ import {
 } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
+import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 
 export function PostsFeed({
   items,
@@ -171,20 +173,44 @@ function PostContent({
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
 }) {
+  const { takedownId } = item.post
+  const needsTranslation = !isPostInLanguage(item.post, ['en'])
+  const primaryLanguage = 'en'
+  const translatorUrl = getTranslatorLink(
+    primaryLanguage,
+    (item.post.record as undefined | { text?: string })?.text || '',
+  )
+  const showActionLine = needsTranslation || !!takedownId
   return (
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
-      {!!item.post.takedownId && (
+      {showActionLine && (
         <p className="text-xs mt-0">
-          <Link
-            className={`${getActionClassNames({
-              action: ComAtprotoAdminDefs.TAKEDOWN,
-              prop: 'text',
-            })}`}
-            href={`/actions/${item.post.takedownId}`}
-          >
-            Taken Down
-          </Link>
+          {!!takedownId && (
+            <Link
+              className={`${getActionClassNames({
+                action: ComAtprotoAdminDefs.TAKEDOWN,
+                prop: 'text',
+              })}`}
+              href={`/actions/${takedownId}`}
+            >
+              Taken Down
+            </Link>
+          )}
+          {needsTranslation && (
+            <a
+              href={translatorUrl}
+              target="_blank"
+              rel="noreferrer"
+              className={classNames(
+                `text-blue-600`,
+                takedownId ? 'pl-1 ml-1 border-gray-400 border-l' : '',
+              )}
+            >
+              <LanguageIcon className="w-3 h-3 inline mr-1" />
+              Translate
+            </a>
+          )}
         </p>
       )}
     </div>
