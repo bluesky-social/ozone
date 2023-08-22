@@ -161,9 +161,12 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
       }
       const getProfile = async () => {
         try {
-          const { data: profile } = await client.api.app.bsky.actor.getProfile({
-            actor: did,
-          })
+          const { data: profile } = await client.api.app.bsky.actor.getProfile(
+            {
+              actor: did,
+            },
+            { headers: client.adminHeaders() },
+          )
           return profile
         } catch (err) {
           if (err?.['status'] === 400) {

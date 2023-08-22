@@ -2,6 +2,10 @@ import { InlineRepo } from '@/common/RecordCard'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
+import {
+  getActionDurationWithRemainingTime,
+  humanReadableActionDuration,
+} from '../ActionView/ActionDurationBadge'
 
 import { actionOptions, getActionClassNames } from './ActionHelpers'
 
@@ -97,16 +101,28 @@ export const CurrentModerationAction = ({
         )}
 
         {currentActionDetail && (
-          <p>
-            Reason:{' '}
-            {currentActionDetail.reason ? (
-              <span className="text-gray-500">
-                {currentActionDetail.reason}
-              </span>
-            ) : (
-              <span className="italic text-gray-300">N/A</span>
+          <>
+            <p>
+              Reason:{' '}
+              {currentActionDetail.reason ? (
+                <span className="text-gray-500">
+                  {currentActionDetail.reason}
+                </span>
+              ) : (
+                <span className="italic text-gray-300">N/A</span>
+              )}
+            </p>
+            {currentActionDetail.durationInHours && (
+              <p>
+                Duration:{' '}
+                <span className="text-gray-500">
+                  {getActionDurationWithRemainingTime(
+                    currentActionDetail.durationInHours,
+                  )}
+                </span>
+              </p>
             )}
-          </p>
+          </>
         )}
       </div>
       <div>

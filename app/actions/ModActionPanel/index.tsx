@@ -19,6 +19,7 @@ import {
 } from '@/common/labels'
 import { takesKeyboardEvt } from '@/lib/util'
 import { SnoozeAction } from '@/reports/SnoozeAction'
+import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -64,6 +65,7 @@ function Form(props: {
   const [replacingAction, setReplacingAction] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
+  const [durationInHours, setActionDuration] = useState<number | null>(null)
   useEffect(() => {
     setReplacingAction(false)
     setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
@@ -142,12 +144,17 @@ function Form(props: {
           const nextLabels = formData
             .getAll('labels')!
             .map((val) => String(val))
+          let transformedAction = formData.get('action')!.toString()
+          if (transformedAction === 'suspend') {
+            transformedAction = ComAtprotoAdminDefs.TAKEDOWN
+          }
           await onSubmit({
             replacingAction,
             currentActionId: currActionMaybeReplace?.id,
             subject: formData.get('subject')!.toString(),
-            action: formData.get('action')!.toString(),
+            action: transformedAction,
             reason: formData.get('reason')!.toString(),
+            durationInHours,
             resolveReportIds: formData
               .getAll('resolveReportIds')
               .map((id) => Number(id)),
@@ -266,6 +273,30 @@ function Form(props: {
       </FormLabel>
       {/* Hidden field exists so that form always has same fields, useful during submission */}
       {currentAction && <input name="action" type="hidden" />}
+      {(action === 'suspend' ||
+        (currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN &&
+          currentAction?.durationInHours)) && (
+        <FormLabel
+          label="Suspension Period"
+          htmlFor="durationInHours"
+          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+        >
+          <ActionDurationSelector
+            disabled={!!currentAction}
+            // TODO: This should respect previously set value
+            value={
+              (currentAction?.durationInHours || durationInHours) ?? undefined
+            }
+            onChange={(ev) => {
+              if (!currentAction) {
+                setActionDuration(
+                  ev.target.value ? parseInt(ev.target.value) : null,
+                )
+              }
+            }}
+          />
+        </FormLabel>
+      )}
       {!currentAction && (
         <Textarea
           name="reason"
@@ -355,12 +386,14 @@ export const actionOptions = {
   [ComAtprotoAdminDefs.ESCALATE]: 'Escalate',
   [ComAtprotoAdminDefs.FLAG]: 'Flag',
   [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
+  suspend: 'Suspend',
 }
 
 export type ModActionFormValues = {
   subject: string
   action: string
   reason: string
+  durationInHours: number | null
   resolveReportIds: number[]
   subjectBlobCids: string[]
   currentActionId?: number

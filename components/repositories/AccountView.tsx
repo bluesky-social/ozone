@@ -434,7 +434,10 @@ function Follows({ id }: { id: string }) {
   const { error, data: follows } = useQuery({
     queryKey: ['follows', { id }],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollows({ actor: id })
+      const { data } = await client.api.app.bsky.graph.getFollows(
+        { actor: id },
+        { headers: client.adminHeaders() },
+      )
       return data
     },
   })
@@ -449,9 +452,12 @@ function Followers({ id }: { id: string }) {
   const { error, data: followers } = useQuery({
     queryKey: ['followers', { id }],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollowers({
-        actor: id,
-      })
+      const { data } = await client.api.app.bsky.graph.getFollowers(
+        {
+          actor: id,
+        },
+        { headers: client.adminHeaders() },
+      )
       return data
     },
   })

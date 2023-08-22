@@ -34,6 +34,7 @@ import {
 } from '@/reports/ModerationView/ActionHelpers'
 import { Loading } from '@/common/Loader'
 import { AllReportsLinkForSubject } from '@/reports/AllReportsLinkForSubject'
+import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -112,6 +113,7 @@ function Form(
   const [replacingAction, setReplacingAction] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
+  const [durationInHours, setActionDuration] = useState<null | number>(null)
   useEffect(() => {
     setReplacingAction(false)
     setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
@@ -195,11 +197,16 @@ function Form(
       setSubmitting(true)
       const formData = new FormData(ev.currentTarget)
       const nextLabels = formData.getAll('labels')!.map((val) => String(val))
+      let transformedAction = formData.get('action')!.toString()
+      if (transformedAction === 'suspend') {
+        transformedAction = ComAtprotoAdminDefs.TAKEDOWN
+      }
       await onSubmit({
         replacingAction,
         currentActionId: currActionMaybeReplace?.id,
         subject: formData.get('subject')!.toString(),
-        action: formData.get('action')!.toString(),
+        action: transformedAction,
+        durationInHours,
         reason: formData.get('reason')!.toString(),
         resolveReportIds: formData
           .getAll('resolveReportIds')
@@ -369,6 +376,19 @@ function Form(
             }}
           />
 
+          {action === ComAtprotoAdminDefs.TAKEDOWN && (
+            <FormLabel label="" htmlFor="durationInHours" className={`mb-3`}>
+              <ActionDurationSelector
+                value={durationInHours ?? undefined}
+                onChange={(ev) => {
+                  setActionDuration(
+                    ev.target.value ? parseInt(ev.target.value) : null,
+                  )
+                }}
+              />
+            </FormLabel>
+          )}
+
           {/* Hidden field exists so that form always has same fields, useful during submission */}
           {currentAction && <input name="action" type="hidden" />}
           {currActionMaybeReplace && (
@@ -404,6 +424,12 @@ function Form(
                 const actionTextClassNames = getActionClassNames({
                   action: value,
                 })
+                const displayLabel =
+                  (value === ComAtprotoAdminDefs.TAKEDOWN && durationInHours) ||
+                  (currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN &&
+                    currentAction?.durationInHours)
+                    ? 'Suspend'
+                    : label
                 return (
                   <RadioGroupOption
                     key={value}
@@ -420,11 +446,19 @@ function Form(
                     onChange={(ev) => {
                       if (!currentAction) {
                         setAction(ev.target.value)
+                        // When selecting non-takedown action, if a duration for takedown was set before, reset it
+                        // Non-takedown actions can't have a duration at the moment
+                        if (
+                          ev.target.value !== ComAtprotoAdminDefs.TAKEDOWN &&
+                          durationInHours
+                        ) {
+                          setActionDuration(null)
+                        }
                       }
                     }}
                     labelClassName={actionTextClassNames}
                   >
-                    {label}
+                    {displayLabel}
                   </RadioGroupOption>
                 )
               })}
@@ -454,6 +488,7 @@ export type ModActionFormValues = {
   subject: string
   action: string
   reason: string
+  durationInHours: number | null
   resolveReportIds: number[]
   subjectBlobCids: string[]
   currentActionId?: number

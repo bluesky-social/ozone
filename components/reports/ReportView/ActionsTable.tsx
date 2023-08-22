@@ -7,6 +7,7 @@ import {
 import { SubjectOverview } from '../SubjectOverview'
 import { ArrowUturnDownIcon } from '@heroicons/react/24/outline'
 import { truncate } from '@/lib/util'
+import { ActionDurationBadge } from '../ActionView/ActionDurationBadge'
 
 export function ActionsTable(props: { actions }) {
   const { actions } = props
@@ -38,8 +39,14 @@ function ActionRow(props: { action: ModAction.OutputSchema }) {
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
         <dl className="font-normal">
           <dt className="sr-only">Reason</dt>
-          <dd className="mt-1 truncate text-gray-700 w-[250px]">
+          <dd className="mt-1 truncate text-gray-700">
             <ReasonBadge reasonType={action.action} />{' '}
+            {action.durationInHours && (
+              <ActionDurationBadge
+                durationInHours={action.durationInHours}
+                className="mr-1"
+              />
+            )}
             {wasReversed ? (
               <>
                 <ArrowUturnDownIcon
@@ -116,7 +123,7 @@ export function ReasonBadge(props: { reasonType: string }) {
   const color = reasonColors[reasonType] ?? reasonColors.default
   return (
     <span
-      className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium`}
+      className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium capitalize`}
     >
       {readable}
     </span>
