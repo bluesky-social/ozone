@@ -1,12 +1,11 @@
-import { InlineRepo } from '@/common/RecordCard'
-import { ComAtprotoAdminDefs } from '@atproto/api'
-import { ShieldExclamationIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
-import {
-  getActionDurationWithRemainingTime,
-  humanReadableActionDuration,
-} from '../ActionView/ActionDurationBadge'
+import { differenceInHours, formatDuration, intervalToDuration } from 'date-fns'
+import { ComAtprotoAdminDefs } from '@atproto/api'
+import { CalendarDaysIcon } from '@heroicons/react/20/solid'
+import { ShieldExclamationIcon } from '@heroicons/react/24/solid'
 
+import { InlineRepo } from '@/common/RecordCard'
+import { getActionDurationWithRemainingTime } from '../ActionView/ActionDurationBadge'
 import { actionOptions, getActionClassNames } from './ActionHelpers'
 
 type Props = {
@@ -47,6 +46,31 @@ const ActionLink = ({
   )
 }
 
+const STALE_ACTION_DURATION_IN_HOURS =
+  process.env.STALE_ACTION_DURATION_IN_HOURS || 72
+const getCurrentActionAge = (currentActionCreatedAt?: Date) => {
+  if (!currentActionCreatedAt)
+    return { isCurrentActionStale: false, currentActionAge: '' }
+
+  const now = new Date()
+  const currentActionAgeInHours = differenceInHours(now, currentActionCreatedAt)
+  // If the action is not older than the threshold for stale action duration, don't bother computing duration and return early
+  if (currentActionAgeInHours < STALE_ACTION_DURATION_IN_HOURS) {
+    return { isCurrentActionStale: false, currentActionAge: '' }
+  }
+
+  return {
+    isCurrentActionStale: true,
+    currentActionAge: formatDuration(
+      intervalToDuration({
+        start: currentActionCreatedAt,
+        end: now,
+      }),
+      { format: ['years', 'months', 'days'] },
+    ),
+  }
+}
+
 export const CurrentModerationAction = ({
   currentAction,
   currentActionDetail,
@@ -54,6 +78,10 @@ export const CurrentModerationAction = ({
   replacingAction,
   currentActionMaybeReplace,
 }: Props) => {
+  const { isCurrentActionStale, currentActionAge } = getCurrentActionAge(
+    currentActionDetail ? new Date(currentActionDetail.createdAt) : undefined,
+  )
+
   if (!currentAction && !currentActionMaybeReplace) {
     return null
   }
@@ -76,7 +104,7 @@ export const CurrentModerationAction = ({
   return (
     <div className={containerClassName}>
       <div className="text-sm text-gray-600 mb-2 mr-1">
-        <p className="font-medium text-gray-500 mb-1 flex flex-row">
+        <p className="font-medium text-gray-500 mb-1 flex flex-row items-center">
           {currentAction && !replacingAction ? (
             <>
               Current Action{' '}
@@ -93,6 +121,12 @@ export const CurrentModerationAction = ({
                 currentActionDetail={currentActionDetail}
               />
             </>
+          )}
+          {isCurrentActionStale && currentActionAge && (
+            <span className="text-yellow-500 text-xs ml-1 flex flex-row items-center">
+              <CalendarDaysIcon className="w-4 h-4 inline mr-1" />
+              {currentActionAge} old
+            </span>
           )}
         </p>
 
