@@ -22,9 +22,12 @@ export const useRepoAndProfile = ({ id }: { id: string }) =>
       }
       const getProfile = async () => {
         try {
-          const { data: profile } = await client.api.app.bsky.actor.getProfile({
-            actor: id,
-          })
+          const { data: profile } = await client.api.app.bsky.actor.getProfile(
+            {
+              actor: id,
+            },
+            { headers: client.adminHeaders() },
+          )
           return profile
         } catch (err) {
           if (err?.['error'] === 'AccountTakedown') {
