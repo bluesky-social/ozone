@@ -236,16 +236,5 @@ export const buildAllLabelOptions = (
   defaultLabels: string[],
   options: string[],
 ) => {
-  const all = [...defaultLabels]
-  // If there are default labels, then make sure that among default labels, if self labels exist
-  // those are excluded from all options to avoid duplication. This ensures that in the UI
-  // we don't show spam(self) and spam as two different options
-  if (all.length) {
-    all.push(
-      ...options.filter((opt) => !defaultLabels.includes(flagSelfLabel(opt))),
-    )
-  } else {
-    all.push(...options)
-  }
-  return unique(all).sort()
+  return unique([...defaultLabels, ...options]).sort()
 }
