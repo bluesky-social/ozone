@@ -204,7 +204,7 @@ function Form(
         currentActionId: currActionMaybeReplace?.id,
         subject: formData.get('subject')!.toString(),
         action: transformedAction,
-        durationInHours,
+        durationInHours: durationInHours || null,
         reason: formData.get('reason')!.toString(),
         resolveReportIds: formData
           .getAll('resolveReportIds')

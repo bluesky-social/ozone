@@ -41,7 +41,7 @@ function ActionRow(props: { action: ModAction.OutputSchema }) {
           <dt className="sr-only">Reason</dt>
           <dd className="mt-1 truncate text-gray-700">
             <ReasonBadge reasonType={action.action} />{' '}
-            {action.durationInHours && (
+            {!!action.durationInHours && (
               <ActionDurationBadge
                 durationInHours={action.durationInHours}
                 className="mr-1"

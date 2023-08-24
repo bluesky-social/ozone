@@ -146,7 +146,7 @@ export const CurrentModerationAction = ({
                 <span className="italic text-gray-300">N/A</span>
               )}
             </p>
-            {currentActionDetail.durationInHours && (
+            {!!currentActionDetail.durationInHours && (
               <p>
                 Duration:{' '}
                 <span className="text-gray-500">

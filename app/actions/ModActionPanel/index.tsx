@@ -60,9 +60,7 @@ function Form(props: {
   const [replacingAction, setReplacingAction] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
-  const [durationInHours, setActionDuration] = useState<number | null>(
-    null,
-  )
+  const [durationInHours, setActionDuration] = useState<number | null>(null)
   useEffect(() => {
     setReplacingAction(false)
     setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
@@ -150,7 +148,9 @@ function Form(props: {
             subject: formData.get('subject')!.toString(),
             action: transformedAction,
             reason: formData.get('reason')!.toString(),
-            durationInHours,
+            // durationInHours is set to 0 when permanent is selected but sending zero to the api req
+            // will have the unwanted behavior of making the action expire right away, so we need to send null instead
+            durationInHours: durationInHours || null,
             resolveReportIds: formData
               .getAll('resolveReportIds')
               .map((id) => Number(id)),
@@ -281,8 +281,7 @@ function Form(props: {
             disabled={!!currentAction}
             // TODO: This should respect previously set value
             value={
-              (currentAction?.durationInHours || durationInHours) ??
-              undefined
+              (currentAction?.durationInHours || durationInHours) ?? undefined
             }
             onChange={(ev) => {
               if (!currentAction) {
