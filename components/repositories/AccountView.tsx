@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { classNames } from '@/lib/util'
+import { classNames, truncate } from '@/lib/util'
 import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
 import React from 'react'
@@ -156,7 +156,7 @@ function Header({
   )
   const displayActorName = repo
     ? profile?.displayName
-      ? `${profile.displayName} @${repo.handle}`
+      ? `${truncate(profile.displayName, 20)} @${truncate(repo.handle, 20)}`
       : `@${repo.handle}`
     : id.startsWith('did:')
     ? id
@@ -359,6 +359,13 @@ function Details({
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
         <DataField label="Handle" value={repo.handle} showCopyButton />
         <DataField label="DID" value={repo.did} showCopyButton />
+        {profile?.displayName && (
+          <DataField
+            label="Display Name"
+            value={profile.displayName}
+            showCopyButton
+          />
+        )}
         {profile?.description && (
           <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500">Description</dt>
