@@ -1,4 +1,5 @@
 'use client'
+import { useEffect, useState } from 'react'
 import {
   AppBskyFeedDefs,
   AppBskyEmbedImages,
@@ -173,14 +174,19 @@ function PostContent({
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
 }) {
-  const { takedownId } = item.post
-  const needsTranslation = !isPostInLanguage(item.post, ['en'])
+  const { takedownId, uri } = item.post
+  const [needsTranslation, setNeedsTranslation] = useState(false)
   const primaryLanguage = 'en'
   const translatorUrl = getTranslatorLink(
     primaryLanguage,
     (item.post.record as undefined | { text?: string })?.text || '',
   )
   const showActionLine = needsTranslation || !!takedownId
+  useEffect(() => {
+    isPostInLanguage(item.post, [primaryLanguage]).then((isPostInPrimaryLang) =>
+      setNeedsTranslation(!isPostInPrimaryLang),
+    )
+  }, [uri])
   return (
     <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
       <RichText post={item.post.record as AppBskyFeedPost.Record} />

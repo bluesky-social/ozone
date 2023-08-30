@@ -1,6 +1,4 @@
 import { AppBskyFeedDefs, AppBskyFeedPost } from '@atproto/api'
-import lande from 'lande'
-import * as bcp47Match from 'bcp-47-match'
 
 import { hasProp } from '../type-guards'
 import { LANGUAGES_MAP_CODE2, LANGUAGES_MAP_CODE3 } from './languages'
@@ -24,9 +22,9 @@ export function codeToLanguageName(lang: string): string {
   return LANGUAGES_MAP_CODE2[lang2]?.name || lang
 }
 
-export function getPostLanguage(
+export async function getPostLanguage(
   post: AppBskyFeedDefs.PostView,
-): string | undefined {
+): Promise<string | undefined> {
   let candidates: string[] = []
   let postText: string = ''
   if (hasProp(post.record, 'text') && typeof post.record.text === 'string') {
@@ -53,6 +51,7 @@ export function getPostLanguage(
   }
 
   // run the language model
+  const lande = (await import('lande')).default
   let langsProbabilityMap = lande(postText)
 
   // filter down using declared languages
@@ -69,16 +68,18 @@ export function getPostLanguage(
   }
 }
 
-export function isPostInLanguage(
+export async function isPostInLanguage(
   post: AppBskyFeedDefs.PostView,
   targetLangs: string[],
-): boolean {
-  const lang = getPostLanguage(post)
+): Promise<boolean> {
+  const lang = await getPostLanguage(post)
 
   if (!lang) {
     // the post has no text, so we just say "yes" for now
     return true
   }
+
+  const bcp47Match = await import('bcp-47-match')
   return bcp47Match.basicFilter(lang, targetLangs).length > 0
 }
 
