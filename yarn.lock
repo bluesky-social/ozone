@@ -688,6 +688,11 @@ base64-js@^1.3.1:
   resolved "https://registry.yarnpkg.com/base64-js/-/base64-js-1.5.1.tgz#1b1b440160a5bf7ad40b650f095963481903930a"
   integrity sha512-AKpaYlHn8t4SVbOHCy+b5+KKgvR4vrsD8vbvrbiQJps7fKDTkjkDry6ji0rUJjC0kzbNePLwzxq8iypo41qeWA==
 
+bcp-47-match@^2.0.3:
+  version "2.0.3"
+  resolved "https://registry.yarnpkg.com/bcp-47-match/-/bcp-47-match-2.0.3.tgz#603226f6e5d3914a581408be33b28a53144b09d0"
+  integrity sha512-JtTezzbAibu8G0R9op9zb3vcWZd9JF6M0xOYGPn0fNCd7wOpRB1mU2mH9T8gaBGbAAyIIVgB2G7xG0GP98zMAQ==
+
 bcrypt-pbkdf@^1.0.0:
   version "1.0.2"
   resolved "https://registry.yarnpkg.com/bcrypt-pbkdf/-/bcrypt-pbkdf-1.0.2.tgz#a4301d389b6a43f9b67ff3ca11a3f6637e360e9e"
@@ -2195,6 +2200,13 @@ keymaster@1.6.2:
   resolved "https://registry.yarnpkg.com/keymaster/-/keymaster-1.6.2.tgz#e1ae54d0ea9488f9f60b66b668f02e9a1946c6eb"
   integrity sha512-OvA/AALN8IDKKkTk2Z+bDrzs/SQao4lo/QPbwSdDvm+frxfiYiYCSn1aHFUypJY3SruAO1y/c771agBmTXqUtg==
 
+lande@^1.0.10:
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/lande/-/lande-1.0.10.tgz#1f6c6542e628338eb18def22edd1038f5fce9e7a"
+  integrity sha512-yT52DQh+UV2pEp08jOYrA4drDv0DbjpiRyZYgl25ak9G2cVR2AimzrqkYQWrD9a7Ud+qkAcaiDDoNH9DXfHPmw==
+  dependencies:
+    toygrad "^2.6.0"
+
 language-subtag-registry@^0.3.20:
   version "0.3.22"
   resolved "https://registry.npmjs.org/language-subtag-registry/-/language-subtag-registry-0.3.22.tgz"
@@ -3330,6 +3342,11 @@ tough-cookie@~2.5.0:
   dependencies:
     psl "^1.1.28"
     punycode "^2.1.1"
+
+toygrad@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/toygrad/-/toygrad-2.6.0.tgz#e814bb7da026db8e08dc7da14c7155f49cdb4d54"
+  integrity sha512-g4zBmlSbvzOE5FOILxYkAybTSxijKLkj1WoNqVGnbMcWDyj4wWQ+eYSr3ik7XOpIgMq/7eBcPRTJX3DM2E0YMg==
 
 ts-easing@^0.2.0:
   version "0.2.0"
