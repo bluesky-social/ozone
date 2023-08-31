@@ -1,12 +1,16 @@
 import { Fragment, useState, useEffect } from 'react'
 import { Disclosure, Transition } from '@headlessui/react'
-import { LabelChip, LabelList, LabelListEmpty } from './List'
+import { LabelChip, LabelListEmpty } from './List'
 import {
   labelOptions,
   displayLabel,
   groupLabelList,
   getLabelGroupInfo,
+  isSelfLabel,
+  buildAllLabelOptions,
+  unFlagSelfLabel,
 } from './util'
+import { classNames } from '@/lib/util'
 
 const EMPTY_ARR = []
 
@@ -22,7 +26,7 @@ export function LabelsGrid(props: LabelsProps) {
     subject,
     ...others
   } = props
-  const allOptions = unique([...defaultLabels, ...options]).sort()
+  const allOptions = buildAllLabelOptions(defaultLabels, options)
   const [current, setCurrent] = useState<string[]>(defaultLabels)
 
   // update the current list when the current labels prop changes
@@ -35,6 +39,8 @@ export function LabelsGrid(props: LabelsProps) {
   }, [defaultLabelsKey, subject])
 
   const handleCheckboxChange = (opt: string) => {
+    // don't allow self labels to be changed
+    if (isSelfLabel(opt)) return
     setCurrent((prev) => {
       if (prev.includes(opt)) {
         return prev.filter((item) => item !== opt)
@@ -55,7 +61,7 @@ export function LabelsGrid(props: LabelsProps) {
       >
         {!current.length && <LabelListEmpty>(click to add)</LabelListEmpty>}
         {current.map((label) => {
-          const labelGroup = getLabelGroupInfo(label)
+          const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
           return (
             <LabelChip key={label} style={{ color: labelGroup.color }}>
               {displayLabel(label)}
@@ -85,33 +91,43 @@ export function LabelsGrid(props: LabelsProps) {
                   className="flex flex-col w-1/4 pt-1 pl-2"
                 >
                   <p style={{ color: group.color }}>{group.title}</p>
-                  {group.labels.map((opt, i) => (
-                    <div className="flex flex-row" key={`label_${opt}`}>
-                      <div className="flex h-6 items-center">
-                        <input
-                          id={`${id}-${group.title}-opt-${i}`}
-                          name={`${name}-staged`}
-                          type="checkbox"
-                          value={opt}
-                          checked={current.includes(opt)}
-                          onChange={() => handleCheckboxChange(opt)}
-                          className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              e.preventDefault() // make sure we don't submit the form
-                              e.currentTarget.click() // simulate a click on the input
-                            }
-                          }}
-                        />
-                      </div>
-                      <label
-                        htmlFor={`${id}-${group.title}-opt-${i}`}
-                        className="ml-1 text-sm leading-6 font-medium text-gray-900"
+                  {group.labels.map((opt, i) => {
+                    const cantChange = isSelfLabel(opt)
+                    return (
+                      <div
+                        className={classNames(
+                          `flex flex-row`,
+                          cantChange ? 'opacity-75' : '',
+                        )}
+                        key={`label_${opt}`}
                       >
-                        {displayLabel(opt)}
-                      </label>
-                    </div>
-                  ))}
+                        <div className="flex h-6 items-center">
+                          <input
+                            id={`${id}-${group.title}-opt-${i}`}
+                            name={`${name}-staged`}
+                            type="checkbox"
+                            value={opt}
+                            disabled={cantChange}
+                            checked={current.includes(opt)}
+                            onChange={() => handleCheckboxChange(opt)}
+                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault() // make sure we don't submit the form
+                                e.currentTarget.click() // simulate a click on the input
+                              }
+                            }}
+                          />
+                        </div>
+                        <label
+                          htmlFor={`${id}-${group.title}-opt-${i}`}
+                          className="ml-1 text-sm leading-6 font-medium text-gray-900"
+                        >
+                          {displayLabel(opt)}
+                        </label>
+                      </div>
+                    )
+                  })}
                 </div>
               )
             })}
@@ -131,9 +147,4 @@ type LabelsProps = {
   defaultLabels?: string[]
   options?: string[]
   subject?: string
-}
-
-function unique<T>(arr: T[]) {
-  const set = new Set(arr)
-  return [...set]
 }

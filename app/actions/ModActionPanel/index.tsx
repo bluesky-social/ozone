@@ -11,7 +11,12 @@ import { PropsOf } from '@/lib/types'
 import { ResolutionList } from './ResolutionList'
 import client from '@/lib/client'
 import { BlobList } from './BlobList'
-import { LabelsInput, diffLabels, toLabelVal } from '@/common/labels'
+import {
+  LabelsInput,
+  diffLabels,
+  toLabelVal,
+  getLabelsForSubject,
+} from '@/common/labels'
 import { takesKeyboardEvt } from '@/lib/util'
 import { SnoozeAction } from '@/reports/SnoozeAction'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
@@ -82,9 +87,10 @@ function Form(props: {
   const { currentAction: currActionMaybeReplace = currentActionFallback } =
     record?.moderation ?? repo?.moderation ?? {}
   const currentAction = replacingAction ? undefined : currActionMaybeReplace
-  const currentLabels = (
-    (record?.labels ?? repo?.labels ?? []) as { val: string }[]
-  ).map(toLabelVal)
+  const allLabels = getLabelsForSubject({ repo, record })
+  const currentLabels = allLabels.map((label) =>
+    toLabelVal(label, repo?.did ?? record?.repo.did),
+  )
   const actionColorClasses =
     currActionMaybeReplace?.action === ComAtprotoAdminDefs.TAKEDOWN
       ? 'text-rose-600 hover:text-rose-700'

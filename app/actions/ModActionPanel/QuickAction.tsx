@@ -14,7 +14,7 @@ import { PropsOf } from '@/lib/types'
 import { ResolutionList } from './ResolutionList'
 import client from '@/lib/client'
 import { BlobList } from './BlobList'
-import { diffLabels, toLabelVal } from '@/common/labels'
+import { diffLabels, getLabelsForSubject, toLabelVal } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
 import { useKeyPressEvent } from 'react-use'
@@ -137,9 +137,11 @@ function Form(
   const { currentAction: currActionMaybeReplace = currentActionFallback } =
     record?.moderation ?? repo?.moderation ?? {}
   const currentAction = replacingAction ? undefined : currActionMaybeReplace
-  const currentLabels = (
-    (record?.labels ?? repo?.labels ?? []) as { val: string }[]
-  ).map(toLabelVal)
+
+  const allLabels = getLabelsForSubject({ repo, record })
+  const currentLabels = allLabels.map((label) =>
+    toLabelVal(label, repo?.did ?? record?.repo.did),
+  )
   const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
 
   // navigate to next or prev report

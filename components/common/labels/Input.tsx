@@ -7,7 +7,11 @@ import {
   displayLabel,
   groupLabelList,
   getLabelGroupInfo,
+  buildAllLabelOptions,
+  isSelfLabel,
+  unFlagSelfLabel,
 } from './util'
+import { classNames } from '@/lib/util'
 
 const EMPTY_ARR = []
 
@@ -22,7 +26,7 @@ export function LabelsInput(props: LabelsProps) {
     disabled,
     ...others
   } = props
-  const allOptions = unique([...defaultLabels, ...options]).sort()
+  const allOptions = buildAllLabelOptions(defaultLabels, options)
   const [packedCurrent, setPackedCurrent] = useSyncedState(
     packMemo(defaultLabels),
   )
@@ -39,7 +43,7 @@ export function LabelsInput(props: LabelsProps) {
       >
         {!current.length && <LabelListEmpty>(click to add)</LabelListEmpty>}
         {current.map((label) => {
-          const labelGroup = getLabelGroupInfo(label)
+          const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
           return (
             <LabelChip key={label} style={{ color: labelGroup.color }}>
               {displayLabel(label)}
@@ -84,16 +88,21 @@ export function LabelsInput(props: LabelsProps) {
                     </p>
                     <div className="flex flex-col">
                       {group.labels.map((opt, i) => {
+                        const cantChange = isSelfLabel(opt)
                         return (
                           <div
                             key={opt}
-                            className="relative flex items-start mr-2"
+                            className={classNames(
+                              `relative flex items-start mr-2`,
+                              cantChange ? 'opacity-75' : '',
+                            )}
                           >
                             <div className="flex h-6 items-center">
                               <input
                                 id={`${groupIndex}-${id}-opt-${i}`}
                                 name={`${name}-staged`}
                                 type="checkbox"
+                                disabled={cantChange}
                                 value={opt}
                                 defaultChecked={current.includes(opt)}
                                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"

@@ -1,4 +1,4 @@
-import { CollectionId } from "@/reports/helpers/subject";
+import { CollectionId } from '@/reports/helpers/subject'
 
 export function classNames(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(' ')
@@ -89,3 +89,7 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
 
 export const isValidDid = (did?: string | null) => did?.startsWith('did:')
 export const isValidHandle = (handle?: string | null) => handle?.includes('.')
+
+export function unique<T>(arr: T[]) {
+  return [...new Set(arr)]
+}

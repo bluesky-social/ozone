@@ -1,4 +1,9 @@
-import { AppBskyActorDefs, ComAtprotoAdminDefs } from '@atproto/api'
+import { unique } from '@/lib/util'
+import {
+  AppBskyActorDefs,
+  ComAtprotoAdminDefs,
+  ComAtprotoLabelDefs,
+} from '@atproto/api'
 
 type LabelGroupInfoRecord = {
   title: string
@@ -16,12 +21,25 @@ export function diffLabels(current: string[], next: string[]) {
   }
 }
 
+const SELF_FLAG = '(self)'
 export function displayLabel(label: string) {
   return label
 }
+export const flagSelfLabel = (label: string) => `${label}${SELF_FLAG}`
+export const unFlagSelfLabel = (label: string) => label.replace(SELF_FLAG, '')
 
-export function toLabelVal(label: { val: string }): string {
-  return label.val
+export const isSelfLabel = (label: string) => label.endsWith(SELF_FLAG)
+
+export function toLabelVal(
+  label: Partial<ComAtprotoLabelDefs.Label>,
+  authorDid?: string,
+): string {
+  if (!label.val) return ''
+  let val = label.val
+  if (authorDid && label.src === authorDid) {
+    val = flagSelfLabel(val)
+  }
+  return val
 }
 
 // @NOTE not deduped
@@ -72,6 +90,7 @@ export enum LabelGroup {
   Intolerance,
   Violations,
   UnCategorized,
+  Self,
 }
 
 export const LabelGroupInfo = {
@@ -150,10 +169,12 @@ export const groupLabelList = (labels: string[]): GroupedLabelList => {
   const groupedList: GroupedLabelList = {}
 
   labels.forEach((label) => {
+    // SELF_FLAG is embedded in the label value so when grouping, we have to take it out of the value
+    const cleanedLabel = unFlagSelfLabel(label)
     // We need to check the property's existence because the value may be simply 0 in which case it will be falsy
     // even though it's a valid value
-    const group = labelToGroupMap.hasOwnProperty(label)
-      ? labelToGroupMap[label]
+    const group = labelToGroupMap.hasOwnProperty(cleanedLabel)
+      ? labelToGroupMap[cleanedLabel]
       : LabelGroup.UnCategorized
 
     if (!groupedList[group]) {
@@ -197,4 +218,23 @@ export const doesProfileNeedBlur = ({
     labels.push(...repo.labels?.map(({ val }) => val))
   }
   return doesLabelNeedBlur(labels)
+}
+
+export const getLabelsForSubject = ({
+  repo,
+  record,
+}: {
+  repo?: ComAtprotoAdminDefs.RepoViewDetail
+  record?: ComAtprotoAdminDefs.RecordViewDetail
+}) => {
+  return (record?.labels ??
+    repo?.labels ??
+    []) as Partial<ComAtprotoLabelDefs.Label>[]
+}
+
+export const buildAllLabelOptions = (
+  defaultLabels: string[],
+  options: string[],
+) => {
+  return unique([...defaultLabels, ...options]).sort()
 }

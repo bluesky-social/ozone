@@ -26,6 +26,7 @@ import {
   LabelList,
   getLabelGroupInfo,
   doesLabelNeedBlur,
+  toLabelVal,
 } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
@@ -384,7 +385,8 @@ function PostLabels({
   if (!labels?.length) return null
   return (
     <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
-      {labels?.map(({ val }, i) => {
+      {labels?.map((label, i) => {
+        const { val, src } = label
         const labelGroup = getLabelGroupInfo(val)
 
         return (
@@ -393,9 +395,11 @@ function PostLabels({
             // TODO: Ideally, we should just use inline class name but it only works when the class names are static
             // so trying to work around that with style prop for now
             style={{ color: labelGroup.color }}
-            key={`${cid}_${val}`}
+            // there may be multiple labels with the same val for the same cid, where the labeler is different
+            // so we need to use the label src is in the key to guaranty uniqueness
+            key={`${cid}_${val}_${src}`}
           >
-            {val}
+            {toLabelVal(label, item.post.author.did)}
           </LabelChip>
         )
       })}
