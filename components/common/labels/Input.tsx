@@ -32,6 +32,7 @@ export function LabelsInput(props: LabelsProps) {
   )
   const current = unpackMemo<string[]>(packedCurrent)
   const groupedLabelList = groupLabelList(allOptions)
+  
   return (
     <Popover className="relative">
       <Popover.Button
@@ -76,22 +77,24 @@ export function LabelsInput(props: LabelsProps) {
               id={`${id}-staged-container`}
             >
               {Object.values(groupedLabelList).map((group, groupIndex) => {
+                const groupTitle = group.strings.settings.en.name
                 return (
                   <div
-                    key={`label_group_${group.title}`}
+                    key={`label_group_${groupTitle}`}
                     className={`w-1/2 ${
                       [0, 1].includes(groupIndex) ? '' : 'pt-2'
                     }`}
                   >
                     <p className="pb-1" style={{ color: group.color }}>
-                      {group.title}
+                      {groupTitle}
                     </p>
                     <div className="flex flex-col">
                       {group.labels.map((opt, i) => {
-                        const cantChange = isSelfLabel(opt)
+                        const labelText = typeof opt === 'string' ? opt : opt.id
+                        const cantChange = isSelfLabel(labelText)
                         return (
                           <div
-                            key={opt}
+                            key={labelText}
                             className={classNames(
                               `relative flex items-start mr-2`,
                               cantChange ? 'opacity-75' : '',
@@ -103,8 +106,8 @@ export function LabelsInput(props: LabelsProps) {
                                 name={`${name}-staged`}
                                 type="checkbox"
                                 disabled={cantChange}
-                                value={opt}
-                                defaultChecked={current.includes(opt)}
+                                value={labelText}
+                                defaultChecked={current.includes(labelText)}
                                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                               />
                             </div>
@@ -112,7 +115,7 @@ export function LabelsInput(props: LabelsProps) {
                               htmlFor={`${groupIndex}-${id}-opt-${i}`}
                               className="ml-3 text-sm leading-6 font-medium text-gray-900"
                             >
-                              {displayLabel(opt)}
+                              {displayLabel(labelText)}
                             </label>
                           </div>
                         )
@@ -137,11 +140,6 @@ type LabelsProps = {
   className?: string
   defaultLabels?: string[]
   options?: string[]
-}
-
-function unique<T>(arr: T[]) {
-  const set = new Set(arr)
-  return [...set]
 }
 
 function packMemo(val: unknown) {

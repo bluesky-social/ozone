@@ -3,15 +3,20 @@ import {
   AppBskyActorDefs,
   ComAtprotoAdminDefs,
   ComAtprotoLabelDefs,
+  LabelDefinition,
+  LabelGroupDefinition,
+  LABELS,
+  LABEL_GROUPS,
 } from '@atproto/api'
 
 type LabelGroupInfoRecord = {
-  title: string
   color: string
+  labels: Array<string | LabelDefinition>
 }
 
-type GroupedLabelList = Partial<
-  Record<LabelGroup, LabelGroupInfoRecord & { labels: string[] }>
+type GroupedLabelList = Record<
+  string,
+  LabelGroupInfoRecord & Omit<LabelGroupDefinition, 'labels'>
 >
 
 export function diffLabels(current: string[], next: string[]) {
@@ -42,128 +47,49 @@ export function toLabelVal(
   return val
 }
 
-// @NOTE not deduped
-export const labelOptions = [
-  // sexuality
-  'porn',
-  'nudity',
-  'sexual',
-
-  // violence/graphic
-  'gore',
-  'self-harm',
-  'torture',
-  'nsfl',
-
-  // intolerance
-  'icon-kkk',
-  'icon-nazi',
-  'icon-intolerant',
-
-  // bad behavior ("subjective")
-  //'troll',
-  //'threat',
-
-  // violations/illegal
-  'csam',
-  'dmca-violation',
-  'nudity-nonconsensual',
-
-  // other policy/behavior issues
-  'spam',
-  'impersonation',
-  'misleading',
-  //'scam',
-  //'account-security',
-
-  // direct action
-  '!no-promote',
-  '!filter',
-  '!warn',
-]
-
-export enum LabelGroup {
-  Sexuality,
-  Other,
-  DirectAction,
-  Violence,
-  Intolerance,
-  Violations,
-  UnCategorized,
-  Self,
-}
+export const labelOptions = Object.keys(LABELS)
 
 export const LabelGroupInfo = {
-  [LabelGroup.Sexuality]: {
-    title: 'Sexuality',
+  [LABEL_GROUPS.system.id]: {
+    color: '#c45722',
+  },
+  [LABEL_GROUPS.sexual.id]: {
     color: '#d45722',
   },
-  [LabelGroup.Violence]: {
-    title: 'Violence',
+  [LABEL_GROUPS.violence.id]: {
     color: '#d42222',
   },
-  [LabelGroup.Intolerance]: {
-    title: 'Intolerance',
+  [LABEL_GROUPS.intolerance.id]: {
     color: '#d422bc',
   },
-  [LabelGroup.Violations]: {
-    title: 'Violations/Illegal',
+  [LABEL_GROUPS.legal.id]: {
     color: '#3502cc',
   },
-  [LabelGroup.Other]: {
-    title: 'Other/Policy Issues',
+  [LABEL_GROUPS.rude.id]: {
     color: '#ccb802',
   },
-  [LabelGroup.DirectAction]: {
-    title: 'Direct Action',
+  [LABEL_GROUPS.curation.id]: {
     color: '#ff0303',
   },
-  [LabelGroup.UnCategorized]: {
-    title: 'Uncategorzied',
+  [LABEL_GROUPS.misinfo.id]: {
+    color: '#530303',
+  },
+  uncategorized: {
+    strings: {
+      en: {
+        name: 'Uncategorzied',
+        description: 'Labels that have not been categorized yet',
+      },
+    },
     color: '',
+    labels: [],
   },
 }
 
-export const labelToGroupMap = {
-  // sexuality
-  porn: LabelGroup.Sexuality,
-  nudity: LabelGroup.Sexuality,
-  sexual: LabelGroup.Sexuality,
-
-  // violence/graphic
-  gore: LabelGroup.Violence,
-  'self-harm': LabelGroup.Violence,
-  torture: LabelGroup.Violence,
-  nsfl: LabelGroup.Violence,
-
-  // intolerance
-  'icon-kkk': LabelGroup.Intolerance,
-  'icon-nazi': LabelGroup.Intolerance,
-  'icon-intolerant': LabelGroup.Intolerance,
-
-  // bad behavior ("subjective")
-  //'troll',
-  //'threat',
-
-  // violations/illegal
-  csam: LabelGroup.Violations,
-  'dmca-violation': LabelGroup.Violations,
-  'nudity-nonconsensual': LabelGroup.Violations,
-
-  // other policy/behavior issues
-  spam: LabelGroup.Other,
-  impersonation: LabelGroup.Other,
-  misleading: LabelGroup.Other,
-  //'scam',
-  //'account-security',
-
-  // direct action
-  '!no-promote': LabelGroup.DirectAction,
-  '!filter': LabelGroup.DirectAction,
-  '!warn': LabelGroup.DirectAction,
-}
-
-const labelGroupsRequiringBlur = [LabelGroup.Violence, LabelGroup.Sexuality]
+const labelGroupsRequiringBlur = [
+  LABEL_GROUPS.violence.id,
+  LABEL_GROUPS.sexual.id,
+]
 
 export const groupLabelList = (labels: string[]): GroupedLabelList => {
   const groupedList: GroupedLabelList = {}
@@ -171,16 +97,17 @@ export const groupLabelList = (labels: string[]): GroupedLabelList => {
   labels.forEach((label) => {
     // SELF_FLAG is embedded in the label value so when grouping, we have to take it out of the value
     const cleanedLabel = unFlagSelfLabel(label)
-    // We need to check the property's existence because the value may be simply 0 in which case it will be falsy
-    // even though it's a valid value
-    const group = labelToGroupMap.hasOwnProperty(cleanedLabel)
-      ? labelToGroupMap[cleanedLabel]
-      : LabelGroup.UnCategorized
+    const group = LABELS[cleanedLabel]
+    const groupId = group?.groupId || 'uncategorized'
 
-    if (!groupedList[group]) {
-      groupedList[group] = { ...LabelGroupInfo[group], labels: [label] }
+    if (groupedList[groupId]) {
+      groupedList[groupId].labels.push(label)
     } else {
-      groupedList[group].labels.push(label)
+      groupedList[groupId] = {
+        ...(LabelGroupInfo[groupId] || LabelGroupInfo.uncategorized),
+        ...(LABEL_GROUPS[groupId] || {}),
+        labels: [label],
+      }
     }
   })
 
@@ -188,19 +115,19 @@ export const groupLabelList = (labels: string[]): GroupedLabelList => {
 }
 
 export const getLabelGroupInfo = (label: string): LabelGroupInfoRecord => {
-  // We need to check the property's existence because the value may be simply 0
-  // in which case it will be falsy even though it's a valid value
-  const group = labelToGroupMap.hasOwnProperty(label)
-    ? labelToGroupMap[label]
-    : LabelGroup.UnCategorized
+  const group = LABELS[label]
+  const groupId = group?.groupId || 'uncategorized'
 
-  return LabelGroupInfo[group]
+  return {
+    ...LabelGroupInfo.uncategorized,
+    ...(LabelGroupInfo[groupId] || {}),
+    ...(group || {}),
+  }
 }
 
-// If even one of the
 export const doesLabelNeedBlur = (labels?: string[]): boolean =>
   !!labels?.find((label) =>
-    labelGroupsRequiringBlur.includes(labelToGroupMap[label]),
+    labelGroupsRequiringBlur.includes(LABELS[label]?.groupId),
   )
 
 export const doesProfileNeedBlur = ({

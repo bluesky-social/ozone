@@ -51,6 +51,10 @@ export function LabelsGrid(props: LabelsProps) {
   }
 
   const groupedLabelList = groupLabelList(allOptions)
+  // Sort by number of labels in each group so that the lists of labels take less vertical space in the UI
+  const sortedLabelList = Object.values(groupedLabelList).sort(
+    (a, b) => b.labels?.length - a.labels?.length,
+  )
 
   return (
     <Disclosure as="div">
@@ -81,35 +85,37 @@ export function LabelsGrid(props: LabelsProps) {
       >
         <Disclosure.Panel>
           <div
-            className="flex flex-wrap flex-row gap-3 p-3 shadow-sm"
+            className="flex flex-wrap flex-row gap-x-8 py-3 shadow-sm"
             id={`${id}-staged-container`}
           >
-            {Object.values(groupedLabelList).map((group) => {
+            {sortedLabelList.map((group) => {
+              const groupTitle = group.strings.settings.en.name
               return (
                 <div
-                  key={`label_group_${group.title}`}
-                  className="flex flex-col w-1/4 pt-1 pl-2"
+                  key={`label_group_${groupTitle}`}
+                  className={classNames('flex flex-col py-1 min-w-1/6')}
                 >
-                  <p style={{ color: group.color }}>{group.title}</p>
+                  <p style={{ color: group.color }}>{groupTitle}</p>
                   {group.labels.map((opt, i) => {
-                    const cantChange = isSelfLabel(opt)
+                    const labelText = typeof opt === 'string' ? opt : opt.id
+                    const cantChange = isSelfLabel(labelText)
                     return (
                       <div
                         className={classNames(
-                          `flex flex-row`,
+                          `flex flex-row pl-1`,
                           cantChange ? 'opacity-75' : '',
                         )}
-                        key={`label_${opt}`}
+                        key={`label_${labelText}`}
                       >
                         <div className="flex h-6 items-center">
                           <input
-                            id={`${id}-${group.title}-opt-${i}`}
+                            id={`${id}-${groupTitle}-opt-${i}`}
                             name={`${name}-staged`}
                             type="checkbox"
-                            value={opt}
+                            value={labelText}
                             disabled={cantChange}
-                            checked={current.includes(opt)}
-                            onChange={() => handleCheckboxChange(opt)}
+                            checked={current.includes(labelText)}
+                            onChange={() => handleCheckboxChange(labelText)}
                             className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') {
@@ -120,10 +126,10 @@ export function LabelsGrid(props: LabelsProps) {
                           />
                         </div>
                         <label
-                          htmlFor={`${id}-${group.title}-opt-${i}`}
+                          htmlFor={`${id}-${groupTitle}-opt-${i}`}
                           className="ml-1 text-sm leading-6 font-medium text-gray-900"
                         >
-                          {displayLabel(opt)}
+                          {displayLabel(labelText)}
                         </label>
                       </div>
                     )
