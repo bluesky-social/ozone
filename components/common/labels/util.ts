@@ -49,7 +49,10 @@ export function toLabelVal(
 
 export const labelOptions = Object.keys(LABELS)
 
-export const LabelGroupInfo = {
+export const LabelGroupInfo: Record<
+  string,
+  Partial<LabelGroupDefinition> & { color: string }
+> = {
   [LABEL_GROUPS.system.id]: {
     color: '#c45722',
   },
@@ -76,9 +79,11 @@ export const LabelGroupInfo = {
   },
   uncategorized: {
     strings: {
-      en: {
-        name: 'Uncategorzied',
-        description: 'Labels that have not been categorized yet',
+      settings: {
+        en: {
+          name: 'Uncategorzied',
+          description: 'Labels that have not been categorized yet',
+        },
       },
     },
     color: '',
@@ -119,6 +124,8 @@ export const getLabelGroupInfo = (label: string): LabelGroupInfoRecord => {
   const groupId = group?.groupId || 'uncategorized'
 
   return {
+    // TODO: We shouldn't have to do this, there's a weird type def somewhere that's causing this
+    labels: [],
     ...LabelGroupInfo.uncategorized,
     ...(LabelGroupInfo[groupId] || {}),
     ...(group || {}),
