@@ -404,7 +404,7 @@ function Form(
             />
           )}
         </div>
-        <div className="mb-4 flex flex-row justify-between">
+        <div className="mb-4 w-full flex flex-row justify-between">
           <ButtonSecondary
             onClick={() => navigateReports(-1)}
             disabled={submitting}
@@ -413,13 +413,13 @@ function Form(
           </ButtonSecondary>
           <div className="flex flex-1">
             <ButtonSecondary
-              className="ml-2 mr-4"
+              className="mx-1 px-0 sm:px-4 sm:ml-2 sm:mr-4"
               disabled={submitting}
               onClick={onCancel}
             >
-              (C)ancel
+              <span className='-rotate-90 sm:rotate-0 text-sm sm:text-base'>(C)ancel</span>
             </ButtonSecondary>
-            <RadioGroup className={`${currentAction ? 'opacity-75' : ''}`}>
+            <RadioGroup className={`w-2/5 md:w-full ${currentAction ? 'opacity-75' : ''}`}>
               {Object.entries(actionOptions).map(([value, label], i, arr) => {
                 const actionTextClassNames = getActionClassNames({
                   action: value,
@@ -467,9 +467,9 @@ function Form(
               ref={submitButton}
               type="submit"
               disabled={submitting}
-              className="ml-4 mr-2"
+              className="mx-1 px-0 sm:px-4 sm:ml-4 sm:mr-2"
             >
-              (S)ubmit
+              <span className='-rotate-90 sm:rotate-0 text-sm sm:text-base'>(S)ubmit</span>
             </ButtonPrimary>
           </div>
           <ButtonSecondary

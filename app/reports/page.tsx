@@ -137,16 +137,16 @@ export default function Reports() {
   return (
     <>
       <SectionHeader title="Reports" tabs={TABS} current={currentTab}>
-        <div className="flex-1 text-right lg:pr-2 pb-4 px-1">
-          <SnoozeListPopup onChange={() => refetch()} />
+        <div className="flex-1 lg:text-right lg:pr-2 pb-4 px-1 pt-5 lg:pt-0">
           <button
             role="button"
             className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom mr-4"
             onClick={() => setQuickOpen(true)}
           >
-            Quick Take Action{' '}
+            Quick <span className="hidden md:inline-block">Take</span> Action{' '}
             <ModActionIcon className="h-4 w-4 align-text-bottom" />
           </button>
+          <SnoozeListPopup onChange={() => refetch()} />
           <button
             role="button"
             className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom"

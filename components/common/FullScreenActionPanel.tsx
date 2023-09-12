@@ -37,7 +37,7 @@ export function FullScreenActionPanel(props: {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="max-w-screen-lg w-3/4 h-full md:max-h-3/4 md:my-12 align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:align-middle flex">
+            <Dialog.Panel className="max-w-screen-lg w-full sm:w-3/4 h-full md:max-h-3/4 md:my-12 align-bottom bg-white rounded-lg text-left sm:overflow-hidden shadow-xl transform transition-all sm:align-middle flex">
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
