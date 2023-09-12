@@ -2,10 +2,9 @@ name: E2E Cypress Tests
 
 on:
   pull_request:
+  push:
     branches:
       - main
-      - develop
-      - staging
 
 jobs:
   cypress-run:
