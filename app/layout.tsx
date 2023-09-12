@@ -31,7 +31,7 @@ export default function RootLayout({
 
   return (
     <html lang="en" className="h-full bg-gray-50">
-      <title>Redsky</title>
+      <title>Ozone</title>
       <link
         rel="icon"
         href={`/img/logo-${isLocal ? 'white' : 'colorful'}.png`}

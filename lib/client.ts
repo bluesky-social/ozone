@@ -133,7 +133,7 @@ export default clientManager
 // helpers
 // =
 
-const SESSION_KEY = 'redsky_session'
+const SESSION_KEY = 'ozone_session'
 
 function _loadSession(): ClientSession | undefined {
   try {

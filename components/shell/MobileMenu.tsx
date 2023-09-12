@@ -109,7 +109,7 @@ export function MobileMenu() {
                     title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
                     className="h-8 w-auto"
                     src="/img/logo-white.png"
-                    alt="RedSky - Bluesky Admin"
+                    alt="Ozone - Bluesky Admin"
                   />
                 </div>
                 <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">
