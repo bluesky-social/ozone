@@ -70,7 +70,7 @@ export function LoginModal() {
               className="mx-auto h-20 w-auto"
               title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
               src="/img/logo-colorful.png"
-              alt="RedSky - Bluesky Admin"
+              alt="Ozone - Bluesky Admin"
               width={200}
               height={200}
             />
