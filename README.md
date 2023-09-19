@@ -1,6 +1,21 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Getting Started
+Ozone: admin and mod web interface for atproto services
+=======================================================
+
+Ozone is a Next.js web application which talks directly to a PDS instance, and requires moderator or administrator privileges to function.
+
+Features:
+
+- viewing triaging, escalating, and actioning moderation reports
+- takedowns and suspension of content and accounts
+- creating and modifying labels on content and accounts
+- viewing invite trees and disabling invite generation
+- sending moderation emails, based on templates
+- browsing app.bsky profiles and post threads, including some taken-down content
+- quick-action modal (Ctrl-K)
+
+
+## Development Quickstart
 
 First, run the development server:
 
@@ -18,20 +33,13 @@ You can start editing the page by modifying `pages/index.tsx`. The page auto-upd
 
 The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
 
-## Development flow
 
-Just an outline of the development flow, as we continue to solidify it:
+### Local Integration Setup
 
-- Create feature branches from `develop`.
-- When you have completed a feature, create a PR from your feature branch into `develop`.
-- Post your PR for review from another team member, and merge once approved.
-- When a batch of work is complete, merge `develop` into the `staging` branch.
-  - **Note** this will be deployed _automatically_ to https://admin.staging.bsky.dev/ using Render.
-
-## Development setup
+Ozone requires a PDS service to talk to, and it is convenient to point it to a local `dev-env` instance for testing during development.
 
 1. In the separate [atproto project](https://github.com/bluesky-social/atproto), run the dev server using `yarn workspace @atproto/dev-env start`. This will run a PDS, seeded with some users and data for you.
-2. Run the development server for Ozone using `yarn dev`. This will start running the Ozone frontent at `http://localhost:3000`.
+2. Run the development server for Ozone using `yarn dev`. This will start running the Ozone frontend at `http://localhost:3000`.
 3. Navigate to the login page in your browser, at [http://localhost:3000](http://localhost:3000).
 4. Login using the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would are:
    - Service URL: http://localhost:2583
@@ -39,7 +47,7 @@ Just an outline of the development flow, as we continue to solidify it:
    - Password: hunter2
    - Admin Token: admin-pass
 
-## Working with unpublished changes to @atproto/api
+### Working with unpublished changes to the `@atproto/api` package
 
 In the course of development there may be updates to the atproto client that are not yet published to npm, but you would like to use with Ozone. Here's the workflow for using unpublished changes to the @atproto/api package:
 
@@ -89,20 +97,6 @@ In the course of development there may be updates to the atproto client that are
    ❯ git checkout package.json yarn.lock && yarn
    ```
 
-## Learn More
+## Acknowledgements
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
-
-## External Resources
-- Logo/Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower
+Logo/Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower
