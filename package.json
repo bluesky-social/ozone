@@ -1,7 +1,9 @@
 {
-  "name": "admin-dashboard",
-  "version": "0.1.0",
+  "name": "ozone",
   "private": true,
+  "version": "0.0.0",
+  "description": "Moderation admin interface for atproto services",
+  "license": "MIT or Apache 2.0",
   "engines": {
     "node": ">=18 <19"
   },
