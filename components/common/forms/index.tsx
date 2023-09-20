@@ -96,9 +96,9 @@ export function RadioGroupOption(
   )
 }
 
-export function FormLabel(
-  props: ComponentProps<'label'> & { label: string; required?: boolean },
-) {
+type LabelProps = { label: string; required?: boolean }
+
+export function FormLabel(props: ComponentProps<'label'> & LabelProps) {
   const { label, required, className, children, ...others } = props
   return (
     <div className={className}>
@@ -107,6 +107,30 @@ export function FormLabel(
         {required && <sup className="text-red-500">*</sup>}
       </label>
       <div className="mt-1">{children}</div>
+    </div>
+  )
+}
+
+export const Checkbox = ({
+  label,
+  required,
+  className,
+  ...rest
+}: LabelProps & ComponentProps<'input'> & { className?: string }) => {
+  return (
+    <div className={className}>
+      <input
+        type="checkbox"
+        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+        {...rest}
+      />
+      <label
+        htmlFor={rest.name}
+        className="ml-1 text-sm leading-6 font-medium text-gray-900"
+      >
+        {label}
+        {required && <sup className="text-red-500">*</sup>}
+      </label>
     </div>
   )
 }

@@ -3,14 +3,23 @@ import { useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { ActionButton } from '@/common/buttons'
-import { FormLabel, Input, Select, Textarea } from '@/common/forms'
+import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
 import client from '@/lib/client'
 import { compileTemplateContent, getTemplate } from './helpers'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { EmailTemplates } from './templates'
+import { useEmailComposer } from './useComposer'
 
 export const EmailComposer = ({ did }: { did: string }) => {
-  const [isSending, setIsSending] = useState(false)
+  const {
+    isSending,
+    requiresConfirmation,
+    isConfirmed,
+    checkContent,
+    toggleConfirmation,
+    toggleSending,
+    reset,
+  } = useEmailComposer()
   const messageField = useRef<HTMLTextAreaElement>(null)
   const subjectField = useRef<HTMLInputElement>(null)
 
@@ -18,11 +27,11 @@ export const EmailComposer = ({ did }: { did: string }) => {
 
   const onSubmit = async (e) => {
     e.preventDefault()
-    setIsSending(true)
     const formData = new FormData(e.currentTarget)
     const subject = formData.get('subject')?.toString() ?? undefined
     const content = formData.get('message') as string
 
+    toggleSending(true)
     try {
       await toast.promise(
         client.api.com.atproto.admin.sendEmail(
@@ -45,11 +54,12 @@ export const EmailComposer = ({ did }: { did: string }) => {
       )
       // Reset the form if email is sent successfully
       e.target.reset()
+      reset()
       // On error, we are already showing a generic error message within the toast so
       // swallowing actual error here and resetting local state back afterwards
     } catch (err) {}
 
-    setIsSending(false)
+    toggleSending(false)
   }
 
   return (
@@ -69,7 +79,10 @@ export const EmailComposer = ({ did }: { did: string }) => {
             const content = compileTemplateContent(templateName, {
               handle: repo?.handle,
             })
-            if (messageField.current) messageField.current.value = content
+            if (messageField.current) {
+              messageField.current.value = content
+              checkContent(content)
+            }
             if (subjectField.current) subjectField.current.value = subject
           }}
         >
@@ -101,10 +114,30 @@ export const EmailComposer = ({ did }: { did: string }) => {
           className="block w-full"
           autoComplete="off"
           ref={messageField}
+          onChange={(e) => {
+            checkContent(e.currentTarget.value)
+          }}
           disabled={isSending}
         />
       </FormLabel>
-      <ActionButton appearance="primary" type="submit" disabled={isSending}>
+      {requiresConfirmation && (
+        <Checkbox
+          required
+          id="confirm"
+          name="confirm"
+          className="mb-3"
+          checked={isConfirmed}
+          onChange={() => {
+            toggleConfirmation()
+          }}
+          label="There may be placeholder texts in the content of the email that are meant to be replaced with actual content, please check this box if you're sure you want to send the email as is"
+        />
+      )}
+      <ActionButton
+        appearance="primary"
+        type="submit"
+        disabled={isSending || (requiresConfirmation && !isConfirmed)}
+      >
         <PaperAirplaneIcon className="h-4 w-4 mr-2" />
         Send
       </ActionButton>
