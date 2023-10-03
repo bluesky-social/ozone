@@ -35,6 +35,8 @@ import {
 import { Loading } from '@/common/Loader'
 import { AllReportsLinkForSubject } from '@/reports/AllReportsLinkForSubject'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { formatDistance } from 'date-fns'
 
 const FORM_ID = 'mod-action-panel'
 
@@ -320,16 +322,10 @@ function Form(
 
           {/* User who reported  */}
           {record?.moderation?.reports[0]?.reportedBy && (
-            <PreviewCard
-              did={record.moderation.reports[0].reportedBy}
-              title="Most recently reported by user"
-            />
+            <LastReportPreviewCard report={record.moderation.reports[0]} />
           )}
           {repo?.moderation?.reports[0]?.reportedBy && (
-            <PreviewCard
-              did={repo.moderation.reports[0].reportedBy}
-              title="Most recently reported by user"
-            />
+            <LastReportPreviewCard report={repo?.moderation?.reports[0]} />
           )}
         </div>
         {record?.blobs && (
@@ -417,9 +413,13 @@ function Form(
               disabled={submitting}
               onClick={onCancel}
             >
-              <span className='-rotate-90 sm:rotate-0 text-sm sm:text-base'>(C)ancel</span>
+              <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                (C)ancel
+              </span>
             </ButtonSecondary>
-            <RadioGroup className={`w-2/5 md:w-full ${currentAction ? 'opacity-75' : ''}`}>
+            <RadioGroup
+              className={`w-2/5 md:w-full ${currentAction ? 'opacity-75' : ''}`}
+            >
               {Object.entries(actionOptions).map(([value, label], i, arr) => {
                 const actionTextClassNames = getActionClassNames({
                   action: value,
@@ -469,7 +469,9 @@ function Form(
               disabled={submitting}
               className="mx-1 px-0 sm:px-4 sm:ml-4 sm:mr-2"
             >
-              <span className='-rotate-90 sm:rotate-0 text-sm sm:text-base'>(S)ubmit</span>
+              <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                (S)ubmit
+              </span>
             </ButtonPrimary>
           </div>
           <ButtonSecondary
@@ -481,6 +483,35 @@ function Form(
         </div>
       </div>
     </form>
+  )
+}
+
+const LastReportPreviewCard = ({
+  report,
+}: {
+  report: ComAtprotoAdminDefs.ReportView
+}) => {
+  return (
+    <PreviewCard
+      did={report.reportedBy}
+      title={
+        <span>
+          Most recent report
+          <ReasonBadge className="mx-1" reasonType={report.reasonType} />
+          <a target="_blank" href={`/reports/${report.id}`} className="ml-1 hover:underline">
+            {formatDistance(new Date(report.createdAt), new Date(), {
+              addSuffix: true,
+            })}
+          </a>
+        </span>
+      }
+    >
+      {!!report.reason && (
+        <p className="ml-10">
+          Report reason: <i>{report.reason}</i>
+        </p>
+      )}
+    </PreviewCard>
   )
 }
 

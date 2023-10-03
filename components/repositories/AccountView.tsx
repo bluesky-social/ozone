@@ -547,7 +547,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
 }
 
 type FollowOrFollower = AppBskyActorDefs.ProfileView
-function AccountsGrid({
+export function AccountsGrid({
   error,
   accounts,
 }: {

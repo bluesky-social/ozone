@@ -6,6 +6,7 @@ import {
   AppBskyFeedGetPostThread as GetPostThread,
   ComAtprotoAdminDefs,
   AppBskyFeedDefs,
+  AppBskyActorDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -26,9 +27,11 @@ import {
   getLabelsForSubject,
 } from '../common/labels'
 import { DataField } from '@/common/DataField'
+import { AccountsGrid } from './AccountView'
 
 enum Views {
   Details,
+  Profiles,
   Thread,
   Blobs,
   Reports,
@@ -37,10 +40,12 @@ enum Views {
 export function RecordView({
   record,
   thread,
+  profiles,
   onReport,
 }: {
   record: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
+  profiles?: AppBskyActorDefs.ProfileView[]
   onReport: (uri: string) => void
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
@@ -73,9 +78,13 @@ export function RecordView({
                     currentView={currentView}
                     record={record}
                     thread={thread}
+                    profiles={profiles}
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && <Details record={record} />}
+                  {currentView === Views.Profiles && !!profiles?.length && (
+                    <AccountsGrid error="" accounts={profiles} />
+                  )}
                   {currentView === Views.Thread && thread && (
                     <Thread thread={thread.thread} />
                   )}
@@ -156,11 +165,14 @@ function Tabs({
   currentView,
   record,
   thread,
+  // May be passed in when viewing a list record
+  profiles,
   onSetCurrentView,
 }: {
   currentView: Views
   record: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
+  profiles?: AppBskyActorDefs.ProfileView[]
   onSetCurrentView: (v: Views) => void
 }) {
   const Tab = ({
@@ -195,6 +207,13 @@ function Tabs({
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <Tab view={Views.Details} label="Details" />
+            {!!profiles?.length && (
+              <Tab
+                view={Views.Profiles}
+                label="Profiles"
+                sublabel={String(profiles.length)}
+              />
+            )}
             {!!thread && <Tab view={Views.Thread} label="Post Thread" />}
             <Tab
               view={Views.Blobs}

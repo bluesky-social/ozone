@@ -16,8 +16,8 @@ export const AllReportsLinkForSubject = ({
 }: Props) => {
   const url = `/reports?term=${subject}`
   return (
-    <Link className={className} href={url} {...rest}>
+    <a target="_blank" className={className} href={url} {...rest}>
       See all reports for this subject
-    </Link>
+    </a>
   )
 }

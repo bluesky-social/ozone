@@ -27,9 +27,11 @@ const getPreviewTitleForAtUri = (uri: string): string => {
 export function PreviewCard({
   did,
   title,
+  children,
 }: {
   did: string
   title?: string | ReactNode
+  children?: ReactNode
 }) {
   if (did.startsWith('at://')) {
     const displayTitle = title || getPreviewTitleForAtUri(did)
@@ -37,6 +39,7 @@ export function PreviewCard({
       <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
         <p className="text-sm font-medium text-gray-500 mb-3">{displayTitle}</p>
         <RecordCard uri={did} />
+        {children}
       </div>
     )
   }
@@ -47,6 +50,7 @@ export function PreviewCard({
           {title ? title : 'Reported user'}
         </p>
         <RepoCard did={did} />
+        {children}
       </div>
     )
   }
@@ -57,6 +61,7 @@ export function PreviewCard({
       <span className="text-xs text-gray-400">
         {title ? title : 'Preview placeholder'}
       </span>
+      {children}
     </div>
   )
 }

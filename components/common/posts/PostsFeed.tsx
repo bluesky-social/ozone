@@ -48,7 +48,7 @@ export function PostsFeed({
           key={`post-${i}`}
           className="bg-white border-b border-gray-200 pt-6 pb-4 px-4"
         >
-          <PostAsCard item={item} onReport={onReport} />
+          <PostAsCard item={item} onReport={onReport} dense />
         </div>
       ))}
       {onLoadMore && <LoadMore onLoadMore={onLoadMore} />}

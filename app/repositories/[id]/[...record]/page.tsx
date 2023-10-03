@@ -1,7 +1,10 @@
 'use client'
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedGetPostThread as GetPostThread } from '@atproto/api'
+import {
+  AppBskyFeedGetPostThread as GetPostThread,
+  AppBskyGraphGetList as GetList,
+} from '@atproto/api'
 import { ReportPanel } from '@/reports/ReportPanel'
 import { RecordView } from '@/repositories/RecordView'
 import client from '@/lib/client'
@@ -55,8 +58,22 @@ export default function Record({
           throw err
         }
       }
-      const [record, thread] = await Promise.all([getRecord(), getThread()])
-      return { record, thread }
+      const getListProfiles = async () => {
+        if (collection !== CollectionId.List) {
+          return undefined
+        }
+        // TODO: We need pagination here, right? how come getPostThread doesn't need it?
+        const { data: listData } = await client.api.app.bsky.graph.getList({
+          list: uri,
+        })
+        return listData.items.map(({ subject }) => subject)
+      }
+      const [record, profiles, thread] = await Promise.all([
+        getRecord(),
+        getListProfiles(),
+        getThread(),
+      ])
+      return { record, thread, profiles }
     },
   })
   if (error) {
@@ -79,6 +96,7 @@ export default function Record({
       <RecordView
         record={data.record}
         thread={data.thread}
+        profiles={data.profiles}
         onReport={setReportUri}
       />
     </>

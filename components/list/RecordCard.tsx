@@ -28,6 +28,7 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
     return <LoadingFailed error="List data not found!" />
   }
 
+  const rkey = uri.split('/').pop()
   const { name, purpose, indexedAt, avatar, creator, description } = data.list
 
   const meta: string[] = [purpose.split('#')[1]]
@@ -63,7 +64,7 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
             </>{' '}
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${creator.did}`}
+              href={`https://bsky.app/profile/${creator.did}/lists/${rkey}`}
               target="_blank"
               rel="noreferrer"
             >
@@ -73,12 +74,10 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
         </div>
       </div>
       <div className="pb-2 pl-10">
-      {description && (
-        <p className="text-sm text-gray-500">{description}</p>
-      )}
-      {!!meta.length && (
-        <p className="text-sm text-gray-500">{meta.join(' - ')}</p>
-      )}
+        {description && <p className="text-sm text-gray-500">{description}</p>}
+        {!!meta.length && (
+          <p className="text-sm text-gray-500">{meta.join(' - ')}</p>
+        )}
       </div>
     </div>
   )
