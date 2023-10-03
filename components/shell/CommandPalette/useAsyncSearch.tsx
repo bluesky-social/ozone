@@ -15,6 +15,7 @@ import {
   getFragmentsFromBlueSkyAppUrl,
   isValidDid,
   isValidHandle,
+  parseAtUri,
 } from '../../../lib/util'
 
 const PostIcon = ChatBubbleLeftIcon
@@ -167,6 +168,32 @@ export const useCommandPaletteAsyncSearch = () => {
             router,
             type: 'handle',
             profileKey: fragments.handle,
+          }),
+        )
+      }
+    } else if (search.startsWith('at://')) {
+      const { did, collection, rkey } = parseAtUri(search) || {}
+      if (did && collection && rkey) {
+        actions.push({
+          id: 'view-post',
+          name: `View post ${rkey}`,
+          section: 'Details',
+          icon: <PostIcon className={iconClassName} />,
+          keywords: `${search},view,post`,
+          subtitle: 'Go to post record',
+          perform: () => {
+            router.push(`/repositories/${did}/${collection}/${rkey}`)
+          },
+        })
+      }
+
+      if (did) {
+        actions.push(
+          ...buildItemForProfile({
+            search,
+            router,
+            type: 'did',
+            profileKey: did,
           }),
         )
       }

@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
-import { classNames } from '@/lib/util'
+import { classNames, parseAtUri } from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
 import {
@@ -339,6 +339,30 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
           <div className={`prose-sm pl-10 pb-2`}>
             <RichText post={embed.record.value} />
           </div>
+        </div>
+      )
+    } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
+      const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
+      const peekLink = `https://bsky.app/profile/${did}/${collection
+        ?.split('.')
+        .pop()}/${rkey}`
+      const repoLink = `/repositories/${did}/${collection}/${rkey}`
+      return (
+        <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
+          <p className="text-sm font-medium text-gray-600">
+            The author of the original post blocked the author.{' '}
+            <Link className=" text-gray-900 underline" href={repoLink}>
+              See quoted post
+            </Link>
+            {' · '}
+            <a
+              target="_blank"
+              className=" text-gray-900 underline"
+              href={peekLink}
+            >
+              Peek
+            </a>
+          </p>
         </div>
       )
     }

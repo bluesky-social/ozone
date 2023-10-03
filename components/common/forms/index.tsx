@@ -1,4 +1,5 @@
 import { ComponentProps, forwardRef } from 'react'
+import { CopyButton } from '../CopyButton'
 
 export const Input = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
   function Input(props: ComponentProps<'input'>, ref) {
@@ -97,14 +98,24 @@ export function RadioGroupOption(
 }
 
 type LabelProps = { label: string; required?: boolean }
+type CopyProps = { copyButton?: { text: string; label?: string } }
 
-export function FormLabel(props: ComponentProps<'label'> & LabelProps) {
-  const { label, required, className, children, ...others } = props
+export function FormLabel(
+  props: ComponentProps<'label'> & LabelProps & CopyProps,
+) {
+  const { label, required, className, children, copyButton, ...others } = props
   return (
     <div className={className}>
       <label {...others} className="block text-sm font-medium text-gray-700">
         {label}
         {required && <sup className="text-red-500">*</sup>}
+        {copyButton && (
+          <CopyButton
+            {...copyButton}
+            className="ml-1"
+            title={`Copy ${copyButton.label} to clipboard`}
+          />
+        )}
       </label>
       <div className="mt-1">{children}</div>
     </div>

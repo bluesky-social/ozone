@@ -275,7 +275,12 @@ function Form(
     >
       <div className="flex flex-col h-full">
         <div className="flex flex-row items-end mb-3">
-          <FormLabel label="Subject" htmlFor="subject" className="flex-1">
+          <FormLabel
+            label="Subject"
+            htmlFor="subject"
+            className="flex-1"
+            copyButton={{ text: subject, label: 'Copy subject' }}
+          >
             <Input
               type="text"
               id="subject"
