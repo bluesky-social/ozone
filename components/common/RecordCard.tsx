@@ -68,10 +68,13 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
     queryKey: ['postCard', { uri }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down posts
-      const { data: post } = await client.api.app.bsky.feed.getPostThread({
-        uri,
-        depth: 0,
-      })
+      const { data: post } = await client.api.app.bsky.feed.getPostThread(
+        {
+          uri,
+          depth: 0,
+        },
+        { headers: client.adminHeaders() },
+      )
       return post
     },
   })

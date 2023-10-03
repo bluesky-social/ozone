@@ -49,6 +49,7 @@ export default function Record({
         try {
           const { data: thread } = await client.api.app.bsky.feed.getPostThread(
             { uri },
+            { headers: client.adminHeaders() },
           )
           return thread
         } catch (err) {
