@@ -2,19 +2,19 @@ import { useReducer } from 'react'
 
 enum ComposerActionType {
   Reset = 'RESET',
-  CheckContent = 'CHECK_CONTENT',
+  SetContent = 'SET_CONTENT',
   ToggleSending = 'TOGGLE_SENDING',
   ToggleConfirmation = 'TOGGLE_CONFIRMATION',
 }
 
 type ComposerAction =
   | {
-      type: ComposerActionType.CheckContent
-      payload: { content: string }
-    }
-  | {
       type: ComposerActionType.ToggleSending
       payload: { isSending: boolean }
+    }
+  | {
+      type: ComposerActionType.SetContent
+      payload: { content: string }
     }
   | {
       type: ComposerActionType.ToggleConfirmation
@@ -27,17 +27,19 @@ type ComposerState = {
   isSending: boolean
   isConfirmed: boolean
   requiresConfirmation: boolean
+  content: string
 }
 
 const initialState = {
   requiresConfirmation: false,
   isConfirmed: false,
   isSending: false,
+  content: '',
 }
 
 const confirmationReducer = (state: ComposerState, action: ComposerAction) => {
   switch (action.type) {
-    case ComposerActionType.CheckContent:
+    case ComposerActionType.SetContent:
       const PlaceholderCheckRegex = /###.*###/gm
       const requiresConfirmation = PlaceholderCheckRegex.test(
         action.payload.content,
@@ -45,6 +47,7 @@ const confirmationReducer = (state: ComposerState, action: ComposerAction) => {
       const newState = {
         ...state,
         requiresConfirmation,
+        content: action.payload.content,
       }
 
       // Only change isConfirmed if changing the content caused requiresConfirmation to be changed
@@ -75,10 +78,10 @@ export const useEmailComposer = () => {
 
   return {
     ...state,
-    checkContent: (content: string) =>
+    setContent: (content?: string) =>
       dispatch({
-        type: ComposerActionType.CheckContent,
-        payload: { content },
+        type: ComposerActionType.SetContent,
+        payload: { content: content || '' },
       }),
     toggleSending: (isSending: boolean) =>
       dispatch({

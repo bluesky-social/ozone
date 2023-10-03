@@ -1,6 +1,8 @@
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
-import { useRef, useState } from 'react'
+import { commands } from '@uiw/react-md-editor'
+import { useRef } from 'react'
 import { toast } from 'react-toastify'
+import dynamic from 'next/dynamic'
 
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
@@ -10,17 +12,19 @@ import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { EmailTemplates } from './templates'
 import { useEmailComposer } from './useComposer'
 
+const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
+
 export const EmailComposer = ({ did }: { did: string }) => {
   const {
     isSending,
     requiresConfirmation,
     isConfirmed,
-    checkContent,
     toggleConfirmation,
     toggleSending,
     reset,
+    content,
+    setContent,
   } = useEmailComposer()
-  const messageField = useRef<HTMLTextAreaElement>(null)
   const subjectField = useRef<HTMLInputElement>(null)
 
   const { data: { repo } = {} } = useRepoAndProfile({ id: did })
@@ -29,13 +33,21 @@ export const EmailComposer = ({ did }: { did: string }) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const subject = formData.get('subject')?.toString() ?? undefined
-    const content = formData.get('message') as string
 
     toggleSending(true)
     try {
+      const [{ remark }, { default: remarkHtml }] = await Promise.all([
+        import('remark'),
+        import('remark-html'),
+      ])
+      const htmlContent = remark()
+        .use(remarkHtml)
+        .processSync(content)
+        .toString()
+
       await toast.promise(
         client.api.com.atproto.admin.sendEmail(
-          { content, recipientDid: did, subject },
+          { content: htmlContent, recipientDid: did, subject },
           { headers: client.adminHeaders(), encoding: 'application/json' },
         ),
         {
@@ -79,10 +91,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
             const content = compileTemplateContent(templateName, {
               handle: repo?.handle,
             })
-            if (messageField.current) {
-              messageField.current.value = content
-              checkContent(content)
-            }
+            setContent(content)
             if (subjectField.current) subjectField.current.value = subject
           }}
         >
@@ -105,19 +114,31 @@ export const EmailComposer = ({ did }: { did: string }) => {
         />
       </FormLabel>
       <FormLabel required label="Message" htmlFor="message" className="mb-3">
-        <Textarea
-          id="message"
-          name="message"
-          required
-          rows={8}
-          placeholder="Actual message to be sent to the user..."
-          className="block w-full"
-          autoComplete="off"
-          ref={messageField}
-          onChange={(e) => {
-            checkContent(e.currentTarget.value)
+        <MDEditor
+          preview="edit"
+          height={400}
+          value={content}
+          onChange={setContent}
+          fullscreen={false}
+          data-color-mode="light"
+          commands={[
+            commands.bold,
+            commands.divider,
+            commands.hr,
+            commands.italic,
+            commands.link,
+            commands.orderedListCommand,
+            commands.unorderedListCommand,
+            commands.quote,
+            commands.strikethrough,
+            commands.title1,
+            commands.title2,
+            commands.title3,
+          ]}
+          extraCommands={[commands.codeEdit, commands.codeLive]}
+          textareaProps={{
+            disabled: isSending,
           }}
-          disabled={isSending}
         />
       </FormLabel>
       {requiresConfirmation && (
