@@ -5,7 +5,8 @@ import { Fragment, useState } from 'react'
 import { ActionButton } from '@/common/buttons'
 import { LabelChip } from '@/common/labels'
 import client from '@/lib/client'
-import { Textarea } from '@/common/forms'
+import { Checkbox, Textarea } from '@/common/forms'
+import { Alert } from '@/common/Alert'
 
 const useInviteCodeMutation = ({ did, id }) => {
   const queryClient = useQueryClient()
@@ -15,10 +16,11 @@ const useInviteCodeMutation = ({ did, id }) => {
     {
       disableInvites: boolean
       note?: string
+      disableExistingCodes?: boolean
     },
     unknown
   >(
-    async ({ disableInvites = true, note }) => {
+    async ({ disableInvites = true, note, disableExistingCodes = false }) => {
       const mutator = disableInvites
         ? 'disableAccountInvites'
         : 'enableAccountInvites'
@@ -30,6 +32,14 @@ const useInviteCodeMutation = ({ did, id }) => {
           encoding: 'application/json',
         },
       )
+
+      // When disabling invites, check if moderator wants to also disable existing codes
+      // If yes, get invite codes through getRepo and disable the active ones
+      if (disableInvites && disableExistingCodes) {
+        await client.api.com.atproto.admin.disableInviteCodes({
+          accounts: [did],
+        })
+      }
 
       return result
     },
@@ -57,12 +67,13 @@ export const InviteCodeGenerationStatus = ({
   const currentStatus = invitesDisabled ? 'Disabled' : 'Enabled'
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [note, setNote] = useState('')
-  const toggleInviteCodes = useInviteCodeMutation({ did, id })
+  const [disableExistingCodes, setDisableExistingCodes] = useState(false)
+  const toggleAccountInvites = useInviteCodeMutation({ did, id })
   let buttonText = invitesDisabled
-    ? toggleInviteCodes.isLoading
+    ? toggleAccountInvites.isLoading
       ? 'Enabling...'
       : 'Enable'
-    : toggleInviteCodes.isLoading
+    : toggleAccountInvites.isLoading
     ? 'Disabling...'
     : 'Disable'
 
@@ -110,8 +121,19 @@ export const InviteCodeGenerationStatus = ({
                     This will {invitesDisabled ? 'enable' : 'stop'} invite code
                     generation for this user.
                     <br />
-                    Remember, already generated invite codes will not be
-                    activated/deactivated by this action.
+                    {invitesDisabled ? (
+                      <p>
+                        Remember, this will not affect already disabled invite
+                        codes.
+                      </p>
+                    ) : (
+                      <p className="pt-2">
+                        Optionally, you can also choose to disable already
+                        generated invite codes by checking the box below. It may
+                        take a bit longer to disable existing invite codes so,
+                        please be patient.
+                      </p>
+                    )}
                   </Dialog.Description>
 
                   <Dialog.Description>
@@ -125,6 +147,27 @@ export const InviteCodeGenerationStatus = ({
                         invitesDisabled ? 'enabling' : 'disabling'
                       } invite code generation`}
                     />
+
+                    {!invitesDisabled && (
+                      <Checkbox
+                        id="disableExistingCodes"
+                        name="disableExistingCodes"
+                        className="mb-3 flex items-center"
+                        checked={disableExistingCodes}
+                        onChange={() =>
+                          setDisableExistingCodes((current) => !current)
+                        }
+                        label="Disable all available invite codes"
+                      />
+                    )}
+
+                    {toggleAccountInvites.isError && (
+                      <Alert
+                        type="error"
+                        title="Something went wrong"
+                        body={toggleAccountInvites.error?.['message']}
+                      />
+                    )}
                   </Dialog.Description>
 
                   <div className="mt-4 flex flex-row justify-end">
@@ -138,9 +181,10 @@ export const InviteCodeGenerationStatus = ({
                     <ActionButton
                       appearance="primary"
                       onClick={() =>
-                        toggleInviteCodes
+                        toggleAccountInvites
                           .mutateAsync({
                             disableInvites: invitesDisabled ? false : true,
+                            disableExistingCodes,
                             note,
                           })
                           .then(() => {
@@ -148,7 +192,7 @@ export const InviteCodeGenerationStatus = ({
                             setNote('')
                           })
                       }
-                      disabled={toggleInviteCodes.isLoading ? true : false}
+                      disabled={toggleAccountInvites.isLoading ? true : false}
                     >
                       {buttonText}
                     </ActionButton>
