@@ -36,6 +36,15 @@ const Comment = ({
         )}
       </p>
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      {/* This is only for legacy actions, new actions won't have these properties for these events */}
+      <EventLabels
+        header="Added: "
+        labels={modEvent.event.createLabelVals as string[]}
+      />
+      <EventLabels
+        header="Removed: "
+        labels={modEvent.event.negateLabelVals as string[]}
+      />
     </div>
   )
 }
@@ -117,7 +126,39 @@ const TakedownOrMute = ({
       {expiresAt && (
         <p className="mt-1">Until {dateFormatter.format(expiresAt)}</p>
       )}
+      {/* This is only for legacy actions, new actions won't have these properties for these events */}
+      <EventLabels
+        header="Added: "
+        labels={modEvent.event.createLabelVals as string[]}
+      />
+      <EventLabels
+        header="Removed: "
+        labels={modEvent.event.negateLabelVals as string[]}
+      />
     </div>
+  )
+}
+
+const EventLabels = ({
+  header,
+  labels,
+}: {
+  header: string
+  labels?: string[]
+}) => {
+  if (!labels?.length) return null
+  return (
+    <LabelList>
+      <span className="text-gray-500">{header}</span>
+      {labels.map((label) => {
+        const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
+        return (
+          <LabelChip key={label} style={{ color: labelGroup.color }}>
+            {displayLabel(label)}
+          </LabelChip>
+        )
+      })}
+    </LabelList>
   )
 }
 
@@ -138,32 +179,8 @@ const Label = ({
             : modEvent.createdBy}
         </span>
       </p>
-      {!!modEvent.event.createLabelVals?.length && (
-        <LabelList>
-          <span>Added: </span>
-          {modEvent.event.createLabelVals.map((label) => {
-            const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
-            return (
-              <LabelChip key={label} style={{ color: labelGroup.color }}>
-                {displayLabel(label)}
-              </LabelChip>
-            )
-          })}
-        </LabelList>
-      )}
-      {!!modEvent.event.negateLabelVals?.length && (
-        <LabelList>
-          <span>Removed: </span>
-          {modEvent.event.negateLabelVals.map((label) => {
-            const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
-            return (
-              <LabelChip key={label} style={{ color: labelGroup.color }}>
-                {displayLabel(label)}
-              </LabelChip>
-            )
-          })}
-        </LabelList>
-      )}
+      <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
+      <EventLabels header="Removed: " labels={modEvent.event.negateLabelVals} />
     </div>
   )
 }
