@@ -39,11 +39,11 @@ const Comment = ({
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
-        labels={modEvent.event.createLabelVals as string[]}
+        labels={modEvent.event.createLabelVals as string[] | undefined}
       />
       <EventLabels
         header="Removed: "
-        labels={modEvent.event.negateLabelVals as string[]}
+        labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
     </div>
   )
@@ -129,11 +129,11 @@ const TakedownOrMute = ({
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
-        labels={modEvent.event.createLabelVals as string[]}
+        labels={modEvent.event.createLabelVals as string[] | undefined}
       />
       <EventLabels
         header="Removed: "
-        labels={modEvent.event.negateLabelVals as string[]}
+        labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
     </div>
   )

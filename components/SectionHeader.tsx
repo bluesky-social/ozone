@@ -46,6 +46,7 @@ export function SectionHeader({
                 }
                 return (
                   <Link
+                    prefetch={false}
                     key={tab.name}
                     href={href}
                     className={classNames(

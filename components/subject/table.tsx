@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { classNames, truncate } from '@/lib/util'
+import { classNames } from '@/lib/util'
 import { SubjectOverview } from '../reports/SubjectOverview'
 import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname } from 'next/navigation'
@@ -165,7 +165,10 @@ function SubjectRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
       >
-        <Link href={getToggleReverseOrderLink('lastReviewedAt')}>
+        <Link
+          prefetch={false}
+          href={getToggleReverseOrderLink('lastReviewedAt')}
+        >
           Last Reviewed/Note
           {sortField === 'lastReviewedAt' &&
             (sortDirection === 'asc' ? (
@@ -179,7 +182,10 @@ function SubjectRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
       >
-        <Link href={getToggleReverseOrderLink('lastReportedAt')}>
+        <Link
+          prefetch={false}
+          href={getToggleReverseOrderLink('lastReportedAt')}
+        >
           Last Reported
           {sortField === 'lastReportedAt' &&
             (sortDirection === 'asc' ? (

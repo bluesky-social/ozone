@@ -1,6 +1,5 @@
 'use client'
-import { useCallback, useState } from 'react'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
@@ -11,6 +10,7 @@ import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
 import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 import Image from 'next/image'
+import { Suspense } from 'react'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
@@ -57,7 +57,10 @@ export function Shell({ children }: React.PropsWithChildren) {
                           aria-hidden="true"
                         />
                       </div>
-                      <SearchInput />
+                      {/* This is only needed because we use useSearchParams inside this component */}
+                      <Suspense fallback={<div></div>}>
+                        <SearchInput />
+                      </Suspense>
                     </div>
                   </form>
                 </div>

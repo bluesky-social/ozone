@@ -280,8 +280,9 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
           <div>{embed.external.title}</div>
           <div>{embed.external.description}</div>
           <div>
+            {/* We don't want links to get out the container since the container usually is dashed bordered */}
             <a
-              className="text-gray-500"
+              className="text-gray-500 break-all"
               href={embed.external.uri}
               target="_blank"
               rel="noreferrer"

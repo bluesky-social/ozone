@@ -20,6 +20,7 @@ const OtherReportsForAuthorLink = ({
   newUrl.set('quickOpen', did)
   return (
     <Link
+      prefetch={false}
       href={{ pathname, search: newUrl.toString() }}
       className={classNames(
         'text-gray-600 hover:text-gray-900 font-medium',
@@ -52,6 +53,7 @@ const CollectionLink = ({
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
       <Link
+        prefetch={false}
         href={{ pathname, search: newUrl.toString() }}
         className="text-gray-600 hover:text-gray-900 font-medium mr-1"
       >
