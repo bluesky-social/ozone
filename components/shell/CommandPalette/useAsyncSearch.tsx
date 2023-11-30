@@ -7,7 +7,7 @@ import {
   MegaphoneIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar, Action, useRegisterActions, createAction } from 'kbar'
-import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context'
+import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 import { useRouter } from 'next/navigation'
 import { useMemo } from 'react'
 import {

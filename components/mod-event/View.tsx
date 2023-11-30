@@ -2,68 +2,51 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  ComAtprotoAdminGetModerationReport as GetReport,
+  ComAtprotoAdminGetModerationEvent as GetEvent,
   AppBskyFeedGetPostThread as GetPostThread,
   ComAtprotoAdminDefs,
 } from '@atproto/api'
-import {
-  ChevronLeftIcon,
-  CheckCircleIcon,
-  ExclamationCircleIcon,
-} from '@heroicons/react/20/solid'
-import { Json } from '../../common/Json'
+import { ChevronLeftIcon } from '@heroicons/react/20/solid'
+import { Json } from '@/common/Json'
 import { classNames } from '@/lib/util'
-import { ReasonBadge } from '../ReasonBadge'
-import { Header } from './Header'
-import { RecordCard, RepoCard } from '../../common/RecordCard'
-import { ActionsTable } from './ActionsTable'
-import { getType } from './getType'
+import { RecordCard, RepoCard } from '@/common/RecordCard'
+import { getType } from '@/reports/helpers/getType'
 import { DataField, DataFieldProps } from '@/common/DataField'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { MOD_EVENT_TITLES } from './constants'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
 enum Views {
   Details,
-  Actions,
+  Events,
 }
 
-export function ReportView({
-  report,
-  setResolveReportPanelOpen,
-}: {
-  report: GetReport.OutputSchema
-  setResolveReportPanelOpen: (open: boolean) => void
-}) {
+export function EventView({ event }: { event: GetEvent.OutputSchema }) {
   const [currentView, setCurrentView] = useState(Views.Details)
+  const eventTitle =
+    event.event.$type && MOD_EVENT_TITLES[event.event.$type as string]
+      ? MOD_EVENT_TITLES[event.event.$type as string]
+      : 'Event'
 
-  const headerTitle = `Report #${report?.id ?? ''}`
+  const headerTitle = `${eventTitle} #${event?.id ?? ''}`
 
-  const reportSubjectValue =
-    ComAtprotoAdminDefs.isRecordView(report.subject) && report.subject.value
-  const shortType = getType(reportSubjectValue).replace('app.bsky.feed.', '')
-  const subHeaderTitle = ComAtprotoAdminDefs.isRecordView(report.subject)
-    ? `${shortType} record of @${report.subject.repo.handle}`
-    : `repo of @${report.subject.handle}`
+  const eventSubjectValue =
+    ComAtprotoAdminDefs.isRecordView(event.subject) && event.subject.value
+  const shortType = getType(eventSubjectValue).replace('app.bsky.feed.', '')
+  const subHeaderTitle = ComAtprotoAdminDefs.isRecordView(event.subject)
+    ? `${shortType} record of @${event.subject.repo.handle}`
+    : `repo of @${event.subject.handle}`
 
-  const resolved = !!report.resolvedByActions?.length
-
-  const titleIcon = (
-    <span className="flex items-center">
-      {resolved ? (
-        <CheckCircleIcon
-          title="Resolved"
-          className="h-6 w-6 inline-block text-green-500 align-text-bottom"
+  const titleIcon =
+    (ComAtprotoAdminDefs.isRecordView(event.subject) ||
+      ComAtprotoAdminDefs.isRepoView(event.subject)) &&
+    event.subject.moderation.subjectStatus ? (
+      <span className="flex items-center">
+        <ReviewStateIcon
+          subjectStatus={event.subject.moderation.subjectStatus}
         />
-      ) : (
-        <ExclamationCircleIcon
-          title="Unresolved"
-          className="h-6 w-6 inline-block text-yellow-500 align-text-bottom"
-        />
-      )}
-    </span>
-  )
-
-  const onResolveReport = () => {
-    setResolveReportPanelOpen(true)
-  }
+      </span>
+    ) : null
 
   return (
     <div className="flex h-full bg-white">
@@ -75,35 +58,31 @@ export function ReportView({
               aria-label="Breadcrumb"
             >
               <Link
-                href={'/reports'}
+                href={'/'}
                 className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900"
               >
                 <ChevronLeftIcon
                   className="-ml-2 h-5 w-5 text-gray-400"
                   aria-hidden="true"
                 />
-                <span>{'Reports'}</span>
+                <span>{'Moderation Queue'}</span>
               </Link>
             </nav>
 
             <article>
               <Header
-                titleIcon={titleIcon}
-                headerTitle={headerTitle}
-                subHeaderTitle={subHeaderTitle}
-                action={{ title: 'Resolve Report', onClick: onResolveReport }}
+                icon={titleIcon}
+                title={headerTitle}
+                subTitle={subHeaderTitle}
               />
-              {report ? (
+              {event ? (
                 <>
                   <Tabs
                     currentView={currentView}
-                    report={report}
+                    event={event}
                     onSetCurrentView={setCurrentView}
                   />
-                  {currentView === Views.Details && <Details report={report} />}
-                  {currentView === Views.Actions && (
-                    <ActionsTable actions={report.resolvedByActions} />
-                  )}
+                  {currentView === Views.Details && <Details event={event} />}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -120,11 +99,11 @@ export function ReportView({
 
 function Tabs({
   currentView,
-  report,
+  event,
   onSetCurrentView,
 }: {
   currentView: Views
-  report: GetReport.OutputSchema
+  event: GetEvent.OutputSchema
   actions?: GetPostThread.OutputSchema
   onSetCurrentView: (v: Views) => void
 }) {
@@ -160,11 +139,7 @@ function Tabs({
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <Tab view={Views.Details} label="Details" />
-            <Tab
-              view={Views.Actions}
-              label="Actions"
-              sublabel={report?.resolvedByActions?.length.toString() ?? '0'}
-            />
+            <Tab view={Views.Events} label="Events" />
           </nav>
         </div>
       </div>
@@ -172,8 +147,8 @@ function Tabs({
   )
 }
 
-function Details({ report }: { report: GetReport.OutputSchema }) {
-  const { createdAt, reason, reasonType, reportedBy, subject } = report
+function Details({ event }: { event: GetEvent.OutputSchema }) {
+  const { createdAt, createdBy, subject } = event
 
   const labels: DataFieldProps[] = [
     {
@@ -181,15 +156,17 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
       value: new Date(createdAt).toLocaleString(),
     },
     {
-      label: 'Reported By DID',
+      label: 'Created By DID',
       showCopyButton: true,
-      value: reportedBy,
+      value: createdBy,
     },
   ]
 
-  const reasonComponent = (
+  const commentComponent = ComAtprotoAdminDefs.isModEventReport(
+    event.event,
+  ) && (
     <span>
-      <ReasonBadge reasonType={reasonType} /> {reason}
+      <ReasonBadge reasonType={event.event.reportType} /> {event.event.comment}
     </span>
   )
 
@@ -199,34 +176,56 @@ function Details({ report }: { report: GetReport.OutputSchema }) {
         {labels.map((label, index) => (
           <DataField key={index} {...label} />
         ))}
-        <DataField label="Reason" value={reason}>
-          {reasonComponent}
-        </DataField>
+        {!!commentComponent && (
+          <DataField label="Reason" value={`${event.event.comment || ''}`}>
+            {commentComponent}
+          </DataField>
+        )}
       </dl>
 
-      <dt className="text-sm font-medium text-gray-500 mb-3">Reported By:</dt>
-      {reportedBy && (
+      <dt className="text-sm font-medium text-gray-500 mb-3">Created By:</dt>
+      {createdBy && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-          <RepoCard did={reportedBy} />
+          <RepoCard did={createdBy} />
         </div>
       )}
 
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
       {(ComAtprotoAdminDefs.isRecordView(subject) ||
-        ComAtprotoAdminDefs.isRecordViewNotFound(subject)) &&
-        subject.uri.startsWith('at://') && (
-          <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
-            <RecordCard uri={subject.uri} />
-          </div>
-        )}
+        ComAtprotoAdminDefs.isRecordViewNotFound(subject)) && (
+        <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
+          <RecordCard uri={subject.uri} />
+        </div>
+      )}
       {(ComAtprotoAdminDefs.isRepoView(subject) ||
-        ComAtprotoAdminDefs.isRepoViewNotFound(subject)) &&
-        subject.did?.startsWith('did:') && (
-          <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-            <RepoCard did={subject.did} />
-          </div>
-        )}
-      <Json className="mt-6" label="Contents" value={report} />
+        ComAtprotoAdminDefs.isRepoViewNotFound(subject)) && (
+        <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+          <RepoCard did={subject.did} />
+        </div>
+      )}
+      <Json className="mt-6" label="Contents" value={event} />
+    </div>
+  )
+}
+
+const Header = ({
+  icon,
+  title,
+  subTitle,
+}: {
+  icon: JSX.Element | null
+  title: string
+  subTitle: string
+}) => {
+  return (
+    <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8 justify-between">
+      <div>
+        <h1 className="flex text-2xl font-bold text-gray-900 align-middle">
+          {icon}
+          <span className="ml-1">{title}</span>
+        </h1>
+        <h2 className="flex-1 text-l text-gray-700">{subTitle}</h2>
+      </div>
     </div>
   )
 }

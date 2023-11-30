@@ -101,21 +101,37 @@ type LabelProps = { label: string; required?: boolean }
 type CopyProps = { copyButton?: { text: string; label?: string } }
 
 export function FormLabel(
-  props: ComponentProps<'label'> & LabelProps & CopyProps,
+  props: ComponentProps<'label'> &
+    LabelProps &
+    CopyProps & { extraLabel?: JSX.Element },
 ) {
-  const { label, required, className, children, copyButton, ...others } = props
+  const {
+    label,
+    required,
+    className,
+    children,
+    copyButton,
+    extraLabel,
+    ...others
+  } = props
   return (
     <div className={className}>
-      <label {...others} className="block text-sm font-medium text-gray-700">
-        {label}
-        {required && <sup className="text-red-500">*</sup>}
-        {copyButton && (
-          <CopyButton
-            {...copyButton}
-            className="ml-1"
-            title={`Copy ${copyButton.label} to clipboard`}
-          />
-        )}
+      <label
+        {...others}
+        className="block text-sm font-medium text-gray-700 flex flex-row justify-between"
+      >
+        <div>
+          {label}
+          {required && <sup className="text-red-500">*</sup>}
+          {copyButton && (
+            <CopyButton
+              {...copyButton}
+              className="ml-1"
+              title={`Copy ${copyButton.label} to clipboard`}
+            />
+          )}
+        </div>
+        {extraLabel}
       </label>
       <div className="mt-1">{children}</div>
     </div>

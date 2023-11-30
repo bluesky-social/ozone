@@ -1,20 +1,29 @@
+// TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery } from '@tanstack/react-query'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import {
+  AtUri,
+  ComAtprotoAdminDefs,
+  ComAtprotoAdminEmitModerationEvent,
+} from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
-import {
-  FormLabel,
-  Input,
-  RadioGroup,
-  RadioGroupOption,
-  Textarea,
-} from '@/common/forms'
+import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
-import { ResolutionList } from './ResolutionList'
 import client from '@/lib/client'
 import { BlobList } from './BlobList'
-import { diffLabels, getLabelsForSubject, toLabelVal } from '@/common/labels'
+import { queryClient } from 'components/QueryClient'
+import {
+  LabelChip,
+  LabelList,
+  LabelListEmpty,
+  diffLabels,
+  displayLabel,
+  getLabelGroupInfo,
+  getLabelsForSubject,
+  toLabelVal,
+  unFlagSelfLabel,
+} from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
 import { useKeyPressEvent } from 'react-use'
@@ -23,40 +32,44 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
-import { LabelsGrid } from '@/common/labels/Grid'
+import { LabelSelector } from '@/common/labels/Grid'
 import { takesKeyboardEvt } from '@/lib/util'
-import { SnoozeAction } from '@/reports/SnoozeAction'
-import { getCurrentActionFromRepoOrRecord } from '@/reports/helpers/getCurrentActionFromRepoOrRecord'
-import { CurrentModerationAction } from '@/reports/ModerationView/CurrentModerationAction'
-import {
-  actionOptions,
-  getActionClassNames,
-} from '@/reports/ModerationView/ActionHelpers'
 import { Loading } from '@/common/Loader'
-import { AllReportsLinkForSubject } from '@/reports/AllReportsLinkForSubject'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import { ReasonBadge } from '@/reports/ReasonBadge'
-import { formatDistance } from 'date-fns'
+import { MOD_EVENTS } from '@/mod-event/constants'
+import { ModEventList } from '@/mod-event/EventList'
+import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
+import { createSubjectFromId } from '@/reports/helpers/subject'
+import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
+import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { useRouter, usePathname, useSearchParams } from 'next/navigation'
 
 const FORM_ID = 'mod-action-panel'
 
 type Props = {
-  subject?: string
+  subject: string
+  setSubject: (subject: string) => void
   subjectOptions?: string[]
   isInitialLoading: boolean
-  onSubmit: (vals: ModActionFormValues) => Promise<void>
-  onSnooze?: (vals: { snoozeDuration: number; subject: string }) => void
+  onSubmit: (
+    vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
+  ) => Promise<void>
 }
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
 
 export function ModActionPanelQuick(
   props: PropsOf<typeof ActionPanel> & Props,
 ) {
   const {
     subject,
+    setSubject,
     subjectOptions,
     onSubmit,
     onClose,
-    onSnooze,
     isInitialLoading,
     ...others
   } = props
@@ -90,8 +103,8 @@ export function ModActionPanelQuick(
           onCancel={onClose}
           onSubmit={onSubmit}
           subject={subject}
+          setSubject={setSubject}
           subjectOptions={subjectOptions}
-          onSnooze={onSnooze}
         />
       )}
     </FullScreenActionPanel>
@@ -101,53 +114,38 @@ export function ModActionPanelQuick(
 function Form(
   props: {
     onCancel: () => void
-  } & Pick<Props, 'subject' | 'subjectOptions' | 'onSubmit' | 'onSnooze'>,
+  } & Pick<Props, 'setSubject' | 'subject' | 'subjectOptions' | 'onSubmit'>,
 ) {
-  const {
-    subject: fixedSubject,
-    subjectOptions,
-    onCancel,
-    onSubmit,
-    onSnooze,
-    ...others
-  } = props
-  const [subject, setSubject] = useState(fixedSubject ?? '')
-  const [replacingAction, setReplacingAction] = useState(false)
+  const { subject, setSubject, subjectOptions, onCancel, onSubmit, ...others } =
+    props
   const [submitting, setSubmitting] = useState(false)
-  const [action, setAction] = useState(ComAtprotoAdminDefs.ACKNOWLEDGE)
-  const [durationInHours, setActionDuration] = useState<null | number>(null)
-  useEffect(() => {
-    setReplacingAction(false)
-    setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
-  }, [subject])
-  const { data: { record, repo } = {} } = useQuery({
+  const { data: subjectStatus, refetch: refetchSubjectStatus } = useQuery({
+    // subject of the report
+    queryKey: ['modSubjectStatus', { subject }],
+    queryFn: () => getSubjectStatus(subject),
+  })
+  const { data: { record, repo } = {}, refetch: refetchSubject } = useQuery({
     // subject of the report
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
-  // This handles a special case where a deleted subject has a current action,
-  // but we weren't able to detect that before form submission. When this happens,
-  // we go spelunking for the current action and let the moderator retry.
-  const { data: currentActionFallback, refetch: fetchCurrentActionFallback } =
-    useQuery({
-      enabled: false,
-      queryKey: ['subjectCurrentAction', { subject }],
-      queryFn: () => {
-        return getCurrentAction(subject)
-      },
-    })
-  const { currentAction: currActionMaybeReplace = currentActionFallback } =
-    record?.moderation ?? repo?.moderation ?? {}
-  const currentAction = replacingAction ? undefined : currActionMaybeReplace
+  const isSubjetDid = subject.startsWith('did:')
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
     toLabelVal(label, repo?.did ?? record?.repo.did),
   )
-  const currentActionDetail = getCurrentActionFromRepoOrRecord({ repo, record })
+  const [modEventType, setModEventType] = useState<string>(
+    MOD_EVENTS.ACKNOWLEDGE,
+  )
+  const isLabelEvent = modEventType === MOD_EVENTS.LABEL
+  const isMuteEvent = modEventType === MOD_EVENTS.MUTE
+  const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
+  const shouldShowDurationInHoursField =
+    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
 
   // navigate to next or prev report
-  const navigateReports = (delta: 1 | -1) => {
+  const navigateQueue = (delta: 1 | -1) => {
     const len = subjectOptions?.length
     if (len) {
       // if we have a next report, go to it
@@ -164,9 +162,9 @@ function Form(
     }
   }
   // Left/right arrows to nav through report subjects
-  const evtRef = useRef({ navigateReports })
+  const evtRef = useRef({ navigateQueue })
   useEffect(() => {
-    evtRef.current = { navigateReports }
+    evtRef.current = { navigateQueue }
   })
   useEffect(() => {
     const downHandler = (ev: WindowEventMap['keydown']) => {
@@ -181,7 +179,7 @@ function Form(
       if (takesKeyboardEvt(ev.target)) {
         return
       }
-      evtRef.current.navigateReports(
+      evtRef.current.navigateQueue(
         ev.key === 'ArrowLeft' || ev.key === 'ArrowUp' ? -1 : 1,
       )
     }
@@ -198,36 +196,47 @@ function Form(
     try {
       setSubmitting(true)
       const formData = new FormData(ev.currentTarget)
-      const nextLabels = formData.getAll('labels')!.map((val) => String(val))
-      let transformedAction = formData.get('action')!.toString()
-      if (transformedAction === 'suspend') {
-        transformedAction = ComAtprotoAdminDefs.TAKEDOWN
+      const nextLabels = String(formData.get('labels'))!.split(',')
+      const coreEvent: Parameters<typeof onSubmit>[0]['event'] = {
+        $type: modEventType,
       }
+
+      if (formData.get('durationInHours')) {
+        coreEvent.durationInHours = Number(formData.get('durationInHours'))
+      }
+
+      if (formData.get('comment')) {
+        coreEvent.comment = formData.get('comment')
+      }
+
+      if (formData.get('sticky')) {
+        coreEvent.sticky = true
+      }
+
+      if (modEventType === MOD_EVENTS.LABEL) {
+        const labels = diffLabels(currentLabels, nextLabels)
+        coreEvent.createLabelVals = labels.createLabelVals
+        coreEvent.negateLabelVals = labels.negateLabelVals
+      }
+
+      const subjectInfo = await createSubjectFromId(subject)
+
       await onSubmit({
-        replacingAction,
-        currentActionId: currActionMaybeReplace?.id,
-        subject: formData.get('subject')!.toString(),
-        action: transformedAction,
-        durationInHours: durationInHours || null,
-        reason: formData.get('reason')!.toString(),
-        resolveReportIds: formData
-          .getAll('resolveReportIds')
-          .map((id) => Number(id)),
+        subject: subjectInfo,
+        createdBy: client.session.did,
         subjectBlobCids: formData
           .getAll('subjectBlobCids')
           .map((cid) => String(cid)),
-        ...diffLabels(currentLabels, nextLabels),
+        event: coreEvent,
       })
+
+      refetchSubjectStatus()
+      refetchSubject()
+      queryClient.invalidateQueries(['modEventList', { props: { subject } }])
 
       // After successful submission, reset the form state to clear inputs for previous submission
       ev.target.reset()
-
-      // Then navigate to the next report in queue
-      navigateReports(1)
     } catch (err) {
-      if (err?.['error'] === 'SubjectHasAction') {
-        fetchCurrentActionFallback()
-      }
       throw err
     } finally {
       setSubmitting(false)
@@ -244,293 +253,269 @@ function Form(
   useKeyPressEvent(
     'a',
     safeKeyHandler(() => {
-      setAction(ComAtprotoAdminDefs.ACKNOWLEDGE)
+      setModEventType(MOD_EVENTS.ACKNOWLEDGE)
+    }),
+  )
+  useKeyPressEvent(
+    'l',
+    safeKeyHandler(() => {
+      setModEventType(MOD_EVENTS.LABEL)
     }),
   )
   useKeyPressEvent(
     'e',
     safeKeyHandler(() => {
-      setAction(ComAtprotoAdminDefs.ESCALATE)
-    }),
-  )
-  useKeyPressEvent(
-    'f',
-    safeKeyHandler(() => {
-      setAction(ComAtprotoAdminDefs.FLAG)
+      setModEventType(MOD_EVENTS.ESCALATE)
     }),
   )
   useKeyPressEvent(
     't',
     safeKeyHandler(() => {
-      setAction(ComAtprotoAdminDefs.TAKEDOWN)
+      setModEventType(MOD_EVENTS.TAKEDOWN)
     }),
   )
 
   return (
-    <form
-      id={FORM_ID}
-      onSubmit={onFormSubmit}
-      {...others}
-      className="flex flex-col h-full"
-    >
-      <div className="flex flex-col h-full">
-        <div className="flex flex-row items-end mb-3">
-          <FormLabel
-            label="Subject"
-            htmlFor="subject"
-            className="flex-1"
-            copyButton={{ text: subject, label: 'Copy subject' }}
-          >
-            <Input
-              type="text"
-              id="subject"
-              name="subject"
-              required
-              readOnly={!!fixedSubject}
-              list="subject-suggestions"
-              placeholder="Subject"
-              className="block w-full"
-              value={subject}
-              onChange={(ev) => setSubject(ev.target.value)}
-              autoComplete="off"
-            />
-            <datalist id="subject-suggestions">
-              {subjectOptions?.map((subject) => (
-                <option key={subject} value={subject} />
-              ))}
-            </datalist>
-          </FormLabel>
-          {subject && onSnooze && (
-            <div className="ml-4 mr-2">
-              <SnoozeAction
-                panelClassName="-right-2 px-2 mt-2"
-                onConfirm={(snoozeDuration) => {
-                  onSnooze({ snoozeDuration, subject })
-                  onCancel()
-                }}
-              />
-            </div>
-          )}
-        </div>
-        {currentAction && (
-          <div className="mb-4 -mt-2">
-            <AllReportsLinkForSubject
-              className="underline text-black"
-              onClick={() => onCancel()}
-              subject={subject}
-            />
-          </div>
-        )}
-        {/* PREVIEWS */}
-        <div className="max-w-xl">
-          <PreviewCard did={subject} />
-
-          {/* User who reported  */}
-          {record?.moderation?.reports[0]?.reportedBy && (
-            <LastReportPreviewCard report={record.moderation.reports[0]} />
-          )}
-          {repo?.moderation?.reports[0]?.reportedBy && (
-            <LastReportPreviewCard report={repo?.moderation?.reports[0]} />
-          )}
-        </div>
-        {record?.blobs && (
-          <FormLabel
-            label="Blobs"
-            className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
-          >
-            <BlobList
-              blobs={record.blobs}
-              disabled={!!currentAction}
-              name="subjectBlobCids"
-            />
-          </FormLabel>
-        )}
-        <FormLabel
-          label="Labels"
-          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
+    <>
+      {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
+      {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
+      <div
+        className="flex overflow-y-auto"
+        style={{ height: 'calc(100vh - 180px)' }}
+      >
+        <form
+          id={FORM_ID}
+          onSubmit={onFormSubmit}
+          {...others}
+          className="flex w-1/2 flex-col"
         >
-          <LabelsGrid
-            id="labels"
-            name="labels"
-            formId={FORM_ID}
-            subject={subject}
-            disabled={!!currentAction}
-            defaultLabels={currentLabels}
-          />
-        </FormLabel>
-        {/* Hidden field exists so that form always has same fields, useful during submission */}
-        {currentAction && <input name="reason" type="hidden" />}
-        <FormLabel
-          label="Resolves"
-          className={`mb-3 ${currentAction ? 'opacity-75' : ''}`}
-        >
-          <ResolutionList subject={subject || null} name="resolveReportIds" />
-        </FormLabel>
-        <div className="mt-auto">
-          <CurrentModerationAction
-            currentAction={currentAction}
-            replacingAction={replacingAction}
-            currentActionDetail={currentActionDetail}
-            currentActionMaybeReplace={currActionMaybeReplace}
-            toggleReplaceMode={() => {
-              setReplacingAction((replacing) => !replacing)
-            }}
-          />
-
-          {action === ComAtprotoAdminDefs.TAKEDOWN && (
-            <FormLabel label="" htmlFor="durationInHours" className={`mb-3`}>
-              <ActionDurationSelector
-                value={durationInHours ?? undefined}
-                onChange={(ev) => {
-                  setActionDuration(
-                    ev.target.value ? parseInt(ev.target.value) : null,
-                  )
-                }}
-              />
-            </FormLabel>
-          )}
-
-          {/* Hidden field exists so that form always has same fields, useful during submission */}
-          {currentAction && <input name="action" type="hidden" />}
-          {currActionMaybeReplace && (
-            <div className="text-base text-gray-600 mb-3">
-              {!replacingAction && 'Resolve with current action?'}
+          <div className="flex flex-col">
+            <div className="flex flex-row items-end mb-3">
+              <FormLabel
+                label="Subject"
+                htmlFor="subject"
+                className="flex-1"
+                copyButton={{ text: subject, label: 'Copy subject' }}
+                extraLabel={
+                  <SubjectSwitchButton
+                    subject={subject}
+                    setSubject={setSubject}
+                  />
+                }
+              >
+                <Input
+                  type="text"
+                  id="subject"
+                  name="subject"
+                  required
+                  list="subject-suggestions"
+                  placeholder="Subject"
+                  className="block w-full"
+                  value={subject}
+                  onChange={(ev) => setSubject(ev.target.value)}
+                  autoComplete="off"
+                />
+                <datalist id="subject-suggestions">
+                  {subjectOptions?.map((subject) => (
+                    <option key={subject} value={subject} />
+                  ))}
+                </datalist>
+              </FormLabel>
             </div>
-          )}
-          {!currentAction && (
-            <Textarea
-              name="reason"
-              placeholder="Reason for action (optional)"
-              className="block w-full mb-3"
-            />
-          )}
-        </div>
-        <div className="mb-4 w-full flex flex-row justify-between">
-          <ButtonSecondary
-            onClick={() => navigateReports(-1)}
-            disabled={submitting}
-          >
-            <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
-          </ButtonSecondary>
-          <div className="flex flex-1">
-            <ButtonSecondary
-              className="mx-1 px-0 sm:px-4 sm:ml-2 sm:mr-4"
-              disabled={submitting}
-              onClick={onCancel}
-            >
-              <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                (C)ancel
-              </span>
-            </ButtonSecondary>
-            <RadioGroup
-              className={`w-2/5 md:w-full ${currentAction ? 'opacity-75' : ''}`}
-            >
-              {Object.entries(actionOptions).map(([value, label], i, arr) => {
-                const actionTextClassNames = getActionClassNames({
-                  action: value,
-                })
-                const displayLabel =
-                  (value === ComAtprotoAdminDefs.TAKEDOWN && durationInHours) ||
-                  (currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN &&
-                    currentAction?.durationInHours)
-                    ? 'Suspend'
-                    : label
-                return (
-                  <RadioGroupOption
-                    key={value}
-                    name="action"
-                    value={value}
-                    required
-                    disabled={!!currentAction}
-                    last={arr.length - 1 === i}
-                    checked={
-                      currentAction
-                        ? value === currentAction.action
-                        : value === action
-                    }
-                    onChange={(ev) => {
-                      if (!currentAction) {
-                        setAction(ev.target.value)
-                        // When selecting non-takedown action, if a duration for takedown was set before, reset it
-                        // Non-takedown actions can't have a duration at the moment
-                        if (
-                          ev.target.value !== ComAtprotoAdminDefs.TAKEDOWN &&
-                          durationInHours
-                        ) {
-                          setActionDuration(null)
-                        }
-                      }
-                    }}
-                    labelClassName={actionTextClassNames}
+            {/* PREVIEWS */}
+            <div className="max-w-xl">
+              <PreviewCard did={subject} />
+            </div>
+
+            {!!subjectStatus && (
+              <div className="pb-4">
+                <p>
+                  <SubjectReviewStateBadge subjectStatus={subjectStatus} />
+
+                  {subjectStatus.lastReviewedAt ? (
+                    <span className="pl-1">
+                      Last reviewed at:{' '}
+                      {dateFormatter.format(
+                        new Date(subjectStatus.lastReviewedAt),
+                      )}
+                    </span>
+                  ) : (
+                    <span className="pl-1">Not yet reviewed</span>
+                  )}
+                </p>
+                {!!subjectStatus.comment && (
+                  <p className="pt-1">
+                    <strong>Note:</strong> {subjectStatus.comment}
+                  </p>
+                )}
+              </div>
+            )}
+
+            {record?.blobs && (
+              <FormLabel
+                label="Blobs"
+                className={`mb-3 ${subjectStatus ? 'opacity-75' : ''}`}
+              >
+                <BlobList
+                  blobs={record.blobs}
+                  name="subjectBlobCids"
+                  disabled={false}
+                />
+              </FormLabel>
+            )}
+            <div className={`mb-3`}>
+              <FormLabel label="Labels">
+                <LabelList className="-ml-1">
+                  {!currentLabels.length && <LabelListEmpty className="ml-1" />}
+                  {currentLabels.map((label) => {
+                    const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
+
+                    return (
+                      <LabelChip
+                        key={label}
+                        style={{ color: labelGroup.color }}
+                      >
+                        {displayLabel(label)}
+                      </LabelChip>
+                    )
+                  })}
+                </LabelList>
+              </FormLabel>
+            </div>
+
+            <div className="px-1">
+              <div className="relative">
+                <ModEventSelectorButton
+                  subjectStatus={subjectStatus}
+                  selectedAction={modEventType}
+                  setSelectedAction={(action) => setModEventType(action)}
+                />
+              </div>
+              {shouldShowDurationInHoursField && (
+                <FormLabel
+                  label=""
+                  htmlFor="durationInHours"
+                  className={`mb-3 mt-2`}
+                >
+                  <ActionDurationSelector
+                    action={modEventType}
+                    labelText={isMuteEvent ? 'Mute duration' : ''}
+                  />
+                </FormLabel>
+              )}
+
+              {isLabelEvent && (
+                <FormLabel label="Labels" className="mt-2">
+                  <LabelSelector
+                    id="labels"
+                    name="labels"
+                    formId={FORM_ID}
+                    subject={subject}
+                    defaultLabels={currentLabels}
+                  />
+                </FormLabel>
+              )}
+
+              <div className="mt-2">
+                <Textarea
+                  name="comment"
+                  placeholder="Reason for action (optional)"
+                  className="block w-full mb-3"
+                />
+              </div>
+              {isCommentEvent && (
+                <Checkbox
+                  value="true"
+                  id="sticky"
+                  name="sticky"
+                  className="mb-3 flex items-center"
+                  label="Update the subject's persistent note with this comment"
+                />
+              )}
+
+              {/* Only show this when moderator tries to apply labels to a DID subject */}
+              {isLabelEvent && isSubjetDid && (
+                <p className="mb-3 text-xs">
+                  Applying labels to an account has severe impact so, you
+                  probably want to apply the labels to the user&apos;s profile
+                  instead.{' '}
+                  <a
+                    href="#"
+                    className="underline"
+                    onClick={() => setSubject(getProfileUriForDid(subject))}
                   >
-                    {displayLabel}
-                  </RadioGroupOption>
-                )
-              })}
-            </RadioGroup>
-            <ButtonPrimary
-              ref={submitButton}
-              type="submit"
-              disabled={submitting}
-              className="mx-1 px-0 sm:px-4 sm:ml-4 sm:mr-2"
-            >
-              <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                (S)ubmit
-              </span>
-            </ButtonPrimary>
+                    Please click here to switch the subject to profile record.
+                  </a>
+                </p>
+              )}
+
+              <div className="mt-auto">
+                <ButtonSecondary
+                  className="px-0 sm:px-4 sm:mr-2"
+                  disabled={submitting}
+                  onClick={onCancel}
+                >
+                  <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                    (C)ancel
+                  </span>
+                </ButtonSecondary>
+                <ButtonPrimary
+                  ref={submitButton}
+                  type="submit"
+                  disabled={submitting}
+                  className="mx-1 px-0 sm:px-4"
+                >
+                  <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                    (S)ubmit
+                  </span>
+                </ButtonPrimary>
+              </div>
+            </div>
           </div>
-          <ButtonSecondary
-            onClick={() => navigateReports(1)}
-            disabled={submitting}
-          >
-            <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
-          </ButtonSecondary>
+        </form>
+        <div className="w-1/2 pl-4">
+          <ModEventList subject={subject} />
         </div>
       </div>
-    </form>
+      <div className="flex justify-between mt-auto">
+        <ButtonSecondary
+          onClick={() => navigateQueue(-1)}
+          disabled={submitting}
+        >
+          <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
+        </ButtonSecondary>
+
+        <ButtonSecondary onClick={() => navigateQueue(1)} disabled={submitting}>
+          <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
+        </ButtonSecondary>
+      </div>
+    </>
   )
 }
 
-const LastReportPreviewCard = ({
-  report,
+const SubjectSwitchButton = ({
+  subject,
+  setSubject,
 }: {
-  report: ComAtprotoAdminDefs.ReportView
-}) => {
-  return (
-    <PreviewCard
-      did={report.reportedBy}
-      title={
-        <span>
-          Most recent report
-          <ReasonBadge className="mx-1" reasonType={report.reasonType} />
-          <a target="_blank" href={`/reports/${report.id}`} className="ml-1 hover:underline">
-            {formatDistance(new Date(report.createdAt), new Date(), {
-              addSuffix: true,
-            })}
-          </a>
-        </span>
-      }
-    >
-      {!!report.reason && (
-        <p className="ml-10">
-          Report reason: <i>{report.reason}</i>
-        </p>
-      )}
-    </PreviewCard>
-  )
-}
-
-export type ModActionFormValues = {
   subject: string
-  action: string
-  reason: string
-  durationInHours: number | null
-  resolveReportIds: number[]
-  subjectBlobCids: string[]
-  currentActionId?: number
-  replacingAction?: boolean
-  createLabelVals: string[]
-  negateLabelVals: string[]
+  setSubject: (s: string) => void
+}) => {
+  const isSubjectDid = subject.startsWith('did:')
+  const text = isSubjectDid ? 'Switch to profile' : 'Switch to account'
+  return (
+    <button
+      className="ml-2 text-xs text-gray-500 underline"
+      onClick={(e) => {
+        e.preventDefault()
+        const newSubject = isSubjectDid
+          ? getProfileUriForDid(subject)
+          : new AtUri(subject).host
+        setSubject(newSubject)
+      }}
+    >
+      {text}
+    </button>
+  )
 }
 
 async function getSubject(subject: string) {
@@ -551,6 +536,16 @@ async function getSubject(subject: string) {
   }
 }
 
+async function getSubjectStatus(subject: string) {
+  const {
+    data: { subjectStatuses },
+  } = await client.api.com.atproto.admin.queryModerationStatuses(
+    { subject, includeMuted: true, limit: 1 },
+    { headers: client.adminHeaders() },
+  )
+  return subjectStatuses.at(0) || null
+}
+
 function isMultiPress(ev: KeyboardEvent) {
   return ev.metaKey || ev.shiftKey || ev.ctrlKey || ev.altKey
 }
@@ -561,17 +556,4 @@ function safeKeyHandler(handler: (_ev: KeyboardEvent) => void) {
       handler(ev)
     }
   }
-}
-
-async function getCurrentAction(subject: string) {
-  const result = await client.api.com.atproto.admin.getModerationActions(
-    { subject },
-    { headers: client.adminHeaders() },
-  )
-
-  return result.data.actions.find(
-    (action) =>
-      !action.reversal &&
-      (action.subject.did === subject || action.subject.uri === subject),
-  )
 }

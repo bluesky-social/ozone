@@ -52,6 +52,8 @@ class ClientManager extends EventTarget {
         this._onSessionChange(session)
       },
     })
+    // @TODO temporary hack to make sure we don't override pdsUrl
+    agent['_updateApiEndpoint'] = () => null
     const { data: login } = await agent.login({
       identifier: handle,
       password,
@@ -97,6 +99,8 @@ class ClientManager extends EventTarget {
           this._onSessionChange(session)
         },
       })
+      // @TODO temporary hack to make sure we don't override pdsUrl
+      agent['_updateApiEndpoint'] = () => null
       await agent.resumeSession(this._session)
       this._agent = agent
     } else {

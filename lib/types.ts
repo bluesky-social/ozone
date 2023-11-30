@@ -15,6 +15,7 @@ export function isRepost(v: Reason): v is AppBskyFeedDefs.ReasonRepost {
 export type Repo = ComAtprotoAdminDefs.RepoView
 
 export type Report = ComAtprotoAdminDefs.ReportView
+export type SubjectStatus = ComAtprotoAdminDefs.SubjectStatusView
 
 export type InviteCode = ComAtprotoServerDefs.InviteCode
 

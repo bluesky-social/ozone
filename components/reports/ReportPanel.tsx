@@ -5,6 +5,7 @@ import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
 import { FormLabel, Input, Select, Textarea } from '../common/forms'
 import { RecordCard, RepoCard } from '../common/RecordCard'
 import { PropsOf } from '@/lib/types'
+import { queryClient } from 'components/QueryClient'
 
 export function ReportPanel(
   props: PropsOf<typeof ActionPanel> & {
@@ -54,6 +55,10 @@ function Form(props: {
             reason: formData.get('reason')!.toString() || undefined,
           })
           onCancel() // Close
+          queryClient.invalidateQueries([
+            'modEventList',
+            { props: { subject } },
+          ])
         } finally {
           setSubmitting(false)
         }

@@ -19,7 +19,7 @@ describe('Authentication', () => {
   const mockModerationReportsResponse = (response: Record<string, any>) =>
     cy.intercept(
       'GET',
-      `${SERVER_URL}/com.atproto.admin.getModerationReports*`,
+      `${SERVER_URL}/com.atproto.admin.queryModerationStatuses*`,
       response,
     )
 
@@ -53,7 +53,6 @@ describe('Authentication', () => {
 
   it('Logs in and opens reports page when authentication succeeds', () => {
     // Setup the auth response
-    const errorMessage = 'Invalid email'
     mockAuthResponse({
       statusCode: 200,
       body: authFixture.createSessionResponse,
@@ -68,7 +67,7 @@ describe('Authentication', () => {
     })
     mockModerationReportsResponse({
       statusCode: 200,
-      body: { cursor: null, reports: [] },
+      body: { cursor: null, subjectStatuses: [] },
     })
 
     cy.get('#service-url').should('have.value', 'https://bsky.social')
@@ -78,6 +77,6 @@ describe('Authentication', () => {
     cy.get("button[type='submit']").click()
 
     // Assert that the reports are displayed
-    cy.get('table').should('include.text', "Loading reports...")
+    cy.get('table').should('include.text', "Loading moderation queue...")
   })
 })

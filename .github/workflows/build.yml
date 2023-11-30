@@ -11,10 +11,10 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     steps:
-      - name: Install node 18
+      - name: Install node 20
         uses: actions/setup-node@v3
         with:
-          node-version: 18
+          node-version: 20
       - name: Check out Git repository
         uses: actions/checkout@v3
       - name: Yarn install

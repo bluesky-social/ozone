@@ -1,9 +1,8 @@
-import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
-import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { ComAtprotoAdminDefs } from '@atproto/api'
 import { ComponentProps } from 'react'
 import { formatBytes } from '@/lib/util'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
 export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
   const { blobs } = props
@@ -28,15 +27,8 @@ export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
 function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
   const { blob, ...others } = props
   const createdAt = new Date(blob.createdAt)
-  const { currentAction } = blob.moderation ?? {}
-  const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
-      ? 'text-rose-600 hover:text-rose-700'
-      : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.defs#',
-    '',
-  )
+  const { subjectStatus } = blob.moderation ?? {}
+
   return (
     <tr {...others}>
       <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 text-ellipsis overflow-hidden max-w-xs">
@@ -58,15 +50,11 @@ function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
         </span>
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-        {currentAction && (
-          <Link
-            href={`/actions/${currentAction.id}`}
-            title={displayActionType}
-            className={`${actionColorClasses} whitespace-nowrap`}
-          >
-            <ShieldExclamationIcon className="h-5 w-5 inline-block align-bottom" />{' '}
-            View #{currentAction.id}
-          </Link>
+        {subjectStatus && (
+          <ReviewStateIcon
+            subjectStatus={subjectStatus}
+            className="h-5 w-5 inline-block align-bottom"
+          />
         )}
       </td>
     </tr>

@@ -34,7 +34,7 @@ export function SectionHeader({
               {tabs.map((tab) => {
                 const url = new URL(tab.href, 'http://x')
                 let href: string = ''
-                if (pathname !== url.pathname) {
+                if (pathname !== url.pathname || tab.href === '/reports') {
                   href = tab.href
                 } else {
                   // Preserve query params when on same page

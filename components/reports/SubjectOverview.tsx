@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { classNames, createAtUri, parseAtUri, truncate } from '@/lib/util'
 import { CollectionId } from './helpers/subject'
+import { usePathname, useSearchParams } from 'next/navigation'
 
 // Renders @handle with link to the repo so that clicking the link can open all reports for that repo's did
 const OtherReportsForAuthorLink = ({
@@ -13,9 +14,13 @@ const OtherReportsForAuthorLink = ({
   repoText: string
   className?: string
 }) => {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const newUrl = new URLSearchParams(searchParams)
+  newUrl.set('quickOpen', did)
   return (
     <Link
-      href={`/reports?term=${did}`}
+      href={{ pathname, search: newUrl.toString() }}
       className={classNames(
         'text-gray-600 hover:text-gray-900 font-medium',
         className,
@@ -37,13 +42,17 @@ const CollectionLink = ({
   collectionName: string
   repoUrl: string
 }) => {
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const newUrl = new URLSearchParams(searchParams)
+  newUrl.set('quickOpen', uri)
   return (
     <>
       <Link href={`/repositories/${repoUrl}`} target="_blank">
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
       <Link
-        href={`/reports?term=${encodeURIComponent(uri)}`}
+        href={{ pathname, search: newUrl.toString() }}
         className="text-gray-600 hover:text-gray-900 font-medium mr-1"
       >
         {collectionName}
@@ -56,8 +65,9 @@ export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>
   subjectRepoHandle?: string
   withTruncation?: boolean
+  hideActor?: boolean
 }) {
-  const { subject, subjectRepoHandle, withTruncation = true } = props
+  const { subject, subjectRepoHandle, withTruncation = true, hideActor } = props
   const summary =
     typeof subject['did'] === 'string'
       ? { did: subject['did'], collection: null, rkey: null }
@@ -83,12 +93,16 @@ export function SubjectOverview(props: {
             uri={createAtUri(summary)}
             collectionName="feed generator"
           />
-          by
-          <OtherReportsForAuthorLink
-            did={summary.did}
-            repoText={repoText}
-            className="ml-1"
-          />
+          {!hideActor && (
+            <>
+              by
+              <OtherReportsForAuthorLink
+                did={summary.did}
+                repoText={repoText}
+                className="ml-1"
+              />
+            </>
+          )}
         </div>
       )
     }
@@ -101,12 +115,16 @@ export function SubjectOverview(props: {
             uri={createAtUri(summary)}
             collectionName="list"
           />
-          by
-          <OtherReportsForAuthorLink
-            did={summary.did}
-            repoText={repoText}
-            className="ml-1"
-          />
+          {!hideActor && (
+            <>
+              by
+              <OtherReportsForAuthorLink
+                did={summary.did}
+                repoText={repoText}
+                className="ml-1"
+              />
+            </>
+          )}
         </div>
       )
     }
@@ -119,12 +137,16 @@ export function SubjectOverview(props: {
             uri={createAtUri(summary)}
             collectionName="profile"
           />
-          by
-          <OtherReportsForAuthorLink
-            did={summary.did}
-            repoText={repoText}
-            className="ml-1"
-          />
+          {!hideActor && (
+            <>
+              by
+              <OtherReportsForAuthorLink
+                did={summary.did}
+                repoText={repoText}
+                className="ml-1"
+              />
+            </>
+          )}
         </div>
       )
     }
@@ -136,12 +158,16 @@ export function SubjectOverview(props: {
           collectionName={shortCollection}
           uri={createAtUri(summary)}
         />
-        by
-        <OtherReportsForAuthorLink
-          did={summary.did}
-          repoText={repoText}
-          className="ml-1"
-        />
+        {!hideActor && (
+          <>
+            by
+            <OtherReportsForAuthorLink
+              did={summary.did}
+              repoText={repoText}
+              className="ml-1"
+            />
+          </>
+        )}
       </div>
     )
   }

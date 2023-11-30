@@ -5,15 +5,19 @@ import { classNames } from '@/lib/util'
 
 export type DropdownItem = {
   id?: string
-  text: string
   onClick: () => void
+  text: string | JSX.Element
 }
 
 export const Dropdown = ({
+  rightAligned,
   className,
   children,
   items,
+  containerClassName,
 }: {
+  containerClassName?: string
+  rightAligned?: boolean
   items: DropdownItem[]
   children: React.ReactNode
   className?: string
@@ -21,7 +25,7 @@ export const Dropdown = ({
   return (
     <>
       {/* Profile dropdown */}
-      <Menu as="div" className="relative flex-shrink-0">
+      <Menu as="div" className={`relative flex-shrink-0 ${containerClassName || ''}`}>
         <div>
           <Menu.Button className={className}>{children}</Menu.Button>
         </div>
@@ -34,9 +38,15 @@ export const Dropdown = ({
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          {/* TODO: This needs to be checked, right-0 may be needed elsewhere */}
+          <Menu.Items
+            className={classNames(
+              rightAligned ? 'right-0' : '',
+              'absolute z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none',
+            )}
+          >
             {items.map((item) => (
-              <Menu.Item key={item.id || item.text}>
+              <Menu.Item key={item.id || String(item.text)}>
                 {({ active }) => (
                   <a
                     href="#"

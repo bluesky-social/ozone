@@ -15,7 +15,6 @@ import {
 } from '@heroicons/react/20/solid'
 import { Json } from '../common/Json'
 import { classNames, parseAtUri } from '@/lib/util'
-import { ReportsTable } from '../reports/ReportsTable'
 import { PostAsCard } from '../common/posts/PostsFeed'
 import { BlobsTable } from './BlobsTable'
 import {
@@ -28,13 +27,15 @@ import {
 } from '../common/labels'
 import { DataField } from '@/common/DataField'
 import { AccountsGrid } from './AccountView'
+import { ModEventList } from '@/mod-event/EventList'
+import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
 
 enum Views {
   Details,
   Profiles,
   Thread,
   Blobs,
-  Reports,
+  ModEvents,
 }
 
 export function RecordView({
@@ -91,8 +92,10 @@ export function RecordView({
                   {currentView === Views.Blobs && (
                     <Blobs blobs={record.blobs} />
                   )}
-                  {currentView === Views.Reports && (
-                    <Reports reports={record.moderation.reports} />
+                  {currentView === Views.ModEvents && (
+                    <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 text-sm">
+                      <ModEventList subject={record.uri} />
+                    </div>
                   )}
                 </>
               ) : (
@@ -120,28 +123,16 @@ function Header({
     .replace('app.bsky.feed.', '')
     .replace('app.bsky.graph.', '')
   if (shortCollection === 'generator') shortCollection = 'feed generator'
-  const { currentAction } = record.moderation
-  const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
-      ? 'text-rose-600 hover:text-rose-700'
-      : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.defs#',
-    '',
-  )
+  const { subjectStatus } = record.moderation
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8">
       <h1 className="flex-1 text-2xl font-bold text-gray-900">
         {`${shortCollection} record by @${record.repo.handle}`}{' '}
-        {currentAction && (
-          <Link
-            href={`/actions/${currentAction.id}`}
-            className={`text-lg ${actionColorClasses}`}
-            title={displayActionType}
-          >
-            <ShieldExclamationIcon className="h-5 w-5 ml-1 inline-block align-text-top" />{' '}
-            #{currentAction.id}
-          </Link>
+        {!!subjectStatus && (
+          <ReviewStateIconLink
+            subjectStatus={subjectStatus}
+            className="h-5 w-5 ml-1"
+          />
         )}
       </h1>
       <div>
@@ -220,7 +211,7 @@ function Tabs({
               label="Blobs"
               sublabel={String(record.blobs.length)}
             />
-            <Tab view={Views.Reports} label="Reports" />
+            <Tab view={Views.ModEvents} label="Mod Events" />
           </nav>
         </div>
       </div>
@@ -279,23 +270,6 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
 
 function Blobs({ blobs }: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
   return <BlobsTable blobs={blobs} />
-}
-
-export function Reports({
-  reports,
-}: {
-  reports: GetRecord.OutputSchema['moderation']['reports']
-}) {
-  // We show reports loaded from repo view so separately showing loading state here is not necessary
-  return (
-    <ReportsTable
-      className="mt-8"
-      reports={reports}
-      showLoadMore={false}
-      onLoadMore={() => null}
-      isInitialLoading={false}
-    />
-  )
 }
 
 function Thread({ thread }: { thread: GetPostThread.OutputSchema['thread'] }) {

@@ -13,6 +13,7 @@ import {
   EnvelopeIcon,
   ExclamationCircleIcon,
   ShieldExclamationIcon,
+  UserCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
@@ -30,7 +31,6 @@ import {
   getLabelsForSubject,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
-import { ReportsView } from './ReportsView'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { Dropdown, DropdownItem } from '@/common/Dropdown'
@@ -39,6 +39,9 @@ import { EmailComposer } from 'components/email/Composer'
 import { DataField } from '@/common/DataField'
 import { ProfileAvatar } from './ProfileAvatar'
 import { DidHistory } from './DidHistory'
+import { ModEventList } from '@/mod-event/EventList'
+import { ButtonGroup } from '@/common/buttons'
+import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 
 enum Views {
   Details,
@@ -46,7 +49,7 @@ enum Views {
   Follows,
   Followers,
   Invites,
-  Reports,
+  Events,
   Email,
 }
 
@@ -117,8 +120,8 @@ export function AccountView({
                   {currentView === Views.Follows && <Follows id={id} />}
                   {currentView === Views.Followers && <Followers id={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
-                  {currentView === Views.Reports && (
-                    <ReportsView did={repo.did} />
+                  {currentView === Views.Events && (
+                    <EventsView did={repo.did} />
                   )}
                   {currentView === Views.Email && <EmailView did={repo.did} />}
                 </>
@@ -146,15 +149,7 @@ function Header({
   profile?: GetProfile.OutputSchema
   onReport: (did: string) => void
 }) {
-  const { currentAction } = repo?.moderation ?? {}
-  const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
-      ? 'text-rose-600 hover:text-rose-700'
-      : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.defs#',
-    '',
-  )
+  const { subjectStatus } = repo?.moderation ?? {}
   const displayActorName = repo
     ? profile?.displayName
       ? `${truncate(profile.displayName, 20)} @${truncate(repo.handle, 20)}`
@@ -197,15 +192,8 @@ function Header({
             <div className="mt-6 min-w-0 flex-1 sm:hidden 2xl:block">
               <h1 className="truncate text-2xl font-bold text-gray-900">
                 {displayActorName}{' '}
-                {currentAction && (
-                  <Link
-                    href={`/actions/${currentAction.id}`}
-                    className={`text-lg ${actionColorClasses}`}
-                    title={displayActionType}
-                  >
-                    <ShieldExclamationIcon className="h-5 w-5 ml-1 inline-block align-text-top" />{' '}
-                    #{currentAction.id}
-                  </Link>
+                {subjectStatus && (
+                  <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                 )}
               </h1>
             </div>
@@ -241,15 +229,8 @@ function Header({
         <div className="mt-6 hidden min-w-0 flex-1 sm:block 2xl:hidden">
           <h1 className="truncate text-2xl font-bold text-gray-900">
             {displayActorName}{' '}
-            {currentAction && (
-              <Link
-                href={`/actions/${currentAction.id}`}
-                className={`text-lg ${actionColorClasses}`}
-                title={displayActionType}
-              >
-                <ShieldExclamationIcon className="h-5 w-5 ml-1 inline-block align-text-top" />{' '}
-                #{currentAction.id}
-              </Link>
+            {subjectStatus && (
+              <SubjectReviewStateBadge subjectStatus={subjectStatus} />
             )}
           </h1>
         </div>
@@ -332,11 +313,7 @@ function Tabs({
               label="Invites"
               sublabel={String(numInvited)}
             />
-            <Tab
-              view={Views.Reports}
-              label="Reports"
-              sublabel={String(repo.moderation.reports.length)}
-            />
+            <Tab view={Views.Events} label="Events" />
             <Tab view={Views.Email} label="Email" />
           </nav>
         </div>
@@ -591,6 +568,53 @@ export function AccountsGrid({
             </div>
           </div>
         ))}
+      </div>
+    </div>
+  )
+}
+enum EventViews {
+  ByUser,
+  ForUser,
+}
+
+export const EventsView = ({ did }: { did: string }) => {
+  // We show reports loaded from repo view so separately showing loading state here is not necessary
+  const [currentView, setCurrentView] = useState(EventViews.ForUser)
+
+  return (
+    <div>
+      <div className="bg-white border-b border-gray-200 py-2 px-4 sm:flex sm:items-center sm:justify-between sticky top-0">
+        <div />
+
+        <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
+          <ButtonGroup
+            size="xs"
+            appearance="primary"
+            items={[
+              {
+                id: 'By User',
+                text: 'By User',
+                Icon: UserCircleIcon,
+                isActive: currentView === EventViews.ByUser,
+                onClick: () => setCurrentView(EventViews.ByUser),
+              },
+              {
+                id: 'For User',
+                text: 'For User',
+                Icon: ExclamationCircleIcon,
+                isActive: currentView === EventViews.ForUser,
+                onClick: () => setCurrentView(EventViews.ForUser),
+              },
+            ]}
+          />
+        </div>
+      </div>
+      <div className="pt-4 max-w-3xl w-full mx-auto">
+        <ModEventList
+          {...(currentView === EventViews.ByUser
+            ? { createdBy: did }
+            : { subject: did })}
+        />
       </div>
     </div>
   )

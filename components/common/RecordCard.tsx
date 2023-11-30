@@ -241,8 +241,7 @@ export function RepoCard(props: { did: string }) {
   if (!repo) {
     return <LoadingDense />
   }
-  const takendown =
-    repo.moderation.currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
+  const takendown = !!repo.moderation.subjectStatus?.takendown
   return (
     <div className="bg-white">
       <div className="flex w-full space-x-4">
@@ -277,12 +276,13 @@ export function RepoCard(props: { did: string }) {
               Peek
             </a>
           </p>
+          {profile?.description && <p className='text-gray-500'>{profile.description}</p>}
           {takendown && (
             <p className="pt-1 pb-1">
               <LoadingFailedDense
                 className="inline-block font-normal text-gray-600"
-                noPadding
                 error="Account taken down"
+                noPadding
               />
             </p>
           )}

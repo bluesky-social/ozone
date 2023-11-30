@@ -1,7 +1,8 @@
 import { Select } from '@/common/forms'
+import { MOD_EVENTS } from '@/mod-event/constants'
 import { ComponentProps } from 'react'
 
-export const ActionDurations = {
+export const TakedownActionDurations = {
   0: {
     text: 'Permanent',
   },
@@ -16,20 +17,37 @@ export const ActionDurations = {
   },
 }
 
+export const MuteActionDurations = {
+  6: {
+    text: '6 Hrs',
+  },
+  12: {
+    text: '12 Hrs',
+  },
+  24: {
+    text: '1 Day',
+  },
+  48: {
+    text: '2 Days',
+  },
+}
+
 export const ActionDurationSelector = (
-  props: {} & ComponentProps<typeof Select>,
+  props: { labelText?: string; action?: string } & ComponentProps<
+    typeof Select
+  >,
 ) => {
+  const { labelText, action, ...rest } = props
   return (
-    <Select
-      id="durationInHours"
-      name="durationInHours"
-      required
-      {...props}
-    >
+    <Select id="durationInHours" name="durationInHours" required {...rest}>
       <option hidden selected value="">
-        Suspension Period
+        {labelText || 'Suspension Period'}
       </option>
-      {Object.entries(ActionDurations).map(([key, info]) => (
+      {Object.entries(
+        action === MOD_EVENTS.MUTE
+          ? MuteActionDurations
+          : TakedownActionDurations,
+      ).map(([key, info]) => (
         <option key={key} value={key}>
           {info.text}
         </option>

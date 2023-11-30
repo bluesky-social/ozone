@@ -8,7 +8,6 @@ import {
   AppBskyFeedPost,
   AppBskyEmbedRecord,
   AppBskyActorDefs,
-  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -31,6 +30,7 @@ import {
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
+import { MOD_EVENTS } from '@/mod-event/constants'
 
 export function PostsFeed({
   items,
@@ -196,7 +196,7 @@ function PostContent({
           {!!takedownId && (
             <Link
               className={`${getActionClassNames({
-                action: ComAtprotoAdminDefs.TAKEDOWN,
+                action: MOD_EVENTS.TAKEDOWN,
                 prop: 'text',
               })}`}
               href={`/actions/${takedownId}`}

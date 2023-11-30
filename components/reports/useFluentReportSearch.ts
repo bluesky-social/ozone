@@ -2,16 +2,14 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 type SearchQueryParams = {
   subject?: string
-  actionedBy?: string
+  lastReviewedBy?: string
   reporters?: string[]
-  actionType?: string
 }
 
 const ParamPrefixes = {
   subject: 'subject',
   reporters: 'reporters',
-  actionedBy: 'actionedBy',
-  actionType: 'actionType',
+  lastReviewedBy: 'lastReviewedBy',
 }
 
 export const buildQueryFromParams = (
@@ -66,9 +64,8 @@ export const useFluentReportSearch = () => {
       let subject = params.get('term') ?? undefined
       const searchParams: SearchQueryParams = {
         subject,
-        actionedBy: undefined,
+        lastReviewedBy: undefined,
         reporters: undefined,
-        actionType: undefined,
       }
 
       const paramsFromQuery = buildParamsFromQuery(subject)
@@ -76,11 +73,10 @@ export const useFluentReportSearch = () => {
       // If the params built from query is not empty, that means the term is no longer just subject
       if (Object.keys(paramsFromQuery).length) {
         searchParams.subject = paramsFromQuery.subject
-        searchParams.actionedBy = paramsFromQuery.actionedBy
+        searchParams.lastReviewedBy = paramsFromQuery.lastReviewedBy
         searchParams.reporters = paramsFromQuery.reporters
           ? paramsFromQuery.reporters.split(',')
           : undefined
-        searchParams.actionType = paramsFromQuery.actionType
       }
 
       return searchParams

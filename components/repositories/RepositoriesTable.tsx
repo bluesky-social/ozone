@@ -4,6 +4,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { AppBskyActorProfile, ComAtprotoAdminDefs } from '@atproto/api'
 import { Repo } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -39,15 +40,7 @@ function RepoRow(props: { repo: Repo }) {
   const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
   const displayName = profile?.displayName
   const indexedAt = new Date(repo.indexedAt)
-  const { currentAction } = repo.moderation
-  const actionColorClasses =
-    currentAction?.action === ComAtprotoAdminDefs.TAKEDOWN
-      ? 'text-rose-600 hover:text-rose-700'
-      : 'text-indigo-600 hover:text-indigo-900'
-  const displayActionType = currentAction?.action.replace(
-    'com.atproto.admin.defs#',
-    '',
-  )
+  const { subjectStatus } = repo.moderation
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
@@ -72,15 +65,11 @@ function RepoRow(props: { repo: Repo }) {
         </span>
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-        {currentAction && (
-          <Link
-            href={`/actions/${currentAction.id}`}
-            title={displayActionType}
-            className={`${actionColorClasses} whitespace-nowrap`}
-          >
-            <ShieldExclamationIcon className="h-5 w-5 inline-block align-bottom" />{' '}
-            View #{currentAction.id}
-          </Link>
+        {subjectStatus && (
+          <ReviewStateIcon
+            subjectStatus={subjectStatus}
+            className="h-5 w-5 inline-block align-bottom"
+          />
         )}
       </td>
     </tr>

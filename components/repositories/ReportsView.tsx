@@ -2,43 +2,18 @@ import {
   ExclamationCircleIcon,
   UserCircleIcon,
 } from '@heroicons/react/20/solid'
-import { useInfiniteQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { ButtonGroup } from '../common/buttons'
-import { ReportsTable } from '../reports/ReportsTable'
-import client from '../../lib/client'
+import { ModEventList } from '@/mod-event/EventList'
 
 enum ReportViews {
   ByUser,
   ForUser,
 }
 
-const useUserReports = ({ view, did }: { view: ReportViews; did: string }) => {
-  const { data, fetchNextPage, hasNextPage, isInitialLoading } =
-    useInfiniteQuery({
-      queryKey: [`user-reports`, did, view],
-      queryFn: async ({ pageParam }) => {
-        const { data } =
-          await client.api.com.atproto.admin.getModerationReports(
-            view === ReportViews.ByUser
-              ? { reporters: [did], cursor: pageParam, limit: 25 }
-              : { subject: did, cursor: pageParam, limit: 25 },
-            { headers: client.adminHeaders() },
-          )
-        return data
-      },
-      getNextPageParam: (lastPage) => lastPage.cursor,
-    })
-
-  const reports = data?.pages.flatMap((page) => page.reports) ?? []
-  return { fetchNextPage, reports, hasNextPage, isInitialLoading }
-}
-
-export const ReportsView = ({ did }: { did: string }) => {
+export const EventsView = ({ did }: { did: string }) => {
   // We show reports loaded from repo view so separately showing loading state here is not necessary
   const [currentView, setCurrentView] = useState(ReportViews.ForUser)
-  const { fetchNextPage, reports, hasNextPage, isInitialLoading } =
-    useUserReports({ view: currentView, did })
 
   return (
     <>
@@ -68,13 +43,7 @@ export const ReportsView = ({ did }: { did: string }) => {
           />
         </div>
       </div>
-      <ReportsTable
-        className="mt-4"
-        reports={reports}
-        showLoadMore={!!hasNextPage}
-        onLoadMore={fetchNextPage}
-        isInitialLoading={isInitialLoading}
-      />
+      <ModEventList subject={did} />
     </>
   )
 }

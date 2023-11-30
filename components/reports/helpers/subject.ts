@@ -18,19 +18,19 @@ export const createSubjectFromId = async (id: string) => {
       if (err?.['error'] === 'RecordNotFound') {
         // @TODO this is a roundabout way to get a record cid if the record was deleted.
         // It should work pretty well in this context, since createSubjectFromId() is generally used while resolving reports.
-        const { data: reports } =
-          await client.api.com.atproto.admin.getModerationReports(
+        const { data: eventData } =
+          await client.api.com.atproto.admin.queryModerationEvents(
             { subject: id, limit: 1 },
             { headers: client.adminHeaders() },
           )
-        const report = reports.reports.at(0)
-        if (!report || report.subject.uri !== id || !report.subject.cid) {
+        const event = eventData.events.at(0)
+        if (!event || event.subject.uri !== id || !event.subject.cid) {
           throw err
         }
         return {
           $type: 'com.atproto.repo.strongRef',
-          uri: report.subject.uri,
-          cid: report.subject.cid,
+          uri: event.subject.uri,
+          cid: event.subject.cid,
         }
       }
       throw err

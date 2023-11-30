@@ -1,23 +1,20 @@
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { MOD_EVENTS } from '@/mod-event/constants'
 
 export const actionOptions = {
-  [ComAtprotoAdminDefs.ACKNOWLEDGE]: 'Acknowledge',
-  [ComAtprotoAdminDefs.ESCALATE]: 'Escalate',
-  [ComAtprotoAdminDefs.FLAG]: 'Flag',
-  [ComAtprotoAdminDefs.TAKEDOWN]: 'Takedown',
+  [MOD_EVENTS.ACKNOWLEDGE]: 'Acknowledge',
+  [MOD_EVENTS.ESCALATE]: 'Escalate',
+  [MOD_EVENTS.TAKEDOWN]: 'Takedown',
 }
 
 const actionTextClassNames = {
-  [ComAtprotoAdminDefs.TAKEDOWN]: 'text-rose-600 hover:text-rose-700',
-  [ComAtprotoAdminDefs.ESCALATE]: 'text-orange-600 hover:text-orange-700',
-  [ComAtprotoAdminDefs.FLAG]: 'text-yellow-600 hover:text-yellow-700',
+  [MOD_EVENTS.TAKEDOWN]: 'text-rose-600 hover:text-rose-700',
+  [MOD_EVENTS.ESCALATE]: 'text-orange-600 hover:text-orange-700',
   default: 'text-indigo-600 hover:text-indigo-900',
 }
 
 const actionBorderClassNames = {
-  [ComAtprotoAdminDefs.TAKEDOWN]: 'border-rose-600 hover:border-rose-700',
-  [ComAtprotoAdminDefs.ESCALATE]: 'border-orange-600 hover:border-orange-700',
-  [ComAtprotoAdminDefs.FLAG]: 'border-yellow-600 hover:border-yellow-700',
+  [MOD_EVENTS.TAKEDOWN]: 'border-rose-600 hover:border-rose-700',
+  [MOD_EVENTS.ESCALATE]: 'border-orange-600 hover:border-orange-700',
   default: 'border-indigo-600 hover:border-indigo-900',
 }
 

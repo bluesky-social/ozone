@@ -47,7 +47,12 @@ export const EmailComposer = ({ did }: { did: string }) => {
 
       await toast.promise(
         client.api.com.atproto.admin.sendEmail(
-          { content: htmlContent, recipientDid: did, subject },
+          {
+            content: htmlContent,
+            recipientDid: did,
+            subject,
+            senderDid: client.session.did,
+          },
           { headers: client.adminHeaders(), encoding: 'application/json' },
         ),
         {
