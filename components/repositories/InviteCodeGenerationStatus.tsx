@@ -36,9 +36,12 @@ const useInviteCodeMutation = ({ did, id }) => {
       // When disabling invites, check if moderator wants to also disable existing codes
       // If yes, get invite codes through getRepo and disable the active ones
       if (disableInvites && disableExistingCodes) {
-        await client.api.com.atproto.admin.disableInviteCodes({
-          accounts: [did],
-        })
+        await client.api.com.atproto.admin.disableInviteCodes(
+          {
+            accounts: [did],
+          },
+          { encoding: 'application/json', headers: client.adminHeaders() },
+        )
       }
 
       return result
