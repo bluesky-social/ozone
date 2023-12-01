@@ -23,6 +23,7 @@ import {
   getLabelsForSubject,
   toLabelVal,
   unFlagSelfLabel,
+  isSelfLabel,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -411,7 +412,9 @@ function Form(
                     name="labels"
                     formId={FORM_ID}
                     subject={subject}
-                    defaultLabels={currentLabels}
+                    defaultLabels={currentLabels.filter(
+                      (label) => !isSelfLabel(label),
+                    )}
                   />
                 </FormLabel>
               )}
