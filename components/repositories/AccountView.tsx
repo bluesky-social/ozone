@@ -138,6 +138,11 @@ export function AccountView({
   )
 }
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
 function Header({
   id,
   repo,
@@ -202,10 +207,23 @@ function Header({
                 <a
                   role="button"
                   href={`mailto:${repo.email}`}
-                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                  title={
+                    repo.emailConfirmedAt
+                      ? `Email verified at ${dateFormatter.format(
+                          new Date(repo.emailConfirmedAt),
+                        )}`
+                      : 'Email not verified'
+                  }
+                  className={`inline-flex justify-center rounded-md border ${
+                    repo.emailConfirmedAt
+                      ? 'border-green-600'
+                      : 'border-gray-300'
+                  } bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2`}
                 >
                   <EnvelopeIcon
-                    className="-ml-1 mr-2 h-5 w-5 text-gray-400"
+                    className={`-ml-1 mr-2 h-5 w-5  ${
+                      repo.emailConfirmedAt ? 'text-green-600' : 'text-gray-400'
+                    }`}
                     aria-hidden="true"
                   />
                   <span>Email Account</span>
@@ -346,6 +364,16 @@ function Details({
             showCopyButton
           />
         )}
+        <DataField
+          label="Email Verification"
+          value={
+            repo.emailConfirmedAt
+              ? `At ${dateFormatter.format(
+                  new Date(repo.emailConfirmedAt),
+                )}`
+              : 'Not verified'
+          }
+        />
         {profile?.description && (
           <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500">Description</dt>
