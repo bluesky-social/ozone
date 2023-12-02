@@ -32,7 +32,7 @@ export function LabelsInput(props: LabelsProps) {
   )
   const current = unpackMemo<string[]>(packedCurrent)
   const groupedLabelList = groupLabelList(allOptions)
-  
+
   return (
     <Popover className="relative">
       <Popover.Button
