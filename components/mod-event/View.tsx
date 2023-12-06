@@ -18,7 +18,6 @@ import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
 enum Views {
   Details,
-  Events,
 }
 
 export function EventView({ event }: { event: GetEvent.OutputSchema }) {
@@ -99,7 +98,6 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
 
 function Tabs({
   currentView,
-  event,
   onSetCurrentView,
 }: {
   currentView: Views
@@ -139,7 +137,6 @@ function Tabs({
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             <Tab view={Views.Details} label="Details" />
-            <Tab view={Views.Events} label="Events" />
           </nav>
         </div>
       </div>

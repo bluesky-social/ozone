@@ -201,6 +201,7 @@ function Form(
       const coreEvent: Parameters<typeof onSubmit>[0]['event'] = {
         $type: modEventType,
       }
+      const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
 
       if (formData.get('durationInHours')) {
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
@@ -237,6 +238,7 @@ function Form(
 
       // After successful submission, reset the form state to clear inputs for previous submission
       ev.target.reset()
+      shouldMoveToNextSubject && navigateQueue(1)
     } catch (err) {
       throw err
     } finally {
@@ -245,12 +247,18 @@ function Form(
   }
   // Keyboard shortcuts for action types
   const submitButton = useRef<HTMLButtonElement>(null)
+  const moveToNextSubjectRef = useRef<HTMLInputElement>(null)
   const submitForm = () => {
     if (!submitButton.current) return
     submitButton.current.click()
   }
+  const submitAndGoNext = () => {
+    moveToNextSubjectRef.current?.setAttribute('value', '1')
+    submitForm()
+  }
   useKeyPressEvent('c', safeKeyHandler(onCancel))
   useKeyPressEvent('s', safeKeyHandler(submitForm))
+  useKeyPressEvent('n', safeKeyHandler(submitAndGoNext))
   useKeyPressEvent(
     'a',
     safeKeyHandler(() => {
@@ -452,26 +460,46 @@ function Form(
                 </p>
               )}
 
-              <div className="mt-auto">
-                <ButtonSecondary
-                  className="px-0 sm:px-4 sm:mr-2"
-                  disabled={submitting}
-                  onClick={onCancel}
-                >
-                  <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                    (C)ancel
-                  </span>
-                </ButtonSecondary>
-                <ButtonPrimary
-                  ref={submitButton}
-                  type="submit"
-                  disabled={submitting}
-                  className="mx-1 px-0 sm:px-4"
-                >
-                  <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                    (S)ubmit
-                  </span>
-                </ButtonPrimary>
+              <div className="mt-auto flex flex-row justify-between">
+                <div>
+                  <input
+                    ref={moveToNextSubjectRef}
+                    type="hidden"
+                    name="moveToNextSubject"
+                    value="0"
+                  />
+                  <ButtonSecondary
+                    className="px-0 sm:px-4 sm:mr-2"
+                    disabled={submitting}
+                    onClick={onCancel}
+                  >
+                    <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                      (C)ancel
+                    </span>
+                  </ButtonSecondary>
+                </div>
+                <div>
+                  <ButtonPrimary
+                    ref={submitButton}
+                    type="submit"
+                    disabled={submitting}
+                    className="mx-1 px-0 sm:px-4"
+                  >
+                    <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                      (S)ubmit
+                    </span>
+                  </ButtonPrimary>
+                  <ButtonPrimary
+                    type="button"
+                    disabled={submitting}
+                    onClick={submitAndGoNext}
+                    className="px-0 sm:px-4"
+                  >
+                    <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
+                      Submit & (N)ext
+                    </span>
+                  </ButtonPrimary>
+                </div>
               </div>
             </div>
           </div>
