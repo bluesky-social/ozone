@@ -97,7 +97,7 @@ export function RadioGroupOption(
   )
 }
 
-type LabelProps = { label: string; required?: boolean }
+type LabelProps = { label: string | JSX.Element; required?: boolean }
 type CopyProps = { copyButton?: { text: string; label?: string } }
 
 export function FormLabel(
@@ -148,7 +148,7 @@ export const Checkbox = ({
     <div className={className}>
       <input
         type="checkbox"
-        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-1"
         {...rest}
       />
       <label

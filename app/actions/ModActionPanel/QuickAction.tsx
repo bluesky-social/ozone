@@ -27,7 +27,7 @@ import {
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
-import { useKeyPressEvent } from 'react-use'
+import { createBreakpoint, useKeyPressEvent } from 'react-use'
 import {
   ArrowLeftIcon,
   ArrowRightIcon,
@@ -43,9 +43,10 @@ import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import { createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { useRouter, usePathname, useSearchParams } from 'next/navigation'
+import { Dialog } from '@headlessui/react'
 
 const FORM_ID = 'mod-action-panel'
+const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
 
 type Props = {
   subject: string
@@ -74,9 +75,29 @@ export function ModActionPanelQuick(
     isInitialLoading,
     ...others
   } = props
+  const [replaceFormWithEvents, setReplaceFormWithEvents] = useState(false)
+  const breakpoint = useBreakpoint()
+  const isMobileView = breakpoint === 'xs'
+
   return (
     <FullScreenActionPanel
-      title={`Take moderation action`}
+      title={
+        <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 flex flex-row justify-between pr-8">
+          Take moderation action
+          {isMobileView && (
+            <button
+              className={`sm:hidden text-xs rounded px-2 ${
+                replaceFormWithEvents
+                  ? 'bg-indigo-700 text-white'
+                  : 'bg-indigo-100 text-indigo-700'
+              }`}
+              onClick={() => setReplaceFormWithEvents(!replaceFormWithEvents)}
+            >
+              Events
+            </button>
+          )}
+        </Dialog.Title>
+      }
       onClose={onClose}
       {...others}
     >
@@ -106,6 +127,7 @@ export function ModActionPanelQuick(
           subject={subject}
           setSubject={setSubject}
           subjectOptions={subjectOptions}
+          replaceFormWithEvents={replaceFormWithEvents && isMobileView}
         />
       )}
     </FullScreenActionPanel>
@@ -115,10 +137,18 @@ export function ModActionPanelQuick(
 function Form(
   props: {
     onCancel: () => void
+    replaceFormWithEvents: boolean
   } & Pick<Props, 'setSubject' | 'subject' | 'subjectOptions' | 'onSubmit'>,
 ) {
-  const { subject, setSubject, subjectOptions, onCancel, onSubmit, ...others } =
-    props
+  const {
+    subject,
+    setSubject,
+    subjectOptions,
+    onCancel,
+    onSubmit,
+    replaceFormWithEvents,
+    ...others
+  } = props
   const [submitting, setSubmitting] = useState(false)
   const { data: subjectStatus, refetch: refetchSubjectStatus } = useQuery({
     // subject of the report
@@ -131,6 +161,10 @@ function Form(
     queryFn: () => getSubject(subject),
   })
   const isSubjetDid = subject.startsWith('did:')
+  const isReviewClosed =
+    subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWCLOSED
+  const isEscalated =
+    subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWESCALATED
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
@@ -215,7 +249,7 @@ function Form(
         coreEvent.sticky = true
       }
 
-      if (modEventType === MOD_EVENTS.LABEL) {
+      if (isLabelEvent) {
         const labels = diffLabels(currentLabels, nextLabels)
         coreEvent.createLabelVals = labels.createLabelVals
         coreEvent.negateLabelVals = labels.negateLabelVals
@@ -232,12 +266,26 @@ function Form(
         event: coreEvent,
       })
 
+      if (formData.get('additionalAcknowledgeEvent')) {
+        await onSubmit({
+          subject: subjectInfo,
+          createdBy: client.session.did,
+          subjectBlobCids: formData
+            .getAll('subjectBlobCids')
+            .map((cid) => String(cid)),
+          // We want the comment from label and other params like label val etc. to NOT be associated with the ack event
+          event: { $type: MOD_EVENTS.ACKNOWLEDGE },
+        })
+      }
+
       refetchSubjectStatus()
       refetchSubject()
       queryClient.invalidateQueries(['modEventList', { props: { subject } }])
 
       // After successful submission, reset the form state to clear inputs for previous submission
       ev.target.reset()
+      // This state is not kept in the form and driven by state so we need to reset it manually after submission
+      setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       shouldMoveToNextSubject && navigateQueue(1)
     } catch (err) {
       throw err
@@ -288,15 +336,23 @@ function Form(
     <>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
       {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
-      <div
-        className="flex overflow-y-auto"
-        style={{ height: 'calc(100vh - 180px)' }}
-      >
+      {/* @ts-ignore */}
+      <style jsx>{`
+        .scrollable-container {
+          height: calc(100vh - 100px);
+        }
+        @media (min-width: 640px) {
+          .scrollable-container {
+            height: calc(100vh - 180px);
+          }
+        }
+      `}</style>
+      <div className="flex overflow-y-auto scrollable-container">
         <form
           id={FORM_ID}
           onSubmit={onFormSubmit}
           {...others}
-          className="flex w-1/2 flex-col"
+          className="flex sm:w-1/2 flex-col"
         >
           <div className="flex flex-col">
             <div className="flex flex-row items-end mb-3">
@@ -392,121 +448,142 @@ function Form(
               </FormLabel>
             </div>
 
-            <div className="px-1">
-              <div className="relative">
-                <ModEventSelectorButton
-                  subjectStatus={subjectStatus}
-                  selectedAction={modEventType}
-                  setSelectedAction={(action) => setModEventType(action)}
-                />
-              </div>
-              {shouldShowDurationInHoursField && (
-                <FormLabel
-                  label=""
-                  htmlFor="durationInHours"
-                  className={`mb-3 mt-2`}
-                >
-                  <ActionDurationSelector
-                    action={modEventType}
-                    labelText={isMuteEvent ? 'Mute duration' : ''}
+            {/* This is only meant to be switched on in mobile/small screen view */}
+            {/* The parent component ensures to toggle this based on the screen size */}
+            {replaceFormWithEvents ? (
+              <ModEventList subject={subject} />
+            ) : (
+              <div className="px-1">
+                <div className="relative">
+                  <ModEventSelectorButton
+                    subjectStatus={subjectStatus}
+                    selectedAction={modEventType}
+                    setSelectedAction={(action) => setModEventType(action)}
                   />
-                </FormLabel>
-              )}
-
-              {isLabelEvent && (
-                <FormLabel label="Labels" className="mt-2">
-                  <LabelSelector
-                    id="labels"
-                    name="labels"
-                    formId={FORM_ID}
-                    subject={subject}
-                    defaultLabels={currentLabels.filter(
-                      (label) => !isSelfLabel(label),
-                    )}
-                  />
-                </FormLabel>
-              )}
-
-              <div className="mt-2">
-                <Textarea
-                  name="comment"
-                  placeholder="Reason for action (optional)"
-                  className="block w-full mb-3"
-                />
-              </div>
-              {isCommentEvent && (
-                <Checkbox
-                  value="true"
-                  id="sticky"
-                  name="sticky"
-                  className="mb-3 flex items-center"
-                  label="Update the subject's persistent note with this comment"
-                />
-              )}
-
-              {/* Only show this when moderator tries to apply labels to a DID subject */}
-              {isLabelEvent && isSubjetDid && (
-                <p className="mb-3 text-xs">
-                  Applying labels to an account has severe impact so, you
-                  probably want to apply the labels to the user&apos;s profile
-                  instead.{' '}
-                  <a
-                    href="#"
-                    className="underline"
-                    onClick={() => setSubject(getProfileUriForDid(subject))}
-                  >
-                    Please click here to switch the subject to profile record.
-                  </a>
-                </p>
-              )}
-
-              <div className="mt-auto flex flex-row justify-between">
-                <div>
-                  <input
-                    ref={moveToNextSubjectRef}
-                    type="hidden"
-                    name="moveToNextSubject"
-                    value="0"
-                  />
-                  <ButtonSecondary
-                    className="px-0 sm:px-4 sm:mr-2"
-                    disabled={submitting}
-                    onClick={onCancel}
-                  >
-                    <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                      (C)ancel
-                    </span>
-                  </ButtonSecondary>
                 </div>
-                <div>
-                  <ButtonPrimary
-                    ref={submitButton}
-                    type="submit"
-                    disabled={submitting}
-                    className="mx-1 px-0 sm:px-4"
+                {shouldShowDurationInHoursField && (
+                  <FormLabel
+                    label=""
+                    htmlFor="durationInHours"
+                    className={`mb-3 mt-2`}
                   >
-                    <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                      (S)ubmit
-                    </span>
-                  </ButtonPrimary>
-                  <ButtonPrimary
-                    type="button"
-                    disabled={submitting}
-                    onClick={submitAndGoNext}
-                    className="px-0 sm:px-4"
-                  >
-                    <span className="-rotate-90 sm:rotate-0 text-sm sm:text-base">
-                      Submit & (N)ext
-                    </span>
-                  </ButtonPrimary>
+                    <ActionDurationSelector
+                      action={modEventType}
+                      labelText={isMuteEvent ? 'Mute duration' : ''}
+                    />
+                  </FormLabel>
+                )}
+
+                {isLabelEvent && (
+                  <FormLabel label="Labels" className="mt-2">
+                    <LabelSelector
+                      id="labels"
+                      name="labels"
+                      formId={FORM_ID}
+                      subject={subject}
+                      defaultLabels={currentLabels.filter(
+                        (label) => !isSelfLabel(label),
+                      )}
+                    />
+                  </FormLabel>
+                )}
+
+                <div className="mt-2">
+                  <Textarea
+                    name="comment"
+                    placeholder="Reason for action (optional)"
+                    className="block w-full mb-3"
+                  />
+                </div>
+                {isCommentEvent && (
+                  <Checkbox
+                    value="true"
+                    id="sticky"
+                    name="sticky"
+                    className="mb-3 flex items-center"
+                    label="Update the subject's persistent note with this comment"
+                  />
+                )}
+
+                {/* Only show this when moderator tries to apply labels to a DID subject */}
+                {isLabelEvent && isSubjetDid && (
+                  <p className="mb-3 text-xs">
+                    Applying labels to an account has severe impact so, you
+                    probably want to apply the labels to the user&apos;s profile
+                    instead.{' '}
+                    <a
+                      href="#"
+                      className="underline"
+                      onClick={() => setSubject(getProfileUriForDid(subject))}
+                    >
+                      Please click here to switch the subject to profile record.
+                    </a>
+                  </p>
+                )}
+
+                {isLabelEvent && !isReviewClosed && (
+                  <Checkbox
+                    value="true"
+                    defaultChecked
+                    id="additionalAcknowledgeEvent"
+                    name="additionalAcknowledgeEvent"
+                    className="mb-3 flex items-center leading-3"
+                    label={
+                      <span className="leading-4">
+                        {isEscalated
+                          ? `De-escalate the subject and acknowledge all open reports after labeling`
+                          : `Acknowledge all open reports after labeling`}
+                      </span>
+                    }
+                  />
+                )}
+
+                <div className="mt-auto flex flex-row justify-between">
+                  <div>
+                    <input
+                      ref={moveToNextSubjectRef}
+                      type="hidden"
+                      name="moveToNextSubject"
+                      value="0"
+                    />
+                    <ButtonSecondary
+                      className="px-2 sm:px-4 sm:mr-2"
+                      disabled={submitting}
+                      onClick={onCancel}
+                    >
+                      <span className="text-sm sm:text-base">(C)ancel</span>
+                    </ButtonSecondary>
+                  </div>
+                  <div>
+                    <ButtonPrimary
+                      ref={submitButton}
+                      type="submit"
+                      disabled={submitting}
+                      className="mx-1 px-2 sm:px-4"
+                    >
+                      <span className="text-sm sm:text-base">(S)ubmit</span>
+                    </ButtonPrimary>
+                    <ButtonPrimary
+                      type="button"
+                      disabled={submitting}
+                      onClick={submitAndGoNext}
+                      className="px-2 sm:px-4"
+                    >
+                      <span className="text-sm sm:text-base">
+                        Submit & (N)ext
+                      </span>
+                    </ButtonPrimary>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
           </div>
         </form>
-        <div className="w-1/2 pl-4">
-          <ModEventList subject={subject} />
-        </div>
+        {!replaceFormWithEvents && (
+          <div className="hidden sm:block sm:w-1/2 sm:pl-4">
+            <ModEventList subject={subject} />
+          </div>
+        )}
       </div>
       <div className="flex justify-between mt-auto">
         <ButtonSecondary

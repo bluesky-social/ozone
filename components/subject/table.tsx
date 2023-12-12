@@ -92,17 +92,42 @@ function SubjectRow({
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
-        <ReviewStateIcon subjectStatus={subjectStatus} className="h-4 w-4" />{' '}
-        <SubjectOverview
-          subject={subjectStatus.subject}
-          subjectRepoHandle={subjectStatus.subjectRepoHandle}
-          withTruncation={false}
-        />
+        <div className="flex flex-row items-center pb-1">
+          <ReviewStateIcon
+            subjectStatus={subjectStatus}
+            className="h-4 w-4 mr-1"
+          />{' '}
+          <SubjectOverview
+            subject={subjectStatus.subject}
+            subjectRepoHandle={subjectStatus.subjectRepoHandle}
+            withTruncation={false}
+          />
+        </div>
         <dl className="font-normal">
-          <dt className="sr-only">Reason</dt>
-          <dd className="mt-1 truncate text-gray-700">
-            {/* <ReasonBadge reasonType={report.reasonType} /> {report.reason} */}
-          </dd>
+          {lastReviewedAt && (
+            <div className="flex items-center flex-row">
+              <dt>Last Reviewed</dt>
+              <dd className="ml-1 truncate text-gray-700">
+                {formatDistanceToNow(lastReviewedAt, { addSuffix: true })}
+              </dd>
+            </div>
+          )}
+          {lastReportedAt && (
+            <div className="flex items-center flex-row">
+              <dt>Last Reported</dt>
+              <dd className="ml-1 truncate text-gray-700">
+                {formatDistanceToNow(lastReportedAt, { addSuffix: true })}
+              </dd>
+            </div>
+          )}
+          {!!subjectStatus?.comment && (
+            <div className="flex items-center flex-row">
+              <dt>Comment</dt>
+              <dd className="ml-1 truncate text-gray-700">
+                {subjectStatus.comment}
+              </dd>
+            </div>
+          )}
         </dl>
       </td>
       <td className="hidden text-center px-3 py-4 text-sm text-gray-500 sm:table-cell">

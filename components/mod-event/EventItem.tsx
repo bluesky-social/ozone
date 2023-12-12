@@ -52,9 +52,9 @@ const Comment = ({
 const Email = ({
   modEvent,
 }: {
-  modEvent: {
+  modEvent: ComAtprotoAdminDefs.ModEventView & {
     event: ComAtprotoAdminDefs.ModEventEmail
-  } & ComAtprotoAdminDefs.ModEventView
+  }
 }) => {
   return (
     <div className="shadow bg-white rounded-sm p-2">
@@ -62,10 +62,10 @@ const Email = ({
         By{' '}
         {modEvent.creatorHandle
           ? `@${modEvent.creatorHandle}`
-          : modEvent.createdBy}
+          : `${modEvent.createdBy}`}
       </p>
       {modEvent.event.subjectLine && (
-        <p>Subject: {modEvent.event.subjectLine}</p>
+        <p>Subject: {`${modEvent.event.subjectLine}`}</p>
       )}
     </div>
   )
@@ -178,7 +178,8 @@ const Label = ({
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-      </p>
+      </p>{' '}
+      {modEvent.event.comment ? <p className='pb-1'>{`${modEvent.event.comment}`}</p> : null}
       <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
       <EventLabels header="Removed: " labels={modEvent.event.negateLabelVals} />
     </div>

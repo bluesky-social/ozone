@@ -195,8 +195,7 @@ export const ReportsPageContent = () => {
             className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom"
             onClick={() => setQuickActionPanelSubject(subjectOptions[0] ?? '')}
           >
-            Quick <span className="hidden md:inline-block">Take</span> Action{' '}
-            <ModActionIcon className="h-4 w-4 align-text-bottom" />
+            Take Action <ModActionIcon className="h-4 w-4 align-text-bottom" />
           </button>
         </div>
       </SectionHeader>
