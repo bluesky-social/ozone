@@ -508,15 +508,15 @@ function Form(
                 {/* Only show this when moderator tries to apply labels to a DID subject */}
                 {isLabelEvent && isSubjetDid && (
                   <p className="mb-3 text-xs">
-                    Applying labels to an account has severe impact so, you
-                    probably want to apply the labels to the user&apos;s profile
-                    instead.{' '}
+                    NOTE: Applying labels to an account overall is a strong
+                    intervention. You may want to apply the labels to the
+                    user&apos;s profile record instead.{' '}
                     <a
                       href="#"
                       className="underline"
                       onClick={() => setSubject(getProfileUriForDid(subject))}
                     >
-                      Please click here to switch the subject to profile record.
+                      Click here to switch the subject from account to profile record.
                     </a>
                   </p>
                 )}
