@@ -14,7 +14,6 @@ import {
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
-import { useSyncedState } from '@/lib/useSyncedState'
 import client from '@/lib/client'
 import { validSubjectString } from '@/lib/types'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
@@ -109,9 +108,7 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
 
 export const ReportsPageContent = () => {
   const params = useSearchParams()
-  const [quickOpenParam, setQuickOpenParam] = useSyncedState(
-    params.get('quickOpen') ?? '',
-  )
+  const quickOpenParam = params.get('quickOpen') ?? ''
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
   const reviewState = params.get('reviewState')
@@ -128,7 +125,6 @@ export const ReportsPageContent = () => {
       searchParams.set('quickOpen', subject)
     }
     router.push((pathname ?? '') + '?' + searchParams.toString())
-    setQuickOpenParam(subject)
   }
 
   const { isLoggedIn } = useContext(AuthContext)

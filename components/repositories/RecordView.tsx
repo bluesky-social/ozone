@@ -29,6 +29,7 @@ import { DataField } from '@/common/DataField'
 import { AccountsGrid } from './AccountView'
 import { ModEventList } from '@/mod-event/EventList'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
+import { Dropdown } from '@/common/Dropdown'
 
 enum Views {
   Details,
@@ -43,11 +44,13 @@ export function RecordView({
   thread,
   profiles,
   onReport,
+  onShowActionPanel,
 }: {
   record: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
   profiles?: AppBskyActorDefs.ProfileView[]
   onReport: (uri: string) => void
+  onShowActionPanel: (subject: string) => void
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
   return (
@@ -72,7 +75,11 @@ export function RecordView({
             </nav>
 
             <article>
-              <Header record={record} onReport={onReport} />
+              <Header
+                record={record}
+                onReport={onReport}
+                onShowActionPanel={onShowActionPanel}
+              />
               {record ? (
                 <>
                   <Tabs
@@ -114,9 +121,11 @@ export function RecordView({
 function Header({
   record,
   onReport,
+  onShowActionPanel,
 }: {
   record: GetRecord.OutputSchema
   onReport: (uri: string) => void
+  onShowActionPanel: (subject: string) => void
 }) {
   const collection = parseAtUri(record.uri)?.collection ?? ''
   let shortCollection = collection
@@ -136,17 +145,29 @@ function Header({
         )}
       </h1>
       <div>
-        <button
-          type="button"
+        <Dropdown
           className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-          onClick={() => onReport(record.uri)}
+          items={[
+            {
+              text: `Report ${shortCollection || 'post'}`,
+              onClick: () => onReport(record.uri),
+            },
+            {
+              text: `Report account`,
+              onClick: () => onReport(record.repo.did),
+            },
+            {
+              text: 'Show action panel',
+              onClick: () => onShowActionPanel(record.uri),
+            },
+          ]}
         >
           <ExclamationCircleIcon
             className="-ml-1 mr-2 h-5 w-5 text-gray-400"
             aria-hidden="true"
           />
-          <span>Report {shortCollection || 'post'}</span>
-        </button>
+          <span>Take Action</span>
+        </Dropdown>
       </div>
     </div>
   )

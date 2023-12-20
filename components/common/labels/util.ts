@@ -21,8 +21,14 @@ type GroupedLabelList = Record<
 
 export function diffLabels(current: string[], next: string[]) {
   return {
-    createLabelVals: next.filter((label) => !current.includes(label)),
-    negateLabelVals: current.filter((label) => !next.includes(label)),
+    createLabelVals: next
+      .filter((label) => !current.includes(label))
+      // Make sure we don't let empty strings or falsy values through
+      .filter(Boolean),
+    negateLabelVals: current
+      .filter((label) => !next.includes(label))
+      // Make sure we don't let empty strings or falsy values through
+      .filter(Boolean),
   }
 }
 

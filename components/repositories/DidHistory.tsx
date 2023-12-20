@@ -1,4 +1,5 @@
 import { Loading } from '@/common/Loader'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { useQuery } from '@tanstack/react-query'
 
 const PLC_DIRECTORY_URL =
@@ -23,6 +24,8 @@ type DidHistoryEvent = {
       }
   )
 }
+
+const getDidPlcWebUrl = (did: string) => `https://web.plc.directory/did/${did}`
 
 export const useDidHistory = (did: string) =>
   useQuery<unknown, unknown, DidHistoryEvent[] | { message: string }>({
@@ -54,7 +57,7 @@ const getServiceDetails = ({
 }
 
 export const DidHistory = ({ did }: { did: string }) => {
-  const { data: history, isLoading, isError, error } = useDidHistory(did)
+  const { data: history, isLoading, isError } = useDidHistory(did)
   if (history === null) return null
   if (isLoading) return <Loading />
   if (!history) {
@@ -78,7 +81,12 @@ export const DidHistory = ({ did }: { did: string }) => {
 
   return (
     <div className="mb-3">
-      <h4 className="font-semibold text-gray-500">DID History</h4>
+      <h4 className="font-semibold text-gray-500">
+        DID History{' '}
+        <a href={getDidPlcWebUrl(did)} target="_blank" title="Open the web view for this DID record">
+          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
+        </a>
+      </h4>
       <table className="min-w-full divide-y divide-gray-300">
         <thead className="bg-gray-50">
           <tr className="text-gray-500 text-left text-sm">

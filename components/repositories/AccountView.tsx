@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { classNames, truncate } from '@/lib/util'
+import { buildBlueSkyAppUrl, classNames, truncate } from '@/lib/util'
 import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
 import React from 'react'
@@ -59,12 +59,14 @@ export function AccountView({
   error,
   id,
   onSubmit,
+  onShowActionPanel,
 }: {
   id: string
   repo?: GetRepo.OutputSchema
   profile?: GetProfile.OutputSchema
   error?: unknown
   onSubmit: (vals: any) => Promise<void>
+  onShowActionPanel: (subject: string) => void
 }) {
   const [currentView, setCurrentView] = useState<Views>(Views.Details)
   const [reportUri, setReportUri] = useState<string>()
@@ -102,6 +104,7 @@ export function AccountView({
                 repo={repo}
                 profile={profile}
                 onReport={setReportUri}
+                onShowActionPanel={onShowActionPanel}
               />
               {repo ? (
                 <>
@@ -148,11 +151,13 @@ function Header({
   repo,
   profile,
   onReport,
+  onShowActionPanel,
 }: {
   id: string
   repo?: GetRepo.OutputSchema
   profile?: GetProfile.OutputSchema
   onReport: (did: string) => void
+  onShowActionPanel: (subject: string) => void
 }) {
   const { subjectStatus } = repo?.moderation ?? {}
   const displayActorName = repo
@@ -176,6 +181,13 @@ function Header({
     })
   }
 
+  if (repo?.did || profile?.did) {
+    reportOptions.push({
+      text: 'Show Action Panel',
+      onClick: () => onShowActionPanel(`${repo?.did || profile?.did}`),
+    })
+  }
+
   return (
     <div>
       <div>
@@ -196,7 +208,14 @@ function Header({
           <div className="mt-6 sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
             <div className="mt-6 min-w-0 flex-1 sm:hidden 2xl:block">
               <h1 className="truncate text-2xl font-bold text-gray-900">
-                {displayActorName}{' '}
+                <a
+                  href={buildBlueSkyAppUrl({
+                    did: repo?.did || profile?.did || '',
+                  })}
+                  target="_blank"
+                >
+                  {displayActorName}
+                </a>{' '}
                 {subjectStatus && (
                   <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                 )}
@@ -238,7 +257,7 @@ function Header({
                     className="-ml-1 mr-2 h-5 w-5 text-gray-400"
                     aria-hidden="true"
                   />
-                  <span>Report</span>
+                  <span>Take Action</span>
                 </Dropdown>
               )}
             </div>
@@ -246,7 +265,14 @@ function Header({
         </div>
         <div className="mt-6 hidden min-w-0 flex-1 sm:block 2xl:hidden">
           <h1 className="truncate text-2xl font-bold text-gray-900">
-            {displayActorName}{' '}
+            <a
+              href={buildBlueSkyAppUrl({
+                did: repo?.did || profile?.did || '',
+              })}
+              target="_blank"
+            >
+              {displayActorName}
+            </a>{' '}
             {subjectStatus && (
               <SubjectReviewStateBadge subjectStatus={subjectStatus} />
             )}
@@ -352,6 +378,7 @@ function Details({
   const labels = getLabelsForSubject({ repo }).map((label) =>
     toLabelVal(label, repo.did),
   )
+  const canShowDidHistory = repo.did.startsWith('did:plc')
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -368,9 +395,7 @@ function Details({
           label="Email Verification"
           value={
             repo.emailConfirmedAt
-              ? `At ${dateFormatter.format(
-                  new Date(repo.emailConfirmedAt),
-                )}`
+              ? `At ${dateFormatter.format(new Date(repo.emailConfirmedAt))}`
               : 'Not verified'
           }
         />
@@ -409,7 +434,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
-      <DidHistory did={repo.did} />
+      {canShowDidHistory && <DidHistory did={repo.did} />}
       {profile && (
         <Json
           className="mb-3"

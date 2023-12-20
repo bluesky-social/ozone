@@ -249,22 +249,97 @@ function Form(
         coreEvent.sticky = true
       }
 
+      const { subject: subjectInfo, record: recordInfo } =
+        await createSubjectFromId(subject)
+
+      // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
+      // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
+      // the label applied to the old CID.
+      // To work around that, this block checks if any label is being reverted and if so, it checks if the event's CID is different than the CID
+      // associated with the label that's being negated. If yes, it emits separate events for each such label and after that, if there are more labels
+      // left to be created/negated for the current CID, it emits the original event separate event for that.
       if (isLabelEvent) {
-        const labels = diffLabels(currentLabels, nextLabels)
+        const labels = diffLabels(
+          // Make sure we don't try to negate self labels
+          currentLabels.filter((label) => !isSelfLabel(label)),
+          nextLabels,
+        )
         coreEvent.createLabelVals = labels.createLabelVals
         coreEvent.negateLabelVals = labels.negateLabelVals
+        const negatingLabelsByCid: Record<string, string[]> = {}
+
+        if (recordInfo?.labels?.length && 'cid' in subjectInfo) {
+          labels.negateLabelVals.forEach((label) => {
+            const existingLabelWithDifferentCid = recordInfo.labels?.find(
+              ({ label: originalLabel, cid, src }) => {
+                return (
+                  originalLabel === label &&
+                  cid !== subjectInfo.cid &&
+                  // Ignore self labels
+                  src !== recordInfo.repo.did
+                )
+              },
+            )
+            if (!!existingLabelWithDifferentCid?.cid) {
+              negatingLabelsByCid[existingLabelWithDifferentCid.cid] ??= []
+
+              negatingLabelsByCid[existingLabelWithDifferentCid.cid].push(label)
+              // Since the label being negated is going to be removed from a different CID
+              coreEvent.negateLabelVals = labels.negateLabelVals.filter(
+                (l) => l !== label,
+              )
+            }
+          })
+        }
+
+        const labelSubmissions: Promise<void>[] = []
+
+        Object.keys(negatingLabelsByCid).forEach((labelCid) =>
+          labelSubmissions.push(
+            onSubmit({
+              subject: { ...subjectInfo, cid: labelCid },
+              createdBy: client.session.did,
+              subjectBlobCids: formData
+                .getAll('subjectBlobCids')
+                .map((cid) => String(cid)),
+              event: {
+                ...coreEvent,
+                // Here we'd never want to create labels associated with different CID than the current one
+                createLabelVals: [],
+                negateLabelVals: negatingLabelsByCid[labelCid],
+              },
+            }),
+          ),
+        )
+
+        // TODO: Typecasting here is not ideal
+        if (
+          (coreEvent.negateLabelVals as string[]).length ||
+          (coreEvent.createLabelVals as string[]).length
+        ) {
+          labelSubmissions.push(
+            onSubmit({
+              subject: subjectInfo,
+              createdBy: client.session.did,
+              subjectBlobCids: formData
+                .getAll('subjectBlobCids')
+                .map((cid) => String(cid)),
+              event: coreEvent,
+            }),
+          )
+        }
+
+        await Promise.all(labelSubmissions)
+      } else {
+        await onSubmit({
+          subject: subjectInfo,
+          createdBy: client.session.did,
+          subjectBlobCids: formData
+            .getAll('subjectBlobCids')
+            .map((cid) => String(cid)),
+          event: coreEvent,
+        })
       }
-
-      const subjectInfo = await createSubjectFromId(subject)
-
-      await onSubmit({
-        subject: subjectInfo,
-        createdBy: client.session.did,
-        subjectBlobCids: formData
-          .getAll('subjectBlobCids')
-          .map((cid) => String(cid)),
-        event: coreEvent,
-      })
 
       if (formData.get('additionalAcknowledgeEvent')) {
         await onSubmit({
@@ -585,18 +660,23 @@ function Form(
           </div>
         )}
       </div>
-      <div className="flex justify-between mt-auto">
-        <ButtonSecondary
-          onClick={() => navigateQueue(-1)}
-          disabled={submitting}
-        >
-          <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
-        </ButtonSecondary>
+      {(subjectOptions?.length || 0) > 1 && (
+        <div className="flex justify-between mt-auto">
+          <ButtonSecondary
+            onClick={() => navigateQueue(-1)}
+            disabled={submitting}
+          >
+            <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
+          </ButtonSecondary>
 
-        <ButtonSecondary onClick={() => navigateQueue(1)} disabled={submitting}>
-          <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
-        </ButtonSecondary>
-      </div>
+          <ButtonSecondary
+            onClick={() => navigateQueue(1)}
+            disabled={submitting}
+          >
+            <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
+          </ButtonSecondary>
+        </div>
+      )}
     </>
   )
 }

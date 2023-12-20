@@ -7,7 +7,7 @@ import { ReportFormValues } from '../reports/ReportPanel'
 
 export async function createReport(vals: ReportFormValues) {
   const createReportAsync = async () => {
-    const subject = await createSubjectFromId(vals.subject)
+    const { subject } = await createSubjectFromId(vals.subject)
     return client.api.com.atproto.moderation.createReport({
       ...vals,
       subject,

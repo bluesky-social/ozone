@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { AppBskyFeedDefs, ComAtprotoAdminDefs } from '@atproto/api'
-import { parseAtUri } from '@/lib/util'
+import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
@@ -29,9 +29,7 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
     return (
       <BaseRecordCard
         uri={uri}
-        renderRecord={(record) => (
-          <ProfileRecordCard {...{ did: parsed?.did, record }} />
-        )}
+        renderRecord={(record) => <RepoCard did={parsed.did} />}
       />
     )
   }
@@ -42,22 +40,6 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
         <GenericRecordCard {...{ did: parsed?.did, record }} />
       )}
     />
-  )
-}
-
-function ProfileRecordCard({
-  record,
-  did,
-}: {
-  did?: string
-  record: ComAtprotoAdminDefs.RecordViewDetail
-}) {
-  const { description } = record.value as { description: string }
-  return (
-    <>
-      {did && <RepoCard did={did} />}
-      <p className="text-sm text-gray-500 pl-10 pb-2">{description}</p>
-    </>
   )
 }
 
@@ -269,14 +251,16 @@ export function RepoCard(props: { did: string }) {
             </Link>{' '}
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${did}`}
+              href={buildBlueSkyAppUrl({ did })}
               target="_blank"
               rel="noreferrer"
             >
               Peek
             </a>
           </p>
-          {profile?.description && <p className='text-gray-500'>{profile.description}</p>}
+          {profile?.description && (
+            <p className="text-gray-500">{profile.description}</p>
+          )}
           {takendown && (
             <p className="pt-1 pb-1">
               <LoadingFailedDense

@@ -17,7 +17,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
-import { classNames, parseAtUri } from '@/lib/util'
+import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
 import {
@@ -344,9 +344,11 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
       )
     } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
       const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
-      const peekLink = `https://bsky.app/profile/${did}/${collection
-        ?.split('.')
-        .pop()}/${rkey}`
+      const peekLink = buildBlueSkyAppUrl({
+        did: `${did}`,
+        rkey: `${rkey}`,
+        collection: `${collection?.split('.').pop()}`,
+      })
       const repoLink = `/repositories/${did}/${collection}/${rkey}`
       return (
         <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">

@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import client from '@/lib/client'
+import { buildBlueSkyAppUrl } from '@/lib/util'
 
 export const ListRecordCard = ({ uri }: { uri: string }) => {
   const { error, data, isFetching } = useQuery({
@@ -64,7 +65,11 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
             </>{' '}
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${creator.did}/lists/${rkey}`}
+              href={buildBlueSkyAppUrl({
+                did: creator.did,
+                collection: 'lists',
+                rkey,
+              })}
               target="_blank"
               rel="noreferrer"
             >

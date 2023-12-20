@@ -1,8 +1,14 @@
 import client from '@/lib/client'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
 
-export const createSubjectFromId = async (id: string) => {
+export const createSubjectFromId = async (
+  id: string,
+): Promise<{
+  subject: { $type: string } & ({ uri: string; cid: string } | { did: string })
+  record: ComAtprotoAdminDefs.RecordViewDetail | null
+}> => {
   if (isIdRecord(id)) {
     try {
       const { data: record } = await client.api.com.atproto.admin.getRecord(
@@ -10,9 +16,12 @@ export const createSubjectFromId = async (id: string) => {
         { headers: client.adminHeaders() },
       )
       return {
-        $type: 'com.atproto.repo.strongRef',
-        uri: record.uri,
-        cid: record.cid,
+        record,
+        subject: {
+          $type: 'com.atproto.repo.strongRef',
+          uri: record.uri,
+          cid: record.cid,
+        },
       }
     } catch (err) {
       if (err?.['error'] === 'RecordNotFound') {
@@ -28,17 +37,23 @@ export const createSubjectFromId = async (id: string) => {
           throw err
         }
         return {
-          $type: 'com.atproto.repo.strongRef',
-          uri: event.subject.uri,
-          cid: event.subject.cid,
+          record: null,
+          subject: {
+            $type: 'com.atproto.repo.strongRef',
+            uri: event.subject.uri,
+            cid: `${event.subject.cid}`,
+          },
         }
       }
       throw err
     }
   }
   return {
-    $type: 'com.atproto.admin.defs#repoRef',
-    did: id,
+    subject: {
+      $type: 'com.atproto.admin.defs#repoRef',
+      did: id,
+    },
+    record: null,
   }
 }
 

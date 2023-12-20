@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import client from '@/lib/client'
+import { buildBlueSkyAppUrl } from '@/lib/util'
 
 export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
   const { error, data, isFetching } = useQuery({
@@ -74,7 +75,7 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
             </>{' '}
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${creator.did}`}
+              href={buildBlueSkyAppUrl({ did: creator.did })}
               target="_blank"
               rel="noreferrer"
             >

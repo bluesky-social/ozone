@@ -56,6 +56,22 @@ const blueSkyUrlMatcher = new RegExp('(https?://)?.*bsky.app')
 
 export const isBlueSkyAppUrl = (url: string) => blueSkyUrlMatcher.test(url)
 
+export const buildBlueSkyAppUrl = (
+  params: { did: string } & ({ collection: string; rkey: string } | {}),
+) => {
+  let url = `https://bsky.app/profile`
+
+  if ('did' in params) {
+    url += `/${params.did}`
+  }
+
+  if ('collection' in params) {
+    url += `/${params.collection}/${params.rkey}`
+  }
+
+  return url
+}
+
 export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
   const fragments = url.match(blueSkyUrlMatcher)
   if (!fragments) return null
