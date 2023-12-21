@@ -271,7 +271,7 @@ function Form(
         if (recordInfo?.labels?.length && 'cid' in subjectInfo) {
           labels.negateLabelVals.forEach((label) => {
             const existingLabelWithDifferentCid = recordInfo.labels?.find(
-              ({ label: originalLabel, cid, src }) => {
+              ({ val: originalLabel, cid, src }) => {
                 return (
                   originalLabel === label &&
                   cid !== subjectInfo.cid &&
@@ -591,7 +591,8 @@ function Form(
                       className="underline"
                       onClick={() => setSubject(getProfileUriForDid(subject))}
                     >
-                      Click here to switch the subject from account to profile record.
+                      Click here to switch the subject from account to profile
+                      record.
                     </a>
                   </p>
                 )}
