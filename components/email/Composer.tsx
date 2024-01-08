@@ -26,6 +26,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
     setContent,
   } = useEmailComposer()
   const subjectField = useRef<HTMLInputElement>(null)
+  const commentField = useRef<HTMLTextAreaElement>(null)
 
   const { data: { repo } = {} } = useRepoAndProfile({ id: did })
 
@@ -33,6 +34,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const subject = formData.get('subject')?.toString() ?? undefined
+    const comment = formData.get('comment')?.toString() ?? undefined
 
     toggleSending(true)
     try {
@@ -51,6 +53,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
             content: htmlContent,
             recipientDid: did,
             subject,
+            comment,
             senderDid: client.session.did,
           },
           { headers: client.adminHeaders(), encoding: 'application/json' },
@@ -98,6 +101,8 @@ export const EmailComposer = ({ did }: { did: string }) => {
             })
             setContent(content)
             if (subjectField.current) subjectField.current.value = subject
+            if (commentField.current)
+              commentField.current.value = `Sent via ozone template: ${templateName}.`
           }}
         >
           {Object.keys(EmailTemplates).map((template) => (
@@ -159,6 +164,17 @@ export const EmailComposer = ({ did }: { did: string }) => {
           label="There may be placeholder texts in the content of the email that are meant to be replaced with actual content, please check this box if you're sure you want to send the email as is"
         />
       )}
+      <FormLabel
+        label="Additional Comment"
+        htmlFor="comment"
+        className="mb-3"
+      >
+        <Textarea
+          name="comment"
+          ref={commentField}
+          className="block w-full mb-3"
+        />
+      </FormLabel>
       <ActionButton
         appearance="primary"
         type="submit"

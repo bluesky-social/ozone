@@ -65,8 +65,9 @@ const Email = ({
           : `${modEvent.createdBy}`}
       </p>
       {modEvent.event.subjectLine && (
-        <p>Subject: {`${modEvent.event.subjectLine}`}</p>
+        <p>Subject: {modEvent.event.subjectLine}</p>
       )}
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
     </div>
   )
 }
@@ -179,7 +180,9 @@ const Label = ({
             : modEvent.createdBy}
         </span>
       </p>{' '}
-      {modEvent.event.comment ? <p className='pb-1'>{`${modEvent.event.comment}`}</p> : null}
+      {modEvent.event.comment ? (
+        <p className="pb-1">{`${modEvent.event.comment}`}</p>
+      ) : null}
       <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
       <EventLabels header="Removed: " labels={modEvent.event.negateLabelVals} />
     </div>
