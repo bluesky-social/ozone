@@ -139,6 +139,7 @@ const reasonTypeOptions = {
   [ComAtprotoModerationDefs.REASONMISLEADING]: 'Misleading',
   [ComAtprotoModerationDefs.REASONSEXUAL]: 'Sexual',
   [ComAtprotoModerationDefs.REASONRUDE]: 'Rude or Hassment',
+  [ComAtprotoModerationDefs.REASONAPPEAL]: 'Appeal',
   [ComAtprotoModerationDefs.REASONOTHER]: 'Other Reason',
 }
 

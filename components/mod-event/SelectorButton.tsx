@@ -19,6 +19,14 @@ const actions = [
     text: 'Unmute',
     key: MOD_EVENTS.UNMUTE,
   },
+  {
+    text: 'Appeal',
+    key: MOD_EVENTS.REPORT,
+  },
+  {
+    text: 'Resolve Appeal',
+    key: MOD_EVENTS.RESOLVE_APPEAL,
+  },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
   acc[action.key] = action.text
@@ -35,7 +43,19 @@ export const ModEventSelectorButton = ({
   setSelectedAction: (action: string) => void
 }) => {
   const availableActions = useMemo(() => {
-    return actions.filter(({ key }) => {
+    return actions.filter(({ key, text }) => {
+      // Don't show resolve appeal action if subject is not already in appealed status
+      if (key === MOD_EVENTS.RESOLVE_APPEAL && !subjectStatus?.appealed) {
+        return false
+      }
+      // Don't show appeal action if subject is already in appealed status
+      if (
+        key === MOD_EVENTS.REPORT &&
+        text === 'Appeal' &&
+        subjectStatus?.appealed
+      ) {
+        return false
+      }
       // Don't show takedown action if subject is already takendown
       if (key === MOD_EVENTS.TAKEDOWN && subjectStatus?.takendown) {
         return false
@@ -66,6 +86,7 @@ export const ModEventSelectorButton = ({
     subjectStatus?.takendown,
     subjectStatus?.muteUntil,
     subjectStatus?.reviewState,
+    subjectStatus?.appealed,
   ])
   return (
     <Dropdown

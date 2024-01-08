@@ -161,6 +161,7 @@ function Details({
     lastReviewedAt,
     lastReportedAt,
     takendown,
+    lastAppealedAt,
     suspendUntil,
   } = subjectStatus
   const isRecord = subject.$type === 'com.atproto.repo.strongRef'
@@ -191,6 +192,13 @@ function Details({
           value: new Date(lastReviewedAt).toLocaleString(),
         }
       : null,
+      lastAppealedAt
+        ? {
+            label: 'Appealed at',
+            showCopyButton: true,
+            value: new Date(lastAppealedAt).toLocaleString(),
+          }
+        : null,
     muteUntil
       ? {
           label: 'Muted Until',

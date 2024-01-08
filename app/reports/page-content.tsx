@@ -54,6 +54,7 @@ const ResolvedFilters = () => {
   const params = useSearchParams()
   const takendown = params.get('takendown')
   const includeMuted = params.get('includeMuted')
+  const appealed = params.get('appealed')
 
   const updateParams = useCallback(
     (key: string, newState: boolean) => {
@@ -73,7 +74,6 @@ const ResolvedFilters = () => {
       size="xs"
       appearance="primary"
       items={[
-        // TODO: Don't think we need ack and flagged status filters?
         {
           id: 'takendown',
           text: 'Taken Down',
@@ -85,6 +85,12 @@ const ResolvedFilters = () => {
           text: 'Show Muted',
           onClick: () => updateParams('includeMuted', true),
           isActive: includeMuted === 'true',
+        },
+        {
+          id: 'appealed',
+          text: 'Appealed',
+          onClick: () => updateParams('appealed', true),
+          isActive: appealed === 'true',
         },
       ]}
     />
@@ -111,6 +117,7 @@ export const ReportsPageContent = () => {
   const quickOpenParam = params.get('quickOpen') ?? ''
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
+  const appealed = !!params.get('appealed')
   const reviewState = params.get('reviewState')
   const { sortField, sortDirection } = getSortParams(params)
   const { getReportSearchParams } = useFluentReportSearch()
@@ -141,6 +148,7 @@ export const ReportsPageContent = () => {
           lastReviewedBy,
           reporters,
           takendown,
+          appealed,
         },
       ],
       queryFn: async ({ pageParam }) => {
@@ -158,6 +166,10 @@ export const ReportsPageContent = () => {
 
         if (includeMuted) {
           queryParams.includeMuted = includeMuted
+        }
+
+        if (appealed) {
+          queryParams.appealed = appealed
         }
 
         // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in

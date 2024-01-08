@@ -6,7 +6,7 @@ import {
   unFlagSelfLabel,
 } from '@/common/labels'
 import { ReasonBadge } from '@/reports/ReasonBadge'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ComAtprotoAdminDefs, ComAtprotoModerationDefs } from '@atproto/api'
 import { MOD_EVENTS } from './constants'
 import { ItemTitle } from './ItemTitle'
 
@@ -79,6 +79,7 @@ const Report = ({
     event: ComAtprotoAdminDefs.ModEventReport
   } & ComAtprotoAdminDefs.ModEventView
 }) => {
+  const isAppeal = modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
     <div className="shadow bg-white rounded-sm p-2">
       <p className="flex justify-between">
@@ -88,7 +89,7 @@ const Report = ({
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-        {modEvent.event.reportType && (
+        {modEvent.event.reportType && !isAppeal && (
           <ReasonBadge reasonType={modEvent.event.reportType} />
         )}
       </p>
@@ -216,6 +217,7 @@ export const ModEventItem = ({
     ComAtprotoAdminDefs.isModEventEscalate(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventComment(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventUnmute(modEvent.event) ||
+    ComAtprotoAdminDefs.isModEventResolveAppeal(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event)
   ) {
     eventItem = <Comment modEvent={modEvent} />

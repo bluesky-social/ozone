@@ -1,6 +1,5 @@
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { ComAtprotoAdminDefs } from '@atproto/api'
-import { getSubjectTitle } from './helpers/subject'
+import { ComAtprotoAdminDefs, ComAtprotoModerationDefs } from '@atproto/api'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -18,7 +17,7 @@ export const ItemTitle = ({
   let eventTitle: JSX.Element | string = 'Event'
   let eventColor = ''
   if (ComAtprotoAdminDefs.isModEventEscalate(modEvent.event)) {
-    eventColor = 'text-orange-700'
+    eventColor = 'text-blue-400'
     eventTitle = 'Escalated'
   }
   if (ComAtprotoAdminDefs.isModEventAcknowledge(modEvent.event)) {
@@ -26,8 +25,14 @@ export const ItemTitle = ({
     eventTitle = 'Acknowledged'
   }
   if (ComAtprotoAdminDefs.isModEventReport(modEvent.event)) {
-    eventColor = 'text-orange-300'
-    eventTitle = 'Reported'
+    const isAppeal =
+      modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
+    eventColor = isAppeal ? 'text-orange-500' : 'text-orange-300'
+    eventTitle = isAppeal ? 'Appealed' : 'Reported'
+  }
+  if (ComAtprotoAdminDefs.isModEventResolveAppeal(modEvent.event)) {
+    eventColor = 'text-blue-400'
+    eventTitle = 'Resolved Appeal'
   }
   if (ComAtprotoAdminDefs.isModEventTakedown(modEvent.event)) {
     eventColor = modEvent.event.durationInHours
@@ -36,27 +41,27 @@ export const ItemTitle = ({
     eventTitle = modEvent.event.durationInHours ? 'Suspended' : 'Taken down'
   }
   if (ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event)) {
-    eventColor = 'text-green-800'
+    eventColor = 'text-blue-400'
     eventTitle = 'Reverted takedown'
   }
   if (ComAtprotoAdminDefs.isModEventLabel(modEvent.event)) {
-    eventColor = 'text-blue-700'
+    eventColor = 'text-blue-400'
     eventTitle = 'Labeled'
   }
   if (ComAtprotoAdminDefs.isModEventMute(modEvent.event)) {
-    eventColor = 'text-pink-800'
+    eventColor = 'text-blue-400'
     eventTitle = 'Muted'
   }
   if (ComAtprotoAdminDefs.isModEventUnmute(modEvent.event)) {
-    eventColor = 'text-green-300'
+    eventColor = 'text-blue-400'
     eventTitle = 'Unmuted'
   }
   if (ComAtprotoAdminDefs.isModEventComment(modEvent.event)) {
-    eventColor = 'text-gray-800'
+    eventColor = 'text-blue-400'
     eventTitle = modEvent.event.sticky ? 'Added note' : 'Commented'
   }
   if (ComAtprotoAdminDefs.isModEventEmail(modEvent.event)) {
-    eventColor = 'text-green-800'
+    eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }
 

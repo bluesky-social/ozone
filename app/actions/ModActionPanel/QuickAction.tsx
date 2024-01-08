@@ -4,6 +4,7 @@ import {
   AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoAdminEmitModerationEvent,
+  ComAtprotoModerationDefs,
 } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
@@ -331,6 +332,9 @@ function Form(
 
         await Promise.all(labelSubmissions)
       } else {
+        if (coreEvent.$type === MOD_EVENTS.REPORT) {
+          coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
+        }
         await onSubmit({
           subject: subjectInfo,
           createdBy: client.session.did,

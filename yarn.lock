@@ -4366,9 +4366,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tlds@^1.234.0:
-  version "1.246.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.246.0.tgz#b66ea74336965a4d7cbf744bea9a9c32336c1de6"
-  integrity sha512-ZxWlQyGhBMuBsFHYniTSGmKhJfxjQ+swTfRC6W6FdAa5BLs9fMWDPzzak1umZeObMqi5Dx6UScBGNjLtjySkBA==
+  version "1.248.0"
+  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.248.0.tgz#65bf56eee6d0ace1e918fbc653227ef18a9ddf8d"
+  integrity sha512-noj0KdpWTBhwsKxMOXk0rN9otg4kTgLm4WohERRHbJ9IY+kSDKr3RmjitaQ3JFzny+DyvBOQKlFZhp0G0qNSfg==
 
 tmp@~0.2.1:
   version "0.2.1"

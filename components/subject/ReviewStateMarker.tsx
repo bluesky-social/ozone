@@ -3,6 +3,7 @@ import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
+  ScaleIcon,
   ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import Link from 'next/link'
@@ -50,7 +51,7 @@ export const SubjectReviewStateBadge = ({
     : 'bg-gray-200 text-gray-800'
 
   if (subjectStatus.takendown) {
-    text = 'Taken Down'
+    text += '(Taken Down)'
     color = 'bg-red-200 text-red-800'
   }
 
@@ -58,8 +59,13 @@ export const SubjectReviewStateBadge = ({
     subjectStatus.muteUntil &&
     new Date(subjectStatus.muteUntil) > new Date()
   ) {
-    text = 'Muted'
+    text += '(Muted)'
     color = 'bg-pink-200 text-pink-800'
+  }
+
+  if (subjectStatus.appealed) {
+    text += '(Appealed)'
+    color = 'bg-orange-200 text-orange-800'
   }
 
   return (
@@ -88,6 +94,13 @@ export const ReviewStateIcon = ({
     text = 'Taken Down'
     color = 'text-red-800'
     Icon = ShieldExclamationIcon
+  }
+
+  // Appealed status should override takendown status specific icon
+  if (subjectStatus.appealed) {
+    text = 'Appealed'
+    color = 'text-orange-500'
+    Icon = ScaleIcon
   }
 
   return (

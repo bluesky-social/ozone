@@ -30,7 +30,7 @@ export function SectionHeader({
         </h3>
         <div className="mt-4 sm:mt-0 sm:ml-10 flex-1">
           <nav className="-mb-px flex flex-wrap">
-            <div className="space-x-8 w-full lg:w-1/2">
+            <div className="space-x-8 w-full lg:w-2/3">
               {tabs.map((tab) => {
                 const url = new URL(tab.href, 'http://x')
                 let href: string = ''
