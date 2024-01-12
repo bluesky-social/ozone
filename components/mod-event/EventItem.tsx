@@ -129,6 +129,9 @@ const TakedownOrMute = ({
       {expiresAt && (
         <p className="mt-1">Until {dateFormatter.format(expiresAt)}</p>
       )}
+      {modEvent.event.comment ? (
+        <p className="pb-1">{`${modEvent.event.comment}`}</p>
+      ) : null}
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
