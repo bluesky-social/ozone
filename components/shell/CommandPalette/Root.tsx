@@ -50,7 +50,7 @@ export const CommandPaletteRoot = ({
   return (
     <KBarProvider actions={staticActions}>
       <KBarPortal>
-        <KBarPositioner className="p-2 bg-gray-900/80 flex items-center pb-4">
+        <KBarPositioner className="p-2 bg-gray-900/80 flex items-center pb-4 z-20">
           <KBarAnimator className="w-full md:w-2/3 lg:w-1/2 w-max-[600px] overflow-hidden p-2 bg-white rounded-xl">
             <KBarSearch
               defaultPlaceholder="Search by DID, bsky url or handle"

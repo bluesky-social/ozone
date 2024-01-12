@@ -1,5 +1,5 @@
 'use client'
-import { ComponentProps, useState } from 'react'
+import { ComponentProps, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -42,6 +42,7 @@ import { DidHistory } from './DidHistory'
 import { ModEventList } from '@/mod-event/EventList'
 import { ButtonGroup } from '@/common/buttons'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 enum Views {
   Details,
@@ -69,7 +70,25 @@ export function AccountView({
   onShowActionPanel: (subject: string) => void
 }) {
   const [currentView, setCurrentView] = useState<Views>(Views.Details)
-  const [reportUri, setReportUri] = useState<string>()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+  const reportUri = searchParams.get('reportUri') || undefined
+  const setReportUri = (uri?: string) => {
+    const newParams = new URLSearchParams(searchParams)
+    if (uri) {
+      newParams.set('reportUri', uri)
+    } else {
+      newParams.delete('reportUri')
+    }
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
+
+  useEffect(() => {
+    if (reportUri === 'default' && (repo || profile)) {
+      setReportUri(repo?.did || profile?.did)
+    }
+  }, [repo, reportUri])
 
   return (
     <div className="flex h-full bg-white">

@@ -999,11 +999,6 @@ comma-separated-tokens@^2.0.0:
   resolved "https://registry.yarnpkg.com/comma-separated-tokens/-/comma-separated-tokens-2.0.3.tgz#4e89c9458acb61bc8fef19f4529973b2392839ee"
   integrity sha512-Fu4hJdvzeylCfQPp9SGWidpzrMs7tTrlu6Vb8XGaRGck8QSNZJJp538Wrb60Lax4fPwR64ViY468OIUTbRlGZg==
 
-command-score@^0.1.2:
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/command-score/-/command-score-0.1.2.tgz#b986ad7e8c0beba17552a56636c44ae38363d381"
-  integrity sha512-VtDvQpIJBvBatnONUsPzXYFVKQQAhuf3XTNOAsdBxCNO/QCtUUd8LSgjn0GVarBkCad6aJCZfXgrjYbl/KRr7w==
-
 commander@^6.2.1:
   version "6.2.1"
   resolved "https://registry.yarnpkg.com/commander/-/commander-6.2.1.tgz#0792eb682dfbc325999bb2b84fddddba110ac73c"
@@ -1799,6 +1794,11 @@ functions-have-names@^1.2.2:
   resolved "https://registry.npmjs.org/functions-have-names/-/functions-have-names-1.2.3.tgz"
   integrity sha512-xckBUXyTIqT97tq2x2AMb+g163b5JFysYk0x4qxNFwbfQkmNZoiRHb6sPzI9/QV33WeuvVYBUIiD4NzNIyqaRQ==
 
+fuse.js@^6.6.2:
+  version "6.6.2"
+  resolved "https://registry.yarnpkg.com/fuse.js/-/fuse.js-6.6.2.tgz#fe463fed4b98c0226ac3da2856a415576dc9a111"
+  integrity sha512-cJaJkxCCxC8qIIcPBF9yGxY0W/tVZS3uEISDxhYIdtk8OL93pe+6Zj7LjCqVV4dzbqcriOZ+kQ/NE4RXZHsIGA==
+
 get-intrinsic@^1.0.2, get-intrinsic@^1.1.1, get-intrinsic@^1.1.3:
   version "1.1.3"
   resolved "https://registry.npmjs.org/get-intrinsic/-/get-intrinsic-1.1.3.tgz"
@@ -2516,14 +2516,14 @@ jsprim@^2.0.2:
     array-includes "^3.1.5"
     object.assign "^4.1.3"
 
-kbar@^0.1.0-beta.40:
-  version "0.1.0-beta.40"
-  resolved "https://registry.yarnpkg.com/kbar/-/kbar-0.1.0-beta.40.tgz#89747e3c1538375fef779af986b6614bb441ae7c"
-  integrity sha512-vEV02WuEBvKaSivO2DnNtyd3gUAbruYrZCax5fXcLcVTFV6q0/w6Ew3z6Qy+AqXxbZdWguwQ3POIwgdHevp+6A==
+kbar@^0.1.0-beta.45:
+  version "0.1.0-beta.45"
+  resolved "https://registry.yarnpkg.com/kbar/-/kbar-0.1.0-beta.45.tgz#6b0871f2860a7fe21ad4db5df2389cf3b73d344a"
+  integrity sha512-kXvjthqPLoWZXlxLJPrFKioskNdQv1O3Ukg5mqq2ExK3Ix1qvYT3W/ACDRIv/e/CHxPWZoTriB4oFbQ6UCSX5g==
   dependencies:
     "@radix-ui/react-portal" "^1.0.1"
-    command-score "^0.1.2"
     fast-equals "^2.0.3"
+    fuse.js "^6.6.2"
     react-virtual "^2.8.2"
     tiny-invariant "^1.2.0"
 

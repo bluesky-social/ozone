@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ComAtprotoModerationDefs } from '@atproto/api'
 import { ActionPanel } from '../common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
@@ -6,6 +6,7 @@ import { FormLabel, Input, Select, Textarea } from '../common/forms'
 import { RecordCard, RepoCard } from '../common/RecordCard'
 import { PropsOf } from '@/lib/types'
 import { queryClient } from 'components/QueryClient'
+import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 
 export function ReportPanel(
   props: PropsOf<typeof ActionPanel> & {
@@ -42,6 +43,14 @@ function Form(props: {
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
   const [submitting, setSubmitting] = useState(false)
+
+  // Update the subject when parent renderer wants to update it
+  // This happens when the subject is loaded async on the renderer component
+  // so on first render, we won't have the subject value yet
+  useEffect(() => {
+    if (fixedSubject) setSubject(fixedSubject)
+  }, [fixedSubject])
+
   return (
     <form
       onSubmit={async (ev) => {
@@ -65,7 +74,14 @@ function Form(props: {
       }}
       {...others}
     >
-      <FormLabel label="Subject" htmlFor="subject" className="mb-3">
+      <FormLabel
+        label="Subject"
+        htmlFor="subject"
+        className="mb-3"
+        extraLabel={
+          <SubjectSwitchButton subject={subject} setSubject={setSubject} />
+        }
+      >
         <Input
           type="text"
           id="subject"

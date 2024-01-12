@@ -45,6 +45,7 @@ import { createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
+import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -683,31 +684,6 @@ function Form(
         </div>
       )}
     </>
-  )
-}
-
-const SubjectSwitchButton = ({
-  subject,
-  setSubject,
-}: {
-  subject: string
-  setSubject: (s: string) => void
-}) => {
-  const isSubjectDid = subject.startsWith('did:')
-  const text = isSubjectDid ? 'Switch to profile' : 'Switch to account'
-  return (
-    <button
-      className="ml-2 text-xs text-gray-500 underline"
-      onClick={(e) => {
-        e.preventDefault()
-        const newSubject = isSubjectDid
-          ? getProfileUriForDid(subject)
-          : new AtUri(subject).host
-        setSubject(newSubject)
-      }}
-    >
-      {text}
-    </button>
   )
 }
 

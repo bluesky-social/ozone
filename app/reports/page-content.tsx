@@ -173,13 +173,16 @@ export const ReportsPageContent = () => {
         }
 
         // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
-        Object.entries({ sortField, sortDirection, reviewState }).forEach(
-          ([key, value]) => {
-            if (value) {
-              queryParams[key] = value
-            }
-          },
-        )
+        Object.entries({
+          sortField,
+          sortDirection,
+          reviewState,
+          lastReviewedBy,
+        }).forEach(([key, value]) => {
+          if (value) {
+            queryParams[key] = value
+          }
+        })
 
         return await getModerationQueue(queryParams)
       },

@@ -6,14 +6,17 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
     name: 'Open Quick Action Panel',
     shortcut: ['q'],
     keywords: 'quick,action,panel',
-    perform: () => router.push('/reports?quickOpen=true'),
+    perform: () => {
+      router.push('/reports?quickOpen=true')
+    },
   },
   {
     id: 'unresolved-queue',
     name: 'Open Unresolved Queue',
     shortcut: ['u'],
     keywords: 'unresolved,queue',
-    perform: () => router.push('/reports'),
+    perform: () =>
+      router.push('/reports?reviewState=com.atproto.admin.defs%23reviewOpen'),
   },
   {
     id: 'resolved-queue',
@@ -33,13 +36,20 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
       ),
   },
   {
+    id: 'all-queue',
+    name: 'Open Moderation Queue',
+    shortcut: ['a'],
+    keywords: 'all,queue',
+    perform: () => router.push('/reports'),
+  },
+  {
     id: 'appeal-queue',
     name: 'Open Appeal Queue',
     shortcut: ['e'],
     keywords: 'appealed,queue',
     perform: () =>
       router.push(
-        '/reports?reviewState=com.atproto.admin.defs%23reviewAppealed',
+        '/reports?reviewState=com.atproto.admin.defs%23reviewOpen&appealed=true',
       ),
   },
 ]
