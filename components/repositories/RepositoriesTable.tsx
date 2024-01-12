@@ -1,7 +1,7 @@
 import Link from 'next/link'
-import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
+import { UserGroupIcon } from '@heroicons/react/20/solid'
 import { formatDistanceToNow } from 'date-fns'
-import { AppBskyActorProfile, ComAtprotoAdminDefs } from '@atproto/api'
+import { AppBskyActorProfile } from '@atproto/api'
 import { Repo } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
@@ -9,9 +9,10 @@ import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 export function RepositoriesTable(props: {
   repos: Repo[]
   showLoadMore: boolean
+  showEmptySearch: boolean
   onLoadMore: () => void
 }) {
-  const { repos, showLoadMore, onLoadMore } = props
+  const { repos, showLoadMore, onLoadMore, showEmptySearch } = props
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
@@ -20,9 +21,22 @@ export function RepositoriesTable(props: {
             <RepoRowHead />
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white">
-            {repos.map((repo) => (
-              <RepoRow key={repo.did} repo={repo} />
-            ))}
+            {!!repos?.length ? (
+              repos.map((repo) => <RepoRow key={repo.did} repo={repo} />)
+            ) : (
+              <tr>
+                <td colSpan={4}>
+                  <div className="flex flex-col items-center py-10">
+                    <UserGroupIcon className="h-10 w-10" />
+                    <p className="text-gray-500 text-base">
+                      {showEmptySearch
+                        ? `Please insert a full or partial handle in the search box above to see matching repositories`
+                        : `No repositories found!`}
+                    </p>
+                  </div>
+                </td>
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

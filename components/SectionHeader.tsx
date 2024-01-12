@@ -23,7 +23,9 @@ export function SectionHeader({
   const pathname = usePathname()
   const params = useSearchParams()
   return (
-    <div className="border-b border-gray-200 px-6 pt-4">
+    <div
+      className={`px-6 pt-4 ${!!tabs.length ? 'border-b border-gray-200' : ''}`}
+    >
       <div className="sm:flex sm:items-baseline">
         <h3 className="text-lg font-medium leading-6 text-gray-900 ">
           {title}

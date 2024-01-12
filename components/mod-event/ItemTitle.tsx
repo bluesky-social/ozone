@@ -9,9 +9,11 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 export const ItemTitle = ({
   modEvent,
   showContentDetails,
+  showContentAuthor,
 }: {
   modEvent: ComAtprotoAdminDefs.ModEventView
   showContentDetails: boolean
+  showContentAuthor: boolean
 }) => {
   const createdAt = dateFormatter.format(new Date(modEvent.createdAt))
   let eventTitle: JSX.Element | string = 'Event'
@@ -84,9 +86,9 @@ export const ItemTitle = ({
       {showContentDetails && (
         <p>
           <SubjectOverview
-            hideActor
             withTruncation
             subject={modEvent.subject}
+            hideActor={!showContentAuthor}
             subjectRepoHandle={modEvent.subjectHandle}
           />
         </p>

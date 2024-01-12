@@ -79,7 +79,8 @@ const Report = ({
     event: ComAtprotoAdminDefs.ModEventReport
   } & ComAtprotoAdminDefs.ModEventView
 }) => {
-  const isAppeal = modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
+  const isAppeal =
+    modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
     <div className="shadow bg-white rounded-sm p-2">
       <p className="flex justify-between">
@@ -207,9 +208,11 @@ const getExpiresAtFromEvent = (modEvent: ComAtprotoAdminDefs.ModEventView) => {
 export const ModEventItem = ({
   modEvent,
   showContentDetails,
+  showContentAuthor,
 }: {
   modEvent: ComAtprotoAdminDefs.ModEventView
   showContentDetails: boolean
+  showContentAuthor: boolean
 }) => {
   let eventItem: JSX.Element = <p>{modEvent.event.$type as string}</p>
   if (
@@ -242,7 +245,7 @@ export const ModEventItem = ({
   }
   return (
     <div className="mt-4">
-      <ItemTitle {...{ modEvent, showContentDetails }} />
+      <ItemTitle {...{ modEvent, showContentDetails, showContentAuthor }} />
       {eventItem}
     </div>
   )

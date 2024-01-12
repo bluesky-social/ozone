@@ -4,8 +4,14 @@ import { useContext, useState } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
 import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
 
+export type ModEventListQueryOptions = {
+  queryOptions?: {
+    refetchInterval?: number
+  }
+}
+
 export const useModEventList = (
-  props: { subject: string } | { createdBy: string },
+  props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
   const { isLoggedIn } = useContext(AuthContext)
   const [types, setTypes] = useState<string[]>([])
@@ -21,11 +27,11 @@ export const useModEventList = (
         includeAllUserRecords,
       }
 
-      if ('subject' in props && props.subject.trim()) {
+      if (props.subject?.trim()) {
         queryParams.subject = props.subject.trim()
       }
 
-      if ('createdBy' in props && props.createdBy.trim()) {
+      if (props.createdBy?.trim()) {
         queryParams.createdBy = props.createdBy
       }
 
@@ -36,6 +42,7 @@ export const useModEventList = (
       return await getModerationEvents(queryParams)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+    ...(props.queryOptions || {}),
   })
 
   return {

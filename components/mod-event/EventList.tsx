@@ -1,4 +1,4 @@
-import { useModEventList } from './useModEventList'
+import { ModEventListQueryOptions, useModEventList } from './useModEventList'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ModEventItem } from './EventItem'
 import { Dropdown } from '@/common/Dropdown'
@@ -55,7 +55,7 @@ const Header = ({
 }
 
 export const ModEventList = (
-  props: { subject: string } | { createdBy: string },
+  props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
   const {
     types,
@@ -67,20 +67,25 @@ export const ModEventList = (
     hasMoreModEvents,
     isInitialLoadingModEvents,
   } = useModEventList(props)
+  const isEntireHistoryView = !props.subject && !props.createdBy
   const subjectTitle = getSubjectTitle(modEvents?.[0]?.subject)
   const noEvents = modEvents.length === 0 && !isInitialLoadingModEvents
-  const isShowingEventsByCreator = 'createdBy' in props
+  const isShowingEventsByCreator = !!props.createdBy
   return (
     <div>
       <div className="flex flex-row justify-between items-center">
-        <Header
-          {...{
-            subjectTitle,
-            includeAllUserRecords,
-            setIncludeAllUserRecords,
-            isShowingEventsByCreator,
-          }}
-        />
+        {!isEntireHistoryView ? (
+          <Header
+            {...{
+              subjectTitle,
+              includeAllUserRecords,
+              setIncludeAllUserRecords,
+              isShowingEventsByCreator,
+            }}
+          />
+        ) : (
+          <h4 className="font-medium text-gray-700">Moderation event stream</h4>
+        )}
         <TypeFilter setSelectedTypes={setTypes} selectedTypes={types} />
       </div>
       <div>
@@ -103,7 +108,10 @@ export const ModEventList = (
               <ModEventItem
                 key={modEvent.id}
                 modEvent={modEvent}
-                showContentDetails={includeAllUserRecords}
+                showContentAuthor={isEntireHistoryView}
+                showContentDetails={
+                  includeAllUserRecords || isEntireHistoryView
+                }
               />
             )
           })

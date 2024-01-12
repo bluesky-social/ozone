@@ -4,7 +4,7 @@ import client from '@/lib/client'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { EventView } from '@/mod-event/View'
 
-export default function Report({ params }: { params: { id: string } }) {
+export default function EventViewPage({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)
   const {
     data: event,

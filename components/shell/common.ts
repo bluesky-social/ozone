@@ -2,6 +2,7 @@ import {
   ExclamationCircleIcon,
   UserGroupIcon,
   BoltIcon,
+  QueueListIcon,
   CommandLineIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
@@ -10,6 +11,7 @@ import { MouseEventHandler } from 'react'
 export const ICONS = {
   reports: ExclamationCircleIcon,
   actions: BoltIcon,
+  events: QueueListIcon,
   repositories: UserGroupIcon,
   command: CommandLineIcon,
 }
@@ -30,6 +32,7 @@ export type SidebarNavItem = {
 
 export const NAV_ITEMS: SidebarNavItem[] = [
   { name: 'Reports', href: '/reports', icon: 'reports' },
+  { name: 'Events', href: '/events', icon: 'events' },
   { name: 'Repositories', href: '/repositories', icon: 'repositories' },
   {
     name: 'Ctrl Panel',
