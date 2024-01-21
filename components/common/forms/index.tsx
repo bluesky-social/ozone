@@ -138,15 +138,22 @@ export function FormLabel(
   )
 }
 
-export const Checkbox = ({
-  label,
-  required,
-  className,
-  ...rest
-}: LabelProps & ComponentProps<'input'> & { className?: string }) => {
+export const Checkbox = forwardRef<
+  HTMLInputElement,
+  LabelProps & ComponentProps<'input'>
+>(function CheckboxElement(
+  {
+    label,
+    required,
+    className,
+    ...rest
+  }: LabelProps & ComponentProps<'input'> & { className?: string },
+  ref,
+) {
   return (
     <div className={className}>
       <input
+        ref={ref}
         type="checkbox"
         className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-1"
         {...rest}
@@ -160,4 +167,4 @@ export const Checkbox = ({
       </label>
     </div>
   )
-}
+})

@@ -9,7 +9,6 @@ import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
 import client from '@/lib/client'
 import { compileTemplateContent, getTemplate } from './helpers'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { EmailTemplates } from './templates'
 import { useEmailComposer } from './useComposer'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
@@ -24,6 +23,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
     reset,
     content,
     setContent,
+    communicationTemplates,
   } = useEmailComposer()
   const subjectField = useRef<HTMLInputElement>(null)
   const commentField = useRef<HTMLTextAreaElement>(null)
@@ -95,8 +95,14 @@ export const EmailComposer = ({ did }: { did: string }) => {
           onChange={(e) => {
             // When templates are changed, force reset message
             const templateName = e.currentTarget.value
-            const subject = getTemplate(templateName).subject
-            const content = compileTemplateContent(templateName, {
+            const template =
+              getTemplate(templateName, communicationTemplates || []) ||
+              communicationTemplates?.[0]
+            if (!template) {
+              return
+            }
+            const subject = template.subject || ''
+            const content = compileTemplateContent(template.contentMarkdown, {
               handle: repo?.handle,
             })
             setContent(content)
@@ -105,11 +111,13 @@ export const EmailComposer = ({ did }: { did: string }) => {
               commentField.current.value = `Sent via ozone template: ${templateName}.`
           }}
         >
-          {Object.keys(EmailTemplates).map((template) => (
-            <option value={template} key={template}>
-              {template}
-            </option>
-          ))}
+          {communicationTemplates
+            ?.filter((tpl) => !tpl.disabled)
+            .map((template) => (
+              <option value={template.name} key={template.id}>
+                {template.name}
+              </option>
+            ))}
         </Select>
       </FormLabel>
       <FormLabel label="Subject" htmlFor="subject" className="mb-3">
@@ -164,11 +172,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
           label="There may be placeholder texts in the content of the email that are meant to be replaced with actual content, please check this box if you're sure you want to send the email as is"
         />
       )}
-      <FormLabel
-        label="Additional Comment"
-        htmlFor="comment"
-        className="mb-3"
-      >
+      <FormLabel label="Additional Comment" htmlFor="comment" className="mb-3">
         <Textarea
           name="comment"
           ref={commentField}

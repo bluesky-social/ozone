@@ -2,9 +2,9 @@ import { ComponentProps } from 'react'
 import { ExclamationTriangleIcon } from '@heroicons/react/24/outline'
 
 export function Loading(
-  props: { noPadding?: boolean } & ComponentProps<'div'>,
+  props: { noPadding?: boolean; message?: string } & ComponentProps<'div'>,
 ) {
-  const { className = '', noPadding, ...others } = props
+  const { className = '', noPadding, message = 'Loading...', ...others } = props
   return (
     <div
       className={`${className} text-center ${noPadding ? '' : 'p-10'}`}
@@ -15,7 +15,7 @@ export function Loading(
         role="status"
         aria-label="loading"
       >
-        <span className="sr-only">Loading...</span>
+        <span className="sr-only">{message}</span>
       </div>
     </div>
   )

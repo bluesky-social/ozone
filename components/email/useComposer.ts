@@ -1,3 +1,4 @@
+import { useCommunicationTemplateList } from 'components/communication-template/hooks'
 import { useReducer } from 'react'
 
 enum ComposerActionType {
@@ -75,6 +76,7 @@ const confirmationReducer = (state: ComposerState, action: ComposerAction) => {
 
 export const useEmailComposer = () => {
   const [state, dispatch] = useReducer(confirmationReducer, initialState)
+  const { data: communicationTemplates } = useCommunicationTemplateList({})
 
   return {
     ...state,
@@ -91,5 +93,6 @@ export const useEmailComposer = () => {
     reset: () => dispatch({ type: ComposerActionType.Reset }),
     toggleConfirmation: () =>
       dispatch({ type: ComposerActionType.ToggleConfirmation }),
+    communicationTemplates,
   }
 }

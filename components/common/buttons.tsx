@@ -1,4 +1,5 @@
 import { ComponentProps, forwardRef, LegacyRef, ReactElement } from 'react'
+import Link from 'next/link'
 
 import { classNames } from '../../lib/util'
 
@@ -42,18 +43,36 @@ const appearanceClassNames = {
   primary:
     'bg-indigo-600 disabled:bg-gray-400 text-white hover:bg-indigo-700 focus:ring-indigo-500 border-transparent',
 }
+const sizeClassNames = {
+  xs: 'px-1 py-1 text-xs font-light',
+  sm: 'px-2 py-1 text-sm font-light',
+  md: 'px-4 py-2 text-base font-medium',
+}
 
 export const ActionButton = forwardRef(function ActionButton(
   props: ComponentProps<'button'> & ActionButtonProps,
   ref: LegacyRef<HTMLButtonElement>,
 ) {
-  const { className = '', appearance, ...others } = props
+  const { className = '', appearance, size, ...others } = props
   const appearanceClassName =
     appearanceClassNames[appearance] || appearanceClassNames.primary
-  const classNames = `inline-flex items-center rounded border px-4 py-2 text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${className} ${appearanceClassName}`
+  const sizeClassName = (size && sizeClassNames[size]) || sizeClassNames.md
+  const classNames = `inline-flex items-center rounded border text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${className} ${appearanceClassName} ${sizeClassName}`
 
   return <button ref={ref} type="button" className={classNames} {...others} />
 })
+
+export const LinkButton = (
+  props: ComponentProps<typeof Link> & ActionButtonProps,
+) => {
+  const { className = '', appearance, size, ...others } = props
+  const appearanceClassName =
+    appearanceClassNames[appearance] || appearanceClassNames.primary
+  const sizeClassName = (size && sizeClassNames[size]) || sizeClassNames.md
+  const classNames = `inline-flex items-center rounded border shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${className} ${appearanceClassName} ${sizeClassName}`
+
+  return <Link className={classNames} {...others} />
+}
 
 type ButtonGroupItem = ComponentProps<'button'> & {
   Icon?: React.ComponentType<React.SVGProps<SVGSVGElement>>

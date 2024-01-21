@@ -1,33 +1,23 @@
-import { EmailTemplates } from './templates'
+import { ComAtprotoAdminDefs } from '@atproto/api'
 
 export const getTemplate = (
-  templateName?: string,
-): { subject: string; content: string } => {
-  // Default to the first template in the array
-  let template = Object.values(EmailTemplates)[0]
-
-  if (templateName) {
-    return EmailTemplates[templateName] || template
-  }
-
-  return template
+  templateName: string,
+  templateList: ComAtprotoAdminDefs.CommunicationTemplateView[],
+): ComAtprotoAdminDefs.CommunicationTemplateView | undefined => {
+  return templateList.find((template) => template.name === templateName)
 }
 
 export const compileTemplateContent = (
-  templateName?: string,
+  content: string,
   // A bit too flexible here. Ideally, we should maintain a mapping of required replacements per template to make it more typesafe
   replacements?: Record<string, any>,
 ): string => {
-  let templateString = getTemplate(templateName).content
-  if (!replacements) return templateString
+  if (!replacements) return content
 
   Object.entries(replacements).forEach(
     ([key, val]) =>
-      (templateString = templateString.replace(
-        new RegExp(`{{${key}}}`, 'ig'),
-        val,
-      )),
+      (content = content.replace(new RegExp(`{{${key}}}`, 'ig'), val)),
   )
 
-  return templateString
+  return content
 }

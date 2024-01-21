@@ -6,13 +6,12 @@ import {
   AppBskyActorGetProfile as GetProfile,
   ComAtprotoAdminGetRepo as GetRepo,
   AppBskyActorDefs,
-  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import {
+  ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
-  ShieldExclamationIcon,
   UserCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/20/solid'
@@ -40,7 +39,7 @@ import { DataField } from '@/common/DataField'
 import { ProfileAvatar } from './ProfileAvatar'
 import { DidHistory } from './DidHistory'
 import { ModEventList } from '@/mod-event/EventList'
-import { ButtonGroup } from '@/common/buttons'
+import { ButtonGroup, LinkButton } from '@/common/buttons'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
@@ -52,6 +51,16 @@ enum Views {
   Invites,
   Events,
   Email,
+}
+
+const TabKeys = {
+  details: Views.Details,
+  posts: Views.Posts,
+  follows: Views.Follows,
+  followers: Views.Followers,
+  invites: Views.Invites,
+  events: Views.Events,
+  email: Views.Email,
 }
 
 export function AccountView({
@@ -69,8 +78,15 @@ export function AccountView({
   onSubmit: (vals: any) => Promise<void>
   onShowActionPanel: (subject: string) => void
 }) {
-  const [currentView, setCurrentView] = useState<Views>(Views.Details)
   const searchParams = useSearchParams()
+  const currentView =
+    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
   const pathname = usePathname()
   const router = useRouter()
   const reportUri = searchParams.get('reportUri') || undefined
@@ -695,6 +711,17 @@ export const EventsView = ({ did }: { did: string }) => {
 const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
   return (
     <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      <div className="flex flex-row justify-end items-center">
+        <LinkButton
+          prefetch={false}
+          href="/communication-template"
+          appearance="primary"
+          size="sm"
+        >
+          Manage Templates
+          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 ml-1" />
+        </LinkButton>
+      </div>
       <EmailComposer {...props} />
     </div>
   )

@@ -114,7 +114,7 @@ const buildItemForProfile = ({
       section: ActionSections.details,
       keywords: `${search},view,${type}`,
       icon: <RepoIcon className={iconClassName} />,
-      subtitle: `Go to profile page and of this ${typeText}`,
+      subtitle: `Go to profile page of this ${typeText}`,
       perform: () => {
         router.push(`/repositories/${profileKey.replace('@', '')}`)
       },
@@ -130,6 +130,17 @@ const buildItemForProfile = ({
         router.push(
           `/repositories/${profileKey.replace('@', '')}?reportUri=default`,
         )
+      },
+    },
+    {
+      id: `email-account-by-${type}`,
+      name: `Send email to ${profileKey}`,
+      section: ActionSections.actions,
+      keywords: `${search},email,action,${type}`,
+      icon: <RepoIcon className={iconClassName} />,
+      subtitle: `Open email composer for ${typeText}`,
+      perform: () => {
+        router.push(`/repositories/${profileKey.replace('@', '')}?tab=email`)
       },
     },
   ]
