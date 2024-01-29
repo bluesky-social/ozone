@@ -1,5 +1,5 @@
 'use client'
-import { useContext, useCallback, Suspense } from 'react'
+import { useContext, useCallback, Suspense, useEffect } from 'react'
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -196,6 +196,32 @@ export const ReportsPageContent = () => {
       (report) => validSubjectString(report.subject) ?? [],
     ),
   )
+
+  useEffect(() => {
+    const titleFromTab =
+      currentTab === 'all'
+        ? `All subjects`
+        : `${currentTab[0].toUpperCase()}${currentTab.slice(1)}`
+    const additionalFragments: string[] = []
+
+    if (takendown) {
+      additionalFragments.push('Taken Down')
+    }
+
+    if (includeMuted) {
+      additionalFragments.push('Include Muted')
+    }
+
+    if (appealed) {
+      additionalFragments.push('Appealed')
+    }
+
+    const additionalTitle = additionalFragments.length
+      ? ` (${additionalFragments.join(', ')})`
+      : ''
+    const title = `Queue - ${titleFromTab}${additionalTitle}`
+    document.title = title
+  }, [currentTab, takendown, includeMuted, appealed])
 
   return (
     <>

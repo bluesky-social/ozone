@@ -4,6 +4,7 @@ import client from '@/lib/client'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { useSearchParams } from 'next/navigation'
 import { SubjectStatusView } from '@/subject/StatusView'
+import { useEffect } from 'react'
 
 export default function SubjectStatus() {
   const params = useSearchParams()
@@ -20,6 +21,16 @@ export default function SubjectStatus() {
       return data
     },
   })
+
+  useEffect(() => {
+    let title = `Subject Status`
+
+    if (data?.subjectStatuses[0]) {
+      title = `${data.subjectStatuses[0].subjectRepoHandle} - ${title}`
+    }
+
+    document.title = title
+  }, [data])
 
   if (status === 'loading') {
     return <Loading />

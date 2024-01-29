@@ -116,6 +116,31 @@ export default function Record({
     }
   }, [data, reportUri])
 
+  // Change title dynamically
+  // Show the collection name
+  // Once we retrieve the profile/repo details, show the handle
+  useEffect(() => {
+    let title = `Record Details`
+
+    if (collection) {
+      const titleFromCollection = collection.split('.').pop()
+      if (titleFromCollection) {
+        title =
+          titleFromCollection[0].toUpperCase() + titleFromCollection.slice(1)
+      }
+    }
+
+    if (data?.record?.repo) {
+      title += ` - ${data.record.repo.handle}`
+    }
+
+    if (rkey) {
+      title += ` - ${rkey}`
+    }
+
+    document.title = title
+  }, [data, collection])
+
   if (error) {
     return <LoadingFailed error={error} />
   }

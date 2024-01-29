@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useInterval } from 'react-use'
 import dynamic from 'next/dynamic'
 
@@ -38,6 +38,10 @@ const Timer = () => {
 // Right now, we only serve the tetris game here, in the future, we want to rotate
 // between a few games/fun activities which is why it's named "surprise me"
 export default function SurpriseMePage() {
+  useEffect(() => {
+    document.title = `Take a break!`
+  }, [])
+
   return (
     <>
       {/* This is valid jsx but because of a known bug, typescript is confused */}
