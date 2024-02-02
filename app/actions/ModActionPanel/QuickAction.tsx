@@ -427,7 +427,7 @@ function Form(
           }
         }
       `}</style>
-      <div className="flex overflow-y-auto scrollable-container">
+      <div className="flex overflow-y-auto scrollable-container pt-1">
         <form
           id={FORM_ID}
           onSubmit={onFormSubmit}

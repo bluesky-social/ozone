@@ -79,7 +79,7 @@ export const ModEventList = (
     createdAfter,
     createdBefore,
     changeListFilter,
-    resetListFilters
+    resetListFilters,
   } = useModEventList(props)
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
@@ -88,7 +88,7 @@ export const ModEventList = (
   const noEvents = modEvents.length === 0 && !isInitialLoadingModEvents
   const isShowingEventsByCreator = !!props.createdBy
   return (
-    <div>
+    <div className='mr-1'>
       <div className="flex flex-row justify-between items-center">
         {!isEntireHistoryView ? (
           <Header
@@ -106,21 +106,21 @@ export const ModEventList = (
         ) : (
           <h4 className="font-medium text-gray-700">Moderation event stream</h4>
         )}
-        <ActionButton
-          size="xs"
-          appearance="outlined"
-          onClick={() => setShowFiltersPanel((current) => !current)}
-        >
-          {hasFilter ? (
-            <FunnelFilledIcon className="h-3 w-3 mr-1" />
-          ) : (
-            <FunnelEmptyIcon className="h-3 w-3 mr-1" />
-          )}
-          <span className="text-xs">Configure</span>
-        </ActionButton>
+          <ActionButton
+            size="xs"
+            appearance="outlined"
+            onClick={() => setShowFiltersPanel((current) => !current)}
+          >
+            {hasFilter ? (
+              <FunnelFilledIcon className="h-3 w-3 mr-1" />
+            ) : (
+              <FunnelEmptyIcon className="h-3 w-3 mr-1" />
+            )}
+            <span className="text-xs">Configure</span>
+          </ActionButton>
       </div>
       {showFiltersPanel && (
-        <div className="shadow rounded py-3 px-5 bg-white mt-2 mx-1">
+        <div className="shadow rounded py-3 px-5 bg-white mt-2">
           <div className="flex flex-row">
             <div className="mr-4">
               <TypeFilterCheckbox
