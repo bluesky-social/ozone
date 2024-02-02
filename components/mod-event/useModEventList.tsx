@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import client from '@/lib/client'
-import { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useReducer, useState } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
 import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
 import { MOD_EVENT_TITLES } from './constants'
@@ -18,58 +18,95 @@ type CommentFilter = {
 
 export const FIRST_EVENT_TIMESTAMP = '2022-11-01T00:00'
 const allTypes = Object.keys(MOD_EVENT_TITLES)
+const initialListState = {
+  types: allTypes,
+  includeAllUserRecords: false,
+  commentFilter: { enabled: false, keyword: '' },
+  createdBy: undefined,
+  subject: undefined,
+  oldestFirst: false,
+  createdBefore: new Date().toISOString().split('.')[0],
+  createdAfter: FIRST_EVENT_TIMESTAMP,
+}
+
+// The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
+type EventListState = Omit<typeof initialListState, 'subject' | 'createdBy'> & {
+  subject?: string
+  createdBy?: string
+}
+
+type EventListFilterPayload =
+  | { field: 'types'; value: string[] }
+  | { field: 'includeAllUserRecords'; value: boolean }
+  | { field: 'commentFilter'; value: CommentFilter }
+  | { field: 'createdBy'; value: string | undefined }
+  | { field: 'subject'; value: string | undefined }
+  | { field: 'oldestFirst'; value: boolean }
+  | { field: 'createdBefore'; value: string }
+  | { field: 'createdAfter'; value: string }
+
+type EventListAction =
+  | {
+      type: 'SET_FILTER'
+      payload: EventListFilterPayload
+    }
+  | {
+      type: 'RESET'
+    }
+
+const eventListReducer = (state: EventListState, action: EventListAction) => {
+  switch (action.type) {
+    case 'SET_FILTER':
+      return { ...state, [action.payload.field]: action.payload.value }
+    case 'RESET':
+      return initialListState
+    default:
+      return state
+  }
+}
 
 export const useModEventList = (
   props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
   const { isLoggedIn } = useContext(AuthContext)
-  const [createdAfter, setCreatedAfter] = useState<string>(
-    FIRST_EVENT_TIMESTAMP,
-  )
-  const [createdBefore, setCreatedBefore] = useState<string>(
-    new Date().toISOString().split('.')[0],
-  )
-  const [subject, setSubject] = useState<string | undefined>(props.subject)
-  const [createdBy, setCreatedBy] = useState<string | undefined>(
-    props.createdBy,
-  )
-  const [types, setTypes] = useState<string[]>(allTypes)
-  const [oldestFirst, setOldestFirst] = useState<boolean>(false)
-  const [commentFilter, setCommentFilter] = useState<CommentFilter>({
-    enabled: false,
-    keyword: '',
-  })
-  const [includeAllUserRecords, setIncludeAllUserRecords] =
-    useState<boolean>(false)
+  const [listState, dispatch] = useReducer(eventListReducer, initialListState)
+
+  const setCommentFilter = (value: CommentFilter) => {
+    dispatch({ type: 'SET_FILTER', payload: { field: 'commentFilter', value } })
+  }
 
   useEffect(() => {
-    if (props.subject !== subject) {
-      setSubject(props.subject)
+    if (props.subject !== listState.subject) {
+      dispatch({
+        type: 'SET_FILTER',
+        payload: { field: 'subject', value: props.subject },
+      })
     }
   }, [props.subject])
 
   useEffect(() => {
-    if (props.createdBy !== createdBy) {
-      setCreatedBy(props.createdBy)
+    if (props.createdBy !== listState.createdBy) {
+      dispatch({
+        type: 'SET_FILTER',
+        payload: { field: 'createdBy', value: props.createdBy },
+      })
     }
   }, [props.createdBy])
 
   const results = useInfiniteQuery({
     enabled: isLoggedIn,
-    queryKey: [
-      'modEventList',
-      {
-        createdBy,
-        subject,
+    queryKey: ['modEventList', { listState }],
+    queryFn: async ({ pageParam }) => {
+      const {
         types,
         includeAllUserRecords,
         commentFilter,
+        createdBy,
+        subject,
         oldestFirst,
-        createdAfter,
         createdBefore,
-      },
-    ],
-    queryFn: async ({ pageParam }) => {
+        createdAfter,
+      } = listState
       const queryParams: ComAtprotoAdminQueryModerationEvents.QueryParams = {
         cursor: pageParam,
         includeAllUserRecords,
@@ -93,7 +130,7 @@ export const useModEventList = (
 
       const filterTypes = types.filter(Boolean)
       if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
-        queryParams.types = allTypes
+        queryParams.types = filterTypes
       }
 
       if (oldestFirst) {
@@ -115,47 +152,41 @@ export const useModEventList = (
   })
 
   const hasFilter =
-    (types.length > 0 &&
-      types.length !== Object.keys(MOD_EVENT_TITLES).length) ||
-    includeAllUserRecords ||
-    commentFilter.enabled ||
-    createdBy ||
-    subject ||
-    oldestFirst
+    (listState.types.length > 0 &&
+      listState.types.length !== allTypes.length) ||
+    listState.includeAllUserRecords ||
+    listState.commentFilter.enabled ||
+    listState.createdBy ||
+    listState.subject ||
+    listState.oldestFirst
 
   return {
-    types,
-    setTypes,
-    includeAllUserRecords,
-    setIncludeAllUserRecords,
+    // Data from react-query
     modEvents: results.data?.pages.map((page) => page.events).flat() || [],
     fetchMoreModEvents: results.fetchNextPage,
     hasMoreModEvents: results.hasNextPage,
     refetchModEvents: results.refetch,
     isInitialLoadingModEvents: results.isInitialLoading,
-    hasFilter,
-    commentFilter,
+
+    // Helper functions to mutate state
     toggleCommentFilter: () => {
-      setCommentFilter((prev) => {
-        if (prev.enabled) {
-          return { enabled: false, keyword: '' }
-        }
-        return { enabled: true, keyword: '' }
-      })
+      if (listState.commentFilter.enabled) {
+        return setCommentFilter({ enabled: false, keyword: '' })
+      }
+      return setCommentFilter({ enabled: true, keyword: '' })
     },
     setCommentFilterKeyword: (keyword: string) => {
       setCommentFilter({ enabled: true, keyword })
     },
-    createdBy,
-    setCreatedBy,
-    subject,
-    setSubject,
-    setOldestFirst,
-    oldestFirst,
-    createdBefore,
-    setCreatedBefore,
-    createdAfter,
-    setCreatedAfter,
+    changeListFilter: (payload: EventListFilterPayload) =>
+      dispatch({ type: 'SET_FILTER', payload: payload }),
+    resetListFilters: () => dispatch({ type: 'RESET' }),
+
+    // State data
+    ...listState,
+
+    // Derived data from state
+    hasFilter,
   }
 }
 

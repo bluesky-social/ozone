@@ -64,9 +64,7 @@ export const ModEventList = (
 ) => {
   const {
     types,
-    setTypes,
     includeAllUserRecords,
-    setIncludeAllUserRecords,
     modEvents,
     fetchMoreModEvents,
     hasMoreModEvents,
@@ -76,15 +74,12 @@ export const ModEventList = (
     toggleCommentFilter,
     setCommentFilterKeyword,
     createdBy,
-    setCreatedBy,
     subject,
-    setSubject,
     oldestFirst,
-    setOldestFirst,
     createdAfter,
-    setCreatedAfter,
     createdBefore,
-    setCreatedBefore,
+    changeListFilter,
+    resetListFilters
   } = useModEventList(props)
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
@@ -100,7 +95,11 @@ export const ModEventList = (
             {...{
               subjectTitle,
               includeAllUserRecords,
-              setIncludeAllUserRecords,
+              setIncludeAllUserRecords: (value) =>
+                changeListFilter({
+                  field: 'includeAllUserRecords',
+                  value,
+                }),
               isShowingEventsByCreator,
             }}
           />
@@ -126,7 +125,9 @@ export const ModEventList = (
             <div className="mr-4">
               <TypeFilterCheckbox
                 selectedTypes={types}
-                setSelectedTypes={setTypes}
+                setSelectedTypes={(value) =>
+                  changeListFilter({ field: 'types', value })
+                }
               />
             </div>
             <div>
@@ -188,7 +189,12 @@ export const ModEventList = (
                   className="block w-full"
                   disabled={!!props.createdBy}
                   value={createdBy || ''}
-                  onChange={(ev) => setCreatedBy(ev.target.value)}
+                  onChange={(ev) =>
+                    changeListFilter({
+                      field: 'createdBy',
+                      value: ev.target.value,
+                    })
+                  }
                   autoComplete="off"
                 />
               </FormLabel>
@@ -206,7 +212,12 @@ export const ModEventList = (
                   placeholder="DID or AT-URI"
                   className="block w-full"
                   value={subject || ''}
-                  onChange={(ev) => setSubject(ev.target.value)}
+                  onChange={(ev) =>
+                    changeListFilter({
+                      field: 'subject',
+                      value: ev.target.value,
+                    })
+                  }
                   autoComplete="off"
                 />
               </FormLabel>
@@ -222,7 +233,12 @@ export const ModEventList = (
                   name="createdAfter"
                   className="block w-full"
                   value={createdAfter}
-                  onChange={(ev) => setCreatedAfter(ev.target.value)}
+                  onChange={(ev) =>
+                    changeListFilter({
+                      field: 'createdAfter',
+                      value: ev.target.value,
+                    })
+                  }
                   autoComplete="off"
                   min={FIRST_EVENT_TIMESTAMP}
                   max={new Date().toISOString().split('.')[0]}
@@ -240,7 +256,12 @@ export const ModEventList = (
                   name="createdBefore"
                   className="block w-full"
                   value={createdBefore}
-                  onChange={(ev) => setCreatedBefore(ev.target.value)}
+                  onChange={(ev) =>
+                    changeListFilter({
+                      field: 'createdBefore',
+                      value: ev.target.value,
+                    })
+                  }
                   autoComplete="off"
                   min={FIRST_EVENT_TIMESTAMP}
                   max={new Date().toISOString().split('.')[0]}
@@ -256,7 +277,9 @@ export const ModEventList = (
               name="sortDirection"
               className="flex items-center"
               checked={oldestFirst}
-              onChange={() => setOldestFirst((current) => !current)}
+              onChange={() =>
+                changeListFilter({ field: 'oldestFirst', value: !oldestFirst })
+              }
               label="Show oldest events first (default: newest first)"
             />
           </div>
@@ -269,7 +292,11 @@ export const ModEventList = (
             No moderation events found.
             {!!types.length && (
               <p className="text-xs italic pt-2">
-                <a className="underline" href="#" onClick={() => setTypes([])}>
+                <a
+                  className="underline"
+                  href="#"
+                  onClick={() => resetListFilters()}
+                >
                   Clear all filters
                 </a>{' '}
                 to see all events
