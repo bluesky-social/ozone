@@ -30,7 +30,7 @@ const initialListState = {
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
-type EventListState = Omit<typeof initialListState, 'subject' | 'createdBy'> & {
+export type EventListState = Omit<typeof initialListState, 'subject' | 'createdBy'> & {
   subject?: string
   createdBy?: string
 }
