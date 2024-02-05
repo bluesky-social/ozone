@@ -10,10 +10,10 @@ export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
-          <thead className="bg-white">
+          <thead className="bg-white dark:bg-slate-800">
             <BlobRowHead />
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
             {blobs.map((blob) => (
               <BlobRow key={blob.cid} blob={blob} />
             ))}
@@ -31,10 +31,10 @@ function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
 
   return (
     <tr {...others}>
-      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 text-ellipsis overflow-hidden max-w-xs">
+      <td className="py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 text-ellipsis overflow-hidden max-w-xs">
         {blob.cid}
       </td>
-      <td className="px-3 py-4 text-sm text-gray-500">
+      <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-50">
         <Chip>{blob.mimeType}</Chip>
         <Chip>{formatBytes(blob.size)}</Chip>
         {(ComAtprotoAdminDefs.isImageDetails(blob.details) ||
@@ -44,7 +44,7 @@ function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
           </Chip>
         )}
       </td>
-      <td className="px-3 py-4 text-sm text-gray-500">
+      <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-50">
         <span title={createdAt.toLocaleString()}>
           {formatDistanceToNow(createdAt, { addSuffix: true })}
         </span>
@@ -66,19 +66,19 @@ function BlobRowHead() {
     <tr>
       <th
         scope="col"
-        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6"
       >
         CID
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 lg:table-cell"
       >
         Details
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 lg:table-cell"
       >
         Created
       </th>

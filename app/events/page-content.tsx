@@ -26,7 +26,7 @@ export default function EventListPageContent() {
 
   return (
     <div>
-      <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4">
+      <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
         <ModEventList queryOptions={{ refetchInterval: 10 * 1000 }} />
       </div>
       <ModActionPanelQuick

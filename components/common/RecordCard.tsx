@@ -225,7 +225,7 @@ export function RepoCard(props: { did: string }) {
   }
   const takendown = !!repo.moderation.subjectStatus?.takendown
   return (
-    <div className="bg-white">
+    <div className="bg-white dark:bg-slate-800">
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
           <ProfileAvatar
@@ -235,7 +235,7 @@ export function RepoCard(props: { did: string }) {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
               href={`/repositories/${repo.handle}`}
               className="hover:underline"
@@ -243,7 +243,7 @@ export function RepoCard(props: { did: string }) {
               {profile?.displayName ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
-                  <span className="ml-1 text-gray-500">@{repo.handle}</span>
+                  <span className="ml-1 text-gray-500 dark:text-gray-50">@{repo.handle}</span>
                 </>
               ) : (
                 <span className="font-bold">@{repo.handle}</span>
@@ -259,12 +259,12 @@ export function RepoCard(props: { did: string }) {
             </a>
           </p>
           {profile?.description && (
-            <p className="text-gray-500">{profile.description}</p>
+            <p className="text-gray-500 dark:text-gray-50">{profile.description}</p>
           )}
           {takendown && (
             <p className="pt-1 pb-1">
               <LoadingFailedDense
-                className="inline-block font-normal text-gray-600"
+                className="inline-block font-normal text-gray-600 dark:text-gray-100"
                 error="Account taken down"
                 noPadding
               />

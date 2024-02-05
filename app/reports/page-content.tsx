@@ -229,7 +229,7 @@ export const ReportsPageContent = () => {
         <div className="flex-1 lg:text-right lg:pr-2 pb-4 px-1 pt-5 lg:pt-0">
           <button
             role="button"
-            className="flex-1 text-gray-500 hover:text-amber-600 whitespace-nowrap font-medium text-sm align-text-bottom"
+            className="flex-1 text-gray-500 dark:text-gray-50 hover:text-amber-600 dark:hover:text-amber-100 whitespace-nowrap font-medium text-sm align-text-bottom"
             onClick={() => setQuickActionPanelSubject(subjectOptions[0] ?? '')}
           >
             Take Action <ModActionIcon className="h-4 w-4 align-text-bottom" />

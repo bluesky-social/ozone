@@ -70,9 +70,9 @@ export function ProfileMenu() {
       {/* Profile dropdown */}
       <Menu as="div" className="relative flex-shrink-0">
         <div>
-          <Menu.Button className="flex rounded-full bg-white text-sm items-center focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
+          <Menu.Button className="flex rounded-full bg-white dark:bg-slate-900 text-sm items-center focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
             <span className="sr-only">Open user menu</span>
-            <span className="hidden md:inline mr-2 font-semibold text-base text-gray-600">
+            <span className="hidden md:inline mr-2 font-semibold text-base text-gray-600 dark:text-gray-100">
               {handle || ''}
             </span>
             <img
@@ -91,14 +91,14 @@ export function ProfileMenu() {
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
-          <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
+          <Menu.Items className="absolute right-0 z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-slate-900 py-1 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
             <Menu.Item>
               {({ active }) => (
                 <a
                   href="#"
                   className={classNames(
-                    active ? 'bg-gray-100' : '',
-                    'block px-4 py-2 text-sm text-gray-700',
+                    active ? 'bg-gray-100 dark:bg-slate-500' : '',
+                    'block px-4 py-2 text-sm text-gray-700 dark:text-gray-100',
                   )}
                   onClick={onClickSignout}
                 >

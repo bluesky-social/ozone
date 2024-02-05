@@ -4,6 +4,8 @@ import {
   BoltIcon,
   QueueListIcon,
   CommandLineIcon,
+  SunIcon,
+  MoonIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -14,6 +16,8 @@ export const ICONS = {
   events: QueueListIcon,
   repositories: UserGroupIcon,
   command: CommandLineIcon,
+  sun: SunIcon,
+  moon: MoonIcon,
 }
 
 export type SidebarNavItem = {
@@ -25,7 +29,8 @@ export type SidebarNavItem = {
     }
   | {
       onClick: (context: {
-        kbar: ReturnType<typeof useKBar>
+        kbar: ReturnType<typeof useKBar>,
+        toggleTheme: () => void
       }) => MouseEventHandler<HTMLButtonElement> | undefined
     }
 )
@@ -41,6 +46,11 @@ export const NAV_ITEMS: SidebarNavItem[] = [
       ({ kbar }) =>
       () =>
         kbar.query.toggle(),
+  },
+  {
+    name: 'Theme',
+    icon: 'sun',
+    onClick: ({ toggleTheme }) => toggleTheme,
   },
 ]
 

@@ -23,7 +23,7 @@ const OtherReportsForAuthorLink = ({
       prefetch={false}
       href={{ pathname, search: newUrl.toString() }}
       className={classNames(
-        'text-gray-600 hover:text-gray-900 font-medium',
+        'text-gray-600 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-200 font-medium',
         className,
       )}
     >
@@ -55,7 +55,7 @@ const CollectionLink = ({
       <Link
         prefetch={false}
         href={{ pathname, search: newUrl.toString() }}
-        className="text-gray-600 hover:text-gray-900 font-medium mr-1"
+        className="text-gray-600 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-300 font-medium mr-1"
       >
         {collectionName}
       </Link>

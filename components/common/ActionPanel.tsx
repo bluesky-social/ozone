@@ -56,7 +56,7 @@ export function ActionPanel(props: {
                       </button>
                     </div>
                   </Transition.Child>
-                  <div className="flex h-full flex-col overflow-y-scroll bg-white py-6 shadow-xl">
+                  <div className="flex h-full flex-col overflow-y-scroll bg-white dark:bg-slate-900 py-6 shadow-xl">
                     {title && (
                       <div className="px-4 sm:px-6">
                         {typeof title !== 'string' && title}

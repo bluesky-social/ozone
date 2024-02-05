@@ -20,15 +20,15 @@ export function LoginModal() {
   const [password, setPassword] = useState('')
   const [adminToken, setAdminToken] = useState('')
 
-  const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2 ${
+  const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-slate-500 focus:ring-offset-2 ${
     isValidatingAuth
       ? 'bg-gray-500 hover:bg-gray-600'
-      : 'bg-rose-600 hover:bg-rose-700'
+      : 'bg-rose-600 bg-teal-600 hover:bg-rose-700 dark:hover:bg-teal-700'
   }`
   const submitButtonIconClassNames = `h-5 w-5 ${
     isValidatingAuth
       ? 'text-gray-800 group-hover:text-gray-700'
-      : 'text-rose-500 group-hover:text-rose-400'
+      : 'text-rose-500 dark:text-gray-50 group-hover:text-rose-400 dark:group-hover:text-gray-100'
   }`
 
   useEffect(() => {
@@ -70,8 +70,8 @@ export function LoginModal() {
   }
   return (
     <div className="fixed inset-0 z-20 overflow-y-auto">
-      <div className="flex min-h-full items-center justify-center bg-gradient-to-b from-rose-600 to-rose-800">
-        <div className="relative transform overflow-hidden rounded-lg bg-white px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
+      <div className="flex min-h-full items-center justify-center bg-gradient-to-b from-rose-600 to-rose-800 dark:from-slate-700 dark:to-slate-900">
+        <div className="relative transform overflow-hidden rounded-lg bg-white dark:bg-slate-700 px-4 pt-5 pb-4 text-left shadow-xl transition-all sm:my-8 sm:w-full sm:max-w-sm sm:p-6">
           <div>
             <Image
               className="mx-auto h-20 w-auto"
@@ -81,10 +81,10 @@ export function LoginModal() {
               width={200}
               height={200}
             />
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
+            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-200">
               Bluesky Admin Tools
             </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
+            <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-100">
               Sign into your account
             </p>
           </div>
@@ -101,7 +101,7 @@ export function LoginModal() {
                   type="text"
                   required
                   disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
                   placeholder="Service URL"
                   list="service-url-suggestions"
                   value={service}
@@ -122,7 +122,7 @@ export function LoginModal() {
                   type="text"
                   required
                   disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
                   placeholder="Account handle"
                   value={handle}
                   onChange={(e) => setHandle(e.target.value)}
@@ -139,7 +139,7 @@ export function LoginModal() {
                   autoComplete="current-password"
                   required
                   disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -155,7 +155,7 @@ export function LoginModal() {
                   type="password"
                   required
                   disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 sm:text-sm"
+                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
                   placeholder="Admin Token"
                   value={adminToken}
                   onChange={(e) => setAdminToken(e.target.value)}

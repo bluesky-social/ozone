@@ -37,29 +37,29 @@ export function FullScreenActionPanel(props: {
             leaveFrom="opacity-100 scale-100"
             leaveTo="opacity-0 scale-95"
           >
-            <Dialog.Panel className="max-w-screen-xl w-full sm:w-5/6 h-full md:max-h-3/4 md:my-12 align-bottom bg-white rounded-lg text-left sm:overflow-hidden shadow-xl transform transition-all sm:align-middle flex">
+            <Dialog.Panel className="max-w-screen-xl w-full sm:w-5/6 h-full md:max-h-3/4 md:my-12 align-bottom bg-white dark:bg-slate-900 rounded-lg text-left sm:overflow-hidden shadow-xl transform transition-all sm:align-middle flex">
               <div className="absolute top-0 right-0 pt-4 pr-4">
                 <button
                   type="button"
-                  className="rounded-md text-gray-300 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
+                  className="rounded-md text-gray-300 dark:text-gray-50 hover:text-white focus:outline-none focus:ring-2 focus:ring-white"
                   onClick={onClose}
                 >
                   <span className="sr-only">Close panel</span>
                   <XMarkIcon className="h-6 w-6" aria-hidden="true" />
                 </button>
               </div>
-              <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex flex-col flex-1">
+              <div className="bg-white dark:bg-slate-900 px-4 pt-5 pb-4 sm:p-6 sm:pb-4 flex flex-col flex-1">
                 {title && (
                   <div className="sm:flex sm:items-start">
                     {typeof title !== 'string' && title}
                     {typeof title === 'string' && (
-                      <Dialog.Title className="text-lg leading-6 font-medium text-gray-900">
+                      <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200">
                         {title}
                       </Dialog.Title>
                     )}
                   </div>
                 )}
-                <div className="mt-2 text-sm text-gray-500 flex flex-1 flex-col align-center">
+                <div className="mt-2 text-sm text-gray-500 dark:text-gray-50 flex flex-1 flex-col align-center">
                   {children}
                 </div>
               </div>

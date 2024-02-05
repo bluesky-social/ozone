@@ -11,16 +11,18 @@ import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 import Image from 'next/image'
 import { Suspense } from 'react'
+import { useColorScheme } from '@/common/useColorScheme'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
+  const { theme, toggleTheme } = useColorScheme()
 
   return (
     <MobileMenuProvider>
       <LoginModal />
       <div className="flex h-full">
         {/* Narrow sidebar */}
-        <div className="hidden w-28 overflow-y-auto bg-rose-700 md:block">
+        <div className="hidden w-28 overflow-y-auto bg-rose-700 dark:bg-teal-800 md:block">
           <div className="flex w-full flex-col items-center py-6">
             <div className="flex flex-shrink-0 items-center">
               <Image
@@ -32,7 +34,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
               />
             </div>
-            <SidebarNav />
+            <SidebarNav {...{ theme, toggleTheme }} />
           </div>
         </div>
 
@@ -42,7 +44,7 @@ export function Shell({ children }: React.PropsWithChildren) {
         {/* Content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
           <header className="w-full">
-            <div className="relative z-10 flex h-16 flex-shrink-0 border-b border-gray-200 bg-white">
+            <div className="relative z-10 flex h-16 flex-shrink-0 border-b border-gray-200 dark:border-slate-600 bg-white dark:bg-slate-900">
               <MobileMenuBtn />
               <div className="flex flex-1 justify-between px-4 sm:px-6">
                 <div className="flex flex-1">
@@ -74,7 +76,7 @@ export function Shell({ children }: React.PropsWithChildren) {
 
           {/* Main content */}
           <div className="flex flex-1 items-stretch overflow-hidden">
-            <main className="flex-1 overflow-y-auto">
+            <main className="flex-1 overflow-y-auto dark:bg-slate-900">
               {/* Primary column */}
               <section
                 aria-labelledby="primary-heading"
@@ -99,7 +101,7 @@ function SearchInput() {
     <input
       id="term"
       name="term"
-      className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0"
+      className="h-full w-full border-transparent py-2 pl-8 pr-3 text-base text-gray-900 placeholder-gray-500 focus:border-transparent focus:placeholder-gray-400 focus:outline-none focus:ring-0 dark:bg-slate-900 dark:text-gray-100"
       placeholder="Search"
       type="search"
       value={termInput}

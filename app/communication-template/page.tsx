@@ -33,7 +33,7 @@ export default function CommunicationTemplatePage() {
   return (
     <div className="w-5/6 md:w-2/3 lg:w-1/2 mx-auto">
       <div className="flex flex-row justify-between items-center">
-        <h2 className="font-semibold text-gray-600 mb-3 mt-4">
+        <h2 className="font-semibold text-gray-600 dark:text-gray-100 mb-3 mt-4">
           Communication Templates
         </h2>
         <LinkButton
@@ -51,9 +51,9 @@ export default function CommunicationTemplatePage() {
       />
       <ul>
         {!data?.length && (
-          <div className="shadow bg-white rounded-sm p-5 text-gray-700 mb-3 text-center">
+          <div className="shadow bg-white dark:bg-slate-800 rounded-sm p-5 text-gray-700 dark:text-gray-100 mb-3 text-center">
             <p>No templates found</p>
-            <p className="text-sm text-gray-900">
+            <p className="text-sm text-gray-900 dark:text-gray-200">
               Create a new template to send emails to users.
             </p>
           </div>
@@ -61,10 +61,10 @@ export default function CommunicationTemplatePage() {
         {data?.map((template) => (
           <li
             key={template.id}
-            className="shadow bg-white rounded-sm p-3 text-gray-700 mb-3"
+            className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-3 text-gray-700 dark:text-gray-100 mb-3"
           >
             <p className="flex flex-row justify-between">
-              <span className="text-sm text-gray-900">{template.name}</span>
+              <span className="text-sm text-gray-900 dark:text-gray-200">{template.name}</span>
               {template.disabled && (
                 <LabelChip className="bg-red-200">Disabled</LabelChip>
               )}
@@ -78,7 +78,7 @@ export default function CommunicationTemplatePage() {
               <div className="flex flex-row">
                 <Link
                   href={`/communication-template/${template.id}/edit`}
-                  className="flex flex-row items-center border border-gray-400 rounded-sm px-2 hover:bg-gray-100 mx-1"
+                  className="flex flex-row items-center border border-gray-400 rounded-sm px-2 hover:bg-gray-100 dark:hover:bg-slate-700 mx-1"
                 >
                   <PencilIcon className="h-3 w-3 mr-1" />
                   Edit

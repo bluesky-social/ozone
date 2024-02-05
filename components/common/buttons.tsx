@@ -12,7 +12,7 @@ export const ButtonPrimary = forwardRef(function ButtonPrimary(
     <button
       ref={ref}
       type="button"
-      className={`inline-flex items-center rounded border border-transparent bg-indigo-600 disabled:bg-gray-400 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${className}`}
+      className={`inline-flex items-center rounded border border-transparent bg-indigo-600 dark:bg-teal-600 disabled:bg-gray-400 px-4 py-2 text-base font-medium text-white shadow-sm hover:bg-indigo-700 hover:bg-teal-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-teal-500 focus:ring-offset-2 ${className}`}
       {...others}
     />
   )
@@ -20,11 +20,11 @@ export const ButtonPrimary = forwardRef(function ButtonPrimary(
 
 export function ButtonSecondary(props: ComponentProps<'button'>) {
   const { className = '', color, ...others } = props
-  const textColor = color || 'text-indigo-700'
+  const textColor = color || 'text-indigo-700 dark:text-sky-100'
   return (
     <button
       type="button"
-      className={`inline-flex items-center rounded-md border border-transparent bg-indigo-100 disabled:bg-gray-100 px-4 py-2 text-base font-medium disabled:text-gray-700 hover:bg-indigo-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 ${textColor} ${className}`}
+      className={`inline-flex items-center rounded-md border border-transparent bg-indigo-100 dark:bg-sky-700 disabled:bg-gray-100 px-4 py-2 text-base font-medium disabled:text-gray-700 hover:bg-indigo-200 dark:hover:bg-sky-800 focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-sky-900 focus:ring-offset-2 ${textColor} ${className}`}
       {...others}
     />
   )
@@ -39,9 +39,9 @@ type ActionButtonProps = {
 
 const appearanceClassNames = {
   outlined:
-    'bg-transparent disabled:bg-gray-300 text-black hover:bg-gray-500 focus:ring-gray-500 border-gray-700',
+    'bg-transparent dark:bg-slate-800 disabled:bg-gray-300 text-black dark:text-gray-50 hover:bg-gray-500 dark:hover:bg-slate-700 focus:ring-gray-500 dark:focus:ring-slate-600 border-gray-700 dark:border-slate-600',
   primary:
-    'bg-indigo-600 disabled:bg-gray-400 text-white hover:bg-indigo-700 focus:ring-indigo-500 border-transparent',
+    'bg-indigo-600 dark:bg-teal-600 disabled:bg-gray-400 text-white hover:bg-indigo-700 dark:hover:bg-teal-700 focus:ring-indigo-500 dark:focus:ring-teal-500 border-transparent',
 }
 const sizeClassNames = {
   xs: 'px-1 py-1 text-xs font-light',
@@ -112,8 +112,8 @@ export const ButtonGroup = ({
             i === 0 ? 'rounded-l-md' : '',
             i === items.length - 1 ? '-ml-px rounded-r-md' : '',
             isActive
-              ? 'bg-rose-600 text-white border-rose-800'
-              : 'bg-white text-gray-700 border-gray-300',
+              ? 'bg-rose-600 dark:bg-teal-600 text-white border-rose-800 dark:border-teal-800'
+              : 'bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-100 border-gray-300 dark:border-slate-700',
             buttonTextSizeMap[size],
             buttonSpaceMap[size],
             className,

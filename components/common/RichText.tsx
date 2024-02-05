@@ -30,7 +30,7 @@ export function RichText({ post }: { post: Post.Record }) {
       els.push(segment.text)
     }
   }
-  return <div className='break-words'>{els}</div>
+  return <div className='break-words dark:text-gray-300'>{els}</div>
 }
 
 // This function was copy-pasted from social-app's RichText component

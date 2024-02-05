@@ -53,10 +53,10 @@ export function SubjectTable(
     <div className={classNames('px-4 sm:px-6 lg:px-8', className)} {...rest}>
       <div className="-mx-4 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
-          <thead className="bg-white">
+          <thead className="bg-white dark:bg-slate-800">
             <SubjectRowHead />
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
             {!subjectStatuses.length && (
               <EmptyRows isInitialLoading={isInitialLoading} />
             )}
@@ -91,7 +91,7 @@ function SubjectRow({
 
   return (
     <tr {...others}>
-      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
+      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
         <div className="flex flex-row items-center pb-1">
           <ReviewStateIcon
             subjectStatus={subjectStatus}
@@ -107,7 +107,7 @@ function SubjectRow({
           {lastReviewedAt && (
             <div className="flex items-center flex-row">
               <dt>Last Reviewed</dt>
-              <dd className="ml-1 truncate text-gray-700">
+              <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
                 {formatDistanceToNow(lastReviewedAt, { addSuffix: true })}
               </dd>
             </div>
@@ -115,7 +115,7 @@ function SubjectRow({
           {lastReportedAt && (
             <div className="flex items-center flex-row">
               <dt>Last Reported</dt>
-              <dd className="ml-1 truncate text-gray-700">
+              <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
                 {formatDistanceToNow(lastReportedAt, { addSuffix: true })}
               </dd>
             </div>
@@ -123,23 +123,23 @@ function SubjectRow({
           {!!subjectStatus?.comment && (
             <div className="flex items-center flex-row">
               <dt>Comment</dt>
-              <dd className="ml-1 truncate text-gray-700">
+              <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
                 {subjectStatus.comment}
               </dd>
             </div>
           )}
         </dl>
       </td>
-      <td className="hidden text-center px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <ReviewStateIcon subjectStatus={subjectStatus} className="h-5 w-5" />
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <SubjectOverview
           subject={subjectStatus.subject}
           subjectRepoHandle={subjectStatus.subjectRepoHandle}
         />
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         {lastReviewedAt && (
           <span title={lastReviewedAt.toLocaleString()}>
             {formatDistanceToNow(lastReviewedAt, { addSuffix: true })}
@@ -152,7 +152,7 @@ function SubjectRow({
           </>
         )}
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         {lastReportedAt && (
           <span title={lastReportedAt.toLocaleString()}>
             {formatDistanceToNow(lastReportedAt, { addSuffix: true })}
@@ -170,25 +170,25 @@ function SubjectRowHead() {
     <tr>
       <th
         scope="col"
-        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 sm:hidden"
+        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6 sm:hidden"
       >
         <span className="sr-only">Id</span>
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Status
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Subject
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         <Link
           prefetch={false}
@@ -205,7 +205,7 @@ function SubjectRowHead() {
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         <Link
           prefetch={false}
@@ -231,10 +231,10 @@ function EmptyRows({ isInitialLoading }: { isInitialLoading: boolean }) {
         {isInitialLoading ? (
           <>
             <Loading />
-            <p className="pb-4 text-gray-400">Loading moderation queue...</p>
+            <p className="pb-4 text-gray-400 dark:text-gray-100">Loading moderation queue...</p>
           </>
         ) : (
-          <p className="py-4 text-gray-400 text-center">
+          <p className="py-4 text-gray-400 dark:text-gray-100 text-center">
             <CheckCircleIcon
               title="No reports"
               className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"

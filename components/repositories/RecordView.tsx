@@ -54,7 +54,7 @@ export function RecordView({
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex h-full bg-white dark:bg-slate-900">
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
@@ -64,7 +64,7 @@ export function RecordView({
             >
               <Link
                 href={`/repositories/${record.repo.handle}`}
-                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900"
+                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
               >
                 <ChevronLeftIcon
                   className="-ml-2 h-5 w-5 text-gray-400"
@@ -100,7 +100,7 @@ export function RecordView({
                     <Blobs blobs={record.blobs} />
                   )}
                   {currentView === Views.ModEvents && (
-                    <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 text-sm">
+                    <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
                       <ModEventList subject={record.uri} />
                     </div>
                   )}
@@ -135,7 +135,7 @@ function Header({
   const { subjectStatus } = record.moderation
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8">
-      <h1 className="flex-1 text-2xl font-bold text-gray-900">
+      <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-200">
         {`${shortCollection} record by @${record.repo.handle}`}{' '}
         {!!subjectStatus && (
           <ReviewStateIconLink
@@ -146,7 +146,7 @@ function Header({
       </h1>
       <div>
         <Dropdown
-          className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+          className="inline-flex justify-center rounded-md border border-gray-300 bg-white dark:bg-slate-900 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 dark:focus:ring-teal-500 focus:ring-offset-2"
           items={[
             {
               text: `Report ${shortCollection || 'post'}`,
@@ -199,8 +199,8 @@ function Tabs({
     <span
       className={classNames(
         view === currentView
-          ? 'border-pink-500 text-gray-900'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+          ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
+          : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300dark:hover:border-teal-300',
         'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
       )}
       aria-current={view === currentView ? 'page' : undefined}
