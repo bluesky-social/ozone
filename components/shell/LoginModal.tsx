@@ -23,7 +23,7 @@ export function LoginModal() {
   const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-slate-500 focus:ring-offset-2 ${
     isValidatingAuth
       ? 'bg-gray-500 hover:bg-gray-600'
-      : 'bg-rose-600 bg-teal-600 hover:bg-rose-700 dark:hover:bg-teal-700'
+      : 'bg-rose-600 dark:bg-teal-600 hover:bg-rose-700 dark:hover:bg-teal-700'
   }`
   const submitButtonIconClassNames = `h-5 w-5 ${
     isValidatingAuth

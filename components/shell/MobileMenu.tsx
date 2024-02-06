@@ -43,7 +43,7 @@ export function MobileMenuBtn() {
   )
 }
 
-export function MobileMenu() {
+export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
   const pathname = usePathname() || '/'
   const mobileMenuOpen = useContext(MobileMenuOpenCtx)
   const kbar = useKBar()
@@ -78,7 +78,7 @@ export function MobileMenu() {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="relative flex w-full max-w-xs flex-1 flex-col bg-rose-700 pt-5 pb-4">
+              <Dialog.Panel className="relative flex w-full max-w-xs flex-1 flex-col bg-rose-700 dark:bg-teal-700 pt-5 pb-4">
                 <Transition.Child
                   as={Fragment}
                   enter="ease-in-out duration-300"
@@ -123,7 +123,7 @@ export function MobileMenu() {
                               className={classNames(
                                 isCurrent(pathname, item)
                                   ? 'text-white'
-                                  : 'text-rose-300 group-hover:text-white',
+                                  : 'text-rose-300 dark:text-teal-300 group-hover:text-white',
                                 'mr-3 h-6 w-6',
                               )}
                               aria-hidden="true"
@@ -138,8 +138,8 @@ export function MobileMenu() {
                               href={item.href}
                               className={classNames(
                                 isCurrent(pathname, item)
-                                  ? 'bg-rose-800 text-white'
-                                  : 'text-rose-100 hover:bg-rose-800 hover:text-white',
+                                  ? 'bg-rose-800 dark:bg-teal-800 text-white'
+                                  : 'text-rose-100 dark:text-teal-100 hover:bg-rose-800 dark:hover:bg-teal-800 hover:text-white',
                                 'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
                               )}
                               aria-current={
@@ -162,7 +162,8 @@ export function MobileMenu() {
                             )}
                             onClick={(e) => {
                               mobileMenuOpen.set(false)
-                              if ('onClick' in item) item.onClick({ kbar })?.(e)
+                              if ('onClick' in item)
+                                item.onClick({ kbar, toggleTheme })?.(e)
                             }}
                           >
                             {children}

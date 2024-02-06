@@ -39,7 +39,7 @@ export function Shell({ children }: React.PropsWithChildren) {
         </div>
 
         {/* Mobile menu */}
-        <MobileMenu />
+        <MobileMenu toggleTheme={toggleTheme} />
 
         {/* Content area */}
         <div className="flex flex-1 flex-col overflow-hidden">
