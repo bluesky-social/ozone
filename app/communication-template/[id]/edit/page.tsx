@@ -1,13 +1,10 @@
 'use client'
 
+import { useTitle } from 'react-use'
 import { CommunicationTemplateForm } from 'components/communication-template/form'
-import { useEffect } from 'react'
 
 export default function CommunicationTemplateEditPage({ params: { id } }) {
-  // Change page title dynamically
-  useEffect(() => {
-    document.title = `Edit Communication Templates #${id}`
-  }, [id])
+  useTitle(`Edit Communication Templates #${id}`)
 
   return (
     <div className="w-5/6 md:w-2/3 lg:w-1/2 mx-auto">
