@@ -191,7 +191,7 @@ export function InlineRepo(props: { did: string }) {
         />
       </div>
       <Link
-        href={`/repositories/${repo.handle}`}
+        href={`/repositories/${repo.did}`}
         className="hover:underline mr-1"
       >
         {profile?.displayName ? (
@@ -237,7 +237,7 @@ export function RepoCard(props: { did: string }) {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
-              href={`/repositories/${repo.handle}`}
+              href={`/repositories/${repo.did}`}
               className="hover:underline"
             >
               {profile?.displayName ? (

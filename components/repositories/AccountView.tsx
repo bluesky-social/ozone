@@ -651,7 +651,7 @@ export function AccountsGrid({
             </div>
             <div className="min-w-0 flex-1">
               <Link
-                href={`/repositories/${account.handle}`}
+                href={`/repositories/${account.did}`}
                 className="focus:outline-none"
               >
                 <span className="absolute inset-0" aria-hidden="true" />

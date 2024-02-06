@@ -73,14 +73,14 @@ export function PostAsRow({
         {isRepost(item.reason) ? (
           <span className="block text-gray-500 dark:text-gray-50">
             Reposted by{' '}
-            <Link href={`/repositories/${item.reason.by.handle}`}>
+            <Link href={`/repositories/${item.reason.by.did}`}>
               @{item.reason.by.handle}
             </Link>
           </span>
         ) : undefined}
         <Link
           className="block"
-          href={`/repositories/${item.post.author.handle}`}
+          href={`/repositories/${item.post.author.did}`}
         >
           @{item.post.author.handle}
         </Link>
