@@ -4,6 +4,7 @@ import { useContext, useEffect, useReducer, useState } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
 import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
 import { MOD_EVENT_TITLES } from './constants'
+import { endOfDay } from 'date-fns'
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -25,14 +26,23 @@ const initialListState = {
   createdBy: undefined,
   subject: undefined,
   oldestFirst: false,
-  createdBefore: new Date().toISOString().split('.')[0],
+  createdBefore: endOfDay(new Date()).toISOString().split('.')[0],
   createdAfter: FIRST_EVENT_TIMESTAMP,
+  reportTypes: [],
+  addedLabels: [],
+  removedLabels: [],
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
-export type EventListState = Omit<typeof initialListState, 'subject' | 'createdBy'> & {
+export type EventListState = Omit<
+  typeof initialListState,
+  'subject' | 'createdBy'
+> & {
   subject?: string
   createdBy?: string
+  reportTypes: string[]
+  addedLabels: string[]
+  removedLabels: string[]
 }
 
 type EventListFilterPayload =
@@ -44,6 +54,9 @@ type EventListFilterPayload =
   | { field: 'oldestFirst'; value: boolean }
   | { field: 'createdBefore'; value: string }
   | { field: 'createdAfter'; value: string }
+  | { field: 'reportTypes'; value: string[] }
+  | { field: 'addedLabels'; value: string[] }
+  | { field: 'removedLabels'; value: string[] }
 
 type EventListAction =
   | {
@@ -106,6 +119,9 @@ export const useModEventList = (
         oldestFirst,
         createdBefore,
         createdAfter,
+        addedLabels,
+        removedLabels,
+        reportTypes,
       } = listState
       const queryParams: ComAtprotoAdminQueryModerationEvents.QueryParams = {
         cursor: pageParam,
@@ -128,6 +144,18 @@ export const useModEventList = (
         queryParams.createdBefore = new Date(createdBefore).toISOString()
       }
 
+      if (reportTypes.length) {
+        queryParams.reportTypes = reportTypes
+      }
+
+      if (addedLabels.length) {
+        queryParams.addedLabels = addedLabels
+      }
+
+      if (removedLabels.length) {
+        queryParams.removedLabels = removedLabels
+      }
+
       const filterTypes = types.filter(Boolean)
       if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
         queryParams.types = filterTypes
@@ -141,7 +169,7 @@ export const useModEventList = (
         queryParams.hasComment = true
 
         if (commentFilter.keyword) {
-          queryParams.commentKeyword = commentFilter.keyword
+          queryParams.comment = commentFilter.keyword
         }
       }
 
@@ -158,7 +186,10 @@ export const useModEventList = (
     listState.commentFilter.enabled ||
     listState.createdBy ||
     listState.subject ||
-    listState.oldestFirst
+    listState.oldestFirst ||
+    listState.reportTypes.length > 0 ||
+    listState.addedLabels.length > 0 ||
+    listState.removedLabels.length > 0
 
   return {
     // Data from react-query

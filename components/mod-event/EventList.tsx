@@ -7,7 +7,7 @@ import {
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ModEventItem } from './EventItem'
 import { Dropdown } from '@/common/Dropdown'
-import { MOD_EVENT_TITLES } from './constants'
+import { MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
 import { useState } from 'react'
@@ -15,6 +15,9 @@ import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
 import { FunnelIcon as FunnelFilledIcon } from '@heroicons/react/24/solid'
+import { reasonTypeOptions } from '@/reports/helpers/getType'
+import Select from 'react-tailwindcss-select'
+import { LabelSelector } from '@/common/labels/Grid'
 
 const Header = ({
   subjectTitle,
@@ -65,6 +68,9 @@ export const ModEventList = (
 ) => {
   const {
     types,
+    reportTypes,
+    addedLabels,
+    removedLabels,
     includeAllUserRecords,
     modEvents,
     fetchMoreModEvents,
@@ -124,6 +130,9 @@ export const ModEventList = (
         <EventFilterPanel
           {...{
             types,
+            reportTypes,
+            addedLabels,
+            removedLabels,
             commentFilter,
             toggleCommentFilter,
             setCommentFilterKeyword,
@@ -180,6 +189,9 @@ export const ModEventList = (
 
 const EventFilterPanel = ({
   types,
+  reportTypes,
+  addedLabels,
+  removedLabels,
   commentFilter,
   createdBy,
   subject,
@@ -404,6 +416,61 @@ const EventFilterPanel = ({
             />
           </FormLabel>
         </div>
+      </div>
+      <div className="flex-row flex gap-2 mt-2">
+        {types.includes(MOD_EVENTS.LABEL) && (
+          <>
+            <FormLabel label="Added Labels" className="flex-1 max-w-sm">
+              <LabelSelector
+                id="addedLabels"
+                name="addedLabels"
+                formId=""
+                defaultLabels={[]}
+                onChange={(value) =>
+                  changeListFilter({ field: 'addedLabels', value })
+                }
+              />
+            </FormLabel>
+
+            <FormLabel label="Removed Labels" className="flex-1 max-w-sm">
+              <LabelSelector
+                id="removedLabels"
+                name="removedLabels"
+                formId=""
+                defaultLabels={[]}
+                onChange={(value) =>
+                  changeListFilter({ field: 'removedLabels', value })
+                }
+              />
+            </FormLabel>
+          </>
+        )}
+
+        {types.includes(MOD_EVENTS.REPORT) && (
+          <FormLabel label="Reason" htmlFor="reasonType" className="flex-1 max-w-sm">
+            <Select
+              isMultiple
+              isSearchable
+              primaryColor=""
+              value={reportTypes.map((value) => ({
+                value,
+                label: reasonTypeOptions[value],
+              }))}
+              options={Object.entries(reasonTypeOptions).map(
+                ([value, label]) => ({
+                  label,
+                  value,
+                }),
+              )}
+              onChange={(value) =>
+                changeListFilter({
+                  field: 'reportTypes',
+                  value: Array.isArray(value) ? value.map((v) => v.value) : [],
+                })
+              }
+            />
+          </FormLabel>
+        )}
       </div>
       <div>
         <h5 className="text-gray-700 font-medium my-2">Sort Direction</h5>

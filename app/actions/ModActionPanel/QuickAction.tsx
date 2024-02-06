@@ -560,7 +560,6 @@ function Form(
                       id="labels"
                       name="labels"
                       formId={FORM_ID}
-                      subject={subject}
                       defaultLabels={currentLabels.filter(
                         (label) => !isSelfLabel(label),
                       )}
