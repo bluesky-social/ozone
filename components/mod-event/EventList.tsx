@@ -1,6 +1,7 @@
 import {
   EventListState,
   FIRST_EVENT_TIMESTAMP,
+  formatDateForInput,
   ModEventListQueryOptions,
   useModEventList,
 } from './useModEventList'
@@ -243,12 +244,6 @@ const EventFilterPanel = ({
                 checked={types.length === allTypes.length}
                 onChange={() => toggleType('all')}
                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                onKeyDown={(e) => {
-                  if (e.key === 'Enter') {
-                    e.preventDefault() // make sure we don't submit the form
-                    e.currentTarget.click() // simulate a click on the input
-                  }
-                }}
               />
               <label
                 htmlFor={`type-all`}
@@ -267,12 +262,6 @@ const EventFilterPanel = ({
                   checked={types.includes(type)}
                   onChange={() => toggleType(type)}
                   className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault() // make sure we don't submit the form
-                      e.currentTarget.click() // simulate a click on the input
-                    }
-                  }}
                 />
                 <label
                   htmlFor={`type-${type}`}
@@ -296,12 +285,6 @@ const EventFilterPanel = ({
               checked={commentFilter.enabled}
               onChange={() => toggleCommentFilter()}
               className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  e.preventDefault() // make sure we don't submit the form
-                  e.currentTarget.click() // simulate a click on the input
-                }
-              }}
             />
             <label
               htmlFor={`comment-filter`}
@@ -389,7 +372,7 @@ const EventFilterPanel = ({
               }
               autoComplete="off"
               min={FIRST_EVENT_TIMESTAMP}
-              max={new Date().toISOString().split('.')[0]}
+              max={formatDateForInput(new Date())}
             />
           </FormLabel>
 
@@ -412,7 +395,7 @@ const EventFilterPanel = ({
               }
               autoComplete="off"
               min={FIRST_EVENT_TIMESTAMP}
-              max={new Date().toISOString().split('.')[0]}
+              max={formatDateForInput(new Date())}
             />
           </FormLabel>
         </div>
@@ -447,7 +430,11 @@ const EventFilterPanel = ({
         )}
 
         {types.includes(MOD_EVENTS.REPORT) && (
-          <FormLabel label="Reason" htmlFor="reasonType" className="flex-1 max-w-sm">
+          <FormLabel
+            label="Reason"
+            htmlFor="reasonType"
+            className="flex-1 max-w-sm"
+          >
             <Select
               isMultiple
               isSearchable

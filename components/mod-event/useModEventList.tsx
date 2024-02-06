@@ -17,6 +17,12 @@ type CommentFilter = {
   keyword: string
 }
 
+// Since we use default browser's date picker, we need to format the date to the correct format
+// More details here: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local
+export const formatDateForInput = (date: Date) => {
+  return date.toISOString().split('.')[0]
+}
+
 export const FIRST_EVENT_TIMESTAMP = '2022-11-01T00:00'
 const allTypes = Object.keys(MOD_EVENT_TITLES)
 const initialListState = {
@@ -26,7 +32,7 @@ const initialListState = {
   createdBy: undefined,
   subject: undefined,
   oldestFirst: false,
-  createdBefore: endOfDay(new Date()).toISOString().split('.')[0],
+  createdBefore: formatDateForInput(endOfDay(new Date())),
   createdAfter: FIRST_EVENT_TIMESTAMP,
   reportTypes: [],
   addedLabels: [],
@@ -70,6 +76,13 @@ type EventListAction =
 const eventListReducer = (state: EventListState, action: EventListAction) => {
   switch (action.type) {
     case 'SET_FILTER':
+      // when updating the subject, if the value is the same as the current state, don't update
+      if (
+        action.payload.field === 'subject' &&
+        action.payload.value === state.subject
+      ) {
+        return state
+      }
       return { ...state, [action.payload.field]: action.payload.value }
     case 'RESET':
       return initialListState
@@ -89,12 +102,10 @@ export const useModEventList = (
   }
 
   useEffect(() => {
-    if (props.subject !== listState.subject) {
-      dispatch({
-        type: 'SET_FILTER',
-        payload: { field: 'subject', value: props.subject },
-      })
-    }
+    dispatch({
+      type: 'SET_FILTER',
+      payload: { field: 'subject', value: props.subject },
+    })
   }, [props.subject])
 
   useEffect(() => {
