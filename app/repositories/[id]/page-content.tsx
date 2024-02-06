@@ -6,8 +6,29 @@ import { ComAtprotoAdminEmitModerationEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
-import { useEffect } from 'react'
+import { useTitle } from 'react-use'
 
+const buildPageTitle = ({
+  handle,
+  tab,
+}: {
+  handle: string
+  tab: string | null
+}) => {
+  let title = `Repository Details`
+  const titleFragments: string[] = [title]
+  const titleFromTab = tab ? tab[0].toUpperCase() + tab.slice(1) : ''
+
+  if (titleFromTab) {
+    titleFragments.unshift(titleFromTab)
+  }
+
+  if (handle) {
+    titleFragments.unshift(handle)
+  }
+
+  return titleFragments.join(' - ')
+}
 export function RepositoryViewPageContent({ id }: { id: string }) {
   const {
     error,
@@ -30,28 +51,11 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
   }
   const tab = searchParams.get('tab')
 
-  // Change title dynamically
-  // Once we retrieve the profile/repo details, show the handle
-  // Show the current tab name from account view
-  useEffect(() => {
-    let title = `Repository Details`
-    const titleFragments: string[] = [title]
-    const titleFromTab = tab ? tab[0].toUpperCase() + tab.slice(1) : ''
-
-    if (titleFromTab) {
-      titleFragments.unshift(titleFromTab)
-    }
-
-    if (profile) {
-      titleFragments.unshift(profile.handle)
-    } else if (repo) {
-      titleFragments.unshift(repo.handle)
-    } else {
-      titleFragments.unshift(id)
-    }
-
-    document.title = titleFragments.join(' - ')
-  }, [id, repo, profile, tab])
+  const pageTitle = buildPageTitle({
+    handle: profile?.handle || repo?.handle || id,
+    tab,
+  })
+  useTitle(pageTitle)
 
   return (
     <>
