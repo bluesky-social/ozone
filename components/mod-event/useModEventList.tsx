@@ -4,6 +4,7 @@ import { useContext, useEffect, useReducer, useState } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
 import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
 import { MOD_EVENT_TITLES } from './constants'
+import { endOfDay } from 'date-fns'
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -16,6 +17,12 @@ type CommentFilter = {
   keyword: string
 }
 
+// Since we use default browser's date picker, we need to format the date to the correct format
+// More details here: https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/datetime-local
+export const formatDateForInput = (date: Date) => {
+  return date.toISOString().split('.')[0]
+}
+
 export const FIRST_EVENT_TIMESTAMP = '2022-11-01T00:00'
 const allTypes = Object.keys(MOD_EVENT_TITLES)
 const initialListState = {
@@ -25,14 +32,23 @@ const initialListState = {
   createdBy: undefined,
   subject: undefined,
   oldestFirst: false,
-  createdBefore: new Date().toISOString().split('.')[0],
+  createdBefore: formatDateForInput(endOfDay(new Date())),
   createdAfter: FIRST_EVENT_TIMESTAMP,
+  reportTypes: [],
+  addedLabels: [],
+  removedLabels: [],
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
-export type EventListState = Omit<typeof initialListState, 'subject' | 'createdBy'> & {
+export type EventListState = Omit<
+  typeof initialListState,
+  'subject' | 'createdBy'
+> & {
   subject?: string
   createdBy?: string
+  reportTypes: string[]
+  addedLabels: string[]
+  removedLabels: string[]
 }
 
 type EventListFilterPayload =
@@ -44,6 +60,9 @@ type EventListFilterPayload =
   | { field: 'oldestFirst'; value: boolean }
   | { field: 'createdBefore'; value: string }
   | { field: 'createdAfter'; value: string }
+  | { field: 'reportTypes'; value: string[] }
+  | { field: 'addedLabels'; value: string[] }
+  | { field: 'removedLabels'; value: string[] }
 
 type EventListAction =
   | {
@@ -57,6 +76,13 @@ type EventListAction =
 const eventListReducer = (state: EventListState, action: EventListAction) => {
   switch (action.type) {
     case 'SET_FILTER':
+      // when updating the subject, if the value is the same as the current state, don't update
+      if (
+        action.payload.field === 'subject' &&
+        action.payload.value === state.subject
+      ) {
+        return state
+      }
       return { ...state, [action.payload.field]: action.payload.value }
     case 'RESET':
       return initialListState
@@ -76,12 +102,10 @@ export const useModEventList = (
   }
 
   useEffect(() => {
-    if (props.subject !== listState.subject) {
-      dispatch({
-        type: 'SET_FILTER',
-        payload: { field: 'subject', value: props.subject },
-      })
-    }
+    dispatch({
+      type: 'SET_FILTER',
+      payload: { field: 'subject', value: props.subject },
+    })
   }, [props.subject])
 
   useEffect(() => {
@@ -106,6 +130,9 @@ export const useModEventList = (
         oldestFirst,
         createdBefore,
         createdAfter,
+        addedLabels,
+        removedLabels,
+        reportTypes,
       } = listState
       const queryParams: ComAtprotoAdminQueryModerationEvents.QueryParams = {
         cursor: pageParam,
@@ -128,6 +155,18 @@ export const useModEventList = (
         queryParams.createdBefore = new Date(createdBefore).toISOString()
       }
 
+      if (reportTypes.length) {
+        queryParams.reportTypes = reportTypes
+      }
+
+      if (addedLabels.length) {
+        queryParams.addedLabels = addedLabels
+      }
+
+      if (removedLabels.length) {
+        queryParams.removedLabels = removedLabels
+      }
+
       const filterTypes = types.filter(Boolean)
       if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
         queryParams.types = filterTypes
@@ -141,7 +180,7 @@ export const useModEventList = (
         queryParams.hasComment = true
 
         if (commentFilter.keyword) {
-          queryParams.commentKeyword = commentFilter.keyword
+          queryParams.comment = commentFilter.keyword
         }
       }
 
@@ -158,7 +197,10 @@ export const useModEventList = (
     listState.commentFilter.enabled ||
     listState.createdBy ||
     listState.subject ||
-    listState.oldestFirst
+    listState.oldestFirst ||
+    listState.reportTypes.length > 0 ||
+    listState.addedLabels.length > 0 ||
+    listState.removedLabels.length > 0
 
   return {
     // Data from react-query
