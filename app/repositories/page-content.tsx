@@ -4,6 +4,7 @@ import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import client from '@/lib/client'
 import { useEffect } from 'react'
+import { useTitle } from 'react-use'
 
 export default function RepositoriesListPage() {
   const params = useSearchParams()
@@ -24,16 +25,12 @@ export default function RepositoriesListPage() {
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
 
-  // Change title dynamically, if there's a search term, include that
-  useEffect(() => {
-    let title = `Repositories`
+  let pageTitle = `Repositories`
+  if (term) {
+    pageTitle += ` - ${term}`
+  }
 
-    if (term) {
-      title += ` - ${term}`
-    }
-
-    document.title = title
-  }, [term])
+  useTitle(pageTitle)
 
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
   return (

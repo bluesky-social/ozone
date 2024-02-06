@@ -22,6 +22,7 @@ import { AuthContext } from '@/shell/AuthContext'
 import { ButtonGroup } from '@/common/buttons'
 import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { SubjectTable } from 'components/subject/table'
+import { useTitle } from 'react-use'
 
 const TABS = [
   {
@@ -47,6 +48,42 @@ const TABS = [
   },
   { key: 'all', name: 'All', href: '/reports' },
 ]
+
+const buildPageTitle = ({
+  currentTab,
+  takendown,
+  includeMuted,
+  appealed,
+}: {
+  currentTab: string
+  takendown: boolean
+  includeMuted: boolean
+  appealed: boolean
+}) => {
+  const titleFromTab =
+    currentTab === 'all'
+      ? `All subjects`
+      : `${currentTab[0].toUpperCase()}${currentTab.slice(1)}`
+  const additionalFragments: string[] = []
+
+  if (takendown) {
+    additionalFragments.push('Taken Down')
+  }
+
+  if (includeMuted) {
+    additionalFragments.push('Include Muted')
+  }
+
+  if (appealed) {
+    additionalFragments.push('Appealed')
+  }
+
+  const additionalTitle = additionalFragments.length
+    ? ` (${additionalFragments.join(', ')})`
+    : ''
+  const title = `Queue - ${titleFromTab}${additionalTitle}`
+  return title
+}
 
 const ResolvedFilters = () => {
   const router = useRouter()
@@ -197,31 +234,13 @@ export const ReportsPageContent = () => {
     ),
   )
 
-  useEffect(() => {
-    const titleFromTab =
-      currentTab === 'all'
-        ? `All subjects`
-        : `${currentTab[0].toUpperCase()}${currentTab.slice(1)}`
-    const additionalFragments: string[] = []
-
-    if (takendown) {
-      additionalFragments.push('Taken Down')
-    }
-
-    if (includeMuted) {
-      additionalFragments.push('Include Muted')
-    }
-
-    if (appealed) {
-      additionalFragments.push('Appealed')
-    }
-
-    const additionalTitle = additionalFragments.length
-      ? ` (${additionalFragments.join(', ')})`
-      : ''
-    const title = `Queue - ${titleFromTab}${additionalTitle}`
-    document.title = title
-  }, [currentTab, takendown, includeMuted, appealed])
+  const pageTitle = buildPageTitle({
+    currentTab,
+    takendown,
+    includeMuted,
+    appealed,
+  })
+  useTitle(pageTitle)
 
   return (
     <>

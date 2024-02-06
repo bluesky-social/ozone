@@ -1,9 +1,9 @@
+import { useTitle } from 'react-use'
 import { ModEventList } from '@/mod-event/EventList'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { ComAtprotoAdminEmitModerationEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
 
 export default function EventListPageContent() {
   const searchParams = useSearchParams()
@@ -20,9 +20,7 @@ export default function EventListPageContent() {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
 
-  useEffect(() => {
-    document.title = `Moderation Events`
-  }, [])
+  useTitle(`Moderation Events`)
 
   return (
     <div>

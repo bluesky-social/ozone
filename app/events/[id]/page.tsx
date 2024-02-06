@@ -1,9 +1,9 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
+import { useTitle } from 'react-use'
 import client from '@/lib/client'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { EventView } from '@/mod-event/View'
-import { useEffect } from 'react'
 import { MOD_EVENT_TITLES } from '@/mod-event/constants'
 
 export default function EventViewPage({ params }: { params: { id: string } }) {
@@ -19,17 +19,13 @@ export default function EventViewPage({ params }: { params: { id: string } }) {
     },
   })
 
-  // Change page title dynamically
-  // Use a human-readable event name once event details are fetched
-  useEffect(() => {
-    if (event) {
-      const eventTitle =
-        MOD_EVENT_TITLES[event.event.$type as string] || 'Moderation'
-      document.title = `${eventTitle} Event #${id}`
-    } else {
-      document.title = `Moderation Event #${id}`
-    }
-  }, [id, event])
+  let pageTitle = `Moderation Event #${id}`
+  if (event) {
+    const eventTitle =
+      MOD_EVENT_TITLES[event.event.$type as string] || 'Moderation'
+    pageTitle = `${eventTitle} Event #${id}`
+  }
+  useTitle(pageTitle)
 
   if (error) {
     return <LoadingFailed error={error} />
