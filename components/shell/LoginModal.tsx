@@ -43,6 +43,13 @@ export function LoginModal() {
     }
   }, [])
 
+  useEffect(() => {
+    const title = `Ozone - Authenticate`
+    if (!isLoggedIn) {
+      document.title = title
+    }
+  }, [isLoggedIn])
+
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     e.stopPropagation()

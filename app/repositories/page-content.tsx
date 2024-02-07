@@ -3,6 +3,8 @@ import { RepositoriesTable } from '@/repositories/RepositoriesTable'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import client from '@/lib/client'
+import { useEffect } from 'react'
+import { useTitle } from 'react-use'
 
 export default function RepositoriesListPage() {
   const params = useSearchParams()
@@ -22,6 +24,14 @@ export default function RepositoriesListPage() {
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
+
+  let pageTitle = `Repositories`
+  if (term) {
+    pageTitle += ` - ${term}`
+  }
+
+  useTitle(pageTitle)
+
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
   return (
     <>

@@ -4,6 +4,7 @@ import format from 'date-fns/format'
 import { useState } from 'react'
 import Link from 'next/link'
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/20/solid'
+import { useTitle } from 'react-use'
 
 import { LabelChip } from '@/common/labels'
 import { Loading, LoadingFailed } from '@/common/Loader'
@@ -16,6 +17,8 @@ export default function CommunicationTemplatePage() {
   const [deletingTemplateId, setDeletingTemplateId] = useState<
     string | undefined
   >()
+
+  useTitle(`Communication Templates`)
 
   if (isLoading) {
     return <Loading message="Loading templates" />

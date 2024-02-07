@@ -15,6 +15,36 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { useEffect } from 'react'
+import { useTitle } from 'react-use'
+
+const buildPageTitle = ({
+  handle,
+  collection,
+  rkey,
+}: {
+  handle?: string
+  collection?: string
+  rkey?: string
+}) => {
+  let title = `Record Details`
+
+  if (collection) {
+    const titleFromCollection = collection.split('.').pop()
+    if (titleFromCollection) {
+      title =
+        titleFromCollection[0].toUpperCase() + titleFromCollection.slice(1)
+    }
+  }
+
+  if (handle) {
+    title += ` - ${handle}`
+  }
+
+  if (rkey) {
+    title += ` - ${rkey}`
+  }
+  return title
+}
 
 export default function Record({
   params,
@@ -115,6 +145,13 @@ export default function Record({
       setReportUri(data?.record.uri)
     }
   }, [data, reportUri])
+
+  const pageTitle = buildPageTitle({
+    handle: data?.record?.repo.handle,
+    rkey,
+    collection,
+  })
+  useTitle(pageTitle)
 
   if (error) {
     return <LoadingFailed error={error} />

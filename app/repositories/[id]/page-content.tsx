@@ -6,7 +6,29 @@ import { ComAtprotoAdminEmitModerationEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
+import { useTitle } from 'react-use'
 
+const buildPageTitle = ({
+  handle,
+  tab,
+}: {
+  handle: string
+  tab: string | null
+}) => {
+  let title = `Repository Details`
+  const titleFragments: string[] = [title]
+  const titleFromTab = tab ? tab[0].toUpperCase() + tab.slice(1) : ''
+
+  if (titleFromTab) {
+    titleFragments.unshift(titleFromTab)
+  }
+
+  if (handle) {
+    titleFragments.unshift(handle)
+  }
+
+  return titleFragments.join(' - ')
+}
 export function RepositoryViewPageContent({ id }: { id: string }) {
   const {
     error,
@@ -27,6 +49,13 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
     }
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
+  const tab = searchParams.get('tab')
+
+  const pageTitle = buildPageTitle({
+    handle: profile?.handle || repo?.handle || id,
+    tab,
+  })
+  useTitle(pageTitle)
 
   return (
     <>

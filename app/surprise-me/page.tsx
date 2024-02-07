@@ -1,6 +1,6 @@
 'use client'
-import { useState } from 'react'
-import { useInterval } from 'react-use'
+import { useEffect, useState } from 'react'
+import { useInterval, useTitle } from 'react-use'
 import dynamic from 'next/dynamic'
 
 // The game package uses some client only code so we can't really import and use it here because that breaks SSR for some reason
@@ -38,6 +38,8 @@ const Timer = () => {
 // Right now, we only serve the tetris game here, in the future, we want to rotate
 // between a few games/fun activities which is why it's named "surprise me"
 export default function SurpriseMePage() {
+  useTitle(`Take a break!`)
+
   return (
     <>
       {/* This is valid jsx but because of a known bug, typescript is confused */}
