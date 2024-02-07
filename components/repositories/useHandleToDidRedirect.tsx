@@ -1,8 +1,10 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { redirect, useRouter, useSearchParams } from 'next/navigation'
 
 import { getDidFromHandle } from '@/lib/identity'
+import clientManager from '@/lib/client'
+import { AuthContext } from '@/shell/AuthContext'
 
 export const useHandleToDidRedirect = (
   handle: string,
@@ -11,15 +13,23 @@ export const useHandleToDidRedirect = (
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isFetching, setIsFetching] = useState<boolean>(true)
+  const { isLoggedIn } = useContext(AuthContext)
 
   useEffect(() => {
+    setIsFetching(true)
+
+    // If the handle is already a DID, don't try to resolve it
     if (handle.startsWith('did:')) {
       setIsFetching(false)
       return
     }
 
+    // If we aren't logged in yet, leave the state at loading and don't try to resolve handle
+    if (!isLoggedIn) {
+      return
+    }
+
     const fetchDidAndRedirect = async () => {
-      setIsFetching(true)
       const did = await getDidFromHandle(handle)
       const params = searchParams.toString()
       if (did) {
@@ -33,7 +43,7 @@ export const useHandleToDidRedirect = (
     }
 
     fetchDidAndRedirect()
-  }, [handle])
+  }, [handle, isLoggedIn])
 
   return { isFetching }
 }
