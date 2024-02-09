@@ -23,6 +23,7 @@ import { ButtonGroup } from '@/common/buttons'
 import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
+import { LanguagePicker } from '@/common/LanguagePicker'
 
 const TABS = [
   {
@@ -156,6 +157,7 @@ export const ReportsPageContent = () => {
   const includeMuted = !!params.get('includeMuted')
   const appealed = !!params.get('appealed')
   const reviewState = params.get('reviewState')
+  const lang = params.get('lang')
   const { sortField, sortDirection } = getSortParams(params)
   const { getReportSearchParams } = useFluentReportSearch()
   const { lastReviewedBy, subject, reporters } = getReportSearchParams()
@@ -186,6 +188,7 @@ export const ReportsPageContent = () => {
           reporters,
           takendown,
           appealed,
+          lang,
         },
       ],
       queryFn: async ({ pageParam }) => {
@@ -207,6 +210,10 @@ export const ReportsPageContent = () => {
 
         if (appealed) {
           queryParams.appealed = appealed
+        }
+
+        if (lang) {
+          queryParams.langs = [lang]
         }
 
         // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
@@ -255,10 +262,9 @@ export const ReportsPageContent = () => {
           </button>
         </div>
       </SectionHeader>
-      <div className="flex mt-2 mb-2 flex-row justify-end px-4 sm:px-6 lg:px-8">
-        <Suspense fallback={<div></div>}>
-          <ResolvedFilters />
-        </Suspense>
+      <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
+        <LanguagePicker />
+        <ResolvedFilters />
       </div>
       <SubjectTable
         subjectStatuses={subjectStatuses}
