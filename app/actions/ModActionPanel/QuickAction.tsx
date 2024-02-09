@@ -427,7 +427,7 @@ function Form(
           }
         }
       `}</style>
-      <div className="flex overflow-y-auto scrollable-container">
+      <div className="flex overflow-y-auto scrollable-container pt-1">
         <form
           id={FORM_ID}
           onSubmit={onFormSubmit}
@@ -560,7 +560,6 @@ function Form(
                       id="labels"
                       name="labels"
                       formId={FORM_ID}
-                      subject={subject}
                       defaultLabels={currentLabels.filter(
                         (label) => !isSelfLabel(label),
                       )}

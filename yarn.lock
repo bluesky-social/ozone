@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@atproto/api@0.9.2":
-  version "0.9.2"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.9.2.tgz#acb70a0c0f658eb13b3ee759c700486de820c49e"
-  integrity sha512-Z1dJM3BER8XsXjw6b6WtbFB1/sf/JXHIGR6tmuOB1AZ1/CLAmBpRN/OAZYz3GD0EHnkzlnjOh9B6FJVfdLKXUQ==
+"@atproto/api@0.9.6":
+  version "0.9.6"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.9.6.tgz#768d8f32261199f254883225917ef051c2027c25"
+  integrity sha512-qbBTskuPTyW2VPVptErHtf9pRbZESULmdk9MQJ/Qx2fvtddTF3iksBSyIUySHvnnO0bIDNoBFXY0RZnIyknX0g==
   dependencies:
     "@atproto/common-web" "^0.2.3"
     "@atproto/lexicon" "^0.3.1"
@@ -4366,9 +4366,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tlds@^1.234.0:
-  version "1.248.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.248.0.tgz#65bf56eee6d0ace1e918fbc653227ef18a9ddf8d"
-  integrity sha512-noj0KdpWTBhwsKxMOXk0rN9otg4kTgLm4WohERRHbJ9IY+kSDKr3RmjitaQ3JFzny+DyvBOQKlFZhp0G0qNSfg==
+  version "1.249.0"
+  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.249.0.tgz#5e10f3428923fef27fa47867770e0aa11b160a35"
+  integrity sha512-PfcE+oqaEhs0U3RDNg4uGg37793cGvlK6+aLAetwR0ImFyV3R2ts1KvU2RfJdtoLn7IFnUEftFFz4br5Wr3caA==
 
 tmp@~0.2.1:
   version "0.2.1"

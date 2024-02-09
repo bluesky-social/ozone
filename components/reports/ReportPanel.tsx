@@ -7,6 +7,7 @@ import { RecordCard, RepoCard } from '../common/RecordCard'
 import { PropsOf } from '@/lib/types'
 import { queryClient } from 'components/QueryClient'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
+import { reasonTypeOptions } from './helpers/getType'
 
 export function ReportPanel(
   props: PropsOf<typeof ActionPanel> & {
@@ -147,16 +148,6 @@ function Form(props: {
       </div>
     </form>
   )
-}
-
-const reasonTypeOptions = {
-  [ComAtprotoModerationDefs.REASONSPAM]: 'Spam',
-  [ComAtprotoModerationDefs.REASONVIOLATION]: 'Violation of Terms',
-  [ComAtprotoModerationDefs.REASONMISLEADING]: 'Misleading',
-  [ComAtprotoModerationDefs.REASONSEXUAL]: 'Sexual',
-  [ComAtprotoModerationDefs.REASONRUDE]: 'Rude or Hassment',
-  [ComAtprotoModerationDefs.REASONAPPEAL]: 'Appeal',
-  [ComAtprotoModerationDefs.REASONOTHER]: 'Other Reason',
 }
 
 export type ReportFormValues = {
