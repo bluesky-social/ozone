@@ -7,6 +7,7 @@ import { Shell } from '@/shell/Shell'
 import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
 import { AuthProvider } from '@/shell/AuthContext'
 import { queryClient } from 'components/QueryClient'
+import { isDarkModeEnabled } from '@/common/useColorScheme'
 
 export default function RootLayout({
   children,
@@ -21,7 +22,12 @@ export default function RootLayout({
       : false
 
   return (
-    <html lang="en" className="h-full bg-gray-50">
+    <html
+      lang="en"
+      className={`h-full bg-gray-50 dark:bg-slate-900 ${
+        isDarkModeEnabled() ? 'dark' : ''
+      }`}
+    >
       <title>Ozone</title>
       <link
         rel="icon"

@@ -10,12 +10,12 @@ export function InviteCodesTable(props: { codes: InviteCode[] }) {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
         <table className="min-w-full divide-y divide-gray-300">
-          <thead className="bg-white">
+          <thead className="bg-white dark:bg-slate-800">
             <ReportRowHead />
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white">
+          <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
             {codes.map((code) => (
-              <InviteCodetRow key={code.code} code={code} />
+              <InviteCodeRow key={code.code} code={code} />
             ))}
           </tbody>
         </table>
@@ -24,12 +24,12 @@ export function InviteCodesTable(props: { codes: InviteCode[] }) {
   )
 }
 
-function InviteCodetRow(props: { code: InviteCode }) {
+function InviteCodeRow(props: { code: InviteCode }) {
   const { code, ...others } = props
   const createdAt = new Date(code.createdAt)
   return (
     <tr {...others}>
-      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
+      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
         {!code.disabled ? (
           <CheckCircleIcon
             title="Resolved"
@@ -44,14 +44,14 @@ function InviteCodetRow(props: { code: InviteCode }) {
         {code.code}
         <dl className="font-normal">
           <dt className="sr-only">Used by</dt>
-          <dd className="mt-1 truncate text-gray-700">
+          <dd className="mt-1 truncate text-gray-700 dark:text-gray-100">
             {code.uses.length > 0
               ? code.uses.map((use) => truncate(use.usedBy, 10)).join(', ')
               : 'Not used yet'}
           </dd>
         </dl>
       </td>
-      <td className="hidden text-center px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell">
         {!code.disabled ? (
           <CheckCircleIcon
             title="Resolved"
@@ -64,13 +64,13 @@ function InviteCodetRow(props: { code: InviteCode }) {
           />
         )}
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell">
         {code.code}
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell">
         {code.available}
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell">
         {code.uses.length > 0 ? (
           <ul>
             {code.uses.map((use) => (
@@ -89,12 +89,12 @@ function InviteCodetRow(props: { code: InviteCode }) {
           'Not used yet'
         )}
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell">
         <span title={createdAt.toLocaleString()}>
           {formatDistanceToNow(createdAt, { addSuffix: true })}
         </span>
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell">
         {code.createdBy}
       </td>
     </tr>
@@ -106,43 +106,43 @@ function ReportRowHead() {
     <tr>
       <th
         scope="col"
-        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6 sm:hidden"
+        className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6 sm:hidden"
       >
         <span className="sr-only">Id</span>
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Enabled
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Code
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Uses
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Used by
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Created
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Created by
       </th>

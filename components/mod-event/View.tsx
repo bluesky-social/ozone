@@ -48,7 +48,7 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
     ) : null
 
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex h-full bg-white dark:bg-slate-900">
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         <div className="relative z-0 flex flex-1 overflow-hidden">
           <main className="relative z-0 flex-1 overflow-y-auto focus:outline-none xl:order-last">
@@ -58,10 +58,10 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
             >
               <Link
                 href={'/'}
-                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900"
+                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
               >
                 <ChevronLeftIcon
-                  className="-ml-2 h-5 w-5 text-gray-400"
+                  className="-ml-2 h-5 w-5 text-gray-400 dark:text-gray-50"
                   aria-hidden="true"
                 />
                 <span>{'Moderation Queue'}</span>
@@ -117,8 +117,8 @@ function Tabs({
     <span
       className={classNames(
         view === currentView
-          ? 'border-pink-500 text-gray-900'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+        ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
+        : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300 dark:hover:border-teal-300',
         'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
       )}
       aria-current={view === currentView ? 'page' : undefined}
@@ -180,14 +180,14 @@ function Details({ event }: { event: GetEvent.OutputSchema }) {
         )}
       </dl>
 
-      <dt className="text-sm font-medium text-gray-500 mb-3">Created By:</dt>
+      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">Created By:</dt>
       {createdBy && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={createdBy} />
         </div>
       )}
 
-      <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
+      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">Subject:</dt>
       {(ComAtprotoAdminDefs.isRecordView(subject) ||
         ComAtprotoAdminDefs.isRecordViewNotFound(subject)) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
@@ -217,11 +217,11 @@ const Header = ({
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8 justify-between">
       <div>
-        <h1 className="flex text-2xl font-bold text-gray-900 align-middle">
+        <h1 className="flex text-2xl font-bold text-gray-900 dark:text-gray-200 align-middle">
           {icon}
           <span className="ml-1">{title}</span>
         </h1>
-        <h2 className="flex-1 text-l text-gray-700">{subTitle}</h2>
+        <h2 className="flex-1 text-l text-gray-700 dark:text-gray-100">{subTitle}</h2>
       </div>
     </div>
   )

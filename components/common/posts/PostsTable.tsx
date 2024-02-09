@@ -24,23 +24,23 @@ export function PostsTable({
   return (
     <>
       <table className="min-w-full divide-y divide-gray-300">
-        <thead className="bg-gray-50">
+        <thead className="bg-gray-50 dark:bg-slate-800">
           <tr>
             <th
               scope="col"
-              className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+              className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:pl-6"
             >
               Author
             </th>
             <th
               scope="col"
-              className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 lg:table-cell"
+              className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 lg:table-cell"
             >
               Content
             </th>
             <th
               scope="col"
-              className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 sm:table-cell"
+              className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
             >
               Date
             </th>
@@ -49,7 +49,7 @@ export function PostsTable({
             </th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-200 bg-white">
+        <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
           {items.map((item, i) => (
             <PostAsRow key={`post-${i}`} item={item} onReport={onReport} />
           ))}
@@ -69,9 +69,9 @@ export function PostAsRow({
 }) {
   return (
     <tr className="align-top">
-      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
+      <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6">
         {isRepost(item.reason) ? (
-          <span className="block text-gray-500">
+          <span className="block text-gray-500 dark:text-gray-50">
             Reposted by{' '}
             <Link href={`/repositories/${item.reason.by.handle}`}>
               @{item.reason.by.handle}
@@ -90,7 +90,7 @@ export function PostAsRow({
             <PostContent item={item} />
           </dd>
           <dt className="sr-only sm:hidden">Date</dt>
-          <dd className="mt-1 truncate text-gray-500 sm:hidden">
+          <dd className="mt-1 truncate text-gray-500 dark:text-gray-50 sm:hidden">
             {new Date(item.post.indexedAt).toLocaleString()}
           </dd>
         </dl>
@@ -99,20 +99,20 @@ export function PostAsRow({
         <PostContent item={item} />
         {/* TODO entities */}
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 sm:table-cell whitespace-nowrap">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 sm:table-cell whitespace-nowrap">
         {new Date(item.post.indexedAt).toLocaleString()}
       </td>
       <td className="py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
         <Link
           href={`/repositories/${item.post.uri.replace('at://', '')}`}
-          className="text-gray-600 hover:text-blue-600 mr-4"
+          className="text-gray-600 dark:text-gray-50 hover:text-blue-600 mr-4"
         >
           View
         </Link>
         <button
           type="button"
           onClick={() => onReport?.(item.post.uri)}
-          className="text-gray-600 hover:text-rose-600"
+          className="text-gray-600 dark:text-gray-50 hover:text-rose-600"
         >
           Report
         </button>
@@ -126,7 +126,7 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   return (
     <>
       {item.reply ? (
-        <span className="block text-gray-500 text-sm">
+        <span className="block text-gray-500 dark:text-gray-50 text-sm">
           Reply to{' '}
           <Link
             href={`/repositories/${
@@ -143,7 +143,7 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
           </Link>
         </span>
       ) : undefined}
-      <span className="block">{(item.post.record as any)?.text}</span>
+      <span className="block dark:text-gray-300">{(item.post.record as any)?.text}</span>
       <PostEmbeds item={item} />
     </>
   )

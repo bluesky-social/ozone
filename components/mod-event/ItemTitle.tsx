@@ -68,7 +68,7 @@ export const ItemTitle = ({
   }
 
   return (
-    <div className="text-gray-500 flex flex-row justify-between">
+    <div className="text-gray-500 dark:text-gray-50 flex flex-row justify-between">
       <p>
         <span className={eventColor}>{eventTitle}</span>
         <i>

@@ -90,7 +90,7 @@ export const ModEventSelectorButton = ({
   ])
   return (
     <Dropdown
-      className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50"
+      className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
       items={availableActions.map(({ key, text }) => ({
         text,
         onClick: () => setSelectedAction(key),

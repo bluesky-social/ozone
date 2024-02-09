@@ -1,7 +1,6 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery } from '@tanstack/react-query'
 import {
-  AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoAdminEmitModerationEvent,
   ComAtprotoModerationDefs,
@@ -84,7 +83,7 @@ export function ModActionPanelQuick(
   return (
     <FullScreenActionPanel
       title={
-        <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 flex flex-row justify-between pr-8">
+        <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
           Take moderation action
           {isMobileView && (
             <button
@@ -108,7 +107,7 @@ export function ModActionPanelQuick(
           {isInitialLoading ? (
             <>
               <Loading />{' '}
-              <p className="pb-4 text-center text-gray-400">
+              <p className="pb-4 text-center text-gray-400 dark:text-gray-50">
                 Loading reports...
               </p>
             </>
@@ -118,7 +117,7 @@ export function ModActionPanelQuick(
                 title="No reports"
                 className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
               />
-              <p className="pb-4 text-center text-gray-400">No reports found</p>
+              <p className="pb-4 text-center text-gray-400 dark:text-gray-50">No reports found</p>
             </>
           )}
         </div>

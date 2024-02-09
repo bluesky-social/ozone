@@ -28,8 +28,8 @@ export function Posts({
 
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 py-2 px-4 sm:flex sm:items-center sm:justify-between sticky top-0">
-        <h3 className="text-lg font-medium leading-6 text-gray-900">{title}</h3>
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 py-2 px-4 sm:flex sm:items-center sm:justify-between sticky top-0">
+        <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">{title}</h3>
         <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
           <ButtonGroup
             appearance="primary"

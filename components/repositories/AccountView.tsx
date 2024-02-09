@@ -39,9 +39,10 @@ import { DataField } from '@/common/DataField'
 import { ProfileAvatar } from './ProfileAvatar'
 import { DidHistory } from './DidHistory'
 import { ModEventList } from '@/mod-event/EventList'
-import { ButtonGroup, LinkButton } from '@/common/buttons'
+import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 
 enum Views {
   Details,
@@ -107,7 +108,7 @@ export function AccountView({
   }, [repo, reportUri])
 
   return (
-    <div className="flex h-full bg-white">
+    <div className="flex h-full bg-white dark:bg-slate-900">
       <ReportPanel
         open={!!reportUri}
         onClose={() => setReportUri(undefined)}
@@ -123,7 +124,7 @@ export function AccountView({
             >
               <Link
                 href="/repositories"
-                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900"
+                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
               >
                 <ChevronLeftIcon
                   className="-ml-2 h-5 w-5 text-gray-400"
@@ -242,7 +243,7 @@ function Header({
           </div>
           <div className="mt-6 sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
             <div className="mt-6 min-w-0 flex-1 sm:hidden 2xl:block">
-              <h1 className="truncate text-2xl font-bold text-gray-900">
+              <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-gray-200">
                 <a
                   href={buildBlueSkyAppUrl({
                     did: repo?.did || profile?.did || '',
@@ -272,7 +273,7 @@ function Header({
                     repo.emailConfirmedAt
                       ? 'border-green-600'
                       : 'border-gray-300'
-                  } bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2`}
+                  } bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2`}
                 >
                   <EnvelopeIcon
                     className={`-ml-1 mr-2 h-5 w-5  ${
@@ -285,7 +286,7 @@ function Header({
               )}
               {!!reportOptions.length && (
                 <Dropdown
-                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
+                  className="inline-flex justify-center rounded-md border border-gray-300 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
                   items={reportOptions}
                 >
                   <ExclamationCircleIcon
@@ -299,7 +300,7 @@ function Header({
           </div>
         </div>
         <div className="mt-6 hidden min-w-0 flex-1 sm:block 2xl:hidden">
-          <h1 className="truncate text-2xl font-bold text-gray-900">
+          <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-gray-200">
             <a
               href={buildBlueSkyAppUrl({
                 did: repo?.did || profile?.did || '',
@@ -341,8 +342,8 @@ function Tabs({
     <span
       className={classNames(
         view === currentView
-          ? 'border-pink-500 text-gray-900'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
+          ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
+          : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300 dark:hover:border-teal-300',
         'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
       )}
       aria-current={view === currentView ? 'page' : undefined}
@@ -436,8 +437,10 @@ function Details({
         />
         {profile?.description && (
           <div className="sm:col-span-2">
-            <dt className="text-sm font-medium text-gray-500">Description</dt>
-            <dd className="mt-1 max-w-prose space-y-5 text-sm text-gray-900">
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-50">
+              Description
+            </dt>
+            <dd className="mt-1 max-w-prose space-y-5 text-sm text-gray-900 dark:text-gray-200">
               {profile.description}
             </dd>
           </div>
@@ -581,30 +584,36 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
     <div>
       <div className="mx-auto mt-8 max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10">
-          <button
-            type="button"
-            className="sm:flex-1 inline-flex justify-center rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
-            onClick={onClickRevoke}
-          >
+          <ActionButton appearance="primary" onClick={onClickRevoke}>
             <XCircleIcon
               className="-ml-1 mr-2 h-5 w-5 text-gray-400"
               aria-hidden="true"
             />
             <span>Revoke unused invite codes</span>
-          </button>
+          </ActionButton>
         </div>
-        <h3 className="text-xl font-medium text-black">Invited users</h3>
+        <h3 className="text-xl font-medium text-black dark:text-gray-200">
+          Invited users
+        </h3>
       </div>
-      <AccountsGrid
-        error={String(error ?? '')}
-        accounts={invitedUsers?.profiles}
-      />
+      {!invitedUsers?.length ? (
+        <EmptyDataset message="No invited users found" />
+      ) : (
+        <AccountsGrid
+          error={String(error ?? '')}
+          accounts={invitedUsers?.profiles}
+        />
+      )}
       <div className="mx-auto mt-8 max-w-5xl px-4 sm:px-6 lg:px-8">
-        <h3 className="text-xl font-medium text-black">Invite codes</h3>
+        <h3 className="text-xl font-medium text-black dark:text-gray-200">
+          Invite codes
+        </h3>
       </div>
       <div className="mb-20">
-        {Array.isArray(repo.invites) && (
+        {!!repo.invites?.length ? (
           <InviteCodesTable codes={repo.invites} />
+        ) : (
+          <EmptyDataset message="No invite codes found" />
         )}
       </div>
     </div>
@@ -632,7 +641,7 @@ export function AccountsGrid({
         {accounts.map((account) => (
           <div
             key={account.handle}
-            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 bg-white px-6 py-5 shadow-sm focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-offset-2 hover:border-gray-400"
+            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
           >
             <div className="flex-shrink-0">
               <ProfileAvatar
@@ -646,10 +655,10 @@ export function AccountsGrid({
                 className="focus:outline-none"
               >
                 <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900">
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
                   {account.displayName || `@${account.handle}`}
                 </p>
-                <p className="truncate text-sm text-gray-500">
+                <p className="truncate text-sm text-gray-500 dark:text-gray-50">
                   @{account.handle}
                 </p>
               </Link>
@@ -671,7 +680,7 @@ export const EventsView = ({ did }: { did: string }) => {
 
   return (
     <div>
-      <div className="bg-white border-b border-gray-200 py-2 px-4 sm:flex sm:items-center sm:justify-between sticky top-0">
+      <div className="bg-white dark:bg-slate-900 border-b border-gray-200 dark:border-gray-500 py-2 px-4 sm:flex sm:items-center sm:justify-between sticky top-0 dark">
         <div />
 
         <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
@@ -697,7 +706,7 @@ export const EventsView = ({ did }: { did: string }) => {
           />
         </div>
       </div>
-      <div className="pt-4 max-w-3xl w-full mx-auto">
+      <div className="pt-4 max-w-3xl w-full mx-auto dark:text-gray-100">
         <ModEventList
           {...(currentView === EventViews.ByUser
             ? { createdBy: did }

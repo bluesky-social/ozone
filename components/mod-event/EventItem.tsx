@@ -21,7 +21,7 @@ const Comment = ({
   }
 }) => {
   return (
-    <div className="shadow bg-white rounded-sm p-2">
+    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
       <p className="flex justify-between text-gray-500">
         <span>
           By{' '}
@@ -57,7 +57,7 @@ const Email = ({
   }
 }) => {
   return (
-    <div className="shadow bg-white rounded-sm p-2">
+    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
       <p className="text-gray-500">
         By{' '}
         {modEvent.creatorHandle
@@ -82,7 +82,7 @@ const Report = ({
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
-    <div className="shadow bg-white rounded-sm p-2">
+    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
       <p className="flex justify-between">
         <span>
           By{' '}
@@ -112,7 +112,7 @@ const TakedownOrMute = ({
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
   return (
-    <div className="shadow bg-white rounded-sm p-2">
+    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
       <p className="flex justify-between">
         <span>
           By{' '}
@@ -155,7 +155,7 @@ const EventLabels = ({
   if (!labels?.length) return null
   return (
     <LabelList>
-      <span className="text-gray-500">{header}</span>
+      <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
         const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
         return (
@@ -176,7 +176,7 @@ const Label = ({
   } & ComAtprotoAdminDefs.ModEventView
 }) => {
   return (
-    <div className="shadow-sm bg-white rounded-sm p-2">
+    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
       <p>
         <span>
           By{' '}

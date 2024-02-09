@@ -54,14 +54,16 @@ const Header = ({
         >
           {includeAllUserRecords ? 'Entire account' : subjectTitle}
           <ChevronDownIcon
-            className="text-gray-900 h-4 w-4"
+            className="text-gray-900 dark:text-gray-200 h-4 w-4"
             aria-hidden="true"
           />
         </Dropdown>
       </div>
     )
   }
-  return <h4 className="font-medium text-gray-700">{content}</h4>
+  return (
+    <h4 className="font-medium text-gray-700 dark:text-gray-100">{content}</h4>
+  )
 }
 
 export const ModEventList = (
@@ -112,7 +114,9 @@ export const ModEventList = (
             }}
           />
         ) : (
-          <h4 className="font-medium text-gray-700">Moderation event stream</h4>
+          <h4 className="font-medium text-gray-700 dark:text-gray-100">
+            Moderation event stream
+          </h4>
         )}
         <ActionButton
           size="xs"
@@ -230,11 +234,13 @@ const EventFilterPanel = ({
   }
 
   return (
-    <div className="shadow rounded py-3 px-5 bg-white mt-2">
+    <div className="shadow dark:shadow-slate-700 rounded py-3 px-5 bg-white dark:bg-slate-800 mt-2">
       <div className="flex flex-row">
         <div className="mr-4">
           <div>
-            <h5 className="text-gray-700 font-medium">Event Type</h5>
+            <h5 className="text-gray-700 dark:text-gray-100 font-medium">
+              Event Type
+            </h5>
             <div className="flex flex-row items-center mr-2 mt-2">
               <input
                 id={`type-all`}
@@ -243,11 +249,11 @@ const EventFilterPanel = ({
                 value={'all'}
                 checked={types.length === allTypes.length}
                 onChange={() => toggleType('all')}
-                className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                className="h-4 w-4 rounded border-gray-300 dark:border-teal-300 text-indigo-600 dark:text-teal-600 focus:ring-indigo-600 dark:focus:ring-teal-600"
               />
               <label
                 htmlFor={`type-all`}
-                className="ml-1 text-sm leading-6 text-gray-700"
+                className="ml-1 text-sm leading-6 text-gray-700 dark:text-gray-100"
               >
                 All
               </label>
@@ -261,11 +267,11 @@ const EventFilterPanel = ({
                   value={type}
                   checked={types.includes(type)}
                   onChange={() => toggleType(type)}
-                  className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                  className="h-4 w-4 rounded border-gray-300 dark:border-teal-300 text-indigo-600 dark:text-teal-600 focus:ring-indigo-600 dark:focus:ring-teal-600"
                 />
                 <label
                   htmlFor={`type-${type}`}
-                  className="ml-1 text-sm leading-6 text-gray-700"
+                  className="ml-1 text-sm leading-6 text-gray-700 dark:text-gray-100"
                 >
                   {title}
                 </label>
@@ -274,7 +280,9 @@ const EventFilterPanel = ({
           </div>
         </div>
         <div>
-          <h5 className="text-gray-700 font-medium">Comment/Note</h5>
+          <h5 className="text-gray-700 dark:text-gray-100 font-medium">
+            Comment/Note
+          </h5>
 
           <div className="flex flex-row items-center mr-2 mt-2">
             <input
@@ -284,11 +292,11 @@ const EventFilterPanel = ({
               value={`true`}
               checked={commentFilter.enabled}
               onChange={() => toggleCommentFilter()}
-              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+              className="h-4 w-4 rounded border-gray-300 dark:border-teal-300 text-indigo-600 dark:text-teal-600 focus:ring-indigo-600 dark:focus:ring-teal-600"
             />
             <label
               htmlFor={`comment-filter`}
-              className="ml-1 text-sm leading-6 text-gray-700"
+              className="ml-1 text-sm leading-6 text-gray-700 dark:text-gray-100"
             >
               Events with comments
             </label>
@@ -460,7 +468,9 @@ const EventFilterPanel = ({
         )}
       </div>
       <div>
-        <h5 className="text-gray-700 font-medium my-2">Sort Direction</h5>
+        <h5 className="text-gray-700 dark:text-gray-100 font-medium my-2">
+          Sort Direction
+        </h5>
 
         <Checkbox
           id="sortDirection"

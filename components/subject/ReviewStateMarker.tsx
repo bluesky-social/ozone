@@ -16,16 +16,16 @@ const reviewStateToText = {
 
 const reviewStateToColor = {
   [ComAtprotoAdminDefs.REVIEWOPEN]: {
-    bg: 'bg-yellow-200',
-    text: 'text-yellow-800',
+    bg: 'bg-yellow-200 dark:bg-yellow-200',
+    text: 'text-yellow-800 dark:text-yellow-500',
   },
   [ComAtprotoAdminDefs.REVIEWESCALATED]: {
-    bg: 'bg-orange-200',
-    text: 'text-orange-800',
+    bg: 'bg-orange-200 dark:bg-orange-200',
+    text: 'text-orange-800 dark:text-orange-500',
   },
   [ComAtprotoAdminDefs.REVIEWCLOSED]: {
-    bg: 'bg-green-200',
-    text: 'text-green-800',
+    bg: 'bg-green-200 dark:bg-green-200',
+    text: 'text-green-800 dark:text-green-500',
   },
 }
 
@@ -92,14 +92,14 @@ export const ReviewStateIcon = ({
 
   if (subjectStatus.takendown) {
     text = 'Taken Down'
-    color = 'text-red-800'
+    color = 'text-red-800 dark:text-red-600'
     Icon = ShieldExclamationIcon
   }
 
   // Appealed status should override takendown status specific icon
   if (subjectStatus.appealed) {
     text = 'Appealed'
-    color = 'text-orange-500'
+    color = 'text-orange-500 dark:text-orange-400'
     Icon = ScaleIcon
   }
 

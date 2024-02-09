@@ -7,7 +7,7 @@ export const Input = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
     return (
       <input
         ref={ref}
-        className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
+        className={`rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500  sm:text-sm dark:text-gray-100 ${className}`}
         {...others}
       />
     )
@@ -18,7 +18,7 @@ export function Select(props: ComponentProps<'select'>) {
   const { className = '', ...others } = props
   return (
     <select
-      className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
+      className={`rounded-md dark:bg-slate-800 dark:text-gray-100 border-gray-300 dark:border-teal-500 shadow-sm focus:border-indigo-500 dark:focus:border-teal-500 focus:ring-indigo-500 sm:text-sm ${className}`}
       {...others}
     />
   )
@@ -32,7 +32,7 @@ export const Textarea = forwardRef<
   return (
     <textarea
       ref={ref}
-      className={`rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm ${className}`}
+      className={`rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100 ${className}`}
       {...others}
     />
   )
@@ -81,7 +81,7 @@ export function RadioGroupOption(
           name={name}
           required={required}
           disabled={disabled}
-          className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 focus:ring-2"
+          className="w-4 h-4 text-indigo-600 dark:text-teal-600 bg-gray-100 dark:bg-slate-500 border-gray-300 focus:ring-indigo-500 dark:focus:ring-teal-500 focus:ring-2"
           {...others}
         />
         <label
@@ -118,7 +118,7 @@ export function FormLabel(
     <div className={className}>
       <label
         {...others}
-        className="block text-sm font-medium text-gray-700 flex flex-row justify-between"
+        className="block text-sm font-medium text-gray-700 dark:text-gray-100 flex flex-row justify-between"
       >
         <div>
           {label}
@@ -155,12 +155,12 @@ export const Checkbox = forwardRef<
       <input
         ref={ref}
         type="checkbox"
-        className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 mr-1"
+        className="h-4 w-4 rounded border-gray-300 text-indigo-600 dark:text-teal-500 focus:ring-indigo-600 dark:focus:ring-teal-500 mr-1"
         {...rest}
       />
       <label
         htmlFor={rest.name}
-        className="ml-1 text-sm leading-6 font-medium text-gray-900"
+        className="ml-1 text-sm leading-6 font-medium text-gray-900 dark:text-gray-200"
       >
         {label}
         {required && <sup className="text-red-500">*</sup>}

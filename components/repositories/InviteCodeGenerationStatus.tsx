@@ -111,16 +111,16 @@ export const InviteCodeGenerationStatus = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white p-6 text-left align-middle shadow-xl transition-all">
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl dark:shadow-xs dark:shadow-slate-900 transition-all">
                   <Dialog.Title
                     as="h3"
-                    className="text-lg font-medium leading-6 text-gray-900"
+                    className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-50"
                   >
                     {invitesDisabled ? 'Enable' : 'Disable'} invite code
                     generation?
                   </Dialog.Title>
 
-                  <Dialog.Description className="text-gray-600 mt-4">
+                  <Dialog.Description className="text-gray-600 dark:text-gray-200 mt-4">
                     This will {invitesDisabled ? 'enable' : 'stop'} invite code
                     generation for this user.
                     <br />
@@ -207,14 +207,14 @@ export const InviteCodeGenerationStatus = ({
         </Dialog>
       </Transition>
       <div className="sm:col-span-1">
-        <dt className="text-sm font-medium text-gray-500">
+        <dt className="text-sm font-medium text-gray-500 dark:text-gray-50">
           Invite Code Generation
         </dt>
-        <dd className="mt-1 text-sm text-gray-900" title={currentStatus}>
+        <dd className="mt-1 text-sm text-gray-900 dark:text-gray-200" title={currentStatus}>
           <button onClick={() => setIsDialogOpen(true)}>
             <LabelChip
               className={`ml-0 text-white ${
-                invitesDisabled ? 'bg-rose-600' : 'bg-green-400'
+                invitesDisabled ? 'bg-rose-600' : 'bg-green-400 dark:bg-lime-400'
               }`}
             >
               {currentStatus}

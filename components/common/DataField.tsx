@@ -18,12 +18,12 @@ export const DataField = ({
   shouldTruncateValue,
 }: DataFieldProps) => {
   const dataClasses = classNames(
-    'mt-1 text-sm text-gray-900',
+    'mt-1 text-sm text-gray-900 dark:text-gray-200',
     shouldTruncateValue ? 'truncate' : 'break-words',
   )
   return (
     <div className="sm:col-span-1">
-      <dt className="text-sm font-medium text-gray-500 flex items-center">
+      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 flex items-center">
         {label}
         {showCopyButton && value && (
           <CopyButton

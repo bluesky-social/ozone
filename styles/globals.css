@@ -1,3 +1,8 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+.wmde-markdown-var[data-color-mode*='dark'] {
+      --color-canvas-default: theme(colors.slate.800) !important;
+      --color-border-default: theme(colors.teal.500) !important;
+}
