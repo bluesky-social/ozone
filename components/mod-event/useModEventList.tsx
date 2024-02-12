@@ -4,7 +4,7 @@ import { useContext, useEffect, useReducer, useState } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
 import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
 import { MOD_EVENT_TITLES } from './constants'
-import { endOfDay } from 'date-fns'
+import { addDays } from 'date-fns'
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -32,7 +32,7 @@ const initialListState = {
   createdBy: undefined,
   subject: undefined,
   oldestFirst: false,
-  createdBefore: formatDateForInput(endOfDay(new Date())),
+  createdBefore: formatDateForInput(addDays(new Date(), 1)),
   createdAfter: FIRST_EVENT_TIMESTAMP,
   reportTypes: [],
   addedLabels: [],
