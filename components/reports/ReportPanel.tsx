@@ -65,10 +65,7 @@ function Form(props: {
             reason: formData.get('reason')!.toString() || undefined,
           })
           onCancel() // Close
-          queryClient.invalidateQueries([
-            'modEventList',
-            { props: { subject } },
-          ])
+          queryClient.invalidateQueries(['modEventList'])
         } finally {
           setSubmitting(false)
         }
