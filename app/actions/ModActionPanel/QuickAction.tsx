@@ -117,7 +117,9 @@ export function ModActionPanelQuick(
                 title="No reports"
                 className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
               />
-              <p className="pb-4 text-center text-gray-400 dark:text-gray-50">No reports found</p>
+              <p className="pb-4 text-center text-gray-400 dark:text-gray-50">
+                No reports found
+              </p>
             </>
           )}
         </div>
@@ -359,7 +361,7 @@ function Form(
 
       refetchSubjectStatus()
       refetchSubject()
-      queryClient.invalidateQueries(['modEventList', { props: { subject } }])
+      queryClient.invalidateQueries(['modEventList'])
 
       // After successful submission, reset the form state to clear inputs for previous submission
       ev.target.reset()
