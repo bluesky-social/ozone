@@ -14,6 +14,14 @@ Features:
 - browsing app.bsky profiles and post threads, including some taken-down content
 - quick-action modal (Ctrl-K)
 
+## Docker Quickstart
+
+Build and run localy, using docker:
+
+```
+docker build -t ozone-ui .
+docker run -p 3000:3000 ozone-ui
+```
 
 ## Development Quickstart
 
