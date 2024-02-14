@@ -1,33 +1,21 @@
-FROM debian:bullseye-slim
+FROM node:20.11-alpine3.18
+
+RUN apk add --update dumb-init
 
 ENV TZ=Etc/UTC
-ENV DEBIAN_FRONTEND=noninteractive
-ENV NODE_VERSION=20
-ENV NVM_DIR=/usr/share/nvm
-
 WORKDIR /usr/src/ozone
 
+COPY package.json yarn.lock .
+RUN yarn
 COPY . .
-
-RUN apt-get update && apt-get install --yes \
-  dumb-init \
-  ca-certificates \
-  wget
-
-RUN mkdir --parents $NVM_DIR && \
-  wget \
-    --output-document=/tmp/nvm-install.sh \
-    https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh && \
-  bash /tmp/nvm-install.sh
-
-RUN \. "$NVM_DIR/nvm.sh" && \
-  nvm install $NODE_VERSION && \
-  nvm use $NODE_VERSION && \
-  npm install --global yarn && \
-  yarn && \
-  yarn build
-
+RUN yarn build
+RUN chown -R node:node .next
 
 ENTRYPOINT ["dumb-init", "--"]
+EXPOSE 3000
+USER node
+CMD ["yarn", "start"]
 
-CMD ["bash", "-c", "source /usr/share/nvm/nvm.sh && yarn start"]
+LABEL org.opencontainers.image.source=https://github.com/bluesky-social/ozone-ui
+LABEL org.opencontainers.image.description="Ozone Moderation Service Web UI"
+LABEL org.opencontainers.image.licenses=MIT
