@@ -2,7 +2,7 @@ FROM debian:bullseye-slim
 
 ENV TZ=Etc/UTC
 ENV DEBIAN_FRONTEND=noninteractive
-ENV NODE_VERSION=18
+ENV NODE_VERSION=20
 ENV NVM_DIR=/usr/share/nvm
 
 WORKDIR /usr/src/ozone
@@ -17,7 +17,7 @@ RUN apt-get update && apt-get install --yes \
 RUN mkdir --parents $NVM_DIR && \
   wget \
     --output-document=/tmp/nvm-install.sh \
-    https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.3/install.sh && \
+    https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh && \
   bash /tmp/nvm-install.sh
 
 RUN \. "$NVM_DIR/nvm.sh" && \
