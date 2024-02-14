@@ -1,8 +1,8 @@
 
-Ozone: admin and mod web interface for atproto services
+Ozone UI: web interface for atproto moderation services
 =======================================================
 
-Ozone is a Next.js web application which talks directly to a PDS instance, and requires moderator or administrator privileges to function.
+Ozone UI is a Next.js web application which talks directly to an Ozone "moderation service". It generally requires moderator or administrator privileges to function.
 
 Features:
 
@@ -16,14 +16,17 @@ Features:
 
 ## Docker Quickstart
 
-Build and run localy, using docker:
-
-```
+```bash
+# build image
 docker build -t ozone-ui .
+
+# run the image
 docker run -p 3000:3000 ozone-ui
 ```
 
 ## Development Quickstart
+
+We recommend [`nvm`](https://github.com/nvm-sh/nvm) for managing Node.js installs. This project requires Node.js version 20. `yarn` is used to manage dependencies. You can install it with `npm install --global yarn`.
 
 First, run the development server:
 
@@ -35,75 +38,46 @@ yarn dev
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `pages/index.tsx`. The page auto-updates as you edit the file.
+See [HACKING](./HACKING.md) for other development tricks, like development with a local PDS instance, or working with un-released changes to the `@atproto/api` package.
 
-[API routes](https://nextjs.org/docs/api-routes/introduction) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.ts`.
+## Contributions
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/api-routes/introduction) instead of React pages.
+> While we do accept contributions, we prioritize high quality issues and pull requests. Adhering to the below guidelines will ensure a more timely review.
 
+**Rules:**
 
-### Local Integration Setup
+- We may not respond to your issue or PR.
+- We may close an issue or PR without much feedback.
+- We may lock discussions or contributions if our attention is getting DDOSed.
+- We do not provide support for build issues.
 
-Ozone requires a PDS service to talk to, and it is convenient to point it to a local `dev-env` instance for testing during development.
+**Guidelines:**
 
-1. In the separate [atproto project](https://github.com/bluesky-social/atproto), run the dev server using `yarn workspace @atproto/dev-env start`. This will run a PDS, seeded with some users and data for you.
-2. Run the development server for Ozone using `yarn dev`. This will start running the Ozone frontend at `http://localhost:3000`.
-3. Navigate to the login page in your browser, at [http://localhost:3000](http://localhost:3000).
-4. Login using the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would are:
-   - Service URL: http://localhost:2583
-   - Account handle: alice.test
-   - Password: hunter2
-   - Admin Token: admin-pass
+- Check for existing issues before filing a new one, please.
+- Open an issue and give some time for discussion before submitting a PR.
+- If submitting a PR that includes a lexicon change, please get sign off on the lexicon change _before_ doing the implementation.
+- Issues are for bugs & feature requests related to the TypeScript implementation of atproto and related services.
+  - For high-level discussions, please use the [Discussion Forum](https://github.com/bluesky-social/atproto/discussions).
+- Stay away from PRs that:
+  - Refactor large parts of the codebase
+  - Add entirely new features without prior discussion
+  - Change the tooling or frameworks used without prior discussion
+  - Introduce new unnecessary dependencies
 
-### Working with unpublished changes to the `@atproto/api` package
+Remember, we serve a wide community of users. Our day-to-day involves us constantly asking "which top priority is our top priority." If you submit well-written PRs that solve problems concisely, that's an awesome contribution. Otherwise, as much as we'd love to accept your ideas and contributions, we really don't have the bandwidth.
 
-In the course of development there may be updates to the atproto client that are not yet published to npm, but you would like to use with Ozone. Here's the workflow for using unpublished changes to the @atproto/api package:
+## Security disclosures
 
-1. Ensure the [atproto/](https://github.com/bluesky-social/atproto) project lives as a sibling to the [ozone/](https://github.com/bluesky-social/ozone) project on your filesystem (or adjust the path used in step 4).
+If you discover any security issues, please send an email to security@bsky.app. The email is automatically CCed to the entire team, and we'll respond promptly. See [SECURITY.md](https://github.com/bluesky-social/atproto/blob/main/SECURITY.md) for more info.
 
-   ```
-   ~/Documents/bluesky
-   ❯ ls -l
-   total 19856
-   drwxr-xr-x  22 user  group  704 Jan 19 15:51 atproto
-   drwxr-xr-x  24 user  group  768 Jan 24 19:17 ozone
-   ```
+## License
 
-2. Checkout whichever branch you'd like to use in atproto/ for the @atproto/api package.
+This project is dual-licensed under MIT and Apache 2.0 terms:
 
-   ```
-   ~/Documents/bluesky
-   ❯ cd atproto
-   ~/Documents/bluesky/atproto
-   ❯ git checkout main
-   ```
+- MIT license ([LICENSE-MIT](https://github.com/bluesky-social/ozone-ui/blob/main/LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/bluesky-social/ozone-ui/blob/main/LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
 
-3. Build the @atproto/api package in atproto/.
-
-   ```
-   ~/Documents/bluesky/atproto
-   ❯ yarn
-   ```
-
-4. Update the package.json file in ozone/ to reference the local build of @atproto/api.
-
-   ```diff
-      "dependencies": {
-   -    "@atproto/api": "^0.0.3",
-   +    "@atproto/api": "link:../atproto/packages/api/dist",
-        "@headlessui/react": "^1.7.7",
-   ```
-
-5. Ask yarn to reinstall, creating the link from ozone/ to the local build of @atproto/api.
-   ```
-   ~/Documents/bluesky/ozone
-   ❯ yarn
-   ```
-6. Take care not to check-in the changes to package.json and yarn.lock that came from the temporary linking. When you're done, you can reset everything with:
-   ```
-   ~/Documents/bluesky/ozone
-   ❯ git checkout package.json yarn.lock && yarn
-   ```
+Downstream projects and end users may chose either license individually, or both together, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
 
 ## Acknowledgements
 
