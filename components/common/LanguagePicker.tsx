@@ -9,15 +9,28 @@ export const LanguagePicker: React.FC = () => {
   const router = useRouter()
   const pathname = usePathname()
 
-  const lang = searchParams.get('lang')
+  const tagsParam = searchParams.get('tags')
+  const tags = tagsParam?.split(',') || []
+  const lang = tags.find((tag) => tag.includes('lang:'))?.split(':')[1]
 
-  const changeLanguage = (lang: string) => {
+  const changeLanguage = (newLang: string) => {
     const nextParams = new URLSearchParams(searchParams)
 
-    if (lang) {
-      nextParams.set('lang', lang)
+    if (newLang) {
+      nextParams.set(
+        'tags',
+        [
+          ...tags.filter((tag) => !tag.includes('lang:')),
+          `lang:${newLang}`,
+        ].join(','),
+      )
     } else {
-      nextParams.delete('lang')
+      const newTags = tags.filter((tag) => !tag.includes('lang:'))
+      if (newTags.length) {
+        nextParams.set('tags', newTags.join(','))
+      } else {
+        nextParams.delete('tags')
+      }
     }
 
     router.push((pathname ?? '') + '?' + nextParams.toString())
