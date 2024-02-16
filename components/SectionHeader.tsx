@@ -15,7 +15,7 @@ export function SectionHeader({
   current,
   children,
 }: {
-  title: string
+  title: string | JSX.Element
   tabs: Tab[]
   current: string
   children?: ReactNode
@@ -27,9 +27,13 @@ export function SectionHeader({
       className={`px-6 pt-4 ${!!tabs.length ? 'border-b border-gray-200' : ''}`}
     >
       <div className="sm:flex sm:items-baseline">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">
-          {title}
-        </h3>
+        {typeof title === 'string' ? (
+          <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">
+            {title}
+          </h3>
+        ) : (
+          title
+        )}
         <div className="mt-4 sm:mt-0 sm:ml-10 flex-1">
           <nav className="-mb-px flex flex-wrap">
             <div className="space-x-8 w-full lg:w-2/3">
