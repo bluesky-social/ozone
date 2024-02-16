@@ -2,7 +2,7 @@ import { LANGUAGES } from '@/lib/locale/languages'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { Select } from './forms'
 
-const languagesInPicker = LANGUAGES.filter(({ code2 }) => !!code2)
+const languagesInPicker = LANGUAGES.filter(({ code2 }) => !!code2.trim())
 
 export const LanguagePicker: React.FC = () => {
   const searchParams = useSearchParams()
@@ -43,9 +43,9 @@ export const LanguagePicker: React.FC = () => {
       onChange={(e) => changeLanguage(e.target.value)}
     >
       <option value="">All Languages</option>
-      {languagesInPicker.map(({ code2, name }) => {
+      {languagesInPicker.map(({ code2, code3, name }) => {
         return (
-          <option key={code2} value={code2}>
+          <option key={`${code3}-${name}`} value={code2}>
             {name}
           </option>
         )
