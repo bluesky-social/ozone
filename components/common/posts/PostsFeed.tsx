@@ -106,7 +106,7 @@ function PostHeader({
           ) : undefined}
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
-              href={`/repositories/${item.post.author.handle}`}
+              href={`/repositories/${item.post.author.did}`}
               className="hover:underline"
             >
               {item.post.author.displayName ? (
@@ -310,7 +310,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             />
             <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
               <Link
-                href={`/repositories/${embed.record.author.handle}`}
+                href={`/repositories/${embed.record.author.did}`}
                 className="hover:underline"
               >
                 {embed.record.author.displayName ? (

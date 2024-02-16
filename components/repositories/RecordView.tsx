@@ -63,7 +63,7 @@ export function RecordView({
               aria-label="Breadcrumb"
             >
               <Link
-                href={`/repositories/${record.repo.handle}`}
+                href={`/repositories/${record.repo.did}`}
                 className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
               >
                 <ChevronLeftIcon
@@ -250,7 +250,7 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
         <DataField label="Handle" value={record.repo.handle} showCopyButton>
           <Link
-            href={`/repositories/${record.repo.handle}`}
+            href={`/repositories/${record.repo.did}`}
             className="underline"
           >
             {record.repo.handle}

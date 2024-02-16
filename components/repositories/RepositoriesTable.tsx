@@ -59,7 +59,7 @@ function RepoRow(props: { repo: Repo }) {
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:w-auto sm:max-w-none sm:pl-6">
         <Link
-          href={`/repositories/${repo.handle}`}
+          href={`/repositories/${repo.did}`}
           className="text-indigo-600 hover:text-indigo-900 dark:text-teal-400 dark:hover:text-teal-600"
         >
           {repo.handle}

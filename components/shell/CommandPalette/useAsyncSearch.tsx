@@ -1,4 +1,5 @@
 import clientManager from '@/lib/client'
+import { getDidFromHandle } from '@/lib/identity'
 import { CollectionId } from '@/reports/helpers/subject'
 import { AtUri } from '@atproto/api'
 import {
@@ -48,19 +49,6 @@ const ActionSections: Record<string, ActionSection> = {
     name: 'Details',
     priority: 1,
   },
-}
-
-const getDidFromHandle = async (handle: string): Promise<string | null> => {
-  try {
-    const { data } = await clientManager.api.com.atproto.identity.resolveHandle(
-      {
-        handle,
-      },
-    )
-    return data.did
-  } catch (err) {
-    return null
-  }
 }
 
 const buildItemForDid = ({

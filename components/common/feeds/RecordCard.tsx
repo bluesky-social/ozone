@@ -69,7 +69,7 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
                 <span className="font-bold">{displayName}</span>
               </Link>
               <span className="ml-1">by</span>
-              <Link href={`/repositories/${creator.handle}`}>
+              <Link href={`/repositories/${creator.did}`}>
                 <span className="ml-1 text-gray-500">@{creator.handle}</span>
               </Link>
             </>{' '}
