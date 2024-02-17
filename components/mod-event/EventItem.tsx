@@ -194,6 +194,32 @@ const Label = ({
   )
 }
 
+const Tag = ({
+  modEvent,
+}: {
+  modEvent: {
+    event: ComAtprotoAdminDefs.ModEventTag
+  } & ComAtprotoAdminDefs.ModEventView
+}) => {
+  return (
+    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+      <p>
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </p>{' '}
+      {modEvent.event.comment ? (
+        <p className="pb-1">{`${modEvent.event.comment}`}</p>
+      ) : null}
+      <EventLabels header="Added: " labels={modEvent.event.add} />
+      <EventLabels header="Removed: " labels={modEvent.event.remove} />
+    </div>
+  )
+}
+
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
@@ -241,6 +267,10 @@ export const ModEventItem = ({
   if (ComAtprotoAdminDefs.isModEventLabel(modEvent.event)) {
     //@ts-ignore
     eventItem = <Label modEvent={modEvent} />
+  }
+  if (ComAtprotoAdminDefs.isModEventTag(modEvent.event)) {
+    //@ts-ignore
+    eventItem = <Tag modEvent={modEvent} />
   }
   if (ComAtprotoAdminDefs.isModEventEmail(modEvent.event)) {
     //@ts-ignore

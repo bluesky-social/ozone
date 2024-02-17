@@ -1,5 +1,5 @@
 'use client'
-import { useContext, useCallback, Suspense, useEffect } from 'react'
+import { useContext, useCallback } from 'react'
 import {
   ReadonlyURLSearchParams,
   usePathname,

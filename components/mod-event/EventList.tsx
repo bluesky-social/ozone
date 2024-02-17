@@ -408,6 +408,38 @@ const EventFilterPanel = ({
           </FormLabel>
         </div>
       </div>
+      {types.includes(MOD_EVENTS.TAG) && (
+        <div className="flex flex-row gap-2 mt-2">
+          <FormLabel label="Added Tags" className="flex-1 max-w-sm">
+            <Input
+              type="text"
+              id="addedTags"
+              name="addedTags"
+              placeholder='comma separated tags'
+              className="block w-full"
+              onChange={(e) =>
+                changeListFilter({ field: 'addedTags', value: e.target.value })
+              }
+            />
+          </FormLabel>
+
+          <FormLabel label="Removed Labels" className="flex-1 max-w-sm">
+            <Input
+              type="text"
+              id="removedTags"
+              name="removedTags"
+              placeholder='comma separated tags'
+              className="block w-full"
+              onChange={(e) =>
+                changeListFilter({
+                  field: 'removedTags',
+                  value: e.target.value,
+                })
+              }
+            />
+          </FormLabel>
+        </div>
+      )}
       <div className="flex-row flex gap-2 mt-2">
         {types.includes(MOD_EVENTS.LABEL) && (
           <>
@@ -439,7 +471,7 @@ const EventFilterPanel = ({
 
         {types.includes(MOD_EVENTS.REPORT) && (
           <FormLabel
-            label="Reason"
+            label="Report Reason"
             htmlFor="reasonType"
             className="flex-1 max-w-sm"
           >
