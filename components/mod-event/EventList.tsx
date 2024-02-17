@@ -12,6 +12,7 @@ import { MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
 import { useState } from 'react'
+import { addDays } from 'date-fns'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
@@ -380,7 +381,7 @@ const EventFilterPanel = ({
               }
               autoComplete="off"
               min={FIRST_EVENT_TIMESTAMP}
-              max={formatDateForInput(new Date())}
+              max={formatDateForInput(addDays(new Date(), 1))}
             />
           </FormLabel>
 

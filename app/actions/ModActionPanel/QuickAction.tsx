@@ -372,7 +372,7 @@ function Form(
 
       refetchSubjectStatus()
       refetchSubject()
-      queryClient.invalidateQueries(['modEventList', { props: { subject } }])
+      queryClient.invalidateQueries(['modEventList'])
 
       // After successful submission, reset the form state to clear inputs for previous submission
       ev.target.reset()

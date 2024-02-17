@@ -10,6 +10,7 @@ import client from '@/lib/client'
 import { compileTemplateContent, getTemplate } from './helpers'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { useEmailComposer } from './useComposer'
+import { useColorScheme } from '@/common/useColorScheme'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -25,6 +26,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
     setContent,
     communicationTemplates,
   } = useEmailComposer()
+  const { theme } = useColorScheme()
   const subjectField = useRef<HTMLInputElement>(null)
   const commentField = useRef<HTMLTextAreaElement>(null)
 
@@ -138,7 +140,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
           value={content}
           onChange={setContent}
           fullscreen={false}
-          data-color-mode="light"
+          data-color-mode={theme}
           commands={[
             commands.bold,
             commands.divider,
