@@ -539,7 +539,7 @@ function Form(
                 </LabelList>
               </FormLabel>
             </div>
-            {subjectStatus?.tags?.length && (
+            {!!subjectStatus?.tags?.length && (
               <div className={`mb-3`}>
                 <FormLabel label="Tags">
                   <LabelList className="-ml-1">
