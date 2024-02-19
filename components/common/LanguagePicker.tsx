@@ -4,6 +4,7 @@ import { CheckIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { useSearchParams, useRouter, usePathname } from 'next/navigation'
 import { ActionButton } from './buttons'
 
+// Please make sure that any item added here exists in LANGUAGES_MAP_CODE2 or add it there first
 const availableLanguageCodes = [
   'en',
   'es',
@@ -24,7 +25,9 @@ const SelectionTitle = ({
   excludedLanguages: string[]
 }) => {
   if (includedLanguages.length === 0 && excludedLanguages.length === 0) {
-    return <>All Languages</>
+    return (
+      <span className="text-gray-700 dark:text-gray-100">All Languages</span>
+    )
   }
 
   const includedNames = includedLanguages.map(
@@ -36,7 +39,9 @@ const SelectionTitle = ({
 
   return (
     <>
-      <span className="text-gray-700 dark:text-gray-100">{includedNames.join(', ')}</span>
+      <span className="text-gray-700 dark:text-gray-100">
+        {includedNames.join(', ')}
+      </span>
       {includedNames.length > 0 && excludedNames.length > 0 && (
         <span className="text-gray-700 dark:text-gray-100 mx-1">|</span>
       )}
@@ -52,6 +57,9 @@ const SelectionTitle = ({
   )
 }
 
+// Tags can be any arbitrary string, and lang tags are prefixed with lang:[code2] so we use this to get the lang code from tag string
+const getLangFromTag = (tag: string) => tag.split(':')[1]
+
 export const LanguagePicker: React.FC = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -62,11 +70,11 @@ export const LanguagePicker: React.FC = () => {
   const tags = tagsParam?.split(',') || []
   const excludedTags = excludeTagsParam?.split(',') || []
   const includedLanguages = tags
-    .filter((tag) => tag.includes('lang:'))
-    .map((tag) => tag.split(':')[1])
+    .filter((tag) => tag.startsWith('lang:'))
+    .map(getLangFromTag)
   const excludedLanguages = excludedTags
-    .filter((tag) => tag.includes('lang:'))
-    .map((tag) => tag.split(':')[1])
+    .filter((tag) => tag.startsWith('lang:'))
+    .map(getLangFromTag)
 
   const toggleLanguage = (section: 'include' | 'exclude', newLang: string) => {
     const nextParams = new URLSearchParams(searchParams)
@@ -182,7 +190,9 @@ const LanguageList = ({
           return (
             <button
               className={`w-full flex flex-row items-center justify-between ${
-                isDisabled ? 'text-gray-400' : 'text-gray-700 dark:text-gray-100'
+                isDisabled
+                  ? 'text-gray-400'
+                  : 'text-gray-700 dark:text-gray-100'
               }`}
               onClick={() => !isDisabled && onSelect(code2)}
               key={code2}
