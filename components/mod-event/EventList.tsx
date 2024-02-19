@@ -75,6 +75,8 @@ export const ModEventList = (
     reportTypes,
     addedLabels,
     removedLabels,
+    addedTags,
+    removedTags,
     includeAllUserRecords,
     modEvents,
     fetchMoreModEvents,
@@ -147,6 +149,8 @@ export const ModEventList = (
             oldestFirst,
             createdAfter,
             createdBefore,
+            addedTags,
+            removedTags,
             changeListFilter,
           }}
         />
@@ -416,7 +420,7 @@ const EventFilterPanel = ({
               type="text"
               id="addedTags"
               name="addedTags"
-              placeholder='comma separated tags'
+              placeholder="comma separated tags"
               className="block w-full"
               onChange={(e) =>
                 changeListFilter({ field: 'addedTags', value: e.target.value })
@@ -429,7 +433,7 @@ const EventFilterPanel = ({
               type="text"
               id="removedTags"
               name="removedTags"
-              placeholder='comma separated tags'
+              placeholder="comma separated tags"
               className="block w-full"
               onChange={(e) =>
                 changeListFilter({
