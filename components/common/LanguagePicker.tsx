@@ -36,11 +36,11 @@ const SelectionTitle = ({
 
   return (
     <>
-      <span className="text-gray-700">{includedNames.join(', ')}</span>
+      <span className="text-gray-700 dark:text-gray-100">{includedNames.join(', ')}</span>
       {includedNames.length > 0 && excludedNames.length > 0 && (
-        <span className="text-gray-700 mx-1">|</span>
+        <span className="text-gray-700 dark:text-gray-100 mx-1">|</span>
       )}
-      <span className="text-gray-700">
+      <span className="text-gray-700 dark:text-gray-100">
         {excludedNames.map((name, i) => (
           <s key={name}>
             {name}
