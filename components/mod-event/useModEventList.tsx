@@ -4,7 +4,7 @@ import { useContext, useEffect, useReducer, useState } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
 import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
 import { MOD_EVENT_TITLES } from './constants'
-import { endOfDay } from 'date-fns'
+import { addDays } from 'date-fns'
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -32,11 +32,13 @@ const initialListState = {
   createdBy: undefined,
   subject: undefined,
   oldestFirst: false,
-  createdBefore: formatDateForInput(endOfDay(new Date())),
+  createdBefore: formatDateForInput(addDays(new Date(), 1)),
   createdAfter: FIRST_EVENT_TIMESTAMP,
   reportTypes: [],
   addedLabels: [],
   removedLabels: [],
+  addedTags: '',
+  removedTags: '',
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
@@ -63,6 +65,8 @@ type EventListFilterPayload =
   | { field: 'reportTypes'; value: string[] }
   | { field: 'addedLabels'; value: string[] }
   | { field: 'removedLabels'; value: string[] }
+  | { field: 'addedTags'; value: string }
+  | { field: 'removedTags'; value: string }
 
 type EventListAction =
   | {
@@ -132,6 +136,8 @@ export const useModEventList = (
         createdAfter,
         addedLabels,
         removedLabels,
+        addedTags,
+        removedTags,
         reportTypes,
       } = listState
       const queryParams: ComAtprotoAdminQueryModerationEvents.QueryParams = {
@@ -184,6 +190,13 @@ export const useModEventList = (
         }
       }
 
+      if (addedTags?.trim().length) {
+        queryParams.addedTags = addedTags.trim().split(',')
+      }
+      if (removedTags?.trim().length) {
+        queryParams.addedTags = removedTags.trim().split(',')
+      }
+
       return await getModerationEvents(queryParams)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
@@ -200,7 +213,9 @@ export const useModEventList = (
     listState.oldestFirst ||
     listState.reportTypes.length > 0 ||
     listState.addedLabels.length > 0 ||
-    listState.removedLabels.length > 0
+    listState.removedLabels.length > 0 ||
+    listState.addedTags.length > 0 ||
+    listState.removedTags.length > 0
 
   return {
     // Data from react-query

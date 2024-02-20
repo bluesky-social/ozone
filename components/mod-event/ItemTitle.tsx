@@ -50,6 +50,10 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Labeled'
   }
+  if (ComAtprotoAdminDefs.isModEventTag(modEvent.event)) {
+    eventColor = 'text-blue-400'
+    eventTitle = 'Tagged'
+  }
   if (ComAtprotoAdminDefs.isModEventMute(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Muted'

@@ -1,5 +1,5 @@
 'use client'
-import { useContext, useCallback, Suspense, useEffect } from 'react'
+import { useContext, useCallback } from 'react'
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -160,6 +160,7 @@ export const ReportsPageContent = () => {
   const appealed = !!params.get('appealed')
   const reviewState = params.get('reviewState')
   const tags = params.get('tags')
+  const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
   const { sortField, sortDirection } = getSortParams(params)
   const { getReportSearchParams } = useFluentReportSearch()
@@ -192,6 +193,7 @@ export const ReportsPageContent = () => {
           takendown,
           appealed,
           tags,
+          excludeTags,
           queueName,
         },
       ],
@@ -218,6 +220,10 @@ export const ReportsPageContent = () => {
 
         if (tags) {
           queryParams.tags = tags.split(',')
+        }
+
+        if (excludeTags) {
+          queryParams.excludeTags = excludeTags.split(',')
         }
 
         // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in

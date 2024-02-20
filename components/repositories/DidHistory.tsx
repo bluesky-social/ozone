@@ -81,22 +81,26 @@ export const DidHistory = ({ did }: { did: string }) => {
 
   return (
     <div className="mb-3">
-      <h4 className="font-semibold text-gray-500">
+      <h4 className="font-semibold text-gray-500 dark:text-gray-50">
         DID History{' '}
-        <a href={getDidPlcWebUrl(did)} target="_blank" title="Open the web view for this DID record">
+        <a
+          href={getDidPlcWebUrl(did)}
+          target="_blank"
+          title="Open the web view for this DID record"
+        >
           <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
         </a>
       </h4>
       <table className="min-w-full divide-y divide-gray-300">
-        <thead className="bg-gray-50">
-          <tr className="text-gray-500 text-left text-sm">
+        <thead className="bg-gray-50 dark:bg-slate-700">
+          <tr className="text-gray-500 dark:text-gray-50 text-left text-sm">
             <th className="py-2 pl-2">Timestamp</th>
             <th className="py-2 pl-2">Type</th>
             <th className="py-2 pl-2">Handle</th>
             <th className="py-2 pl-2">Service</th>
           </tr>
         </thead>
-        <tbody>
+        <tbody className="dark:text-gray-100">
           {history.map((log) => (
             <tr key={log.cid} className="text-sm align-top">
               <td className="pr-2 py-2 pl-2">

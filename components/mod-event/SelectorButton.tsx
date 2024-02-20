@@ -8,6 +8,7 @@ const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
   { text: 'Escalate', key: MOD_EVENTS.ESCALATE },
   { text: 'Label', key: MOD_EVENTS.LABEL },
+  { text: 'Tag', key: MOD_EVENTS.TAG },
   { text: 'Mute', key: MOD_EVENTS.MUTE },
   { text: 'Takedown', key: MOD_EVENTS.TAKEDOWN },
   { text: 'Comment', key: MOD_EVENTS.COMMENT },
