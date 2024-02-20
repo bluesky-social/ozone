@@ -158,6 +158,7 @@ export const ReportsPageContent = () => {
   const appealed = !!params.get('appealed')
   const reviewState = params.get('reviewState')
   const tags = params.get('tags')
+  const excludeTags = params.get('excludeTags')
   const { sortField, sortDirection } = getSortParams(params)
   const { getReportSearchParams } = useFluentReportSearch()
   const { lastReviewedBy, subject, reporters } = getReportSearchParams()
@@ -189,6 +190,7 @@ export const ReportsPageContent = () => {
           takendown,
           appealed,
           tags,
+          excludeTags,
         },
       ],
       queryFn: async ({ pageParam }) => {
@@ -214,6 +216,10 @@ export const ReportsPageContent = () => {
 
         if (tags) {
           queryParams.tags = tags.split(',')
+        }
+
+        if (excludeTags) {
+          queryParams.excludeTags = excludeTags.split(',')
         }
 
         // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
