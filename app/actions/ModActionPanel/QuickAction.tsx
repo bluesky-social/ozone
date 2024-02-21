@@ -45,6 +45,7 @@ import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
+import { diffTags } from 'components/tags/utils'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -176,6 +177,7 @@ function Form(
   const [modEventType, setModEventType] = useState<string>(
     MOD_EVENTS.ACKNOWLEDGE,
   )
+  const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
@@ -250,6 +252,15 @@ function Form(
 
       if (formData.get('sticky')) {
         coreEvent.sticky = true
+      }
+
+      if (formData.get('tags')) {
+        const tags = String(formData.get('tags'))
+          .split(',')
+          .map((tag) => tag.trim())
+        const { add, remove } = diffTags(subjectStatus?.tags || [], tags)
+        coreEvent.add = add
+        coreEvent.remove = remove
       }
 
       const { subject: subjectInfo, record: recordInfo } =
@@ -528,6 +539,17 @@ function Form(
                 </LabelList>
               </FormLabel>
             </div>
+            {!!subjectStatus?.tags?.length && (
+              <div className={`mb-3`}>
+                <FormLabel label="Tags">
+                  <LabelList className="-ml-1">
+                    {subjectStatus.tags.map((tag) => {
+                      return <LabelChip key={tag}>{tag}</LabelChip>
+                    })}
+                  </LabelList>
+                </FormLabel>
+              </div>
+            )}
 
             {/* This is only meant to be switched on in mobile/small screen view */}
             {/* The parent component ensures to toggle this based on the screen size */}
@@ -564,6 +586,19 @@ function Form(
                       defaultLabels={currentLabels.filter(
                         (label) => !isSelfLabel(label),
                       )}
+                    />
+                  </FormLabel>
+                )}
+
+                {isTagEvent && (
+                  <FormLabel label="Tags" className="mt-2">
+                    <Input
+                      type="text"
+                      id="tags"
+                      name="tags"
+                      className="block w-full"
+                      placeholder="Comma separated tags"
+                      defaultValue={subjectStatus?.tags?.join(',') || ''}
                     />
                   </FormLabel>
                 )}
