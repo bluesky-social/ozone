@@ -8,6 +8,7 @@ import {
 } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
+  AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoAdminEmitModerationEvent,
   ComAtprotoAdminQueryModerationStatuses,
@@ -24,6 +25,7 @@ import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { LanguagePicker } from '@/common/LanguagePicker'
+import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
 
 const TABS = [
   {
@@ -159,6 +161,7 @@ export const ReportsPageContent = () => {
   const reviewState = params.get('reviewState')
   const tags = params.get('tags')
   const excludeTags = params.get('excludeTags')
+  const queueName = params.get('queueName')
   const { sortField, sortDirection } = getSortParams(params)
   const { getReportSearchParams } = useFluentReportSearch()
   const { lastReviewedBy, subject, reporters } = getReportSearchParams()
@@ -191,6 +194,7 @@ export const ReportsPageContent = () => {
           appealed,
           tags,
           excludeTags,
+          queueName,
         },
       ],
       queryFn: async ({ pageParam }) => {
@@ -234,7 +238,7 @@ export const ReportsPageContent = () => {
           }
         })
 
-        return await getModerationQueue(queryParams)
+        return await getModerationQueue(queryParams, queueName)
       },
       getNextPageParam: (lastPage) => lastPage.cursor,
     })
@@ -257,7 +261,7 @@ export const ReportsPageContent = () => {
 
   return (
     <>
-      <SectionHeader title="Queue" tabs={TABS} current={currentTab}>
+      <SectionHeader title={<QueueSelector />} tabs={TABS} current={currentTab}>
         <div className="flex-1 lg:text-right lg:pr-2 pb-4 px-1 pt-5 lg:pt-0">
           <button
             role="button"
@@ -312,16 +316,32 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
 
 async function getModerationQueue(
   opts: ComAtprotoAdminQueryModerationStatuses.QueryParams = {},
+  queueName: string | null,
 ) {
-  const res = await client.api.com.atproto.admin.queryModerationStatuses(
+  const { data } = await client.api.com.atproto.admin.queryModerationStatuses(
     {
-      limit: 25,
+      limit: 50,
       includeMuted: true,
       ...opts,
     },
     { headers: client.adminHeaders() },
   )
-  return res.data
+
+  const queueDivider = QUEUE_NAMES.length
+  const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
+  const statusesInQueue = queueName
+    ? data.subjectStatuses.filter((status) => {
+        const subjectDid =
+          status.subject.$type === 'com.atproto.admin.defs#repoRef'
+            ? status.subject.did
+            : new AtUri(`${status.subject.uri}`).host
+        const queueDeciderCharCode =
+          `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
+        return queueDeciderCharCode % queueDivider === queueIndex
+      })
+    : data.subjectStatuses
+
+  return { cursor: data.cursor, subjectStatuses: statusesInQueue }
 }
 
 function unique<T>(arr: T[]) {

@@ -3,7 +3,7 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { useQuery } from '@tanstack/react-query'
 
 const PLC_DIRECTORY_URL =
-  process.env.PLC_DIRECTORY_URL || `https://plc.directory`
+  process.env.NEXT_PUBLIC_PLC_DIRECTORY_URL || `https://plc.directory`
 
 // Not a complete mapping of the DID history event, just the parts we care about in the UI
 type DidHistoryEvent = {
