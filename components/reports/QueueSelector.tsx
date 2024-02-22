@@ -2,14 +2,18 @@ import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
-export const QUEUES = {
-  stratosphere: {
-    name: 'Stratosphere',
-  },
-  troposphere: {
-    name: 'Troposphere',
-  },
+type QueueConfig = Record<string, { name: string }>
+
+const getQueueConfig = () => {
+  const config = process.env.NEXT_PUBLIC_QUEUE_CONFIG || '{}'
+  try {
+    return JSON.parse(config) as QueueConfig
+  } catch (err) {
+    return {}
+  }
 }
+
+export const QUEUES = getQueueConfig()
 export const QUEUE_NAMES = Object.keys(QUEUES)
 
 export const QueueSelector = () => {
@@ -26,6 +30,15 @@ export const QueueSelector = () => {
       nextParams.delete('queueName')
     }
     router.push((pathname ?? '') + '?' + nextParams.toString())
+  }
+
+  // If no queues are configured, just use a static title
+  if (!QUEUE_NAMES.length) {
+    return (
+      <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">
+        Queue
+      </h3>
+    )
   }
 
   return (
