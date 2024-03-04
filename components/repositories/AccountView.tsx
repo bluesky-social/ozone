@@ -561,9 +561,12 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       if (actors.length === 0) {
         return { profiles: [] }
       }
-      const { data } = await client.api.app.bsky.actor.getProfiles({
-        actors,
-      })
+      const { data } = await client.api.app.bsky.actor.getProfiles(
+        {
+          actors,
+        },
+        { headers: client.proxyHeaders() },
+      )
       return data
     },
   })

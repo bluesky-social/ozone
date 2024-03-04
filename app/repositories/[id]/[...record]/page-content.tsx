@@ -66,9 +66,12 @@ export default function RecordViewPageContent({
       if (id.startsWith('did:')) {
         did = id
       } else {
-        const { data } = await client.api.com.atproto.identity.resolveHandle({
-          handle: id,
-        })
+        const { data } = await client.api.com.atproto.identity.resolveHandle(
+          {
+            handle: id,
+          },
+          { headers: client.proxyHeaders() },
+        )
         did = data.did
       }
       const uri = createAtUri({ did, collection, rkey })

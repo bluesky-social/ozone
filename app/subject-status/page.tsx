@@ -17,6 +17,7 @@ export default function SubjectStatus() {
       const { data } =
         await client.api.com.atproto.admin.queryModerationStatuses(
           { subject, limit: 1 },
+          { headers: client.proxyHeaders() },
         )
       return data
     },

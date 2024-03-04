@@ -250,9 +250,12 @@ export const useModEventList = (
 async function getModerationEvents(
   opts: ComAtprotoAdminQueryModerationEvents.QueryParams = {},
 ) {
-  const { data } = await client.api.com.atproto.admin.queryModerationEvents({
-    limit: 25,
-    ...opts,
-  })
+  const { data } = await client.api.com.atproto.admin.queryModerationEvents(
+    {
+      limit: 25,
+      ...opts,
+    },
+    { headers: client.proxyHeaders() },
+  )
   return data
 }

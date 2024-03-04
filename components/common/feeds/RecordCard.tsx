@@ -9,9 +9,12 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
     retry: false,
     queryKey: ['feed-generator', uri],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.feed.getFeedGenerator({
-        feed: uri,
-      })
+      const { data } = await client.api.app.bsky.feed.getFeedGenerator(
+        {
+          feed: uri,
+        },
+        { headers: client.proxyHeaders() },
+      )
       return data
     },
   })

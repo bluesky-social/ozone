@@ -11,7 +11,10 @@ export const useRepoAndProfile = ({ id }: { id: string }) =>
           did = id
         } else {
           const { data: resolved } =
-            await client.api.com.atproto.identity.resolveHandle({ handle: id })
+            await client.api.com.atproto.identity.resolveHandle(
+              { handle: id },
+              { headers: client.proxyHeaders() },
+            )
           did = resolved.did
         }
         const { data: repo } = await client.api.com.atproto.admin.getRepo(

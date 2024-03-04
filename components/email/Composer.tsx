@@ -58,7 +58,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
             comment,
             senderDid: client.session.did,
           },
-          { encoding: 'application/json' },
+          { headers: client.proxyHeaders(), encoding: 'application/json' },
         ),
         {
           pending: 'Sending email...',

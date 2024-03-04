@@ -20,7 +20,10 @@ export const useCommunicationTemplateList = ({
     staleTime: 60 * 60 * 1000,
     queryFn: async () => {
       const { data } =
-        await client.api.com.atproto.admin.listCommunicationTemplates({})
+        await client.api.com.atproto.admin.listCommunicationTemplates(
+          {},
+          { headers: client.proxyHeaders() },
+        )
       return data.communicationTemplates
     },
   })
@@ -79,7 +82,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             disabled,
             updatedBy: client.session.did,
           },
-          { encoding: 'application/json' },
+          { encoding: 'application/json', headers: client.proxyHeaders() },
         )
       : client.api.com.atproto.admin.createCommunicationTemplate(
           {
@@ -88,7 +91,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             name,
             createdBy: client.session.did,
           },
-          { encoding: 'application/json' },
+          { headers: client.proxyHeaders(), encoding: 'application/json' },
         )
 
   const onSubmit = async (e) => {
