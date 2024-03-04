@@ -16,7 +16,7 @@ export const useRepoAndProfile = ({ id }: { id: string }) =>
         }
         const { data: repo } = await client.api.com.atproto.admin.getRepo(
           { did },
-          { headers: client.adminHeaders() },
+          { headers: client.proxyHeaders() },
         )
         return repo
       }
@@ -26,7 +26,7 @@ export const useRepoAndProfile = ({ id }: { id: string }) =>
             {
               actor: id,
             },
-            { headers: client.adminHeaders() },
+            { headers: client.proxyHeaders() },
           )
           return profile
         } catch (err) {

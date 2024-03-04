@@ -318,14 +318,11 @@ async function getModerationQueue(
   opts: ComAtprotoAdminQueryModerationStatuses.QueryParams = {},
   queueName: string | null,
 ) {
-  const { data } = await client.api.com.atproto.admin.queryModerationStatuses(
-    {
-      limit: 50,
-      includeMuted: true,
-      ...opts,
-    },
-    { headers: client.adminHeaders() },
-  )
+  const { data } = await client.api.com.atproto.admin.queryModerationStatuses({
+    limit: 50,
+    includeMuted: true,
+    ...opts,
+  })
 
   const queueDivider = QUEUE_NAMES.length
   const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')

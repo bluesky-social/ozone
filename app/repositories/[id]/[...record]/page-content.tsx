@@ -75,7 +75,7 @@ export default function RecordViewPageContent({
       const getRecord = async () => {
         const { data: record } = await client.api.com.atproto.admin.getRecord(
           { uri },
-          { headers: client.adminHeaders() },
+          { headers: client.proxyHeaders() },
         )
         return record
       }
@@ -86,7 +86,7 @@ export default function RecordViewPageContent({
         try {
           const { data: thread } = await client.api.app.bsky.feed.getPostThread(
             { uri },
-            { headers: client.adminHeaders() },
+            { headers: client.proxyHeaders() },
           )
           return thread
         } catch (err) {

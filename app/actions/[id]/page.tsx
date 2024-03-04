@@ -10,10 +10,9 @@ export default function Action({ params }: { params: { id: string } }) {
   const { data: action, error } = useQuery({
     queryKey: ['action', { id }],
     queryFn: async () => {
-      const { data } = await client.api.com.atproto.admin.getModerationEvent(
-        { id: parseInt(id, 10) },
-        { headers: client.adminHeaders() },
-      )
+      const { data } = await client.api.com.atproto.admin.getModerationEvent({
+        id: parseInt(id, 10),
+      })
       return data
     },
   })

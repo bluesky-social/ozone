@@ -20,10 +20,7 @@ export const useCommunicationTemplateList = ({
     staleTime: 60 * 60 * 1000,
     queryFn: async () => {
       const { data } =
-        await client.api.com.atproto.admin.listCommunicationTemplates(
-          {},
-          { headers: client.adminHeaders() },
-        )
+        await client.api.com.atproto.admin.listCommunicationTemplates({})
       return data.communicationTemplates
     },
   })
@@ -82,7 +79,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             disabled,
             updatedBy: client.session.did,
           },
-          { headers: client.adminHeaders(), encoding: 'application/json' },
+          { encoding: 'application/json' },
         )
       : client.api.com.atproto.admin.createCommunicationTemplate(
           {
@@ -91,7 +88,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             name,
             createdBy: client.session.did,
           },
-          { headers: client.adminHeaders(), encoding: 'application/json' },
+          { encoding: 'application/json' },
         )
 
   const onSubmit = async (e) => {
@@ -103,19 +100,22 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
 
     setIsSaving(true)
     try {
-      await toast.promise(saveFunc({ contentMarkdown, name, subject, disabled }), {
-        pending: 'Saving template...',
-        success: {
-          render() {
-            return 'Template saved successfully'
+      await toast.promise(
+        saveFunc({ contentMarkdown, name, subject, disabled }),
+        {
+          pending: 'Saving template...',
+          success: {
+            render() {
+              return 'Template saved successfully'
+            },
+          },
+          error: {
+            render() {
+              return 'Error saving template'
+            },
           },
         },
-        error: {
-          render() {
-            return 'Error saving template'
-          },
-        },
-      })
+      )
       // Reset the form if email is sent successfully
       e.target.reset()
       setContentMarkdown('')

@@ -724,16 +724,14 @@ function Form(
 
 async function getSubject(subject: string) {
   if (subject.startsWith('did:')) {
-    const { data: repo } = await client.api.com.atproto.admin.getRepo(
-      { did: subject },
-      { headers: client.adminHeaders() },
-    )
+    const { data: repo } = await client.api.com.atproto.admin.getRepo({
+      did: subject,
+    })
     return { repo }
   } else if (subject.startsWith('at://')) {
-    const { data: record } = await client.api.com.atproto.admin.getRecord(
-      { uri: subject },
-      { headers: client.adminHeaders() },
-    )
+    const { data: record } = await client.api.com.atproto.admin.getRecord({
+      uri: subject,
+    })
     return { record }
   } else {
     return {}
@@ -743,10 +741,11 @@ async function getSubject(subject: string) {
 async function getSubjectStatus(subject: string) {
   const {
     data: { subjectStatuses },
-  } = await client.api.com.atproto.admin.queryModerationStatuses(
-    { subject, includeMuted: true, limit: 1 },
-    { headers: client.adminHeaders() },
-  )
+  } = await client.api.com.atproto.admin.queryModerationStatuses({
+    subject,
+    includeMuted: true,
+    limit: 1,
+  })
   return subjectStatuses.at(0) || null
 }
 

@@ -12,14 +12,11 @@ export default function RepositoriesListPage() {
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ['repositories', { term }],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.com.atproto.admin.searchRepos(
-        {
-          term,
-          limit: 25,
-          cursor: pageParam,
-        },
-        { headers: client.adminHeaders() },
-      )
+      const { data } = await client.api.com.atproto.admin.searchRepos({
+        term,
+        limit: 25,
+        cursor: pageParam,
+      })
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,

@@ -18,7 +18,6 @@ Ozone requires a PDS service to talk to, and it is convenient to point it to a l
    - Service URL: http://localhost:2583
    - Account handle: alice.test
    - Password: hunter2
-   - Admin Token: admin-pass
 
 ### Working with unpublished changes to the `@atproto/api` package
 

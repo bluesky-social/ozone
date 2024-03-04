@@ -11,10 +11,9 @@ export const createSubjectFromId = async (
 }> => {
   if (isIdRecord(id)) {
     try {
-      const { data: record } = await client.api.com.atproto.admin.getRecord(
-        { uri: id },
-        { headers: client.adminHeaders() },
-      )
+      const { data: record } = await client.api.com.atproto.admin.getRecord({
+        uri: id,
+      })
       return {
         record,
         subject: {
@@ -28,10 +27,10 @@ export const createSubjectFromId = async (
         // @TODO this is a roundabout way to get a record cid if the record was deleted.
         // It should work pretty well in this context, since createSubjectFromId() is generally used while resolving reports.
         const { data: eventData } =
-          await client.api.com.atproto.admin.queryModerationEvents(
-            { subject: id, limit: 1 },
-            { headers: client.adminHeaders() },
-          )
+          await client.api.com.atproto.admin.queryModerationEvents({
+            subject: id,
+            limit: 1,
+          })
         const event = eventData.events.at(0)
         if (!event || event.subject.uri !== id || !event.subject.cid) {
           throw err

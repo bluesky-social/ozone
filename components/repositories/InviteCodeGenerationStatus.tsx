@@ -28,7 +28,7 @@ const useInviteCodeMutation = ({ did, id }) => {
       const result = await client.api.com.atproto.admin[mutator](
         { account: did, note },
         {
-          headers: client.adminHeaders(),
+          headers: client.proxyHeaders(),
           encoding: 'application/json',
         },
       )
@@ -40,7 +40,7 @@ const useInviteCodeMutation = ({ did, id }) => {
           {
             accounts: [did],
           },
-          { encoding: 'application/json', headers: client.adminHeaders() },
+          { encoding: 'application/json', headers: client.proxyHeaders() },
         )
       }
 
