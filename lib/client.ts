@@ -75,7 +75,7 @@ class ClientManager extends EventTarget {
   }
 
   proxyHeaders(override?: string): Record<string, string> {
-    const proxy = override ?? process.env.ATPROTO_PROXY
+    const proxy = override ?? process.env.NEXT_PUBLIC_OZONE_SERVICE_DID
     return proxy ? { 'atproto-proxy': proxy } : {}
   }
 
