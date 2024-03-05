@@ -1,4 +1,5 @@
 import client from '@/lib/client'
+import { getDidFromHandle } from '@/lib/identity'
 import { useQuery } from '@tanstack/react-query'
 
 export const useRepoAndProfile = ({ id }: { id: string }) =>
@@ -10,12 +11,7 @@ export const useRepoAndProfile = ({ id }: { id: string }) =>
         if (id.startsWith('did:')) {
           did = id
         } else {
-          const { data: resolved } =
-            await client.api.com.atproto.identity.resolveHandle(
-              { handle: id },
-              { headers: client.proxyHeaders() },
-            )
-          did = resolved.did
+          did = await getDidFromHandle(id)
         }
         const { data: repo } = await client.api.com.atproto.admin.getRepo(
           { did },

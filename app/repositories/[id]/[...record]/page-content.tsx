@@ -16,6 +16,7 @@ import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { useEffect } from 'react'
 import { useTitle } from 'react-use'
+import { getDidFromHandle } from '@/lib/identity'
 
 const buildPageTitle = ({
   handle,
@@ -62,18 +63,16 @@ export default function RecordViewPageContent({
   } = useQuery({
     queryKey: ['record', { id, collection, rkey }],
     queryFn: async () => {
-      let did: string
+      let did: string | null
       if (id.startsWith('did:')) {
         did = id
       } else {
-        const { data } = await client.api.com.atproto.identity.resolveHandle(
-          {
-            handle: id,
-          },
-          { headers: client.proxyHeaders() },
-        )
-        did = data.did
+        did = await getDidFromHandle(id)
       }
+      if (!did) {
+        throw new Error('Failed to resolve DID for the record')
+      }
+
       const uri = createAtUri({ did, collection, rkey })
       const getRecord = async () => {
         const { data: record } = await client.api.com.atproto.admin.getRecord(
