@@ -23,7 +23,7 @@ export const CommunicationTemplateDeleteConfirmationModal = ({
     try {
       await clientManager.api.com.atproto.admin.deleteCommunicationTemplate(
         { id: templateId },
-        { encoding: 'application/json' },
+        { headers: clientManager.proxyHeaders(), encoding: 'application/json' },
       )
       toast.success('Template deleted')
       queryClient.invalidateQueries(['communicationTemplateList'])
