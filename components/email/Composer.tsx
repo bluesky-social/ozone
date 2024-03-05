@@ -11,6 +11,7 @@ import { compileTemplateContent, getTemplate } from './helpers'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { useEmailComposer } from './useComposer'
 import { useColorScheme } from '@/common/useColorScheme'
+import { MOD_EVENTS } from '@/mod-event/constants'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -50,13 +51,16 @@ export const EmailComposer = ({ did }: { did: string }) => {
         .toString()
 
       await toast.promise(
-        client.api.com.atproto.admin.sendEmail(
+        client.api.com.atproto.admin.emitModerationEvent(
           {
-            content: htmlContent,
-            recipientDid: did,
-            subject,
-            comment,
-            senderDid: client.session.did,
+            event: {
+              $type: MOD_EVENTS.EMAIL,
+              comment,
+              subjectLine: subject,
+              content: htmlContent,
+            },
+            subject: { $type: 'com.atproto.admin.defs#repoRef', did },
+            createdBy: client.session.did,
           },
           { headers: client.proxyHeaders(), encoding: 'application/json' },
         ),
