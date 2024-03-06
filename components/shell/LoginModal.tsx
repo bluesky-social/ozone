@@ -18,7 +18,6 @@ export function LoginModal() {
   const [service, setService] = useState('https://bsky.social')
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
-  const [adminToken, setAdminToken] = useState('')
 
   const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-slate-500 focus:ring-offset-2 ${
     isValidatingAuth
@@ -55,7 +54,7 @@ export function LoginModal() {
     e.stopPropagation()
     try {
       setAuthContextData(AuthState.Validating)
-      await Client.signin(service, handle, password, adminToken)
+      await Client.signin(service, handle, password)
       setAuthContextData(
         Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
       )
@@ -143,22 +142,6 @@ export function LoginModal() {
                   placeholder="Password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  Admin Token
-                </label>
-                <input
-                  id="admin-token"
-                  name="admin-token"
-                  type="password"
-                  required
-                  disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none rounded-b-md border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
-                  placeholder="Admin Token"
-                  value={adminToken}
-                  onChange={(e) => setAdminToken(e.target.value)}
                 />
               </div>
             </div>

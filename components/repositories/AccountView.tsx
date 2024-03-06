@@ -511,7 +511,7 @@ function Follows({ id }: { id: string }) {
     queryFn: async () => {
       const { data } = await client.api.app.bsky.graph.getFollows(
         { actor: id },
-        { headers: client.adminHeaders() },
+        { headers: client.proxyHeaders() },
       )
       return data
     },
@@ -531,7 +531,7 @@ function Followers({ id }: { id: string }) {
         {
           actor: id,
         },
-        { headers: client.adminHeaders() },
+        { headers: client.proxyHeaders() },
       )
       return data
     },
@@ -561,9 +561,12 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       if (actors.length === 0) {
         return { profiles: [] }
       }
-      const { data } = await client.api.app.bsky.actor.getProfiles({
-        actors,
-      })
+      const { data } = await client.api.app.bsky.actor.getProfiles(
+        {
+          actors,
+        },
+        { headers: client.proxyHeaders() },
+      )
       return data
     },
   })
@@ -576,7 +579,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       {
         accounts: [repo.did],
       },
-      { encoding: 'application/json', headers: client.adminHeaders() },
+      { encoding: 'application/json', headers: client.proxyHeaders() },
     )
   }, [client])
 

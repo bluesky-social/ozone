@@ -12,10 +12,7 @@ export const emitEvent = async (
   const emitModerationEventAsync = async () => {
     const { data } = await client.api.com.atproto.admin.emitModerationEvent(
       vals,
-      {
-        headers: client.adminHeaders(),
-        encoding: 'application/json',
-      },
+      { encoding: 'application/json', headers: client.proxyHeaders() },
     )
 
     return data

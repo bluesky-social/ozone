@@ -12,8 +12,10 @@ export const createSubjectFromId = async (
   if (isIdRecord(id)) {
     try {
       const { data: record } = await client.api.com.atproto.admin.getRecord(
-        { uri: id },
-        { headers: client.adminHeaders() },
+        {
+          uri: id,
+        },
+        { headers: client.proxyHeaders() },
       )
       return {
         record,
@@ -29,8 +31,11 @@ export const createSubjectFromId = async (
         // It should work pretty well in this context, since createSubjectFromId() is generally used while resolving reports.
         const { data: eventData } =
           await client.api.com.atproto.admin.queryModerationEvents(
-            { subject: id, limit: 1 },
-            { headers: client.adminHeaders() },
+            {
+              subject: id,
+              limit: 1,
+            },
+            { headers: client.proxyHeaders() },
           )
         const event = eventData.events.at(0)
         if (!event || event.subject.uri !== id || !event.subject.cid) {

@@ -21,7 +21,7 @@ export function AuthorFeed({
           limit: 30,
           cursor: pageParam,
         },
-        { headers: client.adminHeaders() },
+        { headers: client.proxyHeaders() },
       )
       return data
     },

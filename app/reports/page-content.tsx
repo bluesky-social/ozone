@@ -324,7 +324,7 @@ async function getModerationQueue(
       includeMuted: true,
       ...opts,
     },
-    { headers: client.adminHeaders() },
+    { headers: client.proxyHeaders() },
   )
 
   const queueDivider = QUEUE_NAMES.length

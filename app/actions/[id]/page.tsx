@@ -11,8 +11,10 @@ export default function Action({ params }: { params: { id: string } }) {
     queryKey: ['action', { id }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getModerationEvent(
-        { id: parseInt(id, 10) },
-        { headers: client.adminHeaders() },
+        {
+          id: parseInt(id, 10),
+        },
+        { headers: client.proxyHeaders() },
       )
       return data
     },

@@ -18,7 +18,7 @@ export default function RepositoriesListPage() {
           limit: 25,
           cursor: pageParam,
         },
-        { headers: client.adminHeaders() },
+        { headers: client.proxyHeaders() },
       )
       return data
     },

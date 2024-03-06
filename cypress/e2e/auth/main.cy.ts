@@ -44,7 +44,6 @@ describe('Authentication', () => {
     cy.get('#service-url').should('have.value', 'https://bsky.social')
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
-    cy.get('#admin-token').type('admin-pass')
     cy.get("button[type='submit']").click()
 
     // Assert that the error message is displayed in the UI
@@ -73,7 +72,6 @@ describe('Authentication', () => {
     cy.get('#service-url').should('have.value', 'https://bsky.social')
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
-    cy.get('#admin-token').type('admin-pass')
     cy.get("button[type='submit']").click()
 
     // Assert that the reports are displayed

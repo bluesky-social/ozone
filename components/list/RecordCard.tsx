@@ -9,10 +9,13 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
     retry: false,
     queryKey: ['list', uri],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getList({
-        list: uri,
-        limit: 1,
-      })
+      const { data } = await client.api.app.bsky.graph.getList(
+        {
+          list: uri,
+          limit: 1,
+        },
+        { headers: client.proxyHeaders() },
+      )
       return data
     },
   })

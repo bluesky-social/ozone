@@ -55,7 +55,7 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
           uri,
           depth: 0,
         },
-        { headers: client.adminHeaders() },
+        { headers: client.proxyHeaders() },
       )
       return post
     },
@@ -93,7 +93,7 @@ function BaseRecordCard(props: {
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getRecord(
         { uri },
-        { headers: client.adminHeaders() },
+        { headers: client.proxyHeaders() },
       )
       return data
     },
@@ -140,7 +140,7 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
       const getRepo = async () => {
         const { data: repo } = await client.api.com.atproto.admin.getRepo(
           { did },
-          { headers: client.adminHeaders() },
+          { headers: client.proxyHeaders() },
         )
         return repo
       }
@@ -150,7 +150,7 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
             {
               actor: did,
             },
-            { headers: client.adminHeaders() },
+            { headers: client.proxyHeaders() },
           )
           return profile
         } catch (err) {
@@ -190,10 +190,7 @@ export function InlineRepo(props: { did: string }) {
           className="h-4 w-4 rounded-full"
         />
       </div>
-      <Link
-        href={`/repositories/${repo.did}`}
-        className="hover:underline mr-1"
-      >
+      <Link href={`/repositories/${repo.did}`} className="hover:underline mr-1">
         {profile?.displayName ? (
           <>
             <span className="font-bold">{profile.displayName}</span>
@@ -243,7 +240,9 @@ export function RepoCard(props: { did: string }) {
               {profile?.displayName ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
-                  <span className="ml-1 text-gray-500 dark:text-gray-50">@{repo.handle}</span>
+                  <span className="ml-1 text-gray-500 dark:text-gray-50">
+                    @{repo.handle}
+                  </span>
                 </>
               ) : (
                 <span className="font-bold">@{repo.handle}</span>
@@ -259,7 +258,9 @@ export function RepoCard(props: { did: string }) {
             </a>
           </p>
           {profile?.description && (
-            <p className="text-gray-500 dark:text-gray-50">{profile.description}</p>
+            <p className="text-gray-500 dark:text-gray-50">
+              {profile.description}
+            </p>
           )}
           {takendown && (
             <p className="pt-1 pb-1">

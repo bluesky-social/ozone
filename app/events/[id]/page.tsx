@@ -12,8 +12,10 @@ export default function EventViewPage({ params }: { params: { id: string } }) {
     queryKey: ['event', { id }],
     queryFn: async () => {
       const { data } = await client.api.com.atproto.admin.getModerationEvent(
-        { id: parseInt(id, 10) },
-        { headers: client.adminHeaders() },
+        {
+          id: parseInt(id, 10),
+        },
+        { headers: client.proxyHeaders() },
       )
       return data
     },

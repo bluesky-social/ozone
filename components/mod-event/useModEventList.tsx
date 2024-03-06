@@ -255,7 +255,7 @@ async function getModerationEvents(
       limit: 25,
       ...opts,
     },
-    { headers: client.adminHeaders() },
+    { headers: client.proxyHeaders() },
   )
   return data
 }

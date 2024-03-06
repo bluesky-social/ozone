@@ -2,7 +2,6 @@ import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
 
 interface ClientSession extends AtpSessionData {
   service: string
-  adminToken: string
 }
 
 // exported api
@@ -40,36 +39,23 @@ class ClientManager extends EventTarget {
     this._emit('change')
   }
 
-  async signin(
-    service: string,
-    handle: string,
-    password: string,
-    adminToken: string,
-  ) {
+  async signin(service: string, handle: string, password: string) {
     const agent = new AtpAgent({
       service,
       persistSession: (_type, session) => {
         this._onSessionChange(session)
       },
     })
-    // @TODO temporary hack to make sure we don't override pdsUrl
-    agent['_updateApiEndpoint'] = () => null
     const { data: login } = await agent.login({
       identifier: handle,
       password,
     })
-    // Check validity of admin token
-    await agent.api.com.atproto.admin.getRepo(
-      { did: login.did },
-      { headers: this.adminHeaders(adminToken) },
-    )
     this._session = {
       service,
       accessJwt: login.accessJwt,
       refreshJwt: login.refreshJwt,
       handle: login.handle,
       did: login.did,
-      adminToken,
     }
     this._agent = agent
     _saveSession(this._session)
@@ -86,9 +72,9 @@ class ClientManager extends EventTarget {
     this._emit('change')
   }
 
-  adminHeaders(override?: string) {
-    const adminToken = override ?? this.session.adminToken
-    return { authorization: `Basic ${btoa(`admin:${adminToken}`)}` }
+  proxyHeaders(override?: string): Record<string, string> {
+    const proxy = override ?? process.env.NEXT_PUBLIC_OZONE_SERVICE_DID
+    return proxy ? { 'atproto-proxy': proxy } : {}
   }
 
   private async _setup() {
@@ -99,8 +85,6 @@ class ClientManager extends EventTarget {
           this._onSessionChange(session)
         },
       })
-      // @TODO temporary hack to make sure we don't override pdsUrl
-      agent['_updateApiEndpoint'] = () => null
       await agent.resumeSession(this._session)
       this._agent = agent
     } else {
@@ -150,7 +134,6 @@ function _loadSession(): ClientSession | undefined {
       !obj.service ||
       !obj.refreshJwt ||
       !obj.accessJwt ||
-      !obj.adminToken ||
       !obj.handle ||
       !obj.did
     ) {

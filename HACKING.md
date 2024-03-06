@@ -14,11 +14,15 @@ Ozone requires a PDS service to talk to, and it is convenient to point it to a l
 1. In the separate [atproto project](https://github.com/bluesky-social/atproto), run the dev server using `yarn workspace @atproto/dev-env start`. This will run a PDS, seeded with some users and data for you.
 2. Run the development server for Ozone using `yarn dev`. This will start running the Ozone frontend at `http://localhost:3000`.
 3. Navigate to the login page in your browser, at [http://localhost:3000](http://localhost:3000).
-4. Login using the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would are:
+4. Login using the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would work are:
    - Service URL: http://localhost:2583
-   - Account handle: alice.test
-   - Password: hunter2
-   - Admin Token: admin-pass
+   - Account handle: mod.test
+   - Password: mod-pass
+
+You can also test with different permission levels with the following credentials (<username>/<password>)
+
+- Triage: triage.test/triage-pass
+- Triage: admin-mod.test/admin-mod-pass
 
 ### Working with unpublished changes to the `@atproto/api` package
 
