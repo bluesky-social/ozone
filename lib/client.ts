@@ -50,6 +50,10 @@ class ClientManager extends EventTarget {
       identifier: handle,
       password,
     })
+    await agent.api.com.atproto.admin.getRepo(
+      { did: login.did },
+      { headers: this.proxyHeaders() },
+    )
     this._session = {
       service,
       accessJwt: login.accessJwt,
