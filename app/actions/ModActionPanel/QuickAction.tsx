@@ -19,11 +19,11 @@ import {
   LabelListEmpty,
   diffLabels,
   displayLabel,
-  getLabelGroupInfo,
   getLabelsForSubject,
   toLabelVal,
   unFlagSelfLabel,
   isSelfLabel,
+  LabelGroupInfo,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -46,6 +46,7 @@ import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
+import { ActionError } from '@/reports/ModerationForm/ActionError'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -153,7 +154,10 @@ function Form(
     replaceFormWithEvents,
     ...others
   } = props
-  const [submitting, setSubmitting] = useState(false)
+  const [submission, setSubmission] = useState<{
+    isSubmitting: boolean
+    error: string
+  }>({ isSubmitting: false, error: '' })
   const { data: subjectStatus, refetch: refetchSubjectStatus } = useQuery({
     // subject of the report
     queryKey: ['modSubjectStatus', { subject }],
@@ -179,6 +183,7 @@ function Form(
   )
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
+  const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
@@ -234,7 +239,7 @@ function Form(
   ) => {
     ev.preventDefault()
     try {
-      setSubmitting(true)
+      setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
       const nextLabels = String(formData.get('labels'))!.split(',')
       const coreEvent: Parameters<typeof onSubmit>[0]['event'] = {
@@ -265,6 +270,14 @@ function Form(
 
       const { subject: subjectInfo, record: recordInfo } =
         await createSubjectFromId(subject)
+
+      const subjectBlobCids = formData
+        .getAll('subjectBlobCids')
+        .map((cid) => String(cid))
+
+      if (isDivertEvent && !subjectBlobCids.length) {
+        throw new Error('blob-selection-required')
+      }
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
       // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
@@ -351,9 +364,7 @@ function Form(
         await onSubmit({
           subject: subjectInfo,
           createdBy: client.session.did,
-          subjectBlobCids: formData
-            .getAll('subjectBlobCids')
-            .map((cid) => String(cid)),
+          subjectBlobCids,
           event: coreEvent,
         })
       }
@@ -379,10 +390,9 @@ function Form(
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       shouldMoveToNextSubject && navigateQueue(1)
+      setSubmission({ error: '', isSubmitting: false })
     } catch (err) {
-      throw err
-    } finally {
-      setSubmitting(false)
+      setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
   // Keyboard shortcuts for action types
@@ -525,12 +535,10 @@ function Form(
                 <LabelList className="-ml-1">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
                   {currentLabels.map((label) => {
-                    const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
-
                     return (
                       <LabelChip
                         key={label}
-                        style={{ color: labelGroup.color }}
+                        style={{ color: LabelGroupInfo[label]?.color }}
                       >
                         {displayLabel(label)}
                       </LabelChip>
@@ -561,6 +569,7 @@ function Form(
                   <ModEventSelectorButton
                     subjectStatus={subjectStatus}
                     selectedAction={modEventType}
+                    hasBlobs={!!record?.blobs?.length}
                     setSelectedAction={(action) => setModEventType(action)}
                   />
                 </div>
@@ -654,6 +663,12 @@ function Form(
                   />
                 )}
 
+                {submission.error && (
+                  <div className="my-2">
+                    <ActionError error={submission.error} />
+                  </div>
+                )}
+
                 <div className="mt-auto flex flex-row justify-between">
                   <div>
                     <input
@@ -664,7 +679,7 @@ function Form(
                     />
                     <ButtonSecondary
                       className="px-2 sm:px-4 sm:mr-2"
-                      disabled={submitting}
+                      disabled={submission.isSubmitting}
                       onClick={onCancel}
                     >
                       <span className="text-sm sm:text-base">(C)ancel</span>
@@ -674,14 +689,14 @@ function Form(
                     <ButtonPrimary
                       ref={submitButton}
                       type="submit"
-                      disabled={submitting}
+                      disabled={submission.isSubmitting}
                       className="mx-1 px-2 sm:px-4"
                     >
                       <span className="text-sm sm:text-base">(S)ubmit</span>
                     </ButtonPrimary>
                     <ButtonPrimary
                       type="button"
-                      disabled={submitting}
+                      disabled={submission.isSubmitting}
                       onClick={submitAndGoNext}
                       className="px-2 sm:px-4"
                     >
@@ -705,14 +720,14 @@ function Form(
         <div className="flex justify-between mt-auto">
           <ButtonSecondary
             onClick={() => navigateQueue(-1)}
-            disabled={submitting}
+            disabled={submission.isSubmitting}
           >
             <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
 
           <ButtonSecondary
             onClick={() => navigateQueue(1)}
-            disabled={submitting}
+            disabled={submission.isSubmitting}
           >
             <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
           </ButtonSecondary>

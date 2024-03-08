@@ -3,21 +3,8 @@ import {
   AppBskyActorDefs,
   ComAtprotoAdminDefs,
   ComAtprotoLabelDefs,
-  LabelDefinition,
-  LabelGroupDefinition,
   LABELS,
-  LABEL_GROUPS,
 } from '@atproto/api'
-
-type LabelGroupInfoRecord = {
-  color: string
-  labels: Array<string | LabelDefinition>
-}
-
-type GroupedLabelList = Record<
-  string,
-  LabelGroupInfoRecord & Omit<LabelGroupDefinition, 'labels'>
->
 
 export function diffLabels(current: string[], next: string[]) {
   return {
@@ -53,95 +40,35 @@ export function toLabelVal(
   return val
 }
 
-export const labelOptions = Object.keys(LABELS)
+export const ALL_LABELS = LABELS
 
-export const LabelGroupInfo: Record<
-  string,
-  Partial<LabelGroupDefinition> & { color: string }
-> = {
-  [LABEL_GROUPS.system.id]: {
-    color: '#c45722',
-  },
-  [LABEL_GROUPS.sexual.id]: {
+export const LabelGroupInfo: Record<string, { color: string }> = {
+  [LABELS.sexual.identifier]: {
     color: '#d45722',
   },
-  [LABEL_GROUPS.violence.id]: {
+  [LABELS.gore.identifier]: {
     color: '#d42222',
   },
-  [LABEL_GROUPS.intolerance.id]: {
+  [LABELS.porn.identifier]: {
     color: '#d422bc',
   },
-  [LABEL_GROUPS.legal.id]: {
+  [LABELS.nudity.identifier]: {
     color: '#3502cc',
   },
-  [LABEL_GROUPS.rude.id]: {
+  [LABELS.doxxing.identifier]: {
     color: '#ccb802',
   },
-  [LABEL_GROUPS.curation.id]: {
-    color: '#ff0303',
-  },
-  [LABEL_GROUPS.misinfo.id]: {
-    color: '#530303',
-  },
-  uncategorized: {
-    strings: {
-      settings: {
-        en: {
-          name: 'Uncategorzied',
-          description: 'Labels that have not been categorized yet',
-        },
-      },
-    },
-    color: '',
-    labels: [],
-  },
 }
 
-const labelGroupsRequiringBlur = [
-  LABEL_GROUPS.violence.id,
-  LABEL_GROUPS.sexual.id,
+const labelsRequiring = [
+  LABELS.gore.identifier,
+  LABELS.porn.identifier,
+  LABELS.nudity.identifier,
+  LABELS.sexual.identifier,
 ]
 
-export const groupLabelList = (labels: string[]): GroupedLabelList => {
-  const groupedList: GroupedLabelList = {}
-
-  labels.forEach((label) => {
-    // SELF_FLAG is embedded in the label value so when grouping, we have to take it out of the value
-    const cleanedLabel = unFlagSelfLabel(label)
-    const group = LABELS[cleanedLabel]
-    const groupId = group?.groupId || 'uncategorized'
-
-    if (groupedList[groupId]) {
-      groupedList[groupId].labels.push(label)
-    } else {
-      groupedList[groupId] = {
-        ...(LabelGroupInfo[groupId] || LabelGroupInfo.uncategorized),
-        ...(LABEL_GROUPS[groupId] || {}),
-        labels: [label],
-      }
-    }
-  })
-
-  return groupedList
-}
-
-export const getLabelGroupInfo = (label: string): LabelGroupInfoRecord => {
-  const group = LABELS[label]
-  const groupId = group?.groupId || 'uncategorized'
-
-  return {
-    // TODO: We shouldn't have to do this, there's a weird type def somewhere that's causing this
-    labels: [],
-    ...LabelGroupInfo.uncategorized,
-    ...(LabelGroupInfo[groupId] || {}),
-    ...(group || {}),
-  }
-}
-
 export const doesLabelNeedBlur = (labels?: string[]): boolean =>
-  !!labels?.find((label) =>
-    labelGroupsRequiringBlur.includes(LABELS[label]?.groupId),
-  )
+  !!labels?.find((label) => labelsRequiring.includes(label))
 
 export const doesProfileNeedBlur = ({
   profile,
