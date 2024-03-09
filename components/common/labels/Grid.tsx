@@ -1,6 +1,7 @@
+import client from '@/lib/client'
 import { useState } from 'react'
 import Select from 'react-tailwindcss-select'
-import { buildAllLabelOptions, ALL_LABELS, LabelGroupInfo } from './util'
+import { ALL_LABELS, LabelGroupInfo } from './util'
 
 const EMPTY_ARR = []
 type SelectProps = React.ComponentProps<typeof Select>
@@ -21,10 +22,12 @@ export const LabelSelector = (props: LabelsProps) => {
       value: label,
     })),
   )
-  const allOptions = buildAllLabelOptions(defaultLabels, options)
-  const selectorOptions = Object.values(ALL_LABELS).map((labelOption) => ({
-    label: labelOption.identifier,
-    value: labelOption.identifier,
+  const selectorOptions = [
+    ...(client.session?.config.labeler?.policies?.['labelValues'] || []),
+    ...Object.values(ALL_LABELS).map(({ identifier }) => identifier),
+  ].map((label) => ({
+    label,
+    value: label,
   }))
 
   // TODO: selected label text doesn't feel very nice here

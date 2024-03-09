@@ -1,7 +1,22 @@
-import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
+import {
+  AppBskyLabelerDefs,
+  AtpAgent,
+  AtpServiceClient,
+  AtpSessionData,
+} from '@atproto/api'
 
 interface ClientSession extends AtpSessionData {
   service: string
+  config: {
+    labeler:
+      | AppBskyLabelerDefs.LabelerView
+      | AppBskyLabelerDefs.LabelerViewDetailed
+      | {
+          $type: string
+          [k: string]: unknown
+        }
+      | null
+  }
 }
 
 // exported api
@@ -54,8 +69,24 @@ class ClientManager extends EventTarget {
       { did: login.did },
       { headers: this.proxyHeaders() },
     )
+    let labeler
+    const serviceDid = this.getServiceDid()
+    if (serviceDid) {
+      const {
+        data: { views },
+      } = await agent.api.app.bsky.labeler.getServices(
+        {
+          dids: [serviceDid.split('#')[0]],
+        },
+        { headers: this.proxyHeaders() },
+      )
+      labeler = views[0]
+    }
     this._session = {
       service,
+      config: {
+        labeler,
+      },
       accessJwt: login.accessJwt,
       refreshJwt: login.refreshJwt,
       handle: login.handle,
@@ -76,8 +107,12 @@ class ClientManager extends EventTarget {
     this._emit('change')
   }
 
+  getServiceDid(override?: string) {
+    return override ?? process.env.NEXT_PUBLIC_OZONE_SERVICE_DID
+  }
+
   proxyHeaders(override?: string): Record<string, string> {
-    const proxy = override ?? process.env.NEXT_PUBLIC_OZONE_SERVICE_DID
+    const proxy = this.getServiceDid(override)
     return proxy ? { 'atproto-proxy': proxy } : {}
   }
 
