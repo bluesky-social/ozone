@@ -33,3 +33,10 @@ export type PropsOf<F extends Function> = F extends (
 ) => ReactNode
   ? P
   : never
+
+export enum AuthState {
+  Validating,
+  LoggedIn,
+  LoggedInUnconfigured,
+  LoggedOut,
+}

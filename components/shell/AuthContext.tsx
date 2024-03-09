@@ -1,14 +1,11 @@
+import { AuthState } from '@/lib/types'
 import { createContext, useState } from 'react'
 
 // This may seem a bit over-engineered but this is only the groundwork so while the current data model is simplistic
 // and could probably be handled in a simpler setup, the below setup helps us evolve the context to hold much complex
 // model and expose only what may be needed by UI if/when we have complex authorization based on user role etc.
 
-export enum AuthState {
-  Validating,
-  LoggedIn,
-  LoggedOut,
-}
+export { AuthState } from '@/lib/types'
 
 type AuthContextData = {
   authState: AuthState
