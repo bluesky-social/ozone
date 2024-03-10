@@ -80,7 +80,11 @@ class ClientManager extends EventTarget {
 
   async signout() {
     try {
-      this._agent?.api.com.atproto.server.deleteSession()
+      this._agent?.api.com.atproto.server.deleteSession(undefined, {
+        headers: {
+          authorization: `Bearer ${this.session.refreshJwt}`,
+        },
+      })
     } catch (err) {
       console.error('(Minor issue) Failed to delete session on the server', err)
     }
@@ -124,7 +128,7 @@ class ClientManager extends EventTarget {
       if (
         err?.['status'] === 400 &&
         typeof err['message'] === 'string' &&
-        err['message'].includes('proxy')
+        err['message'].includes('proxy') // "could not resolve proxy did service url"
       ) {
         return false
       }

@@ -5,6 +5,7 @@ import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import { AuthChangeContext, AuthContext } from './AuthContext'
 import { AuthState } from '@/lib/types'
 import Client from '@/lib/client'
+import { ConfigurationFlow } from './ConfigurationFlow'
 
 export function LoginModal() {
   const { isValidatingAuth, isLoggedIn, authState } = useContext(AuthContext)
@@ -81,7 +82,9 @@ export function LoginModal() {
               )}
             </p>
           </div>
-          {authState === AuthState.LoggedInUnconfigured && <>Configuring...</>}
+          {authState === AuthState.LoggedInUnconfigured && (
+            <ConfigurationFlow onComplete={console.log} />
+          )}
           {authState !== AuthState.LoggedInUnconfigured && (
             <form className="mt-8 space-y-6" onSubmit={onSubmit}>
               <input type="hidden" name="remember" defaultValue="true" />
