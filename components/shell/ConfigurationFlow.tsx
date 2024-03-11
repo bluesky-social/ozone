@@ -439,7 +439,7 @@ function useSession() {
 }
 
 async function updatePlcIdentity(token: string, config: OzoneConfigFull) {
-  const services = config.needs.service ? config.doc.services : undefined
+  const services = config.needs.service ? { ...config.doc.services } : undefined
   if (services) {
     services['atproto_labeler'] = {
       type: 'AtprotoLabeler',
@@ -447,7 +447,7 @@ async function updatePlcIdentity(token: string, config: OzoneConfigFull) {
     }
   }
   const verificationMethods = config.needs.key
-    ? config.doc.verificationMethods
+    ? { ...config.doc.verificationMethods }
     : undefined
   if (verificationMethods) {
     verificationMethods['atproto_label'] = config.meta.publicKey

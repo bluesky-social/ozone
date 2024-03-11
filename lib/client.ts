@@ -72,7 +72,7 @@ class ClientManager extends EventTarget {
     this._session = {
       service,
       config,
-      skipRecord: false,
+      skipRecord: config.did !== login.did, // skip if not logged-in as service account
       accessJwt: login.accessJwt,
       refreshJwt: login.refreshJwt,
       handle: login.handle,
