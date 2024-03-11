@@ -101,7 +101,7 @@ class ClientManager extends EventTarget {
 
   async reconfigure(opts?: { skipRecord?: boolean }) {
     if (!this._session) return
-    const config = await this._getConfig(this._session.did)
+    const config = await this._getConfig(this._session.config.did)
     this._session = {
       ...this._session,
       config,
