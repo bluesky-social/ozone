@@ -22,7 +22,7 @@ export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
   const configQuery = useQuery({
     queryKey: ['ozoneConfig'],
     staleTime: Infinity, // explicitly control refresh
-    queryFn: async () => {
+    queryFn: async (): Promise<OzoneConfig> => {
       const meta = await getOzoneMeta()
       const doc = await resolveDidDocData(meta.did)
       const labelerUrl = getServiceUrlFromDoc(doc, 'atproto_labeler')
@@ -111,6 +111,36 @@ export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
     )
   }
 
+  if (!config.matching.key || !config.matching.service) {
+    return (
+      <ErrorInfo>
+        {`There's`} a configuration issue: you will need to update your identity
+        or your Ozone service.
+        <br />
+        <br />
+        {!config.matching.service && (
+          <>
+            Your Ozone service is running at <b>{config.meta.url}</b>, but your
+            identity points to{' '}
+            <b>{getServiceUrlFromDoc(config.doc, 'atproto_labeler')}</b>.
+          </>
+        )}
+        {!config.matching.service && !config.matching.key && (
+          <>
+            <br />
+            <br />
+          </>
+        )}
+        {!config.matching.key && (
+          <>
+            Your Ozone service is configured with a different key than the key
+            associated with {config.handle}.
+          </>
+        )}
+      </ErrorInfo>
+    )
+  }
+
   return <pre>{JSON.stringify(config, null, 2)}</pre>
 }
 
@@ -118,12 +148,7 @@ function IdentityConfigurationFlow({
   config,
   onComplete,
 }: {
-  config: {
-    handle: string
-    meta: OzoneMeta
-    doc: DidDocData
-    needs: { service: boolean; key: boolean }
-  }
+  config: OzoneConfig
   onComplete: () => void
 }) {
   const [token, setToken] = useState('')
@@ -134,33 +159,7 @@ function IdentityConfigurationFlow({
   })
   const submitPlcOperation = useMutation({
     mutationFn: async () => {
-      const services = config.needs.service ? config.doc.services : undefined
-      if (services) {
-        services['atproto_labeler'] = {
-          type: 'AtprotoLabeler',
-          endpoint: config.meta.url,
-        }
-      }
-      const verificationMethods = config.needs.key
-        ? config.doc.verificationMethods
-        : undefined
-      if (verificationMethods) {
-        verificationMethods['atproto_label'] = config.meta.publicKey
-      }
-      const {
-        data: { operation },
-      } = await client.api.com.atproto.identity.signPlcOperation({
-        token,
-        verificationMethods,
-        services,
-      })
-      await client.api.com.atproto.identity.submitPlcOperation({
-        operation,
-      })
-      // @NOTE temp hack to push an identity op through
-      await client.api.com.atproto.identity.updateHandle({
-        handle: config.handle,
-      })
+      await updatePlcIdentity(token, config)
       onComplete()
     },
   })
@@ -270,7 +269,9 @@ function ErrorInfo({
           />
         </div>
         <div className="ml-3">
-          <h3 className="text-sm font-medium text-yellow-800">{children}</h3>
+          <h3 className="text-sm font-medium text-yellow-800 break-words">
+            {children}
+          </h3>
         </div>
       </div>
     </div>
@@ -316,6 +317,35 @@ function useSession() {
 }
 
 type OzoneMeta = { did: string; url: string; publicKey: string }
+
+async function updatePlcIdentity(token: string, config: OzoneConfig) {
+  const services = config.needs.service ? config.doc.services : undefined
+  if (services) {
+    services['atproto_labeler'] = {
+      type: 'AtprotoLabeler',
+      endpoint: config.meta.url,
+    }
+  }
+  const verificationMethods = config.needs.key
+    ? config.doc.verificationMethods
+    : undefined
+  if (verificationMethods) {
+    verificationMethods['atproto_label'] = config.meta.publicKey
+  }
+  const { data: signed } =
+    await client.api.com.atproto.identity.signPlcOperation({
+      token,
+      verificationMethods,
+      services,
+    })
+  await client.api.com.atproto.identity.submitPlcOperation({
+    operation: signed.operation,
+  })
+  // @NOTE temp hack to push an identity op through
+  await client.api.com.atproto.identity.updateHandle({
+    handle: config.handle,
+  })
+}
 
 async function getOzoneMeta() {
   const res = await fetch('/.well-known/atproto-labeler.json')
@@ -409,4 +439,12 @@ type DidDocData = {
   alsoKnownAs: string[]
   verificationMethods: Record<string, string>
   services: Record<string, { type: string; endpoint: string }>
+}
+
+type OzoneConfig = {
+  handle: string
+  meta: OzoneMeta
+  doc: DidDocData
+  matching: { service: boolean; key: boolean }
+  needs: { service: boolean; key: boolean; pds: boolean; record: boolean }
 }

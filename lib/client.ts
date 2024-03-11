@@ -127,6 +127,13 @@ class ClientManager extends EventTarget {
     } catch (err) {
       if (
         err?.['status'] === 400 &&
+        typeof err['error'] === 'string' &&
+        err['error'] === 'RepoNotFound' // paper over temp appview auth issue
+      ) {
+        return true
+      }
+      if (
+        err?.['status'] === 400 &&
         typeof err['message'] === 'string' &&
         err['message'].includes('proxy') // "could not resolve proxy did service url"
       ) {
