@@ -12,58 +12,27 @@ import {
   ExclamationTriangleIcon,
   ArrowRightCircleIcon,
 } from '@heroicons/react/20/solid'
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useMutation } from '@tanstack/react-query'
 import { Loading } from '@/common/Loader'
-import client from '@/lib/client'
+import client, { ClientSession } from '@/lib/client'
 import { Input } from '@/common/forms'
 import { AuthState } from './AuthContext'
+import {
+  OzoneConfigFull,
+  getServiceUrlFromDoc,
+  withDocAndMeta,
+} from '@/lib/client-config'
 
-export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
+export function ConfigurationFlow() {
   const session = useSession()
-  const configQuery = useQuery({
-    queryKey: ['ozoneConfig'],
-    staleTime: Infinity, // explicitly control refresh
-    queryFn: async (): Promise<OzoneConfig> => {
-      const meta = await getOzoneMeta()
-      const doc = await resolveDidDocData(meta.did)
-      const labelerUrl = getServiceUrlFromDoc(doc, 'atproto_labeler')
-      const labelerDidKey = getDidKeyFromDoc(doc, 'atproto_label')
-      const handle = getHandleFromDoc(doc)
-      const pdsUrl = getServiceUrlFromDoc(doc, 'atproto_pds')
-      const record = pdsUrl
-        ? await getLabelerServiceRecord(pdsUrl, meta.did)
-        : null
-      return {
-        doc,
-        meta,
-        handle,
-        matching: {
-          service: labelerUrl
-            ? normalizeUrl(labelerUrl) === normalizeUrl(meta.url)
-            : false,
-          key: labelerDidKey === meta.publicKey,
-        },
-        needs: {
-          service: !labelerUrl,
-          key: !labelerDidKey,
-          pds: !pdsUrl,
-          record: !record,
-        },
-      }
-    },
-  })
 
-  if (configQuery.status === 'loading') {
-    return <Loading message="Checking configuration..." />
-  }
-
-  if (configQuery.status === 'error') {
-    const message =
-      configQuery.error?.['message'] ||
-      'Something went wrong. Try logging in again, or seek support.'
+  if (!session) {
     return (
       <>
-        <ErrorInfo className="mt-2">{message}</ErrorInfo>
+        <ErrorInfo className="mt-2">
+          {`You're`} not logged-in. Please login using your Ozone service
+          account in order to configure Ozone.
+        </ErrorInfo>
         <Button
           className="w-full mt-2"
           icon={<ArrowLeftOnRectangleIcon />}
@@ -75,44 +44,96 @@ export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
     )
   }
 
-  const config = configQuery.data
-  if (!session || session.did !== config.meta.did) {
-    return (
-      <>
-        {session && (
-          <ErrorInfo className="mt-2">
-            You&#39;re logged in as {session.handle}. Please login as{' '}
-            {config.handle} in order to configure Ozone.
-          </ErrorInfo>
-        )}
-        {!session && (
-          <ErrorInfo className="mt-2">
-            You&#39;re not logged-in. Please login as {config.handle} in order
-            to configure Ozone.
-          </ErrorInfo>
-        )}
-        <Button
-          className="w-full mt-2"
-          icon={<ArrowLeftOnRectangleIcon />}
-          onClick={() => client.signout()}
-        >
-          Restart
-        </Button>
-      </>
-    )
-  }
+  const { config } = session
 
   if (config.needs.key || config.needs.service) {
+    if (session.did !== session.config.did) {
+      return (
+        <>
+          <ErrorInfo className="mt-2">
+            {`You're`} logged in as {session.handle}. Please login as{' '}
+            {session.config.handle || 'your Ozone service account'} in order to
+            configure Ozone.
+          </ErrorInfo>
+          <Button
+            className="w-full mt-2"
+            icon={<ArrowLeftOnRectangleIcon />}
+            onClick={() => client.signout()}
+          >
+            Restart
+          </Button>
+        </>
+      )
+    }
+    if (config.did.startsWith('did:web:')) {
+      return (
+        <>
+          <ErrorInfo className="mt-2">
+            You must configure your identity on your own if {`you're`} using a
+            did:web. You will need to add a service with id{' '}
+            {`"atproto_labeler"`} and verification method with id{' '}
+            {`"atproto_label"`}.
+          </ErrorInfo>
+          <Button
+            className="w-full mt-2"
+            icon={<ArrowLeftOnRectangleIcon />}
+            onClick={() => client.signout()}
+          >
+            Restart
+          </Button>
+        </>
+      )
+    }
+    if (!config.doc) {
+      return (
+        <>
+          <ErrorInfo className="mt-2">
+            We could not find identity information for the account{' '}
+            <b>{session.handle}</b>. Are you sure this account has an identity
+            on the network?
+          </ErrorInfo>
+          <Button
+            className="w-full mt-2"
+            icon={<ArrowLeftOnRectangleIcon />}
+            onClick={() => client.signout()}
+          >
+            Restart
+          </Button>
+        </>
+      )
+    }
+    if (!config.meta) {
+      return (
+        <>
+          <ErrorInfo className="mt-2">
+            We could not find your Ozone service configuration. Please ensure
+            {`you're`} currently on the domain where your Ozone service is
+            running.
+          </ErrorInfo>
+          <Button
+            className="w-full mt-2"
+            icon={<ArrowLeftOnRectangleIcon />}
+            onClick={() => client.signout()}
+          >
+            Restart
+          </Button>
+        </>
+      )
+    }
     return (
       <IdentityConfigurationFlow
-        key={configQuery.dataUpdatedAt}
-        config={config}
-        onComplete={() => configQuery.refetch()}
+        key={config.updatedAt}
+        config={withDocAndMeta(config)}
+        onComplete={() => client.reconfigure()}
       />
     )
   }
 
-  if (!config.matching.key || !config.matching.service) {
+  if (
+    (!config.matching.key || !config.matching.service) &&
+    config.doc &&
+    config.meta
+  ) {
     return (
       <ErrorInfo className="mt-2">
         {`There's`} a configuration issue: you will need to update your identity
@@ -145,11 +166,10 @@ export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
   if (config.needs.record) {
     return (
       <RecordConfigurationFlow
-        key={configQuery.dataUpdatedAt}
-        config={config}
-        onComplete={async (skip) => {
-          if (!skip) await configQuery.refetch()
-          onComplete()
+        key={config.updatedAt}
+        session={session}
+        onComplete={(skip) => {
+          client.reconfigure({ skipRecord: skip })
         }}
       />
     )
@@ -162,7 +182,7 @@ function IdentityConfigurationFlow({
   config,
   onComplete,
 }: {
-  config: OzoneConfig
+  config: OzoneConfigFull
   onComplete: () => void
 }) {
   const [token, setToken] = useState('')
@@ -266,16 +286,17 @@ function IdentityConfigurationFlow({
 }
 
 function RecordConfigurationFlow({
-  config,
+  session,
   onComplete,
 }: {
-  config: OzoneConfig
+  session: ClientSession
   onComplete: (skip: boolean) => void
 }) {
+  const { config } = session
   const putServiceRecord = useMutation({
     mutationFn: async () => {
       await client.api.com.atproto.repo.putRecord({
-        repo: config.meta.did,
+        repo: config.did,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
         record: {
@@ -304,9 +325,19 @@ function RecordConfigurationFlow({
           You may skip this step and come back to it next time you login.
         </ErrorInfo>
       )}
+      {session.did !== config.did && (
+        <ErrorInfo className="mt-4">
+          {`You're`} logged in as {session.handle}. Please login as{' '}
+          {session.config.handle || 'your Ozone service account'} in order to
+          configure Ozone.
+          <br />
+          <br />
+          You may skip this step and come back to it next time you login.
+        </ErrorInfo>
+      )}
       {putServiceRecord.isError && (
         <ErrorInfo className="mt-4">
-          We weren&#39;t able to create the service record. Please try again, or
+          We {`weren't`} able to create the service record. Please try again, or
           seek support.
         </ErrorInfo>
       )}
@@ -325,6 +356,7 @@ function RecordConfigurationFlow({
           disabled={
             putServiceRecord.isLoading ||
             putServiceRecord.isSuccess ||
+            session.did !== config.did ||
             config.needs.pds
           }
           className="w-full ml-2"
@@ -406,9 +438,7 @@ function useSession() {
   return session
 }
 
-type OzoneMeta = { did: string; url: string; publicKey: string }
-
-async function updatePlcIdentity(token: string, config: OzoneConfig) {
+async function updatePlcIdentity(token: string, config: OzoneConfigFull) {
   const services = config.needs.service ? config.doc.services : undefined
   if (services) {
     services['atproto_labeler'] = {
@@ -431,110 +461,10 @@ async function updatePlcIdentity(token: string, config: OzoneConfig) {
   await client.api.com.atproto.identity.submitPlcOperation({
     operation: signed.operation,
   })
-  // @NOTE temp hack to push an identity op through
-  await client.api.com.atproto.identity.updateHandle({
-    handle: config.handle,
-  })
-}
-
-async function getOzoneMeta() {
-  const res = await fetch('/.well-known/atproto-labeler.json')
-  if (res.status !== 200) {
-    throw new Error(
-      'Could not find Ozone configuration info. Try logging in again or seek support.',
-    )
+  if (config.handle) {
+    // @NOTE temp hack to push an identity op through
+    await client.api.com.atproto.identity.updateHandle({
+      handle: config.handle,
+    })
   }
-  const meta = await res.json()
-  if (typeof meta?.did !== 'string') {
-    throw new Error(
-      "Ozone configuration info doesn't look right. Try logging in again or seek support.",
-    )
-  }
-  return meta as OzoneMeta
-}
-
-async function resolveDidDocData(did: string): Promise<DidDocData> {
-  let url: URL | undefined
-  if (did.startsWith('did:web:')) {
-    throw new Error(
-      'You must configure your identity on your own if you\'re using a did:web. You will need to add a service with id "atproto_labeler" and verification method with id "atproto_label".',
-    )
-  }
-  if (did.startsWith('did:plc:')) {
-    url = new URL(`/${did}/data`, 'https://plc.directory')
-  }
-  if (!url) {
-    throw new Error(
-      `The server DID in your Ozone configuration looks invalid: ${did}. Are you sure Ozone is configured with the right account DID?`,
-    )
-  }
-  const res = await fetch(url)
-  if (res.status !== 200) {
-    throw new Error(
-      "We couldn't find your identity. Have you created an account yet?",
-    )
-  }
-  const doc = await res.json()
-  if (doc?.['did'] !== did) {
-    throw new Error(
-      `The DID doc for ${did} looks invalid. Are you sure Ozone is configured with the right account DID?`,
-    )
-  }
-  return doc
-}
-
-function getHandleFromDoc(doc: DidDocData) {
-  const handleAka = doc.alsoKnownAs.find(
-    (aka) => typeof aka === 'string' && aka.startsWith('at://'),
-  )
-  if (!handleAka) {
-    throw new Error(
-      `Your identity ${doc.did} doesn\'t seem to have a handle. Are you sure you've setup your account?`,
-    )
-  }
-  return handleAka.replace('at://', '')
-}
-
-function getDidKeyFromDoc(doc: DidDocData, keyId: string): string | null {
-  return doc.verificationMethods[keyId] ?? null
-}
-
-function getServiceUrlFromDoc(
-  doc: DidDocData,
-  serviceId: string,
-): string | null {
-  return doc.services[serviceId]?.endpoint ?? null
-}
-
-async function getLabelerServiceRecord(pdsUrl: string, did: string) {
-  const url = new URL('/xrpc/com.atproto.repo.getRecord', pdsUrl)
-  url.searchParams.set('repo', did)
-  url.searchParams.set('collection', 'app.bsky.labeler.service')
-  url.searchParams.set('rkey', 'self')
-  const res = await fetch(url)
-  if (res.status !== 200) return null
-  const recordInfo = await res.json()
-  if (!recordInfo?.['value'] || typeof recordInfo['value'] !== 'object') {
-    return null
-  }
-  return recordInfo['value'] as Record<string, undefined>
-}
-
-function normalizeUrl(url: string) {
-  return new URL(url).href
-}
-
-type DidDocData = {
-  did: string
-  alsoKnownAs: string[]
-  verificationMethods: Record<string, string>
-  services: Record<string, { type: string; endpoint: string }>
-}
-
-type OzoneConfig = {
-  handle: string
-  meta: OzoneMeta
-  doc: DidDocData
-  matching: { service: boolean; key: boolean }
-  needs: { service: boolean; key: boolean; pds: boolean; record: boolean }
 }

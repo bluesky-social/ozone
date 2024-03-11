@@ -1,11 +1,12 @@
 import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
 import { AuthState } from './types'
+import { OzoneConfig, getConfig } from './client-config'
 
-interface ClientSession extends AtpSessionData {
+export interface ClientSession extends AtpSessionData {
   service: string
   // @TODO consider backwards compat of local storage state
-  ozoneDid: string
-  ozoneConfigured: boolean
+  config: OzoneConfig
+  skipRecord: boolean
 }
 
 // exported api
@@ -20,7 +21,12 @@ class ClientManager extends EventTarget {
     if (!this._agent || !this._session) {
       return AuthState.LoggedOut
     }
-    if (!this._session.ozoneConfigured) {
+    const { config, skipRecord } = this._session
+    if (
+      config.needs.key ||
+      config.needs.service ||
+      (!skipRecord && config.needs.record)
+    ) {
       return AuthState.LoggedInUnconfigured
     }
     return AuthState.LoggedIn
@@ -51,7 +57,6 @@ class ClientManager extends EventTarget {
   }
 
   async signin(service: string, handle: string, password: string) {
-    const ozoneDid = await _getOzoneDid()
     const agent = new AtpAgent({
       service,
       persistSession: (_type, session) => {
@@ -62,11 +67,12 @@ class ClientManager extends EventTarget {
       identifier: handle,
       password,
     })
-    const configured = await this._checkCredentials(agent, login.did, ozoneDid)
+    const config = await this._getConfig()
+    await this._checkCredentials(agent, login.did, config.did)
     this._session = {
       service,
-      ozoneDid,
-      ozoneConfigured: configured,
+      config,
+      skipRecord: false,
       accessJwt: login.accessJwt,
       refreshJwt: login.refreshJwt,
       handle: login.handle,
@@ -93,9 +99,22 @@ class ClientManager extends EventTarget {
     return this.authState
   }
 
+  async reconfigure(opts?: { skipRecord?: boolean }) {
+    if (!this._session) return
+    const config = await this._getConfig(this._session.did)
+    this._session = {
+      ...this._session,
+      config,
+      skipRecord: opts?.skipRecord ?? this._session.skipRecord,
+    }
+    _saveSession(this._session)
+    this._emit('change')
+    return this.authState
+  }
+
   proxyHeaders(override?: string): Record<string, string> {
-    const proxy = override ?? this._session?.ozoneDid
-    return proxy ? { 'atproto-proxy': proxy } : {}
+    const proxy = override ?? this._session?.config.did
+    return proxy ? { 'atproto-proxy': _ensureServiceId(proxy) } : {}
   }
 
   private async _setup() {
@@ -113,6 +132,13 @@ class ClientManager extends EventTarget {
     }
   }
 
+  private async _getConfig(ozoneDid?: string) {
+    const builtIn =
+      ozoneDid || process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
+    const plcUrl = process.env.NEXT_PUBLIC_PLC_URL || undefined
+    return await getConfig(builtIn, plcUrl)
+  }
+
   private async _checkCredentials(
     agent: AtpAgent,
     accountDid: string,
@@ -123,28 +149,12 @@ class ClientManager extends EventTarget {
         { did: accountDid },
         { headers: this.proxyHeaders(ozoneDid) },
       )
-      return true
     } catch (err) {
-      if (
-        err?.['status'] === 400 &&
-        typeof err['error'] === 'string' &&
-        err['error'] === 'RepoNotFound' // paper over temp appview auth issue
-      ) {
-        return true
-      }
-      if (
-        err?.['status'] === 400 &&
-        typeof err['message'] === 'string' &&
-        err['message'].includes('proxy') // "could not resolve proxy did service url"
-      ) {
-        return false
-      }
       if (err?.['status'] === 401) {
         throw new Error(
           "Account does not have access to this Ozone service. If this seems in error, check Ozone's access configuration.",
         )
       }
-      throw err
     }
   }
 
@@ -209,22 +219,7 @@ function _deleteSession() {
   localStorage.removeItem(SESSION_KEY)
 }
 
-async function _getOzoneDid() {
-  const builtIn = process.env.NEXT_PUBLIC_OZONE_SERVICE_DID
-  if (builtIn) return builtIn
-  const meta = await _getOzoneMeta()
-  if (!meta) {
-    throw new Error(
-      'Ozone must be configured with a service DID. Are you on the same domain as your Ozone backend?',
-    )
-  }
-  return `${meta.did}#atproto_labeler`
-}
-
-async function _getOzoneMeta() {
-  const res = await fetch('/.well-known/atproto-labeler.json')
-  if (res.status !== 200) return null
-  const meta = await res.json().catch(() => null)
-  if (typeof meta?.did !== 'string') return null
-  return meta as { did: string; url: string; publicKey: string }
+function _ensureServiceId(did: string) {
+  if (did.includes('#')) return did
+  return `${did}#atproto_labeler`
 }

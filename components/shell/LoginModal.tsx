@@ -83,7 +83,7 @@ export function LoginModal() {
             </p>
           </div>
           {authState === AuthState.LoggedInUnconfigured && (
-            <ConfigurationFlow onComplete={console.log} />
+            <ConfigurationFlow />
           )}
           {authState !== AuthState.LoggedInUnconfigured && (
             <form className="mt-8 space-y-6" onSubmit={onSubmit}>
