@@ -25,7 +25,7 @@ async function main() {
     await ozone.ctx.db.migrateToLatestOrThrow()
   }
   // run
-  ozone.app.get('/.well-known/atproto-labeler.json', (_req, res) => {
+  ozone.app.get('/.well-known/ozone-metadata.json', (_req, res) => {
     return res.json({
       did: ozone.ctx.cfg.service.did,
       url: ozone.ctx.cfg.service.publicUrl,

@@ -54,7 +54,7 @@ export async function getConfig(
 }
 
 async function getOzoneMeta(serviceUrl = window.location.origin) {
-  const url = new URL('/.well-known/atproto-labeler.json', serviceUrl)
+  const url = new URL('/.well-known/ozone-metadata.json', serviceUrl)
   const res = await fetch(url)
   if (res.status !== 200) return null
   const meta = await res.json().catch(() => null)
