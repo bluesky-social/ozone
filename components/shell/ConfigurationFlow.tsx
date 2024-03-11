@@ -8,6 +8,7 @@ import {
 } from 'react'
 import {
   ArrowLeftOnRectangleIcon,
+  ArrowRightOnRectangleIcon,
   ExclamationTriangleIcon,
   ArrowRightCircleIcon,
 } from '@heroicons/react/20/solid'
@@ -113,7 +114,7 @@ export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
 
   if (!config.matching.key || !config.matching.service) {
     return (
-      <ErrorInfo>
+      <ErrorInfo className="mt-2">
         {`There's`} a configuration issue: you will need to update your identity
         or your Ozone service.
         <br />
@@ -141,7 +142,20 @@ export function ConfigurationFlow({ onComplete }: { onComplete: () => void }) {
     )
   }
 
-  return <pre>{JSON.stringify(config, null, 2)}</pre>
+  if (config.needs.record) {
+    return (
+      <RecordConfigurationFlow
+        key={configQuery.dataUpdatedAt}
+        config={config}
+        onComplete={async (skip) => {
+          if (!skip) await configQuery.refetch()
+          onComplete()
+        }}
+      />
+    )
+  }
+
+  return <Loading message="Logging in..." />
 }
 
 function IdentityConfigurationFlow({
@@ -247,6 +261,82 @@ function IdentityConfigurationFlow({
           </div>
         </>
       )}
+    </div>
+  )
+}
+
+function RecordConfigurationFlow({
+  config,
+  onComplete,
+}: {
+  config: OzoneConfig
+  onComplete: (skip: boolean) => void
+}) {
+  const putServiceRecord = useMutation({
+    mutationFn: async () => {
+      await client.api.com.atproto.repo.putRecord({
+        repo: config.meta.did,
+        collection: 'app.bsky.labeler.service',
+        rkey: 'self',
+        record: {
+          createdAt: new Date().toISOString(),
+          policies: { labelValues: [] },
+        },
+      })
+    },
+  })
+  return (
+    <div className="text-gray-600 dark:text-gray-100 mt-4">
+      <p className="mt-4">
+        Your Ozone service configuration and your identity are in sync.
+      </p>
+      <p className="mt-4">
+        The final step is to publish a record that will allow your account
+        appear as a moderation service in the Bluesky application. Users of the
+        app will be able to start using the labels you publish.
+      </p>
+      {config.needs.pds && (
+        <ErrorInfo className="mt-4">
+          Your account {config.handle} needs to have a repository hosted on a
+          PDS before we can create the record.
+          <br />
+          <br />
+          You may skip this step and come back to it next time you login.
+        </ErrorInfo>
+      )}
+      {putServiceRecord.isError && (
+        <ErrorInfo className="mt-4">
+          We weren&#39;t able to create the service record. Please try again, or
+          seek support.
+        </ErrorInfo>
+      )}
+      <div className="flex mt-4">
+        <Button
+          disabled={putServiceRecord.isLoading || putServiceRecord.isSuccess}
+          className="w-full mr-2"
+          icon={<ArrowRightOnRectangleIcon />}
+          onClick={() => {
+            onComplete(true)
+          }}
+        >
+          Skip
+        </Button>
+        <Button
+          disabled={
+            putServiceRecord.isLoading ||
+            putServiceRecord.isSuccess ||
+            config.needs.pds
+          }
+          className="w-full ml-2"
+          icon={<ArrowRightCircleIcon />}
+          onClick={async () => {
+            await putServiceRecord.mutateAsync()
+            onComplete(false)
+          }}
+        >
+          Submit
+        </Button>
+      </div>
     </div>
   )
 }
