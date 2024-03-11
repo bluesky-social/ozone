@@ -2,6 +2,8 @@
 Ozone UI: web interface for atproto labeling services
 =====================================================
 
+![ozone web interface screenshot](./docs/ozone_ui.png)
+
 Ozone UI is a Next.js web application which talks directly to an Ozone "labeling service". It generally requires moderator or administrator privileges to function.
 
 Features:
