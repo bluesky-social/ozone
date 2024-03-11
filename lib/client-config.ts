@@ -53,7 +53,7 @@ export async function getConfig(
   }
 }
 
-export async function getOzoneMeta(serviceUrl = window.location.origin) {
+async function getOzoneMeta(serviceUrl = window.location.origin) {
   const url = new URL('/.well-known/atproto-labeler.json', serviceUrl)
   const res = await fetch(url)
   if (res.status !== 200) return null
@@ -62,7 +62,7 @@ export async function getOzoneMeta(serviceUrl = window.location.origin) {
   return meta as OzoneMeta
 }
 
-export async function resolveDidDocData(
+async function resolveDidDocData(
   did: string,
   plcUrl?: string,
 ): Promise<DidDocData | null> {
@@ -80,55 +80,54 @@ export async function resolveDidDocData(
     if (res.status !== 200) return null
     const doc = await res.json().catch(() => null)
     if (!doc || typeof doc !== 'object' || doc['id'] !== did) return null
-    return {
-      did: doc.id,
-      alsoKnownAs: Array.isArray(doc['alsoKnownAs']) ? doc['alsoKnownAs'] : [],
-      verificationMethods: Array.isArray(doc['verificationMethod'])
-        ? doc['verificationMethod'].reduce((acc, vm) => {
-            if (
-              vm &&
-              typeof vm['id'] === 'string' &&
-              vm['type'] === 'Multikey' &&
-              typeof vm['publicKeyMultibase'] === 'string'
-            ) {
-              const [, id] = vm['id'].split('#')
-              acc[id] = `did:key:${vm['publicKeyMultibase']}`
-            }
-            return acc
-          }, {})
-        : {},
-      services: Array.isArray(doc['service'])
-        ? doc['service'].reduce((acc, s) => {
-            if (
-              s &&
-              typeof s['id'] === 'string' &&
-              typeof s['type'] === 'string' &&
-              typeof s['serviceEndpoint'] === 'string'
-            ) {
-              const [, id] = s['id'].split('#')
-              acc[id] = {
-                type: s['type'],
-                serviceEndpoint: s['serviceEndpoint'],
-              }
-            }
-            return acc
-          }, {})
-        : {},
-    }
+    return didDocToData(doc)
   }
   return null
 }
 
-export function getHandleFromDoc(doc: DidDocData) {
+function didDocToData(doc: { id: string; [key: string]: unknown }): DidDocData {
+  return {
+    did: doc.id,
+    alsoKnownAs: Array.isArray(doc['alsoKnownAs']) ? doc['alsoKnownAs'] : [],
+    verificationMethods: Array.isArray(doc['verificationMethod'])
+      ? doc['verificationMethod'].reduce((acc, vm) => {
+          if (
+            vm &&
+            typeof vm['id'] === 'string' &&
+            vm['type'] === 'Multikey' &&
+            typeof vm['publicKeyMultibase'] === 'string'
+          ) {
+            const [, id] = vm['id'].split('#')
+            acc[id] = `did:key:${vm['publicKeyMultibase']}`
+          }
+          return acc
+        }, {})
+      : {},
+    services: Array.isArray(doc['service'])
+      ? doc['service'].reduce((acc, s) => {
+          if (
+            s &&
+            typeof s['id'] === 'string' &&
+            typeof s['type'] === 'string' &&
+            typeof s['serviceEndpoint'] === 'string'
+          ) {
+            const [, id] = s['id'].split('#')
+            acc[id] = {
+              type: s['type'],
+              serviceEndpoint: s['serviceEndpoint'],
+            }
+          }
+          return acc
+        }, {})
+      : {},
+  }
+}
+
+function getHandleFromDoc(doc: DidDocData) {
   const handleAka = doc.alsoKnownAs.find(
     (aka) => typeof aka === 'string' && aka.startsWith('at://'),
   )
-  if (!handleAka) {
-    // throw new Error(
-    //   `Your identity ${doc.did} doesn\'t seem to have a handle. Are you sure you've setup your account?`,
-    // )
-    return null
-  }
+  if (!handleAka) return null
   return handleAka.replace('at://', '')
 }
 
@@ -146,7 +145,7 @@ export function getServiceUrlFromDoc(
   return doc.services[serviceId]?.endpoint ?? null
 }
 
-export async function getLabelerServiceRecord(pdsUrl: string, did: string) {
+async function getLabelerServiceRecord(pdsUrl: string, did: string) {
   const url = new URL('/xrpc/com.atproto.repo.getRecord', pdsUrl)
   url.searchParams.set('repo', did)
   url.searchParams.set('collection', 'app.bsky.labeler.service')
@@ -160,7 +159,7 @@ export async function getLabelerServiceRecord(pdsUrl: string, did: string) {
   return recordInfo['value'] as Record<string, undefined>
 }
 
-export function normalizeUrl(url: string) {
+function normalizeUrl(url: string) {
   return new URL(url).href
 }
 
