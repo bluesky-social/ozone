@@ -23,7 +23,7 @@ export function BlobList(props: {
         const displayActionType = subjectStatus?.takendown ? 'Taken down' : ''
         return (
           <div key={blob.cid} className="relative flex items-start">
-            <div className="flex h-5 items-center">
+            <div className="flex h-5 items-center ml-1">
               <input
                 id={`blob-${blob.cid}`}
                 name={name}
@@ -37,7 +37,7 @@ export function BlobList(props: {
             <div className="ml-3 text-sm min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
               <label
                 htmlFor={`blob-${blob.cid}`}
-                className="font-medium text-gray-700"
+                className="font-medium text-gray-700 dark:text-gray-100"
               >
                 {subjectStatus && (
                   <>

@@ -28,6 +28,10 @@ const actions = [
     text: 'Resolve Appeal',
     key: MOD_EVENTS.RESOLVE_APPEAL,
   },
+  {
+    text: 'Divert',
+    key: MOD_EVENTS.DIVERT,
+  },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
   acc[action.key] = action.text
@@ -38,10 +42,12 @@ export const ModEventSelectorButton = ({
   subjectStatus,
   selectedAction,
   setSelectedAction,
+  hasBlobs,
 }: {
   subjectStatus?: ComAtprotoAdminDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
+  hasBlobs: boolean
 }) => {
   const availableActions = useMemo(() => {
     return actions.filter(({ key, text }) => {
@@ -58,7 +64,14 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show takedown action if subject is already takendown
-      if (key === MOD_EVENTS.TAKEDOWN && subjectStatus?.takendown) {
+      if (
+        (key === MOD_EVENTS.TAKEDOWN || key === MOD_EVENTS.DIVERT) &&
+        subjectStatus?.takendown
+      ) {
+        return false
+      }
+      // Don't show divert action if the subject does not have any blobs
+      if (key === MOD_EVENTS.DIVERT && !hasBlobs) {
         return false
       }
       // Don't show reverse takedown action if subject is not takendown
@@ -88,6 +101,7 @@ export const ModEventSelectorButton = ({
     subjectStatus?.muteUntil,
     subjectStatus?.reviewState,
     subjectStatus?.appealed,
+    hasBlobs,
   ])
   return (
     <Dropdown

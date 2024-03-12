@@ -1,3 +1,4 @@
+import { Card } from '@/common/Card'
 import {
   LabelChip,
   LabelList,
@@ -21,7 +22,7 @@ const Comment = ({
   }
 }) => {
   return (
-    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+    <Card>
       <p className="flex justify-between text-gray-500">
         <span>
           By{' '}
@@ -45,7 +46,7 @@ const Comment = ({
         header="Removed: "
         labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
-    </div>
+    </Card>
   )
 }
 
@@ -57,7 +58,7 @@ const Email = ({
   }
 }) => {
   return (
-    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+    <Card>
       <p className="text-gray-500">
         By{' '}
         {modEvent.creatorHandle
@@ -68,7 +69,7 @@ const Email = ({
         <p>Subject: {modEvent.event.subjectLine}</p>
       )}
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
-    </div>
+    </Card>
   )
 }
 
@@ -82,7 +83,7 @@ const Report = ({
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
-    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+    <Card>
       <p className="flex justify-between">
         <span>
           By{' '}
@@ -97,7 +98,7 @@ const Report = ({
       {modEvent.event.comment && (
         <p className="mt-1">{modEvent.event.comment}</p>
       )}
-    </div>
+    </Card>
   )
 }
 
@@ -112,7 +113,7 @@ const TakedownOrMute = ({
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
   return (
-    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+    <Card>
       <p className="flex justify-between">
         <span>
           By{' '}
@@ -141,7 +142,7 @@ const TakedownOrMute = ({
         header="Removed: "
         labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
-    </div>
+    </Card>
   )
 }
 
@@ -176,7 +177,7 @@ const Label = ({
   } & ComAtprotoAdminDefs.ModEventView
 }) => {
   return (
-    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+    <Card>
       <p>
         <span>
           By{' '}
@@ -190,7 +191,7 @@ const Label = ({
       ) : null}
       <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
       <EventLabels header="Removed: " labels={modEvent.event.negateLabelVals} />
-    </div>
+    </Card>
   )
 }
 
@@ -202,7 +203,7 @@ const Tag = ({
   } & ComAtprotoAdminDefs.ModEventView
 }) => {
   return (
-    <div className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-2">
+    <Card>
       <p>
         <span>
           By{' '}
@@ -216,7 +217,7 @@ const Tag = ({
       ) : null}
       <EventLabels header="Added: " labels={modEvent.event.add} />
       <EventLabels header="Removed: " labels={modEvent.event.remove} />
-    </div>
+    </Card>
   )
 }
 
@@ -250,7 +251,9 @@ export const ModEventItem = ({
     ComAtprotoAdminDefs.isModEventComment(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventUnmute(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventResolveAppeal(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event)
+    ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event) ||
+    // This is temporary since the api package with this new type check is not yet published
+    modEvent.event.$type === 'com.atproto.admin.defs#modEventDivert'
   ) {
     eventItem = <Comment modEvent={modEvent} />
   }
