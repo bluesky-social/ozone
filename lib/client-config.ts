@@ -1,12 +1,11 @@
-export async function getConfig(
-  labelerDid?: string,
-  plcUrl?: string,
-): Promise<OzoneConfig> {
+import { DidDocData, resolveDidDocData } from './identity'
+
+export async function getConfig(labelerDid?: string): Promise<OzoneConfig> {
   let doc: DidDocData | null = null
   let meta: OzoneMeta | null = null
   labelerDid = labelerDid?.split('#')[0] // ensure no service id
   if (labelerDid) {
-    doc = await resolveDidDocData(labelerDid, plcUrl)
+    doc = await resolveDidDocData(labelerDid)
     const labelerUrl = doc && getServiceUrlFromDoc(doc, 'atproto_labeler')
     if (labelerUrl) {
       meta = await getOzoneMeta(labelerUrl)
@@ -62,67 +61,6 @@ async function getOzoneMeta(serviceUrl = window.location.origin) {
   return meta as OzoneMeta
 }
 
-async function resolveDidDocData(
-  did: string,
-  plcUrl?: string,
-): Promise<DidDocData | null> {
-  if (did.startsWith('did:plc:')) {
-    const url = new URL(`/${did}/data`, plcUrl ?? 'https://plc.directory')
-    const res = await fetch(url)
-    if (res.status !== 200) return null
-    const doc = await res.json()
-    return doc
-  }
-  if (did.startsWith('did:web:')) {
-    const hostname = did.slice('did:web:'.length)
-    const url = new URL(`/.well-known/did.json`, hostname)
-    const res = await fetch(url)
-    if (res.status !== 200) return null
-    const doc = await res.json().catch(() => null)
-    if (!doc || typeof doc !== 'object' || doc['id'] !== did) return null
-    return didDocToData(doc)
-  }
-  return null
-}
-
-function didDocToData(doc: { id: string; [key: string]: unknown }): DidDocData {
-  return {
-    did: doc.id,
-    alsoKnownAs: Array.isArray(doc['alsoKnownAs']) ? doc['alsoKnownAs'] : [],
-    verificationMethods: Array.isArray(doc['verificationMethod'])
-      ? doc['verificationMethod'].reduce((acc, vm) => {
-          if (
-            vm &&
-            typeof vm['id'] === 'string' &&
-            vm['type'] === 'Multikey' &&
-            typeof vm['publicKeyMultibase'] === 'string'
-          ) {
-            const [, id] = vm['id'].split('#')
-            acc[id] = `did:key:${vm['publicKeyMultibase']}`
-          }
-          return acc
-        }, {})
-      : {},
-    services: Array.isArray(doc['service'])
-      ? doc['service'].reduce((acc, s) => {
-          if (
-            s &&
-            typeof s['id'] === 'string' &&
-            typeof s['type'] === 'string' &&
-            typeof s['serviceEndpoint'] === 'string'
-          ) {
-            const [, id] = s['id'].split('#')
-            acc[id] = {
-              type: s['type'],
-              serviceEndpoint: s['serviceEndpoint'],
-            }
-          }
-          return acc
-        }, {})
-      : {},
-  }
-}
-
 function getHandleFromDoc(doc: DidDocData) {
   const handleAka = doc.alsoKnownAs.find(
     (aka) => typeof aka === 'string' && aka.startsWith('at://'),
@@ -167,13 +105,6 @@ export function withDocAndMeta(config: OzoneConfig) {
   if (config.doc === null) throw new Error('Missing doc in Ozone config')
   if (config.meta === null) throw new Error('Missing meta info in Ozone config')
   return config as OzoneConfigFull
-}
-
-export type DidDocData = {
-  did: string
-  alsoKnownAs: string[]
-  verificationMethods: Record<string, string>
-  services: Record<string, { type: string; endpoint: string }>
 }
 
 export type OzoneMeta = { did: string; url: string; publicKey: string }

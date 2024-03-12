@@ -135,8 +135,7 @@ class ClientManager extends EventTarget {
   private async _getConfig(ozoneDid?: string) {
     const builtIn =
       ozoneDid || process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
-    const plcUrl = process.env.NEXT_PUBLIC_PLC_URL || undefined
-    return await getConfig(builtIn, plcUrl)
+    return await getConfig(builtIn)
   }
 
   private async _checkCredentials(
