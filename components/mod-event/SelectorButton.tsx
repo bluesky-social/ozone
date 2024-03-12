@@ -101,6 +101,7 @@ export const ModEventSelectorButton = ({
     subjectStatus?.muteUntil,
     subjectStatus?.reviewState,
     subjectStatus?.appealed,
+    hasBlobs,
   ])
   return (
     <Dropdown
