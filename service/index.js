@@ -24,7 +24,7 @@ async function main() {
   if (migrate) {
     await ozone.ctx.db.migrateToLatestOrThrow()
   }
-  // run
+  // setup handlers
   ozone.app.get('/.well-known/ozone-metadata.json', (_req, res) => {
     return res.json({
       did: ozone.ctx.cfg.service.did,
@@ -32,7 +32,10 @@ async function main() {
       publicKey: ozone.ctx.signingKey.did(),
     })
   })
-  ozone.app.get('*', (req, res) => frontendHandler(req, res))
+  ozone.app.get('*', (req, res) => {
+    return frontendHandler(req, res)
+  })
+  // run
   const httpServer = await ozone.start()
   /** @type {import('net').AddressInfo} */
   const addr = httpServer.address()
