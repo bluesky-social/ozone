@@ -1,7 +1,8 @@
 import {
   ComAtprotoRepoStrongRef,
-  ComAtprotoAdminDefs,
+  ToolsOzoneModerationDefs,
   ComAtprotoServerDefs,
+  ComAtprotoAdminDefs,
   AppBskyFeedDefs,
 } from '@atproto/api'
 import { ReactNode } from 'react'
@@ -12,14 +13,13 @@ export function isRepost(v: Reason): v is AppBskyFeedDefs.ReasonRepost {
   return AppBskyFeedDefs.isReasonRepost(v)
 }
 
-export type Repo = ComAtprotoAdminDefs.RepoView
+export type Repo = ToolsOzoneModerationDefs.RepoView
 
-export type Report = ComAtprotoAdminDefs.ReportView
-export type SubjectStatus = ComAtprotoAdminDefs.SubjectStatusView
+export type SubjectStatus = ToolsOzoneModerationDefs.SubjectStatusView
 
 export type InviteCode = ComAtprotoServerDefs.InviteCode
 
-export function validSubjectString(subject: Report['subject']) {
+export function validSubjectString(subject: SubjectStatus['subject']) {
   if (ComAtprotoAdminDefs.isRepoRef(subject)) {
     return subject.did
   } else if (ComAtprotoRepoStrongRef.isMain(subject)) {

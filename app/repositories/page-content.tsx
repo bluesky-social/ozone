@@ -12,7 +12,7 @@ export default function RepositoriesListPage() {
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
     queryKey: ['repositories', { term }],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.com.atproto.admin.searchRepos(
+      const { data } = await client.api.tools.ozone.moderation.searchRepos(
         {
           term,
           limit: 25,

@@ -4,13 +4,13 @@ import client from '@/lib/client'
 import { displayError } from '../../common/Loader'
 import { queryClient } from 'components/QueryClient'
 import { MOD_EVENTS } from '@/mod-event/constants'
-import { ComAtprotoAdminEmitModerationEvent } from '@atproto/api'
+import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 
 export const emitEvent = async (
-  vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
+  vals: ToolsOzoneModerationEmitEvent.InputSchema,
 ) => {
   const emitModerationEventAsync = async () => {
-    const { data } = await client.api.com.atproto.admin.emitModerationEvent(
+    const { data } = await client.api.tools.ozone.moderation.emitEvent(
       vals,
       { encoding: 'application/json', headers: client.proxyHeaders() },
     )

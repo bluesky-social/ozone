@@ -2,7 +2,7 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminEmitModerationEvent,
+  ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
 import { ReportPanel } from '@/reports/ReportPanel'
 import { RecordView } from '@/repositories/RecordView'
@@ -75,7 +75,7 @@ export default function RecordViewPageContent({
 
       const uri = createAtUri({ did, collection, rkey })
       const getRecord = async () => {
-        const { data: record } = await client.api.com.atproto.admin.getRecord(
+        const { data: record } = await client.api.tools.ozone.moderation.getRecord(
           { uri },
           { headers: client.proxyHeaders() },
         )
@@ -171,7 +171,7 @@ export default function RecordViewPageContent({
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
         onSubmit={async (
-          vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
+          vals: ToolsOzoneModerationEmitEvent.InputSchema,
         ) => {
           await emitEvent(vals)
           refetch()

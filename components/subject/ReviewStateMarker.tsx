@@ -1,4 +1,4 @@
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -9,37 +9,37 @@ import {
 import Link from 'next/link'
 
 const reviewStateToText = {
-  [ComAtprotoAdminDefs.REVIEWOPEN]: 'Requires Review',
-  [ComAtprotoAdminDefs.REVIEWESCALATED]: 'Escalated',
-  [ComAtprotoAdminDefs.REVIEWCLOSED]: 'Reviewed',
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: 'Requires Review',
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'Escalated',
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'Reviewed',
 }
 
 const reviewStateToColor = {
-  [ComAtprotoAdminDefs.REVIEWOPEN]: {
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: {
     bg: 'bg-yellow-200 dark:bg-yellow-200',
     text: 'text-yellow-800 dark:text-yellow-500',
   },
-  [ComAtprotoAdminDefs.REVIEWESCALATED]: {
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: {
     bg: 'bg-orange-200 dark:bg-orange-200',
     text: 'text-orange-800 dark:text-orange-500',
   },
-  [ComAtprotoAdminDefs.REVIEWCLOSED]: {
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: {
     bg: 'bg-green-200 dark:bg-green-200',
     text: 'text-green-800 dark:text-green-500',
   },
 }
 
 const reviewStateToIcon = {
-  [ComAtprotoAdminDefs.REVIEWOPEN]: ExclamationCircleIcon,
-  [ComAtprotoAdminDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
-  [ComAtprotoAdminDefs.REVIEWCLOSED]: CheckCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: ExclamationCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: CheckCircleIcon,
 }
 
 export const SubjectReviewStateBadge = ({
   subjectStatus,
   className,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   className?: string
 }) => {
   let text =
@@ -81,7 +81,7 @@ export const ReviewStateIcon = ({
   subjectStatus,
   className,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   className?: string
 }) => {
   let text =
@@ -116,7 +116,7 @@ export const ReviewStateIconLink = ({
   className,
   children,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   className?: string
   children?: React.ReactNode
 }) => {

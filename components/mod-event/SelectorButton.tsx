@@ -1,5 +1,5 @@
 import { useMemo } from 'react'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
@@ -44,7 +44,7 @@ export const ModEventSelectorButton = ({
   setSelectedAction,
   hasBlobs,
 }: {
-  subjectStatus?: ComAtprotoAdminDefs.SubjectStatusView | null
+  subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
   hasBlobs: boolean
@@ -89,7 +89,7 @@ export const ModEventSelectorButton = ({
       // Don't show escalate action if subject is already escalated
       if (
         key === MOD_EVENTS.ESCALATE &&
-        subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWESCALATED
+        subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
       ) {
         return false
       }

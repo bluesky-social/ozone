@@ -51,7 +51,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
         .toString()
 
       await toast.promise(
-        client.api.com.atproto.admin.emitModerationEvent(
+        client.api.tools.ozone.moderation.emitEvent(
           {
             event: {
               $type: MOD_EVENTS.EMAIL,

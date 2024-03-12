@@ -11,7 +11,7 @@ describe('Authentication', () => {
     )
 
   const mockRepoResponse = (response: Record<string, any>) =>
-    cy.intercept('GET', `${SERVER_URL}/com.atproto.admin.getRepo*`, response)
+    cy.intercept('GET', `${SERVER_URL}/tools.ozone.moderation.getRepo*`, response)
 
   const mockProfileResponse = (response: Record<string, any>) =>
     cy.intercept('GET', `${SERVER_URL}/app.bsky.actor.getProfile*`, response)
@@ -19,7 +19,7 @@ describe('Authentication', () => {
   const mockModerationReportsResponse = (response: Record<string, any>) =>
     cy.intercept(
       'GET',
-      `${SERVER_URL}/com.atproto.admin.queryModerationStatuses*`,
+      `${SERVER_URL}/tools.ozone.moderation.queryStatuses*`,
       response,
     )
 

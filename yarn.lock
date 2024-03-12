@@ -2,15 +2,15 @@
 # yarn lockfile v1
 
 
-"@atproto/api@0.9.8":
-  version "0.9.8"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.9.8.tgz#c1a363a10a47edc2a5b62b0910a142c7632262b1"
-  integrity sha512-v3QO2e5MF99JlPEyjhN2LRs8Uv0tf3C0RJwVm83bgp16yLhN2ZQO13z7w99HoGN7dWwoYf/xXWM/PQPJJcxPTA==
+"@atproto/api@@atproto/api@0.11.0-next":
+  version "0.11.0-next"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.11.0-next.tgz#0f4101ccce5b2608097ad6f295936b204baf4200"
+  integrity sha512-8GEOfAgVcuJLNSWHI5HB1V2815r08hrCu4YtW+fs8txZekOhYlTy3/m/RT1Szkesk3EyKHqkBthK1FiB7QOxWg==
   dependencies:
     "@atproto/common-web" "^0.2.3"
-    "@atproto/lexicon" "^0.3.1"
-    "@atproto/syntax" "^0.1.5"
-    "@atproto/xrpc" "^0.4.1"
+    "@atproto/lexicon" "^0.3.2"
+    "@atproto/syntax" "^0.2.0"
+    "@atproto/xrpc" "^0.4.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
     typed-emitter "^2.1.0"
@@ -26,30 +26,30 @@
     uint8arrays "3.0.0"
     zod "^3.21.4"
 
-"@atproto/lexicon@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.3.1.tgz#5d7275d041883a1c930404e3274a6fe7affc151f"
-  integrity sha512-yLy6GUNP4pn0mGUIyUHvN0UeBza0S03AgjTXVR6KliC4ut2+7SjNMe4cI4G1M8/bJMaccC6ooQSm2kvwiOdr3A==
+"@atproto/lexicon@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.3.2.tgz#0085a3acd3a77867b8efe188297a1bbacc55ce5c"
+  integrity sha512-kmGCkrRwpWIqmn/KO4BZwUf8Nmfndk3XvFC06V0ygCWc42g6+t4QP/6ywNW4PgqfZY0Q5aW4EuDfD7KjAFkFtQ==
   dependencies:
     "@atproto/common-web" "^0.2.3"
-    "@atproto/syntax" "^0.1.5"
+    "@atproto/syntax" "^0.2.0"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     zod "^3.21.4"
 
-"@atproto/syntax@^0.1.5":
-  version "0.1.5"
-  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.1.5.tgz#85b6488a33da3b864e8ac22a61b5586b271206ee"
-  integrity sha512-pbY5lOnThoAbsmrdbN9LC/dNmckfqODJiX9zjW2t3BIHYFeGBc6w9bK3Vre8A0Hg8yWkQpv6gaBLu+ykgi2DJQ==
+"@atproto/syntax@^0.2.0":
+  version "0.2.0"
+  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.2.0.tgz#4bab724c02e11f8943b8ec101251082cf55067e9"
+  integrity sha512-K+9jl6mtxC9ytlR7msSiP9jVNqtdxEBSt0kOfsC924lqGwuD8nlUAMi1GSMgAZJGg/Rd+0MKXh789heTdeL3HQ==
   dependencies:
     "@atproto/common-web" "^0.2.3"
 
-"@atproto/xrpc@^0.4.1":
-  version "0.4.1"
-  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.4.1.tgz#2fb7e81a159b019339bbcdcf4e7ce8dc4e83bef0"
-  integrity sha512-EMRGiu6oDvFL03Hk2rG/WCL3QK0GjZs9psH80JVf8z2nfdsGON6yn0hw3jvRB26CBXqi58U8Uicyq8Ej5pVTAA==
+"@atproto/xrpc@^0.4.2":
+  version "0.4.2"
+  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.4.2.tgz#57812e0624be597b85f21471acf336513f35ccda"
+  integrity sha512-x4x2QB4nWmLjIpz2Ue9n/QVbVyJkk6tQMhvmDQaVFF89E3FcVI4rxF4uhzSxaLpbNtyVQBNEEmNHOr5EJLeHVA==
   dependencies:
-    "@atproto/lexicon" "^0.3.1"
+    "@atproto/lexicon" "^0.3.2"
     zod "^3.21.4"
 
 "@babel/runtime-corejs3@^7.10.2":
@@ -4366,9 +4366,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tlds@^1.234.0:
-  version "1.250.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.250.0.tgz#6e387c4d789a21c5429c1781137fe3dbaa514f55"
-  integrity sha512-rWsBfFCWKrjM/o2Q1TTUeYQv6tHSd/umUutDjVs6taTuEgRDIreVYIBgWRWW4ot7jp6n0UVUuxhTLWBtUmPu/w==
+  version "1.251.0"
+  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.251.0.tgz#d5a79fe0ddd564dadef7b3ce0b5f7f6e5acd2f99"
+  integrity sha512-yztVk5O1LGKCjPd+7soBQyiKvSBXI5qugc/X0C7pLa0rV5ufBS6xcyX0pdf4NznO8xcZ5fqX248q+jTHd4AQJA==
 
 tmp@~0.2.1:
   version "0.2.1"

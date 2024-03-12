@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyActorGetProfile as GetProfile,
-  ComAtprotoAdminGetRepo as GetRepo,
+  ToolsOzoneModerationGetRepo as GetRepo,
   AppBskyActorDefs,
 } from '@atproto/api'
 import {

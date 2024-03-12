@@ -1,9 +1,9 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery } from '@tanstack/react-query'
 import {
-  ComAtprotoAdminDefs,
-  ComAtprotoAdminEmitModerationEvent,
   ComAtprotoModerationDefs,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
@@ -56,9 +56,7 @@ type Props = {
   setSubject: (subject: string) => void
   subjectOptions?: string[]
   isInitialLoading: boolean
-  onSubmit: (
-    vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
-  ) => Promise<void>
+  onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -170,9 +168,9 @@ function Form(
   })
   const isSubjetDid = subject.startsWith('did:')
   const isReviewClosed =
-    subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWCLOSED
+    subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
-    subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWESCALATED
+    subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
@@ -740,7 +738,7 @@ function Form(
 
 async function getSubject(subject: string) {
   if (subject.startsWith('did:')) {
-    const { data: repo } = await client.api.com.atproto.admin.getRepo(
+    const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
       {
         did: subject,
       },
@@ -748,7 +746,7 @@ async function getSubject(subject: string) {
     )
     return { repo }
   } else if (subject.startsWith('at://')) {
-    const { data: record } = await client.api.com.atproto.admin.getRecord(
+    const { data: record } = await client.api.tools.ozone.moderation.getRecord(
       {
         uri: subject,
       },
@@ -763,7 +761,7 @@ async function getSubject(subject: string) {
 async function getSubjectStatus(subject: string) {
   const {
     data: { subjectStatuses },
-  } = await client.api.com.atproto.admin.queryModerationStatuses(
+  } = await client.api.tools.ozone.moderation.queryStatuses(
     {
       subject,
       includeMuted: true,

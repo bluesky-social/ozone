@@ -1,13 +1,15 @@
 import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
-  ComAtprotoAdminDefs,
   ComAtprotoLabelDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
+import {
   LabelDefinition,
   LabelGroupDefinition,
   LABELS,
   LABEL_GROUPS,
-} from '@atproto/api'
+} from './data'
 
 type LabelGroupInfoRecord = {
   color: string
@@ -148,7 +150,7 @@ export const doesProfileNeedBlur = ({
   repo,
 }: {
   profile?: AppBskyActorDefs.ProfileViewBasic
-  repo?: ComAtprotoAdminDefs.RepoView
+  repo?: ToolsOzoneModerationDefs.RepoView
 }) => {
   const labels: string[] = []
   if (profile?.labels) {
@@ -164,8 +166,8 @@ export const getLabelsForSubject = ({
   repo,
   record,
 }: {
-  repo?: ComAtprotoAdminDefs.RepoViewDetail
-  record?: ComAtprotoAdminDefs.RecordViewDetail
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail
+  record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
   return (record?.labels ??
     repo?.labels ??
