@@ -6,6 +6,7 @@ import { AuthChangeContext, AuthContext } from './AuthContext'
 import { AuthState } from '@/lib/types'
 import Client from '@/lib/client'
 import { ConfigurationFlow } from './ConfigurationFlow'
+import { ErrorInfo } from '@/common/ErrorInfo'
 
 export function LoginModal() {
   const { isValidatingAuth, isLoggedIn, authState } = useContext(AuthContext)
@@ -145,23 +146,7 @@ export function LoginModal() {
                 </div>
               </div>
 
-              {error ? (
-                <div className="rounded-md bg-red-50 p-4">
-                  <div className="flex">
-                    <div className="flex-shrink-0">
-                      <XCircleIcon
-                        className="h-5 w-5 text-red-400"
-                        aria-hidden="true"
-                      />
-                    </div>
-                    <div className="ml-3">
-                      <h3 className="text-sm font-medium text-red-800">
-                        {error}
-                      </h3>
-                    </div>
-                  </div>
-                </div>
-              ) : undefined}
+              {error ? <ErrorInfo>{error}</ErrorInfo> : undefined}
 
               <div>
                 <button

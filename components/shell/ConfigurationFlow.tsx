@@ -9,7 +9,6 @@ import {
 import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
-  ExclamationTriangleIcon,
   ArrowRightCircleIcon,
 } from '@heroicons/react/20/solid'
 import { useMutation } from '@tanstack/react-query'
@@ -22,6 +21,7 @@ import {
   getServiceUrlFromDoc,
   withDocAndMeta,
 } from '@/lib/client-config'
+import { ErrorInfo } from '@/common/ErrorInfo'
 
 export function ConfigurationFlow() {
   const session = useSession()
@@ -29,7 +29,7 @@ export function ConfigurationFlow() {
   if (!session) {
     return (
       <>
-        <ErrorInfo className="mt-2">
+        <ErrorInfo type="warn" className="mt-2">
           {`You're`} not logged-in. Please login using your Ozone service
           account in order to configure Ozone.
         </ErrorInfo>
@@ -50,7 +50,7 @@ export function ConfigurationFlow() {
     if (session.did !== session.config.did) {
       return (
         <>
-          <ErrorInfo className="mt-2">
+          <ErrorInfo type="warn" className="mt-2">
             {`You're`} logged in as {session.handle}. Please login as{' '}
             {session.config.handle || 'your Ozone service account'} in order to
             configure Ozone.
@@ -68,7 +68,7 @@ export function ConfigurationFlow() {
     if (config.did.startsWith('did:web:')) {
       return (
         <>
-          <ErrorInfo className="mt-2">
+          <ErrorInfo type="warn" className="mt-2">
             You must configure your identity on your own if {`you're`} using a
             did:web. You will need to add a service with id{' '}
             {`"atproto_labeler"`} and verification method with id{' '}
@@ -87,7 +87,7 @@ export function ConfigurationFlow() {
     if (!config.doc) {
       return (
         <>
-          <ErrorInfo className="mt-2">
+          <ErrorInfo type="warn" className="mt-2">
             We could not find identity information for the account{' '}
             <b>{session.handle}</b>. Are you sure this account has an identity
             on the network?
@@ -105,7 +105,7 @@ export function ConfigurationFlow() {
     if (!config.meta) {
       return (
         <>
-          <ErrorInfo className="mt-2">
+          <ErrorInfo type="warn" className="mt-2">
             We could not find your Ozone service configuration. Please ensure
             {`you're`} currently on the domain where your Ozone service is
             running.
@@ -135,7 +135,7 @@ export function ConfigurationFlow() {
     config.meta
   ) {
     return (
-      <ErrorInfo className="mt-2">
+      <ErrorInfo type="warn" className="mt-2">
         {`There's`} a configuration issue: you will need to update your identity
         or your Ozone service.
         <br />
@@ -210,7 +210,7 @@ function IdentityConfigurationFlow({
         recommended <i>not</i> to use a personal account for this.
       </p>
       {requestPlcOperationSignature.isError && (
-        <ErrorInfo className="mt-4">
+        <ErrorInfo type="warn" className="mt-4">
           We weren&#39;t able to send a confirmation email. Try sending again,
           or seek support.
         </ErrorInfo>
@@ -249,7 +249,7 @@ function IdentityConfigurationFlow({
             onChange={(ev) => setToken(ev.target.value)}
           />
           {submitPlcOperation.isError && (
-            <ErrorInfo className="mt-4">
+            <ErrorInfo type="warn" className="mt-4">
               Submitting your PLC operation failed:
               <br />
               {submitPlcOperation.error?.['message']}
@@ -317,7 +317,7 @@ function RecordConfigurationFlow({
         app will be able to start using the labels you publish.
       </p>
       {config.needs.pds && (
-        <ErrorInfo className="mt-4">
+        <ErrorInfo type="warn" className="mt-4">
           Your account {config.handle} needs to have a repository hosted on a
           PDS before we can create the record.
           <br />
@@ -326,7 +326,7 @@ function RecordConfigurationFlow({
         </ErrorInfo>
       )}
       {session.did !== config.did && (
-        <ErrorInfo className="mt-4">
+        <ErrorInfo type="warn" className="mt-4">
           {`You're`} logged in as {session.handle}. Please login as{' '}
           {session.config.handle || 'your Ozone service account'} in order to
           configure Ozone.
@@ -336,7 +336,7 @@ function RecordConfigurationFlow({
         </ErrorInfo>
       )}
       {putServiceRecord.isError && (
-        <ErrorInfo className="mt-4">
+        <ErrorInfo type="warn" className="mt-4">
           We {`weren't`} able to create the service record. Please try again, or
           seek support.
         </ErrorInfo>
@@ -368,33 +368,6 @@ function RecordConfigurationFlow({
         >
           Submit
         </Button>
-      </div>
-    </div>
-  )
-}
-
-function ErrorInfo({
-  children,
-  className = '',
-  ...others
-}: ComponentProps<'div'>) {
-  return (
-    <div
-      className={`rounded-md bg-yellow-50 p-4 mt-4 ${className}`}
-      {...others}
-    >
-      <div className="flex">
-        <div className="flex-shrink-0">
-          <ExclamationTriangleIcon
-            className="h-5 w-5 text-yellow-400"
-            aria-hidden="true"
-          />
-        </div>
-        <div className="ml-3">
-          <h3 className="text-sm font-medium text-yellow-800 break-words">
-            {children}
-          </h3>
-        </div>
       </div>
     </div>
   )
