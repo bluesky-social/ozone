@@ -407,7 +407,7 @@ function useSession() {
       )
     client.addEventListener('change', updateSession)
     return () => client.removeEventListener('change', updateSession)
-  })
+  }, [])
   return session
 }
 

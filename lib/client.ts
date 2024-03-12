@@ -200,7 +200,8 @@ function _loadSession(): ClientSession | undefined {
       !obj.refreshJwt ||
       !obj.accessJwt ||
       !obj.handle ||
-      !obj.did
+      !obj.did ||
+      !obj.config
     ) {
       return undefined
     }
