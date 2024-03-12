@@ -1,5 +1,5 @@
 import client from '@/lib/client'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
 
@@ -7,11 +7,11 @@ export const createSubjectFromId = async (
   id: string,
 ): Promise<{
   subject: { $type: string } & ({ uri: string; cid: string } | { did: string })
-  record: ComAtprotoAdminDefs.RecordViewDetail | null
+  record: ToolsOzoneModerationDefs.RecordViewDetail | null
 }> => {
   if (isIdRecord(id)) {
     try {
-      const { data: record } = await client.api.com.atproto.admin.getRecord(
+      const { data: record } = await client.api.tools.ozone.moderation.getRecord(
         {
           uri: id,
         },
@@ -30,7 +30,7 @@ export const createSubjectFromId = async (
         // @TODO this is a roundabout way to get a record cid if the record was deleted.
         // It should work pretty well in this context, since createSubjectFromId() is generally used while resolving reports.
         const { data: eventData } =
-          await client.api.com.atproto.admin.queryModerationEvents(
+          await client.api.tools.ozone.moderation.queryEvents(
             {
               subject: id,
               limit: 1,

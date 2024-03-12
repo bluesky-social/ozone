@@ -50,7 +50,7 @@ class ClientManager extends EventTarget {
       identifier: handle,
       password,
     })
-    await agent.api.com.atproto.admin.getRepo(
+    await agent.api.tools.ozone.moderation.getRepo(
       { did: login.did },
       { headers: this.proxyHeaders() },
     )

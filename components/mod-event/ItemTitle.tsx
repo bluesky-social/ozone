@@ -1,5 +1,5 @@
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { ComAtprotoAdminDefs, ComAtprotoModerationDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs, ComAtprotoModerationDefs } from '@atproto/api'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -11,62 +11,62 @@ export const ItemTitle = ({
   showContentDetails,
   showContentAuthor,
 }: {
-  modEvent: ComAtprotoAdminDefs.ModEventView
+  modEvent: ToolsOzoneModerationDefs.ModEventView
   showContentDetails: boolean
   showContentAuthor: boolean
 }) => {
   const createdAt = dateFormatter.format(new Date(modEvent.createdAt))
   let eventTitle: JSX.Element | string = 'Event'
   let eventColor = ''
-  if (ComAtprotoAdminDefs.isModEventEscalate(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventEscalate(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Escalated'
   }
-  if (ComAtprotoAdminDefs.isModEventAcknowledge(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventAcknowledge(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Acknowledged'
   }
-  if (ComAtprotoAdminDefs.isModEventReport(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventReport(modEvent.event)) {
     const isAppeal =
       modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
     eventColor = isAppeal ? 'text-orange-500' : 'text-orange-300'
     eventTitle = isAppeal ? 'Appealed' : 'Reported'
   }
-  if (ComAtprotoAdminDefs.isModEventResolveAppeal(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Resolved Appeal'
   }
-  if (ComAtprotoAdminDefs.isModEventTakedown(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event)) {
     eventColor = modEvent.event.durationInHours
       ? 'text-red-200'
       : 'text-red-500'
     eventTitle = modEvent.event.durationInHours ? 'Suspended' : 'Taken down'
   }
-  if (ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Reverted takedown'
   }
-  if (ComAtprotoAdminDefs.isModEventLabel(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventLabel(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Labeled'
   }
-  if (ComAtprotoAdminDefs.isModEventTag(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventTag(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Tagged'
   }
-  if (ComAtprotoAdminDefs.isModEventMute(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventMute(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Muted'
   }
-  if (ComAtprotoAdminDefs.isModEventUnmute(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Unmuted'
   }
-  if (ComAtprotoAdminDefs.isModEventComment(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventComment(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = modEvent.event.sticky ? 'Added note' : 'Commented'
   }
-  if (ComAtprotoAdminDefs.isModEventEmail(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventEmail(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }

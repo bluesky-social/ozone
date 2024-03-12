@@ -148,7 +148,7 @@ export const doesProfileNeedBlur = ({
   repo,
 }: {
   profile?: AppBskyActorDefs.ProfileViewBasic
-  repo?: ComAtprotoAdminDefs.RepoView
+  repo?: ToolsOzoneModerationDefs.RepoView
 }) => {
   const labels: string[] = []
   if (profile?.labels) {
@@ -164,8 +164,8 @@ export const getLabelsForSubject = ({
   repo,
   record,
 }: {
-  repo?: ComAtprotoAdminDefs.RepoViewDetail
-  record?: ComAtprotoAdminDefs.RecordViewDetail
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail
+  record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
   return (record?.labels ??
     repo?.labels ??

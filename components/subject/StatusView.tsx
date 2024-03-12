@@ -3,7 +3,7 @@ import { Json } from '@/common/Json'
 import { RecordCard, RepoCard } from '@/common/RecordCard'
 import { classNames } from '@/lib/util'
 import { ModEventList } from '@/mod-event/EventList'
-import { AtUri, ComAtprotoAdminDefs } from '@atproto/api'
+import { AtUri, ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronLeftIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -17,7 +17,7 @@ enum Views {
 export const SubjectStatusView = ({
   subjectStatus,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
 }) => {
   const [currentView, setCurrentView] = useState(Views.Details)
   const isRecord = subjectStatus.subject.$type === 'com.atproto.repo.strongRef'
@@ -105,7 +105,7 @@ function Tabs({
   onSetCurrentView,
 }: {
   currentView: Views
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   onSetCurrentView: (v: Views) => void
 }) {
   const Tab = ({
@@ -151,7 +151,7 @@ function Tabs({
 function Details({
   subjectStatus,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
 }) {
   const {
     updatedAt,

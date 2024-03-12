@@ -1,21 +1,21 @@
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 
 export const getSubjectString = (
   subject:
-    | ComAtprotoAdminDefs.RecordView
-    | ComAtprotoAdminDefs.RecordViewNotFound
-    | ComAtprotoAdminDefs.RepoView
-    | ComAtprotoAdminDefs.RepoViewNotFound
+    | ToolsOzoneModerationDefs.RecordView
+    | ToolsOzoneModerationDefs.RecordViewNotFound
+    | ToolsOzoneModerationDefs.RepoView
+    | ToolsOzoneModerationDefs.RepoViewNotFound
     | { [k: string]: unknown; $type: string },
 ) => {
   if (
-    ComAtprotoAdminDefs.isRecordView(subject) ||
-    ComAtprotoAdminDefs.isRecordViewNotFound(subject)
+    ToolsOzoneModerationDefs.isRecordView(subject) ||
+    ToolsOzoneModerationDefs.isRecordViewNotFound(subject)
   ) {
     return subject.uri
   } else if (
-    ComAtprotoAdminDefs.isRepoView(subject) ||
-    ComAtprotoAdminDefs.isRepoViewNotFound(subject)
+    ToolsOzoneModerationDefs.isRepoView(subject) ||
+    ToolsOzoneModerationDefs.isRepoViewNotFound(subject)
   ) {
     return subject.did
   }
