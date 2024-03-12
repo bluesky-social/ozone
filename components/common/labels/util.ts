@@ -1,13 +1,15 @@
 import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
-  ComAtprotoAdminDefs,
   ComAtprotoLabelDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
+import {
   LabelDefinition,
   LabelGroupDefinition,
   LABELS,
   LABEL_GROUPS,
-} from '@atproto/api'
+} from './data'
 
 type LabelGroupInfoRecord = {
   color: string
