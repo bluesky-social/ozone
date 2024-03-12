@@ -1,6 +1,11 @@
 import { useState } from 'react'
 import Select from 'react-tailwindcss-select'
-import { buildAllLabelOptions, ALL_LABELS, LabelGroupInfo } from './util'
+import {
+  labelOptions,
+  groupLabelList,
+  getLabelGroupInfo,
+  buildAllLabelOptions,
+} from './util'
 
 const EMPTY_ARR = []
 type SelectProps = React.ComponentProps<typeof Select>
@@ -11,7 +16,7 @@ export const LabelSelector = (props: LabelsProps) => {
     formId,
     name,
     defaultLabels = EMPTY_ARR,
-    options = Object.keys(ALL_LABELS),
+    options = labelOptions,
     disabled,
     onChange,
   } = props
@@ -22,10 +27,19 @@ export const LabelSelector = (props: LabelsProps) => {
     })),
   )
   const allOptions = buildAllLabelOptions(defaultLabels, options)
-  const selectorOptions = Object.values(ALL_LABELS).map((labelOption) => ({
-    label: labelOption.identifier,
-    value: labelOption.identifier,
-  }))
+  const groupedLabelList = groupLabelList(allOptions)
+  const selectorOptions = Object.entries(groupedLabelList).map(
+    ([group, groupInfo]) => ({
+      label: group,
+      options: groupInfo.labels.map((label) => {
+        const labelText = typeof label === 'string' ? label : label.id
+        return {
+          label: labelText,
+          value: labelText,
+        }
+      }),
+    }),
+  )
 
   // TODO: selected label text doesn't feel very nice here
   return (
@@ -47,10 +61,11 @@ export const LabelSelector = (props: LabelsProps) => {
         value={selectedLabels}
         options={selectorOptions}
         formatOptionLabel={(data) => {
+          const labelGroup = getLabelGroupInfo(data.label)
           return (
             <li
               className={`block transition duration-200 py-1 cursor-pointer select-none truncate`}
-              style={{ color: LabelGroupInfo[data.label]?.color }}
+              style={{ color: labelGroup.color }}
             >
               {data.label}
             </li>

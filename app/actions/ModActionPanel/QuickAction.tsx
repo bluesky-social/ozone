@@ -21,9 +21,9 @@ import {
   displayLabel,
   getLabelsForSubject,
   toLabelVal,
+  getLabelGroupInfo,
   unFlagSelfLabel,
   isSelfLabel,
-  LabelGroupInfo,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -535,10 +535,11 @@ function Form(
                 <LabelList className="-ml-1">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
                   {currentLabels.map((label) => {
+                    const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
                     return (
                       <LabelChip
                         key={label}
-                        style={{ color: LabelGroupInfo[label]?.color }}
+                        style={{ color: labelGroup.color }}
                       >
                         {displayLabel(label)}
                       </LabelChip>

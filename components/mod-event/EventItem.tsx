@@ -3,7 +3,8 @@ import {
   LabelChip,
   LabelList,
   displayLabel,
-  LabelGroupInfo,
+  getLabelGroupInfo,
+  unFlagSelfLabel,
 } from '@/common/labels'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ComAtprotoAdminDefs, ComAtprotoModerationDefs } from '@atproto/api'
@@ -157,11 +158,9 @@ const EventLabels = ({
     <LabelList>
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
+        const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
         return (
-          <LabelChip
-            key={label}
-            style={{ color: LabelGroupInfo[label]?.color }}
-          >
+          <LabelChip key={label} style={{ color: labelGroup.color }}>
             {displayLabel(label)}
           </LabelChip>
         )
@@ -253,7 +252,8 @@ export const ModEventItem = ({
     ComAtprotoAdminDefs.isModEventUnmute(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventResolveAppeal(modEvent.event) ||
     ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventDivert(modEvent.event)
+    // This is temporary since the api package with this new type check is not yet published
+    modEvent.event.$type === 'com.atproto.admin.defs#modEventDivert'
   ) {
     eventItem = <Comment modEvent={modEvent} />
   }
