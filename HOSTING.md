@@ -24,13 +24,14 @@ Ensure that you can ssh to your server and have root access.
 - Public inbound internet access permitted on port 80/tcp and 443/tcp
 
 **Server Recommendations**
-| | |
+
+|                  |              |
 | ---------------- | ------------ |
 | Operating System | Ubuntu 22.04 |
-| Memory | 2+ GB RAM |
-| CPU | 2+ Cores |
-| Storage | 40+ GB SSD |
-| Architectures | amd64, arm64 |
+| Memory           | 2+ GB RAM    |
+| CPU              | 2+ Cores     |
+| Storage          | 40+ GB SSD   |
+| Architectures    | amd64, arm64 |
 
 > [!TIP]
 > It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
