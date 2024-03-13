@@ -16,6 +16,6 @@ EXPOSE 3000
 USER node
 CMD ["yarn", "start"]
 
-LABEL org.opencontainers.image.source=https://github.com/bluesky-social/ozone-ui
+LABEL org.opencontainers.image.source=https://github.com/bluesky-social/ozone
 LABEL org.opencontainers.image.description="Ozone Moderation Service Web UI"
 LABEL org.opencontainers.image.licenses=MIT
