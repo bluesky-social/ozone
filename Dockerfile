@@ -7,7 +7,8 @@ RUN yarn
 COPY . .
 RUN yarn build
 RUN rm -rf node_modules .next/cache
-RUN cd service && yarn
+RUN mv service/package.json package.json && mv service/yarn.lock yarn.lock
+RUN yarn
 
 # final stage
 
@@ -27,6 +28,6 @@ ENV NODE_ENV=production
 USER node
 CMD ["node", "./service"]
 
-LABEL org.opencontainers.image.source=https://github.com/bluesky-social/ozone-ui
+LABEL org.opencontainers.image.source=https://github.com/bluesky-social/ozone
 LABEL org.opencontainers.image.description="Ozone Moderation Service Web UI"
 LABEL org.opencontainers.image.licenses=MIT
