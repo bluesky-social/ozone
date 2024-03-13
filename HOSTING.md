@@ -224,7 +224,7 @@ Download the `compose.yaml` to run your Ozone instance, which includes the follo
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
 
 ```bash
-curl https://raw.githubusercontent.com/bluesky-social/ozone-ui/main/service/compose.yaml | sudo tee /ozone/compose.yaml
+curl https://raw.githubusercontent.com/bluesky-social/ozone/main/service/compose.yaml | sudo tee /ozone/compose.yaml
 ```
 
 ##### Create the systemd service
@@ -233,7 +233,7 @@ curl https://raw.githubusercontent.com/bluesky-social/ozone-ui/main/service/comp
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/ozone.service
 [Unit]
 Description=Bluesky Ozone Service
-Documentation=https://github.com/bluesky-social/ozone-ui
+Documentation=https://github.com/bluesky-social/ozone
 Requires=docker.service
 After=docker.service
 
@@ -307,7 +307,7 @@ If you use use Docker `compose.yaml` file in this repo, Ozone will automatically
 **Pull the latest Ozone container image:**
 
 ```bash
-sudo docker pull ghcr.io/bluesky-social/ozone-ui:latest
+sudo docker pull ghcr.io/bluesky-social/ozone:latest
 ```
 
 **Restart Ozone with the new container image:**
