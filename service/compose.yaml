@@ -31,7 +31,7 @@ services:
       - 'com.centurylinklabs.watchtower.enable=true'
   postgres:
     container_name: postgres
-    image: 14.11-bookworm
+    image: postgres:14.11-bookworm
     network_mode: host
     restart: unless-stopped
     healthcheck:

@@ -27,10 +27,10 @@ Ensure that you can ssh to your server and have root access.
 | | |
 | ---------------- | ------------ |
 | Operating System | Ubuntu 22.04 |
-| Memory           | 2+ GB RAM    |
-| CPU              | 2+ Cores     |
-| Storage          | 40+ GB SSD   |
-| Architectures    | amd64, arm64 |
+| Memory | 2+ GB RAM |
+| CPU | 2+ Cores |
+| Storage | 40+ GB SSD |
+| Architectures | amd64, arm64 |
 
 > [!TIP]
 > It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
@@ -191,8 +191,8 @@ Your Ozone instance will need a secp256k1 private key used to sign labels provid
 
 ```bash
 OZONE_HOSTNAME="ozone.example.com"
-OZONE_ACCOUNT_HANDLE="mylabeler.bsky.social"
-OZONE_SERVER_DID="$(curl --fail --silent --show-error "https://api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${OZONE_ACCOUNT_HANDLE}" | jq --raw-output .did)"
+OZONE_SERVICE_ACCOUNT_HANDLE="mylabeler.bsky.social"
+OZONE_SERVER_DID="$(curl --fail --silent --show-error "https://api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${OZONE_SERVICE_ACCOUNT_HANDLE}" | jq --raw-output .did)"
 OZONE_ADMIN_PASSWORD="$(openssl rand --hex 16)"
 OZONE_SIGNING_KEY_HEX="$(openssl ecparam --name secp256k1 --genkey --noout --outform DER | tail --bytes=+8 | head --bytes=32 | xxd --plain --cols 32)"
 POSTGRES_PASSWORD="..." # Use password from postgres env setup
