@@ -7,7 +7,8 @@ RUN yarn
 COPY . .
 RUN yarn build
 RUN rm -rf node_modules .next/cache
-RUN cd service && yarn
+RUN mv service/package.json package.json && mv service/yarn.lock yarn.lock
+RUN yarn
 
 # final stage
 
