@@ -44,7 +44,7 @@ In your cloud provider's console, the following ports should be open to inbound 
 - 80/tcp (Used only for TLS certification verification)
 - 443/tcp (Used for all application requests)
 
-[!TIP]
+> [!TIP]
 > There is no need to set up TLS or redirect requests from port 80 to 443 because the Caddy web server, included in the Docker compose file, will handle this for you.
 
 ### Configure DNS for your domain
@@ -77,7 +77,7 @@ This should return your server's public IP.
 
 ### Installing on Ubuntu 22.04
 
-[!TIP]
+> [!TIP]
 > Ozone will run on other Linux distributions but will require different commands.
 
 #### Open ports on your Linux firewall
