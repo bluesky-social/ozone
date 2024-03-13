@@ -1,6 +1,8 @@
-# Ozone UI: web interface for atproto moderation services
+# Ozone UI: web interface for atproto labeling services
 
-Ozone UI is a Next.js web application which talks directly to an Ozone "moderation service". It generally requires moderator or administrator privileges to function.
+![ozone web interface screenshot](./docs/ozone_ui.png)
+
+Ozone UI is a Next.js web application which talks directly to an Ozone "labeling service". It generally requires moderator or administrator privileges to function.
 
 Features:
 
@@ -11,6 +13,8 @@ Features:
 - sending moderation emails, based on templates
 - browsing app.bsky profiles and post threads, including some taken-down content
 - quick-action modal (Ctrl-K)
+
+See [User Guide](./docs/userguide.md) for a quick introduction for users of the interface.
 
 ## Docker Quickstart
 

@@ -20,7 +20,7 @@ export const useCommunicationTemplateList = ({
     staleTime: 60 * 60 * 1000,
     queryFn: async () => {
       const { data } =
-        await client.api.com.atproto.admin.listCommunicationTemplates(
+        await client.api.tools.ozone.communication.listTemplates(
           {},
           { headers: client.proxyHeaders() },
         )
@@ -73,7 +73,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
     disabled: boolean
   }) =>
     templateId
-      ? client.api.com.atproto.admin.updateCommunicationTemplate(
+      ? client.api.tools.ozone.communication.updateTemplate(
           {
             id: `${templateId}`,
             contentMarkdown,
@@ -84,7 +84,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
           },
           { encoding: 'application/json', headers: client.proxyHeaders() },
         )
-      : client.api.com.atproto.admin.createCommunicationTemplate(
+      : client.api.tools.ozone.communication.createTemplate(
           {
             contentMarkdown,
             subject,

@@ -9,9 +9,9 @@ import {
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
   AtUri,
-  ComAtprotoAdminDefs,
-  ComAtprotoAdminEmitModerationEvent,
-  ComAtprotoAdminQueryModerationStatuses,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+  ToolsOzoneModerationQueryStatuses
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -32,21 +32,21 @@ const TABS = [
     key: 'unresolved',
     name: 'Unresolved',
     href: `/reports?reviewState=${encodeURIComponent(
-      ComAtprotoAdminDefs.REVIEWOPEN,
+      ToolsOzoneModerationDefs.REVIEWOPEN,
     )}`,
   },
   {
     key: 'escalated',
     name: 'Escalated',
     href: `/reports?reviewState=${encodeURIComponent(
-      ComAtprotoAdminDefs.REVIEWESCALATED,
+      ToolsOzoneModerationDefs.REVIEWESCALATED,
     )}`,
   },
   {
     key: 'resolved',
     name: 'Resolved',
     href: `/reports?reviewState=${encodeURIComponent(
-      ComAtprotoAdminDefs.REVIEWCLOSED,
+      ToolsOzoneModerationDefs.REVIEWCLOSED,
     )}`,
   },
   { key: 'all', name: 'All', href: '/reports' },
@@ -290,7 +290,7 @@ export const ReportsPageContent = () => {
         subjectOptions={subjectOptions}
         isInitialLoading={isInitialLoading}
         onSubmit={async (
-          vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
+          vals: ToolsOzoneModerationEmitEvent.InputSchema,
         ) => {
           await emitEvent(vals)
           refetch()
@@ -302,9 +302,9 @@ export const ReportsPageContent = () => {
 
 function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
   const reviewStateMap = {
-    [ComAtprotoAdminDefs.REVIEWESCALATED]: 'escalated',
-    [ComAtprotoAdminDefs.REVIEWCLOSED]: 'resolved',
-    [ComAtprotoAdminDefs.REVIEWOPEN]: 'unresolved',
+    [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'escalated',
+    [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'resolved',
+    [ToolsOzoneModerationDefs.REVIEWOPEN]: 'unresolved',
   }
 
   if (reviewState) {
@@ -315,10 +315,10 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
 }
 
 async function getModerationQueue(
-  opts: ComAtprotoAdminQueryModerationStatuses.QueryParams = {},
+  opts: ToolsOzoneModerationQueryStatuses.QueryParams = {},
   queueName: string | null,
 ) {
-  const { data } = await client.api.com.atproto.admin.queryModerationStatuses(
+  const { data } = await client.api.tools.ozone.moderation.queryStatuses(
     {
       limit: 50,
       includeMuted: true,

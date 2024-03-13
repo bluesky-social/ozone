@@ -2,15 +2,15 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.10.5":
-  version "0.10.5"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.10.5.tgz#e778e2843d08690df8df81f24028a7578e9b3cb4"
-  integrity sha512-GYdST5sPKU2JnPmm8x3KqjOSlDiYXrp4GkW7bpQTVLPabnUNq5NLN6HJEoJABjjOAsaLF12rBoV+JpRb1UjNsQ==
+"@atproto/api@^0.11.0-next":
+  version "0.11.0-next.0"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.11.0-next.0.tgz#bca3bb684cfc430d67dccb4fd5fe09b43ead217d"
+  integrity sha512-EeE2IBdcf9PDHOHJw4S12FpU4QHQJdiDm1R9hO7Jk0kBDvKtGlvDWKpFf+V4mYbRhXl7YvmpPyw5f1dN4x9lDA==
   dependencies:
     "@atproto/common-web" "^0.2.3"
-    "@atproto/lexicon" "^0.3.2"
-    "@atproto/syntax" "^0.2.0"
-    "@atproto/xrpc" "^0.4.2"
+    "@atproto/lexicon" "^0.3.1"
+    "@atproto/syntax" "^0.1.5"
+    "@atproto/xrpc" "^0.4.1"
     multiformats "^9.9.0"
     tlds "^1.234.0"
     typed-emitter "^2.1.0"
@@ -78,7 +78,7 @@
     "@atproto/crypto" "^0.3.0"
     axios "^0.27.2"
 
-"@atproto/lexicon@^0.3.2":
+"@atproto/lexicon@^0.3.1", "@atproto/lexicon@^0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.3.2.tgz#0085a3acd3a77867b8efe188297a1bbacc55ce5c"
   integrity sha512-kmGCkrRwpWIqmn/KO4BZwUf8Nmfndk3XvFC06V0ygCWc42g6+t4QP/6ywNW4PgqfZY0Q5aW4EuDfD7KjAFkFtQ==
@@ -89,12 +89,12 @@
     multiformats "^9.9.0"
     zod "^3.21.4"
 
-"@atproto/ozone@^0.0.17-next.0":
-  version "0.0.17-next.0"
-  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.0.17-next.0.tgz#eb3144158bdc45fcba4c4c0fd43c28e30b8edd77"
-  integrity sha512-HVQrbRdnlUR0ZWqoPMDhAwFMZgdHHqGajd4PNU/svSLK1BA8GrCDTEP1ILF23ltnXLyRZ2vWpayuWBFwEysLzg==
+"@atproto/ozone@^0.0.17-next.1":
+  version "0.0.17-next.1"
+  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.0.17-next.1.tgz#c621d1395a8923bcc3a31280d850f3dd3364102d"
+  integrity sha512-bTaXXzT5siiYtPT0n41farbo56jPh7VN5Mo2bgsWKicb0XwgKy5SyAemQgnqV0Cix5vhoESXr97gm8U0kAu6Sw==
   dependencies:
-    "@atproto/api" "^0.10.5"
+    "@atproto/api" "^0.11.0-next"
     "@atproto/common" "^0.3.3"
     "@atproto/crypto" "^0.3.0"
     "@atproto/identity" "^0.3.2"
@@ -115,6 +115,13 @@
     pino-http "^8.2.1"
     typed-emitter "^2.1.0"
     uint8arrays "3.0.0"
+
+"@atproto/syntax@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.1.5.tgz#85b6488a33da3b864e8ac22a61b5586b271206ee"
+  integrity sha512-pbY5lOnThoAbsmrdbN9LC/dNmckfqODJiX9zjW2t3BIHYFeGBc6w9bK3Vre8A0Hg8yWkQpv6gaBLu+ykgi2DJQ==
+  dependencies:
+    "@atproto/common-web" "^0.2.3"
 
 "@atproto/syntax@^0.2.0":
   version "0.2.0"
@@ -140,7 +147,7 @@
     ws "^8.12.0"
     zod "^3.21.4"
 
-"@atproto/xrpc@^0.4.2":
+"@atproto/xrpc@^0.4.1":
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.4.2.tgz#57812e0624be597b85f21471acf336513f35ccda"
   integrity sha512-x4x2QB4nWmLjIpz2Ue9n/QVbVyJkk6tQMhvmDQaVFF89E3FcVI4rxF4uhzSxaLpbNtyVQBNEEmNHOr5EJLeHVA==

@@ -53,12 +53,16 @@ export async function getConfig(labelerDid?: string): Promise<OzoneConfig> {
 }
 
 async function getOzoneMeta(serviceUrl = window.location.origin) {
-  const url = new URL('/.well-known/ozone-metadata.json', serviceUrl)
-  const res = await fetch(url)
-  if (res.status !== 200) return null
-  const meta = await res.json().catch(() => null)
-  if (typeof meta?.did !== 'string') return null
-  return meta as OzoneMeta
+  try {
+    const url = new URL('/.well-known/ozone-metadata.json', serviceUrl)
+    const res = await fetch(url)
+    if (res.status !== 200) return null
+    const meta = await res.json().catch(() => null)
+    if (typeof meta?.did !== 'string') return null
+    return meta as OzoneMeta
+  } catch (e) {
+    return null
+  }
 }
 
 function getHandleFromDoc(doc: DidDocData) {

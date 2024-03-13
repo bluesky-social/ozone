@@ -1,9 +1,9 @@
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 
 export const getTemplate = (
   templateName: string,
-  templateList: ComAtprotoAdminDefs.CommunicationTemplateView[],
-): ComAtprotoAdminDefs.CommunicationTemplateView | undefined => {
+  templateList: ToolsOzoneCommunicationDefs.TemplateView[],
+): ToolsOzoneCommunicationDefs.TemplateView | undefined => {
   return templateList.find((template) => template.name === templateName)
 }
 

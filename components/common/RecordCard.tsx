@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedDefs, ComAtprotoAdminDefs } from '@atproto/api'
+import { AppBskyFeedDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
@@ -84,14 +84,14 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
 
 function BaseRecordCard(props: {
   uri: string
-  renderRecord: (record: ComAtprotoAdminDefs.RecordViewDetail) => JSX.Element
+  renderRecord: (record: ToolsOzoneModerationDefs.RecordViewDetail) => JSX.Element
 }) {
   const { uri, renderRecord } = props
   const { data: record, error } = useQuery({
     retry: false,
     queryKey: ['recordCard', { uri }],
     queryFn: async () => {
-      const { data } = await client.api.com.atproto.admin.getRecord(
+      const { data } = await client.api.tools.ozone.moderation.getRecord(
         { uri },
         { headers: client.proxyHeaders() },
       )
@@ -118,7 +118,7 @@ function GenericRecordCard({
   record,
   did,
 }: {
-  record: ComAtprotoAdminDefs.RecordViewDetail
+  record: ToolsOzoneModerationDefs.RecordViewDetail
   did?: string
 }) {
   return (
@@ -138,7 +138,7 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down profiles
       const getRepo = async () => {
-        const { data: repo } = await client.api.com.atproto.admin.getRepo(
+        const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
           { did },
           { headers: client.proxyHeaders() },
         )
