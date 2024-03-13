@@ -2,9 +2,9 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import {
-  ComAtprotoAdminGetModerationEvent as GetEvent,
+  ToolsOzoneModerationGetEvent as GetEvent,
   AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminDefs,
+  ToolsOzoneModerationDefs,
 } from '@atproto/api'
 import { ChevronLeftIcon } from '@heroicons/react/20/solid'
 import { Json } from '@/common/Json'
@@ -30,15 +30,15 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
   const headerTitle = `${eventTitle} #${event?.id ?? ''}`
 
   const eventSubjectValue =
-    ComAtprotoAdminDefs.isRecordView(event.subject) && event.subject.value
+    ToolsOzoneModerationDefs.isRecordView(event.subject) && event.subject.value
   const shortType = getType(eventSubjectValue).replace('app.bsky.feed.', '')
-  const subHeaderTitle = ComAtprotoAdminDefs.isRecordView(event.subject)
+  const subHeaderTitle = ToolsOzoneModerationDefs.isRecordView(event.subject)
     ? `${shortType} record of @${event.subject.repo.handle}`
     : `repo of @${event.subject.handle}`
 
   const titleIcon =
-    (ComAtprotoAdminDefs.isRecordView(event.subject) ||
-      ComAtprotoAdminDefs.isRepoView(event.subject)) &&
+    (ToolsOzoneModerationDefs.isRecordView(event.subject) ||
+      ToolsOzoneModerationDefs.isRepoView(event.subject)) &&
     event.subject.moderation.subjectStatus ? (
       <span className="flex items-center">
         <ReviewStateIcon
@@ -117,8 +117,8 @@ function Tabs({
     <span
       className={classNames(
         view === currentView
-        ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
-        : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300 dark:hover:border-teal-300',
+          ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
+          : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300 dark:hover:border-teal-300',
         'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
       )}
       aria-current={view === currentView ? 'page' : undefined}
@@ -159,7 +159,7 @@ function Details({ event }: { event: GetEvent.OutputSchema }) {
     },
   ]
 
-  const commentComponent = ComAtprotoAdminDefs.isModEventReport(
+  const commentComponent = ToolsOzoneModerationDefs.isModEventReport(
     event.event,
   ) && (
     <span>
@@ -180,22 +180,26 @@ function Details({ event }: { event: GetEvent.OutputSchema }) {
         )}
       </dl>
 
-      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">Created By:</dt>
+      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
+        Created By:
+      </dt>
       {createdBy && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={createdBy} />
         </div>
       )}
 
-      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">Subject:</dt>
-      {(ComAtprotoAdminDefs.isRecordView(subject) ||
-        ComAtprotoAdminDefs.isRecordViewNotFound(subject)) && (
+      <dt className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
+        Subject:
+      </dt>
+      {(ToolsOzoneModerationDefs.isRecordView(subject) ||
+        ToolsOzoneModerationDefs.isRecordViewNotFound(subject)) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
           <RecordCard uri={subject.uri} />
         </div>
       )}
-      {(ComAtprotoAdminDefs.isRepoView(subject) ||
-        ComAtprotoAdminDefs.isRepoViewNotFound(subject)) && (
+      {(ToolsOzoneModerationDefs.isRepoView(subject) ||
+        ToolsOzoneModerationDefs.isRepoViewNotFound(subject)) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
           <RepoCard did={subject.did} />
         </div>
@@ -221,7 +225,9 @@ const Header = ({
           {icon}
           <span className="ml-1">{title}</span>
         </h1>
-        <h2 className="flex-1 text-l text-gray-700 dark:text-gray-100">{subTitle}</h2>
+        <h2 className="flex-1 text-l text-gray-700 dark:text-gray-100">
+          {subTitle}
+        </h2>
       </div>
     </div>
   )

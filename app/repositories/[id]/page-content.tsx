@@ -2,7 +2,7 @@
 import { AccountView } from '@/repositories/AccountView'
 import { createReport } from '@/repositories/createReport'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { ComAtprotoAdminEmitModerationEvent } from '@atproto/api'
+import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
@@ -67,7 +67,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
         onSubmit={async (
-          vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
+          vals: ToolsOzoneModerationEmitEvent.InputSchema,
         ) => {
           await emitEvent(vals)
           refetch()

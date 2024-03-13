@@ -2,7 +2,6 @@ import { useState } from 'react'
 import Select from 'react-tailwindcss-select'
 import {
   labelOptions,
-  displayLabel,
   groupLabelList,
   getLabelGroupInfo,
   buildAllLabelOptions,

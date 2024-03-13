@@ -1,10 +1,12 @@
 import { formatDistanceToNow } from 'date-fns'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ComponentProps } from 'react'
 import { formatBytes } from '@/lib/util'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
-export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
+export function BlobsTable(props: {
+  blobs: ToolsOzoneModerationDefs.BlobView[]
+}) {
   const { blobs } = props
   return (
     <div className="px-4 sm:px-6 lg:px-8">
@@ -24,7 +26,7 @@ export function BlobsTable(props: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
   )
 }
 
-function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
+function BlobRow(props: { blob: ToolsOzoneModerationDefs.BlobView }) {
   const { blob, ...others } = props
   const createdAt = new Date(blob.createdAt)
   const { subjectStatus } = blob.moderation ?? {}
@@ -37,8 +39,8 @@ function BlobRow(props: { blob: ComAtprotoAdminDefs.BlobView }) {
       <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-50">
         <Chip>{blob.mimeType}</Chip>
         <Chip>{formatBytes(blob.size)}</Chip>
-        {(ComAtprotoAdminDefs.isImageDetails(blob.details) ||
-          ComAtprotoAdminDefs.isVideoDetails(blob.details)) && (
+        {(ToolsOzoneModerationDefs.isImageDetails(blob.details) ||
+          ToolsOzoneModerationDefs.isVideoDetails(blob.details)) && (
           <Chip>
             {blob.details.height}x{blob.details.width}px
           </Chip>

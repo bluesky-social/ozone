@@ -15,7 +15,7 @@ export default function SubjectStatus() {
     queryFn: async () => {
       if (!subject) return null
       const { data } =
-        await client.api.com.atproto.admin.queryModerationStatuses(
+        await client.api.tools.ozone.moderation.queryStatuses(
           { subject, limit: 1 },
           { headers: client.proxyHeaders() },
         )

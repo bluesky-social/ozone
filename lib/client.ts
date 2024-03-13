@@ -144,7 +144,7 @@ class ClientManager extends EventTarget {
     ozoneDid: string,
   ) {
     try {
-      await agent.api.com.atproto.admin.getRepo(
+      await agent.api.tools.ozone.moderation.getRepo(
         { did: accountDid },
         { headers: this.proxyHeaders(ozoneDid) },
       )

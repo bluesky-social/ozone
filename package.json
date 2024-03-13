@@ -17,7 +17,7 @@
     "e2e:run": "$(yarn bin)/cypress run"
   },
   "dependencies": {
-    "@atproto/api": "0.10.5",
+    "@atproto/api": "@atproto/api@0.11.0-next",
     "@headlessui/react": "^1.7.7",
     "@heroicons/react": "^2.0.13",
     "@tanstack/react-query": "^4.22.0",

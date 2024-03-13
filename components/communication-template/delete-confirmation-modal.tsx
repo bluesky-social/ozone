@@ -21,7 +21,7 @@ export const CommunicationTemplateDeleteConfirmationModal = ({
   const onDelete = async () => {
     setIsDeleting(true)
     try {
-      await clientManager.api.com.atproto.admin.deleteCommunicationTemplate(
+      await clientManager.api.tools.ozone.communication.deleteTemplate(
         { id: templateId },
         { headers: clientManager.proxyHeaders(), encoding: 'application/json' },
       )

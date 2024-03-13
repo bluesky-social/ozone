@@ -1,7 +1,7 @@
 import { useTitle } from 'react-use'
 import { ModEventList } from '@/mod-event/EventList'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
-import { ComAtprotoAdminEmitModerationEvent } from '@atproto/api'
+import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
@@ -35,7 +35,7 @@ export default function EventListPageContent() {
         subjectOptions={[quickOpenParam]}
         isInitialLoading={false}
         onSubmit={async (
-          vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
+          vals: ToolsOzoneModerationEmitEvent.InputSchema,
         ) => {
           await emitEvent(vals)
         }}

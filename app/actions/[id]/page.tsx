@@ -10,7 +10,7 @@ export default function Action({ params }: { params: { id: string } }) {
   const { data: action, error } = useQuery({
     queryKey: ['action', { id }],
     queryFn: async () => {
-      const { data } = await client.api.com.atproto.admin.getModerationEvent(
+      const { data } = await client.api.tools.ozone.moderation.getEvent(
         {
           id: parseInt(id, 10),
         },

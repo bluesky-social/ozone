@@ -13,7 +13,7 @@ export const useRepoAndProfile = ({ id }: { id: string }) =>
         } else {
           did = await getDidFromHandle(id)
         }
-        const { data: repo } = await client.api.com.atproto.admin.getRepo(
+        const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
           { did },
           { headers: client.proxyHeaders() },
         )
