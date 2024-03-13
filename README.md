@@ -1,4 +1,4 @@
-# Ozone UI: web interface for atproto labeling services
+# Ozone: labeling service for Bluesky and other atproto apps
 
 ![ozone web interface screenshot](./docs/ozone_ui.png)
 
