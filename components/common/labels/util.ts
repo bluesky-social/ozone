@@ -1,3 +1,4 @@
+import client from '@/lib/client'
 import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
@@ -85,6 +86,17 @@ export const LabelGroupInfo: Record<
   [LABEL_GROUPS.misinfo.id]: {
     color: '#530303',
   },
+  custom: {
+    color: '#218734',
+    strings: {
+      settings: {
+        en: {
+          name: 'Custom Labels',
+          description: 'Labels from labeler service',
+        },
+      },
+    },
+  },
   uncategorized: {
     strings: {
       settings: {
@@ -106,12 +118,19 @@ const labelGroupsRequiringBlur = [
 
 export const groupLabelList = (labels: string[]): GroupedLabelList => {
   const groupedList: GroupedLabelList = {}
+  const customLabels = getCustomLabels()
 
   labels.forEach((label) => {
     // SELF_FLAG is embedded in the label value so when grouping, we have to take it out of the value
     const cleanedLabel = unFlagSelfLabel(label)
     const group = LABELS[cleanedLabel]
-    const groupId = group?.groupId || 'uncategorized'
+    let groupId = 'uncategorized'
+
+    if (group?.groupId) {
+      groupId = group.groupId
+    } else if (customLabels?.includes(cleanedLabel)) {
+      groupId = 'custom'
+    }
 
     if (groupedList[groupId]) {
       groupedList[groupId].labels.push(label)
@@ -127,9 +146,15 @@ export const groupLabelList = (labels: string[]): GroupedLabelList => {
   return groupedList
 }
 
+const getCustomLabels = () =>
+  client.session?.config.labeler?.policies.labelValues
+
 export const getLabelGroupInfo = (label: string): LabelGroupInfoRecord => {
+  const customLabels = getCustomLabels()
   const group = LABELS[label]
-  const groupId = group?.groupId || 'uncategorized'
+  const groupId =
+    group?.groupId ||
+    (customLabels?.includes(label) ? 'custom' : 'uncategorized')
 
   return {
     // TODO: We shouldn't have to do this, there's a weird type def somewhere that's causing this
@@ -178,5 +203,6 @@ export const buildAllLabelOptions = (
   defaultLabels: string[],
   options: string[],
 ) => {
-  return unique([...defaultLabels, ...options]).sort()
+  const customLabels = getCustomLabels()
+  return unique([...defaultLabels, ...options, ...(customLabels || [])]).sort()
 }
