@@ -6,6 +6,7 @@ import {
   CommandLineIcon,
   SunIcon,
   MoonIcon,
+  WrenchScrewdriverIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -18,18 +19,20 @@ export const ICONS = {
   command: CommandLineIcon,
   sun: SunIcon,
   moon: MoonIcon,
+  configure: WrenchScrewdriverIcon,
 }
 
 export type SidebarNavItem = {
   name: string
   icon: keyof typeof ICONS
+  serviceAccountOnly?: boolean
 } & (
   | {
       href: string
     }
   | {
       onClick: (context: {
-        kbar: ReturnType<typeof useKBar>,
+        kbar: ReturnType<typeof useKBar>
         toggleTheme: () => void
       }) => MouseEventHandler<HTMLButtonElement> | undefined
     }
@@ -51,6 +54,12 @@ export const NAV_ITEMS: SidebarNavItem[] = [
     name: 'Theme',
     icon: 'sun',
     onClick: ({ toggleTheme }) => toggleTheme,
+  },
+  {
+    name: 'Configure',
+    href: '/configure',
+    icon: 'configure',
+    serviceAccountOnly: true,
   },
 ]
 

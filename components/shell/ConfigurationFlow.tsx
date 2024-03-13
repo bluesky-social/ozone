@@ -1,11 +1,5 @@
 'use client'
-import {
-  ComponentProps,
-  ReactElement,
-  cloneElement,
-  useEffect,
-  useState,
-} from 'react'
+import { ComponentProps, ReactElement, cloneElement, useState } from 'react'
 import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
@@ -22,6 +16,7 @@ import {
   withDocAndMeta,
 } from '@/lib/client-config'
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { useSession } from '@/lib/useSession'
 
 export function ConfigurationFlow() {
   const session = useSession()
@@ -394,21 +389,6 @@ function Button({
       {children}
     </button>
   )
-}
-
-function useSession() {
-  const [session, setSession] = useState(
-    client.authState === AuthState.LoggedOut ? null : client.session,
-  )
-  useEffect(() => {
-    const updateSession = () =>
-      setSession(
-        client.authState === AuthState.LoggedOut ? null : client.session,
-      )
-    client.addEventListener('change', updateSession)
-    return () => client.removeEventListener('change', updateSession)
-  }, [])
-  return session
 }
 
 async function updatePlcIdentity(token: string, config: OzoneConfigFull) {

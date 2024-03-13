@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation'
 import { Dialog, Transition } from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { classNames } from '@/lib/util'
+import { useSession } from '@/lib/useSession'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
 import Image from 'next/image'
 import { useKBar } from 'kbar'
@@ -47,6 +48,8 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
   const pathname = usePathname() || '/'
   const mobileMenuOpen = useContext(MobileMenuOpenCtx)
   const kbar = useKBar()
+  const session = useSession()
+  const isServiceAccount = !!session && session.did === session.config.did
   return (
     <>
       {/* Mobile menu */}
@@ -116,6 +119,9 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                   <nav className="flex h-full flex-col">
                     <div className="space-y-1">
                       {NAV_ITEMS.map((item) => {
+                        if (item.serviceAccountOnly && !isServiceAccount) {
+                          return
+                        }
                         const Icon = ICONS[item.icon]
                         const children = (
                           <>
