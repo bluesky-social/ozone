@@ -4,14 +4,14 @@ Self-hosting Ozone enables you to participate as a labeler in Bluesky's system f
 
 ### Preparation for self-hosting Ozone
 
-## Create a Bluesky labeler service account
+#### Create a Bluesky labeler service account
 
 > [!IMPORTANT]
 > Before setting up your Ozone service you should create a _new_ account on the network, separate from your main account. This is the account that subscribers to your labeler will interact with: accounts for labelers appear different in Bluesky than normal accounts.
 
 You can create a new service account for your labeler at [bsky.app](https://bsky.app/).
 
-## Launch a server
+#### Launch a server
 
 Launch a server on any cloud provider, [OVHcloud](https://us.ovhcloud.com/vps/), [Digital Ocean](https://digitalocean.com/), and [Vultr](https://vultr.com/) are popular choices.
 
