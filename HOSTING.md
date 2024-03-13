@@ -13,7 +13,7 @@ You can create a new service account for your labeler at [bsky.app](https://bsky
 
 ## Launch a server
 
-Launch a server on any cloud provider, [Digital Ocean](https://digitalocean.com/) and [Vultr](https://vultr.com/) are two popular choices.
+Launch a server on any cloud provider, [OVHcloud](https://us.ovhcloud.com/vps/), [Digital Ocean](https://digitalocean.com/), and [Vultr](https://vultr.com/) are popular choices.
 
 Ensure that you can ssh to your server and have root access.
 
@@ -27,12 +27,13 @@ Ensure that you can ssh to your server and have root access.
 | | |
 | ---------------- | ------------ |
 | Operating System | Ubuntu 22.04 |
-| Memory (RAM) | 2+ GB |
-| CPU Cores | 2+ |
-| Storage | 40+ GB SSD |
-| Architectures | amd64, arm64 |
+| Memory           | 2+ GB RAM    |
+| CPU              | 2+ Cores     |
+| Storage          | 40+ GB SSD   |
+| Architectures    | amd64, arm64 |
 
-**Note:** It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
+> [!TIP]
+> It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
 
 ### Open your cloud firewall for HTTP and HTTPS
 
@@ -43,19 +44,20 @@ In your cloud provider's console, the following ports should be open to inbound 
 - 80/tcp (Used only for TLS certification verification)
 - 443/tcp (Used for all application requests)
 
-**Note:** there is no need to set up TLS or redirect requests from port 80 to 443 because the Caddy web server, included in the Docker compose file, will handle this for you.
+[!TIP]
+> There is no need to set up TLS or redirect requests from port 80 to 443 because the Caddy web server, included in the Docker compose file, will handle this for you.
 
 ### Configure DNS for your domain
 
 From your DNS provider's control panel, set up a domain with records pointing to your server.
 
-| Name          | Type | Value         | TTL |
-| ------------- | ---- | ------------- | --- |
-| `example.com` | `A`  | `12.34.56.78` | 600 |
+| Name                | Type | Value         | TTL |
+| ------------------- | ---- | ------------- | --- |
+| `ozone.example.com` | `A`  | `12.34.56.78` | 600 |
 
 **Note:**
 
-- Replace `example.com` with your domain name.
+- Replace `ozone.example.com` with your domain name.
 - Replace `12.34.56.78` with your server's IP address.
 - Some providers may use the `@` symbol to represent the root of your domain.
 - The TTL can be anything but 600 (10 minutes) is reasonable
@@ -65,15 +67,18 @@ From your DNS provider's control panel, set up a domain with records pointing to
 
 ### Check that DNS is working as expected
 
-Use a service like [DNS Checker](https://dnschecker.org/) to verify that you can resolve domain names.
+Use a service like [DNS Checker](https://dnschecker.org/) to verify that you can resolve your new DNS hostnames.
 
 Check the following:
 
-- `example.com` (record type `A`)
+- `ozone.example.com` (record type `A`)
 
 This should return your server's public IP.
 
-### Installing manually on Ubuntu 22.04
+### Installing on Ubuntu 22.04
+
+[!TIP]
+> Ozone will run on other Linux distributions but will require different commands.
 
 #### Open ports on your Linux firewall
 
@@ -147,12 +152,12 @@ sudo mkdir --parents /ozone/caddy/etc/caddy
 
 #### Create the Caddyfile
 
-Be sure to replace `example.com` with your own domain.
+Be sure to replace `ozone.example.com` with your own domain.
 
 ```bash
 cat <<CADDYFILE | sudo tee /ozone/caddy/etc/caddy/Caddyfile
-example.com {
-  tls you@example.com
+ozone.example.com {
+  tls ozone@example.com
   reverse_proxy http://localhost:3000
 }
 CADDYFILE
@@ -182,10 +187,10 @@ Your Ozone instance will need a secp256k1 private key used to sign labels provid
 
 **Note:**
 
-- Replace `example.com` with your domain name.
+- Replace `ozone.example.com` with your domain name.
 
 ```bash
-OZONE_HOSTNAME="example.com"
+OZONE_HOSTNAME="ozone.example.com"
 OZONE_ACCOUNT_HANDLE="mylabeler.bsky.social"
 OZONE_SERVER_DID="$(curl --fail --silent --show-error "https://api.bsky.app/xrpc/com.atproto.identity.resolveHandle?handle=${OZONE_ACCOUNT_HANDLE}" | jq --raw-output .did)"
 OZONE_ADMIN_PASSWORD="$(openssl rand --hex 16)"
@@ -278,10 +283,10 @@ sudo docker ps
 
 ### Verify that Ozone is online
 
-You can check if your server is online and healthy by requesting the healthcheck endpoint, and by visiting the UI in browser at https://example.com/.
+You can check if your server is online and healthy by requesting the healthcheck endpoint, and by visiting the UI in browser at https://ozone.example.com/.
 
 ```bash
-curl https://example.com/xrpc/_health
+curl https://ozone.example.com/xrpc/_health
 {"version":"0.2.2-beta.2"}
 ```
 
@@ -289,15 +294,15 @@ curl https://example.com/xrpc/_health
 
 Once you've successfully started running your service, there is a final step to make the rest of the network aware of it, so that users can find your labeler in the Bluesky app and so that Bluesky can consume the labels that you publish. This step can be completed from within the Ozone UI.
 
-1.  Navigate to your Ozone UI at https://example.com.
+1.  Navigate to your Ozone UI at https://ozone.example.com.
 2.  Login to Ozone using the service account that you created in the first step of this guide.
 3.  The Ozone UI will lead you through the following steps to announce your service to the network.
-    - The first step associates https://example.com with your service account's identity on the network. In technical terms this involves adding a service and a verification method to your account's DID document. This step is required to use your Ozone service.
+    - The first step associates https://ozone.example.com with your service account's identity on the network. In technical terms this involves adding a service and a verification method to your account's DID document. This step is required to use your Ozone service.
     - The second step publishes a record in your service account's repository. This allows the Bluesky application to understand that your service account represents a labeler. This step is optional: each time you login as your service account, you'll be prompted to complete it.
 
 ### Manually updating Ozone
 
-If you use use Docker `compose.yaml` file in this repo, Ozone will automatically update nightly. To manually update to the latest version use the following commands.
+If you use use Docker `compose.yaml` file in this repo, Ozone will automatically update at midnight UTC when new releases are available. To manually update to the latest version use the following commands.
 
 **Pull the latest Ozone container image:**
 
@@ -315,19 +320,19 @@ sudo systemctl restart ozone
 
 You will need to customize various settings configured through the Ozone environment variables. See the below table to find the variables you'll need to set.
 
-| Environment Variable  | Value                       | Should update? | Notes                                                                      |
-| --------------------- | --------------------------- | -------------- | -------------------------------------------------------------------------- |
-| OZONE_SERVER_DID      | did:plc:39dak...            | ✅             | The DID of your Ozone service account, distinct from your personal account |
-| OZONE_PUBLIC_URL      | https://example.com         | ✅             | Pubicly accessible URL to your Ozone service                               |
-| OZONE_ADMIN_DIDS      | did:plc:39...,did:plc:f7... | ✅             | Comma-separated list of DIDs granted access to login to your Ozone service |
-| OZONE_ADMIN_PASSWORD  | 3ee68...                    | ✅             | Admin password which can be used as an API key to take certain actions     |
-| OZONE_SIGNING_KEY_HEX | e049f...                    | ✅             | Hex representation of a private key, primarily used to sign labels         |
-| OZONE_DB_POSTGRES_URL | postgresql://pg:password... | ✅             | The postgresql:// URL containing credentials for Ozone's database          |
-| OZONE_DB_MIGRATE      | 1                           | ❌             | Perform DB migrations at startup if necessary                              |
-| OZONE_DID_PLC_URL     | https://plc.directory       | ❌             | Determines which URL to use for PLC identity lookups                       |
-| OZONE_APPVIEW_URL     | https://api.bsky.app        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
-| OZONE_APPVIEW_DID     | did:web:api.bsky.app        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
-| LOG_ENABLED           | 1                           | ❌             | Set to 0 if you would not like JSON log output from the Ozone              |
+| Environment Variable    | Value                         | Should modify? | Notes                                                                      |
+| ----------------------- | ----------------------------- | -------------- | -------------------------------------------------------------------------- |
+| `OZONE_SERVER_DID`      | `did:plc:39dak...`            | ✅             | The DID of your Ozone service account, distinct from your personal account |
+| `OZONE_PUBLIC_URL`      | `https://ozone.example.com`   | ✅             | Pubicly accessible URL to your Ozone service                               |
+| `OZONE_ADMIN_DIDS`      | `did:plc:39...,did:plc:f7...` | ✅             | Comma-separated list of DIDs granted access to login to your Ozone service |
+| `OZONE_ADMIN_PASSWORD`  | `3ee68...`                    | ✅             | Admin password which can be used as an API key to take certain actions     |
+| `OZONE_SIGNING_KEY_HEX` | `e049f...`                    | ✅             | Hex representation of a private key, primarily used to sign labels         |
+| `OZONE_DB_POSTGRES_URL` | `postgresql://pg:password...` | ✅             | The postgresql:// URL containing credentials for Ozone's database          |
+| `OZONE_DB_MIGRATE`      | `1`                           | ❌             | Perform DB migrations at startup if necessary                              |
+| `OZONE_DID_PLC_URL`     | `https://plc.directory`       | ❌             | Determines which URL to use for PLC identity lookups                       |
+| `OZONE_APPVIEW_URL`     | `https://api.bsky.app`        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
+| `OZONE_APPVIEW_DID`     | `did:web:api.bsky.app`        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
+| `LOG_ENABLED`           | `1`                           | ❌             | Set to 0 if you would not like JSON log output from the Ozone              |
 
 There are additional environment variables that can be tweaked depending on how you're running your service, particularly if another service on the network allows delegates some control to your Ozone instance, e.g. to prompt them to purge certain content.
 
