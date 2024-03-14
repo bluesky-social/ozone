@@ -1,8 +1,8 @@
+# Ozone: labeling service for Bluesky and other atproto apps
 
-Ozone UI: web interface for atproto moderation services
-=======================================================
+![ozone web interface screenshot](./docs/ozone_ui.png)
 
-Ozone UI is a Next.js web application which talks directly to an Ozone "moderation service". It generally requires moderator or administrator privileges to function.
+Ozone UI is a Next.js web application which talks directly to an Ozone "labeling service". It generally requires moderator or administrator privileges to function.
 
 Features:
 
@@ -14,14 +14,16 @@ Features:
 - browsing app.bsky profiles and post threads, including some taken-down content
 - quick-action modal (Ctrl-K)
 
+See [User Guide](./docs/userguide.md) for a quick introduction for users of the interface.
+
 ## Docker Quickstart
 
 ```bash
 # build image
-docker build -t ozone-ui .
+docker build -t ozone .
 
 # run the image
-docker run -p 3000:3000 ozone-ui
+docker run -p 3000:3000 ozone
 ```
 
 ## Development Quickstart
@@ -39,6 +41,19 @@ yarn dev
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
 See [HACKING](./HACKING.md) for other development tricks, like development with a local PDS instance, or working with un-released changes to the `@atproto/api` package.
+
+## Running your own Ozone labeler service
+
+> [!TIP]
+> There is a comprehensive guide for setting up your own Ozone labeler service within [HOSTING.md](./HOSTING.md).
+
+We offer a Dockerized setup for hosting both the Ozone UI and backend together. This allows you to run an Ozone labeler service on the network, which users of the Bluesky application can discover and opt into. There are a few requirements to get this setup:
+
+1. Create a "service account" for your labeler. This is the account that users will discover in the application, allowing them to subscribe to your labeler. You should _not_ use your personal account as an Ozone labeler service account. It can be created on [bsky.app](https://bsky.app) just like a typical account.
+2. Start running the Ozone UI and backend on the public internet. The service only relies on Postgres, and is generally quite cheap and easy to run. It should be served over https at a domain that you own.
+3. Associate your Ozone labeler service with your service account, and announce it to the network. Your Ozone UI will help you with this if you login to Ozone using your service account.
+
+This process is outlined in detail within [HOSTING.md](./HOSTING.md).
 
 ## Contributions
 
@@ -74,8 +89,8 @@ If you discover any security issues, please send an email to security@bsky.app. 
 
 This project is dual-licensed under MIT and Apache 2.0 terms:
 
-- MIT license ([LICENSE-MIT](https://github.com/bluesky-social/ozone-ui/blob/main/LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
-- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/bluesky-social/ozone-ui/blob/main/LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
+- MIT license ([LICENSE-MIT](https://github.com/bluesky-social/ozone/blob/main/LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+- Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/bluesky-social/ozone/blob/main/LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
 
 Downstream projects and end users may chose either license individually, or both together, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
 

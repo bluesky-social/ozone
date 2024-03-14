@@ -23,9 +23,10 @@ import { RichText } from '../RichText'
 import {
   LabelChip,
   LabelList,
-  getLabelGroupInfo,
   doesLabelNeedBlur,
   toLabelVal,
+  LabelGroupInfo,
+  getLabelGroupInfo,
 } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
@@ -354,7 +355,10 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
         <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
           <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
             The author of the original post blocked the author.{' '}
-            <Link className=" text-gray-900 dark:text-gray-200 underline" href={repoLink}>
+            <Link
+              className=" text-gray-900 dark:text-gray-200 underline"
+              href={repoLink}
+            >
               See quoted post
             </Link>
             {' · '}
@@ -415,10 +419,11 @@ function PostLabels({
       {labels?.map((label, i) => {
         const { val, src } = label
         const labelGroup = getLabelGroupInfo(val)
-
         return (
           <LabelChip
-            className={`${i === 0 ? 'ml-0' : ''} text-[${labelGroup.color}]`}
+            className={`${i === 0 ? 'ml-0' : ''} text-[${
+              labelGroup.color
+            }]`}
             // TODO: Ideally, we should just use inline class name but it only works when the class names are static
             // so trying to work around that with style prop for now
             style={{ color: labelGroup.color }}

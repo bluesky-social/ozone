@@ -3,10 +3,11 @@ import {
   AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
 } from '@atproto/api'
 
 export const getSubjectTitle = (
-  subject: ComAtprotoAdminDefs.ModEventView['subject'],
+  subject: ToolsOzoneModerationDefs.ModEventView['subject'],
 ) => {
   if (ComAtprotoAdminDefs.isRepoRef(subject)) {
     return 'Account'

@@ -1,6 +1,5 @@
 import { ComponentProps } from 'react'
-import Link from 'next/link'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { formatBytes } from '@/lib/util'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
@@ -8,7 +7,7 @@ import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
 export function BlobList(props: {
   name: string
   disabled?: boolean
-  blobs: ComAtprotoAdminDefs.BlobView[]
+  blobs: ToolsOzoneModerationDefs.BlobView[]
 }) {
   const { name, disabled, blobs } = props
   return (
@@ -23,7 +22,7 @@ export function BlobList(props: {
         const displayActionType = subjectStatus?.takendown ? 'Taken down' : ''
         return (
           <div key={blob.cid} className="relative flex items-start">
-            <div className="flex h-5 items-center">
+            <div className="flex h-5 items-center ml-1">
               <input
                 id={`blob-${blob.cid}`}
                 name={name}
@@ -37,7 +36,7 @@ export function BlobList(props: {
             <div className="ml-3 text-sm min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
               <label
                 htmlFor={`blob-${blob.cid}`}
-                className="font-medium text-gray-700"
+                className="font-medium text-gray-700 dark:text-gray-100"
               >
                 {subjectStatus && (
                   <>
@@ -52,8 +51,8 @@ export function BlobList(props: {
               <p id={`blob-${blob.cid}-description`}>
                 <Chip>{blob.mimeType}</Chip>
                 <Chip>{formatBytes(blob.size)}</Chip>
-                {(ComAtprotoAdminDefs.isImageDetails(blob.details) ||
-                  ComAtprotoAdminDefs.isVideoDetails(blob.details)) && (
+                {(ToolsOzoneModerationDefs.isImageDetails(blob.details) ||
+                  ToolsOzoneModerationDefs.isVideoDetails(blob.details)) && (
                   <Chip>
                     {blob.details.height}x{blob.details.width}px
                   </Chip>
