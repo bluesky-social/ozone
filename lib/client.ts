@@ -4,7 +4,6 @@ import { OzoneConfig, getConfig } from './client-config'
 
 export interface ClientSession extends AtpSessionData {
   service: string
-  // @TODO consider backwards compat of local storage state
   config: OzoneConfig
   skipRecord: boolean
 }

@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - feat/labeler-distro
     tags:
       - v*
 env:
