@@ -37,21 +37,6 @@ export default function ConfigurePageContent() {
 
 function ConfigureDetails({ session }: { session: ClientSession }) {
   const record = session.config.labeler ?? null
-  const createInitialRecord = useMutation({
-    mutationFn: async () => {
-      await client.api.com.atproto.repo.putRecord({
-        repo: session.config.did,
-        collection: 'app.bsky.labeler.service',
-        rkey: 'self',
-        record: {
-          createdAt: new Date().toISOString(),
-          policies: { labelValues: [] },
-        },
-      })
-      await client.reconfigure()
-    },
-  })
-
   return (
     <div>
       <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
@@ -83,31 +68,55 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
             </li>
           </ul>
         </p>
-        {!record && (
-          <>
-            <p className="mt-4">
-              <b>You do not have a service record yet.</b> Would you like to
-              create one?
-            </p>
-            {createInitialRecord.error && (
-              <ErrorInfo>{createInitialRecord.error?.['message']}</ErrorInfo>
-            )}
-            <div className="text-center mt-4">
-              <ButtonPrimary
-                onClick={() => createInitialRecord.mutate()}
-                disabled={createInitialRecord.isLoading}
-              >
-                Yes, create service record
-              </ButtonPrimary>
-            </div>
-          </>
-        )}
-        {record && <RecordEditor record={record} />}
+        {!record && <RecordInitStep repo={session.config.did} />}
+        {record && <RecordEditStep repo={session.config.did} record={record} />}
       </Card>
     </div>
   )
 }
 
-function RecordEditor({ record }: { record: AppBskyLabelerService.Record }) {
+function RecordInitStep({ repo }: { repo: string }) {
+  const createInitialRecord = useMutation({
+    mutationFn: async () => {
+      await client.api.com.atproto.repo.putRecord({
+        repo,
+        collection: 'app.bsky.labeler.service',
+        rkey: 'self',
+        record: {
+          createdAt: new Date().toISOString(),
+          policies: { labelValues: [] },
+        },
+      })
+      await client.reconfigure()
+    },
+  })
+  return (
+    <>
+      <p className="mt-4">
+        <b>You do not have a service record yet.</b> Would you like to create
+        one?
+      </p>
+      {createInitialRecord.error && (
+        <ErrorInfo>{createInitialRecord.error?.['message']}</ErrorInfo>
+      )}
+      <div className="text-center mt-4">
+        <ButtonPrimary
+          onClick={() => createInitialRecord.mutate()}
+          disabled={createInitialRecord.isLoading}
+        >
+          Yes, create service record
+        </ButtonPrimary>
+      </div>
+    </>
+  )
+}
+
+function RecordEditStep({
+  record,
+  repo,
+}: {
+  record: AppBskyLabelerService.Record
+  repo: string
+}) {
   return <pre>{JSON.stringify(record.policies, null, 2)}</pre>
 }
