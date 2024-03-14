@@ -229,7 +229,7 @@ const AssociatedProfileIcon = ({
   return (
     <ShieldCheckIcon
       title={`This account is associated with ${title}. Please be cautious when moderating this account`}
-      className="h-6 w-6 text-indigo-800"
+      className="h-6 w-6 text-indigo-800 dark:text-teal-600"
     />
   )
 }
