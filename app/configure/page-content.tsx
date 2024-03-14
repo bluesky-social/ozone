@@ -1,12 +1,15 @@
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useTitle } from 'react-use'
+import ReactJson from 'react-json-view'
 import { useMutation } from '@tanstack/react-query'
 import { AppBskyLabelerService } from '@atproto/api'
 import client, { ClientSession } from '@/lib/client'
 import { useSession } from '@/lib/useSession'
-import { ButtonPrimary } from '@/common/buttons'
+import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { useSyncedState } from '@/lib/useSyncedState'
+import { isDarkModeEnabled } from '@/common/useColorScheme'
 
 export default function ConfigurePageContent() {
   useTitle('Configure')
@@ -61,7 +64,7 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
             <li>
               A list of{' '}
               <b>
-                <code>labelDefinitions</code>
+                <code>labelValueDefinitions</code>
               </b>
               : details about how each custom label should be respected by the
               Bluesky application and presented to users.
@@ -96,8 +99,8 @@ function RecordInitStep({ repo }: { repo: string }) {
         <b>You do not have a service record yet.</b> Would you like to create
         one?
       </p>
-      {createInitialRecord.error && (
-        <ErrorInfo>{createInitialRecord.error?.['message']}</ErrorInfo>
+      {!!createInitialRecord.error && (
+        <ErrorInfo>{createInitialRecord.error['message']}</ErrorInfo>
       )}
       <div className="text-center mt-4">
         <ButtonPrimary
@@ -118,5 +121,103 @@ function RecordEditStep({
   record: AppBskyLabelerService.Record
   repo: string
 }) {
-  return <pre>{JSON.stringify(record.policies, null, 2)}</pre>
+  const darkMode = isDarkModeEnabled()
+  const [recordVal, setRecordVal] = useSyncedState(record)
+  const invalid = useMemo(() => {
+    const validation = AppBskyLabelerService.validateRecord(recordVal)
+    if (validation.success) return null
+    return validation.error.message
+  }, [recordVal])
+  const updateRecord = useMutation({
+    mutationFn: async () => {
+      await client.api.com.atproto.repo.putRecord({
+        repo,
+        collection: 'app.bsky.labeler.service',
+        rkey: 'self',
+        record: recordVal,
+      })
+      await client.reconfigure()
+    },
+  })
+  const addLabelValue = () => {
+    setRecordVal({
+      ...recordVal,
+      policies: {
+        ...recordVal.policies,
+        labelValues: [...recordVal.policies.labelValues, 'label-name'],
+      },
+    })
+  }
+  const addLabelDefinition = () => {
+    setRecordVal({
+      ...recordVal,
+      policies: {
+        ...recordVal.policies,
+        labelValueDefinitions: [
+          ...(recordVal.policies.labelValueDefinitions ?? []),
+          {
+            identifier: 'label-name',
+            severity: 'alert|inform|none',
+            blurs: 'content|media|none',
+            locales: [
+              {
+                lang: 'en',
+                name: 'Label Display Name',
+                description: 'Label description.',
+              },
+            ],
+          },
+        ],
+      },
+    })
+  }
+  return (
+    <div>
+      <div className="flex justify-evenly mt-4 mb-4">
+        <ButtonSecondary onClick={addLabelValue} className="mx-1">
+          Add label value
+        </ButtonSecondary>
+        <ButtonSecondary onClick={addLabelDefinition} className="mx-1">
+          Add label definition
+        </ButtonSecondary>
+        <div className="flex-grow text-right">
+          <ButtonPrimary
+            onClick={() => updateRecord.mutate()}
+            disabled={!!invalid || updateRecord.isLoading}
+            className="mx-1"
+          >
+            Save
+          </ButtonPrimary>
+        </div>
+      </div>
+      {!!updateRecord.error && (
+        <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
+      )}
+      {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
+      <ReactJson
+        src={recordVal.policies}
+        theme={darkMode ? 'harmonic' : 'rjv-default'}
+        name={null}
+        quotesOnKeys={false}
+        displayObjectSize={false}
+        displayDataTypes={false}
+        enableClipboard={false}
+        validationMessage="Cannot delete property"
+        onEdit={(edit) => {
+          setRecordVal({ ...recordVal, policies: edit.updated_src as any })
+        }}
+        onDelete={(del) => {
+          const [key, ...others] = del.namespace
+          if (
+            others.length ||
+            (key !== 'labelValues' && key !== 'labelValueDefinitions')
+          ) {
+            // can only delete items directly out of labelValues and labelValueDefinitions
+            return false
+          }
+          setRecordVal({ ...recordVal, policies: del.updated_src as any })
+        }}
+      />
+    </div>
+  )
 }
