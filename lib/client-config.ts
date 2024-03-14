@@ -1,3 +1,4 @@
+import { AppBskyLabelerService } from '@atproto/api'
 import { DidDocData, resolveDidDocData } from './identity'
 
 export async function getConfig(labelerDid?: string): Promise<OzoneConfig> {
@@ -58,7 +59,7 @@ async function getOzoneMeta(serviceUrl = window.location.origin) {
     const url = new URL('/.well-known/ozone-metadata.json', serviceUrl)
     const res = await fetch(url)
     if (res.status !== 200) return null
-    const meta = await res.json().catch(() => null)
+    const meta = await res.json()
     if (typeof meta?.did !== 'string') return null
     return meta as OzoneMeta
   } catch (e) {
@@ -99,7 +100,7 @@ async function getLabelerServiceRecord(pdsUrl: string, did: string) {
   if (!recordInfo?.['value'] || typeof recordInfo['value'] !== 'object') {
     return null
   }
-  return recordInfo['value'] as TemporaryLabelerServiceDef
+  return recordInfo['value'] as AppBskyLabelerService.Record
 }
 
 function normalizeUrl(url: string) {
@@ -113,15 +114,10 @@ export function withDocAndMeta(config: OzoneConfig) {
 }
 
 export type OzoneMeta = { did: string; url: string; publicKey: string }
-export type TemporaryLabelerServiceDef = {
-  policies: {
-    labelValues: string[]
-  }
-}
 
 export type OzoneConfig = {
   did: string
-  labeler: TemporaryLabelerServiceDef | null
+  labeler: AppBskyLabelerService.Record | null
   handle: string | null
   meta: OzoneMeta | null
   doc: DidDocData | null

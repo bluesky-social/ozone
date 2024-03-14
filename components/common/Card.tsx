@@ -1,19 +1,20 @@
-import React from 'react'
+import React, { ComponentProps } from 'react'
 
 export type Variation = 'default' | 'error'
 
 export const Card = ({
-  children,
+  className = '',
   variation = 'default',
-}: {
-  children: React.ReactNode
+  ...props
+}: ComponentProps<'div'> & {
   variation?: Variation
 }) => {
-  let className = 'shadow rounded-sm p-2'
+  className += ' shadow rounded-sm p-2'
   if (variation === 'error') {
-    className += ' bg-red-100 dark:bg-red-600 border-red-400 text-red-700 dark:text-red-100'
+    className +=
+      ' bg-red-100 dark:bg-red-600 border-red-400 text-red-700 dark:text-red-100'
   } else {
     className += ' dark:shadow-slate-700 bg-white dark:bg-slate-800'
   }
-  return <div className={className}>{children}</div>
+  return <div className={className} {...props} />
 }
