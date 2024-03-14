@@ -89,10 +89,10 @@
     multiformats "^9.9.0"
     zod "^3.21.4"
 
-"@atproto/ozone@0.1.0":
-  version "0.1.0"
-  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.1.0.tgz#0dab5b9cd58475aa4e773ff7129836c7c9fab489"
-  integrity sha512-xdMegbOirFcQDz5NiUC76KhNO/Mk5bxBbh8X9W18mj1137JXoLVLNeoneaXdY5ejUWNi7sCAwwl3k8NRJMhqFg==
+"@atproto/ozone@0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.1.1.tgz#2770923f5bd701302c571bb92ffff9ee7ef710b1"
+  integrity sha512-jBwRAGoByq8IucR7lFlA4s+01W7OB+Fvv7Z/Yn6VjYkJs2QWC74rFsd+2mbwZbSFsY8gDq/ZVpfguVqOG0f0YA==
   dependencies:
     "@atproto/api" "^0.11.1"
     "@atproto/common" "^0.3.4"
