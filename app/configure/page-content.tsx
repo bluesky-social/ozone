@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react'
 import { useTitle } from 'react-use'
 import ReactJson from 'react-json-view'
+import dynamic from 'next/dynamic'
 import { useMutation } from '@tanstack/react-query'
 import { AppBskyLabelerService } from '@atproto/api'
 import client, { ClientSession } from '@/lib/client'
@@ -10,6 +11,9 @@ import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
+const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
+  ssr: false,
+})
 
 export default function ConfigurePageContent() {
   useTitle('Configure')
@@ -194,7 +198,7 @@ function RecordEditStep({
         <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
       )}
       {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
-      <ReactJson
+      <BrowserReactJsonView
         src={recordVal.policies}
         theme={darkMode ? 'harmonic' : 'rjv-default'}
         name={null}
