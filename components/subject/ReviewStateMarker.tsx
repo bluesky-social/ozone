@@ -44,7 +44,7 @@ const reviewStateToIcon = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: ExclamationCircleIcon,
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
   [ToolsOzoneModerationDefs.REVIEWCLOSED]: CheckCircleIcon,
-  [ToolsOzoneModerationDefs.REVIEWCLOSED]: NoSymbolIcon,
+  [ToolsOzoneModerationDefs.REVIEWNONE]: NoSymbolIcon,
 }
 
 export const SubjectReviewStateBadge = ({
