@@ -34,6 +34,7 @@ export async function getConfig(labelerDid?: string): Promise<OzoneConfig> {
     doc,
     meta,
     handle,
+    labeler: record,
     matching: {
       service:
         labelerUrl && meta
@@ -98,7 +99,7 @@ async function getLabelerServiceRecord(pdsUrl: string, did: string) {
   if (!recordInfo?.['value'] || typeof recordInfo['value'] !== 'object') {
     return null
   }
-  return recordInfo['value'] as Record<string, undefined>
+  return recordInfo['value'] as TemporaryLabelerServiceDef
 }
 
 function normalizeUrl(url: string) {
@@ -112,9 +113,15 @@ export function withDocAndMeta(config: OzoneConfig) {
 }
 
 export type OzoneMeta = { did: string; url: string; publicKey: string }
+export type TemporaryLabelerServiceDef = {
+  policies: {
+    labelValues: string[]
+  }
+}
 
 export type OzoneConfig = {
   did: string
+  labeler: TemporaryLabelerServiceDef | null
   handle: string | null
   meta: OzoneMeta | null
   doc: DidDocData | null
