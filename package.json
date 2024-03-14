@@ -34,6 +34,7 @@
     "next": "14.0.1",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-json-view": "^10.0.1",
     "react-tailwindcss-select": "^1.8.5",
     "react-tetris": "^0.3.0",
     "react-toastify": "^9.1.1",
