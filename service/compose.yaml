@@ -1,0 +1,60 @@
+# @NOTE: this compose file is intended to accompany the guide found in HOSTING.md
+version: '3.9'
+services:
+  caddy:
+    container_name: caddy
+    image: caddy:2
+    network_mode: host
+    depends_on:
+      - ozone
+    restart: unless-stopped
+    volumes:
+      - type: bind
+        source: /ozone/caddy/data
+        target: /data
+      - type: bind
+        source: /ozone/caddy/etc/caddy
+        target: /etc/caddy
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
+  ozone:
+    container_name: ozone
+    image: ghcr.io/bluesky-social/ozone:0.1
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    env_file:
+      - /ozone/ozone.env
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
+  postgres:
+    container_name: postgres
+    image: postgres:14.11-bookworm
+    network_mode: host
+    restart: unless-stopped
+    healthcheck:
+      test: pg_isready -h localhost -U $$POSTGRES_USER
+      interval: 2s
+      timeout: 5s
+      retries: 10
+    volumes:
+      - type: bind
+        source: /ozone/postgres
+        target: /var/lib/postgresql/data
+    env_file:
+      - /ozone/postgres.env
+  watchtower:
+    container_name: watchtower
+    image: containrrr/watchtower:latest
+    network_mode: host
+    volumes:
+      - type: bind
+        source: /var/run/docker.sock
+        target: /var/run/docker.sock
+    restart: unless-stopped
+    environment:
+      WATCHTOWER_CLEANUP: true
+      WATCHTOWER_SCHEDULE: '@midnight'
+      WATCHTOWER_LABEL_ENABLE: true

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import Select from 'react-tailwindcss-select'
+import client from '@/lib/client'
 import {
   labelOptions,
   groupLabelList,

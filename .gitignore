@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/service/node_modules
 /.pnp
 .pnp.js
 
@@ -39,3 +40,4 @@ next-env.d.ts
 cypress/videos
 
 .env
+.ozone.env

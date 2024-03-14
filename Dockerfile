@@ -1,20 +1,32 @@
-FROM node:20.11-alpine3.18
+FROM node:20.11-alpine3.18 as build
 
-RUN apk add --update dumb-init
-
-ENV TZ=Etc/UTC
 WORKDIR /usr/src/ozone
 
 COPY package.json yarn.lock .
 RUN yarn
 COPY . .
 RUN yarn build
-RUN chown -R node:node .next
+RUN rm -rf node_modules .next/cache
+RUN mv service/package.json package.json && mv service/yarn.lock yarn.lock
+RUN yarn
+
+# final stage
+
+FROM node:20.11-alpine3.18
+
+RUN apk add --update dumb-init
+ENV TZ=Etc/UTC
+
+WORKDIR /usr/src/ozone
+COPY --from=build /usr/src/ozone /usr/src/ozone
+RUN chown -R node:node .
 
 ENTRYPOINT ["dumb-init", "--"]
 EXPOSE 3000
+ENV OZONE_PORT=3000
+ENV NODE_ENV=production
 USER node
-CMD ["yarn", "start"]
+CMD ["node", "./service"]
 
 LABEL org.opencontainers.image.source=https://github.com/bluesky-social/ozone
 LABEL org.opencontainers.image.description="Ozone Moderation Service Web UI"

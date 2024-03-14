@@ -3,16 +3,13 @@ import Image from 'next/image'
 import { FormEvent, useState, useEffect, useContext } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import { AuthChangeContext, AuthContext } from './AuthContext'
+import { AuthState } from '@/lib/types'
 import Client from '@/lib/client'
-
-enum AuthState {
-  Validating,
-  LoggedIn,
-  LoggedOut,
-}
+import { ConfigurationFlow } from './ConfigurationFlow'
+import { ErrorInfo } from '@/common/ErrorInfo'
 
 export function LoginModal() {
-  const { isValidatingAuth, isLoggedIn } = useContext(AuthContext)
+  const { isValidatingAuth, isLoggedIn, authState } = useContext(AuthContext)
   const setAuthContextData = useContext(AuthChangeContext)
   const [error, setError] = useState('')
   const [service, setService] = useState('https://bsky.social')
@@ -33,11 +30,7 @@ export function LoginModal() {
   useEffect(() => {
     if (!Client.hasSetup) {
       Client.setup()
-        .then(() =>
-          setAuthContextData(
-            Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
-          ),
-        )
+        .then((authState) => setAuthContextData(authState))
         .catch(() => setAuthContextData(AuthState.LoggedOut))
     }
   }, [])
@@ -54,10 +47,8 @@ export function LoginModal() {
     e.stopPropagation()
     try {
       setAuthContextData(AuthState.Validating)
-      await Client.signin(service, handle, password)
-      setAuthContextData(
-        Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
-      )
+      const authState = await Client.signin(service, handle, password)
+      setAuthContextData(authState)
     } catch (e: any) {
       console.error(e)
       setError(e.toString())
@@ -84,102 +75,96 @@ export function LoginModal() {
               Bluesky Admin Tools
             </h2>
             <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-100">
-              Sign into your account
+              {authState === AuthState.LoggedInUnconfigured && (
+                <>Configure your Ozone service</>
+              )}
+              {authState !== AuthState.LoggedInUnconfigured && (
+                <>Sign into your account</>
+              )}
             </p>
           </div>
-          <form className="mt-8 space-y-6" onSubmit={onSubmit}>
-            <input type="hidden" name="remember" defaultValue="true" />
-            <div className="-space-y-px rounded-md shadow-sm">
-              <div>
-                <label htmlFor="service-url" className="sr-only">
-                  Service
-                </label>
-                <input
-                  id="service-url"
-                  name="service"
-                  type="text"
-                  required
-                  disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
-                  placeholder="Service URL"
-                  list="service-url-suggestions"
-                  value={service}
-                  onChange={(e) => setService(e.target.value)}
-                />
-                <datalist id="service-url-suggestions">
-                  <option value="https://bsky.social" />
-                  <option value="https://staging.bsky.dev" />
-                </datalist>
-              </div>
-              <div>
-                <label htmlFor="account-handle" className="sr-only">
-                  Account handle
-                </label>
-                <input
-                  id="account-handle"
-                  name="handle"
-                  type="text"
-                  required
-                  disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
-                  placeholder="Account handle"
-                  value={handle}
-                  onChange={(e) => setHandle(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="current-password"
-                  required
-                  disabled={isValidatingAuth}
-                  className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
-                  placeholder="Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {error ? (
-              <div className="rounded-md bg-red-50 p-4">
-                <div className="flex">
-                  <div className="flex-shrink-0">
-                    <XCircleIcon
-                      className="h-5 w-5 text-red-400"
-                      aria-hidden="true"
-                    />
-                  </div>
-                  <div className="ml-3">
-                    <h3 className="text-sm font-medium text-red-800">
-                      {error}
-                    </h3>
-                  </div>
+          {authState === AuthState.LoggedInUnconfigured && (
+            <ConfigurationFlow />
+          )}
+          {authState !== AuthState.LoggedInUnconfigured && (
+            <form className="mt-8 space-y-6" onSubmit={onSubmit}>
+              <input type="hidden" name="remember" defaultValue="true" />
+              <div className="-space-y-px rounded-md shadow-sm">
+                <div>
+                  <label htmlFor="service-url" className="sr-only">
+                    Service
+                  </label>
+                  <input
+                    id="service-url"
+                    name="service"
+                    type="text"
+                    required
+                    disabled={isValidatingAuth}
+                    className="relative block w-full appearance-none rounded-none rounded-t-md border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
+                    placeholder="Service URL"
+                    list="service-url-suggestions"
+                    value={service}
+                    onChange={(e) => setService(e.target.value)}
+                  />
+                  <datalist id="service-url-suggestions">
+                    <option value="https://bsky.social" />
+                    <option value="https://staging.bsky.dev" />
+                  </datalist>
+                </div>
+                <div>
+                  <label htmlFor="account-handle" className="sr-only">
+                    Account handle
+                  </label>
+                  <input
+                    id="account-handle"
+                    name="handle"
+                    type="text"
+                    required
+                    disabled={isValidatingAuth}
+                    className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
+                    placeholder="Account handle"
+                    value={handle}
+                    onChange={(e) => setHandle(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <label htmlFor="password" className="sr-only">
+                    Password
+                  </label>
+                  <input
+                    id="password"
+                    name="password"
+                    type="password"
+                    autoComplete="current-password"
+                    required
+                    disabled={isValidatingAuth}
+                    className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
+                    placeholder="Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                  />
                 </div>
               </div>
-            ) : undefined}
 
-            <div>
-              <button
-                type="submit"
-                disabled={isValidatingAuth}
-                className={submitButtonClassNames}
-              >
-                <span className="absolute inset-y-0 left-0 flex items-center pl-3">
-                  <LockClosedIcon
-                    className={submitButtonIconClassNames}
-                    aria-hidden="true"
-                  />
-                </span>
-                {isValidatingAuth ? 'Authenticating...' : 'Sign in'}
-              </button>
-            </div>
-          </form>
+              {error ? <ErrorInfo>{error}</ErrorInfo> : undefined}
+
+              <div>
+                <button
+                  type="submit"
+                  disabled={isValidatingAuth}
+                  className={submitButtonClassNames}
+                >
+                  <span className="absolute inset-y-0 left-0 flex items-center pl-3">
+                    <LockClosedIcon
+                      className={submitButtonIconClassNames}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  {isValidatingAuth ? 'Authenticating...' : 'Sign in'}
+                </button>
+              </div>
+            </form>
+          )}
         </div>
       </div>
     </div>
