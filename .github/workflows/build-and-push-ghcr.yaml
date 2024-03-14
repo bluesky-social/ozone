@@ -3,7 +3,7 @@ on:
   push:
     branches:
       - main
-      - divy/distro
+      - feat/labeler-distro
     tags:
       - v*
 env:
