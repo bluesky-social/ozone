@@ -148,7 +148,7 @@ function RecordEditStep({
       ...recordVal,
       policies: {
         ...recordVal.policies,
-        labelValues: [...recordVal.policies.labelValues, 'label-name'],
+        labelValues: ['label-name', ...recordVal.policies.labelValues],
       },
     })
   }
@@ -158,11 +158,12 @@ function RecordEditStep({
       policies: {
         ...recordVal.policies,
         labelValueDefinitions: [
-          ...(recordVal.policies.labelValueDefinitions ?? []),
           {
             identifier: 'label-name',
-            severity: 'alert|inform|none',
+            severity: 'inform|alert|none',
             blurs: 'content|media|none',
+            defaultSetting: 'ignore|warn|hide',
+            adultOnly: false,
             locales: [
               {
                 lang: 'en',
@@ -171,6 +172,7 @@ function RecordEditStep({
               },
             ],
           },
+          ...(recordVal.policies.labelValueDefinitions ?? []),
         ],
       },
     })
