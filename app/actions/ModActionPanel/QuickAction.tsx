@@ -40,13 +40,14 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
-import { createSubjectFromId } from '@/reports/helpers/subject'
+import { CollectionId, createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
+import { Card } from '@/common/Card'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -499,7 +500,12 @@ function Form(
 
                   {subjectStatus.lastReviewedAt ? (
                     <span className="pl-1">
-                      Last reviewed at:{' '}
+                      Last{' '}
+                      {subjectStatus.reviewState ===
+                      ToolsOzoneModerationDefs.REVIEWNONE
+                        ? 'event'
+                        : 'reviewed'}{' '}
+                      at:{' '}
                       {dateFormatter.format(
                         new Date(subjectStatus.lastReviewedAt),
                       )}
@@ -509,9 +515,9 @@ function Form(
                   )}
                 </p>
                 {!!subjectStatus.comment && (
-                  <p className="pt-1">
+                  <Card hint="important" className="mt-2">
                     <strong>Note:</strong> {subjectStatus.comment}
-                  </p>
+                  </Card>
                 )}
               </div>
             )}

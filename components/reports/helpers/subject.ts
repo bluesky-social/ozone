@@ -67,6 +67,7 @@ export enum CollectionId {
   Profile = 'app.bsky.actor.profile',
   List = 'app.bsky.graph.list',
   Post = 'app.bsky.feed.post',
+  LabelerService = 'app.bsky.labeler.service',
 }
 export const getProfileUriForDid = (did: string) =>
   `at://${did}/${CollectionId.Profile}/self`

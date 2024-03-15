@@ -5,13 +5,24 @@ import {
   ExclamationTriangleIcon,
   ScaleIcon,
   ShieldExclamationIcon,
+  NoSymbolIcon,
 } from '@heroicons/react/20/solid'
 import Link from 'next/link'
+
+const reviewStateDescription = {
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: 'This subject requires a human review',
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'This subject has been escalated',
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]:
+    'This subject has been reviewed and closed',
+  [ToolsOzoneModerationDefs.REVIEWNONE]:
+    'This subject received moderation events but no human review is necessary as of now',
+}
 
 const reviewStateToText = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: 'Requires Review',
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'Escalated',
   [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'Reviewed',
+  [ToolsOzoneModerationDefs.REVIEWNONE]: 'Review N/A',
 }
 
 const reviewStateToColor = {
@@ -33,6 +44,7 @@ const reviewStateToIcon = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: ExclamationCircleIcon,
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
   [ToolsOzoneModerationDefs.REVIEWCLOSED]: CheckCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWNONE]: NoSymbolIcon,
 }
 
 export const SubjectReviewStateBadge = ({
@@ -70,6 +82,7 @@ export const SubjectReviewStateBadge = ({
 
   return (
     <span
+      title={reviewStateDescription[subjectStatus.reviewState]}
       className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
     >
       {text}
