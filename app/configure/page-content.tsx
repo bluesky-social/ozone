@@ -1,6 +1,6 @@
-import { useEffect, useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useTitle } from 'react-use'
-import ReactJson from 'react-json-view'
+import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useMutation } from '@tanstack/react-query'
 import { AppBskyLabelerService } from '@atproto/api'
@@ -11,6 +11,8 @@ import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
+import { Checkbox } from '@/common/forms'
+
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
 })
@@ -83,6 +85,7 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
 }
 
 function RecordInitStep({ repo }: { repo: string }) {
+  const [checked, setChecked] = useState(false)
   const createInitialRecord = useMutation({
     mutationFn: async () => {
       await client.api.com.atproto.repo.putRecord({
@@ -109,11 +112,29 @@ function RecordInitStep({ repo }: { repo: string }) {
       <div className="text-center mt-4">
         <ButtonPrimary
           onClick={() => createInitialRecord.mutate()}
-          disabled={createInitialRecord.isLoading}
+          disabled={!checked || createInitialRecord.isLoading}
         >
           Yes, create service record
         </ButtonPrimary>
       </div>
+      <p className="text-center mt-2">
+        <Checkbox
+          checked={checked}
+          onChange={(ev) => setChecked(ev.target.checked)}
+          label={
+            <>
+              I have read the{' '}
+              <Link
+                href="https://bsky.social/about/support/community-guidelines#labeler"
+                target="_blank"
+                className="text-blue-500"
+              >
+                Bluesky Labeler Community Guidelines
+              </Link>
+            </>
+          }
+        />
+      </p>
     </>
   )
 }
