@@ -194,9 +194,7 @@ export const getLabelsForSubject = ({
   repo?: ToolsOzoneModerationDefs.RepoViewDetail
   record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
-  return (record?.labels ??
-    repo?.labels ??
-    []) as Partial<ComAtprotoLabelDefs.Label>[]
+  return record?.labels ?? repo?.labels ?? []
 }
 
 export const buildAllLabelOptions = (
