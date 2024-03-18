@@ -1,6 +1,7 @@
 import clientManager from '@/lib/client'
 import { AppBskyLabelerDefs, ComAtprotoLabelDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
+import { ExtendedLabelerServiceDef } from './util'
 
 export const useLabelerServiceDef = (did: string) => {
   const { data: labelerDef } = useQuery({
@@ -14,8 +15,8 @@ export const useLabelerServiceDef = (did: string) => {
         return null
       }
 
-      const labelerDef = data.views[0] as AppBskyLabelerDefs.LabelerViewDetailed
-      if (labelerDef.policies.labelValueDefinitions) {
+      const labelerDef = data.views[0] as ExtendedLabelerServiceDef
+      if (labelerDef?.policies.labelValueDefinitions) {
         const definitionsById: Record<
           string,
           ComAtprotoLabelDefs.LabelValueDefinition
@@ -34,5 +35,5 @@ export const useLabelerServiceDef = (did: string) => {
     cacheTime: 60 * 60 * 1000,
   })
 
-  return labelerDef
+  return labelerDef || null
 }

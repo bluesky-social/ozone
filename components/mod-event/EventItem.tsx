@@ -5,7 +5,9 @@ import {
   displayLabel,
   getLabelGroupInfo,
   unFlagSelfLabel,
+  ModerationLabel,
 } from '@/common/labels'
+import { OZONE_SERVICE_DID } from '@/lib/constants'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import {
   ToolsOzoneModerationDefs,
@@ -161,11 +163,11 @@ const EventLabels = ({
     <LabelList>
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
-        const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
         return (
-          <LabelChip key={label} style={{ color: labelGroup.color }}>
-            {displayLabel(label)}
-          </LabelChip>
+          <ModerationLabel
+            key={label}
+            label={{ val: label, src: OZONE_SERVICE_DID, uri: '', cts: '' }}
+          />
         )
       })}
     </LabelList>

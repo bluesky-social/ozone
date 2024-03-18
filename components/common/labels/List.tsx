@@ -1,18 +1,25 @@
-import client from '@/lib/client'
-import { AppBskyLabelerDefs, ComAtprotoLabelDefs } from '@atproto/api'
+import { OZONE_SERVICE_DID } from '@/lib/constants'
+import { buildBlueSkyAppUrl, classNames } from '@/lib/util'
+import { AppBskyActorDefs, ComAtprotoLabelDefs } from '@atproto/api'
 import { Popover, Transition } from '@headlessui/react'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
-import { ClockIcon, CogIcon, EyeSlashIcon } from '@heroicons/react/24/outline'
-import { useQuery } from '@tanstack/react-query'
+import {
+  ArrowTopRightOnSquareIcon,
+  ClockIcon,
+  CogIcon,
+  EyeSlashIcon,
+  HomeIcon,
+  TagIcon,
+} from '@heroicons/react/24/outline'
 import { ComponentProps, Fragment } from 'react'
 import { useLabelerServiceDef } from './useLabelerDefinition'
-import { getLabelGroupInfo, toLabelVal } from './util'
+import { isSelfLabel, toLabelVal } from './util'
 
 export function LabelList(props: ComponentProps<'div'>) {
   const { className = '', ...others } = props
   return (
     <div
-      className={`items-center gap-x-1 text-sm leading-6 text-gray-900 ${className}`}
+      className={`flex flex-row items-center gap-x-1 text-sm leading-6 text-gray-900 ${className}`}
       {...others}
     />
   )
@@ -37,6 +44,37 @@ export function LabelChip(props: ComponentProps<'span'>) {
   )
 }
 
+const getLabelChipClassNames = ({
+  label,
+  isSelfLabeled = false,
+  labelDefFromService,
+}: {
+  label: ComAtprotoLabelDefs.Label
+  isSelfLabeled: boolean
+  labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition
+}) => {
+  const wrapper: string[] = []
+  const text: string[] = []
+
+  if (isSelfLabeled) {
+    wrapper.push('bg-green-200 text-green-700')
+    text.push('text-green-700')
+  } else if (labelDefFromService) {
+    if (labelDefFromService.severity === 'alert') {
+      wrapper.push('bg-red-200 text-red-700')
+      text.push('text-red-700')
+    } else if (labelDefFromService.blurs === 'content') {
+      wrapper.push('bg-indigo-200 text-indigo-700')
+      text.push('text-indigo-700')
+    } else if (labelDefFromService.blurs === 'media') {
+      wrapper.push('bg-yellow-200 text-yellow-700')
+      text.push('text-yellow-700')
+    }
+  }
+
+  return { wrapper: classNames(...wrapper), text: classNames(...text) }
+}
+
 /*
 - Make sure the color coding is right based on labeler service def
 - Make sure self labels are flagged
@@ -46,24 +84,56 @@ export function LabelChip(props: ComponentProps<'span'>) {
 export const ModerationLabel = ({
   label,
   recordAuthorDid,
+  className,
   ...props
 }: {
   label: ComAtprotoLabelDefs.Label
   recordAuthorDid?: string
 } & ComponentProps<'span'>) => {
   const labelerServiceDef = useLabelerServiceDef(label.src)
-  const labelGroup = getLabelGroupInfo(label.val)
+  const isFromCurrentService = label.src === OZONE_SERVICE_DID
 
   const labelVal = toLabelVal(label, recordAuthorDid)
+  const isSelfLabeled = isSelfLabel(labelVal)
+  const labelDefFromService =
+    labelerServiceDef?.policies.definitionById[label.val]
+  const labelerProfile = labelerServiceDef?.creator
+  const labelClassNames = getLabelChipClassNames({
+    label,
+    isSelfLabeled,
+    labelDefFromService,
+  })
+
   return (
     <Popover className="relative">
       {({ open }) => (
         <>
-          <Popover.Button
-            className={`${open ? 'text-white' : 'text-white/90'}`}
-          >
-            <LabelChip {...props}>
-              {label.exp && <ClockIcon className="h-3 w-3 mr-1" />}
+          <Popover.Button className="ring-none">
+            <LabelChip
+              className={classNames(...[labelClassNames.wrapper, className])}
+              {...props}
+            >
+              {isFromCurrentService && (
+                <HomeIcon
+                  className={classNames(
+                    ...['h-3 w-3 mr-1', labelClassNames.text],
+                  )}
+                />
+              )}
+              {isSelfLabeled && (
+                <TagIcon
+                  className={classNames(
+                    ...['h-3 w-3 mr-1', labelClassNames.text],
+                  )}
+                />
+              )}
+              {label.exp && (
+                <ClockIcon
+                  className={classNames(
+                    ...['h-3 w-3 mr-1', labelClassNames.text],
+                  )}
+                />
+              )}
               {labelVal}
             </LabelChip>
           </Popover.Button>
@@ -76,11 +146,14 @@ export const ModerationLabel = ({
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-0 translate-y-1"
           >
-            <Popover.Panel className="absolute right-0 z-10 mt-3 w-72 max-w-sm -translate-x-1/2 transform px-4 sm:px-0 lg:max-w-3xl">
-              <div className="overflow-hidden rounded-lg shadow-lg ring-1 ring-black/5">
-                <div className="relative bg-white">
+            <Popover.Panel className="absolute left-2 z-20 mt-3 w-72 transform lg:max-w-3xl max-w-sm">
+              <div className="overflow-hidden rounded-lg shadow-lg">
+                <div className="relative bg-white dark:bg-slate-700 text-gray-500 dark:text-gray-50">
                   <LabelDefinition
-                    labelerServiceDef={labelerServiceDef}
+                    labelDefFromService={labelDefFromService}
+                    isFromCurrentService={isFromCurrentService}
+                    labelerProfile={labelerProfile}
+                    isSelfLabeled={isSelfLabeled}
                     label={label}
                   />
                 </div>
@@ -94,76 +167,119 @@ export const ModerationLabel = ({
 }
 
 export const LabelDefinition = ({
-  labelerServiceDef,
+  labelDefFromService,
+  isFromCurrentService,
+  isSelfLabeled,
+  labelerProfile,
   label,
 }: {
+  labelerProfile?: AppBskyActorDefs.ProfileView
+  isSelfLabeled: boolean
+  isFromCurrentService: boolean
   label: ComAtprotoLabelDefs.Label
-  labelerServiceDef: AppBskyLabelerDefs.LabelerViewDetailed & {
-    policies: AppBskyLabelerDefs.LabelerViewDetailed['policies'] & {
-      definitionById: Record<string, ComAtprotoLabelDefs.LabelValueDefinition>
-    }
-  }
+  labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition
 }) => {
-  if (!labelerServiceDef) {
-    return <h3>Sorry, no details found about the labeler</h3>
+  if (isSelfLabeled) {
+    return (
+      <div className="px-4 py-3">
+        <h3 className="font-semibold text-gray-700 dark:text-gray-100 pb-1 flex flex-row items-center">
+          <TagIcon className="h-4 w-4 mr-1" />
+          Self label
+        </h3>
+        <p className="leading-4 pb-3">
+          This label was added by the the author of the content. Moderators are not
+          allowed to change this.
+        </p>
+      </div>
+    )
+  }
+
+  if (!labelDefFromService && !isFromCurrentService) {
+    return (
+      <div className="px-4 py-3">
+        <h3 className="font-semibold text-gray-700 dark:text-gray-100 pb-1">
+          Sorry, no details found about the labeler
+        </h3>
+      </div>
+    )
   }
 
   // Get the english language definition
-  const labelDef = labelerServiceDef.policies.definitionById[label.val]
-  const labelDefInLocale = labelDef?.locales.find(({ lang }) => lang === 'en')
+  const labelDefInLocale = labelDefFromService?.locales.find(
+    ({ lang }) => lang === 'en',
+  )
   const hasPreferences =
-    labelDef?.blurs || labelDef?.severity || labelDef?.defaultSetting
+    labelDefFromService?.blurs ||
+    labelDefFromService?.severity ||
+    labelDefFromService?.defaultSetting
 
   const temporaryWarning = label.exp && (
-    <div className="flex flex-row items-center leading-4">
-      <p className='italic'>This is a temporary label and will expire at {label.exp}</p>
-      <ClockIcon className="h-6 w-6 mr-1" />
+    <div className="flex flex-row items-start leading-4">
+      <ClockIcon className="h-4 w-4 mr-1" />
+      <p className="italic">
+        This is a temporary label and will expire at {label.exp}
+      </p>
+    </div>
+  )
+
+  const currentServiceReminder = isFromCurrentService && (
+    <div className="flex flex-row items-start leading-4">
+      <HomeIcon className="h-4 w-4 mr-1" />
+      <p className="italic">This label is from your own labeling service</p>
     </div>
   )
 
   return (
     <>
       <div className="px-4 py-3">
-        <h3 className="font-semibold text-gray-700 pb-1">
-          {labelerServiceDef.creator.displayName}
-        </h3>
-        <p className="leading-4 text-gray-600 pb-3">
-          {labelerServiceDef.creator.description}
-        </p>
+        {labelerProfile && (
+          <>
+            <h3 className="font-semibold text-gray-700 dark:text-gray-100 pb-1">
+              <a
+                href={buildBlueSkyAppUrl({ did: labelerProfile.did })}
+                target="_blank"
+                className="underline flex flex-row items-center"
+              >
+                {labelerProfile.displayName}
+                <ArrowTopRightOnSquareIcon className="h-3 w-3 ml-1" />
+              </a>
+            </h3>
+            <p className="leading-4 pb-3">{labelerProfile.description}</p>
+          </>
+        )}
+        {currentServiceReminder}
         {temporaryWarning}
       </div>
 
-      <div className="bg-gray-50 px-4 py-3">
-        {labelDef ? (
+      <div className="bg-gray-50 dark:bg-slate-600 px-4 py-3">
+        {labelDefFromService ? (
           <>
-            <h4 className="font-semibold text-gray-700">
+            <h4 className="font-semibold text-gray-700 dark:text-gray-100">
               {labelDefInLocale?.name || label.val}
             </h4>
             {labelDefInLocale?.description && (
-              <p className="leading-4 text-gray-600">
-                {labelDefInLocale.description}
-              </p>
+              <p className="leading-4">{labelDefInLocale.description}</p>
             )}
             {hasPreferences && (
-              <ul className="pt-2 text-gray-600">
-                {labelDef.blurs && (
+              <ul className="pt-2">
+                {labelDefFromService.blurs ? (
                   <li className="flex flex-row items-center">
                     <EyeSlashIcon className="h-4 w-4 mr-1" /> Blurs{' '}
-                    {labelDef.blurs}
+                    {labelDefFromService.blurs}
                   </li>
-                )}
-                {labelDef.severity && (
+                ) : null}
+                {labelDefFromService.severity ? (
                   <li className="flex flex-row items-center">
                     <ExclamationCircleIcon className="h-4 w-4 mr-1" /> Severity{' '}
-                    {labelDef.severity}
+                    {labelDefFromService.severity}
                   </li>
-                )}
-                {labelDef.defaultSetting && (
+                ) : null}
+                {labelDefFromService.defaultSetting ? (
                   <li className="flex flex-row items-center">
                     <CogIcon className="h-4 w-4 mr-1" />
-                    {`Default setting ${labelDef.defaultSetting}`}
+                    {`Default setting ${labelDefFromService.defaultSetting}`}
                   </li>
-                )}
+                ) : null}
               </ul>
             )}
           </>

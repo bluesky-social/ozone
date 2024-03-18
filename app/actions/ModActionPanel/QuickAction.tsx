@@ -545,7 +545,7 @@ function Form(
                       <ModerationLabel
                         key={label.val}
                         label={label}
-                        recordAuthorDid={`${repo?.did || record?.did}`}
+                        recordAuthorDid={`${repo?.did || record?.repo.did}`}
                       />
                     )
                   })}
