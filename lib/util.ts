@@ -1,9 +1,5 @@
 import { CollectionId } from '@/reports/helpers/subject'
-<<<<<<< Updated upstream
-=======
 import { AtUri } from '@atproto/api'
-import { SOCIAL_APP_URL } from './constants'
->>>>>>> Stashed changes
 
 export function classNames(...classes: (string | undefined)[]) {
   return classes.filter(Boolean).join(' ')
