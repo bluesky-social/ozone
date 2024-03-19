@@ -56,41 +56,45 @@ export default function CommunicationTemplatePage() {
             </p>
           </div>
         )}
-        {data?.map((template) => (
-          <li
-            key={template.id}
-            className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-3 text-gray-700 dark:text-gray-100 mb-3"
-          >
-            <p className="flex flex-row justify-between">
-              <span className="text-sm text-gray-900 dark:text-gray-200">{template.name}</span>
-              {template.disabled && (
-                <LabelChip className="bg-red-200">Disabled</LabelChip>
-              )}
-            </p>
-            <p className="text-sm">Subject: {template.subject}</p>
-            <div className="text-sm flex flex-row justify-between">
-              <span>
-                Last Updated{' '}
-                {format(new Date(template.updatedAt), 'do MMM yyyy')}
-              </span>
-              <div className="flex flex-row">
-                <Link
-                  href={`/communication-template/${template.id}/edit`}
-                  className="flex flex-row items-center border border-gray-400 rounded-sm px-2 hover:bg-gray-100 dark:hover:bg-slate-700 mx-1"
-                >
-                  <PencilIcon className="h-3 w-3 mr-1" />
-                  Edit
-                </Link>
-                <ActionButton
-                  appearance="outlined"
-                  onClick={() => setDeletingTemplateId(template.id)}
-                >
-                  <TrashIcon className="h-3 w-3" />
-                </ActionButton>
+        {data
+          ?.sort((prev, next) => prev.name.localeCompare(next.name))
+          .map((template) => (
+            <li
+              key={template.id}
+              className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-3 text-gray-700 dark:text-gray-100 mb-3"
+            >
+              <p className="flex flex-row justify-between">
+                <span className="text-sm text-gray-900 dark:text-gray-200">
+                  {template.name}
+                </span>
+                {template.disabled && (
+                  <LabelChip className="bg-red-200">Disabled</LabelChip>
+                )}
+              </p>
+              <p className="text-sm">Subject: {template.subject}</p>
+              <div className="text-sm flex flex-row justify-between">
+                <span>
+                  Last Updated{' '}
+                  {format(new Date(template.updatedAt), 'do MMM yyyy')}
+                </span>
+                <div className="flex flex-row">
+                  <Link
+                    href={`/communication-template/${template.id}/edit`}
+                    className="flex flex-row items-center border border-gray-400 rounded-sm px-2 hover:bg-gray-100 dark:hover:bg-slate-700 mx-1"
+                  >
+                    <PencilIcon className="h-3 w-3 mr-1" />
+                    Edit
+                  </Link>
+                  <ActionButton
+                    appearance="outlined"
+                    onClick={() => setDeletingTemplateId(template.id)}
+                  >
+                    <TrashIcon className="h-3 w-3" />
+                  </ActionButton>
+                </div>
               </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          ))}
       </ul>
     </div>
   )
