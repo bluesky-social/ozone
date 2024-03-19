@@ -55,7 +55,7 @@ export const TemplateSelector = ({
         >
           <Combobox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
             {!matchingTemplates?.length && query !== '' ? (
-              <div className="relative cursor-default select-none px-4 py-2 text-gray-700">
+              <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
                 No template found.
               </div>
             ) : (
@@ -65,7 +65,7 @@ export const TemplateSelector = ({
                   className={({ active }) =>
                     `relative cursor-default select-none py-2 pl-10 pr-4 ${
                       active
-                        ? 'bg-gray-100 text-gray-900'
+                        ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
                         : 'text-gray-900 dark:text-gray-200'
                     }`
                   }
