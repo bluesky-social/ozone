@@ -1,5 +1,5 @@
 import { Loading } from '@/common/Loader'
-import { PLC_DIRECTORY_URL } from '@/lib/identity'
+import { PLC_DIRECTORY_URL } from '@/lib/constants'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { useQuery } from '@tanstack/react-query'
 

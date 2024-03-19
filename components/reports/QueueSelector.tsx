@@ -1,11 +1,12 @@
 import { Dropdown } from '@/common/Dropdown'
+import { QUEUE_CONFIG } from '@/lib/constants'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 type QueueConfig = Record<string, { name: string }>
 
 const getQueueConfig = () => {
-  const config = process.env.NEXT_PUBLIC_QUEUE_CONFIG || '{}'
+  const config = QUEUE_CONFIG
   try {
     return JSON.parse(config) as QueueConfig
   } catch (err) {

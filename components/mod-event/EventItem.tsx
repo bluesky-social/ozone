@@ -5,7 +5,9 @@ import {
   displayLabel,
   getLabelGroupInfo,
   unFlagSelfLabel,
+  ModerationLabel,
 } from '@/common/labels'
+import { OZONE_SERVICE_DID } from '@/lib/constants'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import {
   ToolsOzoneModerationDefs,
@@ -152,20 +154,27 @@ const TakedownOrMute = ({
 const EventLabels = ({
   header,
   labels,
+  isTag = false,
 }: {
   header: string
   labels?: string[]
+  isTag?: boolean
 }) => {
   if (!labels?.length) return null
   return (
     <LabelList>
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
-        const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
+        if (isTag) {
+          return <LabelChip key={label}>{label}</LabelChip>
+        }
+        // Moderation events being displayed means that these events were added by the current service
+        // so we can assume that the src is the same as the configured ozone service DID
         return (
-          <LabelChip key={label} style={{ color: labelGroup.color }}>
-            {displayLabel(label)}
-          </LabelChip>
+          <ModerationLabel
+            key={label}
+            label={{ val: label, src: OZONE_SERVICE_DID, uri: '', cts: '' }}
+          />
         )
       })}
     </LabelList>
@@ -218,8 +227,8 @@ const Tag = ({
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
-      <EventLabels header="Added: " labels={modEvent.event.add} />
-      <EventLabels header="Removed: " labels={modEvent.event.remove} />
+      <EventLabels isTag header="Added: " labels={modEvent.event.add} />
+      <EventLabels isTag header="Removed: " labels={modEvent.event.remove} />
     </Card>
   )
 }

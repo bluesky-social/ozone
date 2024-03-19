@@ -1,7 +1,5 @@
 import clientManager from './client'
-
-export const PLC_DIRECTORY_URL =
-  process.env.NEXT_PUBLIC_PLC_DIRECTORY_URL || `https://plc.directory`
+import { PLC_DIRECTORY_URL } from './constants'
 
 export const getDidFromHandle = async (
   handle: string,

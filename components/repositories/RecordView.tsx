@@ -23,6 +23,7 @@ import {
   displayLabel,
   toLabelVal,
   getLabelsForSubject,
+  ModerationLabel,
 } from '../common/labels'
 import { DataField } from '@/common/DataField'
 import { AccountsGrid } from './AccountView'
@@ -241,9 +242,7 @@ function Tabs({
 
 function Details({ record }: { record: GetRecord.OutputSchema }) {
   const { collection, rkey } = parseAtUri(record.uri) ?? {}
-  const labels = getLabelsForSubject({ record }).map((label) =>
-    toLabelVal(label, record.repo.did),
-  )
+  const labels = getLabelsForSubject({ record })
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -275,7 +274,11 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
           <LabelList>
             {!labels.length && <LabelListEmpty />}
             {labels.map((label) => (
-              <LabelChip key={label}>{displayLabel(label)}</LabelChip>
+              <ModerationLabel
+                label={label}
+                key={label.val}
+                recordAuthorDid={record.repo.did}
+              />
             ))}
           </LabelList>
         </DataField>
