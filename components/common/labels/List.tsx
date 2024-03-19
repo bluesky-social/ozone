@@ -187,8 +187,8 @@ export const LabelDefinition = ({
           Self label
         </h3>
         <p className="leading-4 pb-3">
-          This label was added by the the author of the content. Moderators are not
-          allowed to change this.
+          This label was added by the the author of the content. Moderators are
+          not allowed to change this.
         </p>
       </div>
     )
@@ -285,7 +285,8 @@ export const LabelDefinition = ({
           </>
         ) : (
           <h4 className="leading-4">
-            <b>{label.val}</b> label does not have a custom definition
+            <b>{label.val}</b> label does not have a custom definition. Users
+            will be able to configure the behavior of the label in app.
           </h4>
         )}
       </div>
