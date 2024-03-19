@@ -1,4 +1,4 @@
-import { CollectionId } from '@/reports/helpers/subject'
+import { getCollectionName } from '@/reports/helpers/subject'
 import {
   AtUri,
   ComAtprotoAdminDefs,
@@ -16,16 +16,7 @@ export const getSubjectTitle = (
   if (ComAtprotoRepoStrongRef.isMain(subject)) {
     const atUri = new AtUri(subject.uri)
     const collection = atUri.collection
-
-    if (collection === CollectionId.Post) {
-      return 'Post'
-    }
-    if (collection === CollectionId.Profile) {
-      return 'Profile'
-    }
-    if (collection === CollectionId.List) {
-      return 'List'
-    }
+    return getCollectionName(collection)
   }
 
   return 'Subject'
