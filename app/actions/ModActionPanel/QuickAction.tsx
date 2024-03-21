@@ -442,6 +442,11 @@ function Form(
         .scrollable-container {
           height: calc(100vh - 100px);
         }
+        @supports (-webkit-touch-callout: none) {
+          .scrollable-container {
+            height: calc(100svh - 100px);
+          }
+        }
         @media (min-width: 640px) {
           .scrollable-container {
             height: calc(100vh - 180px);
@@ -724,17 +729,19 @@ function Form(
       {(subjectOptions?.length || 0) > 1 && (
         <div className="flex justify-between mt-auto">
           <ButtonSecondary
+            className="px-2 py-1"
             onClick={() => navigateQueue(-1)}
             disabled={submission.isSubmitting}
           >
-            <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
+            <ArrowLeftIcon className="h-3 w-3 sm:h-4 sm:w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
 
           <ButtonSecondary
+            className="px-2 py-1"
             onClick={() => navigateQueue(1)}
             disabled={submission.isSubmitting}
           >
-            <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
+            <ArrowRightIcon className="h-3 w-3 sm:h-4 sm:w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
         </div>
       )}

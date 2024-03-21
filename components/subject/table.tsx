@@ -139,7 +139,7 @@ function SubjectRow({
           subjectRepoHandle={subjectStatus.subjectRepoHandle}
         />
       </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-sm">
         {lastReviewedAt && (
           <span title={lastReviewedAt.toLocaleString()}>
             {formatDistanceToNow(lastReviewedAt, { addSuffix: true })}
@@ -231,7 +231,9 @@ function EmptyRows({ isInitialLoading }: { isInitialLoading: boolean }) {
         {isInitialLoading ? (
           <>
             <Loading />
-            <p className="pb-4 text-gray-400 dark:text-gray-100">Loading moderation queue...</p>
+            <p className="pb-4 text-gray-400 dark:text-gray-100">
+              Loading moderation queue...
+            </p>
           </>
         ) : (
           <p className="py-4 text-gray-400 dark:text-gray-100 text-center">
