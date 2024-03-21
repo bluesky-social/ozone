@@ -5,13 +5,14 @@ import { toast } from 'react-toastify'
 import dynamic from 'next/dynamic'
 
 import { ActionButton } from '@/common/buttons'
-import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
+import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import client from '@/lib/client'
 import { compileTemplateContent, getTemplate } from './helpers'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { useEmailComposer } from './useComposer'
 import { useColorScheme } from '@/common/useColorScheme'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { TemplateSelector } from './template-selector'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -88,43 +89,31 @@ export const EmailComposer = ({ did }: { did: string }) => {
     toggleSending(false)
   }
 
+  const onTemplateSelect = (templateName: string) => {
+    // When templates are changed, force reset message
+    const template =
+      getTemplate(templateName, communicationTemplates || []) ||
+      communicationTemplates?.[0]
+    if (!template) {
+      return
+    }
+    const subject = template.subject || ''
+    const content = compileTemplateContent(template.contentMarkdown, {
+      handle: repo?.handle,
+    })
+    setContent(content)
+    if (subjectField.current) subjectField.current.value = subject
+    if (commentField.current)
+      commentField.current.value = `Sent via ozone template: ${templateName}.`
+  }
+
   return (
     <form onSubmit={onSubmit}>
       <FormLabel label="Template" htmlFor="template" className="mb-3">
-        <Select
-          id="template"
-          name="template"
-          placeholder="Use from existing set of templates"
-          className="block w-full"
-          autoComplete="off"
-          disabled={isSending}
-          onChange={(e) => {
-            // When templates are changed, force reset message
-            const templateName = e.currentTarget.value
-            const template =
-              getTemplate(templateName, communicationTemplates || []) ||
-              communicationTemplates?.[0]
-            if (!template) {
-              return
-            }
-            const subject = template.subject || ''
-            const content = compileTemplateContent(template.contentMarkdown, {
-              handle: repo?.handle,
-            })
-            setContent(content)
-            if (subjectField.current) subjectField.current.value = subject
-            if (commentField.current)
-              commentField.current.value = `Sent via ozone template: ${templateName}.`
-          }}
-        >
-          {communicationTemplates
-            ?.filter((tpl) => !tpl.disabled)
-            .map((template) => (
-              <option value={template.name} key={template.id}>
-                {template.name}
-              </option>
-            ))}
-        </Select>
+        <TemplateSelector
+          communicationTemplates={communicationTemplates}
+          onSelect={onTemplateSelect}
+        />
       </FormLabel>
       <FormLabel label="Subject" htmlFor="subject" className="mb-3">
         <Input
