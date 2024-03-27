@@ -38,6 +38,10 @@ const reviewStateToColor = {
     bg: 'bg-green-200 dark:bg-green-200',
     text: 'text-green-800 dark:text-green-500',
   },
+  [ToolsOzoneModerationDefs.REVIEWNONE]: {
+    bg: 'bg-gray-200 dark:bg-gray-200',
+    text: 'text-gray-800 dark:text-gray-600',
+  },
 }
 
 const reviewStateToIcon = {
