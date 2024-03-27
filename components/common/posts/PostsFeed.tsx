@@ -14,6 +14,7 @@ import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
   LanguageIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
@@ -25,7 +26,6 @@ import {
   LabelList,
   doesLabelNeedBlur,
   toLabelVal,
-  LabelGroupInfo,
   getLabelGroupInfo,
 } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
@@ -228,6 +228,16 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
+function ImageAltText({ alt }: { alt: string }) {
+  if (!alt) return null
+  return (
+    <p className="leading-2 text-gray-400 text-xs leading-3 mt-1">
+      <InformationCircleIcon className="w-4 h-4 inline mr-1" />
+      {alt}
+    </p>
+  )
+}
+
 // @TODO record embeds
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
@@ -262,6 +272,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
               src={image.thumb}
               alt={image.alt}
             />
+            <ImageAltText alt={image.alt} />
           </a>
         ))}
       </div>
@@ -421,9 +432,7 @@ function PostLabels({
         const labelGroup = getLabelGroupInfo(val)
         return (
           <LabelChip
-            className={`${i === 0 ? 'ml-0' : ''} text-[${
-              labelGroup.color
-            }]`}
+            className={`${i === 0 ? 'ml-0' : ''} text-[${labelGroup.color}]`}
             // TODO: Ideally, we should just use inline class name but it only works when the class names are static
             // so trying to work around that with style prop for now
             style={{ color: labelGroup.color }}
