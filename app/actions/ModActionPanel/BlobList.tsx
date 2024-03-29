@@ -33,7 +33,7 @@ export function BlobList(props: {
                 disabled={disabled}
               />
             </div>
-            <div className="ml-3 text-sm min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
+            <div className="ml-1 sm:ml-3 text-sm min-w-0 overflow-hidden">
               <label
                 htmlFor={`blob-${blob.cid}`}
                 className="font-medium text-gray-700 dark:text-gray-100"
@@ -46,7 +46,8 @@ export function BlobList(props: {
                     </ReviewStateIconLink>{' '}
                   </>
                 )}
-                {blob.cid}
+                {/* blob cids are long strings of random characters. on mobile screens, it will almost always cause overflow so breaking it into multi lines */}
+                <span className="break-all">{blob.cid}</span>
               </label>
               <p id={`blob-${blob.cid}-description`}>
                 <Chip>{blob.mimeType}</Chip>

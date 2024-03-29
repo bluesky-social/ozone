@@ -10,7 +10,7 @@ export default function RecordViewPage({
 }) {
   return (
     <Suspense fallback={<div></div>}>
-      <RedirectFromHandleToDid handle={params.id}>
+      <RedirectFromHandleToDid handle={params.id} record={params.record}>
         <RecordViewPageContent params={params} />
       </RedirectFromHandleToDid>
     </Suspense>

@@ -11,12 +11,13 @@ export const createSubjectFromId = async (
 }> => {
   if (isIdRecord(id)) {
     try {
-      const { data: record } = await client.api.tools.ozone.moderation.getRecord(
-        {
-          uri: id,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data: record } =
+        await client.api.tools.ozone.moderation.getRecord(
+          {
+            uri: id,
+          },
+          { headers: client.proxyHeaders() },
+        )
       return {
         record,
         subject: {
@@ -71,3 +72,27 @@ export enum CollectionId {
 }
 export const getProfileUriForDid = (did: string) =>
   `at://${did}/${CollectionId.Profile}/self`
+
+export const getCollectionName = (collection: string) => {
+  if (collection === CollectionId.Post) {
+    return 'Post'
+  }
+  if (collection === CollectionId.Profile) {
+    return 'Profile'
+  }
+  if (collection === CollectionId.List) {
+    return 'List'
+  }
+  if (collection === CollectionId.FeedGenerator) {
+    return 'Feed'
+  }
+  if (collection === CollectionId.LabelerService) {
+    return 'Labeler'
+  }
+  // If the collection is a string with ., use the last two segments as the title
+  // so app.bsky.graph.list -> graph list
+  if (collection.includes('.')) {
+    return collection.split('.').slice(-2).join(' ')
+  }
+  return ''
+}

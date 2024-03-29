@@ -1,5 +1,5 @@
 import { parseAtUri } from '@/lib/util'
-import { CollectionId } from '@/reports/helpers/subject'
+import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { ReactNode } from 'react'
 import { RecordCard, RepoCard } from './RecordCard'
 
@@ -17,9 +17,7 @@ const getPreviewTitleForAtUri = (uri: string): string => {
   return (
     PreviewTitleMap[collection || CollectionId.Post] ||
     (collection
-      ? // If the collection is a string, use the last two segments as the title
-        // so app.bsky.graph.list -> graph list
-        `Reported ${collection.split('.').slice(-2).join(' ')}`
+      ? `Reported ${getCollectionName(collection)}`
       : PreviewTitleMap[CollectionId.Post])
   )
 }
@@ -37,7 +35,9 @@ export function PreviewCard({
     const displayTitle = title || getPreviewTitleForAtUri(did)
     return (
       <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
-        <p className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">{displayTitle}</p>
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
+          {displayTitle}
+        </p>
         <RecordCard uri={did} />
         {children}
       </div>

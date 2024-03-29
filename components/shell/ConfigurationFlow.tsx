@@ -1,11 +1,6 @@
 'use client'
-import {
-  ComponentProps,
-  ReactElement,
-  cloneElement,
-  useEffect,
-  useState,
-} from 'react'
+import { ComponentProps, ReactElement, cloneElement, useState } from 'react'
+import Link from 'next/link'
 import {
   ArrowLeftOnRectangleIcon,
   ArrowRightOnRectangleIcon,
@@ -14,8 +9,7 @@ import {
 import { useMutation } from '@tanstack/react-query'
 import { Loading } from '@/common/Loader'
 import client, { ClientSession } from '@/lib/client'
-import { Input } from '@/common/forms'
-import { AuthState } from './AuthContext'
+import { Checkbox, Input } from '@/common/forms'
 import {
   OzoneConfigFull,
   getServiceUrlFromDoc,
@@ -294,6 +288,7 @@ function RecordConfigurationFlow({
   onComplete: (skip: boolean) => void
 }) {
   const { config } = session
+  const [checked, setChecked] = useState(false)
   const putServiceRecord = useMutation({
     mutationFn: async () => {
       await client.api.com.atproto.repo.putRecord({
@@ -358,7 +353,8 @@ function RecordConfigurationFlow({
             putServiceRecord.isLoading ||
             putServiceRecord.isSuccess ||
             session.did !== config.did ||
-            config.needs.pds
+            config.needs.pds ||
+            !checked
           }
           className="w-full ml-2"
           icon={<ArrowRightCircleIcon />}
@@ -370,6 +366,24 @@ function RecordConfigurationFlow({
           Submit
         </Button>
       </div>
+      <p className="text-center mt-2">
+        <Checkbox
+          checked={checked}
+          onChange={(ev) => setChecked(ev.target.checked)}
+          label={
+            <>
+              I have read the{' '}
+              <Link
+                href="https://bsky.social/about/support/community-guidelines#labeler"
+                target="_blank"
+                className="text-blue-500"
+              >
+                Bluesky Labeler Community Guidelines
+              </Link>
+            </>
+          }
+        />
+      </p>
     </div>
   )
 }
