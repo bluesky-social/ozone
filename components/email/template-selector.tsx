@@ -38,6 +38,7 @@ export const TemplateSelector = ({
           <Combobox.Input
             className="w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100"
             onChange={(event) => setQuery(event.target.value)}
+            placeholder="Type keyword or click the arrows on the right to see all templates"
           />
           <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
             <ChevronUpDownIcon
