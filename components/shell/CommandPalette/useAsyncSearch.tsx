@@ -1,4 +1,3 @@
-import clientManager from '@/lib/client'
 import { getDidFromHandle } from '@/lib/identity'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { AtUri } from '@atproto/api'
