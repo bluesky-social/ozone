@@ -12,6 +12,7 @@ import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { Checkbox } from '@/common/forms'
+import { ExternalLabelerConfig } from '@/config/external-labeler'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -80,6 +81,7 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
         {!record && <RecordInitStep repo={session.config.did} />}
         {record && <RecordEditStep repo={session.config.did} record={record} />}
       </Card>
+      <ExternalLabelerConfig />
     </div>
   )
 }

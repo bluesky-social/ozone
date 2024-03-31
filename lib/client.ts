@@ -2,6 +2,7 @@ import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
 import { OZONE_SERVICE_DID } from './constants'
+import { getExternalLabelers } from '@/config/data'
 
 export interface ClientSession extends AtpSessionData {
   service: string
@@ -114,7 +115,17 @@ class ClientManager extends EventTarget {
 
   proxyHeaders(override?: string): Record<string, string> {
     const proxy = override ?? this._session?.config.did
-    return proxy ? { 'atproto-proxy': _ensureServiceId(proxy) } : {}
+    const externalLabelers = getExternalLabelers()
+    const labelerDids = Object.keys(externalLabelers)
+      .map(_ensureServiceId)
+      .join(',')
+    console.log(labelerDids)
+    return proxy
+      ? {
+          'atproto-proxy': _ensureServiceId(proxy),
+          'Atproto-Accept-Labelers': labelerDids,
+        }
+      : {}
   }
 
   private async _setup() {

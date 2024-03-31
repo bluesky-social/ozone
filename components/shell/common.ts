@@ -59,7 +59,6 @@ export const NAV_ITEMS: SidebarNavItem[] = [
     name: 'Configure',
     href: '/configure',
     icon: 'configure',
-    serviceAccountOnly: true,
   },
 ]
 
