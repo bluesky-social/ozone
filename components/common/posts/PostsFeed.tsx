@@ -190,7 +190,7 @@ function PostContent({
     )
   }, [uri])
   return (
-    <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
+    <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2 dark:text-gray-100`}>
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
       {showActionLine && (
         <p className="text-xs mt-0">
@@ -277,7 +277,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             src={embed.external.thumb}
           />
         ) : undefined}
-        <div>
+        <div className='dark:text-gray-300'>
           <div>{embed.external.title}</div>
           <div>{embed.external.description}</div>
           <div>
@@ -338,7 +338,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
               </Link>
             </p>
           </div>
-          <div className={`prose-sm pl-10 pb-2`}>
+          <div className={`prose-sm pl-10 pb-2 dark:text-gray-100`}>
             <RichText post={embed.record.value} />
           </div>
         </div>

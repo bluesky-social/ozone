@@ -502,7 +502,7 @@ function Posts({
   id: string
   onReport: (uri: string) => void
 }) {
-  return <AuthorFeed title="" id={id} onReport={onReport} />
+  return <AuthorFeed id={id} onReport={onReport} />
 }
 
 function Follows({ id }: { id: string }) {
