@@ -1,4 +1,3 @@
-import clientManager from '@/lib/client'
 import { getDidFromHandle } from '@/lib/identity'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { AtUri } from '@atproto/api'
@@ -206,6 +205,11 @@ export const useCommandPaletteAsyncSearch = () => {
       })
     } else if (isBlueSkyAppUrl(search)) {
       const fragments = getFragmentsFromBlueSkyAppUrl(search)
+      // From the URL, if we didn't get a DID but if the handle was resolved into DID
+      // let's inject the DID into the fragments container so we can use it when building atUri
+      if (fragments?.handle && !fragments?.did && didFromHandle.did) {
+        fragments.did = didFromHandle.did
+      }
       const atUri = buildAtUriFromFragments(fragments)
       const collectionName = getCollectionName(fragments?.collection || '')
 
@@ -232,8 +236,8 @@ export const useCommandPaletteAsyncSearch = () => {
       }
 
       if (fragments?.rkey && collectionName) {
-        actions.push(
-          {
+        if (atUri) {
+          actions.push({
             id: `show-action-for-${collectionName}`,
             name: `Take action on ${collectionName}`,
             keywords: `${search},${collectionName},search,action`,
@@ -245,7 +249,9 @@ export const useCommandPaletteAsyncSearch = () => {
             perform: () => {
               router.push(`?quickOpen=${atUri}`)
             },
-          },
+          })
+        }
+        actions.push(
           {
             id: `report-${collectionName}`,
             name: `Report ${collectionName} ${fragments.rkey}`,
