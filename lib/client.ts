@@ -133,7 +133,10 @@ class ClientManager extends EventTarget {
 
   private async _getConfig(ozoneDid?: string) {
     const builtIn =
-      ozoneDid || process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
+      ozoneDid ||
+      process.env.NEXT_PUBLIC_OZONE_SERVICE_DID ||
+      'did:plc:kqg2icildynagykzlxehkkaw' ||
+      undefined
     return await getConfig(builtIn)
   }
 
