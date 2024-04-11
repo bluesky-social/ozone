@@ -1,7 +1,7 @@
 'use client'
 import { ComponentProps, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import {
   AppBskyActorGetProfile as GetProfile,
   ToolsOzoneModerationGetRepo as GetRepo,
@@ -50,6 +50,7 @@ enum Views {
   Follows,
   Followers,
   Invites,
+  Blocks,
   Events,
   Email,
 }
@@ -60,6 +61,7 @@ const TabKeys = {
   follows: Views.Follows,
   followers: Views.Followers,
   invites: Views.Invites,
+  blocks: Views.Blocks,
   events: Views.Events,
   email: Views.Email,
 }
@@ -159,6 +161,7 @@ export function AccountView({
                   {currentView === Views.Follows && <Follows id={id} />}
                   {currentView === Views.Followers && <Followers id={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
+                  {currentView === Views.Blocks && <Blocks id={id} />}
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
                   )}
@@ -388,6 +391,7 @@ function Tabs({
                 sublabel={String(profile.followersCount)}
               />
             )}
+            {profile && <Tab view={Views.Blocks} label="Blocks" />}
             <Tab
               view={Views.Invites}
               label="Invites"
@@ -506,7 +510,11 @@ function Posts({
 }
 
 function Follows({ id }: { id: string }) {
-  const { error, data: follows } = useQuery({
+  const {
+    error,
+    data: follows,
+    isLoading,
+  } = useQuery({
     queryKey: ['follows', { id }],
     queryFn: async () => {
       const { data } = await client.api.app.bsky.graph.getFollows(
@@ -518,13 +526,42 @@ function Follows({ id }: { id: string }) {
   })
   return (
     <div>
-      <AccountsGrid error={String(error ?? '')} accounts={follows?.follows} />
+      <AccountsGrid
+        isLoading={isLoading}
+        error={String(error ?? '')}
+        accounts={follows?.follows}
+      />
+    </div>
+  )
+}
+
+function Blocks({ id }: { id: string }) {
+  const { data, error, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
+    useInfiniteQuery({
+      queryKey: ['blocks', { id }],
+      queryFn: async ({ pageParam }) => {
+        const { data } = await client.api.app.bsky.graph.getBlocks(
+          { cursor: pageParam },
+          { headers: client.proxyHeaders() },
+        )
+        return data
+      },
+      getNextPageParam: (lastPage) => lastPage.cursor,
+    })
+  const blockedAccounts = data?.pages.flatMap((page) => page.blocks) ?? []
+  return (
+    <div>
+      <AccountsGrid error={String(error ?? '')} accounts={blockedAccounts} />
     </div>
   )
 }
 
 function Followers({ id }: { id: string }) {
-  const { error, data: followers } = useQuery({
+  const {
+    error,
+    isLoading,
+    data: followers,
+  } = useQuery({
     queryKey: ['followers', { id }],
     queryFn: async () => {
       const { data } = await client.api.app.bsky.graph.getFollowers(
@@ -539,6 +576,7 @@ function Followers({ id }: { id: string }) {
   return (
     <div>
       <AccountsGrid
+        isLoading={isLoading}
         error={String(error ?? '')}
         accounts={followers?.followers}
       />
@@ -547,7 +585,11 @@ function Followers({ id }: { id: string }) {
 }
 
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
-  const { error, data: invitedUsers } = useQuery({
+  const {
+    error,
+    isLoading,
+    data: invitedUsers,
+  } = useQuery({
     queryKey: ['invitedUsers', { id: repo.did }],
     queryFn: async () => {
       const actors: string[] = []
@@ -626,12 +668,14 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
 type FollowOrFollower = AppBskyActorDefs.ProfileView
 export function AccountsGrid({
   error,
+  isLoading,
   accounts,
 }: {
   error: string
+  isLoading?: boolean
   accounts?: FollowOrFollower[]
 }) {
-  if (!accounts) {
+  if (isLoading) {
     return (
       <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
         Loading...
@@ -640,8 +684,13 @@ export function AccountsGrid({
   }
   return (
     <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      {!!error && (
+        <div className="mt-1">
+          <p>{error}</p>
+        </div>
+      )}
       <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {accounts.map((account) => (
+        {accounts?.map((account) => (
           <div
             key={account.handle}
             className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
