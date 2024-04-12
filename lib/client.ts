@@ -132,6 +132,10 @@ class ClientManager extends EventTarget {
     }
   }
 
+  getServiceDid() {
+    return this._session?.config.did
+  }
+
   private async _getConfig(ozoneDid?: string) {
     const builtIn = ozoneDid || OZONE_SERVICE_DID
     return await getConfig(builtIn)
