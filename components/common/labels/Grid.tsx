@@ -1,7 +1,7 @@
 import client from '@/lib/client'
 import { useState } from 'react'
 import Select from 'react-tailwindcss-select'
-import { ALL_LABELS, LabelGroupInfo } from './util'
+import { ALL_LABELS, getCustomLabels, LabelGroupInfo } from './util'
 
 const EMPTY_ARR = []
 type SelectProps = React.ComponentProps<typeof Select>
@@ -23,7 +23,7 @@ export const LabelSelector = (props: LabelsProps) => {
     })),
   )
   const selectorOptions = [
-    ...(client.session?.config.labeler?.policies?.['labelValues'] || []),
+    ...getCustomLabels(),
     ...Object.values(ALL_LABELS).map(({ identifier }) => identifier),
   ].map((label) => ({
     label,

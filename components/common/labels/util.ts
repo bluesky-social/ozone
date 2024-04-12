@@ -61,7 +61,7 @@ export const LabelGroupInfo: Record<string, { color: string }> = {
   },
 }
 
-const labelsRequiring = [
+const labelsRequiringBlur = [
   LABELS.gore.identifier,
   LABELS.porn.identifier,
   LABELS.nudity.identifier,
@@ -69,7 +69,7 @@ const labelsRequiring = [
 ]
 
 export const doesLabelNeedBlur = (labels?: string[]): boolean =>
-  !!labels?.find((label) => labelsRequiring.includes(label))
+  !!labels?.find((label) => labelsRequiringBlur.includes(label))
 
 export const doesProfileNeedBlur = ({
   profile,
@@ -100,8 +100,8 @@ export const getLabelsForSubject = ({
     []) as Partial<ComAtprotoLabelDefs.Label>[]
 }
 
-const getCustomLabels = () =>
-  client.session?.config.labeler?.policies.labelValues
+export const getCustomLabels = () =>
+  client.session?.config.labeler?.policies.labelValues || []
 
 export const buildAllLabelOptions = (
   defaultLabels: string[],
