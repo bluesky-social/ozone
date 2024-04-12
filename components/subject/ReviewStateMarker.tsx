@@ -1,45 +1,61 @@
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   ScaleIcon,
   ShieldExclamationIcon,
+  NoSymbolIcon,
 } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 
+const reviewStateDescription = {
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: 'This subject requires a human review',
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'This subject has been escalated',
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]:
+    'This subject has been reviewed and closed',
+  [ToolsOzoneModerationDefs.REVIEWNONE]:
+    'This subject received moderation events but no human review is necessary as of now',
+}
+
 const reviewStateToText = {
-  [ComAtprotoAdminDefs.REVIEWOPEN]: 'Requires Review',
-  [ComAtprotoAdminDefs.REVIEWESCALATED]: 'Escalated',
-  [ComAtprotoAdminDefs.REVIEWCLOSED]: 'Reviewed',
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: 'Requires Review',
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'Escalated',
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'Reviewed',
+  [ToolsOzoneModerationDefs.REVIEWNONE]: 'Review N/A',
 }
 
 const reviewStateToColor = {
-  [ComAtprotoAdminDefs.REVIEWOPEN]: {
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: {
     bg: 'bg-yellow-200 dark:bg-yellow-200',
     text: 'text-yellow-800 dark:text-yellow-500',
   },
-  [ComAtprotoAdminDefs.REVIEWESCALATED]: {
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: {
     bg: 'bg-orange-200 dark:bg-orange-200',
     text: 'text-orange-800 dark:text-orange-500',
   },
-  [ComAtprotoAdminDefs.REVIEWCLOSED]: {
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: {
     bg: 'bg-green-200 dark:bg-green-200',
     text: 'text-green-800 dark:text-green-500',
+  },
+  [ToolsOzoneModerationDefs.REVIEWNONE]: {
+    bg: 'bg-gray-200 dark:bg-gray-200',
+    text: 'text-gray-800 dark:text-gray-600',
   },
 }
 
 const reviewStateToIcon = {
-  [ComAtprotoAdminDefs.REVIEWOPEN]: ExclamationCircleIcon,
-  [ComAtprotoAdminDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
-  [ComAtprotoAdminDefs.REVIEWCLOSED]: CheckCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWOPEN]: ExclamationCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: CheckCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWNONE]: NoSymbolIcon,
 }
 
 export const SubjectReviewStateBadge = ({
   subjectStatus,
   className,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   className?: string
 }) => {
   let text =
@@ -70,6 +86,7 @@ export const SubjectReviewStateBadge = ({
 
   return (
     <span
+      title={reviewStateDescription[subjectStatus.reviewState]}
       className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
     >
       {text}
@@ -81,7 +98,7 @@ export const ReviewStateIcon = ({
   subjectStatus,
   className,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   className?: string
 }) => {
   let text =
@@ -116,7 +133,7 @@ export const ReviewStateIconLink = ({
   className,
   children,
 }: {
-  subjectStatus: ComAtprotoAdminDefs.SubjectStatusView
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
   className?: string
   children?: React.ReactNode
 }) => {

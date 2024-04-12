@@ -1,8 +1,8 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
 import client from '@/lib/client'
-import { useContext, useEffect, useReducer, useState } from 'react'
+import { useContext, useEffect, useReducer } from 'react'
 import { AuthContext } from '@/shell/AuthContext'
-import { ComAtprotoAdminQueryModerationEvents } from '@atproto/api'
+import { ToolsOzoneModerationQueryEvents } from '@atproto/api'
 import { MOD_EVENT_TITLES } from './constants'
 import { addDays } from 'date-fns'
 
@@ -140,7 +140,7 @@ export const useModEventList = (
         removedTags,
         reportTypes,
       } = listState
-      const queryParams: ComAtprotoAdminQueryModerationEvents.QueryParams = {
+      const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
         cursor: pageParam,
         includeAllUserRecords,
       }
@@ -248,9 +248,9 @@ export const useModEventList = (
 }
 
 async function getModerationEvents(
-  opts: ComAtprotoAdminQueryModerationEvents.QueryParams = {},
+  opts: ToolsOzoneModerationQueryEvents.QueryParams = {},
 ) {
-  const { data } = await client.api.com.atproto.admin.queryModerationEvents(
+  const { data } = await client.api.tools.ozone.moderation.queryEvents(
     {
       limit: 25,
       ...opts,

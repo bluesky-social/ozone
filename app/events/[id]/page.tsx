@@ -11,7 +11,7 @@ export default function EventViewPage({ params }: { params: { id: string } }) {
   const { data: event, error } = useQuery({
     queryKey: ['event', { id }],
     queryFn: async () => {
-      const { data } = await client.api.com.atproto.admin.getModerationEvent(
+      const { data } = await client.api.tools.ozone.moderation.getEvent(
         {
           id: parseInt(id, 10),
         },

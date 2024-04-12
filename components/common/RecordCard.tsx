@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedDefs, ComAtprotoAdminDefs } from '@atproto/api'
+import { AppBskyFeedDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
@@ -9,6 +9,8 @@ import { CollectionId } from '@/reports/helpers/subject'
 import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
+import { ShieldCheckIcon } from '@heroicons/react/24/solid'
+import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -84,14 +86,16 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
 
 function BaseRecordCard(props: {
   uri: string
-  renderRecord: (record: ComAtprotoAdminDefs.RecordViewDetail) => JSX.Element
+  renderRecord: (
+    record: ToolsOzoneModerationDefs.RecordViewDetail,
+  ) => JSX.Element
 }) {
   const { uri, renderRecord } = props
   const { data: record, error } = useQuery({
     retry: false,
     queryKey: ['recordCard', { uri }],
     queryFn: async () => {
-      const { data } = await client.api.com.atproto.admin.getRecord(
+      const { data } = await client.api.tools.ozone.moderation.getRecord(
         { uri },
         { headers: client.proxyHeaders() },
       )
@@ -118,7 +122,7 @@ function GenericRecordCard({
   record,
   did,
 }: {
-  record: ComAtprotoAdminDefs.RecordViewDetail
+  record: ToolsOzoneModerationDefs.RecordViewDetail
   did?: string
 }) {
   return (
@@ -138,7 +142,7 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down profiles
       const getRepo = async () => {
-        const { data: repo } = await client.api.com.atproto.admin.getRepo(
+        const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
           { did },
           { headers: client.proxyHeaders() },
         )
@@ -204,6 +208,32 @@ export function InlineRepo(props: { did: string }) {
   )
 }
 
+const AssociatedProfileIcon = ({
+  profile,
+}: {
+  profile?: ProfileViewDetailed
+}) => {
+  let title = ''
+
+  if (profile?.associated?.labeler) {
+    title = 'Labeler service'
+  }
+  if (profile?.associated?.feedgens) {
+    title = 'Feed Generator'
+  }
+  if (profile?.associated?.lists) {
+    title = 'List'
+  }
+
+  if (!title) return null
+  return (
+    <ShieldCheckIcon
+      title={`This account is associated with ${title}. Please be cautious when moderating this account`}
+      className="h-6 w-6 text-indigo-800 dark:text-teal-600"
+    />
+  )
+}
+
 // Based on PostAsCard header
 export function RepoCard(props: { did: string }) {
   const { did } = props
@@ -221,6 +251,7 @@ export function RepoCard(props: { did: string }) {
     return <LoadingDense />
   }
   const takendown = !!repo.moderation.subjectStatus?.takendown
+
   return (
     <div className="bg-white dark:bg-slate-800">
       <div className="flex w-full space-x-4">
@@ -230,6 +261,8 @@ export function RepoCard(props: { did: string }) {
             repo={repo}
             className="h-6 w-6 rounded-full"
           />
+
+          <AssociatedProfileIcon profile={profile} />
         </div>
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">

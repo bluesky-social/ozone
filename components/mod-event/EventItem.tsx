@@ -6,18 +6,21 @@ import {
   LabelGroupInfo,
 } from '@/common/labels'
 import { ReasonBadge } from '@/reports/ReasonBadge'
-import { ComAtprotoAdminDefs, ComAtprotoModerationDefs } from '@atproto/api'
+import {
+  ToolsOzoneModerationDefs,
+  ComAtprotoModerationDefs,
+} from '@atproto/api'
 import { MOD_EVENTS } from './constants'
 import { ItemTitle } from './ItemTitle'
 
 const Comment = ({
   modEvent,
 }: {
-  modEvent: ComAtprotoAdminDefs.ModEventView & {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
     event:
-      | ComAtprotoAdminDefs.ModEventEscalate
-      | ComAtprotoAdminDefs.ModEventAcknowledge
-      | ComAtprotoAdminDefs.ModEventComment
+      | ToolsOzoneModerationDefs.ModEventEscalate
+      | ToolsOzoneModerationDefs.ModEventAcknowledge
+      | ToolsOzoneModerationDefs.ModEventComment
   }
 }) => {
   return (
@@ -52,8 +55,8 @@ const Comment = ({
 const Email = ({
   modEvent,
 }: {
-  modEvent: ComAtprotoAdminDefs.ModEventView & {
-    event: ComAtprotoAdminDefs.ModEventEmail
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.ModEventEmail
   }
 }) => {
   return (
@@ -76,8 +79,8 @@ const Report = ({
   modEvent,
 }: {
   modEvent: {
-    event: ComAtprotoAdminDefs.ModEventReport
-  } & ComAtprotoAdminDefs.ModEventView
+    event: ToolsOzoneModerationDefs.ModEventReport
+  } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
@@ -106,9 +109,9 @@ const TakedownOrMute = ({
 }: {
   modEvent: {
     event:
-      | ComAtprotoAdminDefs.ModEventTakedown
-      | ComAtprotoAdminDefs.ModEventMute
-  } & ComAtprotoAdminDefs.ModEventView
+      | ToolsOzoneModerationDefs.ModEventTakedown
+      | ToolsOzoneModerationDefs.ModEventMute
+  } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
   return (
@@ -174,8 +177,8 @@ const Label = ({
   modEvent,
 }: {
   modEvent: {
-    event: ComAtprotoAdminDefs.ModEventLabel
-  } & ComAtprotoAdminDefs.ModEventView
+    event: ToolsOzoneModerationDefs.ModEventLabel
+  } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   return (
     <Card>
@@ -200,8 +203,8 @@ const Tag = ({
   modEvent,
 }: {
   modEvent: {
-    event: ComAtprotoAdminDefs.ModEventTag
-  } & ComAtprotoAdminDefs.ModEventView
+    event: ToolsOzoneModerationDefs.ModEventTag
+  } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   return (
     <Card>
@@ -227,7 +230,9 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   timeStyle: 'short',
 })
 
-const getExpiresAtFromEvent = (modEvent: ComAtprotoAdminDefs.ModEventView) => {
+const getExpiresAtFromEvent = (
+  modEvent: ToolsOzoneModerationDefs.ModEventView,
+) => {
   if (!modEvent.event.durationInHours) return null
   const createdAt = new Date(modEvent.createdAt)
   createdAt.setHours(
@@ -241,25 +246,25 @@ export const ModEventItem = ({
   showContentDetails,
   showContentAuthor,
 }: {
-  modEvent: ComAtprotoAdminDefs.ModEventView
+  modEvent: ToolsOzoneModerationDefs.ModEventView
   showContentDetails: boolean
   showContentAuthor: boolean
 }) => {
   let eventItem: JSX.Element = <p>{modEvent.event.$type as string}</p>
   if (
-    ComAtprotoAdminDefs.isModEventAcknowledge(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventEscalate(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventComment(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventUnmute(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventResolveAppeal(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventReverseTakedown(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventDivert(modEvent.event)
+    ToolsOzoneModerationDefs.isModEventAcknowledge(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventEscalate(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventComment(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventDivert(modEvent.event)
   ) {
     eventItem = <Comment modEvent={modEvent} />
   }
   if (
-    ComAtprotoAdminDefs.isModEventTakedown(modEvent.event) ||
-    ComAtprotoAdminDefs.isModEventMute(modEvent.event)
+    ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventMute(modEvent.event)
   ) {
     eventItem = <TakedownOrMute modEvent={modEvent} />
   }
@@ -267,15 +272,15 @@ export const ModEventItem = ({
     //@ts-ignore
     eventItem = <Report modEvent={modEvent} />
   }
-  if (ComAtprotoAdminDefs.isModEventLabel(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventLabel(modEvent.event)) {
     //@ts-ignore
     eventItem = <Label modEvent={modEvent} />
   }
-  if (ComAtprotoAdminDefs.isModEventTag(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventTag(modEvent.event)) {
     //@ts-ignore
     eventItem = <Tag modEvent={modEvent} />
   }
-  if (ComAtprotoAdminDefs.isModEventEmail(modEvent.event)) {
+  if (ToolsOzoneModerationDefs.isModEventEmail(modEvent.event)) {
     //@ts-ignore
     eventItem = <Email modEvent={modEvent} />
   }

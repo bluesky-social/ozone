@@ -1,9 +1,9 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery } from '@tanstack/react-query'
 import {
-  ComAtprotoAdminDefs,
-  ComAtprotoAdminEmitModerationEvent,
   ComAtprotoModerationDefs,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
@@ -21,7 +21,6 @@ import {
   displayLabel,
   getLabelsForSubject,
   toLabelVal,
-  unFlagSelfLabel,
   isSelfLabel,
   LabelGroupInfo,
 } from '@/common/labels'
@@ -40,13 +39,14 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
-import { createSubjectFromId } from '@/reports/helpers/subject'
+import { CollectionId, createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
+import { Card } from '@/common/Card'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -56,9 +56,7 @@ type Props = {
   setSubject: (subject: string) => void
   subjectOptions?: string[]
   isInitialLoading: boolean
-  onSubmit: (
-    vals: ComAtprotoAdminEmitModerationEvent.InputSchema,
-  ) => Promise<void>
+  onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -170,9 +168,9 @@ function Form(
   })
   const isSubjetDid = subject.startsWith('did:')
   const isReviewClosed =
-    subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWCLOSED
+    subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
-    subjectStatus?.reviewState === ComAtprotoAdminDefs.REVIEWESCALATED
+    subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
@@ -443,6 +441,11 @@ function Form(
         .scrollable-container {
           height: calc(100vh - 100px);
         }
+        @supports (-webkit-touch-callout: none) {
+          .scrollable-container {
+            height: calc(100svh - 100px);
+          }
+        }
         @media (min-width: 640px) {
           .scrollable-container {
             height: calc(100vh - 180px);
@@ -501,7 +504,12 @@ function Form(
 
                   {subjectStatus.lastReviewedAt ? (
                     <span className="pl-1">
-                      Last reviewed at:{' '}
+                      Last{' '}
+                      {subjectStatus.reviewState ===
+                      ToolsOzoneModerationDefs.REVIEWNONE
+                        ? 'event'
+                        : 'reviewed'}{' '}
+                      at:{' '}
                       {dateFormatter.format(
                         new Date(subjectStatus.lastReviewedAt),
                       )}
@@ -511,9 +519,9 @@ function Form(
                   )}
                 </p>
                 {!!subjectStatus.comment && (
-                  <p className="pt-1">
+                  <Card hint="important" className="mt-2">
                     <strong>Note:</strong> {subjectStatus.comment}
-                  </p>
+                  </Card>
                 )}
               </div>
             )}
@@ -719,17 +727,19 @@ function Form(
       {(subjectOptions?.length || 0) > 1 && (
         <div className="flex justify-between mt-auto">
           <ButtonSecondary
+            className="px-2 py-1"
             onClick={() => navigateQueue(-1)}
             disabled={submission.isSubmitting}
           >
-            <ArrowLeftIcon className="h-4 w-4 inline-block align-text-bottom" />
+            <ArrowLeftIcon className="h-3 w-3 sm:h-4 sm:w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
 
           <ButtonSecondary
+            className="px-2 py-1"
             onClick={() => navigateQueue(1)}
             disabled={submission.isSubmitting}
           >
-            <ArrowRightIcon className="h-4 w-4 inline-block align-text-bottom" />
+            <ArrowRightIcon className="h-3 w-3 sm:h-4 sm:w-4 inline-block align-text-bottom" />
           </ButtonSecondary>
         </div>
       )}
@@ -739,7 +749,7 @@ function Form(
 
 async function getSubject(subject: string) {
   if (subject.startsWith('did:')) {
-    const { data: repo } = await client.api.com.atproto.admin.getRepo(
+    const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
       {
         did: subject,
       },
@@ -747,7 +757,7 @@ async function getSubject(subject: string) {
     )
     return { repo }
   } else if (subject.startsWith('at://')) {
-    const { data: record } = await client.api.com.atproto.admin.getRecord(
+    const { data: record } = await client.api.tools.ozone.moderation.getRecord(
       {
         uri: subject,
       },
@@ -762,7 +772,7 @@ async function getSubject(subject: string) {
 async function getSubjectStatus(subject: string) {
   const {
     data: { subjectStatuses },
-  } = await client.api.com.atproto.admin.queryModerationStatuses(
+  } = await client.api.tools.ozone.moderation.queryStatuses(
     {
       subject,
       includeMuted: true,

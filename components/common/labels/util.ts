@@ -1,9 +1,10 @@
+import client from '@/lib/client'
 import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
-  ComAtprotoAdminDefs,
   ComAtprotoLabelDefs,
   LABELS,
+  ToolsOzoneModerationDefs,
 } from '@atproto/api'
 
 export function diffLabels(current: string[], next: string[]) {
@@ -75,7 +76,7 @@ export const doesProfileNeedBlur = ({
   repo,
 }: {
   profile?: AppBskyActorDefs.ProfileViewBasic
-  repo?: ComAtprotoAdminDefs.RepoView
+  repo?: ToolsOzoneModerationDefs.RepoView
 }) => {
   const labels: string[] = []
   if (profile?.labels) {
@@ -91,17 +92,21 @@ export const getLabelsForSubject = ({
   repo,
   record,
 }: {
-  repo?: ComAtprotoAdminDefs.RepoViewDetail
-  record?: ComAtprotoAdminDefs.RecordViewDetail
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail
+  record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
   return (record?.labels ??
     repo?.labels ??
     []) as Partial<ComAtprotoLabelDefs.Label>[]
 }
 
+const getCustomLabels = () =>
+  client.session?.config.labeler?.policies.labelValues
+
 export const buildAllLabelOptions = (
   defaultLabels: string[],
   options: string[],
 ) => {
-  return unique([...defaultLabels, ...options]).sort()
+  const customLabels = getCustomLabels()
+  return unique([...defaultLabels, ...options, ...(customLabels || [])]).sort()
 }

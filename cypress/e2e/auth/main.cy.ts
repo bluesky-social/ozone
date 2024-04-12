@@ -2,6 +2,7 @@
 
 describe('Authentication', () => {
   const SERVER_URL = 'https://bsky.social/xrpc/'
+  const PLC_URL = 'https://plc.directory'
 
   const mockAuthResponse = (response: Record<string, any>) =>
     cy.intercept(
@@ -11,7 +12,11 @@ describe('Authentication', () => {
     )
 
   const mockRepoResponse = (response: Record<string, any>) =>
-    cy.intercept('GET', `${SERVER_URL}/com.atproto.admin.getRepo*`, response)
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.moderation.getRepo*`,
+      response,
+    )
 
   const mockProfileResponse = (response: Record<string, any>) =>
     cy.intercept('GET', `${SERVER_URL}/app.bsky.actor.getProfile*`, response)
@@ -19,9 +24,13 @@ describe('Authentication', () => {
   const mockModerationReportsResponse = (response: Record<string, any>) =>
     cy.intercept(
       'GET',
-      `${SERVER_URL}/com.atproto.admin.queryModerationStatuses*`,
+      `${SERVER_URL}/tools.ozone.moderation.queryStatuses*`,
       response,
     )
+  const mockOzoneMetaResponse = (response: Record<string, any>) =>
+    cy.intercept('GET', '/.well-known/ozone-metadata.json', response)
+  const mockOzoneDidDataResponse = (response: Record<string, any>) =>
+    cy.intercept('GET', `${PLC_URL}/*/data`, response)
 
   let authFixture
 
@@ -68,6 +77,14 @@ describe('Authentication', () => {
       statusCode: 200,
       body: { cursor: null, subjectStatuses: [] },
     })
+    mockOzoneMetaResponse({
+      statusCode: 200,
+      body: authFixture.ozoneMetaResponse,
+    })
+    mockOzoneDidDataResponse({
+      statusCode: 200,
+      body: authFixture.ozoneDidDataResponse,
+    })
 
     cy.get('#service-url').should('have.value', 'https://bsky.social')
     cy.get('#account-handle').type('alice.test')
@@ -75,6 +92,6 @@ describe('Authentication', () => {
     cy.get("button[type='submit']").click()
 
     // Assert that the reports are displayed
-    cy.get('table').should('include.text', "Loading moderation queue...")
+    cy.get('table').should('include.text', 'Loading moderation queue...')
   })
 })

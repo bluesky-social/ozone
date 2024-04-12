@@ -1,5 +1,5 @@
 import client from '@/lib/client'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
 
@@ -7,16 +7,17 @@ export const createSubjectFromId = async (
   id: string,
 ): Promise<{
   subject: { $type: string } & ({ uri: string; cid: string } | { did: string })
-  record: ComAtprotoAdminDefs.RecordViewDetail | null
+  record: ToolsOzoneModerationDefs.RecordViewDetail | null
 }> => {
   if (isIdRecord(id)) {
     try {
-      const { data: record } = await client.api.com.atproto.admin.getRecord(
-        {
-          uri: id,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data: record } =
+        await client.api.tools.ozone.moderation.getRecord(
+          {
+            uri: id,
+          },
+          { headers: client.proxyHeaders() },
+        )
       return {
         record,
         subject: {
@@ -30,7 +31,7 @@ export const createSubjectFromId = async (
         // @TODO this is a roundabout way to get a record cid if the record was deleted.
         // It should work pretty well in this context, since createSubjectFromId() is generally used while resolving reports.
         const { data: eventData } =
-          await client.api.com.atproto.admin.queryModerationEvents(
+          await client.api.tools.ozone.moderation.queryEvents(
             {
               subject: id,
               limit: 1,
@@ -67,6 +68,31 @@ export enum CollectionId {
   Profile = 'app.bsky.actor.profile',
   List = 'app.bsky.graph.list',
   Post = 'app.bsky.feed.post',
+  LabelerService = 'app.bsky.labeler.service',
 }
 export const getProfileUriForDid = (did: string) =>
   `at://${did}/${CollectionId.Profile}/self`
+
+export const getCollectionName = (collection: string) => {
+  if (collection === CollectionId.Post) {
+    return 'Post'
+  }
+  if (collection === CollectionId.Profile) {
+    return 'Profile'
+  }
+  if (collection === CollectionId.List) {
+    return 'List'
+  }
+  if (collection === CollectionId.FeedGenerator) {
+    return 'Feed'
+  }
+  if (collection === CollectionId.LabelerService) {
+    return 'Labeler'
+  }
+  // If the collection is a string with ., use the last two segments as the title
+  // so app.bsky.graph.list -> graph list
+  if (collection.includes('.')) {
+    return collection.split('.').slice(-2).join(' ')
+  }
+  return ''
+}

@@ -1,6 +1,5 @@
 import { ComponentProps } from 'react'
-import Link from 'next/link'
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
 import { formatBytes } from '@/lib/util'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
@@ -8,7 +7,7 @@ import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
 export function BlobList(props: {
   name: string
   disabled?: boolean
-  blobs: ComAtprotoAdminDefs.BlobView[]
+  blobs: ToolsOzoneModerationDefs.BlobView[]
 }) {
   const { name, disabled, blobs } = props
   return (
@@ -34,7 +33,7 @@ export function BlobList(props: {
                 disabled={disabled}
               />
             </div>
-            <div className="ml-3 text-sm min-w-0 text-ellipsis overflow-hidden whitespace-nowrap">
+            <div className="ml-1 sm:ml-3 text-sm min-w-0 overflow-hidden">
               <label
                 htmlFor={`blob-${blob.cid}`}
                 className="font-medium text-gray-700 dark:text-gray-100"
@@ -47,13 +46,14 @@ export function BlobList(props: {
                     </ReviewStateIconLink>{' '}
                   </>
                 )}
-                {blob.cid}
+                {/* blob cids are long strings of random characters. on mobile screens, it will almost always cause overflow so breaking it into multi lines */}
+                <span className="break-all">{blob.cid}</span>
               </label>
               <p id={`blob-${blob.cid}-description`}>
                 <Chip>{blob.mimeType}</Chip>
                 <Chip>{formatBytes(blob.size)}</Chip>
-                {(ComAtprotoAdminDefs.isImageDetails(blob.details) ||
-                  ComAtprotoAdminDefs.isVideoDetails(blob.details)) && (
+                {(ToolsOzoneModerationDefs.isImageDetails(blob.details) ||
+                  ToolsOzoneModerationDefs.isVideoDetails(blob.details)) && (
                   <Chip>
                     {blob.details.height}x{blob.details.width}px
                   </Chip>

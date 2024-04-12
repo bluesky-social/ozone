@@ -1,13 +1,11 @@
-import clientManager from '@/lib/client'
 import { getDidFromHandle } from '@/lib/identity'
-import { CollectionId } from '@/reports/helpers/subject'
+import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { AtUri } from '@atproto/api'
 import {
   ChatBubbleLeftIcon,
   UserGroupIcon,
   PuzzlePieceIcon,
   LifebuoyIcon,
-  MegaphoneIcon,
 } from '@heroicons/react/24/outline'
 import {
   useKBar,
@@ -25,6 +23,7 @@ import {
   isValidDid,
   isValidHandle,
   parseAtUri,
+  buildAtUriFromFragments,
 } from '../../../lib/util'
 
 const PostIcon = ChatBubbleLeftIcon
@@ -41,12 +40,12 @@ const ActionSections: Record<string, ActionSection> = {
     name: 'Actions',
     priority: 3,
   },
-  reports: {
-    name: 'Reports',
-    priority: 2,
-  },
   details: {
     name: 'Details',
+    priority: 2,
+  },
+  reports: {
+    name: 'Reports',
     priority: 1,
   },
 }
@@ -68,6 +67,7 @@ const buildItemForDid = ({
       icon: <RepoIcon className={iconClassName} />,
       subtitle: `Open DID in action panel`,
       section: ActionSections.actions,
+      priority: 5,
       perform: () => {
         router.push(`?quickOpen=${did}`)
       },
@@ -95,7 +95,20 @@ const buildItemForProfile = ({
   router,
 }: ItemBuilderProps): Action[] => {
   const typeText = type === 'did' ? type.toUpperCase() : type
-  const actions: Action[] = [
+  const actions: Action[] = []
+
+  // Right now, we can't search reports by a handle
+  if (type !== 'handle') {
+    actions.push(
+      ...buildItemForDid({
+        search,
+        router,
+        did: profileKey,
+      }),
+    )
+  }
+
+  actions.push(
     {
       id: `view-profile-by-${type}`,
       name: `Profile for ${profileKey}`,
@@ -131,18 +144,7 @@ const buildItemForProfile = ({
         router.push(`/repositories/${profileKey.replace('@', '')}?tab=email`)
       },
     },
-  ]
-
-  // Right now, we can't search reports by a handle
-  if (type !== 'handle') {
-    actions.push(
-      ...buildItemForDid({
-        search,
-        router,
-        did: profileKey,
-      }),
-    )
-  }
+  )
 
   return actions
 }
@@ -152,26 +154,35 @@ export const useCommandPaletteAsyncSearch = () => {
   const { search } = useKBar<{ search: string }>((state) => ({
     search: state.searchQuery,
   }))
-  const [didFromHandle, setDidFromHandle] = useState<string>('')
-  const setDidFromSearch = () =>
-    getDidFromHandle(search).then((did) => {
+  const [didFromHandle, setDidFromHandle] = useState<{
+    did: string
+    handle: string
+  }>({ did: '', handle: '' })
+  const setDidFromSearch = (handle: string) => {
+    setDidFromHandle({ did: '', handle })
+    if (!handle) return
+    getDidFromHandle(handle).then((did) => {
       if (did) {
-        setDidFromHandle(did)
+        setDidFromHandle({ did, handle })
       } else {
-        setDidFromHandle('')
+        setDidFromHandle({ did: '', handle })
       }
     })
+  }
 
   useEffect(() => {
-    if (isValidHandle(search)) {
-      setDidFromSearch()
-    } else if (isBlueSkyAppUrl(search)) {
+    // When full url is pasted in, it may contain user handle
+    // so let's check for the full URL match first
+    if (isBlueSkyAppUrl(search)) {
       const fragments = getFragmentsFromBlueSkyAppUrl(search)
       if (fragments?.handle) {
-        setDidFromSearch()
+        setDidFromSearch(fragments.handle)
       }
+      // When the search query is an at-uri, it surely won't be a valid handle
+    } else if (isValidHandle(search) && !search.startsWith('at://')) {
+      setDidFromSearch(search)
     } else {
-      setDidFromHandle('')
+      setDidFromSearch('')
     }
   }, [search])
 
@@ -194,56 +205,13 @@ export const useCommandPaletteAsyncSearch = () => {
       })
     } else if (isBlueSkyAppUrl(search)) {
       const fragments = getFragmentsFromBlueSkyAppUrl(search)
-
-      if (fragments?.cid) {
-        actions.push(
-          {
-            id: 'report-post',
-            name: `Report post ${fragments.cid}`,
-            section: ActionSections.actions,
-            icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},report,post`,
-            subtitle: 'Go to post record and open report panel',
-            perform: () => {
-              router.push(
-                `/repositories/${fragments.did || fragments.handle}/${
-                  CollectionId.Post
-                }/${fragments.cid}?reportUri=default`,
-              )
-            },
-          },
-          {
-            id: 'view-post',
-            name: `View post ${fragments.cid}`,
-            section: ActionSections.details,
-            icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},view,post`,
-            subtitle: 'Go to post record',
-            perform: () => {
-              router.push(
-                `/repositories/${fragments.did || fragments.handle}/${
-                  CollectionId.Post
-                }/${fragments.cid}`,
-              )
-            },
-          },
-          {
-            id: 'search-reports-by-post',
-            name: `Reports for post ${fragments.cid}`,
-            section: ActionSections.reports,
-            icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},search,report,post`,
-            subtitle: 'Go to reports page and filter by this post',
-            perform: () => {
-              router.push(
-                `/reports?term=at://${fragments.did || fragments.handle}/${
-                  CollectionId.Post
-                }/${fragments.cid}`,
-              )
-            },
-          },
-        )
+      // From the URL, if we didn't get a DID but if the handle was resolved into DID
+      // let's inject the DID into the fragments container so we can use it when building atUri
+      if (fragments?.handle && !fragments?.did && didFromHandle.did) {
+        fragments.did = didFromHandle.did
       }
+      const atUri = buildAtUriFromFragments(fragments)
+      const collectionName = getCollectionName(fragments?.collection || '')
 
       if (fragments?.did) {
         actions.push(
@@ -266,18 +234,83 @@ export const useCommandPaletteAsyncSearch = () => {
           }),
         )
       }
+
+      if (fragments?.rkey && collectionName) {
+        if (atUri) {
+          actions.push({
+            id: `show-action-for-${collectionName}`,
+            name: `Take action on ${collectionName}`,
+            keywords: `${search},${collectionName},search,action`,
+            icon: <PostIcon className={iconClassName} />,
+            subtitle: `Open ${collectionName} in action panel`,
+            section: ActionSections.actions,
+            // When we have an exact content by rkey, we want to prioritize it over action for the account by did
+            priority: 6,
+            perform: () => {
+              router.push(`?quickOpen=${atUri}`)
+            },
+          })
+        }
+        actions.push(
+          {
+            id: `report-${collectionName}`,
+            name: `Report ${collectionName} ${fragments.rkey}`,
+            section: ActionSections.actions,
+            icon: <PostIcon className={iconClassName} />,
+            keywords: `${search},report,${collectionName}`,
+            subtitle: `Go to ${collectionName} record and open report panel`,
+            perform: () => {
+              router.push(
+                `/repositories/${fragments.did || fragments.handle}/${
+                  CollectionId.Post
+                }/${fragments.rkey}?reportUri=default`,
+              )
+            },
+          },
+          {
+            id: `view-${collectionName}`,
+            name: `View ${collectionName} ${fragments.rkey}`,
+            section: ActionSections.details,
+            icon: <PostIcon className={iconClassName} />,
+            keywords: `${search},view,${collectionName}`,
+            subtitle: `Go to ${collectionName} record`,
+            perform: () => {
+              router.push(
+                `/repositories/${fragments.did || fragments.handle}/${
+                  CollectionId.Post
+                }/${fragments.rkey}`,
+              )
+            },
+          },
+          {
+            id: `search-reports-by-${collectionName}`,
+            name: `Reports for ${collectionName} ${fragments.rkey}`,
+            section: ActionSections.reports,
+            icon: <PostIcon className={iconClassName} />,
+            keywords: `${search},search,report,${collectionName}`,
+            subtitle: `Go to reports page and filter by this ${collectionName}`,
+            perform: () => {
+              router.push(
+                `/reports?term=at://${fragments.did || fragments.handle}/${
+                  CollectionId.Post
+                }/${fragments.rkey}`,
+              )
+            },
+          },
+        )
+      }
     } else if (search.startsWith('at://')) {
       const { did, collection, rkey } = parseAtUri(search) || {}
       if (did && collection && rkey) {
-        const readableCollection = collection.split('.').pop()
+        const readableCollection = getCollectionName(collection)
         actions.push(
           {
-            id: 'report-post',
+            id: `report-${readableCollection}`,
             name: `Report ${readableCollection} ${rkey}`,
             section: ActionSections.actions,
             icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},report,post`,
-            subtitle: 'Go to post record and open report panel',
+            keywords: `report,${readableCollection},${search}`,
+            subtitle: `Go to ${readableCollection} record and open report panel`,
             perform: () => {
               router.push(
                 `/repositories/${did}/${collection}/${rkey}?reportUri=${search}`,
@@ -285,12 +318,15 @@ export const useCommandPaletteAsyncSearch = () => {
             },
           },
           {
-            id: 'action-post',
+            id: `action-${readableCollection}`,
             name: `Action ${readableCollection} ${rkey}`,
             section: ActionSections.actions,
             icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},action,post`,
+            keywords: `action,${readableCollection},${search}`,
             subtitle: 'Open action panel for post',
+            // for a complete record uri, we would want it to be the first action
+            // the account actions should come after it
+            priority: 7,
             perform: () => {
               router.push(
                 `?quickOpen=${AtUri.make(did, collection, rkey).toString()}`,
@@ -298,12 +334,12 @@ export const useCommandPaletteAsyncSearch = () => {
             },
           },
           {
-            id: 'view-post',
+            id: `view-${readableCollection}`,
             name: `View ${readableCollection} ${rkey}`,
             section: ActionSections.details,
             icon: <PostIcon className={iconClassName} />,
-            keywords: `${search},view,post`,
-            subtitle: 'Go to post record',
+            keywords: `view,${readableCollection},${search}`,
+            subtitle: `Go to ${readableCollection} record`,
             perform: () => {
               router.push(`/repositories/${did}/${collection}/${rkey}`)
             },
@@ -341,13 +377,13 @@ export const useCommandPaletteAsyncSearch = () => {
       )
     }
 
-    if (didFromHandle) {
+    if (didFromHandle.handle) {
       actions.push(
         ...buildItemForDid({
           search,
           router,
-          handle: search,
-          did: didFromHandle,
+          handle: didFromHandle.handle,
+          did: didFromHandle.did,
         }),
       )
     }

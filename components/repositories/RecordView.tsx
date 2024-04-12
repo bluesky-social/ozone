@@ -2,16 +2,15 @@
 import { ReactNode, useState } from 'react'
 import Link from 'next/link'
 import {
-  ComAtprotoAdminGetRecord as GetRecord,
+  ToolsOzoneModerationGetRecord as GetRecord,
   AppBskyFeedGetPostThread as GetPostThread,
-  ComAtprotoAdminDefs,
   AppBskyFeedDefs,
   AppBskyActorDefs,
+  ToolsOzoneModerationDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
   ExclamationCircleIcon,
-  ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import { Json } from '../common/Json'
 import { classNames, parseAtUri } from '@/lib/util'
@@ -249,10 +248,7 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
         <DataField label="Handle" value={record.repo.handle} showCopyButton>
-          <Link
-            href={`/repositories/${record.repo.did}`}
-            className="underline"
-          >
+          <Link href={`/repositories/${record.repo.did}`} className="underline">
             {record.repo.handle}
           </Link>
         </DataField>
@@ -289,7 +285,7 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
   )
 }
 
-function Blobs({ blobs }: { blobs: ComAtprotoAdminDefs.BlobView[] }) {
+function Blobs({ blobs }: { blobs: ToolsOzoneModerationDefs.BlobView[] }) {
   return <BlobsTable blobs={blobs} />
 }
 

@@ -18,17 +18,14 @@ export function ProfileMenu() {
   const [avatar, setAvatar] = useState<string>('')
 
   useEffect(() => {
-    const onClientChange = () =>
-      setAuthContextData(
-        Client.isAuthed ? AuthState.LoggedIn : AuthState.LoggedOut,
-      )
+    const onClientChange = () => setAuthContextData(Client.authState)
     Client.addEventListener('change', onClientChange)
     return () => Client.removeEventListener('change', onClientChange)
   }, [])
 
   useEffect(() => {
     let aborted = false
-    if (!Client.isAuthed) {
+    if (Client.authState !== AuthState.LoggedIn) {
       localStorage.cachedProfileHandle = ''
       localStorage.cachedProfileAvatar = ''
       setHandle('')
