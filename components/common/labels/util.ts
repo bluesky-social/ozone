@@ -47,7 +47,7 @@ export const LabelGroupInfo: Record<string, { color: string }> = {
   [LABELS.sexual.identifier]: {
     color: '#d45722',
   },
-  [LABELS.gore.identifier]: {
+  [LABELS['graphic-media'].identifier]: {
     color: '#d42222',
   },
   [LABELS.porn.identifier]: {
@@ -56,13 +56,10 @@ export const LabelGroupInfo: Record<string, { color: string }> = {
   [LABELS.nudity.identifier]: {
     color: '#3502cc',
   },
-  [LABELS.doxxing.identifier]: {
-    color: '#ccb802',
-  },
 }
 
 const labelsRequiringBlur = [
-  LABELS.gore.identifier,
+  LABELS['graphic-media'].identifier,
   LABELS.porn.identifier,
   LABELS.nudity.identifier,
   LABELS.sexual.identifier,
