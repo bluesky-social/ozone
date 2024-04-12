@@ -1,3 +1,5 @@
+import client from '@/lib/client'
+
 const key = 'external_labeler_dids'
 
 export const getExternalLabelers = () => {
@@ -16,7 +18,9 @@ export const addExternalLabelerDid = (did: string, data: any) => {
 
 export const removeExternalLabelerDid = (did: string) => {
   const labelers = getExternalLabelers()
-  if (!labelers[did]) return labelers
+  const serviceDid = client.getServiceDid()?.split('#')[0]
+  // Don't allow removing original service DID
+  if (!labelers[did] || serviceDid === did) return labelers
   delete labelers[did]
   localStorage.setItem(key, JSON.stringify(labelers))
   return labelers

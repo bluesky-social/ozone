@@ -119,11 +119,11 @@ class ClientManager extends EventTarget {
     const labelerDids = Object.keys(externalLabelers)
       .map(_ensureServiceId)
       .join(',')
-    console.log(labelerDids)
+
     return proxy
       ? {
           'atproto-proxy': _ensureServiceId(proxy),
-          'Atproto-Accept-Labelers': labelerDids,
+          'atproto-accept-labelers': labelerDids,
         }
       : {}
   }
