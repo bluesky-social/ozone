@@ -1,7 +1,5 @@
 export const OZONE_SERVICE_DID =
-  process.env.NEXT_PUBLIC_OZONE_SERVICE_DID ||
-  'did:plc:zr3ma7h3tavnvqovjf73llrw' ||
-  'did:plc:ar7c4by46qjdydhdevvrndac'
+  process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
 
 export const PLC_DIRECTORY_URL =
   process.env.NEXT_PUBLIC_PLC_DIRECTORY_URL ||

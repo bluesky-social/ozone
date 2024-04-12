@@ -1,13 +1,6 @@
+import client from '@/lib/client'
 import { Card } from '@/common/Card'
-import {
-  LabelChip,
-  LabelList,
-  displayLabel,
-  getLabelGroupInfo,
-  unFlagSelfLabel,
-  ModerationLabel,
-} from '@/common/labels'
-import { OZONE_SERVICE_DID } from '@/lib/constants'
+import { LabelChip, LabelList, ModerationLabel } from '@/common/labels'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import {
   ToolsOzoneModerationDefs,
@@ -173,7 +166,12 @@ const EventLabels = ({
         return (
           <ModerationLabel
             key={label}
-            label={{ val: label, src: OZONE_SERVICE_DID, uri: '', cts: '' }}
+            label={{
+              val: label,
+              src: client.getServiceDid() || '',
+              uri: '',
+              cts: '',
+            }}
           />
         )
       })}
