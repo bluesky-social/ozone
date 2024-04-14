@@ -14,6 +14,24 @@ import {
 import { MOD_EVENTS } from './constants'
 import { ItemTitle } from './ItemTitle'
 
+const LinkToAuthor = ({
+  creatorHandle,
+  createdBy,
+}: {
+  creatorHandle?: string
+  createdBy: string
+}) => {
+  return (
+    <a
+      target="_blank"
+      href={`/repositories/${createdBy}?quickOpen=${createdBy}`}
+      className="underline"
+    >
+      {creatorHandle ? `@${creatorHandle}` : createdBy}
+    </a>
+  )
+}
+
 const Comment = ({
   modEvent,
 }: {
@@ -87,17 +105,25 @@ const Report = ({
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
     <Card>
-      <p className="flex justify-between">
+      <div className="flex justify-between">
         <span>
           By{' '}
-          {modEvent.creatorHandle
-            ? `@${modEvent.creatorHandle}`
-            : modEvent.createdBy}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
         </span>
-        {modEvent.event.reportType && !isAppeal && (
-          <ReasonBadge reasonType={modEvent.event.reportType} />
-        )}
-      </p>
+        <div>
+          {modEvent.event.reportType && !isAppeal && (
+            <ReasonBadge reasonType={modEvent.event.reportType} />
+          )}
+          {modEvent.event.isReporterMuted && (
+            <LabelChip className="bg-violet-100 text-violet-800">
+              Muted Report
+            </LabelChip>
+          )}
+        </div>
+      </div>
       {modEvent.event.comment && (
         <p className="mt-1">{modEvent.event.comment}</p>
       )}
@@ -117,19 +143,26 @@ const TakedownOrMute = ({
   const expiresAt = getExpiresAtFromEvent(modEvent)
   return (
     <Card>
-      <p className="flex justify-between">
+      <div className="flex justify-between">
         <span>
           By{' '}
           {modEvent.creatorHandle
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-        {!!modEvent.event.durationInHours && (
-          <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-            {modEvent.event.durationInHours}hrs
-          </span>
-        )}
-      </p>
+        <div>
+          {!!modEvent.event.durationInHours && (
+            <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
+              {modEvent.event.durationInHours}hrs
+            </span>
+          )}
+          {!!modEvent.event.reportingOnly && (
+            <LabelChip className="bg-violet-100 text-violet-800">
+              Reports Only
+            </LabelChip>
+          )}
+        </div>
+      </div>
       {expiresAt && (
         <p className="mt-1">Until {dateFormatter.format(expiresAt)}</p>
       )}

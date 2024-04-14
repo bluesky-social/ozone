@@ -3,6 +3,7 @@ import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
+import { isMuted } from '@/subject/helpers'
 
 const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
@@ -79,11 +80,19 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show mute action if subject is already muted
-      if (key === MOD_EVENTS.MUTE && subjectStatus?.muteUntil) {
+      if (
+        key === MOD_EVENTS.MUTE &&
+        isMuted(subjectStatus) &&
+        isMuted(subjectStatus, true)
+      ) {
         return false
       }
       // Don't show unmute action if subject is not muted
-      if (key === MOD_EVENTS.UNMUTE && !subjectStatus?.muteUntil) {
+      if (
+        key === MOD_EVENTS.UNMUTE &&
+        !isMuted(subjectStatus) &&
+        !isMuted(subjectStatus, true)
+      ) {
         return false
       }
       // Don't show escalate action if subject is already escalated
