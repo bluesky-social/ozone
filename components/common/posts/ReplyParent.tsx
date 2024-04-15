@@ -40,10 +40,10 @@ export const ReplyParent = ({
     <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
       Reply to{' '}
       <Link
-        href={`/repositories/${parentAuthor.handle}`}
+        href={`/repositories/${parentAuthor.did}`}
         className="hover:underline"
       >
-        @{parentAuthor.handle}
+        @{parentAuthor.did}
       </Link>
     </Wrapper>
   )
