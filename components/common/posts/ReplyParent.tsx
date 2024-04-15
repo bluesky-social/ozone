@@ -1,5 +1,7 @@
 import { AppBskyActorDefs, AppBskyFeedDefs } from '@atproto/api'
 import Link from 'next/link'
+import { usePathname, useSearchParams } from 'next/navigation'
+import { useCallback } from 'react'
 
 export const ReplyParent = ({
   reply,
@@ -10,15 +12,31 @@ export const ReplyParent = ({
 }) => {
   const parent = reply.parent
   const Wrapper = inline ? 'span' : 'p'
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+
+  const createLinkToActionPanel = useCallback(
+    (name: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set(name, value)
+
+      return `${pathname}?${params.toString()}`
+    },
+    [searchParams, pathname],
+  )
 
   if (!parent) return null
+
   if (parent.notFound) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
         Reply to{' '}
-        <a target="_blank" href={`/reports?quickOpen=${parent.uri}`}>
+        <Link
+          className="underline"
+          href={createLinkToActionPanel('quickOpen', `${parent.uri}`)}
+        >
           a deleted post
-        </a>
+        </Link>
       </Wrapper>
     )
   }
@@ -29,9 +47,12 @@ export const ReplyParent = ({
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
         Reply to{' '}
-        <a target="_blank" href={`/reports?quickOpen=${parent.uri}`}>
+        <Link
+          className="underline"
+          href={createLinkToActionPanel('quickOpen', `${parent.uri}`)}
+        >
           an anonymous post
-        </a>
+        </Link>
       </Wrapper>
     )
   }
@@ -43,7 +64,7 @@ export const ReplyParent = ({
         href={`/repositories/${parentAuthor.did}`}
         className="hover:underline"
       >
-        @{parentAuthor.did}
+        @{parentAuthor.handle}
       </Link>
     </Wrapper>
   )
