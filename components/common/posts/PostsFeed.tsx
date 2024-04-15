@@ -7,7 +7,6 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  AppBskyActorDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -25,13 +24,13 @@ import {
   LabelList,
   doesLabelNeedBlur,
   toLabelVal,
-  LabelGroupInfo,
   getLabelGroupInfo,
 } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { ReplyParent } from './ReplyParent'
 
 export function PostsFeed({
   items,
@@ -141,28 +140,7 @@ function PostHeader({
               Peek
             </a>
           </p>
-          {item.reply ? (
-            <p className="text-gray-500 dark:text-gray-50 text-sm">
-              Reply to{' '}
-              <Link
-                href={`/repositories/${
-                  (
-                    item.reply.parent
-                      .author as AppBskyActorDefs.ProfileViewBasic
-                  ).handle
-                }`}
-                className="hover:underline"
-              >
-                @
-                {
-                  (
-                    item.reply.parent
-                      .author as AppBskyActorDefs.ProfileViewBasic
-                  ).handle
-                }
-              </Link>
-            </p>
-          ) : undefined}
+          {item.reply ? <ReplyParent reply={item.reply} /> : undefined}
         </div>
       </div>
     </div>
@@ -421,9 +399,7 @@ function PostLabels({
         const labelGroup = getLabelGroupInfo(val)
         return (
           <LabelChip
-            className={`${i === 0 ? 'ml-0' : ''} text-[${
-              labelGroup.color
-            }]`}
+            className={`${i === 0 ? 'ml-0' : ''} text-[${labelGroup.color}]`}
             // TODO: Ideally, we should just use inline class name but it only works when the class names are static
             // so trying to work around that with style prop for now
             style={{ color: labelGroup.color }}
