@@ -108,6 +108,7 @@ export const ModEventSelectorButton = ({
   }, [
     subjectStatus?.takendown,
     subjectStatus?.muteUntil,
+    subjectStatus?.muteReportingUntil,
     subjectStatus?.reviewState,
     subjectStatus?.appealed,
     hasBlobs,

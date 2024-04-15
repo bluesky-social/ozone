@@ -40,23 +40,31 @@ const Comment = ({
       | ToolsOzoneModerationDefs.ModEventEscalate
       | ToolsOzoneModerationDefs.ModEventAcknowledge
       | ToolsOzoneModerationDefs.ModEventComment
+      | ToolsOzoneModerationDefs.ModEventUnmute
   }
 }) => {
   return (
     <Card>
-      <p className="flex justify-between text-gray-500">
+      <div className="flex justify-between text-gray-500">
         <span>
           By{' '}
           {modEvent.creatorHandle
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-        {!!modEvent.event.sticky && (
-          <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-            Sticky
-          </span>
-        )}
-      </p>
+        <div>
+          {!!modEvent.event.sticky && (
+            <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
+              Sticky
+            </span>
+          )}
+          {!!modEvent.event.reportingOnly && (
+            <LabelChip className="bg-violet-100 text-violet-800">
+              Reports Only
+            </LabelChip>
+          )}
+        </div>
+      </div>
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
