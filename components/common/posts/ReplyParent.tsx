@@ -15,7 +15,10 @@ export const ReplyParent = ({
   if (parent.notFound) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-        Reply to a deleted post
+        Reply to{' '}
+        <a target="_blank" href={`/reports?quickOpen=${parent.uri}`}>
+          a deleted post
+        </a>
       </Wrapper>
     )
   }
@@ -25,7 +28,10 @@ export const ReplyParent = ({
   if (!parentAuthor) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-        Reply to an anonymous post
+        Reply to{' '}
+        <a target="_blank" href={`/reports?quickOpen=${parent.uri}`}>
+          an anonymous post
+        </a>
       </Wrapper>
     )
   }
