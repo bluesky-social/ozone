@@ -2,55 +2,69 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.11.1":
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.11.1.tgz#c9a1153ae99fe4ecb85306f9475edefb175ce97d"
-  integrity sha512-U0kdo73e5xFXD4YGLrpviMHPaB/BT4s/22Z/V/geha5V1zjo6DjSC1LVLV1oYx3r/nVaaspPmumwzM0oorU50w==
-  dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/lexicon" "^0.3.3"
-    "@atproto/syntax" "^0.2.1"
-    "@atproto/xrpc" "^0.4.3"
-    multiformats "^9.9.0"
-    tlds "^1.234.0"
-    typed-emitter "^2.1.0"
-    zod "^3.21.4"
+"@atproto/api@link:../atproto/packages/api/dist":
+  version "0.0.0"
+  uid ""
 
-"@atproto/common-web@^0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.2.4.tgz#a77e0a7f8f025115b3db4f7c530b934b10ab3d82"
-  integrity sha512-6+DOhQcTklFmeiSkZRx6iFeqi4OFtGl4yEDGATk00q4tEcPoPvyOBtYHN6+G9lrfJIfx5RfmggamvXlJv1PxxA==
-  dependencies:
-    graphemer "^1.4.0"
-    multiformats "^9.9.0"
-    uint8arrays "3.0.0"
-    zod "^3.21.4"
+"@atproto/caching@link:../atproto/packages/caching/dist":
+  version "0.0.0"
+  uid ""
 
-"@atproto/lexicon@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.3.3.tgz#e242bf8b024661b3312a8da5b84fe2cd627a6ab1"
-  integrity sha512-6FOjdc3V05JKrtkhjfhHMS7f/4hMJOeHNtoE3Na7iFMpzBz0Lw5sw8kIFKY8pc8IG79qGcFgELyHLsljZYX+5A==
-  dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/syntax" "^0.2.1"
-    iso-datestring-validator "^2.2.2"
-    multiformats "^9.9.0"
-    zod "^3.21.4"
+"@atproto/did@link:../atproto/packages/did/dist":
+  version "0.0.0"
+  uid ""
 
-"@atproto/syntax@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.2.1.tgz#3abcb050c122e7ce80fc25b49cd7d86c63dc6c2e"
-  integrity sha512-ImOuiICtB5h78j90hAYOfTYzr5q5Wut0irNdELiogA3i74a8EXThe+j6Tj8snanYggrShbu5c6BDc1tVj477Yw==
-  dependencies:
-    "@atproto/common-web" "^0.2.4"
+"@atproto/disposable-polyfill@link:../atproto/packages/disposable-polyfill/dist":
+  version "0.0.0"
+  uid ""
 
-"@atproto/xrpc@^0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.4.3.tgz#19d85cb7f343369363e664917945dec1f89fde97"
-  integrity sha512-0rn3abHORG0T93mci8WW97Cpg2ClU2aCtTq5rxdCPRsl9P4tyP+8F4snbkrIaMbVO05Rd9D9gFwtWs5Z473pCQ==
-  dependencies:
-    "@atproto/lexicon" "^0.3.3"
-    zod "^3.21.4"
+"@atproto/fetch@link:../atproto/packages/fetch/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/handle-resolver@link:../atproto/packages/handle-resolver/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/identity-resolver@link:../atproto/packages/identity-resolver/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/indexed-db@link:../atproto/packages/indexed-db/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/jwk-jose@link:../atproto/packages/jwk-jose/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/jwk-webcrypto@link:../atproto/packages/jwk-webcrypto/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/jwk@link:../atproto/packages/jwk/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/oauth-client-browser@link:../atproto/packages/oauth-client-browser/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/oauth-client-metadata@link:../atproto/packages/oauth-client-metadata/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/oauth-client@link:../atproto/packages/oauth-client/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/oauth-server-metadata-resolver@link:../atproto/packages/oauth-server-metadata-resolver/dist":
+  version "0.0.0"
+  uid ""
+
+"@atproto/oauth-server-metadata@link:../atproto/packages/oauth-server-metadata/dist":
+  version "0.0.0"
+  uid ""
 
 "@babel/runtime-corejs3@^7.10.2":
   version "7.20.6"
@@ -2016,11 +2030,6 @@ grapheme-splitter@^1.0.4:
   resolved "https://registry.npmjs.org/grapheme-splitter/-/grapheme-splitter-1.0.4.tgz"
   integrity sha512-bzh50DW9kTPM00T8y4o8vQg89Di9oLJVLW/KaOGIXJWP/iqCN6WKYkbNOF04vFLJhwcpYUh9ydh/+5vpOqV4YQ==
 
-graphemer@^1.4.0:
-  version "1.4.0"
-  resolved "https://registry.yarnpkg.com/graphemer/-/graphemer-1.4.0.tgz#fb2f1d55e0e3a1849aeffc90c4fa0dd53a0e66c6"
-  integrity sha512-EtKwoO6kxCL9WO5xipiHTZlSzBm7WLT627TqC/uVRd0HKmq8NXyebnNYxDoBi7wt8eTWrUrKXCOVaFq9x1kgag==
-
 has-bigints@^1.0.1, has-bigints@^1.0.2:
   version "1.0.2"
   resolved "https://registry.npmjs.org/has-bigints/-/has-bigints-1.0.2.tgz"
@@ -2481,11 +2490,6 @@ isexe@^2.0.0:
   version "2.0.0"
   resolved "https://registry.npmjs.org/isexe/-/isexe-2.0.0.tgz"
   integrity sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==
-
-iso-datestring-validator@^2.2.2:
-  version "2.2.2"
-  resolved "https://registry.yarnpkg.com/iso-datestring-validator/-/iso-datestring-validator-2.2.2.tgz#2daa80d2900b7a954f9f731d42f96ee0c19a6895"
-  integrity sha512-yLEMkBbLZTlVQqOnQ4FiMujR6T4DEcCb1xizmvXS+OxuhwcbtynoosRzdMA69zZCShCNAbi+gJ71FxZBBXx1SA==
 
 isstream@~0.1.2:
   version "0.1.2"
@@ -3221,11 +3225,6 @@ ms@^2.1.1:
   version "2.1.3"
   resolved "https://registry.npmjs.org/ms/-/ms-2.1.3.tgz"
   integrity sha512-6FlzubTLZG3J2a/NVCAleEhjzq5oxgHyaCU9yYXvcLsvoVaHJq/s5xXI6/XXP6tz7R9xAOtHnSO/tXtF3WRTlA==
-
-multiformats@^9.4.2, multiformats@^9.9.0:
-  version "9.9.0"
-  resolved "https://registry.yarnpkg.com/multiformats/-/multiformats-9.9.0.tgz#c68354e7d21037a8f1f8833c8ccd68618e8f1d37"
-  integrity sha512-HoMUjhH9T8DDBNT+6xzkrd9ga/XiBI4xLr58LJACwK6G3HTOPeMz4nB4KJs33L2BelrIJa7P0VuNaVF3hMYfjg==
 
 nano-css@^5.3.1:
   version "5.3.5"
@@ -4104,7 +4103,7 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-rxjs@^7.5.1, rxjs@^7.5.2:
+rxjs@^7.5.1:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
@@ -4490,11 +4489,6 @@ tiny-invariant@^1.2.0:
   resolved "https://registry.yarnpkg.com/tiny-invariant/-/tiny-invariant-1.3.1.tgz#8560808c916ef02ecfd55e66090df23a4b7aa642"
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
-tlds@^1.234.0:
-  version "1.251.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.251.0.tgz#d5a79fe0ddd564dadef7b3ce0b5f7f6e5acd2f99"
-  integrity sha512-yztVk5O1LGKCjPd+7soBQyiKvSBXI5qugc/X0C7pLa0rV5ufBS6xcyX0pdf4NznO8xcZ5fqX248q+jTHd4AQJA==
-
 tmp@~0.2.1:
   version "0.2.1"
   resolved "https://registry.yarnpkg.com/tmp/-/tmp-0.2.1.tgz#8457fc3037dcf4719c251367a1af6500ee1ccf14"
@@ -4608,13 +4602,6 @@ type-fest@^0.21.3:
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.21.3.tgz#d260a24b0198436e133fa26a524a6d65fa3b2e37"
   integrity sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==
 
-typed-emitter@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/typed-emitter/-/typed-emitter-2.1.0.tgz#ca78e3d8ef1476f228f548d62e04e3d4d3fd77fb"
-  integrity sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==
-  optionalDependencies:
-    rxjs "^7.5.2"
-
 typescript@4.9.4:
   version "4.9.4"
   resolved "https://registry.npmjs.org/typescript/-/typescript-4.9.4.tgz"
@@ -4624,13 +4611,6 @@ ua-parser-js@^1.0.35:
   version "1.0.37"
   resolved "https://registry.yarnpkg.com/ua-parser-js/-/ua-parser-js-1.0.37.tgz#b5dc7b163a5c1f0c510b08446aed4da92c46373f"
   integrity sha512-bhTyI94tZofjo+Dn8SN6Zv8nBDvyXTymAdM3LDI/0IboIUwTu1rEhW7v2TfiVsoYWgkQ4kOVqnI8APUFbIQIFQ==
-
-uint8arrays@3.0.0:
-  version "3.0.0"
-  resolved "https://registry.yarnpkg.com/uint8arrays/-/uint8arrays-3.0.0.tgz#260869efb8422418b6f04e3fac73a3908175c63b"
-  integrity sha512-HRCx0q6O9Bfbp+HHSfQQKD7wU70+lydKVt4EghkdOvlK/NlrF90z+eXV34mUd48rNvVJXwkrMSPpCATkct8fJA==
-  dependencies:
-    multiformats "^9.4.2"
 
 unbox-primitive@^1.0.2:
   version "1.0.2"
@@ -4908,11 +4888,6 @@ yocto-queue@^0.1.0:
   version "0.1.0"
   resolved "https://registry.npmjs.org/yocto-queue/-/yocto-queue-0.1.0.tgz"
   integrity sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==
-
-zod@^3.21.4:
-  version "3.22.4"
-  resolved "https://registry.yarnpkg.com/zod/-/zod-3.22.4.tgz#f31c3a9386f61b1f228af56faa9255e845cf3fff"
-  integrity sha512-iC+8Io04lddc+mVqQ9AZ7OQ2MrUKGN+oIQyq1vemgt46jwCwLfhq7/pwnBnNXXXZb8VTVLKwp9EDkx+ryxIWmg==
 
 zwitch@^2.0.0, zwitch@^2.0.4:
   version "2.0.4"
