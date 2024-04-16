@@ -23,7 +23,12 @@ import { oauthClientMetadataSchema } from '@atproto/oauth-client-metadata'
 
 const CURRENT_SESSION_ID_KEY = 'CURRENT_SESSION_ID_KEY'
 
-export function useOAuth(factory: BrowserOAuthClientFactory) {
+export function useOAuth(
+) {
+  const [factory, setFactory] = useState<
+  null|
+  BrowserOAuthClientFactory
+  >(null)
   const [initialized, setInitialized] = useState(false)
   const [client, setClient] = useState<undefined | null | OAuthClient>(void 0)
   const [clients, setClients] = useState<{ [_: string]: OAuthClient }>({})
@@ -34,6 +39,20 @@ export function useOAuth(factory: BrowserOAuthClientFactory) {
   const semaphore = useRef(0)
 
   useEffect(() => {
+    const oauthFactory = new BrowserOAuthClientFactory({
+      clientMetadata: oauthClientMetadataSchema.parse({
+        client_id: 'http://localhost/',
+        redirect_uris: [new URL(location.origin).href],
+        response_types: ['code id_token', 'code'],
+      }),
+      responseMode: 'fragment',
+      plcDirectoryUrl: 'http://localhost:2582', // dev-env
+      atprotoLexiconUrl: 'http://localhost:2584', // dev-env (bsky appview)
+    })
+    setFactory(oauthFactory)
+  }, [setFactory])
+
+  useEffect(() => {
     if (client != null) {
       localStorage.setItem(CURRENT_SESSION_ID_KEY, client.sessionId)
     } else if (client === null) {
@@ -42,6 +61,8 @@ export function useOAuth(factory: BrowserOAuthClientFactory) {
   }, [client])
 
   useEffect(() => {
+    if (!factory) return
+
     semaphore.current++
 
     setInitialized(false)
@@ -100,6 +121,7 @@ export function useOAuth(factory: BrowserOAuthClientFactory) {
 
   const signIn = useCallback(
     async (input: string, options?: OAuthAuthorizeOptions) => {
+      if (!factory) return
       if (client) return
 
       if (semaphore.current) return
@@ -134,18 +156,8 @@ export function useOAuth(factory: BrowserOAuthClientFactory) {
   }
 }
 
-export const oauthFactory = new BrowserOAuthClientFactory({
-  clientMetadata: oauthClientMetadataSchema.parse({
-    client_id: 'http://localhost/',
-    redirect_uris: ['http://127.0.0.1:5173/'],
-    response_types: ['code id_token', 'code'],
-  }),
-  responseMode: 'fragment',
-  plcDirectoryUrl: 'http://localhost:2582', // dev-env
-  atprotoLexiconUrl: 'http://localhost:2584', // dev-env (bsky appview)
-})
 
-export function LoginModal(oauthFactory) {
+export function LoginModal() {
   const {
     initialized,
     client,
@@ -154,7 +166,8 @@ export function LoginModal(oauthFactory) {
     error: authError,
     loading,
     signIn,
-  } = useOAuth(oauthFactory)
+  } = useOAuth()
+
   const { isValidatingAuth, isLoggedIn, authState } = useContext(AuthContext)
   const setAuthContextData = useContext(AuthChangeContext)
   const [error, setError] = useState('')
