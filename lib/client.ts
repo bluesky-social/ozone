@@ -1,9 +1,13 @@
-import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
+import {
+  AppBskyActorDefs,
+  AtpSessionData,
+  ToolsOzoneModerationQueryStatuses,
+} from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
+import { OAuthClient } from '@atproto/oauth-client'
 
-export interface ClientSession extends AtpSessionData {
-  service: string
+export interface ClientSession extends Pick<AtpSessionData, 'handle' | 'did'> {
   config: OzoneConfig
   skipRecord: boolean
 }
@@ -13,7 +17,7 @@ export interface ClientSession extends AtpSessionData {
 
 class ClientManager extends EventTarget {
   hasSetup = false
-  private _agent: AtpAgent | undefined
+  private _agent: OAuthClient | undefined
   private _session: ClientSession | undefined
 
   get authState() {
@@ -31,13 +35,6 @@ class ClientManager extends EventTarget {
     return AuthState.LoggedIn
   }
 
-  get api(): AtpServiceClient {
-    if (this._agent) {
-      return this._agent.api
-    }
-    throw new Error('Not authed')
-  }
-
   get session(): ClientSession {
     if (this._session) {
       return this._session
@@ -49,50 +46,30 @@ class ClientManager extends EventTarget {
   async setup() {
     if (this.hasSetup) return this.authState
     this._session = _loadSession()
-    await this._setup()
     this.hasSetup = true
     this._emit('change')
     return this.authState
   }
 
-  async signin(service: string, handle: string, password: string) {
-    const agent = new AtpAgent({
-      service,
-      persistSession: (_type, session) => {
-        this._onSessionChange(session)
-      },
-    })
-    const { data: login } = await agent.login({
-      identifier: handle,
-      password,
-    })
+  async signin(agent: OAuthClient) {
+    const userInfo = await agent.getUserinfo()
+    console.log('signing in')
     const config = await this._getConfig()
-    await this._checkCredentials(agent, login.did, config.did)
+    await this._checkCredentials(agent, userInfo.sub, config.did)
     this._session = {
-      service,
       config,
-      skipRecord: config.did !== login.did, // skip if not logged-in as service account
-      accessJwt: login.accessJwt,
-      refreshJwt: login.refreshJwt,
-      handle: login.handle,
-      did: login.did,
+      skipRecord: config.did !== userInfo.sub, // skip if not logged-in as service account
+      handle: userInfo.userinfo.preferred_username?.replace('@', ''),
+      did: userInfo.sub,
     }
     this._agent = agent
     _saveSession(this._session)
     this._emit('change')
+    this.hasSetup = true
     return this.authState
   }
 
   async signout() {
-    try {
-      this._agent?.api.com.atproto.server.deleteSession(undefined, {
-        headers: {
-          authorization: `Bearer ${this.session.refreshJwt}`,
-        },
-      })
-    } catch (err) {
-      console.error('(Minor issue) Failed to delete session on the server', err)
-    }
     this._clear()
     this._emit('change')
     return this.authState
@@ -116,38 +93,25 @@ class ClientManager extends EventTarget {
     return proxy ? { 'atproto-proxy': _ensureServiceId(proxy) } : {}
   }
 
-  private async _setup() {
-    if (this._session) {
-      const agent = new AtpAgent({
-        service: this._session.service,
-        persistSession: (_type, session) => {
-          this._onSessionChange(session)
-        },
-      })
-      await agent.resumeSession(this._session)
-      this._agent = agent
-    } else {
-      this._agent = undefined
-    }
-  }
-
   private async _getConfig(ozoneDid?: string) {
     const builtIn =
       ozoneDid ||
       process.env.NEXT_PUBLIC_OZONE_SERVICE_DID ||
-      `did:plc:gjviapkxyqvtqqvvbpzxzr6k` ||
+      `did:plc:6utqfv3asdb7buu6iqvp6hza` ||
       undefined
     return await getConfig(builtIn)
   }
 
   private async _checkCredentials(
-    agent: AtpAgent,
+    agent: OAuthClient,
     accountDid: string,
     ozoneDid: string,
   ) {
     try {
-      await agent.api.tools.ozone.moderation.getRepo(
-        { did: accountDid },
+      await agent.request(
+        `/xrpc/tools.ozone.moderation.getRepo?${new URLSearchParams({
+          did: accountDid,
+        }).toString()}`,
         { headers: this.proxyHeaders(ozoneDid) },
       )
     } catch (err) {
@@ -159,16 +123,6 @@ class ClientManager extends EventTarget {
     }
   }
 
-  private _onSessionChange(newSession?: AtpSessionData) {
-    if (newSession && this._session) {
-      Object.assign(this._session, newSession)
-      _saveSession(this._session)
-    } else {
-      this._clear()
-      this._emit('change')
-    }
-  }
-
   private _clear() {
     _deleteSession()
     this._agent = undefined
@@ -177,6 +131,53 @@ class ClientManager extends EventTarget {
 
   private _emit(type: string) {
     this.dispatchEvent(new Event(type))
+  }
+
+  get api() {
+    if (!this._agent) {
+      throw new Error('Not authed')
+    }
+
+    return {
+      app: {
+        bsky: {
+          actor: {
+            getProfile: async (opts: { actor: string }) => {
+              const res = await this._agent?.request(
+                `/xrpc/tools.ozone.actor.getProfile?${new URLSearchParams(
+                  opts,
+                ).toString()}`,
+              )
+              return (await res?.json()) as AppBskyActorDefs.ProfileViewDetailed
+            },
+          },
+        },
+      },
+      tools: {
+        ozone: {
+          moderation: {
+            queryStatuses: async (
+              params: ToolsOzoneModerationQueryStatuses.QueryParams,
+            ) => {
+              const query = {}
+              Object.entries(params).forEach(([key, value]) => {
+                if (value !== undefined) {
+                  query[key] = value
+                }
+              })
+              const res = await this._agent?.request(
+                `/xrpc/tools.ozone.moderation.queryStatuses?${new URLSearchParams(
+                  query,
+                ).toString()}`,
+              )
+              const data =
+                (await res?.json()) as ToolsOzoneModerationQueryStatuses.OutputSchema
+              return { data }
+            },
+          },
+        },
+      },
+    }
   }
 }
 const clientManager = new ClientManager()
@@ -197,14 +198,7 @@ function _loadSession(): ClientSession | undefined {
     if (!obj || typeof obj === 'undefined') {
       return undefined
     }
-    if (
-      !obj.service ||
-      !obj.refreshJwt ||
-      !obj.accessJwt ||
-      !obj.handle ||
-      !obj.did ||
-      !obj.config
-    ) {
+    if (!obj.handle || !obj.did || !obj.config) {
       return undefined
     }
     return obj as ClientSession

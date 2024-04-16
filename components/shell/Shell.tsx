@@ -5,21 +5,42 @@ import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
+import Client from '@/lib/client'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
 import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 import Image from 'next/image'
-import { Suspense } from 'react'
+import { Suspense, useContext, useEffect } from 'react'
 import { useColorScheme } from '@/common/useColorScheme'
+import { useOAuth } from './useOAuth'
+import { AuthChangeContext, AuthState } from './AuthContext'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
   const { theme, toggleTheme } = useColorScheme()
+  const {
+    initialized,
+    client,
+    clients,
+    signedIn,
+    signOut,
+    error: authError,
+    loading,
+    signIn,
+  } = useOAuth()
+  const setAuthContextData = useContext(AuthChangeContext)
+
+  useEffect(() => {
+    if (signedIn && client && !Client.hasSetup) {
+      console.log('here 2')
+      Client.signin(client).then((authState) => setAuthContextData(authState))
+    }
+  }, [signedIn, client, setAuthContextData, Client.hasSetup])
 
   return (
     <MobileMenuProvider>
-      <LoginModal />
+      <LoginModal {...{ signIn, error: authError }} />
       <div className="flex h-full">
         {/* Narrow sidebar */}
         <div className="hidden w-28 overflow-y-auto bg-rose-700 dark:bg-teal-800 md:block">
