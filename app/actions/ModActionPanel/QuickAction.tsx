@@ -545,7 +545,6 @@ function Form(
                 <LabelList className="-ml-1">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
                   {allLabels.map((label) => {
-                    // const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
                     return (
                       <ModerationLabel
                         key={label.val}

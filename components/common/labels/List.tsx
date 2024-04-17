@@ -286,7 +286,7 @@ export const LabelDefinition = ({
         ) : (
           <h4 className="leading-4">
             <b>{label.val}</b> label does not have a custom definition. Users
-            will be able to configure the behavior of the label in app.
+            might be able to configure the behavior of the label in app.
           </h4>
         )}
       </div>
