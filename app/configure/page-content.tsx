@@ -6,12 +6,12 @@ import { useMutation } from '@tanstack/react-query'
 import { AppBskyLabelerService } from '@atproto/api'
 import client, { ClientSession } from '@/lib/client'
 import { useSession } from '@/lib/useSession'
-import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
+import { ButtonGroup, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
-import { Checkbox } from '@/common/forms'
+import { Checkbox, Textarea } from '@/common/forms'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -146,8 +146,13 @@ function RecordEditStep({
   record: AppBskyLabelerService.Record
   repo: string
 }) {
+  const [editorMode, setEditorMode] = useState<'json' | 'plain'>('json')
   const darkMode = isDarkModeEnabled()
   const [recordVal, setRecordVal] = useSyncedState(record)
+  const [plainTextRecord, setPlainTextRecord] = useSyncedState(
+    JSON.stringify(record.policies, null, 2),
+  )
+  const [isPlainTextInvalid, setIsPlainTextInvalid] = useState<boolean>(false)
   const invalid = useMemo(() => {
     const validation = AppBskyLabelerService.validateRecord(recordVal)
     if (validation.success) return null
@@ -217,34 +222,90 @@ function RecordEditStep({
           </ButtonPrimary>
         </div>
       </div>
+
+      <div className="my-2 justify-end sm:flex">
+        <ButtonGroup
+          size="xs"
+          className="ml-0"
+          appearance="primary"
+          items={[
+            {
+              id: 'JSON',
+              text: 'JSON Editor',
+              isActive: editorMode === 'json',
+              onClick: () => setEditorMode('json'),
+            },
+            {
+              id: 'plain',
+              text: 'Plain Editor',
+              isActive: editorMode === 'plain',
+              onClick: () => setEditorMode('plain'),
+            },
+          ]}
+        />
+      </div>
       {!!updateRecord.error && (
         <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
       )}
       {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
-      <BrowserReactJsonView
-        src={recordVal.policies}
-        theme={darkMode ? 'harmonic' : 'rjv-default'}
-        name={null}
-        quotesOnKeys={false}
-        displayObjectSize={false}
-        displayDataTypes={false}
-        enableClipboard={false}
-        validationMessage="Cannot delete property"
-        onEdit={(edit) => {
-          setRecordVal({ ...recordVal, policies: edit.updated_src as any })
-        }}
-        onDelete={(del) => {
-          const [key, ...others] = del.namespace
-          if (
-            others.length ||
-            (key !== 'labelValues' && key !== 'labelValueDefinitions')
-          ) {
-            // can only delete items directly out of labelValues and labelValueDefinitions
-            return false
-          }
-          setRecordVal({ ...recordVal, policies: del.updated_src as any })
-        }}
-      />
+      {isPlainTextInvalid && editorMode === 'plain' && (
+        <ErrorInfo type="warn" className="mb-2">
+          Invalid JSON input. Your changes can not be saved.
+        </ErrorInfo>
+      )}
+      {editorMode === 'plain' ? (
+        <div>
+          <Textarea
+            value={plainTextRecord}
+            placeholder="Enter JSON here..."
+            onChange={(ev) => {
+              setPlainTextRecord(ev.target.value)
+              try {
+                setRecordVal({
+                  ...recordVal,
+                  policies: JSON.parse(ev.target.value) as any,
+                })
+                setIsPlainTextInvalid(false)
+              } catch (e) {
+                setIsPlainTextInvalid(true)
+              }
+            }}
+            className="w-full h-96"
+          />
+        </div>
+      ) : (
+        <BrowserReactJsonView
+          src={recordVal.policies}
+          theme={darkMode ? 'harmonic' : 'rjv-default'}
+          name={null}
+          quotesOnKeys={false}
+          displayObjectSize={false}
+          displayDataTypes={false}
+          enableClipboard={false}
+          validationMessage="Cannot delete property"
+          onEdit={(edit) => {
+            const newRecord = {
+              ...recordVal,
+              policies: edit.updated_src as any,
+            }
+            setRecordVal(newRecord)
+            setPlainTextRecord(JSON.stringify(newRecord.policies, null, 2))
+          }}
+          onDelete={(del) => {
+            const [key, ...others] = del.namespace
+            if (
+              others.length ||
+              (key !== 'labelValues' && key !== 'labelValueDefinitions')
+            ) {
+              // can only delete items directly out of labelValues and labelValueDefinitions
+              return false
+            }
+            const newRecord = { ...recordVal, policies: del.updated_src as any }
+            setRecordVal(newRecord)
+            setPlainTextRecord(JSON.stringify(newRecord.policies, null, 2))
+          }}
+        />
+      )}
     </div>
   )
 }
