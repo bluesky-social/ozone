@@ -32,11 +32,26 @@ export function Shell({ children }: React.PropsWithChildren) {
   const setAuthContextData = useContext(AuthChangeContext)
 
   useEffect(() => {
+    if (initialized && !signedIn) {
+      setAuthContextData(AuthState.LoggedOut)
+    }
+  }, [initialized, signedIn])
+
+  useEffect(() => {
     if (signedIn && client && !Client.hasSetup) {
       console.log('here 2')
-      Client.signin(client).then((authState) => setAuthContextData(authState))
+      Client.signin(client).then((authState) => {
+        setAuthContextData(authState)
+      })
     }
   }, [signedIn, client, setAuthContextData, Client.hasSetup])
+
+  const pathname = location.pathname
+  useEffect(() => {
+    if (signedIn && !loading && initialized && pathname === '/') {
+      location.href = '/reports'
+    }
+  }, [signedIn, loading, initialized, pathname])
 
   return (
     <MobileMenuProvider>
@@ -89,7 +104,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 </div>
                 <div className="ml-2 flex items-center space-x-4 sm:ml-6 sm:space-x-6">
                   {/* Profile dropdown */}
-                  <ProfileMenu />
+                  <ProfileMenu signOut={signOut} />
                 </div>
               </div>
             </div>

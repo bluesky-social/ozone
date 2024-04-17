@@ -11,7 +11,7 @@ import { classNames } from '@/lib/util'
 import Client from '@/lib/client'
 import { AuthChangeContext, AuthContext, AuthState } from './AuthContext'
 
-export function ProfileMenu() {
+export function ProfileMenu({ signOut }: { signOut: () => Promise<void> }) {
   const { isLoggedIn } = useContext(AuthContext)
   const setAuthContextData = useContext(AuthChangeContext)
   const [handle, setHandle] = useState<string>('')
@@ -58,8 +58,10 @@ export function ProfileMenu() {
 
   const onClickSignout = (e: SyntheticEvent) => {
     e.preventDefault()
-    Client.signout()
-    window.location.reload()
+    signOut().then(() => {
+      Client.signout()
+      window.location.reload()
+    })
   }
 
   return (

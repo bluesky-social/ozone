@@ -43,9 +43,10 @@ class ClientManager extends EventTarget {
   }
 
   // this gets called by the login modal during initial render
-  async setup() {
+  async setup(client: OAuthClient) {
     if (this.hasSetup) return this.authState
     this._session = _loadSession()
+    this._agent = client
     this.hasSetup = true
     this._emit('change')
     return this.authState
@@ -148,7 +149,9 @@ class ClientManager extends EventTarget {
                   opts,
                 ).toString()}`,
               )
-              return (await res?.json()) as AppBskyActorDefs.ProfileViewDetailed
+              const data =
+                (await res?.json()) as AppBskyActorDefs.ProfileViewDetailed
+              return { data }
             },
           },
         },
