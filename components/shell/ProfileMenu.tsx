@@ -59,7 +59,6 @@ export function ProfileMenu({ signOut }: { signOut: () => Promise<void> }) {
   const onClickSignout = (e: SyntheticEvent) => {
     e.preventDefault()
     signOut().then(() => {
-      Client.signout()
       window.location.reload()
     })
   }

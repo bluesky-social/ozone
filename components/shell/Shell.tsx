@@ -5,7 +5,6 @@ import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
 import { LoginModal } from './LoginModal'
-import Client from '@/lib/client'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
 import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
@@ -13,49 +12,24 @@ import { useSyncedState } from '@/lib/useSyncedState'
 import Image from 'next/image'
 import { Suspense, useContext, useEffect } from 'react'
 import { useColorScheme } from '@/common/useColorScheme'
-import { useOAuth } from './useOAuth'
+import { useAuth } from './useAuth'
 import { AuthChangeContext, AuthState } from './AuthContext'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
   const { theme, toggleTheme } = useColorScheme()
   const {
-    initialized,
-    client,
-    clients,
-    signedIn,
+    isSignedIn,
+    hasInitialized,
+    isLoading,
     signOut,
-    error: authError,
-    loading,
+    error,
     signIn,
-  } = useOAuth()
-  const setAuthContextData = useContext(AuthChangeContext)
-
-  useEffect(() => {
-    if (initialized && !signedIn) {
-      setAuthContextData(AuthState.LoggedOut)
-    }
-  }, [initialized, signedIn])
-
-  useEffect(() => {
-    if (signedIn && client && !Client.hasSetup) {
-      console.log('here 2')
-      Client.signin(client).then((authState) => {
-        setAuthContextData(authState)
-      })
-    }
-  }, [signedIn, client, setAuthContextData, Client.hasSetup])
-
-  const pathname = location.pathname
-  useEffect(() => {
-    if (signedIn && !loading && initialized && pathname === '/') {
-      location.href = '/reports'
-    }
-  }, [signedIn, loading, initialized, pathname])
+  } = useAuth()
 
   return (
     <MobileMenuProvider>
-      <LoginModal {...{ signIn, error: authError }} />
+      <LoginModal {...{ signIn, error }} />
       <div className="flex h-full">
         {/* Narrow sidebar */}
         <div className="hidden w-28 overflow-y-auto bg-rose-700 dark:bg-teal-800 md:block">

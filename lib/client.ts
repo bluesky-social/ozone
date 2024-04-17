@@ -1,6 +1,7 @@
 import {
   AppBskyActorDefs,
   AtpSessionData,
+  ToolsOzoneModerationQueryEvents,
   ToolsOzoneModerationQueryStatuses,
 } from '@atproto/api'
 import { AuthState } from './types'
@@ -35,23 +36,6 @@ class ClientManager extends EventTarget {
     return AuthState.LoggedIn
   }
 
-  get session(): ClientSession {
-    if (this._session) {
-      return this._session
-    }
-    throw new Error('Not authed')
-  }
-
-  // this gets called by the login modal during initial render
-  async setup(client: OAuthClient) {
-    if (this.hasSetup) return this.authState
-    this._session = _loadSession()
-    this._agent = client
-    this.hasSetup = true
-    this._emit('change')
-    return this.authState
-  }
-
   async signin(agent: OAuthClient) {
     const userInfo = await agent.getUserinfo()
     console.log('signing in')
@@ -64,15 +48,7 @@ class ClientManager extends EventTarget {
       did: userInfo.sub,
     }
     this._agent = agent
-    _saveSession(this._session)
-    this._emit('change')
     this.hasSetup = true
-    return this.authState
-  }
-
-  async signout() {
-    this._clear()
-    this._emit('change')
     return this.authState
   }
 
@@ -84,8 +60,6 @@ class ClientManager extends EventTarget {
       config,
       skipRecord: opts?.skipRecord ?? this._session.skipRecord,
     }
-    _saveSession(this._session)
-    this._emit('change')
     return this.authState
   }
 
@@ -98,7 +72,7 @@ class ClientManager extends EventTarget {
     const builtIn =
       ozoneDid ||
       process.env.NEXT_PUBLIC_OZONE_SERVICE_DID ||
-      `did:plc:6utqfv3asdb7buu6iqvp6hza` ||
+      `did:plc:uhpxfzh7exxkxf473m5r7hku` ||
       undefined
     return await getConfig(builtIn)
   }
@@ -109,12 +83,9 @@ class ClientManager extends EventTarget {
     ozoneDid: string,
   ) {
     try {
-      await agent.request(
-        `/xrpc/tools.ozone.moderation.getRepo?${new URLSearchParams({
-          did: accountDid,
-        }).toString()}`,
-        { headers: this.proxyHeaders(ozoneDid) },
-      )
+      await this.makeRequest('tools.ozone.moderation.getRepo', {
+        did: accountDid,
+      })
     } catch (err) {
       if (err?.['status'] === 401) {
         throw new Error(
@@ -124,14 +95,27 @@ class ClientManager extends EventTarget {
     }
   }
 
-  private _clear() {
-    _deleteSession()
-    this._agent = undefined
-    this._session = undefined
+  setup(_agent: OAuthClient) {
+    this._agent = _agent
   }
 
-  private _emit(type: string) {
-    this.dispatchEvent(new Event(type))
+  async makeRequest<Input extends Record<string, any>, Output>(
+    endPoint: string,
+    input?: Input,
+  ): Promise<{ data: Output }> {
+    let url = `/xrpc/${endPoint}`
+    const params = new URLSearchParams()
+    if (input) {
+      Object.entries(input).forEach(([key, value]) => {
+        if (value !== undefined) params.set(key, value)
+      })
+      url += `?${params.toString()}`
+    }
+    const res = await this._agent?.request(url, {
+      headers: this.proxyHeaders(),
+    })
+    const data = (await res?.json()) as Output
+    return { data }
   }
 
   get api() {
@@ -144,14 +128,10 @@ class ClientManager extends EventTarget {
         bsky: {
           actor: {
             getProfile: async (opts: { actor: string }) => {
-              const res = await this._agent?.request(
-                `/xrpc/tools.ozone.actor.getProfile?${new URLSearchParams(
-                  opts,
-                ).toString()}`,
-              )
-              const data =
-                (await res?.json()) as AppBskyActorDefs.ProfileViewDetailed
-              return { data }
+              return this.makeRequest<
+                { actor: string },
+                AppBskyActorDefs.ProfileViewDetailed
+              >('tools.ozone.actor.getProfile', opts)
             },
           },
         },
@@ -162,20 +142,18 @@ class ClientManager extends EventTarget {
             queryStatuses: async (
               params: ToolsOzoneModerationQueryStatuses.QueryParams,
             ) => {
-              const query = {}
-              Object.entries(params).forEach(([key, value]) => {
-                if (value !== undefined) {
-                  query[key] = value
-                }
-              })
-              const res = await this._agent?.request(
-                `/xrpc/tools.ozone.moderation.queryStatuses?${new URLSearchParams(
-                  query,
-                ).toString()}`,
-              )
-              const data =
-                (await res?.json()) as ToolsOzoneModerationQueryStatuses.OutputSchema
-              return { data }
+              return this.makeRequest<
+                ToolsOzoneModerationQueryStatuses.QueryParams,
+                ToolsOzoneModerationQueryStatuses.OutputSchema
+              >('tools.ozone.moderation.queryStatuses', params)
+            },
+            queryEvents: async (
+              params: ToolsOzoneModerationQueryEvents.QueryParams,
+            ) => {
+              return this.makeRequest<
+                ToolsOzoneModerationQueryEvents.QueryParams,
+                ToolsOzoneModerationQueryEvents.OutputSchema
+              >('tools.ozone.moderation.queryEvents', params)
             },
           },
         },
@@ -188,35 +166,6 @@ export default clientManager
 
 // For debugging and low-level access
 ;(globalThis as any).client = clientManager
-
-// helpers
-// =
-
-const SESSION_KEY = 'ozone_session'
-
-function _loadSession(): ClientSession | undefined {
-  try {
-    const str = localStorage.getItem(SESSION_KEY)
-    const obj = str ? JSON.parse(str) : undefined
-    if (!obj || typeof obj === 'undefined') {
-      return undefined
-    }
-    if (!obj.handle || !obj.did || !obj.config) {
-      return undefined
-    }
-    return obj as ClientSession
-  } catch (e) {
-    return undefined
-  }
-}
-
-function _saveSession(session: ClientSession) {
-  localStorage.setItem(SESSION_KEY, JSON.stringify(session))
-}
-
-function _deleteSession() {
-  localStorage.removeItem(SESSION_KEY)
-}
 
 function _ensureServiceId(did: string) {
   if (did.includes('#')) return did

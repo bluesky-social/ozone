@@ -2,10 +2,11 @@
 import Image from 'next/image'
 import { FormEvent, useState, useEffect, useContext } from 'react'
 import { LockClosedIcon } from '@heroicons/react/20/solid'
-import { AuthChangeContext, AuthContext } from './AuthContext'
+import { AuthContext } from './AuthContext'
 import { AuthState } from '@/lib/types'
 import { ConfigurationFlow } from './ConfigurationFlow'
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { Input } from '@/common/forms'
 
 export function LoginModal({
   signIn,
@@ -16,7 +17,6 @@ export function LoginModal({
 }) {
   const { isValidatingAuth, isLoggedIn, authState } = useContext(AuthContext)
   const [handle, setHandle] = useState('')
-  console.log({ authState })
 
   const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-slate-500 focus:ring-offset-2 ${
     isValidatingAuth
@@ -81,14 +81,14 @@ export function LoginModal({
                   <label htmlFor="account-handle" className="sr-only">
                     Account handle/Host
                   </label>
-                  <input
+                  <Input
                     id="account-handle"
                     name="handle"
                     type="text"
                     required
                     disabled={isValidatingAuth}
-                    className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
-                    placeholder="Account handle"
+                    className="w-full"
+                    placeholder="Account handle/Host"
                     value={handle}
                     onChange={(e) => setHandle(e.target.value)}
                   />
