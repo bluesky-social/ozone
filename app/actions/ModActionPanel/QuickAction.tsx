@@ -24,6 +24,7 @@ import {
   getLabelGroupInfo,
   unFlagSelfLabel,
   isSelfLabel,
+  ModerationLabel,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -543,15 +544,13 @@ function Form(
               <FormLabel label="Labels">
                 <LabelList className="-ml-1">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
-                  {currentLabels.map((label) => {
-                    const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
+                  {allLabels.map((label) => {
                     return (
-                      <LabelChip
-                        key={label}
-                        style={{ color: labelGroup.color }}
-                      >
-                        {displayLabel(label)}
-                      </LabelChip>
+                      <ModerationLabel
+                        key={label.val}
+                        label={label}
+                        recordAuthorDid={`${repo?.did || record?.repo.did}`}
+                      />
                     )
                   })}
                 </LabelList>

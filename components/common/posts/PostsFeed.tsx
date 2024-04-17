@@ -20,17 +20,12 @@ import { isRepost } from '@/lib/types'
 import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
-import {
-  LabelChip,
-  LabelList,
-  doesLabelNeedBlur,
-  toLabelVal,
-  getLabelGroupInfo,
-} from '../labels'
+import { LabelList, doesLabelNeedBlur, ModerationLabel } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { SOCIAL_APP_URL } from '@/lib/constants'
 import { ReplyParent } from './ReplyParent'
 
 export function PostsFeed({
@@ -132,7 +127,7 @@ function PostHeader({
             </Link>
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${item.post.uri
+              href={`${SOCIAL_APP_URL}/profile/${item.post.uri
                 .replace('at://', '')
                 .replace(CollectionId.Post, 'post')}`}
               target="_blank"
@@ -169,7 +164,11 @@ function PostContent({
     )
   }, [uri])
   return (
-    <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2 dark:text-gray-100`}>
+    <div
+      className={`${
+        dense ? 'prose-sm pl-10' : 'prose pl-14'
+      } pb-2 dark:text-gray-100`}
+    >
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
       {showActionLine && (
         <p className="text-xs mt-0">
@@ -267,7 +266,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             src={embed.external.thumb}
           />
         ) : undefined}
-        <div className='dark:text-gray-300'>
+        <div className="dark:text-gray-300">
           <div>{embed.external.title}</div>
           <div>{embed.external.description}</div>
           <div>
@@ -408,19 +407,15 @@ function PostLabels({
     <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
       {labels?.map((label, i) => {
         const { val, src } = label
-        const labelGroup = getLabelGroupInfo(val)
         return (
-          <LabelChip
-            className={`${i === 0 ? 'ml-0' : ''} text-[${labelGroup.color}]`}
-            // TODO: Ideally, we should just use inline class name but it only works when the class names are static
-            // so trying to work around that with style prop for now
-            style={{ color: labelGroup.color }}
+          <ModerationLabel
+            recordAuthorDid={item.post.author.did}
+            label={label}
+            className={`${i === 0 ? 'ml-0' : ''}`}
             // there may be multiple labels with the same val for the same cid, where the labeler is different
             // so we need to use the label src is in the key to guaranty uniqueness
             key={`${cid}_${val}_${src}`}
-          >
-            {toLabelVal(label, item.post.author.did)}
-          </LabelChip>
+          />
         )
       })}
     </LabelList>
