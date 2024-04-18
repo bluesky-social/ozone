@@ -1,4 +1,5 @@
 import { CollectionId } from '@/reports/helpers/subject'
+import { SOCIAL_APP_URL } from './constants'
 import { AtUri } from '@atproto/api'
 
 export function classNames(...classes: (string | undefined)[]) {
@@ -60,7 +61,7 @@ export const isBlueSkyAppUrl = (url: string) => blueSkyUrlMatcher.test(url)
 export const buildBlueSkyAppUrl = (
   params: { did: string } & ({ collection: string; rkey: string } | {}),
 ) => {
-  let url = `https://bsky.app/profile`
+  let url = `${SOCIAL_APP_URL}/profile`
 
   if ('did' in params) {
     url += `/${params.did}`

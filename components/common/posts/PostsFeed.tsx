@@ -7,31 +7,26 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  AppBskyActorDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
   LanguageIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
 import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
-import {
-  LabelChip,
-  LabelList,
-  doesLabelNeedBlur,
-  toLabelVal,
-  LabelGroupInfo,
-  getLabelGroupInfo,
-} from '../labels'
+import { LabelList, doesLabelNeedBlur, ModerationLabel } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { SOCIAL_APP_URL } from '@/lib/constants'
+import { ReplyParent } from './ReplyParent'
 
 export function PostsFeed({
   items,
@@ -132,7 +127,7 @@ function PostHeader({
             </Link>
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${item.post.uri
+              href={`${SOCIAL_APP_URL}/profile/${item.post.uri
                 .replace('at://', '')
                 .replace(CollectionId.Post, 'post')}`}
               target="_blank"
@@ -141,28 +136,7 @@ function PostHeader({
               Peek
             </a>
           </p>
-          {item.reply ? (
-            <p className="text-gray-500 dark:text-gray-50 text-sm">
-              Reply to{' '}
-              <Link
-                href={`/repositories/${
-                  (
-                    item.reply.parent
-                      .author as AppBskyActorDefs.ProfileViewBasic
-                  ).handle
-                }`}
-                className="hover:underline"
-              >
-                @
-                {
-                  (
-                    item.reply.parent
-                      .author as AppBskyActorDefs.ProfileViewBasic
-                  ).handle
-                }
-              </Link>
-            </p>
-          ) : undefined}
+          {item.reply ? <ReplyParent reply={item.reply} /> : undefined}
         </div>
       </div>
     </div>
@@ -190,7 +164,11 @@ function PostContent({
     )
   }, [uri])
   return (
-    <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
+    <div
+      className={`${
+        dense ? 'prose-sm pl-10' : 'prose pl-14'
+      } pb-2 dark:text-gray-100`}
+    >
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
       {showActionLine && (
         <p className="text-xs mt-0">
@@ -228,6 +206,16 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
+function ImageAltText({ alt }: { alt: string }) {
+  if (!alt) return null
+  return (
+    <p className="leading-2 text-gray-400 text-xs leading-3 mt-1">
+      <InformationCircleIcon className="w-4 h-4 inline mr-1" />
+      {alt}
+    </p>
+  )
+}
+
 // @TODO record embeds
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
@@ -262,6 +250,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
               src={image.thumb}
               alt={image.alt}
             />
+            <ImageAltText alt={image.alt} />
           </a>
         ))}
       </div>
@@ -277,7 +266,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             src={embed.external.thumb}
           />
         ) : undefined}
-        <div>
+        <div className="dark:text-gray-300">
           <div>{embed.external.title}</div>
           <div>{embed.external.description}</div>
           <div>
@@ -338,7 +327,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
               </Link>
             </p>
           </div>
-          <div className={`prose-sm pl-10 pb-2`}>
+          <div className={`prose-sm pl-10 pb-2 dark:text-gray-100`}>
             <RichText post={embed.record.value} />
           </div>
         </div>
@@ -418,21 +407,15 @@ function PostLabels({
     <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
       {labels?.map((label, i) => {
         const { val, src } = label
-        const labelGroup = getLabelGroupInfo(val)
         return (
-          <LabelChip
-            className={`${i === 0 ? 'ml-0' : ''} text-[${
-              labelGroup.color
-            }]`}
-            // TODO: Ideally, we should just use inline class name but it only works when the class names are static
-            // so trying to work around that with style prop for now
-            style={{ color: labelGroup.color }}
+          <ModerationLabel
+            recordAuthorDid={item.post.author.did}
+            label={label}
+            className={`${i === 0 ? 'ml-0' : ''}`}
             // there may be multiple labels with the same val for the same cid, where the labeler is different
             // so we need to use the label src is in the key to guaranty uniqueness
             key={`${cid}_${val}_${src}`}
-          >
-            {toLabelVal(label, item.post.author.did)}
-          </LabelChip>
+          />
         )
       })}
     </LabelList>

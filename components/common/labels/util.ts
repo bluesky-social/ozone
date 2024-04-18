@@ -2,6 +2,7 @@ import client from '@/lib/client'
 import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
+  AppBskyLabelerDefs,
   ComAtprotoLabelDefs,
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
@@ -12,7 +13,7 @@ import {
   LABEL_GROUPS,
 } from './data'
 
-type LabelGroupInfoRecord = {
+export type LabelGroupInfoRecord = {
   color: string
   labels: Array<string | LabelDefinition>
 }
@@ -21,6 +22,14 @@ type GroupedLabelList = Record<
   string,
   LabelGroupInfoRecord & Omit<LabelGroupDefinition, 'labels'>
 >
+
+export type ExtendedLabelerServiceDef =
+  | (AppBskyLabelerDefs.LabelerViewDetailed & {
+      policies: AppBskyLabelerDefs.LabelerViewDetailed['policies'] & {
+        definitionById: Record<string, ComAtprotoLabelDefs.LabelValueDefinition>
+      }
+    })
+  | null
 
 export function diffLabels(current: string[], next: string[]) {
   return {
@@ -194,9 +203,7 @@ export const getLabelsForSubject = ({
   repo?: ToolsOzoneModerationDefs.RepoViewDetail
   record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
-  return (record?.labels ??
-    repo?.labels ??
-    []) as Partial<ComAtprotoLabelDefs.Label>[]
+  return record?.labels ?? repo?.labels ?? []
 }
 
 export const buildAllLabelOptions = (
