@@ -113,10 +113,7 @@ class ClientManager extends EventTarget {
   }
 
   getServiceDid(override?: string) {
-    return (
-      override ??
-      (this._session?.config.did || process.env.NEXT_PUBLIC_OZONE_SERVICE_DID)
-    )
+    return override ?? (this._session?.config.did || OZONE_SERVICE_DID)
   }
 
   proxyHeaders(override?: string): Record<string, string> {
@@ -137,10 +134,6 @@ class ClientManager extends EventTarget {
     } else {
       this._agent = undefined
     }
-  }
-
-  getServiceDid() {
-    return this._session?.config.did
   }
 
   private async _getConfig(ozoneDid?: string) {
