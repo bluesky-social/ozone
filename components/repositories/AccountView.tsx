@@ -28,6 +28,7 @@ import {
   displayLabel,
   toLabelVal,
   getLabelsForSubject,
+  ModerationLabel,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
@@ -411,9 +412,7 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
-  const labels = getLabelsForSubject({ repo }).map((label) =>
-    toLabelVal(label, repo.did),
-  )
+  const labels = getLabelsForSubject({ repo })
   const canShowDidHistory = repo.did.startsWith('did:plc')
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -449,7 +448,11 @@ function Details({
           <LabelList>
             {!labels.length && <LabelListEmpty />}
             {labels.map((label) => (
-              <LabelChip key={label}>{displayLabel(label)}</LabelChip>
+              <ModerationLabel
+                label={label}
+                key={label.val}
+                recordAuthorDid={repo.did}
+              />
             ))}
           </LabelList>
         </DataField>
@@ -502,7 +505,7 @@ function Posts({
   id: string
   onReport: (uri: string) => void
 }) {
-  return <AuthorFeed title="" id={id} onReport={onReport} />
+  return <AuthorFeed id={id} onReport={onReport} />
 }
 
 function Follows({ id }: { id: string }) {

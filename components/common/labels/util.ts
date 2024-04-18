@@ -2,10 +2,19 @@ import client from '@/lib/client'
 import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
+  AppBskyLabelerDefs,
   ComAtprotoLabelDefs,
   LABELS,
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
+
+export type ExtendedLabelerServiceDef =
+  | (AppBskyLabelerDefs.LabelerViewDetailed & {
+      policies: AppBskyLabelerDefs.LabelerViewDetailed['policies'] & {
+        definitionById: Record<string, ComAtprotoLabelDefs.LabelValueDefinition>
+      }
+    })
+  | null
 
 export function diffLabels(current: string[], next: string[]) {
   return {
@@ -92,9 +101,7 @@ export const getLabelsForSubject = ({
   repo?: ToolsOzoneModerationDefs.RepoViewDetail
   record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
-  return (record?.labels ??
-    repo?.labels ??
-    []) as Partial<ComAtprotoLabelDefs.Label>[]
+  return record?.labels ?? repo?.labels ?? []
 }
 
 export const getCustomLabels = () =>

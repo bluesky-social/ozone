@@ -1,6 +1,7 @@
 import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
+import { OZONE_SERVICE_DID } from './constants'
 
 export interface ClientSession extends AtpSessionData {
   service: string
@@ -138,9 +139,12 @@ class ClientManager extends EventTarget {
     }
   }
 
+  getServiceDid() {
+    return this._session?.config.did
+  }
+
   private async _getConfig(ozoneDid?: string) {
-    const builtIn =
-      ozoneDid || process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
+    const builtIn = ozoneDid || OZONE_SERVICE_DID
     return await getConfig(builtIn)
   }
 

@@ -18,11 +18,10 @@ import {
   LabelList,
   LabelListEmpty,
   diffLabels,
-  displayLabel,
   getLabelsForSubject,
   toLabelVal,
   isSelfLabel,
-  LabelGroupInfo,
+  ModerationLabel,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -39,7 +38,7 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
-import { CollectionId, createSubjectFromId } from '@/reports/helpers/subject'
+import { createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
@@ -542,14 +541,13 @@ function Form(
               <FormLabel label="Labels">
                 <LabelList className="-ml-1">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
-                  {currentLabels.map((label) => {
+                  {allLabels.map((label) => {
                     return (
-                      <LabelChip
-                        key={label}
-                        style={{ color: LabelGroupInfo[label]?.color }}
-                      >
-                        {displayLabel(label)}
-                      </LabelChip>
+                      <ModerationLabel
+                        key={label.val}
+                        label={label}
+                        recordAuthorDid={`${repo?.did || record?.repo.did}`}
+                      />
                     )
                   })}
                 </LabelList>
