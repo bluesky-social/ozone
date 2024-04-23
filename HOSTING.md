@@ -45,6 +45,8 @@ In your cloud provider's console, the following ports should be open to inbound 
 - 80/tcp (Used only for TLS certification verification)
 - 443/tcp (Used for all application requests)
 
+Note that WebSockets (over HTTPS) will be used to pull labels from your Ozone instance in to the network.
+
 > [!TIP]
 > There is no need to set up TLS or redirect requests from port 80 to 443 because the Caddy web server, included in the Docker compose file, will handle this for you.
 
@@ -152,6 +154,9 @@ sudo mkdir --parents /ozone/caddy/etc/caddy
 ```
 
 #### Create the Caddyfile
+
+> [!TIP]
+> The most common problems with getting Ozone labels consumed in the live network are when folks substitute the supported Caddy configuration for manual nginx, apache, or similar reverse proxies. Getting TLS certificates, WebSockets, and virtual server names all correct can be tricky. We are not currently providing tech support for other configurations.
 
 Be sure to replace `ozone.example.com` with your own domain.
 
@@ -287,9 +292,17 @@ sudo docker ps
 You can check if your server is online and healthy by requesting the healthcheck endpoint, and by visiting the UI in browser at https://ozone.example.com/.
 
 ```bash
-curl https://ozone.example.com/xrpc/_health
-{"version":"0.2.2-beta.2"}
+curl https://ozone.EXAMPLE.COM/xrpc/_health
+{"version":"0.1.1"}
 ```
+
+You can check that the WebSocket label stream is working with the command:
+
+```bash
+wsdump "wss://ozone.EXAMPLE.COM/xrpc/com.atproto.label.subscribeLabels?cursor=0"
+```
+
+Note that there will be no labels output on the WebSocket until they are created in Ozone, so the above command may continue to run with no output if things are configured successfully.
 
 ### Announcing Ozone to the network
 
