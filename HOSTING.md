@@ -112,6 +112,8 @@ sudo apt-get install \
     ca-certificates \
     curl \
     jq \
+    openssl \
+    xxd \
     gnupg
 ```
 
