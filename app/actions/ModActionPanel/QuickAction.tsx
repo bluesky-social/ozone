@@ -165,7 +165,7 @@ function Form(
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
-  const isSubjetDid = subject.startsWith('did:')
+  const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
@@ -646,7 +646,7 @@ function Form(
                 )}
 
                 {/* Only show this when moderator tries to apply labels to a DID subject */}
-                {isLabelEvent && isSubjetDid && (
+                {isLabelEvent && isSubjectDid && (
                   <p className="mb-3 text-xs">
                     NOTE: Applying labels to an account overall is a strong
                     intervention. You may want to apply the labels to the
