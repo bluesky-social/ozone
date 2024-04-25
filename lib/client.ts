@@ -112,8 +112,12 @@ class ClientManager extends EventTarget {
     return this.authState
   }
 
+  getServiceDid(override?: string) {
+    return override ?? (this._session?.config.did || OZONE_SERVICE_DID)
+  }
+
   proxyHeaders(override?: string): Record<string, string> {
-    const proxy = override ?? this._session?.config.did
+    const proxy = this.getServiceDid(override)
     return proxy ? { 'atproto-proxy': _ensureServiceId(proxy) } : {}
   }
 
@@ -130,10 +134,6 @@ class ClientManager extends EventTarget {
     } else {
       this._agent = undefined
     }
-  }
-
-  getServiceDid() {
-    return this._session?.config.did
   }
 
   private async _getConfig(ozoneDid?: string) {

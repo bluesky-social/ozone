@@ -305,8 +305,7 @@ export const ModEventItem = ({
     ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event) ||
-    // This is temporary since the api package with this new type check is not yet published
-    modEvent.event.$type === 'tools.ozone.moderation.defs#modEventDivert'
+    ToolsOzoneModerationDefs.isModEventDivert(modEvent.event)
   ) {
     eventItem = <Comment modEvent={modEvent} />
   }

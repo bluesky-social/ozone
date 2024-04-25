@@ -1,12 +1,7 @@
+import client from '@/lib/client'
 import { useState } from 'react'
 import Select from 'react-tailwindcss-select'
-import client from '@/lib/client'
-import {
-  labelOptions,
-  groupLabelList,
-  getLabelGroupInfo,
-  buildAllLabelOptions,
-} from './util'
+import { ALL_LABELS, getCustomLabels, LabelGroupInfo } from './util'
 
 const EMPTY_ARR = []
 type SelectProps = React.ComponentProps<typeof Select>
@@ -17,7 +12,7 @@ export const LabelSelector = (props: LabelsProps) => {
     formId,
     name,
     defaultLabels = EMPTY_ARR,
-    options = labelOptions,
+    options = Object.keys(ALL_LABELS),
     disabled,
     onChange,
   } = props
@@ -27,20 +22,13 @@ export const LabelSelector = (props: LabelsProps) => {
       value: label,
     })),
   )
-  const allOptions = buildAllLabelOptions(defaultLabels, options)
-  const groupedLabelList = groupLabelList(allOptions)
-  const selectorOptions = Object.entries(groupedLabelList).map(
-    ([group, groupInfo]) => ({
-      label: group,
-      options: groupInfo.labels.map((label) => {
-        const labelText = typeof label === 'string' ? label : label.id
-        return {
-          label: labelText,
-          value: labelText,
-        }
-      }),
-    }),
-  )
+  const selectorOptions = [
+    ...getCustomLabels(),
+    ...Object.values(ALL_LABELS).map(({ identifier }) => identifier),
+  ].map((label) => ({
+    label,
+    value: label,
+  }))
 
   // TODO: selected label text doesn't feel very nice here
   return (
@@ -62,11 +50,10 @@ export const LabelSelector = (props: LabelsProps) => {
         value={selectedLabels}
         options={selectorOptions}
         formatOptionLabel={(data) => {
-          const labelGroup = getLabelGroupInfo(data.label)
           return (
             <li
               className={`block transition duration-200 py-1 cursor-pointer select-none truncate`}
-              style={{ color: labelGroup.color }}
+              style={{ color: LabelGroupInfo[data.label]?.color }}
             >
               {data.label}
             </li>

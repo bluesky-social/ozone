@@ -18,11 +18,8 @@ import {
   LabelList,
   LabelListEmpty,
   diffLabels,
-  displayLabel,
   getLabelsForSubject,
   toLabelVal,
-  getLabelGroupInfo,
-  unFlagSelfLabel,
   isSelfLabel,
   ModerationLabel,
 } from '@/common/labels'
@@ -41,7 +38,7 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
-import { CollectionId, createSubjectFromId } from '@/reports/helpers/subject'
+import { createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
