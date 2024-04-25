@@ -3,7 +3,7 @@ import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
-import { isMuted } from '@/subject/helpers'
+import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
 
 const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
@@ -11,6 +11,7 @@ const actions = [
   { text: 'Label', key: MOD_EVENTS.LABEL },
   { text: 'Tag', key: MOD_EVENTS.TAG },
   { text: 'Mute', key: MOD_EVENTS.MUTE },
+  { text: 'Mute Reporter', key: MOD_EVENTS.MUTE_REPORTER },
   { text: 'Takedown', key: MOD_EVENTS.TAKEDOWN },
   { text: 'Comment', key: MOD_EVENTS.COMMENT },
   {
@@ -20,6 +21,10 @@ const actions = [
   {
     text: 'Unmute',
     key: MOD_EVENTS.UNMUTE,
+  },
+  {
+    text: 'Unmute Reporter',
+    key: MOD_EVENTS.UNMUTE_REPORTER,
   },
   {
     text: 'Appeal',
@@ -80,18 +85,21 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show mute action if subject is already muted
-      if (
-        key === MOD_EVENTS.MUTE &&
-        isMuted(subjectStatus) &&
-        isMuted(subjectStatus, true)
-      ) {
+      if (key === MOD_EVENTS.MUTE && isSubjectMuted(subjectStatus)) {
         return false
       }
       // Don't show unmute action if subject is not muted
+      if (key === MOD_EVENTS.UNMUTE && !isSubjectMuted(subjectStatus)) {
+        return false
+      }
+      // Don't show mute reporter action if reporter is already muted
+      if (key === MOD_EVENTS.MUTE_REPORTER && isReporterMuted(subjectStatus)) {
+        return false
+      }
+      // Don't show unmute reporter action if reporter is not muted
       if (
-        key === MOD_EVENTS.UNMUTE &&
-        !isMuted(subjectStatus) &&
-        !isMuted(subjectStatus, true)
+        key === MOD_EVENTS.UNMUTE_REPORTER &&
+        !isReporterMuted(subjectStatus)
       ) {
         return false
       }

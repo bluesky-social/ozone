@@ -208,7 +208,7 @@ function Header({
     : `@${id}`
   const [isMuteReportingOpen, setIsMuteReportingOpen] = useState(false)
   const isReportingMuted =
-    subjectStatus?.muteReportingUntil &&
+    !!subjectStatus?.muteReportingUntil &&
     new Date(subjectStatus.muteReportingUntil) > new Date()
   const reportOptions: DropdownItem[] = []
   if (repo) {

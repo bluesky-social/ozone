@@ -46,7 +46,6 @@ import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
-import { isMuted } from '@/subject/helpers'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -183,15 +182,10 @@ function Form(
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
-  const isUnmuteEvent = modEventType === MOD_EVENTS.UNMUTE
+  const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
-    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
-  const isReportingMutedForSubject = isMuted(subjectStatus, true)
-  const shouldShowMuteReportingOnlyField =
-    isSubjetDid &&
-    ((isMuteEvent && !isReportingMutedForSubject) ||
-      (isUnmuteEvent && isReportingMutedForSubject))
+    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -253,10 +247,6 @@ function Form(
 
       if (formData.get('durationInHours')) {
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
-      }
-
-      if (formData.get('reportingOnly')) {
-        coreEvent.reportingOnly = true
       }
 
       if (formData.get('comment')) {
@@ -603,22 +593,13 @@ function Form(
                   </FormLabel>
                 )}
 
-                {shouldShowMuteReportingOnlyField && (
-                  <>
-                    <Checkbox
-                      value="true"
-                      id="reportingOnly"
-                      name="reportingOnly"
-                      className="mb-1 flex items-center"
-                      label="Reporting only"
-                    />
-                    <p className="text-xs mb-3">
-                      When muting reports only, this account will still be able
-                      to report and their reports will show up in the event log.
-                      However, their reports {"won't"} change moderation review
-                      state of the subject {"they're"} reporting
-                    </p>
-                  </>
+                {isMuteReporterEvent && (
+                  <p className="text-xs my-3">
+                    When a reporter is muted, that account will still be able to
+                    report and their reports will show up in the event log.
+                    However, their reports {"won't"} change moderation review
+                    state of the subject {"they're"} reporting
+                  </p>
                 )}
 
                 {isLabelEvent && (

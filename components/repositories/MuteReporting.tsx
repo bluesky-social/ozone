@@ -29,9 +29,8 @@ const useMuteReporting = ({
         {
           event: {
             $type: isReportingMuted
-              ? `tools.ozone.moderation.defs#modEventUnmute`
-              : `tools.ozone.moderation.defs#modEventMute`,
-            reportingOnly: true,
+              ? `tools.ozone.moderation.defs#modEventUnmuteReporter`
+              : `tools.ozone.moderation.defs#modEventMuteReporter`,
             ...params,
           },
           subject: {

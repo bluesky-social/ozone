@@ -6,7 +6,6 @@ import {
   ToolsOzoneModerationDefs,
   ComAtprotoModerationDefs,
 } from '@atproto/api'
-import { MOD_EVENTS } from './constants'
 import { ItemTitle } from './ItemTitle'
 
 const LinkToAuthor = ({
@@ -36,6 +35,7 @@ const Comment = ({
       | ToolsOzoneModerationDefs.ModEventAcknowledge
       | ToolsOzoneModerationDefs.ModEventComment
       | ToolsOzoneModerationDefs.ModEventUnmute
+      | ToolsOzoneModerationDefs.ModEventUnmuteReporter
   }
 }) => {
   return (
@@ -52,11 +52,6 @@ const Comment = ({
             <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
               Sticky
             </span>
-          )}
-          {!!modEvent.event.reportingOnly && (
-            <LabelChip className="bg-violet-100 text-violet-800">
-              Reports Only
-            </LabelChip>
           )}
         </div>
       </div>
@@ -141,6 +136,7 @@ const TakedownOrMute = ({
     event:
       | ToolsOzoneModerationDefs.ModEventTakedown
       | ToolsOzoneModerationDefs.ModEventMute
+      | ToolsOzoneModerationDefs.ModEventMuteReporter
   } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
@@ -159,7 +155,7 @@ const TakedownOrMute = ({
               {modEvent.event.durationInHours}hrs
             </span>
           )}
-          {!!modEvent.event.reportingOnly && (
+          {ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event) && (
             <LabelChip className="bg-violet-100 text-violet-800">
               Reports Only
             </LabelChip>
@@ -303,6 +299,7 @@ export const ModEventItem = ({
     ToolsOzoneModerationDefs.isModEventEscalate(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventComment(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventUnmuteReporter(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventDivert(modEvent.event)
@@ -311,12 +308,13 @@ export const ModEventItem = ({
   }
   if (
     ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventMute(modEvent.event)
+    ToolsOzoneModerationDefs.isModEventMute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event)
   ) {
     eventItem = <TakedownOrMute modEvent={modEvent} />
   }
-  if (modEvent.event.$type === MOD_EVENTS.REPORT) {
-    //@ts-ignore
+  if (ToolsOzoneModerationDefs.isModEventReport(modEvent.event)) {
+    // @ts-ignore
     eventItem = <Report modEvent={modEvent} />
   }
   if (ToolsOzoneModerationDefs.isModEventLabel(modEvent.event)) {
