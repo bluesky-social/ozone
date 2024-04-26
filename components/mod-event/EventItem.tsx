@@ -157,7 +157,7 @@ const TakedownOrMute = ({
           )}
           {ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event) && (
             <LabelChip className="bg-violet-100 text-violet-800">
-              Reports Only
+              Muted Reporter
             </LabelChip>
           )}
         </div>
