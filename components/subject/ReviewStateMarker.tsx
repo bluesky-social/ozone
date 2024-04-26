@@ -79,6 +79,14 @@ export const SubjectReviewStateBadge = ({
     color = 'bg-pink-200 text-pink-800'
   }
 
+  if (
+    subjectStatus.muteReportingUntil &&
+    new Date(subjectStatus.muteReportingUntil) > new Date()
+  ) {
+    text += '(Muted Reporting)'
+    color = 'bg-pink-200 text-pink-800'
+  }
+
   if (subjectStatus.appealed) {
     text += '(Appealed)'
     color = 'bg-orange-200 text-orange-800'

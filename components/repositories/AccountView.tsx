@@ -44,6 +44,8 @@ import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { MuteReporting } from './MuteReporting'
 
 enum Views {
   Details,
@@ -204,12 +206,29 @@ function Header({
     : id.startsWith('did:')
     ? id
     : `@${id}`
+  const [isMuteReportingOpen, setIsMuteReportingOpen] = useState(false)
+  const isReportingMuted =
+    !!subjectStatus?.muteReportingUntil &&
+    new Date(subjectStatus.muteReportingUntil) > new Date()
   const reportOptions: DropdownItem[] = []
   if (repo) {
     reportOptions.push({
       text: 'Report Account',
       onClick: () => onReport(repo.did),
     })
+    if (!isReportingMuted) {
+      reportOptions.push({
+        text: 'Mute Reporting',
+        onClick: () => setIsMuteReportingOpen(true),
+      })
+    } else {
+      reportOptions.push({
+        text: 'Unmute Reporting',
+        onClick: () => {
+          setIsMuteReportingOpen(true)
+        },
+      })
+    }
   }
   if (profile) {
     reportOptions.push({
@@ -227,6 +246,14 @@ function Header({
 
   return (
     <div>
+      {(repo?.did || profile?.did) && (
+        <MuteReporting
+          isOpen={isMuteReportingOpen}
+          setIsOpen={setIsMuteReportingOpen}
+          isReportingMuted={isReportingMuted}
+          did={`${repo?.did || profile?.did}`}
+        />
+      )}
       <div>
         <img
           className="h-32 w-full object-cover lg:h-48"

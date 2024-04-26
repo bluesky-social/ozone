@@ -1,5 +1,8 @@
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { ToolsOzoneModerationDefs, ComAtprotoModerationDefs } from '@atproto/api'
+import {
+  ToolsOzoneModerationDefs,
+  ComAtprotoModerationDefs,
+} from '@atproto/api'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -54,11 +57,17 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Tagged'
   }
-  if (ToolsOzoneModerationDefs.isModEventMute(modEvent.event)) {
+  if (
+    ToolsOzoneModerationDefs.isModEventMute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event)
+  ) {
     eventColor = 'text-blue-400'
     eventTitle = 'Muted'
   }
-  if (ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event)) {
+  if (
+    ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventUnmuteReporter(modEvent.event)
+  ) {
     eventColor = 'text-blue-400'
     eventTitle = 'Unmuted'
   }

@@ -165,7 +165,7 @@ function Form(
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
-  const isSubjetDid = subject.startsWith('did:')
+  const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
@@ -182,9 +182,10 @@ function Form(
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
+  const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
-    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
+    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -592,6 +593,15 @@ function Form(
                   </FormLabel>
                 )}
 
+                {isMuteReporterEvent && (
+                  <p className="text-xs my-3">
+                    When a reporter is muted, that account will still be able to
+                    report and their reports will show up in the event log.
+                    However, their reports {"won't"} change moderation review
+                    state of the subject {"they're"} reporting
+                  </p>
+                )}
+
                 {isLabelEvent && (
                   <FormLabel label="Labels" className="mt-2">
                     <LabelSelector
@@ -636,7 +646,7 @@ function Form(
                 )}
 
                 {/* Only show this when moderator tries to apply labels to a DID subject */}
-                {isLabelEvent && isSubjetDid && (
+                {isLabelEvent && isSubjectDid && (
                   <p className="mb-3 text-xs">
                     NOTE: Applying labels to an account overall is a strong
                     intervention. You may want to apply the labels to the
