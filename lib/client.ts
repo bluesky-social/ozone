@@ -1,4 +1,9 @@
-import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
+import {
+  AtpAgent,
+  AtpServiceClient,
+  AtpSessionData,
+  ComAtprotoServerCreateSession,
+} from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
 import { OZONE_SERVICE_DID } from './constants'
@@ -56,15 +61,22 @@ class ClientManager extends EventTarget {
     return this.authState
   }
 
-  async signin(service: string, handle: string, password: string) {
+  async signin(
+    service: string,
+    handle: string,
+    password: string,
+    authFactorToken: string = '',
+  ) {
     const agent = new AtpAgent({
       service,
       persistSession: (_type, session) => {
         this._onSessionChange(session)
       },
     })
+
     const { data: login } = await agent.login({
       identifier: handle,
+      authFactorToken,
       password,
     })
     const config = await this._getConfig()
