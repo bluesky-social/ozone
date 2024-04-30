@@ -26,7 +26,7 @@ export function LoginModal() {
     isNeeded: false,
     isInvalid: false,
   })
-  const handleRef = createRef<HTMLInputElement>(null)
+  const handleRef = createRef<HTMLInputElement>()
 
   const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-slate-500 focus:ring-offset-2 ${
     isValidatingAuth
