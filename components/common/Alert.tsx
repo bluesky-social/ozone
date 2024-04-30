@@ -6,7 +6,7 @@ export const Alert = ({
 }: {
   showIcon?: boolean
   title?: string
-  body?: string
+  body?: React.ReactNode
   type?: 'error' | 'warning' | 'info'
 }) => {
   const classNames = {
