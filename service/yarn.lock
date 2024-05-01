@@ -2,24 +2,22 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.11.1":
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.11.1.tgz#c9a1153ae99fe4ecb85306f9475edefb175ce97d"
-  integrity sha512-U0kdo73e5xFXD4YGLrpviMHPaB/BT4s/22Z/V/geha5V1zjo6DjSC1LVLV1oYx3r/nVaaspPmumwzM0oorU50w==
+"@atproto/api@^0.12.7":
+  version "0.12.7"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.7.tgz#dace57dd8464866797ac718f7dcde350e56e653d"
+  integrity sha512-WHPX+rO8K24Mb3gMofUz7v8GLtTrVUzq9ZfUOxqP/tqDIlYPWEWc5ess6B8joIP0jYLZCyYakLV6giinXjpE6Q==
   dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/lexicon" "^0.3.3"
-    "@atproto/syntax" "^0.2.1"
-    "@atproto/xrpc" "^0.4.3"
+    "@atproto/common-web" "^0.3.0"
+    "@atproto/lexicon" "^0.4.0"
+    "@atproto/syntax" "^0.3.0"
+    "@atproto/xrpc" "^0.5.0"
     multiformats "^9.9.0"
     tlds "^1.234.0"
-    typed-emitter "^2.1.0"
-    zod "^3.21.4"
 
-"@atproto/common-web@^0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.2.4.tgz#a77e0a7f8f025115b3db4f7c530b934b10ab3d82"
-  integrity sha512-6+DOhQcTklFmeiSkZRx6iFeqi4OFtGl4yEDGATk00q4tEcPoPvyOBtYHN6+G9lrfJIfx5RfmggamvXlJv1PxxA==
+"@atproto/common-web@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.3.0.tgz#36da8c2c31d8cf8a140c3c8f03223319bf4430bb"
+  integrity sha512-67VnV6JJyX+ZWyjV7xFQMypAgDmjVaR9ZCuU/QW+mqlqI7fex2uL4Fv+7/jHadgzhuJHVd6OHOvNn0wR5WZYtA==
   dependencies:
     graphemer "^1.4.0"
     multiformats "^9.9.0"
@@ -36,18 +34,17 @@
     pino "^8.6.1"
     zod "^3.14.2"
 
-"@atproto/common@^0.3.4":
-  version "0.3.4"
-  resolved "https://registry.yarnpkg.com/@atproto/common/-/common-0.3.4.tgz#4af79785ae7998dfb33946ebe6d7aa86b38664ed"
-  integrity sha512-qjOHcyeHjGRJseYbdnl+0PViDlMRN9GR0/1ToGKAmXh0voz4LbBWU1FwtGF7CvTlbom9MZYhu21lF5pD5RqBwQ==
+"@atproto/common@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@atproto/common/-/common-0.4.0.tgz#d77696c7eb545426df727837d9ee333b429fe7ef"
+  integrity sha512-yOXuPlCjT/OK9j+neIGYn9wkxx/AlxQSucysAF0xgwu0Ji8jAtKBf9Jv6R5ObYAjAD/kVUvEYumle+Yq/R9/7g==
   dependencies:
-    "@atproto/common-web" "^0.2.4"
+    "@atproto/common-web" "^0.3.0"
     "@ipld/dag-cbor" "^7.0.3"
     cbor-x "^1.5.1"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     pino "^8.15.0"
-    zod "3.21.4"
 
 "@atproto/crypto@0.1.0":
   version "0.1.0"
@@ -60,77 +57,76 @@
     one-webcrypto "^1.0.3"
     uint8arrays "3.0.0"
 
-"@atproto/crypto@^0.3.0":
-  version "0.3.0"
-  resolved "https://registry.yarnpkg.com/@atproto/crypto/-/crypto-0.3.0.tgz#a79e05a85129810755f3456e9d419b49824407d7"
-  integrity sha512-bhcxRTL4fgRY2YX/St0x4o0oDUp18QIPD7ek+7v8UKA0HpsCGQYbo8w9d9hUvwwty5X5p00cYF2tbggUWaPy7A==
+"@atproto/crypto@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@atproto/crypto/-/crypto-0.4.0.tgz#dcdd6bf5ba98261ae0ff3b96d7b8695c1ef788e6"
+  integrity sha512-Kj/4VgJ7hzzXvE42L0rjzP6lM0tai+OfPnP1rxJ+UZg/YUDtuewL4uapnVoWXvlNceKgaLZH98g5n9gXBVTe5Q==
   dependencies:
     "@noble/curves" "^1.1.0"
     "@noble/hashes" "^1.3.1"
     uint8arrays "3.0.0"
 
-"@atproto/identity@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@atproto/identity/-/identity-0.3.3.tgz#451b7d56f11cb4b407ffa43d5dee60e0e8385bce"
-  integrity sha512-i5d3eOnXQAXuOrjdm4NcveIBJxdEywYJQ4d74/JOgy27bGdNVFgh9FdZAsOseQRkLv4r7mr0I0C6OlSA2BQIxA==
+"@atproto/identity@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@atproto/identity/-/identity-0.4.0.tgz#f8a4d450a20606d221c4ec05b856c0ce55f0a3a7"
+  integrity sha512-KKdVlqBgkFuTUx3KFiiQe0LuK9kopej1bhKm6SHRPEYbSEPFmRZQMY9TAjWJQrvQt8DpQzz6kVGjASFEjd3teQ==
   dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/crypto" "^0.3.0"
+    "@atproto/common-web" "^0.3.0"
+    "@atproto/crypto" "^0.4.0"
     axios "^0.27.2"
 
-"@atproto/lexicon@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.3.3.tgz#e242bf8b024661b3312a8da5b84fe2cd627a6ab1"
-  integrity sha512-6FOjdc3V05JKrtkhjfhHMS7f/4hMJOeHNtoE3Na7iFMpzBz0Lw5sw8kIFKY8pc8IG79qGcFgELyHLsljZYX+5A==
+"@atproto/lexicon@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.4.0.tgz#63e8829945d80c25524882caa8ed27b1151cc576"
+  integrity sha512-RvCBKdSI4M8qWm5uTNz1z3R2yIvIhmOsMuleOj8YR6BwRD+QbtUBy3l+xQ7iXf4M5fdfJFxaUNa6Ty0iRwdKqQ==
   dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/syntax" "^0.2.1"
+    "@atproto/common-web" "^0.3.0"
+    "@atproto/syntax" "^0.3.0"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     zod "^3.21.4"
 
-"@atproto/ozone@0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.1.1.tgz#2770923f5bd701302c571bb92ffff9ee7ef710b1"
-  integrity sha512-jBwRAGoByq8IucR7lFlA4s+01W7OB+Fvv7Z/Yn6VjYkJs2QWC74rFsd+2mbwZbSFsY8gDq/ZVpfguVqOG0f0YA==
+"@atproto/ozone@0.1.11":
+  version "0.1.11"
+  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.1.11.tgz#43304bfd7bd04908255b128e55b911e8811f82ac"
+  integrity sha512-vAGT5f4zeFUtNaVUYy6Ww0SjVhC+Qss5kXl9JaEeFg0psCOXV5jXrb1hIlHcRKNdJTtZdEYSOxeXds6N0LOv9g==
   dependencies:
-    "@atproto/api" "^0.11.1"
-    "@atproto/common" "^0.3.4"
-    "@atproto/crypto" "^0.3.0"
-    "@atproto/identity" "^0.3.3"
-    "@atproto/lexicon" "^0.3.3"
-    "@atproto/syntax" "^0.2.1"
-    "@atproto/xrpc-server" "^0.4.4"
+    "@atproto/api" "^0.12.7"
+    "@atproto/common" "^0.4.0"
+    "@atproto/crypto" "^0.4.0"
+    "@atproto/identity" "^0.4.0"
+    "@atproto/lexicon" "^0.4.0"
+    "@atproto/syntax" "^0.3.0"
+    "@atproto/xrpc" "^0.5.0"
+    "@atproto/xrpc-server" "^0.5.1"
     "@did-plc/lib" "^0.0.1"
+    axios "^1.6.7"
     compression "^1.7.4"
     cors "^2.8.5"
     express "^4.17.2"
-    express-async-errors "^3.1.1"
     http-terminator "^3.2.0"
     kysely "^0.22.0"
+    lande "^1.0.10"
     multiformats "^9.9.0"
     p-queue "^6.6.2"
     pg "^8.10.0"
-    pino "^8.15.0"
     pino-http "^8.2.1"
     typed-emitter "^2.1.0"
     uint8arrays "3.0.0"
 
-"@atproto/syntax@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.2.1.tgz#3abcb050c122e7ce80fc25b49cd7d86c63dc6c2e"
-  integrity sha512-ImOuiICtB5h78j90hAYOfTYzr5q5Wut0irNdELiogA3i74a8EXThe+j6Tj8snanYggrShbu5c6BDc1tVj477Yw==
-  dependencies:
-    "@atproto/common-web" "^0.2.4"
+"@atproto/syntax@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.0.tgz#fafa2dbea9add37253005cb663e7373e05e618b3"
+  integrity sha512-Weq0ZBxffGHDXHl9U7BQc2BFJi/e23AL+k+i5+D9hUq/bzT4yjGsrCejkjq0xt82xXDjmhhvQSZ0LqxyZ5woxA==
 
-"@atproto/xrpc-server@^0.4.4":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@atproto/xrpc-server/-/xrpc-server-0.4.4.tgz#758f9a01ae59aedad02a325ec820781d168e6e3b"
-  integrity sha512-R4uYvuia+tUM4wATLlKmMhr/+VEaSImhuAhD7jEHIjN3a+ZxDBE5PnW3PwWf68VBqw720JJ+jmsJMZO7v9y6FA==
+"@atproto/xrpc-server@^0.5.1":
+  version "0.5.1"
+  resolved "https://registry.yarnpkg.com/@atproto/xrpc-server/-/xrpc-server-0.5.1.tgz#f63c86ba60bd5b9c5a641ea57191ff83d9db41fd"
+  integrity sha512-SXU6dscVe5iYxPeV79QIFs/yEEu7LLOzyHGoHG1kSNO6DjwxXTdcWOc8GSYGV6H+7VycOoPZPkyD9q4teJlj/w==
   dependencies:
-    "@atproto/common" "^0.3.4"
-    "@atproto/crypto" "^0.3.0"
-    "@atproto/lexicon" "^0.3.3"
+    "@atproto/common" "^0.4.0"
+    "@atproto/crypto" "^0.4.0"
+    "@atproto/lexicon" "^0.4.0"
     cbor-x "^1.5.1"
     express "^4.17.2"
     http-errors "^2.0.0"
@@ -140,12 +136,12 @@
     ws "^8.12.0"
     zod "^3.21.4"
 
-"@atproto/xrpc@^0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.4.3.tgz#19d85cb7f343369363e664917945dec1f89fde97"
-  integrity sha512-0rn3abHORG0T93mci8WW97Cpg2ClU2aCtTq5rxdCPRsl9P4tyP+8F4snbkrIaMbVO05Rd9D9gFwtWs5Z473pCQ==
+"@atproto/xrpc@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.5.0.tgz#dacbfd8f7b13f0ab5bd56f8fdd4b460e132a6032"
+  integrity sha512-swu+wyOLvYW4l3n+VAuJbHcPcES+tin2Lsrp8Bw5aIXIICiuFn1YMFlwK9JwVUzTH21Py1s1nHEjr4CJeElJog==
   dependencies:
-    "@atproto/lexicon" "^0.3.3"
+    "@atproto/lexicon" "^0.4.0"
     zod "^3.21.4"
 
 "@cbor-extract/cbor-extract-darwin-arm64@2.2.0":
@@ -317,6 +313,15 @@ axios@^1.3.4:
   integrity sha512-/hDJGff6/c7u0hDkvkGxR/oy6CbCs8ziCsC7SqmhjfozqiJGc8Z11wrv9z9lYfY4K8l+H9TpjcMDX0xOZmx+RA==
   dependencies:
     follow-redirects "^1.15.4"
+    form-data "^4.0.0"
+    proxy-from-env "^1.1.0"
+
+axios@^1.6.7:
+  version "1.6.8"
+  resolved "https://registry.yarnpkg.com/axios/-/axios-1.6.8.tgz#66d294951f5d988a00e87a0ffb955316a619ea66"
+  integrity sha512-v/ZHtJDU39mDpyBoFVkETcd/uNdxrWRrg3bKpOKzXFA6Bvqopts6ALSMU3y6ijYxbw2B+wPrIv46egTzJXCLGQ==
+  dependencies:
+    follow-redirects "^1.15.6"
     form-data "^4.0.0"
     proxy-from-env "^1.1.0"
 
@@ -575,11 +580,6 @@ events@^3.3.0:
   resolved "https://registry.yarnpkg.com/events/-/events-3.3.0.tgz#31a95ad0a924e2d2c419a813aeb2c4e878ea7400"
   integrity sha512-mQw+2fkQbALzQ7V0MY0IqdnXNOeTtP4r0lN9z7AAawCXgqea7bDii20AYrIBrFd/Hx0M2Ocz6S111CaFkUcb0Q==
 
-express-async-errors@^3.1.1:
-  version "3.1.1"
-  resolved "https://registry.yarnpkg.com/express-async-errors/-/express-async-errors-3.1.1.tgz#6053236d61d21ddef4892d6bd1d736889fc9da41"
-  integrity sha512-h6aK1da4tpqWSbyCa3FxB/V6Ehd4EEB15zyQq9qe75OZBp0krinNKuH4rAY+S/U/2I36vdLAUFSjQJ+TFmODng==
-
 express@^4.17.2:
   version "4.18.3"
   resolved "https://registry.yarnpkg.com/express/-/express-4.18.3.tgz#6870746f3ff904dee1819b82e4b51509afffb0d4"
@@ -646,6 +646,11 @@ follow-redirects@^1.14.9, follow-redirects@^1.15.4:
   version "1.15.5"
   resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.5.tgz#54d4d6d062c0fa7d9d17feb008461550e3ba8020"
   integrity sha512-vSFWUON1B+yAw1VN4xMfxgn5fTUiaOzAJCKBwIIgT/+7CuGy9+r+5gITvP62j3RmaD5Ph65UaERdOSRGUzZtgw==
+
+follow-redirects@^1.15.6:
+  version "1.15.6"
+  resolved "https://registry.yarnpkg.com/follow-redirects/-/follow-redirects-1.15.6.tgz#7f815c0cda4249c74ff09e95ef97c23b5fd0399b"
+  integrity sha512-wWN62YITEaOpSK584EZXJafH1AGpO8RVgElfkuXbTOrPX4fIfOyEpW/CsiNd8JdYrAoOvafRTOEnvsO++qCqFA==
 
 form-data@^4.0.0:
   version "4.0.0"
@@ -785,6 +790,13 @@ kysely@^0.22.0:
   version "0.22.0"
   resolved "https://registry.yarnpkg.com/kysely/-/kysely-0.22.0.tgz#8aac53942da3cadc604d7d154a746d983fe8f7b9"
   integrity sha512-ZE3qWtnqLOalodzfK5QUEcm7AEulhxsPNuKaGFsC3XiqO92vMLm+mAHk/NnbSIOtC4RmGm0nsv700i8KDp1gfQ==
+
+lande@^1.0.10:
+  version "1.0.10"
+  resolved "https://registry.yarnpkg.com/lande/-/lande-1.0.10.tgz#1f6c6542e628338eb18def22edd1038f5fce9e7a"
+  integrity sha512-yT52DQh+UV2pEp08jOYrA4drDv0DbjpiRyZYgl25ak9G2cVR2AimzrqkYQWrD9a7Ud+qkAcaiDDoNH9DXfHPmw==
+  dependencies:
+    toygrad "^2.6.0"
 
 media-typer@0.3.0:
   version "0.3.0"
@@ -1307,6 +1319,11 @@ toidentifier@1.0.1:
   resolved "https://registry.yarnpkg.com/toidentifier/-/toidentifier-1.0.1.tgz#3be34321a88a820ed1bd80dfaa33e479fbb8dd35"
   integrity sha512-o5sSPKEkg/DIQNmH43V0/uerLrpzVedkUh8tGNvaeXpfpuwjKenlSox/2O/BTlZUtEe+JG7s5YhEz608PlAHRA==
 
+toygrad@^2.6.0:
+  version "2.6.0"
+  resolved "https://registry.yarnpkg.com/toygrad/-/toygrad-2.6.0.tgz#e814bb7da026db8e08dc7da14c7155f49cdb4d54"
+  integrity sha512-g4zBmlSbvzOE5FOILxYkAybTSxijKLkj1WoNqVGnbMcWDyj4wWQ+eYSr3ik7XOpIgMq/7eBcPRTJX3DM2E0YMg==
+
 tslib@^2.1.0, tslib@^2.4.0:
   version "2.6.2"
   resolved "https://registry.yarnpkg.com/tslib/-/tslib-2.6.2.tgz#703ac29425e7b37cd6fd456e92404d46d1f3e4ae"
@@ -1371,11 +1388,6 @@ xtend@^4.0.0:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/xtend/-/xtend-4.0.2.tgz#bb72779f5fa465186b1f438f674fa347fdb5db54"
   integrity sha512-LKYU1iAXJXUgAXn9URjiu+MWhyUXHsvfp7mcuYm9dSUKK0/CjtrUwFAxD82/mCWbtLsGjFIad0wIsod4zrTAEQ==
-
-zod@3.21.4:
-  version "3.21.4"
-  resolved "https://registry.yarnpkg.com/zod/-/zod-3.21.4.tgz#10882231d992519f0a10b5dd58a38c9dabbb64db"
-  integrity sha512-m46AKbrzKVzOzs/DZgVnG5H55N1sv1M8qZU3A8RIKbs3mrACDNeIOeilDymVb2HdmP8uwshOCF4uJ8uM9rCqJw==
 
 zod@^3.14.2, zod@^3.21.4:
   version "3.22.4"

@@ -3,7 +3,10 @@
   "description": "Ozone service entrypoint",
   "main": "index.js",
   "dependencies": {
-    "@atproto/ozone": "0.1.1",
+    "@atproto/ozone": "0.1.11",
     "next": "14.0.1"
+  },
+  "volta": {
+    "node": "20.12.2"
   }
 }
