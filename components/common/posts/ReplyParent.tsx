@@ -25,18 +25,21 @@ export const ReplyParent = ({
     [searchParams, pathname],
   )
 
+  const linkToParentPost = (text: string = 'Reply') => (
+    <Link
+      className="underline"
+      href={createLinkToActionPanel('quickOpen', `${parent.uri}`)}
+    >
+      {text}
+    </Link>
+  )
+
   if (!parent) return null
 
   if (parent.notFound) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-        Reply to{' '}
-        <Link
-          className="underline"
-          href={createLinkToActionPanel('quickOpen', `${parent.uri}`)}
-        >
-          a deleted post
-        </Link>
+        {linkToParentPost()} to a deleted post
       </Wrapper>
     )
   }
@@ -44,27 +47,27 @@ export const ReplyParent = ({
   const parentAuthor = parent.author as AppBskyActorDefs.ProfileViewBasic
 
   if (!parentAuthor) {
+    const userText = parent.blocked
+      ? 'a user who blocked the author'
+      : 'an anonymous user'
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-        Reply to{' '}
-        <Link
-          className="underline"
-          href={createLinkToActionPanel('quickOpen', `${parent.uri}`)}
-        >
-          an anonymous post
-        </Link>
+        {linkToParentPost()} to {userText}
       </Wrapper>
     )
   }
 
+  const userText = parent.blocked
+    ? 'a user who blocked the author'
+    : `@${parentAuthor.handle}`
   return (
     <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-      Reply to{' '}
+      {linkToParentPost()} to{' '}
       <Link
-        href={`/repositories/${parentAuthor.did}`}
-        className="hover:underline"
+        href={createLinkToActionPanel('quickOpen', parentAuthor.did)}
+        className="underline"
       >
-        @{parentAuthor.handle}
+        {userText}
       </Link>
     </Wrapper>
   )

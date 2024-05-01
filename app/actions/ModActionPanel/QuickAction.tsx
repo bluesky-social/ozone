@@ -576,6 +576,7 @@ function Form(
                   <ModEventSelectorButton
                     subjectStatus={subjectStatus}
                     selectedAction={modEventType}
+                    isSubjectDid={isSubjectDid}
                     hasBlobs={!!record?.blobs?.length}
                     setSelectedAction={(action) => setModEventType(action)}
                   />

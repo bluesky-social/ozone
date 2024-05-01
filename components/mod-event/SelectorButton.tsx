@@ -49,11 +49,13 @@ export const ModEventSelectorButton = ({
   selectedAction,
   setSelectedAction,
   hasBlobs,
+  isSubjectDid,
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
   hasBlobs: boolean
+  isSubjectDid: boolean
 }) => {
   const availableActions = useMemo(() => {
     return actions.filter(({ key, text }) => {
@@ -93,13 +95,17 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show mute reporter action if reporter is already muted
-      if (key === MOD_EVENTS.MUTE_REPORTER && isReporterMuted(subjectStatus)) {
+      if (
+        (key === MOD_EVENTS.MUTE_REPORTER && isReporterMuted(subjectStatus)) ||
+        !isSubjectDid
+      ) {
         return false
       }
       // Don't show unmute reporter action if reporter is not muted
       if (
-        key === MOD_EVENTS.UNMUTE_REPORTER &&
-        !isReporterMuted(subjectStatus)
+        (key === MOD_EVENTS.UNMUTE_REPORTER &&
+          !isReporterMuted(subjectStatus)) ||
+        !isSubjectDid
       ) {
         return false
       }
