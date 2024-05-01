@@ -19,7 +19,7 @@ import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
 import { FunnelIcon as FunnelFilledIcon } from '@heroicons/react/24/solid'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
 import Select from 'react-tailwindcss-select'
-import { LabelSelector } from '@/common/labels/Grid'
+import { LabelSelector } from '@/common/labels/Selector'
 
 const Header = ({
   subjectTitle,

@@ -31,7 +31,7 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
-import { LabelSelector } from '@/common/labels/Grid'
+import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
@@ -603,7 +603,7 @@ function Form(
                 )}
 
                 {isLabelEvent && (
-                  <FormLabel label="Labels" className="mt-2">
+                  <div className="mt-2">
                     <LabelSelector
                       id="labels"
                       name="labels"
@@ -612,7 +612,7 @@ function Form(
                         (label) => !isSelfLabel(label),
                       )}
                     />
-                  </FormLabel>
+                  </div>
                 )}
 
                 {isTagEvent && (
