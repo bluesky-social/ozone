@@ -1,3 +1,7 @@
+## Release 0.1.5
+- Fix event type selector button ([#112](https://github.com/bluesky-social/ozone/pull/112))
+
+
 ## Release 0.1.4
 
 ### Features
