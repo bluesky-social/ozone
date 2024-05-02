@@ -96,16 +96,15 @@ export const ModEventSelectorButton = ({
       }
       // Don't show mute reporter action if reporter is already muted
       if (
-        (key === MOD_EVENTS.MUTE_REPORTER && isReporterMuted(subjectStatus)) ||
-        !isSubjectDid
+        key === MOD_EVENTS.MUTE_REPORTER &&
+        (isReporterMuted(subjectStatus) || !isSubjectDid)
       ) {
         return false
       }
       // Don't show unmute reporter action if reporter is not muted
       if (
-        (key === MOD_EVENTS.UNMUTE_REPORTER &&
-          !isReporterMuted(subjectStatus)) ||
-        !isSubjectDid
+        key === MOD_EVENTS.UNMUTE_REPORTER &&
+        (!isReporterMuted(subjectStatus) || !isSubjectDid)
       ) {
         return false
       }
@@ -126,7 +125,9 @@ export const ModEventSelectorButton = ({
     subjectStatus?.reviewState,
     subjectStatus?.appealed,
     hasBlobs,
+    isSubjectDid,
   ])
+  
   return (
     <Dropdown
       className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
