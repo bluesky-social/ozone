@@ -4,14 +4,20 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useKBar } from 'kbar'
 import { classNames } from '@/lib/util'
+import { useSession } from '@/lib/useSession'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
 
 export function SidebarNav({ theme, toggleTheme }) {
   const kbar = useKBar()
   const pathname = usePathname() || '/'
+  const session = useSession()
+  const isServiceAccount = !!session && session.did === session.config.did
   return (
     <div className="mt-6 w-full flex-1 space-y-1 px-2">
       {NAV_ITEMS.map((item) => {
+        if (item.serviceAccountOnly && !isServiceAccount) {
+          return
+        }
         let iconName = item.icon
         if (iconName === 'sun' && theme === 'dark') {
           iconName = 'moon'
