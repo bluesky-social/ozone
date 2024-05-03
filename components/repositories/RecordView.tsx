@@ -30,6 +30,7 @@ import { AccountsGrid } from './AccountView'
 import { ModEventList } from '@/mod-event/EventList'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
 import { Dropdown } from '@/common/Dropdown'
+import { Tabs, TabView } from '@/common/Tabs'
 
 enum Views {
   Details,
@@ -53,6 +54,34 @@ export function RecordView({
   onShowActionPanel: (subject: string) => void
 }) {
   const [currentView, setCurrentView] = useState(Views.Details)
+
+  const getTabViews = () => {
+    const views: TabView<Views>[] = [{ view: Views.Details, label: 'Details' }]
+    if (!!profiles?.length) {
+      views.push({
+        view: Views.Profiles,
+        label: 'Profiles',
+        sublabel: String(profiles.length),
+      })
+    }
+    if (!!thread) {
+      views.push({
+        view: Views.Thread,
+        label: 'Post Thread',
+      })
+    }
+    views.push(
+      {
+        view: Views.Blobs,
+        label: 'Blobs',
+        sublabel: String(record.blobs.length),
+      },
+      { view: Views.ModEvents, label: 'Mod Events' },
+    )
+
+    return views
+  }
+
   return (
     <div className="flex h-full bg-white dark:bg-slate-900">
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
@@ -83,10 +112,8 @@ export function RecordView({
               {record ? (
                 <>
                   <Tabs
+                    views={getTabViews()}
                     currentView={currentView}
-                    record={record}
-                    thread={thread}
-                    profiles={profiles}
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && <Details record={record} />}
@@ -168,73 +195,6 @@ function Header({
           />
           <span>Take Action</span>
         </Dropdown>
-      </div>
-    </div>
-  )
-}
-
-function Tabs({
-  currentView,
-  record,
-  thread,
-  // May be passed in when viewing a list record
-  profiles,
-  onSetCurrentView,
-}: {
-  currentView: Views
-  record: GetRecord.OutputSchema
-  thread?: GetPostThread.OutputSchema
-  profiles?: AppBskyActorDefs.ProfileView[]
-  onSetCurrentView: (v: Views) => void
-}) {
-  const Tab = ({
-    view,
-    label,
-    sublabel,
-  }: {
-    view: Views
-    label: string
-    sublabel?: string
-  }) => (
-    <span
-      className={classNames(
-        view === currentView
-          ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
-          : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300dark:hover:border-teal-300',
-        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
-      )}
-      aria-current={view === currentView ? 'page' : undefined}
-      onClick={() => onSetCurrentView(view)}
-    >
-      {label}{' '}
-      {sublabel ? (
-        <span className="text-xs font-bold text-gray-400">{sublabel}</span>
-      ) : undefined}
-    </span>
-  )
-
-  return (
-    <div className="mt-6 sm:mt-2 2xl:mt-5">
-      <div className="border-b border-gray-200">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" />
-            {!!profiles?.length && (
-              <Tab
-                view={Views.Profiles}
-                label="Profiles"
-                sublabel={String(profiles.length)}
-              />
-            )}
-            {!!thread && <Tab view={Views.Thread} label="Post Thread" />}
-            <Tab
-              view={Views.Blobs}
-              label="Blobs"
-              sublabel={String(record.blobs.length)}
-            />
-            <Tab view={Views.ModEvents} label="Mod Events" />
-          </nav>
-        </div>
       </div>
     </div>
   )
