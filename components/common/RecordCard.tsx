@@ -71,6 +71,31 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
       />
     )
   }
+
+  // When the author of the post blocks the viewer, getPostThread won't return the necessary properties
+  // to build the post view so we manually build the post view from the raw record data
+  if (data?.thread?.blocked) {
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => (
+          <PostAsCard
+            dense
+            controls={false}
+            item={{
+              post: {
+                author: record.repo,
+                record: record.value,
+                ...record,
+                ...record.value,
+              },
+            }}
+          />
+        )}
+      />
+    )
+  }
+
   if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
   }

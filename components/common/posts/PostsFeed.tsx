@@ -222,9 +222,17 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     ? item.post.embed.media
     : item.post.embed
 
-  const imageRequiresBlur = doesLabelNeedBlur(
-    item.post.labels?.map(({ val }) => val),
-  )
+  const labelVals: string[] = []
+  if (Array.isArray(item.post.labels)) {
+    item.post.labels.forEach(({ val }) => labelVals.push(val))
+  } else if (Array.isArray(item.post.labels?.['values'])) {
+    // This handles the case where the item may be built from raw record and in that case, labels value is not an array rather a self label object
+    const labels = item.post.labels?.['values'] as unknown as Array<{
+      val: string
+    }>
+    labels.forEach(({ val }) => labelVals.push(val))
+  }
+  const imageRequiresBlur = doesLabelNeedBlur(labelVals)
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
     imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
