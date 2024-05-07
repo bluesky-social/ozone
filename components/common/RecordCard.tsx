@@ -11,6 +11,7 @@ import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
+import { isSelfLabels } from '@atproto/api/dist/client/types/com/atproto/label/defs'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -84,10 +85,19 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
             controls={false}
             item={{
               post: {
+                uri: record.uri,
+                cid: record.cid,
                 author: record.repo,
                 record: record.value,
-                ...record,
-                ...record.value,
+                labels: isSelfLabels(record.value['labels'])
+                  ? record.value['labels'].values.map(({ val }) => ({
+                      val,
+                      uri: record.uri,
+                      src: record.repo.did,
+                      cts: new Date(0).toISOString(),
+                    }))
+                  : [],
+                indexedAt: new Date(0).toISOString(),
               },
             }}
           />
