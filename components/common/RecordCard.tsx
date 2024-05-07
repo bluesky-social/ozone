@@ -1,5 +1,9 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedDefs, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  AppBskyFeedDefs,
+  AppBskyActorDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
@@ -10,7 +14,6 @@ import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
-import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -211,7 +214,7 @@ export function InlineRepo(props: { did: string }) {
 const AssociatedProfileIcon = ({
   profile,
 }: {
-  profile?: ProfileViewDetailed
+  profile?: AppBskyActorDefs.ProfileViewDetailed
 }) => {
   let title = ''
 

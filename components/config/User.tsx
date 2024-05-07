@@ -1,5 +1,4 @@
 import { ActionButton } from '@/common/buttons'
-import { Card } from '@/common/Card'
 import { ToolsOzoneModeratorDefs } from '@atproto/api'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { UserEditor } from 'components/moderator/UserEditor'
