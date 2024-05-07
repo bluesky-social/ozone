@@ -10,10 +10,12 @@ export function Tabs<ViewName>({
   currentView,
   onSetCurrentView,
   views,
+  fullWidth,
 }: {
   currentView: ViewName
   onSetCurrentView: (v: ViewName) => void
   views: TabView<ViewName>[]
+  fullWidth?: boolean
 }) {
   const Tab = ({
     view,
@@ -44,7 +46,11 @@ export function Tabs<ViewName>({
   return (
     <div className="mt-6 sm:mt-2 2xl:mt-5">
       <div className="border-b border-gray-200">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+        <div
+          className={`mx-auto max-w-5xl ${
+            fullWidth ? '' : 'px-4 sm:px-6 lg:px-8'
+          }`}
+        >
           <nav className="-mb-px flex space-x-8" aria-label="Tabs">
             {views.map(({ view, label, sublabel }) => (
               <Tab key={label} {...{ view, label, sublabel }} />
