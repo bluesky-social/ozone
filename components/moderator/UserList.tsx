@@ -21,18 +21,21 @@ export function UserList({
   const createActionPanelLink = useActionPanelLink()
   const session = useSession()
   return (
-    <Card>
+    <Card className="mb-3 py-3">
       {isInitialLoading ? (
         <p>Hang tight, we{"'"}re loading all users...</p>
       ) : (
         <div>
           {!users?.length && <p>No users found.</p>}
-          {users?.map((user) => {
+          {users?.map((user, i) => {
             const isCurrentUser = session?.did === user.did
+            const lastItem = i === users.length - 1
             return (
               <div
                 key={user.did}
-                className="flex flex-row justify-between mb-2 px-2"
+                className={`flex flex-row justify-between px-2 ${
+                  !lastItem ? 'mb-2 border-b border-gray-700 pb-3' : ''
+                }`}
               >
                 <div>
                   {user.profile ? (
