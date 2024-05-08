@@ -14,6 +14,8 @@ export const MOD_EVENTS = {
   EMAIL: 'tools.ozone.moderation.defs#modEventEmail',
   TAG: 'tools.ozone.moderation.defs#modEventTag',
   DIVERT: 'tools.ozone.moderation.defs#modEventDivert',
+  DISABLE_DMS: 'disableDms',
+  ENABLE_DMS: 'enableDms',
 } as const
 
 export const MOD_EVENT_TITLES = {

@@ -46,6 +46,7 @@ import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
+import { DM_DISABLE_TAG } from '@/lib/constants'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -266,6 +267,22 @@ function Form(
         coreEvent.remove = remove
       }
 
+      // Enable and disable dm actions are just tag operations behind the scenes
+      // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
+      if (
+        coreEvent.$type === MOD_EVENTS.DISABLE_DMS ||
+        coreEvent.$type === MOD_EVENTS.ENABLE_DMS
+      ) {
+        if (coreEvent.$type === MOD_EVENTS.DISABLE_DMS) {
+          coreEvent.add = [DM_DISABLE_TAG]
+          coreEvent.remove = []
+        }
+        if (coreEvent.$type === MOD_EVENTS.ENABLE_DMS) {
+          coreEvent.add = []
+          coreEvent.remove = [DM_DISABLE_TAG]
+        }
+        coreEvent.$type = MOD_EVENTS.TAG
+      }
       const { subject: subjectInfo, record: recordInfo } =
         await createSubjectFromId(subject)
 

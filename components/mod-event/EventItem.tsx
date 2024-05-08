@@ -7,6 +7,7 @@ import {
   ComAtprotoModerationDefs,
 } from '@atproto/api'
 import { ItemTitle } from './ItemTitle'
+import { MessageReport } from './MessageReport'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -101,6 +102,8 @@ const Report = ({
 }) => {
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
+  const isMessageReport =
+    modEvent.subject.$type === 'chat.bsky.convo.defs#messageRef'
   return (
     <Card>
       <div className="flex justify-between">
@@ -125,6 +128,8 @@ const Report = ({
       {modEvent.event.comment && (
         <p className="mt-1">{modEvent.event.comment}</p>
       )}
+
+      {isMessageReport && <MessageReport subject={modEvent.subject} />}
     </Card>
   )
 }

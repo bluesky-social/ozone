@@ -1,3 +1,4 @@
+import { DM_DISABLE_TAG } from '@/lib/constants'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   CheckCircleIcon,
@@ -89,6 +90,11 @@ export const SubjectReviewStateBadge = ({
 
   if (subjectStatus.appealed) {
     text += '(Appealed)'
+    color = 'bg-orange-200 text-orange-800'
+  }
+
+  if (subjectStatus.tags?.includes(DM_DISABLE_TAG)) {
+    text += '(No DMs)'
     color = 'bg-orange-200 text-orange-800'
   }
 
