@@ -15,15 +15,35 @@ export function Tabs<ViewName>({
   onSetCurrentView: (v: ViewName) => void
   views: TabView<ViewName>[]
 }) {
-  const Tab = ({
-    view,
-    label,
-    sublabel,
-  }: {
-    view: ViewName
-    label: string
-    sublabel?: string
-  }) => (
+  return (
+    <div className="mt-6 sm:mt-2 2xl:mt-5">
+      <div className="border-b border-gray-200">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+            {views.map(({ view, label, sublabel }) => (
+              <Tab
+                key={label}
+                {...{ view, label, sublabel, currentView, onSetCurrentView }}
+              />
+            ))}
+          </nav>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function Tab<ViewName>({
+  view,
+  label,
+  sublabel,
+  currentView,
+  onSetCurrentView,
+}: {
+  currentView: ViewName
+  onSetCurrentView: (v: ViewName) => void
+} & TabView<ViewName>) {
+  return (
     <span
       className={classNames(
         view === currentView
@@ -39,19 +59,5 @@ export function Tabs<ViewName>({
         <span className="text-xs font-bold text-gray-400">{sublabel}</span>
       ) : undefined}
     </span>
-  )
-
-  return (
-    <div className="mt-6 sm:mt-2 2xl:mt-5">
-      <div className="border-b border-gray-200">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            {views.map(({ view, label, sublabel }) => (
-              <Tab key={label} {...{ view, label, sublabel }} />
-            ))}
-          </nav>
-        </div>
-      </div>
-    </div>
   )
 }

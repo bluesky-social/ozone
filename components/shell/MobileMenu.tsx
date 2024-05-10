@@ -119,6 +119,9 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                   <nav className="flex h-full flex-col">
                     <div className="space-y-1">
                       {NAV_ITEMS.map((item) => {
+                        if (item.serviceAccountOnly && !isServiceAccount) {
+                          return
+                        }
                         const Icon = ICONS[item.icon]
                         const children = (
                           <>
