@@ -29,7 +29,7 @@ const actions = [
   },
   {
     text: 'Appeal',
-    key: MOD_EVENTS.REPORT,
+    key: MOD_EVENTS.APPEAL,
   },
   {
     text: 'Resolve Appeal',
@@ -73,11 +73,7 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show appeal action if subject is already in appealed status
-      if (
-        key === MOD_EVENTS.REPORT &&
-        text === 'Appeal' &&
-        subjectStatus?.appealed
-      ) {
+      if (key === MOD_EVENTS.APPEAL && subjectStatus?.appealed) {
         return false
       }
       // Don't show takedown action if subject is already takendown
@@ -129,14 +125,12 @@ export const ModEventSelectorButton = ({
         key === MOD_EVENTS.DISABLE_DMS &&
         (subjectStatus?.tags?.includes(DM_DISABLE_TAG) || !isSubjectDid)
       ) {
-        console.log('disable')
         return false
       }
       if (
         key === MOD_EVENTS.ENABLE_DMS &&
         (!subjectStatus?.tags?.includes(DM_DISABLE_TAG) || !isSubjectDid)
       ) {
-        console.log('enable')
         return false
       }
 
@@ -153,7 +147,6 @@ export const ModEventSelectorButton = ({
     isSubjectDid,
   ])
 
-  console.log(availableActions, actions)
   return (
     <Dropdown
       className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"

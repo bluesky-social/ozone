@@ -30,6 +30,7 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
+  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Grid'
 import { takesKeyboardEvt } from '@/lib/util'
@@ -47,6 +48,8 @@ import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
 import { DM_DISABLE_TAG } from '@/lib/constants'
+import { MessageActorMeta } from '@/dms/MessageActorMeta'
+import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -555,6 +558,11 @@ function Form(
                 />
               </FormLabel>
             )}
+            {isSubjectDid && (
+              <div className="mb-3">
+                <MessageActorMeta did={subject} />
+              </div>
+            )}
             <div className={`mb-3`}>
               <FormLabel label="Labels">
                 <LabelList className="-ml-1">
@@ -589,7 +597,7 @@ function Form(
               <ModEventList subject={subject} />
             ) : (
               <div className="px-1">
-                <div className="relative">
+                <div className="relative flex flex-row gap-1 items-center">
                   <ModEventSelectorButton
                     subjectStatus={subjectStatus}
                     selectedAction={modEventType}
@@ -597,6 +605,7 @@ function Form(
                     hasBlobs={!!record?.blobs?.length}
                     setSelectedAction={(action) => setModEventType(action)}
                   />
+                  <ModEventDetailsPopover modEventType={modEventType} />
                 </div>
                 {shouldShowDurationInHoursField && (
                   <FormLabel

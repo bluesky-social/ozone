@@ -1,8 +1,9 @@
 import { Alert } from '@/common/Alert'
 import client from '@/lib/client'
 import { ChatBskyConvoDefs } from '@atproto/api'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { useQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { ComponentProps, useState } from 'react'
 
 const MockMessages = [
   {
@@ -39,13 +40,14 @@ const MockMessages = [
   },
 ]
 
-const useMessageContext = (messageId) => {
+const useMessageContext = ({ messageId, did }) => {
   return useQuery({
-    cacheTime: 60 * 60 * 1000,
-    staleTime: 60 * 60 * 1000,
+    cacheTime: 4 * 60 * 60 * 1000,
+    staleTime: 4 * 60 * 60 * 1000,
     retry: 0,
     queryKey: ['messageContext', { messageId }],
     queryFn: async () => {
+      // TODO: Use this instead of the mock data
       // const { data } = await client.api.chat.bsky.moderation.getMessageContext(
       //   { messageId },
       //   { headers: client.proxyHeaders() },
@@ -58,28 +60,29 @@ const useMessageContext = (messageId) => {
   })
 }
 
-export const MessageReport = ({
+export const MessageContext = ({
   subject,
+  ...rest
 }: {
   subject: ChatBskyConvoDefs.MessageRef
-}) => {
-  const {
-    data: messages,
-    error,
-    isLoading,
-  } = useMessageContext(subject.messageId)
+} & ComponentProps<'div'>) => {
+  const { data: messages, error, isLoading } = useMessageContext(subject)
   const [showMessageContext, setShowMessageContext] = useState(true)
 
   if (isLoading) {
-    return <p className="mt-3">Loading message context...</p>
+    return (
+      <div {...rest}>
+        <p>Loading message context...</p>
+      </div>
+    )
   }
 
   if (error) {
     return (
-      <div className="mt-3">
+      <div {...rest}>
         <Alert
           type="error"
-          body={`${error}`}
+          body={`${error} Message ID ${subject.messageId}`}
           title="Message context loading failed"
         />
       </div>
@@ -92,15 +95,20 @@ export const MessageReport = ({
   })
 
   return (
-    <div className="mt-3">
+    <div {...rest}>
       <button
-        className="font-bold underline"
+        className="font-bold"
         onClick={(e) => {
           e.preventDefault()
           setShowMessageContext((show) => !show)
         }}
       >
         Message context
+        {showMessageContext ? (
+          <ChevronUpIcon className="h-3 w-3 ml-1 inline" />
+        ) : (
+          <ChevronDownIcon className="h-3 w-3 ml-1 inline" />
+        )}
       </button>
       {showMessageContext &&
         messages?.map((message, i) => {

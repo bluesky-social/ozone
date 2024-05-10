@@ -5,9 +5,10 @@ import { ReasonBadge } from '@/reports/ReasonBadge'
 import {
   ToolsOzoneModerationDefs,
   ComAtprotoModerationDefs,
+  ChatBskyConvoDefs,
 } from '@atproto/api'
 import { ItemTitle } from './ItemTitle'
-import { MessageReport } from './MessageReport'
+import { MessageContext } from '@/dms/MessageContext'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -93,6 +94,12 @@ const Email = ({
   )
 }
 
+function isMessageSubject(
+  subject: ToolsOzoneModerationDefs.ModEventView['subject'],
+): subject is ChatBskyConvoDefs.MessageRef {
+  return subject.messageId !== undefined
+}
+
 const Report = ({
   modEvent,
 }: {
@@ -102,8 +109,6 @@ const Report = ({
 }) => {
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
-  const isMessageReport =
-    modEvent.subject.$type === 'chat.bsky.convo.defs#messageRef'
   return (
     <Card>
       <div className="flex justify-between">
@@ -129,7 +134,9 @@ const Report = ({
         <p className="mt-1">{modEvent.event.comment}</p>
       )}
 
-      {isMessageReport && <MessageReport subject={modEvent.subject} />}
+      {isMessageSubject(modEvent.subject) && (
+        <MessageContext className="mt-3" subject={modEvent.subject} />
+      )}
     </Card>
   )
 }
