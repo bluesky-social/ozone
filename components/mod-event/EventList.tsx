@@ -18,8 +18,8 @@ import { ActionButton } from '@/common/buttons'
 import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
 import { FunnelIcon as FunnelFilledIcon } from '@heroicons/react/24/solid'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
-import Select from 'react-tailwindcss-select'
 import { LabelSelector } from '@/common/labels/Selector'
+import { ReasonBadgeButton } from '@/reports/ReasonBadge'
 
 const Header = ({
   subjectTitle,
@@ -375,7 +375,7 @@ const EventFilterPanel = ({
               type="datetime-local"
               id="createdAfter"
               name="createdAfter"
-              className="block w-full"
+              className="block w-full dark:[color-scheme:dark]"
               value={createdAfter}
               onChange={(ev) =>
                 changeListFilter({
@@ -398,7 +398,7 @@ const EventFilterPanel = ({
               type="datetime-local"
               id="createdBefore"
               name="createdBefore"
-              className="block w-full"
+              className="block w-full dark:[color-scheme:dark]"
               value={createdBefore}
               onChange={(ev) =>
                 changeListFilter({
@@ -428,7 +428,7 @@ const EventFilterPanel = ({
             />
           </FormLabel>
 
-          <FormLabel label="Removed Labels" className="flex-1 max-w-sm">
+          <FormLabel label="Removed Tags" className="flex-1 max-w-sm">
             <Input
               type="text"
               id="removedTags"
@@ -445,10 +445,10 @@ const EventFilterPanel = ({
           </FormLabel>
         </div>
       )}
-      <div className="flex-row flex gap-2 mt-2">
+      <div className="mt-2">
         {types.includes(MOD_EVENTS.LABEL) && (
           <>
-            <FormLabel label="Added Labels" className="flex-1 max-w-sm">
+            <FormLabel label="Added Labels" className="w-full mt-2">
               <LabelSelector
                 id="addedLabels"
                 name="addedLabels"
@@ -460,7 +460,7 @@ const EventFilterPanel = ({
               />
             </FormLabel>
 
-            <FormLabel label="Removed Labels" className="flex-1 max-w-sm">
+            <FormLabel label="Removed Labels" className="w-full mt-2">
               <LabelSelector
                 id="removedLabels"
                 name="removedLabels"
@@ -478,29 +478,29 @@ const EventFilterPanel = ({
           <FormLabel
             label="Report Reason"
             htmlFor="reasonType"
-            className="flex-1 max-w-sm"
+            className="mt-2"
           >
-            <Select
-              isMultiple
-              isSearchable
-              primaryColor=""
-              value={reportTypes.map((value) => ({
-                value,
-                label: reasonTypeOptions[value],
-              }))}
-              options={Object.entries(reasonTypeOptions).map(
-                ([value, label]) => ({
-                  label,
-                  value,
-                }),
-              )}
-              onChange={(value) =>
-                changeListFilter({
-                  field: 'reportTypes',
-                  value: Array.isArray(value) ? value.map((v) => v.value) : [],
-                })
-              }
-            />
+            {Object.keys(reasonTypeOptions).map((typeValue) => {
+              const isSelected = reportTypes.includes(typeValue)
+              return (
+                <ReasonBadgeButton
+                  key={typeValue}
+                  className={`mr-1 ${isSelected ? 'font-bold' : ''}`}
+                  reasonType={typeValue}
+                  isHighlighted={isSelected}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    const value: string[] = isSelected
+                      ? reportTypes.filter((t) => t !== typeValue)
+                      : [...reportTypes, typeValue]
+                    changeListFilter({
+                      field: 'reportTypes',
+                      value,
+                    })
+                  }}
+                />
+              )
+            })}
           </FormLabel>
         )}
       </div>
