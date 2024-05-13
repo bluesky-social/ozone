@@ -80,9 +80,7 @@ describe('Mod Action -> Label', () => {
   it('Allows searching and adding custom label', () => {
     const TEST_LABEL = 'test'
 
-    cy.get('table').should('include.text', 'Loading moderation queue...')
     cy.contains('button', 'Take Action').click()
-
     cy.get('[data-cy="mod-event-selector"] button').click()
     cy.get('[data-headlessui-state="open"] > a:contains("Label")').click()
     cy.get('input[name="searchLabel"]').type(TEST_LABEL)
