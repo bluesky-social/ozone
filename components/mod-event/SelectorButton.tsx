@@ -128,6 +128,7 @@ export const ModEventSelectorButton = ({
         text,
         onClick: () => setSelectedAction(key),
       }))}
+      data-cy="mod-event-selector"
     >
       {actionsByKey[selectedAction] || 'Action'}
 

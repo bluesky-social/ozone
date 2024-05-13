@@ -11,7 +11,7 @@ import {
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
-  ToolsOzoneModerationQueryStatuses
+  ToolsOzoneModerationQueryStatuses,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -303,9 +303,7 @@ export const ReportsPageContent = () => {
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={subjectOptions}
         isInitialLoading={isInitialLoading}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
           refetch()
         }}

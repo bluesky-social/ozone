@@ -55,10 +55,6 @@ describe('Command Palette', () => {
       statusCode: 200,
       body: authFixture.getProfileResponse,
     })
-    mockModerationReportsResponse({
-      statusCode: 200,
-      body: { cursor: null, subjectStatuses: [] },
-    })
     mockOzoneMetaResponse({
       statusCode: 200,
       body: authFixture.ozoneMetaResponse,

@@ -64,7 +64,7 @@ export const LabelSelector = (props: LabelsProps) => {
         placeholder="Search or add your own label"
         onChange={(e) => setQuery(e.currentTarget.value)}
       />
-      <div className="flex flex-wrap">
+      <div className="flex flex-wrap" data-cy="label-selector-buttons">
         {selectorOptions?.length ? (
           selectorOptions.map((label) => {
             const selectedLabel = selectedLabels.find((l) => l === label)
