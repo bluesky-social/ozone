@@ -30,8 +30,8 @@ describe('Mod Action -> Label', () => {
   })
 
   it('Allows removing and adding a label to a subject', () => {
-    const SPAM_LABEL = 'spam'
-    cy.get('table').should('include.text', 'Loading moderation queue...')
+    const NUDITY_LABEL = 'nudity'
+    cy.get('table').should('include.text', seedFixture.carla.repo.handle)
     cy.contains('button', 'Take Action').click()
     cy.get('[data-cy="label-list"]').contains(
       seedFixture.carla.repo.labels[0].val,
@@ -42,7 +42,7 @@ describe('Mod Action -> Label', () => {
       .contains(seedFixture.carla.repo.labels[0].val)
       .click()
     cy.get(
-      `[data-cy="label-selector-buttons"] button:contains("${SPAM_LABEL}")`,
+      `[data-cy="label-selector-buttons"] button:contains("${NUDITY_LABEL}")`,
     ).click()
     cy.get('#mod-action-panel button[type="submit"]').click()
 
@@ -50,7 +50,7 @@ describe('Mod Action -> Label', () => {
       'POST',
       `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
       (req) => {
-        expect(req.body.event.createLabelVals).to.include(SPAM_LABEL)
+        expect(req.body.event.createLabelVals).to.include(NUDITY_LABEL)
         expect(req.body.event.negateLabelVals).to.include(
           seedFixture.carla.repo.labels[0].val,
         )
@@ -61,7 +61,7 @@ describe('Mod Action -> Label', () => {
             id: 7,
             event: {
               $type: 'tools.ozone.moderation.defs#modEventLabel',
-              createLabelVals: [SPAM_LABEL],
+              createLabelVals: [NUDITY_LABEL],
               negateLabelVals: [seedFixture.carla.repo.labels[0].val],
             },
             subject: {
@@ -80,6 +80,7 @@ describe('Mod Action -> Label', () => {
   it('Allows searching and adding custom label', () => {
     const TEST_LABEL = 'test'
 
+    cy.get('table').should('include.text', seedFixture.carla.repo.handle)
     cy.contains('button', 'Take Action').click()
     cy.get('[data-cy="mod-event-selector"] button').click()
     cy.get('[data-headlessui-state="open"] > a:contains("Label")').click()
