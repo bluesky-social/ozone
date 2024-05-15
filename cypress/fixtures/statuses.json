@@ -1,0 +1,26 @@
+{
+      "onlyRepo": {
+            "cursor": "1715600696530::1",
+            "subjectStatuses": [
+                  {
+                        "id": 1,
+                        "reviewState": "tools.ozone.moderation.defs#reviewClosed",
+                        "createdAt": "2024-05-13T11:44:56.535Z",
+                        "updatedAt": "2024-05-13T14:35:22.264Z",
+                        "lastReviewedBy": "did:plc:t7jaiidsmjzvtp7quvto4lo2",
+                        "lastReviewedAt": "2024-05-13T14:13:49.328Z",
+                        "lastReportedAt": "2024-05-13T11:44:56.530Z",
+                        "takendown": false,
+                        "subjectRepoHandle": "carla.test",
+                        "subjectBlobCids": [],
+                        "tags": [
+                              "lang:und"
+                        ],
+                        "subject": {
+                              "$type": "com.atproto.admin.defs#repoRef",
+                              "did": "did:plc:jttgywq7eusytkmurmjbum6h"
+                        }
+                  }
+            ]
+      }
+  }

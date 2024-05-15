@@ -15,6 +15,7 @@ export const Dropdown = ({
   children,
   items,
   containerClassName,
+  ...rest
 }: {
   containerClassName?: string
   rightAligned?: boolean
@@ -25,7 +26,11 @@ export const Dropdown = ({
   return (
     <>
       {/* Profile dropdown */}
-      <Menu as="div" className={`relative flex-shrink-0 ${containerClassName || ''}`}>
+      <Menu
+        as="div"
+        className={`relative flex-shrink-0 ${containerClassName || ''}`}
+        {...rest}
+      >
         <div>
           <Menu.Button className={className}>{children}</Menu.Button>
         </div>
