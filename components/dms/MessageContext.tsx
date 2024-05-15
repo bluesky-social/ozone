@@ -51,11 +51,6 @@ export const MessageContext = ({
     )
   }
 
-  const dateFormatter = new Intl.DateTimeFormat('en-US', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  })
-
   return (
     <div {...rest}>
       <button
@@ -74,22 +69,10 @@ export const MessageContext = ({
       </button>
       {showMessageContext &&
         messages?.map((message, i) => {
-          const senderInfo = (
-            <p>
-              <i>
-                {message.sender?.did === subject.did
-                  ? 'Reported User'
-                  : 'Recipient'}{' '}
-                <span className="text-xs text-gray-400">
-                  {dateFormatter.format(new Date(message.sentAt))}
-                </span>
-              </i>
-            </p>
-          )
           if (ChatBskyConvoDefs.isDeletedMessageView(message)) {
             return (
               <div key={message.id} className="pt-2">
-                {senderInfo}
+                <MessageSenderInfo {...{ message, subject }} />
                 <p>
                   <i>Deleted message</i>
                 </p>
@@ -99,7 +82,7 @@ export const MessageContext = ({
           if (ChatBskyConvoDefs.isMessageView(message)) {
             return (
               <div key={message.id} className="pt-2">
-                {senderInfo}
+                <MessageSenderInfo {...{ message, subject }} />
                 <p>
                   {message.text}
                   {message.id === subject.messageId
@@ -109,8 +92,37 @@ export const MessageContext = ({
               </div>
             )
           }
-          return null
+          return (
+            <div key={i} className="pt-2">
+              <p>
+                <i>Unknown message type</i>
+                {JSON.stringify(message)}
+              </p>
+            </div>
+          )
         })}
     </div>
   )
 }
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
+const MessageSenderInfo = ({
+  message,
+  subject,
+}: {
+  subject: ChatBskyConvoDefs.MessageRef
+  message: ChatBskyConvoDefs.MessageView | ChatBskyConvoDefs.DeletedMessageView
+}) => (
+  <p>
+    <i>
+      {message.sender?.did === subject.did ? 'Reported User' : 'Recipient'}{' '}
+      <span className="text-xs text-gray-400">
+        {dateFormatter.format(new Date(message.sentAt))}
+      </span>
+    </i>
+  </p>
+)

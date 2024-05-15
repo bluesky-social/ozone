@@ -270,6 +270,12 @@ function Form(
         coreEvent.remove = remove
       }
 
+      // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
+      if (coreEvent.$type === MOD_EVENTS.APPEAL) {
+        coreEvent.$type = MOD_EVENTS.REPORT
+        coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
+      }
+
       // Enable and disable dm actions are just tag operations behind the scenes
       // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
       if (
@@ -376,9 +382,6 @@ function Form(
 
         await Promise.all(labelSubmissions)
       } else {
-        if (coreEvent.$type === MOD_EVENTS.REPORT) {
-          coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
-        }
         await onSubmit({
           subject: subjectInfo,
           createdBy: client.session.did,
