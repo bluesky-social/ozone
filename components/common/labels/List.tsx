@@ -19,6 +19,7 @@ export function LabelList(props: ComponentProps<'div'>) {
   const { className = '', ...others } = props
   return (
     <div
+      data-cy="label-list"
       className={`flex flex-row items-center gap-x-1 text-sm leading-6 text-gray-900 ${className}`}
       {...others}
     />

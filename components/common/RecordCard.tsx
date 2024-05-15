@@ -11,6 +11,7 @@ import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
+import { isSelfLabels } from '@atproto/api/dist/client/types/com/atproto/label/defs'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -71,6 +72,40 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
       />
     )
   }
+
+  // When the author of the post blocks the viewer, getPostThread won't return the necessary properties
+  // to build the post view so we manually build the post view from the raw record data
+  if (data?.thread?.blocked) {
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => (
+          <PostAsCard
+            dense
+            controls={false}
+            item={{
+              post: {
+                uri: record.uri,
+                cid: record.cid,
+                author: record.repo,
+                record: record.value,
+                labels: isSelfLabels(record.value['labels'])
+                  ? record.value['labels'].values.map(({ val }) => ({
+                      val,
+                      uri: record.uri,
+                      src: record.repo.did,
+                      cts: new Date(0).toISOString(),
+                    }))
+                  : [],
+                indexedAt: new Date(0).toISOString(),
+              },
+            }}
+          />
+        )}
+      />
+    )
+  }
+
   if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
   }
