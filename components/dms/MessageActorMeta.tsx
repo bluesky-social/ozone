@@ -60,7 +60,7 @@ export const MessageActorMeta = ({
         <Alert
           type="error"
           body={`${error}`}
-          title="Failed loading user's messaging data"
+          title="User's messaging data loading failed"
         />
       </div>
     )

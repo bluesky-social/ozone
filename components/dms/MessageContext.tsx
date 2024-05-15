@@ -83,7 +83,7 @@ export const MessageContext = ({
             return (
               <div key={message.id} className="pt-2">
                 <MessageSenderInfo {...{ message, subject }} />
-                <p>
+                <p className='break-all'>
                   {message.text}
                   {message.id === subject.messageId
                     ? ' (Reported message)'
