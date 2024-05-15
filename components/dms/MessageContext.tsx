@@ -5,55 +5,17 @@ import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { useQuery } from '@tanstack/react-query'
 import { ComponentProps, useState } from 'react'
 
-const MockMessages = [
-  {
-    $type: 'chat.bsky.convo.defs#messageView',
-    id: 'msg1',
-    rev: '1',
-    text: 'Hello, how are you?',
-    sender: { did: 'sender1' },
-    sentAt: '2023-05-08T09:00:00.000Z',
-  },
-  {
-    $type: 'chat.bsky.convo.defs#messageView',
-    id: 'xyz',
-    rev: '1',
-    text: 'I am fine, thank you!',
-    sender: { did: 'did:plc:s3sfor4vczbude7suqlj6xyf' },
-    sentAt: '2023-05-08T09:01:00.000Z',
-  },
-  {
-    $type: 'chat.bsky.convo.defs#deletedMessageView',
-    id: 'msg3',
-    rev: '1',
-    text: 'I am fine, thank you!',
-    sender: { did: 'sender2' },
-    sentAt: '2023-05-08T09:01:00.000Z',
-  },
-  {
-    $type: 'chat.bsky.convo.defs#messageView',
-    id: 'msg4',
-    rev: '1',
-    text: 'This is random!',
-    sender: { did: 'did:plc:s3sfor4vczbude7suqlj6xyf' },
-    sentAt: '2023-05-08T09:01:00.000Z',
-  },
-]
-
 const useMessageContext = ({ messageId, did }) => {
   return useQuery({
+    // Message context isn't likely to change, so cache for a long time
     cacheTime: 4 * 60 * 60 * 1000,
     staleTime: 4 * 60 * 60 * 1000,
     retry: 0,
     queryKey: ['messageContext', { messageId }],
     queryFn: async () => {
-      // TODO: Use this instead of the mock data
-      // const { data } = await client.api.chat.bsky.moderation.getMessageContext(
-      //   { messageId },
-      //   { headers: client.proxyHeaders() },
-      // )
-      return new Promise((resolve) =>
-        setTimeout(() => resolve(MockMessages), 3000),
+      const { data } = await client.api.chat.bsky.moderation.getMessageContext(
+        { messageId },
+        { headers: client.proxyHeaders() },
       )
       return data.messages
     },

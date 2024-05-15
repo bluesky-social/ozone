@@ -47,7 +47,6 @@ export const LabelSelector = (props: LabelsProps) => {
     onChange?.(newSelectedLabels)
   }
 
-  // TODO: selected label text doesn't feel very nice here
   return (
     <>
       <input

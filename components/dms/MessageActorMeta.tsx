@@ -5,27 +5,6 @@ import { useQuery } from '@tanstack/react-query'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { ChatBskyModerationGetActorMetadata } from '@atproto/api'
 
-const MockData: ChatBskyModerationGetActorMetadata.OutputSchema = {
-  day: {
-    messagesSent: 25,
-    messagesReceived: 30,
-    convos: 10,
-    convosStarted: 5,
-  },
-  month: {
-    messagesSent: 700,
-    messagesReceived: 650,
-    convos: 300,
-    convosStarted: 150,
-  },
-  all: {
-    messagesSent: 1500,
-    messagesReceived: 1450,
-    convos: 800,
-    convosStarted: 400,
-  },
-}
-
 export const useMessageActorMeta = ({
   did,
   enabled,
@@ -45,12 +24,12 @@ export const useMessageActorMeta = ({
     enabled,
     queryKey: ['messageActorMeta', { did }],
     queryFn: async () => {
-      // TODO: Use this instead of the mock data
-      // const { data } = await client.api.chat.bsky.moderation.getActorMetadata(
-      // { actor: did },
-      // { headers: client.proxyHeaders() },
-      // )
-      return new Promise((resolve) => setTimeout(() => resolve(MockData), 3000))
+      const { data } = await client.api.chat.bsky.moderation.getActorMetadata(
+        { actor: did },
+        { headers: client.proxyHeaders() },
+      )
+
+      return data
     },
   })
 }
