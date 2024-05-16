@@ -83,7 +83,7 @@ export const MessageContext = ({
             return (
               <div key={message.id} className="pt-2">
                 <MessageSenderInfo {...{ message, subject }} />
-                <p className='break-all'>
+                <p className="break-all">
                   {message.text}
                   {message.id === subject.messageId
                     ? ' (Reported message)'
@@ -119,7 +119,13 @@ const MessageSenderInfo = ({
 }) => (
   <p>
     <i>
-      {message.sender?.did === subject.did ? 'Reported User' : 'Recipient'}{' '}
+      <a
+        target="_blank"
+        href={`/repositories/${message.sender.did}`}
+        className="underline"
+      >
+        {message.sender.did === subject.did ? 'Reported User' : 'Recipient'}
+      </a>{' '}
       <span className="text-xs text-gray-400">
         {dateFormatter.format(new Date(message.sentAt))}
       </span>
