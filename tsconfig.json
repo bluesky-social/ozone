@@ -31,6 +31,7 @@
       "@/entertainment/*": ["components/entertainment/*"],
       "@/mod-event/*": ["components/mod-event/*"],
       "@/subject/*": ["components/subject/*"],
+      "@/dms/*": ["components/dms/*"],
     }
   },
   "include": ["next-env.d.ts", "**/**/**/*.tsx", "**/**/**/*.ts", ".next/types/**/*.ts"],
