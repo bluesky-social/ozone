@@ -3,18 +3,17 @@ import { RepositoriesTable } from '@/repositories/RepositoriesTable'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import client from '@/lib/client'
-import { useEffect } from 'react'
 import { useTitle } from 'react-use'
 
 export default function RepositoriesListPage() {
   const params = useSearchParams()
-  const term = params.get('term') ?? ''
+  const q = params.get('term') ?? ''
   const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: ['repositories', { term }],
+    queryKey: ['repositories', { q }],
     queryFn: async ({ pageParam }) => {
       const { data } = await client.api.tools.ozone.moderation.searchRepos(
         {
-          term,
+          q,
           limit: 25,
           cursor: pageParam,
         },
@@ -26,8 +25,8 @@ export default function RepositoriesListPage() {
   })
 
   let pageTitle = `Repositories`
-  if (term) {
-    pageTitle += ` - ${term}`
+  if (q) {
+    pageTitle += ` - ${q}`
   }
 
   useTitle(pageTitle)
@@ -41,7 +40,7 @@ export default function RepositoriesListPage() {
         repos={repos}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
-        showEmptySearch={!term?.length && !repos.length}
+        showEmptySearch={!q?.length && !repos.length}
       />
     </>
   )
