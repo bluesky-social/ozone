@@ -1,0 +1,54 @@
+{
+      "carla": {
+            "repo": {
+                  "did":"did:plc:jttgywq7eusytkmurmjbum6h",
+                  "handle":"carla.test",
+                  "relatedRecords":[
+                      {
+                          "$type":"app.bsky.actor.profile",
+                          "description":"Test user 3",
+                          "displayName":"Carla"
+                      }
+                  ],
+                  "indexedAt":"2024-05-13T11:44:56.381Z",
+                  "moderation":{
+                      "subjectStatus":{
+                          "id":1,
+                          "reviewState":"tools.ozone.moderation.defs#reviewClosed",
+                          "createdAt":"2024-05-13T11:44:56.535Z",
+                          "updatedAt":"2024-05-13T14:35:22.264Z",
+                          "lastReviewedBy":"did:plc:t7jaiidsmjzvtp7quvto4lo2",
+                          "lastReviewedAt":"2024-05-13T14:13:49.328Z",
+                          "lastReportedAt":"2024-05-13T11:44:56.530Z",
+                          "takendown":false,
+                          "subjectRepoHandle":"carla.test",
+                          "subjectBlobCids":[
+                              
+                          ],
+                          "tags":[
+                              "lang:und"
+                          ],
+                          "subject":{
+                              "$type":"com.atproto.admin.defs#repoRef",
+                              "did":"did:plc:jttgywq7eusytkmurmjbum6h"
+                          }
+                      }
+                  },
+                  "labels":[
+                      {
+                          "ver":1,
+                          "src":"did:plc:4wke3qtisoohr7tf6vfhe5r2",
+                          "uri":"did:plc:jttgywq7eusytkmurmjbum6h",
+                          "val":"impersonation",
+                          "cts":"2024-05-13T14:35:09.154Z",
+                          "sig":{
+                              "$bytes":"nf077gIQFC8OeMKZMgKRa/bCJRa2fupBrPAks9wGwC0sLiNEohejomkRMJdIkV9SIto2SeK4QLb90BvbyuI+XA"
+                          }
+                      }
+                  ],
+                  "email":"carla@test.com",
+                  "invitesDisabled":false,
+                  "invites":[]
+            }
+      }
+}

@@ -2,54 +2,50 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.11.1":
-  version "0.11.1"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.11.1.tgz#c9a1153ae99fe4ecb85306f9475edefb175ce97d"
-  integrity sha512-U0kdo73e5xFXD4YGLrpviMHPaB/BT4s/22Z/V/geha5V1zjo6DjSC1LVLV1oYx3r/nVaaspPmumwzM0oorU50w==
+"@atproto/api@^0.12.10":
+  version "0.12.10"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.10.tgz#a745f0e9a273a8e42d208e6d7f91535b73619720"
+  integrity sha512-WhZXvtVENdWSqfiPKiVIjX84r1zFnpEKApyh8rBjxBzGstWfabiz7bKW2eybZNHMty1IyFHwMHaLXPruoSJlHQ==
   dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/lexicon" "^0.3.3"
-    "@atproto/syntax" "^0.2.1"
-    "@atproto/xrpc" "^0.4.3"
+    "@atproto/common-web" "^0.3.0"
+    "@atproto/lexicon" "^0.4.0"
+    "@atproto/syntax" "^0.3.0"
+    "@atproto/xrpc" "^0.5.0"
     multiformats "^9.9.0"
     tlds "^1.234.0"
-    typed-emitter "^2.1.0"
-    zod "^3.21.4"
 
-"@atproto/common-web@^0.2.4":
-  version "0.2.4"
-  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.2.4.tgz#a77e0a7f8f025115b3db4f7c530b934b10ab3d82"
-  integrity sha512-6+DOhQcTklFmeiSkZRx6iFeqi4OFtGl4yEDGATk00q4tEcPoPvyOBtYHN6+G9lrfJIfx5RfmggamvXlJv1PxxA==
+"@atproto/common-web@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.3.0.tgz#36da8c2c31d8cf8a140c3c8f03223319bf4430bb"
+  integrity sha512-67VnV6JJyX+ZWyjV7xFQMypAgDmjVaR9ZCuU/QW+mqlqI7fex2uL4Fv+7/jHadgzhuJHVd6OHOvNn0wR5WZYtA==
   dependencies:
     graphemer "^1.4.0"
     multiformats "^9.9.0"
     uint8arrays "3.0.0"
     zod "^3.21.4"
 
-"@atproto/lexicon@^0.3.3":
-  version "0.3.3"
-  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.3.3.tgz#e242bf8b024661b3312a8da5b84fe2cd627a6ab1"
-  integrity sha512-6FOjdc3V05JKrtkhjfhHMS7f/4hMJOeHNtoE3Na7iFMpzBz0Lw5sw8kIFKY8pc8IG79qGcFgELyHLsljZYX+5A==
+"@atproto/lexicon@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.4.0.tgz#63e8829945d80c25524882caa8ed27b1151cc576"
+  integrity sha512-RvCBKdSI4M8qWm5uTNz1z3R2yIvIhmOsMuleOj8YR6BwRD+QbtUBy3l+xQ7iXf4M5fdfJFxaUNa6Ty0iRwdKqQ==
   dependencies:
-    "@atproto/common-web" "^0.2.4"
-    "@atproto/syntax" "^0.2.1"
+    "@atproto/common-web" "^0.3.0"
+    "@atproto/syntax" "^0.3.0"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     zod "^3.21.4"
 
-"@atproto/syntax@^0.2.1":
-  version "0.2.1"
-  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.2.1.tgz#3abcb050c122e7ce80fc25b49cd7d86c63dc6c2e"
-  integrity sha512-ImOuiICtB5h78j90hAYOfTYzr5q5Wut0irNdELiogA3i74a8EXThe+j6Tj8snanYggrShbu5c6BDc1tVj477Yw==
-  dependencies:
-    "@atproto/common-web" "^0.2.4"
+"@atproto/syntax@^0.3.0":
+  version "0.3.0"
+  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.0.tgz#fafa2dbea9add37253005cb663e7373e05e618b3"
+  integrity sha512-Weq0ZBxffGHDXHl9U7BQc2BFJi/e23AL+k+i5+D9hUq/bzT4yjGsrCejkjq0xt82xXDjmhhvQSZ0LqxyZ5woxA==
 
-"@atproto/xrpc@^0.4.3":
-  version "0.4.3"
-  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.4.3.tgz#19d85cb7f343369363e664917945dec1f89fde97"
-  integrity sha512-0rn3abHORG0T93mci8WW97Cpg2ClU2aCtTq5rxdCPRsl9P4tyP+8F4snbkrIaMbVO05Rd9D9gFwtWs5Z473pCQ==
+"@atproto/xrpc@^0.5.0":
+  version "0.5.0"
+  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.5.0.tgz#dacbfd8f7b13f0ab5bd56f8fdd4b460e132a6032"
+  integrity sha512-swu+wyOLvYW4l3n+VAuJbHcPcES+tin2Lsrp8Bw5aIXIICiuFn1YMFlwK9JwVUzTH21Py1s1nHEjr4CJeElJog==
   dependencies:
-    "@atproto/lexicon" "^0.3.3"
+    "@atproto/lexicon" "^0.4.0"
     zod "^3.21.4"
 
 "@babel/runtime-corejs3@^7.10.2":
@@ -3742,11 +3738,6 @@ react-markdown@~8.0.0:
     unist-util-visit "^4.0.0"
     vfile "^5.0.0"
 
-react-tailwindcss-select@^1.8.5:
-  version "1.8.5"
-  resolved "https://registry.yarnpkg.com/react-tailwindcss-select/-/react-tailwindcss-select-1.8.5.tgz#adf752c7e54889c38fd76bd1aa5cf8cf6d2b9788"
-  integrity sha512-x29IrLiqBT5FnkC9oFQReOr05tEOZHtDtZdha84nlSWcj3qD67yonKFHXIf69yc8ElFlKUxCEv0zCllN8jHBFA==
-
 react-tetris@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/react-tetris/-/react-tetris-0.3.0.tgz#b846e1dff9af37880a54877783aedddc2258bed5"
@@ -4104,7 +4095,7 @@ run-parallel@^1.1.9:
   dependencies:
     queue-microtask "^1.2.2"
 
-rxjs@^7.5.1, rxjs@^7.5.2:
+rxjs@^7.5.1:
   version "7.8.1"
   resolved "https://registry.yarnpkg.com/rxjs/-/rxjs-7.8.1.tgz#6f6f3d99ea8044291efd92e7c7fcf562c4057543"
   integrity sha512-AA3TVj+0A2iuIoQkWEK/tqFjBq2j+6PO6Y0zJcvzLAFhEFIO3HL0vls9hWLncZbAAbK0mar7oZ4V079I/qPMxg==
@@ -4607,13 +4598,6 @@ type-fest@^0.21.3:
   version "0.21.3"
   resolved "https://registry.yarnpkg.com/type-fest/-/type-fest-0.21.3.tgz#d260a24b0198436e133fa26a524a6d65fa3b2e37"
   integrity sha512-t0rzBq87m3fVcduHDUFhKmyyX+9eo6WQjZvf51Ea/M0Q7+T374Jp1aUiyUl0GKxp8M/OETVHSDvmkyPgvX+X2w==
-
-typed-emitter@^2.1.0:
-  version "2.1.0"
-  resolved "https://registry.yarnpkg.com/typed-emitter/-/typed-emitter-2.1.0.tgz#ca78e3d8ef1476f228f548d62e04e3d4d3fd77fb"
-  integrity sha512-g/KzbYKbH5C2vPkaXGu8DJlHrGKHLsM25Zg9WuC9pMGfuvT+X25tZQWo5fK1BjBm8+UrVE9LDCvaY0CQk+fXDA==
-  optionalDependencies:
-    rxjs "^7.5.2"
 
 typescript@4.9.4:
   version "4.9.4"

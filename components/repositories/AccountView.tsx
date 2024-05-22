@@ -22,11 +22,8 @@ import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
 import React from 'react'
 import {
-  LabelChip,
   LabelList,
   LabelListEmpty,
-  displayLabel,
-  toLabelVal,
   getLabelsForSubject,
   ModerationLabel,
 } from '../common/labels'
@@ -44,6 +41,8 @@ import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
+import { MuteReporting } from './MuteReporting'
+import { Tabs, TabView } from '@/common/Tabs'
 
 enum Views {
   Details,
@@ -108,6 +107,41 @@ export function AccountView({
     }
   }, [repo, reportUri])
 
+  const getTabViews = () => {
+    const numInvited = (repo?.invites || []).reduce(
+      (acc, invite) => acc + invite.uses.length,
+      0,
+    )
+
+    const views: TabView<Views>[] = [{ view: Views.Details, label: 'Profile' }]
+    if (profile) {
+      views.push(
+        {
+          view: Views.Posts,
+          label: 'Posts',
+          sublabel: String(profile.postsCount),
+        },
+        {
+          view: Views.Follows,
+          label: 'Follows',
+          sublabel: String(profile.followsCount),
+        },
+        {
+          view: Views.Followers,
+          label: 'Followers',
+          sublabel: String(profile.followersCount),
+        },
+      )
+    }
+    views.push(
+      { view: Views.Invites, label: 'Invites', sublabel: String(numInvited) },
+      { view: Views.Events, label: 'Events' },
+      { view: Views.Email, label: 'Email' },
+    )
+
+    return views
+  }
+
   return (
     <div className="flex h-full bg-white dark:bg-slate-900">
       <ReportPanel
@@ -147,8 +181,7 @@ export function AccountView({
                 <>
                   <Tabs
                     currentView={currentView}
-                    profile={profile}
-                    repo={repo}
+                    views={getTabViews()}
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && (
@@ -204,12 +237,29 @@ function Header({
     : id.startsWith('did:')
     ? id
     : `@${id}`
+  const [isMuteReportingOpen, setIsMuteReportingOpen] = useState(false)
+  const isReportingMuted =
+    !!subjectStatus?.muteReportingUntil &&
+    new Date(subjectStatus.muteReportingUntil) > new Date()
   const reportOptions: DropdownItem[] = []
   if (repo) {
     reportOptions.push({
       text: 'Report Account',
       onClick: () => onReport(repo.did),
     })
+    if (!isReportingMuted) {
+      reportOptions.push({
+        text: 'Mute Reporting',
+        onClick: () => setIsMuteReportingOpen(true),
+      })
+    } else {
+      reportOptions.push({
+        text: 'Unmute Reporting',
+        onClick: () => {
+          setIsMuteReportingOpen(true)
+        },
+      })
+    }
   }
   if (profile) {
     reportOptions.push({
@@ -227,6 +277,14 @@ function Header({
 
   return (
     <div>
+      {(repo?.did || profile?.did) && (
+        <MuteReporting
+          isOpen={isMuteReportingOpen}
+          setIsOpen={setIsMuteReportingOpen}
+          isReportingMuted={isReportingMuted}
+          did={`${repo?.did || profile?.did}`}
+        />
+      )}
       <div>
         <img
           className="h-32 w-full object-cover lg:h-48"
@@ -314,89 +372,6 @@ function Header({
               <SubjectReviewStateBadge subjectStatus={subjectStatus} />
             )}
           </h1>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Tabs({
-  currentView,
-  profile,
-  repo,
-  onSetCurrentView,
-}: {
-  currentView: Views
-  profile?: GetProfile.OutputSchema
-  repo: GetRepo.OutputSchema
-  onSetCurrentView: (v: Views) => void
-}) {
-  const Tab = ({
-    view,
-    label,
-    sublabel,
-  }: {
-    view: Views
-    label: string
-    sublabel?: string
-  }) => (
-    <span
-      className={classNames(
-        view === currentView
-          ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
-          : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300 dark:hover:border-teal-300',
-        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
-      )}
-      aria-current={view === currentView ? 'page' : undefined}
-      onClick={() => onSetCurrentView(view)}
-    >
-      {label}{' '}
-      {sublabel ? (
-        <span className="text-xs font-bold text-gray-400">{sublabel}</span>
-      ) : undefined}
-    </span>
-  )
-
-  const numInvited = (repo.invites || []).reduce(
-    (acc, invite) => acc + invite.uses.length,
-    0,
-  )
-
-  return (
-    <div className="mt-6 sm:mt-2 2xl:mt-5">
-      <div className="border-b border-gray-200">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Profile" />
-            {profile && (
-              <Tab
-                view={Views.Posts}
-                label="Posts"
-                sublabel={String(profile.postsCount)}
-              />
-            )}
-            {profile && (
-              <Tab
-                view={Views.Follows}
-                label="Follows"
-                sublabel={String(profile.followsCount)}
-              />
-            )}
-            {profile && (
-              <Tab
-                view={Views.Followers}
-                label="Followers"
-                sublabel={String(profile.followersCount)}
-              />
-            )}
-            <Tab
-              view={Views.Invites}
-              label="Invites"
-              sublabel={String(numInvited)}
-            />
-            <Tab view={Views.Events} label="Events" />
-            <Tab view={Views.Email} label="Email" />
-          </nav>
         </div>
       </div>
     </div>
@@ -505,7 +480,7 @@ function Posts({
   id: string
   onReport: (uri: string) => void
 }) {
-  return <AuthorFeed title="" id={id} onReport={onReport} />
+  return <AuthorFeed id={id} onReport={onReport} />
 }
 
 function Follows({ id }: { id: string }) {

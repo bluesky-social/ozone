@@ -11,7 +11,7 @@ import {
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
-  ToolsOzoneModerationQueryStatuses
+  ToolsOzoneModerationQueryStatuses,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -94,6 +94,7 @@ const ResolvedFilters = () => {
   const params = useSearchParams()
   const takendown = params.get('takendown')
   const includeMuted = params.get('includeMuted')
+  const onlyMuted = params.get('onlyMuted')
   const appealed = params.get('appealed')
 
   const updateParams = useCallback(
@@ -127,6 +128,12 @@ const ResolvedFilters = () => {
           isActive: includeMuted === 'true',
         },
         {
+          id: 'onlyMuted',
+          text: 'Only Muted',
+          onClick: () => updateParams('onlyMuted', true),
+          isActive: onlyMuted === 'true',
+        },
+        {
           id: 'appealed',
           text: 'Appealed',
           onClick: () => updateParams('appealed', true),
@@ -157,6 +164,7 @@ export const ReportsPageContent = () => {
   const quickOpenParam = params.get('quickOpen') ?? ''
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
+  const onlyMuted = !!params.get('onlyMuted')
   const appealed = !!params.get('appealed')
   const reviewState = params.get('reviewState')
   const tags = params.get('tags')
@@ -195,6 +203,8 @@ export const ReportsPageContent = () => {
           tags,
           excludeTags,
           queueName,
+          includeMuted,
+          onlyMuted,
         },
       ],
       queryFn: async ({ pageParam }) => {
@@ -212,6 +222,10 @@ export const ReportsPageContent = () => {
 
         if (includeMuted) {
           queryParams.includeMuted = includeMuted
+        }
+
+        if (onlyMuted) {
+          queryParams.onlyMuted = onlyMuted
         }
 
         if (appealed) {
@@ -289,9 +303,7 @@ export const ReportsPageContent = () => {
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={subjectOptions}
         isInitialLoading={isInitialLoading}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
           refetch()
         }}

@@ -1,4 +1,8 @@
-import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
+import {
+  AtpAgent,
+  AtpServiceClient,
+  AtpSessionData,
+} from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
 import { OZONE_SERVICE_DID } from './constants'
@@ -57,15 +61,22 @@ class ClientManager extends EventTarget {
     return this.authState
   }
 
-  async signin(service: string, handle: string, password: string) {
+  async signin(
+    service: string,
+    handle: string,
+    password: string,
+    authFactorToken: string = '',
+  ) {
     const agent = new AtpAgent({
       service,
       persistSession: (_type, session) => {
         this._onSessionChange(session)
       },
     })
+
     const { data: login } = await agent.login({
       identifier: handle,
+      authFactorToken,
       password,
     })
     const config = await this._getConfig()
@@ -113,8 +124,12 @@ class ClientManager extends EventTarget {
     return this.authState
   }
 
+  getServiceDid(override?: string) {
+    return override ?? (this._session?.config.did || OZONE_SERVICE_DID)
+  }
+
   proxyHeaders(override?: string): Record<string, string> {
-    const proxy = override ?? this._session?.config.did
+    const proxy = this.getServiceDid(override)
     const externalLabelers = getExternalLabelers()
     const labelerDids = Object.keys(externalLabelers)
       .map(_ensureServiceId)
@@ -141,10 +156,6 @@ class ClientManager extends EventTarget {
     } else {
       this._agent = undefined
     }
-  }
-
-  getServiceDid() {
-    return this._session?.config.did
   }
 
   private async _getConfig(ozoneDid?: string) {

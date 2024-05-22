@@ -1,4 +1,27 @@
 import { ComAtprotoModerationDefs } from '@atproto/api'
+import { ComponentProps } from 'react'
+
+export function ReasonBadgeButton(
+  props: {
+    reasonType: string
+    className?: string
+    isHighlighted?: boolean
+  } & ComponentProps<'button'>,
+) {
+  const { reasonType, className = '', isHighlighted = false, ...rest } = props
+  const readable = reasonType.replace('com.atproto.moderation.defs#reason', '')
+  const color = isHighlighted
+    ? 'bg-indigo-600 border-indigo-500 text-white dark:bg-teal-600 dark:border-teal-500'
+    : reasonColors[reasonType] ?? reasonColors.default
+  return (
+    <button
+      className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
+      {...rest}
+    >
+      {readable}
+    </button>
+  )
+}
 
 export function ReasonBadge(props: { reasonType: string; className?: string }) {
   const { reasonType, className = '' } = props

@@ -5,6 +5,7 @@ import { PostsFeed } from './PostsFeed'
 import { PostsTable } from './PostsTable'
 import { ButtonGroup } from '../buttons'
 import { EmptyFeed } from '../feeds/EmptyFeed'
+import { Input } from '../forms'
 
 enum Mode {
   Feed,
@@ -13,47 +14,56 @@ enum Mode {
 
 export function Posts({
   items,
-  title,
   onReport,
   onLoadMore,
   isFetching,
+  setSearchQuery,
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
-  title: string
   onReport: (uri: string) => void
   onLoadMore?: () => void
   isFetching: boolean
+  setSearchQuery: (query: string) => void
 }) {
   const [mode, setMode] = useState<Mode>(Mode.Feed)
 
   return (
     <div>
-      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 py-2 px-4 sm:flex sm:items-center sm:justify-between sticky top-0">
-        <h3 className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">{title}</h3>
-        <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
-          <ButtonGroup
-            appearance="primary"
-            items={[
-              {
-                id: 'feed',
-                text: 'Feed',
-                Icon: ListBulletIcon,
-                onClick: () => setMode(Mode.Feed),
-                isActive: mode === Mode.Feed,
-              },
-              {
-                id: 'table',
-                text: 'Table',
-                Icon: TableCellsIcon,
-                onClick: () => setMode(Mode.Table),
-                isActive: mode === Mode.Table,
-                className:
-                  mode === Mode.Table
-                    ? 'bg-rose-600 text-white border-rose-800'
-                    : 'bg-white text-gray-700 border-gray-300',
-              },
-            ]}
-          />
+      <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 sticky top-0">
+        <div className="mx-auto max-w-3xl w-full sm:py-4 sm:px-6 lg:px-8 sm:flex sm:items-center sm:justify-between ">
+          <div className="w-2/3">
+            <Input
+              name="search"
+              className="w-full p-2"
+              placeholder="Type keyword to search..."
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
+            <ButtonGroup
+              appearance="primary"
+              items={[
+                {
+                  id: 'feed',
+                  text: 'Feed',
+                  Icon: ListBulletIcon,
+                  onClick: () => setMode(Mode.Feed),
+                  isActive: mode === Mode.Feed,
+                },
+                {
+                  id: 'table',
+                  text: 'Table',
+                  Icon: TableCellsIcon,
+                  onClick: () => setMode(Mode.Table),
+                  isActive: mode === Mode.Table,
+                  className:
+                    mode === Mode.Table
+                      ? 'bg-rose-600 text-white border-rose-800'
+                      : 'bg-white text-gray-700 border-gray-300',
+                },
+              ]}
+            />
+          </div>
         </div>
       </div>
       {!isFetching && !items.length ? (
