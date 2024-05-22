@@ -35,12 +35,14 @@ export default function ConfigurePageContent() {
             Configure
           </h3>
           <Card className="mt-4 p-4">
-            Please login as your service account{' '}
-            {session?.config.handle && <b>{session?.config.handle}</b>} in order
-            to configure Ozone.
+            Your service account owner{' '}
+            {session?.config.handle && <b>{session?.config.handle}</b>} will be
+            able to see more configuration here.
           </Card>
         </div>
       )}
+
+      <ExternalLabelerConfig />
     </div>
   )
 }
@@ -81,7 +83,6 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
         {!record && <RecordInitStep repo={session.config.did} />}
         {record && <RecordEditStep repo={session.config.did} record={record} />}
       </Card>
-      <ExternalLabelerConfig />
     </div>
   )
 }
