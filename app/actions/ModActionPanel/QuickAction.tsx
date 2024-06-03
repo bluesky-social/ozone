@@ -30,7 +30,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
@@ -141,6 +140,19 @@ export function ModActionPanelQuick(
   )
 }
 
+const getDeactivatedAt = ({
+  repo,
+  record,
+}: Awaited<ReturnType<typeof getSubject>>) => {
+  const deactivatedAt = repo?.deactivatedAt || record?.repo?.deactivatedAt
+
+  if (!deactivatedAt) {
+    return ''
+  }
+
+  return dateFormatter.format(new Date(deactivatedAt))
+}
+
 function Form(
   props: {
     onCancel: () => void
@@ -191,12 +203,9 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
-  const deactivatedAt =
-    repo?.deactivatedAt || record?.repo?.deactivatedAt
-      ? dateFormatter.format(
-          new Date(repo?.deactivatedAt || record?.repo?.deactivatedAt),
-        )
-      : ''
+  const deactivatedAt = getDeactivatedAt(
+    repo ? { repo } : record ? { record } : {},
+  )
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
