@@ -50,6 +50,7 @@ import { Card } from '@/common/Card'
 import { DM_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
+import { LockClosedIcon } from '@heroicons/react/24/solid'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -190,6 +191,12 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
+  const deactivatedAt =
+    repo?.deactivatedAt || record?.repo?.deactivatedAt
+      ? dateFormatter.format(
+          new Date(repo?.deactivatedAt || record?.repo?.deactivatedAt),
+        )
+      : ''
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -517,7 +524,14 @@ function Form(
             </div>
             {/* PREVIEWS */}
             <div className="max-w-xl">
-              <PreviewCard did={subject} />
+              <PreviewCard did={subject}>
+                {deactivatedAt && (
+                  <p className="pt-1 pb-1 flex flex-row items-center">
+                    <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
+                    Account deactivated on {deactivatedAt}
+                  </p>
+                )}
+              </PreviewCard>
             </div>
 
             {!!subjectStatus && (
