@@ -1,9 +1,5 @@
 import { Alert } from '@/common/Alert'
-import {
-  PostAsCard,
-  PostEmbeds,
-  RecordEmbedView,
-} from '@/common/posts/PostsFeed'
+import { RecordEmbedView } from '@/common/posts/PostsFeed'
 import client from '@/lib/client'
 import { ChatBskyConvoDefs } from '@atproto/api'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
