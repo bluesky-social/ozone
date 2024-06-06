@@ -84,7 +84,7 @@ class ClientManager extends EventTarget {
       refreshJwt: login.refreshJwt,
       handle: login.handle,
       did: login.did,
-      active: !!login.active,
+      active: login.active !== false,
     }
     this._agent = agent
     _saveSession(this._session)
