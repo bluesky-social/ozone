@@ -30,7 +30,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  QuestionMarkCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
@@ -50,6 +49,7 @@ import { Card } from '@/common/Card'
 import { DM_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
+import { LockClosedIcon } from '@heroicons/react/24/solid'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -140,6 +140,19 @@ export function ModActionPanelQuick(
   )
 }
 
+const getDeactivatedAt = ({
+  repo,
+  record,
+}: Awaited<ReturnType<typeof getSubject>>) => {
+  const deactivatedAt = repo?.deactivatedAt || record?.repo?.deactivatedAt
+
+  if (!deactivatedAt) {
+    return ''
+  }
+
+  return dateFormatter.format(new Date(deactivatedAt))
+}
+
 function Form(
   props: {
     onCancel: () => void
@@ -190,6 +203,9 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
+  const deactivatedAt = getDeactivatedAt(
+    repo ? { repo } : record ? { record } : {},
+  )
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -517,7 +533,14 @@ function Form(
             </div>
             {/* PREVIEWS */}
             <div className="max-w-xl">
-              <PreviewCard did={subject} />
+              <PreviewCard did={subject}>
+                {deactivatedAt && (
+                  <p className="pt-1 pb-1 flex flex-row items-center">
+                    <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
+                    Account deactivated on {deactivatedAt}
+                  </p>
+                )}
+              </PreviewCard>
             </div>
 
             {!!subjectStatus && (

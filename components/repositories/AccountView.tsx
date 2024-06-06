@@ -43,6 +43,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
+import { Lists } from 'components/list/Lists'
 
 enum Views {
   Details,
@@ -52,6 +53,7 @@ enum Views {
   Invites,
   Events,
   Email,
+  Lists,
 }
 
 const TabKeys = {
@@ -59,6 +61,7 @@ const TabKeys = {
   posts: Views.Posts,
   follows: Views.Follows,
   followers: Views.Followers,
+  lists: Views.Lists,
   invites: Views.Invites,
   events: Views.Events,
   email: Views.Email,
@@ -132,6 +135,14 @@ export function AccountView({
           sublabel: String(profile.followersCount),
         },
       )
+
+      if (profile.associated?.lists) {
+        views.push({
+          view: Views.Lists,
+          label: 'Lists',
+          sublabel: String(profile.associated.lists),
+        })
+      }
     }
     views.push(
       { view: Views.Invites, label: 'Invites', sublabel: String(numInvited) },
@@ -195,6 +206,7 @@ export function AccountView({
                   )}
                   {currentView === Views.Follows && <Follows id={id} />}
                   {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Lists && <Lists actor={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
@@ -392,6 +404,9 @@ function Details({
 }) {
   const labels = getLabelsForSubject({ repo })
   const canShowDidHistory = repo.did.startsWith('did:plc')
+  const deactivatedAt = repo.deactivatedAt
+    ? dateFormatter.format(new Date(repo.deactivatedAt))
+    : ''
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -412,6 +427,12 @@ function Details({
               : 'Not verified'
           }
         />
+        {deactivatedAt && (
+          <DataField
+            label="Account Deactivated"
+            value={`At ${deactivatedAt}`}
+          />
+        )}
         {profile?.description && (
           <div className="sm:col-span-2">
             <dt className="text-sm font-medium text-gray-500 dark:text-gray-50">
