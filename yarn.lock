@@ -2,7 +2,7 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.12.16":
+"@atproto/api@^0.12.17":
   version "0.12.17"
   resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.17.tgz#6fc98f9e4a831d5d0bb792a4dd2388713a587ed9"
   integrity sha512-hj2LnEJGM27xPB1cugZHMnsvPDzjcIc0JtrGS11LO8+XJ/QYL192/HVdPQR82rN8XMlSPHXhNoeI2NJna8MUGQ==
