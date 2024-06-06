@@ -43,6 +43,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
+import { Lists } from 'components/list/Lists'
 
 enum Views {
   Details,
@@ -52,6 +53,7 @@ enum Views {
   Invites,
   Events,
   Email,
+  Lists,
 }
 
 const TabKeys = {
@@ -59,6 +61,7 @@ const TabKeys = {
   posts: Views.Posts,
   follows: Views.Follows,
   followers: Views.Followers,
+  lists: Views.Lists,
   invites: Views.Invites,
   events: Views.Events,
   email: Views.Email,
@@ -132,6 +135,14 @@ export function AccountView({
           sublabel: String(profile.followersCount),
         },
       )
+
+      if (profile.associated?.lists) {
+        views.push({
+          view: Views.Lists,
+          label: 'Lists',
+          sublabel: String(profile.associated.lists),
+        })
+      }
     }
     views.push(
       { view: Views.Invites, label: 'Invites', sublabel: String(numInvited) },
@@ -192,6 +203,7 @@ export function AccountView({
                   )}
                   {currentView === Views.Follows && <Follows id={id} />}
                   {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Lists && <Lists actor={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
