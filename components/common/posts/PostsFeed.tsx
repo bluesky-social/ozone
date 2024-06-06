@@ -216,8 +216,7 @@ function ImageAltText({ alt }: { alt: string }) {
   )
 }
 
-// @TODO record embeds
-function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
@@ -286,84 +285,136 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   }
   // render quote posts embeds
   if (AppBskyEmbedRecord.isView(embed)) {
-    if (
-      AppBskyEmbedRecord.isViewRecord(embed.record) &&
-      AppBskyFeedPost.isRecord(embed.record.value) &&
-      AppBskyFeedPost.validateRecord(embed.record.value).success
-    ) {
-      return (
-        <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
-          <div className="flex flex-row">
-            <ProfileAvatar
-              profile={embed.record.author}
-              className="w-6 h-6 rounded-full"
-            />
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
-              <Link
-                href={`/repositories/${embed.record.author.did}`}
-                className="hover:underline"
-              >
-                {embed.record.author.displayName ? (
-                  <>
-                    <span className="font-bold">
-                      {embed.record.author.displayName}
-                    </span>
-                    <span className="ml-1 text-gray-500 dark:text-gray-50">
-                      @{embed.record.author.handle}
-                    </span>
-                  </>
-                ) : (
-                  <span className="font-bold">
-                    @{embed.record.author.handle}
-                  </span>
-                )}
-              </Link>
-              &nbsp;&middot;&nbsp;
-              <Link
-                href={`/repositories/${embed.record.uri.replace('at://', '')}`}
-                className="text-gray-500 dark:text-gray-50 hover:underline"
-              >
-                {new Date(embed.record.indexedAt).toLocaleString()}
-              </Link>
-            </p>
-          </div>
-          <div className={`prose-sm pl-10 pb-2 dark:text-gray-100`}>
-            <RichText post={embed.record.value} />
-          </div>
-        </div>
-      )
-    } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
-      const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
-      const peekLink = buildBlueSkyAppUrl({
-        did: `${did}`,
-        rkey: `${rkey}`,
-        collection: `${collection?.split('.').pop()}`,
-      })
-      const repoLink = `/repositories/${did}/${collection}/${rkey}`
-      return (
-        <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
-            The author of the original post blocked the author.{' '}
-            <Link
-              className=" text-gray-900 dark:text-gray-200 underline"
-              href={repoLink}
-            >
-              See quoted post
-            </Link>
-            {' · '}
-            <a
-              target="_blank"
-              className=" text-gray-900 dark:text-gray-200 underline"
-              href={peekLink}
-            >
-              Peek
-            </a>
-          </p>
-        </div>
-      )
+    const recordView = <RecordEmbedView embed={embed} />
+    if (recordView) {
+      return recordView
     }
   }
   return <span />
+}
+
+export function RecordEmbedView({
+  embed,
+  leftAligned = true,
+}: {
+  embed: AppBskyEmbedRecord.View | { $type: string; [k: string]: unknown }
+  leftAligned?: boolean
+}) {
+  const leftPadding = !leftAligned ? 'pl-14' : 'pl-2'
+  if (
+    AppBskyEmbedRecord.isViewRecord(embed.record) &&
+    AppBskyFeedPost.isRecord(embed.record.value) &&
+    AppBskyFeedPost.validateRecord(embed.record.value).success
+  ) {
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <div className="flex flex-row gap-1">
+          <ProfileAvatar
+            profile={embed.record.author}
+            className="w-6 h-6 rounded-full"
+          />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+            <Link
+              href={`/repositories/${embed.record.author.did}`}
+              className="hover:underline"
+            >
+              {embed.record.author.displayName ? (
+                <>
+                  <span className="font-bold">
+                    {embed.record.author.displayName}
+                  </span>
+                  <span className="ml-1 text-gray-500 dark:text-gray-50">
+                    @{embed.record.author.handle}
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold">@{embed.record.author.handle}</span>
+              )}
+            </Link>
+            &nbsp;&middot;&nbsp;
+            <Link
+              href={`/repositories/${embed.record.uri.replace('at://', '')}`}
+              className="text-gray-500 dark:text-gray-50 hover:underline"
+            >
+              {new Date(embed.record.indexedAt).toLocaleString()}
+            </Link>
+          </p>
+        </div>
+        <div
+          className={`prose-sm ${
+            leftAligned ? 'pl-6' : 'pl-10'
+          } pb-2 dark:text-gray-100`}
+        >
+          <RichText post={embed.record.value} />
+        </div>
+      </div>
+    )
+  } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
+    const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
+    const peekLink = buildBlueSkyAppUrl({
+      did: `${did}`,
+      rkey: `${rkey}`,
+      collection: `${collection?.split('.').pop()}`,
+    })
+    const repoLink = `/repositories/${did}/${collection}/${rkey}`
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
+          The author of the original post blocked the author.{' '}
+          <Link
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={repoLink}
+          >
+            See quoted post
+          </Link>
+          {' · '}
+          <a
+            target="_blank"
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={peekLink}
+          >
+            Peek
+          </a>
+        </p>
+      </div>
+    )
+  } else if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
+    const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
+    const peekLink = buildBlueSkyAppUrl({
+      did: `${did}`,
+      rkey: `${rkey}`,
+      collection: `${collection?.split('.').pop()}`,
+    })
+    const repoLink = `/repositories/${did}/${collection}/${rkey}`
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
+          The embedded record could not be found.{' '}
+          <Link
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={repoLink}
+          >
+            See record
+          </Link>
+          {' · '}
+          <a
+            target="_blank"
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={peekLink}
+          >
+            Peek
+          </a>
+        </p>
+      </div>
+    )
+  }
+  return null
 }
 
 function PostControls({

@@ -1,4 +1,9 @@
 import { Alert } from '@/common/Alert'
+import {
+  PostAsCard,
+  PostEmbeds,
+  RecordEmbedView,
+} from '@/common/posts/PostsFeed'
 import client from '@/lib/client'
 import { ChatBskyConvoDefs } from '@atproto/api'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
@@ -80,15 +85,20 @@ export const MessageContext = ({
             )
           }
           if (ChatBskyConvoDefs.isMessageView(message)) {
+            let embedView: React.ReactNode = null
+            const texts = [
+              message.text,
+              message.id === subject.messageId ? '(Reported message)' : '',
+            ]
+            if (message.embed) {
+              embedView = <RecordEmbedView embed={message.embed} />
+              texts.push('(Embed)')
+            }
             return (
               <div key={message.id} className="pt-2">
                 <MessageSenderInfo {...{ message, subject }} />
-                <p className="break-all">
-                  {message.text}
-                  {message.id === subject.messageId
-                    ? ' (Reported message)'
-                    : ''}
-                </p>
+                {embedView}
+                <p className="break-all">{texts.join(' ')}</p>
               </div>
             )
           }
