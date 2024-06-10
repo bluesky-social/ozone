@@ -57,7 +57,7 @@ export const ActionButton = forwardRef(function ActionButton(
   const appearanceClassName =
     appearanceClassNames[appearance] || appearanceClassNames.primary
   const sizeClassName = (size && sizeClassNames[size]) || sizeClassNames.md
-  const classNames = `inline-flex items-center rounded border text-base font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${className} ${appearanceClassName} ${sizeClassName}`
+  const classNames = `inline-flex items-center rounded border font-medium shadow-sm focus:outline-none focus:ring-2 focus:ring-offset-2 ${className} ${appearanceClassName} ${sizeClassName}`
 
   return <button ref={ref} type="button" className={classNames} {...others} />
 })

@@ -308,7 +308,10 @@ export function RepoCard(props: { did: string }) {
               {profile?.displayName ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
-                  <span className="ml-1 text-gray-500 dark:text-gray-50">
+                  <span
+                    className="ml-1 text-gray-500 dark:text-gray-50"
+                    title={`@${repo.handle}`}
+                  >
                     @{repo.handle}
                   </span>
                 </>
@@ -326,7 +329,7 @@ export function RepoCard(props: { did: string }) {
             </a>
           </p>
           {profile?.description && (
-            <p className="text-gray-500 dark:text-gray-50">
+            <p className="text-gray-500 dark:text-gray-50 break-words">
               {profile.description}
             </p>
           )}

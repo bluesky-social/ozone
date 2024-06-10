@@ -32,6 +32,7 @@
       "@/mod-event/*": ["components/mod-event/*"],
       "@/subject/*": ["components/subject/*"],
       "@/dms/*": ["components/dms/*"],
+      "@/workspace/*": ["components/workspace/*"],
     }
   },
   "include": ["next-env.d.ts", "**/**/**/*.tsx", "**/**/**/*.ts", ".next/types/**/*.ts"],

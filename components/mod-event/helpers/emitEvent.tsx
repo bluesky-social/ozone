@@ -5,15 +5,17 @@ import { displayError } from '../../common/Loader'
 import { queryClient } from 'components/QueryClient'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import { createSubjectFromId } from '@/reports/helpers/subject'
+import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
 
 export const emitEvent = async (
   vals: ToolsOzoneModerationEmitEvent.InputSchema,
 ) => {
   const emitModerationEventAsync = async () => {
-    const { data } = await client.api.tools.ozone.moderation.emitEvent(
-      vals,
-      { encoding: 'application/json', headers: client.proxyHeaders() },
-    )
+    const { data } = await client.api.tools.ozone.moderation.emitEvent(vals, {
+      encoding: 'application/json',
+      headers: client.proxyHeaders(),
+    })
 
     return data
   }
@@ -58,6 +60,58 @@ export const emitEvent = async (
     } else {
       toast.error(`Error taking action: ${displayError(err)}`)
     }
+    throw err
+  }
+}
+
+export const actionSubjects = async (
+  eventData: Omit<ToolsOzoneModerationEmitEvent.InputSchema, 'subject'>,
+  subjects: string[],
+) => {
+  const emit = async (
+    subject: ToolsOzoneModerationEmitEvent.InputSchema['subject'],
+  ) => {
+    const { data } = await client.api.tools.ozone.moderation.emitEvent(
+      { subject, ...eventData },
+      {
+        encoding: 'application/json',
+        headers: client.proxyHeaders(),
+      },
+    )
+
+    return data
+  }
+
+  try {
+    const results: { succeeded: string[]; failed: string[] } = {
+      succeeded: [],
+      failed: [],
+    }
+    const actions = Promise.allSettled(
+      subjects.map(async (sub) => {
+        try {
+          const { subject } = await createSubjectFromId(sub)
+          await emit(subject)
+          results.succeeded.push(sub)
+        } catch (err) {
+          results.failed.push(sub)
+        }
+      }),
+    )
+    await toast.promise(actions, {
+      pending: `Taking action on ${buildItemsSummary(
+        groupSubjects(subjects),
+      )}...`,
+      success: results.failed.length
+        ? `Actioned ${buildItemsSummary(
+            groupSubjects(results.succeeded),
+          )}. Failed to action ${buildItemsSummary(
+            groupSubjects(results.failed),
+          )}`
+        : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`,
+    })
+  } catch (err) {
+    toast.error(`Error taking action: ${displayError(err)}`)
     throw err
   }
 }
