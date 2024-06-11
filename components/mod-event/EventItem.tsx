@@ -5,8 +5,10 @@ import { ReasonBadge } from '@/reports/ReasonBadge'
 import {
   ToolsOzoneModerationDefs,
   ComAtprotoModerationDefs,
+  ChatBskyConvoDefs,
 } from '@atproto/api'
 import { ItemTitle } from './ItemTitle'
+import { MessageContext } from '@/dms/MessageContext'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -92,6 +94,12 @@ const Email = ({
   )
 }
 
+function isMessageSubject(
+  subject: ToolsOzoneModerationDefs.ModEventView['subject'],
+): subject is ChatBskyConvoDefs.MessageRef {
+  return subject.messageId !== undefined
+}
+
 const Report = ({
   modEvent,
 }: {
@@ -124,6 +132,10 @@ const Report = ({
       </div>
       {modEvent.event.comment && (
         <p className="mt-1">{modEvent.event.comment}</p>
+      )}
+
+      {isMessageSubject(modEvent.subject) && (
+        <MessageContext className="mt-3" subject={modEvent.subject} />
       )}
     </Card>
   )

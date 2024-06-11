@@ -3,6 +3,7 @@ import {
   AppBskyFeedDefs,
   AppBskyActorDefs,
   ToolsOzoneModerationDefs,
+  ComAtprotoLabelDefs,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
@@ -74,6 +75,40 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
       />
     )
   }
+
+  // When the author of the post blocks the viewer, getPostThread won't return the necessary properties
+  // to build the post view so we manually build the post view from the raw record data
+  if (data?.thread?.blocked) {
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => (
+          <PostAsCard
+            dense
+            controls={false}
+            item={{
+              post: {
+                uri: record.uri,
+                cid: record.cid,
+                author: record.repo,
+                record: record.value,
+                labels: ComAtprotoLabelDefs.isSelfLabels(record.value['labels'])
+                  ? record.value['labels'].values.map(({ val }) => ({
+                      val,
+                      uri: record.uri,
+                      src: record.repo.did,
+                      cts: new Date(0).toISOString(),
+                    }))
+                  : [],
+                indexedAt: new Date(0).toISOString(),
+              },
+            }}
+          />
+        )}
+      />
+    )
+  }
+
   if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
   }

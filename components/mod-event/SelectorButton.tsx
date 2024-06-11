@@ -4,6 +4,7 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
+import { DM_DISABLE_TAG } from '@/lib/constants'
 
 const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
@@ -28,7 +29,7 @@ const actions = [
   },
   {
     text: 'Appeal',
-    key: MOD_EVENTS.REPORT,
+    key: MOD_EVENTS.APPEAL,
   },
   {
     text: 'Resolve Appeal',
@@ -37,6 +38,14 @@ const actions = [
   {
     text: 'Divert',
     key: MOD_EVENTS.DIVERT,
+  },
+  {
+    text: 'Disable DMs',
+    key: MOD_EVENTS.DISABLE_DMS,
+  },
+  {
+    text: 'Enable DMs',
+    key: MOD_EVENTS.ENABLE_DMS,
   },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
@@ -64,11 +73,7 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show appeal action if subject is already in appealed status
-      if (
-        key === MOD_EVENTS.REPORT &&
-        text === 'Appeal' &&
-        subjectStatus?.appealed
-      ) {
+      if (key === MOD_EVENTS.APPEAL && subjectStatus?.appealed) {
         return false
       }
       // Don't show takedown action if subject is already takendown
@@ -116,6 +121,19 @@ export const ModEventSelectorButton = ({
         return false
       }
 
+      if (
+        key === MOD_EVENTS.DISABLE_DMS &&
+        (subjectStatus?.tags?.includes(DM_DISABLE_TAG) || !isSubjectDid)
+      ) {
+        return false
+      }
+      if (
+        key === MOD_EVENTS.ENABLE_DMS &&
+        (!subjectStatus?.tags?.includes(DM_DISABLE_TAG) || !isSubjectDid)
+      ) {
+        return false
+      }
+
       return true
     })
   }, [
@@ -124,10 +142,11 @@ export const ModEventSelectorButton = ({
     subjectStatus?.muteReportingUntil,
     subjectStatus?.reviewState,
     subjectStatus?.appealed,
+    subjectStatus?.tags,
     hasBlobs,
     isSubjectDid,
   ])
-  
+
   return (
     <Dropdown
       className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
@@ -135,6 +154,7 @@ export const ModEventSelectorButton = ({
         text,
         onClick: () => setSelectedAction(key),
       }))}
+      data-cy="mod-event-selector"
     >
       {actionsByKey[selectedAction] || 'Action'}
 

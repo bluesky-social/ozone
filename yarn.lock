@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.12.7":
-  version "0.12.7"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.7.tgz#dace57dd8464866797ac718f7dcde350e56e653d"
-  integrity sha512-WHPX+rO8K24Mb3gMofUz7v8GLtTrVUzq9ZfUOxqP/tqDIlYPWEWc5ess6B8joIP0jYLZCyYakLV6giinXjpE6Q==
+"@atproto/api@^0.12.17":
+  version "0.12.17"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.17.tgz#6fc98f9e4a831d5d0bb792a4dd2388713a587ed9"
+  integrity sha512-hj2LnEJGM27xPB1cugZHMnsvPDzjcIc0JtrGS11LO8+XJ/QYL192/HVdPQR82rN8XMlSPHXhNoeI2NJna8MUGQ==
   dependencies:
     "@atproto/common-web" "^0.3.0"
     "@atproto/lexicon" "^0.4.0"
@@ -3737,11 +3737,6 @@ react-markdown@~8.0.0:
     unified "^10.0.0"
     unist-util-visit "^4.0.0"
     vfile "^5.0.0"
-
-react-tailwindcss-select@^1.8.5:
-  version "1.8.5"
-  resolved "https://registry.yarnpkg.com/react-tailwindcss-select/-/react-tailwindcss-select-1.8.5.tgz#adf752c7e54889c38fd76bd1aa5cf8cf6d2b9788"
-  integrity sha512-x29IrLiqBT5FnkC9oFQReOr05tEOZHtDtZdha84nlSWcj3qD67yonKFHXIf69yc8ElFlKUxCEv0zCllN8jHBFA==
 
 react-tetris@^0.3.0:
   version "0.3.0"
