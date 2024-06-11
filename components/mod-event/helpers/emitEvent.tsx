@@ -102,13 +102,17 @@ export const actionSubjects = async (
       pending: `Taking action on ${buildItemsSummary(
         groupSubjects(subjects),
       )}...`,
-      success: results.failed.length
-        ? `Actioned ${buildItemsSummary(
-            groupSubjects(results.succeeded),
-          )}. Failed to action ${buildItemsSummary(
-            groupSubjects(results.failed),
-          )}`
-        : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`,
+      success: {
+        render() {
+          return results.failed.length
+            ? `Actioned ${buildItemsSummary(
+                groupSubjects(results.succeeded),
+              )}. Failed to action ${buildItemsSummary(
+                groupSubjects(results.failed),
+              )}`
+            : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`
+        },
+      },
     })
   } catch (err) {
     toast.error(`Error taking action: ${displayError(err)}`)
