@@ -1,25 +1,14 @@
-import {
-  EventListState,
-  FIRST_EVENT_TIMESTAMP,
-  formatDateForInput,
-  ModEventListQueryOptions,
-  useModEventList,
-} from './useModEventList'
+import { ModEventListQueryOptions, useModEventList } from './useModEventList'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ModEventItem } from './EventItem'
 import { Dropdown } from '@/common/Dropdown'
-import { MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
 import { useState } from 'react'
-import { addDays } from 'date-fns'
-import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
 import { FunnelIcon as FunnelFilledIcon } from '@heroicons/react/24/solid'
-import { reasonTypeOptions } from '@/reports/helpers/getType'
-import { LabelSelector } from '@/common/labels/Selector'
-import { ReasonBadgeButton } from '@/reports/ReasonBadge'
+import { EventFilterPanel } from './FilterPanel'
 
 const Header = ({
   subjectTitle,
@@ -91,6 +80,7 @@ export const ModEventList = (
     oldestFirst,
     createdAfter,
     createdBefore,
+    applyFilterMacro,
     changeListFilter,
     resetListFilters,
   } = useModEventList(props)
@@ -151,6 +141,7 @@ export const ModEventList = (
             createdBefore,
             addedTags,
             removedTags,
+            applyFilterMacro,
             changeListFilter,
           }}
         />
@@ -193,333 +184,6 @@ export const ModEventList = (
           <LoadMoreButton onClick={() => fetchMoreModEvents()} />
         </div>
       )}
-    </div>
-  )
-}
-
-const EventFilterPanel = ({
-  types,
-  reportTypes,
-  addedLabels,
-  removedLabels,
-  commentFilter,
-  createdBy,
-  subject,
-  oldestFirst,
-  createdAfter,
-  createdBefore,
-  toggleCommentFilter,
-  setCommentFilterKeyword,
-  changeListFilter,
-}: Omit<EventListState, 'includeAllUserRecords'> &
-  Pick<
-    ReturnType<typeof useModEventList>,
-    | 'changeListFilter'
-    | 'commentFilter'
-    | 'toggleCommentFilter'
-    | 'setCommentFilterKeyword'
-  >) => {
-  const allTypes = Object.entries(MOD_EVENT_TITLES)
-  const toggleType = (type) => {
-    if (type === 'all') {
-      if (types.length === allTypes.length) {
-        changeListFilter({ field: 'types', value: [] })
-      } else {
-        changeListFilter({
-          field: 'types',
-          value: allTypes.map(([type]) => type),
-        })
-      }
-      return
-    }
-    const newTypes = types.includes(type)
-      ? types.filter((t) => t !== type)
-      : [...types, type]
-    changeListFilter({ field: 'types', value: newTypes })
-  }
-
-  return (
-    <div className="shadow dark:shadow-slate-700 rounded py-3 px-5 bg-white dark:bg-slate-800 mt-2">
-      <div className="flex flex-row">
-        <div className="mr-4">
-          <div>
-            <h5 className="text-gray-700 dark:text-gray-100 font-medium">
-              Event Type
-            </h5>
-            <div className="flex flex-row items-center mr-2 mt-2">
-              <input
-                id={`type-all`}
-                name={`type-all`}
-                type="checkbox"
-                value={'all'}
-                checked={types.length === allTypes.length}
-                onChange={() => toggleType('all')}
-                className="h-4 w-4 rounded border-gray-300 dark:border-teal-300 text-indigo-600 dark:text-teal-600 focus:ring-indigo-600 dark:focus:ring-teal-600"
-              />
-              <label
-                htmlFor={`type-all`}
-                className="ml-1 text-sm leading-6 text-gray-700 dark:text-gray-100"
-              >
-                All
-              </label>
-            </div>
-            {allTypes.map(([type, title]) => (
-              <div className="flex flex-row items-center mr-2" key={type}>
-                <input
-                  id={`type-${type}`}
-                  name={`type-${type}`}
-                  type="checkbox"
-                  value={type}
-                  checked={types.includes(type)}
-                  onChange={() => toggleType(type)}
-                  className="h-4 w-4 rounded border-gray-300 dark:border-teal-300 text-indigo-600 dark:text-teal-600 focus:ring-indigo-600 dark:focus:ring-teal-600"
-                />
-                <label
-                  htmlFor={`type-${type}`}
-                  className="ml-1 text-sm leading-6 text-gray-700 dark:text-gray-100"
-                >
-                  {title}
-                </label>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div>
-          <h5 className="text-gray-700 dark:text-gray-100 font-medium">
-            Comment/Note
-          </h5>
-
-          <div className="flex flex-row items-center mr-2 mt-2">
-            <input
-              id={`comment-filter`}
-              name={`comment-filter`}
-              type="checkbox"
-              value={`true`}
-              checked={commentFilter.enabled}
-              onChange={() => toggleCommentFilter()}
-              className="h-4 w-4 rounded border-gray-300 dark:border-teal-300 text-indigo-600 dark:text-teal-600 focus:ring-indigo-600 dark:focus:ring-teal-600"
-            />
-            <label
-              htmlFor={`comment-filter`}
-              className="ml-1 text-sm leading-6 text-gray-700 dark:text-gray-100"
-            >
-              Events with comments
-            </label>
-          </div>
-          {commentFilter?.enabled && (
-            <FormLabel
-              label="Comment Keyword"
-              htmlFor="keyword"
-              className="flex-1 mt-2"
-            >
-              <Input
-                type="text"
-                id="keyword"
-                name="keyword"
-                required
-                placeholder="trim, later, soon etc."
-                className="block w-full"
-                value={commentFilter.keyword}
-                onChange={(ev) => setCommentFilterKeyword(ev.target.value)}
-                autoComplete="off"
-              />
-            </FormLabel>
-          )}
-
-          <FormLabel
-            label="Event Author DID"
-            htmlFor="createdBy"
-            className="flex-1 mt-2"
-          >
-            <Input
-              type="text"
-              id="createdBy"
-              name="createdBy"
-              placeholder="DID of the author of the event"
-              className="block w-full"
-              value={createdBy || ''}
-              onChange={(ev) =>
-                changeListFilter({
-                  field: 'createdBy',
-                  value: ev.target.value,
-                })
-              }
-              autoComplete="off"
-            />
-          </FormLabel>
-
-          <FormLabel label="Subject" htmlFor="subject" className="flex-1 mt-2">
-            <Input
-              type="text"
-              id="subject"
-              name="subject"
-              placeholder="DID or AT-URI"
-              className="block w-full"
-              value={subject || ''}
-              onChange={(ev) =>
-                changeListFilter({
-                  field: 'subject',
-                  value: ev.target.value,
-                })
-              }
-              autoComplete="off"
-            />
-          </FormLabel>
-
-          <FormLabel
-            label="Events Created After"
-            htmlFor="createdAfter"
-            className="flex-1 mt-2"
-          >
-            <Input
-              type="datetime-local"
-              id="createdAfter"
-              name="createdAfter"
-              className="block w-full dark:[color-scheme:dark]"
-              value={createdAfter}
-              onChange={(ev) =>
-                changeListFilter({
-                  field: 'createdAfter',
-                  value: ev.target.value,
-                })
-              }
-              autoComplete="off"
-              min={FIRST_EVENT_TIMESTAMP}
-              max={formatDateForInput(addDays(new Date(), 1))}
-            />
-          </FormLabel>
-
-          <FormLabel
-            label="Events Created Before"
-            htmlFor="createdBefore"
-            className="flex-1 mt-2"
-          >
-            <Input
-              type="datetime-local"
-              id="createdBefore"
-              name="createdBefore"
-              className="block w-full dark:[color-scheme:dark]"
-              value={createdBefore}
-              onChange={(ev) =>
-                changeListFilter({
-                  field: 'createdBefore',
-                  value: ev.target.value,
-                })
-              }
-              autoComplete="off"
-              min={FIRST_EVENT_TIMESTAMP}
-              max={formatDateForInput(new Date())}
-            />
-          </FormLabel>
-        </div>
-      </div>
-      {types.includes(MOD_EVENTS.TAG) && (
-        <div className="flex flex-row gap-2 mt-2">
-          <FormLabel label="Added Tags" className="flex-1 max-w-sm">
-            <Input
-              type="text"
-              id="addedTags"
-              name="addedTags"
-              placeholder="comma separated tags"
-              className="block w-full"
-              onChange={(e) =>
-                changeListFilter({ field: 'addedTags', value: e.target.value })
-              }
-            />
-          </FormLabel>
-
-          <FormLabel label="Removed Tags" className="flex-1 max-w-sm">
-            <Input
-              type="text"
-              id="removedTags"
-              name="removedTags"
-              placeholder="comma separated tags"
-              className="block w-full"
-              onChange={(e) =>
-                changeListFilter({
-                  field: 'removedTags',
-                  value: e.target.value,
-                })
-              }
-            />
-          </FormLabel>
-        </div>
-      )}
-      <div className="mt-2">
-        {types.includes(MOD_EVENTS.LABEL) && (
-          <>
-            <FormLabel label="Added Labels" className="w-full mt-2">
-              <LabelSelector
-                id="addedLabels"
-                name="addedLabels"
-                formId=""
-                defaultLabels={[]}
-                onChange={(value) =>
-                  changeListFilter({ field: 'addedLabels', value })
-                }
-              />
-            </FormLabel>
-
-            <FormLabel label="Removed Labels" className="w-full mt-2">
-              <LabelSelector
-                id="removedLabels"
-                name="removedLabels"
-                formId=""
-                defaultLabels={[]}
-                onChange={(value) =>
-                  changeListFilter({ field: 'removedLabels', value })
-                }
-              />
-            </FormLabel>
-          </>
-        )}
-
-        {types.includes(MOD_EVENTS.REPORT) && (
-          <FormLabel
-            label="Report Reason"
-            htmlFor="reasonType"
-            className="mt-2"
-          >
-            {Object.keys(reasonTypeOptions).map((typeValue) => {
-              const isSelected = reportTypes.includes(typeValue)
-              return (
-                <ReasonBadgeButton
-                  key={typeValue}
-                  className={`mr-1 ${isSelected ? 'font-bold' : ''}`}
-                  reasonType={typeValue}
-                  isHighlighted={isSelected}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    const value: string[] = isSelected
-                      ? reportTypes.filter((t) => t !== typeValue)
-                      : [...reportTypes, typeValue]
-                    changeListFilter({
-                      field: 'reportTypes',
-                      value,
-                    })
-                  }}
-                />
-              )
-            })}
-          </FormLabel>
-        )}
-      </div>
-      <div>
-        <h5 className="text-gray-700 dark:text-gray-100 font-medium my-2">
-          Sort Direction
-        </h5>
-
-        <Checkbox
-          id="sortDirection"
-          name="sortDirection"
-          className="flex items-center"
-          checked={oldestFirst}
-          onChange={() =>
-            changeListFilter({ field: 'oldestFirst', value: !oldestFirst })
-          }
-          label="Show oldest events first (default: newest first)"
-        />
-      </div>
     </div>
   )
 }
