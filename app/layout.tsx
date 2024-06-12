@@ -5,12 +5,13 @@ import 'yet-another-react-lightbox/styles.css'
 import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import 'yet-another-react-lightbox/plugins/captions.css'
 import { ToastContainer } from 'react-toastify'
-import { QueryClientProvider } from '@tanstack/react-query'
 import { Shell } from '@/shell/Shell'
 import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
 import { AuthProvider } from '@/shell/AuthContext'
-import { queryClient } from 'components/QueryClient'
+import { AuthQueryClientProvider } from '@/shell/AuthQueryClient'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
+import { PLC_DIRECTORY_URL, SOCIAL_APP_URL } from '@/lib/constants'
+import { ConfigurationProvider } from '@/shell/ConfigurationContext'
 
 export default function RootLayout({
   children,
@@ -45,12 +46,18 @@ export default function RootLayout({
           hideProgressBar={false}
           closeOnClick
         />
-        <AuthProvider>
-          <CommandPaletteRoot>
-            <QueryClientProvider client={queryClient}>
-              <Shell>{children}</Shell>
-            </QueryClientProvider>
-          </CommandPaletteRoot>
+
+        <AuthProvider
+          plcDirectoryUrl={PLC_DIRECTORY_URL}
+          handleResolver={SOCIAL_APP_URL}
+        >
+          <AuthQueryClientProvider>
+            <ConfigurationProvider>
+              <CommandPaletteRoot>
+                <Shell>{children}</Shell>
+              </CommandPaletteRoot>
+            </ConfigurationProvider>
+          </AuthQueryClientProvider>
         </AuthProvider>
       </body>
     </html>

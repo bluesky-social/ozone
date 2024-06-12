@@ -1,4 +1,5 @@
 import { classNames } from '@/lib/util'
+import { HTMLAttributes, ReactNode, useEffect, useState } from 'react'
 
 export type TabView<ViewName> = {
   view: ViewName
@@ -64,5 +65,36 @@ function Tab<ViewName>({
         <span className="text-xs font-bold text-gray-400">{sublabel}</span>
       ) : undefined}
     </span>
+  )
+}
+
+export function TabsPanel<ViewName>({
+  views,
+  fallback,
+  ...props
+}: {
+  views: (TabView<ViewName> & { content: ReactNode })[]
+  fallback?: ReactNode
+} & HTMLAttributes<HTMLDivElement>) {
+  const available = views.filter((v) => v.content)
+  const defaultView = available[0]?.view
+
+  const [currentView, setCurrentView] = useState(defaultView)
+
+  const current = available.find((v) => v.view === currentView)
+
+  useEffect(() => {
+    if (!current?.view) setCurrentView(defaultView)
+  }, [current?.view, defaultView])
+
+  return (
+    <div {...props}>
+      <Tabs
+        views={available}
+        currentView={currentView}
+        onSetCurrentView={setCurrentView}
+      />
+      {current?.content ?? fallback}
+    </div>
   )
 }

@@ -1,11 +1,12 @@
 import { useTitle } from 'react-use'
 import { ModEventList } from '@/mod-event/EventList'
-import { emitEvent } from '@/mod-event/helpers/emitEvent'
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 export default function EventListPageContent() {
+  const emitEvent = useEmitEvent()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -34,9 +35,7 @@ export default function EventListPageContent() {
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={[quickOpenParam]}
         isInitialLoading={false}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
         }}
       />

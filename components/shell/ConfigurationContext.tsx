@@ -1,0 +1,203 @@
+'use client'
+
+import { BskyAgent } from '@atproto/api'
+import {
+  createContext,
+  ReactNode,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react'
+
+import { SetupModal } from '@/common/SetupModal'
+import { getExternalLabelers } from '@/config/data'
+import { getConfig, OzoneConfig } from '@/lib/client-config'
+import {
+  parseServerConfig,
+  PermissionName,
+  ServerConfig,
+} from '@/lib/server-config'
+import { useQuery } from '@tanstack/react-query'
+import { useAuthContext } from './AuthContext'
+import { ConfigurationFlow } from './ConfigurationFlow'
+
+export enum ConfigurationState {
+  Pending,
+  Ready,
+  Unconfigured,
+  Unauthorized,
+}
+
+export type ReconfigureOptions = {
+  skipRecord?: boolean
+}
+
+export type ConfigurationContextData = {
+  /** An agent to use in order to communicate with the labeler on the user's behalf. */
+  labelerAgent: BskyAgent
+  isServiceAccount: boolean
+  config: OzoneConfig
+  serverConfig: ServerConfig
+  reconfigure: (options?: ReconfigureOptions) => void
+}
+
+const ConfigurationContext = createContext<ConfigurationContextData | null>(
+  null,
+)
+
+export const ConfigurationProvider = ({
+  children,
+}: {
+  children: ReactNode
+}) => {
+  // Fetch the labeler static configuration
+  const {
+    data: config,
+    error: configError,
+    refetch: refetchConfig,
+  } = useQuery<OzoneConfig, Error>({
+    retry: (failureCount: number, error: Error): boolean => {
+      // TODO: change getConfig() to throw a specific error when a network
+      // error occurs, so we can distinguish between network errors and
+      // configuration errors.
+      return false
+    },
+    queryKey: ['labeler-config'],
+    queryFn: async () => getConfig(),
+    // Refetching will be handled manually
+    refetchOnWindowFocus: false,
+  })
+
+  // Derive an agent for communicating with the labeler, if we have a config and
+  // an (authenticated) PDS agent.
+  const { pdsAgent } = useAuthContext()
+  const labelerAgent = useMemo(() => {
+    if (!pdsAgent) return undefined
+    if (!config?.did) return undefined
+
+    const [did, id = 'atproto_labeler'] = config.did.split('#')
+    const labelerAgent = pdsAgent.withProxy(id, did)
+
+    const externalLabelers = getExternalLabelers()
+    const labelerDids = Object.keys(externalLabelers)
+    labelerAgent.configureLabelersHeader([did, ...labelerDids])
+
+    return labelerAgent
+  }, [pdsAgent, config?.did])
+
+  // Fetch the user's server configuration
+  const {
+    data: serverConfig,
+    error: serverConfigError,
+    refetch: refetchServerConfig,
+  } = useQuery({
+    enabled: labelerAgent != null,
+    retry: (failureCount: number, error: Error): boolean => {
+      if (error?.['status'] === 401) return false
+      return failureCount < 3
+    },
+    queryKey: ['server-config', labelerAgent?.did ?? '<anonymous>'],
+    queryFn: async ({ signal }) => {
+      const { data } = await labelerAgent!.api.tools.ozone.server.getConfig(
+        {},
+        { signal },
+      )
+      return parseServerConfig(data)
+    },
+    refetchOnWindowFocus: false,
+  })
+
+  // Allow ignoring the creation of a record when reconfiguring
+  const [skipRecord, setSkipRecord] = useState(false)
+  useEffect(() => setSkipRecord(false), [labelerAgent]) // Reset on credential change
+
+  const accountDid = labelerAgent?.did
+
+  const state = useMemo<ConfigurationState>(() => {
+    if (serverConfigError?.['status'] === 401) {
+      return ConfigurationState.Unauthorized
+    } else if (!config || !serverConfig) {
+      return ConfigurationState.Pending
+    } else if (!serverConfig.role) {
+      return ConfigurationState.Unauthorized
+    } else if (
+      config.needs.key ||
+      config.needs.service ||
+      (config.needs.record && config.did === accountDid && !skipRecord)
+    ) {
+      return ConfigurationState.Unconfigured
+    } else {
+      return ConfigurationState.Ready
+    }
+  }, [config, serverConfigError, serverConfig, skipRecord, accountDid])
+
+  const reconfigure = useCallback(
+    async (options?: ReconfigureOptions) => {
+      if (options?.skipRecord != null) setSkipRecord(options.skipRecord)
+      await refetchConfig()
+      await refetchServerConfig()
+    },
+    [refetchConfig, refetchServerConfig],
+  )
+
+  const configurationContextData = useMemo<ConfigurationContextData | null>(
+    () =>
+      // Note conditions here are redundant, but required for type safety
+      state === ConfigurationState.Ready &&
+      config &&
+      serverConfig &&
+      labelerAgent
+        ? {
+            config,
+            isServiceAccount: accountDid === config.did,
+            serverConfig,
+            labelerAgent,
+            reconfigure,
+          }
+        : null,
+    [state, accountDid, config, serverConfig, labelerAgent, reconfigure],
+  )
+
+  if (!configurationContextData) {
+    return (
+      <SetupModal>
+        <ConfigurationFlow
+          config={config}
+          state={state}
+          error={configError || serverConfigError}
+          reconfigure={reconfigure}
+          labelerAgent={labelerAgent}
+        />
+      </SetupModal>
+    )
+  }
+
+  return (
+    <ConfigurationContext.Provider value={configurationContextData}>
+      {children}
+    </ConfigurationContext.Provider>
+  )
+}
+
+export const useConfigurationContext = () => {
+  const value = useContext(ConfigurationContext)
+  if (value) return value
+
+  throw new Error(
+    `useConfigurationContext() must be used within a <ConfigurationProvider />`,
+  )
+}
+
+export function useLabelerAgent() {
+  return useConfigurationContext().labelerAgent
+}
+
+export function useServerConfig() {
+  return useConfigurationContext().serverConfig
+}
+
+export function usePermission(name: PermissionName) {
+  return useServerConfig().permissions[name]
+}

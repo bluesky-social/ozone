@@ -27,8 +27,8 @@
     "@uiw/react-md-editor": "^3.23.5",
     "bcp-47-match": "^2.0.3",
     "date-fns": "^2.29.3",
-    "eslint": "8.30.0",
-    "eslint-config-next": "13.4.8",
+    "eslint": "^8.57.0",
+    "eslint-config-next": "^14.2.4",
     "kbar": "^0.1.0-beta.45",
     "lande": "^1.0.10",
     "next": "14.0.1",
@@ -40,7 +40,7 @@
     "react-use": "^17.4.0",
     "remark": "^14.0.3",
     "remark-html": "^15.0.2",
-    "typescript": "4.9.4",
+    "typescript": "^5.4.5",
     "yet-another-react-lightbox": "^3.20.0"
   },
   "devDependencies": {

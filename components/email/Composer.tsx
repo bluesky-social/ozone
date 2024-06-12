@@ -1,22 +1,23 @@
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import { commands } from '@uiw/react-md-editor'
+import dynamic from 'next/dynamic'
 import { useRef } from 'react'
 import { toast } from 'react-toastify'
-import dynamic from 'next/dynamic'
 
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
-import client from '@/lib/client'
-import { compileTemplateContent, getTemplate } from './helpers'
-import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { useEmailComposer } from './useComposer'
 import { useColorScheme } from '@/common/useColorScheme'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { compileTemplateContent, getTemplate } from './helpers'
 import { TemplateSelector } from './template-selector'
+import { useEmailComposer } from './useComposer'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
 export const EmailComposer = ({ did }: { did: string }) => {
+  const labelerAgent = useLabelerAgent()
   const {
     isSending,
     requiresConfirmation,
@@ -52,7 +53,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
         .toString()
 
       await toast.promise(
-        client.api.tools.ozone.moderation.emitEvent(
+        labelerAgent.api.tools.ozone.moderation.emitEvent(
           {
             event: {
               $type: MOD_EVENTS.EMAIL,
@@ -61,9 +62,9 @@ export const EmailComposer = ({ did }: { did: string }) => {
               content: htmlContent,
             },
             subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-            createdBy: client.session.did,
+            createdBy: labelerAgent.getDid(),
           },
-          { headers: client.proxyHeaders(), encoding: 'application/json' },
+          { encoding: 'application/json' },
         ),
         {
           pending: 'Sending email...',

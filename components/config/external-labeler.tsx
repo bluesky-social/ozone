@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
@@ -11,27 +11,24 @@ import {
 } from './data'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
 import dynamic from 'next/dynamic'
-import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { buildBlueSkyAppUrl } from '@/lib/util'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
 })
 
 export const ExternalLabelerConfig = () => {
-  const [labelers, setLabelers] = useState<Record<string, any>>({})
+  const { config } = useConfigurationContext()
+  const [labelers, setLabelers] = useState(getExternalLabelers)
   const [did, setDid] = useState<string>('')
   const labelerServiceDef = useLabelerServiceDef(did)
-  const labelerDetails = Object.entries(labelers)
+  const labelersEntries = Object.entries(labelers)
   const darkMode = isDarkModeEnabled()
-  const originalServiceDid = client.getServiceDid()?.split('#')[0]
 
-  useEffect(() => {
-    setLabelers(getExternalLabelers())
-  }, [])
-  const alreadySubscribed = !!labelerDetails.find(([d]) => d === did)
+  const alreadySubscribed = labelersEntries.some(([d]) => d === did)
 
   return (
     <>
@@ -74,8 +71,8 @@ export const ExternalLabelerConfig = () => {
               className="px-2 sm:px-4 sm:mr-2 py-1.5"
               disabled={!labelerServiceDef || alreadySubscribed}
               onClick={() => {
-                const labelers = addExternalLabelerDid(did, labelerServiceDef)
-                setLabelers(labelers)
+                if (!labelerServiceDef) return
+                setLabelers(addExternalLabelerDid(did, labelerServiceDef))
                 setDid('')
               }}
             >
@@ -91,14 +88,14 @@ export const ExternalLabelerConfig = () => {
             </ErrorInfo>
           )}
 
-          {labelerDetails.length ? (
+          {labelersEntries.length ? (
             <div className="mt-4">
               <h4 className="font-bold pb-2 text-sm">Configured labelers</h4>
-              {labelerDetails.map(([labelerDid, labeler], i) => (
+              {labelersEntries.map(([labelerDid, labeler], i) => (
                 <div
                   key={labeler.uri}
                   className={`pb-2 dark:border-gray-600 border-gray-300 ${
-                    i < labelerDetails.length - 1 ? 'border-b mb-2' : ''
+                    i < labelersEntries.length - 1 ? 'border-b mb-2' : ''
                   }`}
                 >
                   <h5 className="text-base flex items-center">
@@ -128,16 +125,15 @@ export const ExternalLabelerConfig = () => {
                       validationMessage="Cannot delete property"
                     />
                   </div>
-                  {originalServiceDid !== labeler.creator.did && (
+                  {config.did !== labeler.creator.did && (
                     <ActionButton
                       size="xs"
                       appearance="outlined"
                       className="px-2 sm:px-4 sm:mr-2"
                       onClick={() => {
-                        const labelers = removeExternalLabelerDid(
-                          labeler.creator.did,
+                        setLabelers(
+                          removeExternalLabelerDid(labeler.creator.did),
                         )
-                        setLabelers(labelers)
                       }}
                     >
                       <span className="text-sm sm:text-base">Unsubscribe</span>

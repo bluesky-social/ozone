@@ -1,37 +1,64 @@
 'use client'
-import { ComponentProps, ReactElement, cloneElement, useState } from 'react'
-import Link from 'next/link'
+
 import {
   ArrowLeftOnRectangleIcon,
-  ArrowRightOnRectangleIcon,
   ArrowRightCircleIcon,
+  ArrowRightOnRectangleIcon,
 } from '@heroicons/react/20/solid'
 import { useMutation } from '@tanstack/react-query'
-import { Loading } from '@/common/Loader'
-import client, { ClientSession } from '@/lib/client'
+import Link from 'next/link'
+import { ComponentProps, ReactElement, cloneElement, useState } from 'react'
+
+import { ErrorInfo } from '@/common/ErrorInfo'
 import { Checkbox, Input } from '@/common/forms'
+import { Loading } from '@/common/Loader'
 import {
+  OzoneConfig,
   OzoneConfigFull,
   getServiceUrlFromDoc,
   withDocAndMeta,
 } from '@/lib/client-config'
-import { ErrorInfo } from '@/common/ErrorInfo'
-import { useSession } from '@/lib/useSession'
+import { BskyAgent } from '@atproto/api'
+import { useAuthContext, useAuthDid, useAuthIdentifier } from './AuthContext'
+import { ConfigurationState, ReconfigureOptions } from './ConfigurationContext'
 
-export function ConfigurationFlow() {
-  const session = useSession()
+type ReconfigureFn = (options?: ReconfigureOptions) => void | Promise<void>
 
-  if (!session) {
+export type ConfigurationFlowProps = {
+  state: ConfigurationState
+  config: OzoneConfig | undefined
+  error: Error | null
+  labelerAgent: BskyAgent | undefined
+  reconfigure: ReconfigureFn
+}
+
+export function ConfigurationFlow({
+  state,
+  config,
+  error,
+  labelerAgent,
+  reconfigure,
+}: ConfigurationFlowProps) {
+  const { signOut } = useAuthContext()
+
+  const authDid = useAuthDid()
+  const authIdentifier = useAuthIdentifier()
+
+  if (state === ConfigurationState.Ready) {
+    return <Loading message="Redirecting..." />
+  }
+
+  if (state === ConfigurationState.Unauthorized) {
     return (
       <>
         <ErrorInfo type="warn" className="mt-2">
-          {`You're`} not logged-in. Please login using your Ozone service
-          account in order to configure Ozone.
+          Your credentials are not authorized on this network. Please login as
+          an authorized user in order to configure Ozone.
         </ErrorInfo>
         <Button
           className="w-full mt-2"
           icon={<ArrowLeftOnRectangleIcon />}
-          onClick={() => client.signout()}
+          onClick={signOut}
         >
           Restart
         </Button>
@@ -39,21 +66,43 @@ export function ConfigurationFlow() {
     )
   }
 
-  const { config } = session
+  // Note conditions here are redundant, but required for type safety
+  if (state === ConfigurationState.Pending || !config || !labelerAgent) {
+    if (error) {
+      return (
+        <>
+          <ErrorInfo type="error" className="mt-2">
+            We encountered an error loading the service configuration:
+            <br />
+            {error.message}
+          </ErrorInfo>
+          <Button
+            className="w-full mt-2"
+            icon={<ArrowLeftOnRectangleIcon />}
+            onClick={() => reconfigure()}
+          >
+            Retry
+          </Button>
+        </>
+      )
+    }
+
+    return <Loading message="Loading configuration..." />
+  }
 
   if (config.needs.key || config.needs.service) {
-    if (session.did !== session.config.did) {
+    if (authDid !== config.did) {
       return (
         <>
           <ErrorInfo type="warn" className="mt-2">
-            {`You're`} logged in as {session.handle}. Please login as{' '}
-            {session.config.handle || 'your Ozone service account'} in order to
+            {`You're`} logged in as {authIdentifier}. Please login as{' '}
+            {config.handle || 'your Ozone service account'} in order to
             configure Ozone.
           </ErrorInfo>
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => client.signout()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -72,7 +121,7 @@ export function ConfigurationFlow() {
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => client.signout()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -84,13 +133,13 @@ export function ConfigurationFlow() {
         <>
           <ErrorInfo type="warn" className="mt-2">
             We could not find identity information for the account{' '}
-            <b>{session.handle}</b>. Are you sure this account has an identity
+            <b>{authIdentifier}</b>. Are you sure this account has an identity
             on the network?
           </ErrorInfo>
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => client.signout()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -108,7 +157,7 @@ export function ConfigurationFlow() {
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => client.signout()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -117,9 +166,8 @@ export function ConfigurationFlow() {
     }
     return (
       <IdentityConfigurationFlow
-        key={config.updatedAt}
         config={withDocAndMeta(config)}
-        onComplete={() => client.reconfigure()}
+        reconfigure={reconfigure}
       />
     )
   }
@@ -159,37 +207,34 @@ export function ConfigurationFlow() {
   }
 
   if (config.needs.record) {
-    return (
-      <RecordConfigurationFlow
-        key={config.updatedAt}
-        session={session}
-        onComplete={(skip) => {
-          client.reconfigure({ skipRecord: skip })
-        }}
-      />
-    )
+    return <RecordConfigurationFlow config={config} reconfigure={reconfigure} />
   }
 
-  return <Loading message="Logging in..." />
+  return <Loading message="Redirecting..." />
 }
 
 function IdentityConfigurationFlow({
   config,
-  onComplete,
+  reconfigure,
 }: {
   config: OzoneConfigFull
-  onComplete: () => void
+  reconfigure: ReconfigureFn
 }) {
   const [token, setToken] = useState('')
+  const { signOut } = useAuthContext()
+  const { pdsAgent } = useAuthContext()
+
   const requestPlcOperationSignature = useMutation({
+    mutationKey: [pdsAgent.did, config.did],
     mutationFn: async () => {
-      await client.api.com.atproto.identity.requestPlcOperationSignature()
+      await pdsAgent.api.com.atproto.identity.requestPlcOperationSignature()
     },
   })
   const submitPlcOperation = useMutation({
+    mutationKey: [pdsAgent.did, config.did, config.updatedAt],
     mutationFn: async () => {
-      await updatePlcIdentity(token, config)
-      onComplete()
+      await updatePlcIdentity(pdsAgent, token, config)
+      await reconfigure()
     },
   })
   return (
@@ -200,7 +245,7 @@ function IdentityConfigurationFlow({
         setup!
       </p>
       <p className="mt-4">
-        We will be associating your service running at <b>{config.meta.url}</b>{' '}
+        We will be associating your service running at <b>{config.meta?.url}</b>{' '}
         with your moderation account <b>{config.handle}</b>. It is highly{' '}
         recommended <i>not</i> to use a personal account for this.
       </p>
@@ -216,7 +261,7 @@ function IdentityConfigurationFlow({
             disabled={requestPlcOperationSignature.isLoading}
             className="w-full mr-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => client.signout()}
+            onClick={signOut}
           >
             Cancel
           </Button>
@@ -257,7 +302,7 @@ function IdentityConfigurationFlow({
               }
               className="w-full mr-2"
               icon={<ArrowLeftOnRectangleIcon />}
-              onClick={() => client.signout()}
+              onClick={signOut}
             >
               Cancel
             </Button>
@@ -281,17 +326,21 @@ function IdentityConfigurationFlow({
 }
 
 function RecordConfigurationFlow({
-  session,
-  onComplete,
+  config,
+  reconfigure,
 }: {
-  session: ClientSession
-  onComplete: (skip: boolean) => void
+  config: OzoneConfig
+  reconfigure: ReconfigureFn
 }) {
-  const { config } = session
   const [checked, setChecked] = useState(false)
+  const authDid = useAuthDid()
+
+  const { pdsAgent } = useAuthContext()
+  const identifier = useAuthIdentifier()
+
   const putServiceRecord = useMutation({
     mutationFn: async () => {
-      await client.api.com.atproto.repo.putRecord({
+      await pdsAgent.api.com.atproto.repo.putRecord({
         repo: config.did,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
@@ -321,11 +370,11 @@ function RecordConfigurationFlow({
           You may skip this step and come back to it next time you login.
         </ErrorInfo>
       )}
-      {session.did !== config.did && (
+      {authDid !== config.did && (
         <ErrorInfo type="warn" className="mt-4">
-          {`You're`} logged in as {session.handle}. Please login as{' '}
-          {session.config.handle || 'your Ozone service account'} in order to
-          configure Ozone.
+          {`You're`} logged in as {identifier}. Please login as{' '}
+          {config.handle || 'your Ozone service account'} in order to configure
+          Ozone.
           <br />
           <br />
           You may skip this step and come back to it next time you login.
@@ -342,8 +391,8 @@ function RecordConfigurationFlow({
           disabled={putServiceRecord.isLoading || putServiceRecord.isSuccess}
           className="w-full mr-2"
           icon={<ArrowRightOnRectangleIcon />}
-          onClick={() => {
-            onComplete(true)
+          onClick={async () => {
+            await reconfigure({ skipRecord: true })
           }}
         >
           Skip
@@ -352,7 +401,7 @@ function RecordConfigurationFlow({
           disabled={
             putServiceRecord.isLoading ||
             putServiceRecord.isSuccess ||
-            session.did !== config.did ||
+            authDid !== config.did ||
             config.needs.pds ||
             !checked
           }
@@ -360,7 +409,7 @@ function RecordConfigurationFlow({
           icon={<ArrowRightCircleIcon />}
           onClick={async () => {
             await putServiceRecord.mutateAsync()
-            onComplete(false)
+            await reconfigure({ skipRecord: false })
           }}
         >
           Submit
@@ -411,7 +460,11 @@ function Button({
   )
 }
 
-async function updatePlcIdentity(token: string, config: OzoneConfigFull) {
+async function updatePlcIdentity(
+  client: BskyAgent,
+  token: string,
+  config: OzoneConfigFull,
+) {
   const services = config.needs.service ? { ...config.doc.services } : undefined
   if (services) {
     services['atproto_labeler'] = {

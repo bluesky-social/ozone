@@ -1,65 +1,75 @@
 import Link from 'next/link'
 import { toast } from 'react-toastify'
-import client from '@/lib/client'
-import { displayError } from '../../common/Loader'
-import { queryClient } from 'components/QueryClient'
-import { MOD_EVENTS } from '@/mod-event/constants'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import { useQueryClient } from '@tanstack/react-query'
 
-export const emitEvent = async (
-  vals: ToolsOzoneModerationEmitEvent.InputSchema,
-) => {
-  const emitModerationEventAsync = async () => {
-    const { data } = await client.api.tools.ozone.moderation.emitEvent(
-      vals,
-      { encoding: 'application/json', headers: client.proxyHeaders() },
-    )
+import { displayError } from '../../common/Loader'
+import { MOD_EVENTS } from '@/mod-event/constants'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useCallback } from 'react'
 
-    return data
-  }
+export function useEmitEvent() {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
 
-  try {
-    const isRecord = vals?.subject.$type === 'com.atproto.repo.strongRef'
-    await toast.promise(emitModerationEventAsync, {
-      pending: 'Taking action...',
-      success: {
-        render({ data }) {
-          const eventId = data?.id
-          const eventType = data?.event.$type as string
-          const actionTypeString = eventType && eventTexts[eventType]
+  return useCallback(
+    async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+      const emitModerationEventAsync = async () => {
+        const { data } =
+          await labelerAgent.api.tools.ozone.moderation.emitEvent(vals, {
+            encoding: 'application/json',
+          })
+        return data
+      }
 
-          const title = `${isRecord ? 'Record' : 'Repo'} was ${
-            actionTypeString ?? 'actioned'
-          }`
+      try {
+        const isRecord = vals?.subject.$type === 'com.atproto.repo.strongRef'
+        await toast.promise(emitModerationEventAsync, {
+          pending: 'Taking action...',
+          success: {
+            render({ data }) {
+              const eventId = data?.id
+              const eventType = data?.event.$type as string
+              const actionTypeString = eventType && eventTexts[eventType]
 
-          return (
-            <div>
-              {title} -{' '}
-              <Link
-                href={`/events/${eventId}`}
-                className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
-              >
-                View #{eventId}
-              </Link>
-            </div>
+              const title = `${isRecord ? 'Record' : 'Repo'} was ${
+                actionTypeString ?? 'actioned'
+              }`
+
+              return (
+                <div>
+                  {title} -{' '}
+                  <Link
+                    href={`/events/${eventId}`}
+                    className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
+                  >
+                    View #{eventId}
+                  </Link>
+                </div>
+              )
+            },
+          },
+        })
+        if (!isRecord) {
+          // This may not be all encompassing because in the accountView query, the id may be a did or a handle
+          queryClient.invalidateQueries([
+            'accountView',
+            { id: vals?.subject.did },
+          ])
+        }
+      } catch (err) {
+        if (err?.['error'] === 'SubjectHasAction') {
+          toast.warn(
+            'We found that subject already has a current action. You may proceed by resolving with that action, or replacing it.',
           )
-        },
-      },
-    })
-    if (!isRecord) {
-      // This may not be all encompassing because in the accountView query, the id may be a did or a handle
-      queryClient.invalidateQueries(['accountView', { id: vals?.subject.did }])
-    }
-  } catch (err) {
-    if (err?.['error'] === 'SubjectHasAction') {
-      toast.warn(
-        'We found that subject already has a current action. You may proceed by resolving with that action, or replacing it.',
-      )
-    } else {
-      toast.error(`Error taking action: ${displayError(err)}`)
-    }
-    throw err
-  }
+        } else {
+          toast.error(`Error taking action: ${displayError(err)}`)
+        }
+        throw err
+      }
+    },
+    [labelerAgent, queryClient],
+  )
 }
 
 const eventTexts = {

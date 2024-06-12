@@ -3,7 +3,6 @@ import Link from 'next/link'
 import dynamic from 'next/dynamic'
 import { useMutation } from '@tanstack/react-query'
 import { AppBskyLabelerService } from '@atproto/api'
-import client, { ClientSession } from '@/lib/client'
 import { ButtonGroup, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
@@ -12,21 +11,19 @@ import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { Checkbox, Textarea } from '@/common/forms'
 import { ExternalLabelerConfig } from './external-labeler'
 import { ServerConfig } from './server-config'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
+import { useAuthContext } from '@/shell/AuthContext'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
 })
 
-export function LabelerConfig({
-  session,
-  isServiceAccount,
-}: {
-  session: ClientSession
-  isServiceAccount: boolean
-}) {
+export function LabelerConfig() {
+  const { config, isServiceAccount } = useConfigurationContext()
+
   return (
     <div className="pt-4">
-      {isServiceAccount && <ConfigureDetails session={session} />}
+      {isServiceAccount && <ConfigureDetails />}
       {!isServiceAccount && (
         <div>
           <div className="flex flex-row justify-between mb-4">
@@ -35,21 +32,22 @@ export function LabelerConfig({
             </h4>
           </div>
           <Card className="mt-4 p-4">
-            Your service account owner{' '}
-            {session?.config.handle && <b>{session?.config.handle}</b>} will be
-            able to see more configuration here.
+            Your service account owner {config.handle && <b>{config.handle}</b>}{' '}
+            will be able to see more configuration here.
           </Card>
         </div>
       )}
 
-      <ServerConfig session={session} />
+      <ServerConfig />
       <ExternalLabelerConfig />
     </div>
   )
 }
 
-function ConfigureDetails({ session }: { session: ClientSession }) {
-  const record = session.config.labeler ?? null
+function ConfigureDetails() {
+  const { config } = useConfigurationContext()
+
+  const record = config.labeler
   return (
     <div>
       <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
@@ -81,8 +79,11 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
             </li>
           </ul>
         </p>
-        {!record && <RecordInitStep repo={session.config.did} />}
-        {record && <RecordEditStep repo={session.config.did} record={record} />}
+        {config.labeler ? (
+          <RecordEditStep repo={config.did} record={config.labeler} />
+        ) : (
+          <RecordInitStep repo={config.did} />
+        )}
       </Card>
     </div>
   )
@@ -90,9 +91,12 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
 
 function RecordInitStep({ repo }: { repo: string }) {
   const [checked, setChecked] = useState(false)
+  const { pdsAgent } = useAuthContext()
+  const { reconfigure } = useConfigurationContext()
+
   const createInitialRecord = useMutation({
     mutationFn: async () => {
-      await client.api.com.atproto.repo.putRecord({
+      await pdsAgent.api.com.atproto.repo.putRecord({
         repo,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
@@ -101,7 +105,7 @@ function RecordInitStep({ repo }: { repo: string }) {
           policies: { labelValues: [] },
         },
       })
-      await client.reconfigure()
+      await reconfigure()
     },
   })
   return (
@@ -150,6 +154,9 @@ function RecordEditStep({
   record: AppBskyLabelerService.Record
   repo: string
 }) {
+  const { pdsAgent } = useAuthContext()
+  const { reconfigure } = useConfigurationContext()
+
   const [editorMode, setEditorMode] = useState<'json' | 'plain'>('json')
   const darkMode = isDarkModeEnabled()
   const [recordVal, setRecordVal] = useSyncedState(record)
@@ -164,13 +171,13 @@ function RecordEditStep({
   }, [recordVal])
   const updateRecord = useMutation({
     mutationFn: async () => {
-      await client.api.com.atproto.repo.putRecord({
+      await pdsAgent.api.com.atproto.repo.putRecord({
         repo,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
         record: recordVal,
       })
-      await client.reconfigure()
+      await reconfigure()
     },
   })
   const addLabelValue = () => {
