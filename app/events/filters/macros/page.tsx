@@ -47,7 +47,7 @@ export default function EventFiltersMacrosListPage() {
           Event Filter Macros
         </h2>
         <LinkButton
-          href="/communication-template/create"
+          href="/events"
           appearance="primary"
           size="sm"
         >
