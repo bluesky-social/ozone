@@ -160,7 +160,7 @@ sudo mkdir --parents /ozone/caddy/etc/caddy
 > [!TIP]
 > The most common problems with getting Ozone labels consumed in the live network are when folks substitute the supported Caddy configuration for manual nginx, apache, or similar reverse proxies. Getting TLS certificates, WebSockets, and virtual server names all correct can be tricky. We are not currently providing tech support for other configurations.
 
-Be sure to replace `ozone.example.com` with your own domain.
+Be sure to replace `ozone.example.com` and `ozone@example.com` with your own domain.
 
 ```bash
 cat <<CADDYFILE | sudo tee /ozone/caddy/etc/caddy/Caddyfile
