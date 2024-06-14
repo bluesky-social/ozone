@@ -12,6 +12,7 @@ import { isRepost } from '@/lib/types'
 import { doesLabelNeedBlur } from '../labels'
 import { classNames } from '@/lib/util'
 import { ReplyParent } from './ReplyParent'
+import { ImageList } from './ImageList'
 
 export function PostsTable({
   items,
@@ -155,16 +156,10 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     )
     return (
       <span className="flex gap-2 pt-2">
-        {embed.images.map((image, i) => (
-          <a
-            key={`img-${i}`}
-            href={image.fullsize}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <img className={embeddedImageClassName} src={image.thumb} />
-          </a>
-        ))}
+        <ImageList
+          images={embed.images}
+          imageClassName={embeddedImageClassName}
+        />
       </span>
     )
   }

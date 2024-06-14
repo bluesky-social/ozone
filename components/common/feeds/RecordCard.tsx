@@ -63,7 +63,7 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
           />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="text-sm font-medium text-gray-900">
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <>
               <Link
                 href={`/repositories/${uri?.replace('at://', '')}`}
@@ -73,7 +73,9 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
               </Link>
               <span className="ml-1">by</span>
               <Link href={`/repositories/${creator.did}`}>
-                <span className="ml-1 text-gray-500">@{creator.handle}</span>
+                <span className="ml-1 text-gray-500 dark:text-gray-50">
+                  @{creator.handle}
+                </span>
               </Link>
             </>{' '}
             &nbsp;&middot;&nbsp;
@@ -87,10 +89,10 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
           </p>
         </div>
       </div>
-      <div className="pb-2 pl-10">
-        {description && <p className="text-sm text-gray-500">{description}</p>}
+      <div className="pb-2 pl-10 text-gray-500 dark:text-gray-50">
+        {description && <p className="text-sm">{description}</p>}
         {!!meta.length && (
-          <p className="text-sm text-gray-500">{meta.join(' - ')}</p>
+          <p className="text-sm">{meta.join(' - ')}</p>
         )}
       </div>
     </div>

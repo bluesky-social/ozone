@@ -303,14 +303,12 @@ export function RepoCard(props: { did: string }) {
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
               href={`/repositories/${repo.did}`}
-              className="hover:underline"
+              className="hover:underline text-gray-500 dark:text-gray-50"
             >
               {profile?.displayName ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
-                  <span className="ml-1 text-gray-500 dark:text-gray-50">
-                    @{repo.handle}
-                  </span>
+                  <span className="ml-1">@{repo.handle}</span>
                 </>
               ) : (
                 <span className="font-bold">@{repo.handle}</span>

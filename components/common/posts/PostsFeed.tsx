@@ -9,6 +9,10 @@ import {
   AppBskyEmbedRecord,
 } from '@atproto/api'
 import Link from 'next/link'
+import Lightbox from 'yet-another-react-lightbox'
+import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
+import 'yet-another-react-lightbox/styles.css'
+import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
@@ -27,6 +31,7 @@ import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { SOCIAL_APP_URL } from '@/lib/constants'
 import { ReplyParent } from './ReplyParent'
+import { ImageList } from './ImageList'
 
 export function PostsFeed({
   items,
@@ -217,6 +222,7 @@ function ImageAltText({ alt }: { alt: string }) {
 }
 
 export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
@@ -237,21 +243,10 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     )
     return (
       <div className="flex gap-2 pb-2 pl-14">
-        {embed.images.map((image, i) => (
-          <a
-            key={`img-${i}`}
-            href={image.fullsize}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <img
-              className={embeddedImageClassName}
-              src={image.thumb}
-              alt={image.alt}
-            />
-            <ImageAltText alt={image.alt} />
-          </a>
-        ))}
+        <ImageList
+          images={embed.images}
+          imageClassName={embeddedImageClassName}
+        />
       </div>
     )
   }
