@@ -21,7 +21,7 @@ export function MemberList({
   isInitialLoading: boolean
   members: ToolsOzoneTeamDefs.Member[] | undefined
   fetchNextPage: () => void
-  hasNextPage: boolean
+  hasNextPage?: boolean
   onEdit: (member: ToolsOzoneTeamDefs.Member) => void
 }) {
   const createActionPanelLink = useActionPanelLink()
