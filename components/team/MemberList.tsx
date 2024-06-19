@@ -15,13 +15,13 @@ export function MemberList({
   members,
   isInitialLoading,
   fetchNextPage,
-  hasMore,
+  hasNextPage,
   onEdit,
 }: {
   isInitialLoading: boolean
   members: ToolsOzoneTeamDefs.Member[] | undefined
   fetchNextPage: () => void
-  hasMore: boolean
+  hasNextPage: boolean
   onEdit: (member: ToolsOzoneTeamDefs.Member) => void
 }) {
   const createActionPanelLink = useActionPanelLink()
@@ -119,7 +119,7 @@ export function MemberList({
         )}
       </Card>
 
-      {members?.length && hasMore && (
+      {members?.length && hasNextPage && (
         <div className="flex justify-center pb-2">
           <LoadMoreButton onClick={fetchNextPage} />
         </div>

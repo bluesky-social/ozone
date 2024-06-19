@@ -10,7 +10,7 @@ export function MemberConfig() {
   const [editingMember, setEditingMember] =
     useState<ToolsOzoneTeamDefs.Member | null>(null)
   const [showMemberCreateForm, setShowMemberCreateForm] = useState(false)
-  const { fetchNextPage, data, isInitialLoading } = useMemberList()
+  const { fetchNextPage, data, hasNextPage, isInitialLoading } = useMemberList()
   const hideEditorForm = () => {
     if (editingMember) {
       setEditingMember(null)
@@ -46,10 +46,10 @@ export function MemberConfig() {
       )}
       <MemberList
         {...{
+          hasNextPage,
           fetchNextPage,
           isInitialLoading,
           onEdit: setEditingMember,
-          hasMore: !!data?.pageParams,
           members: data?.pages.map((page) => page.members).flat(),
         }}
       />
