@@ -4,7 +4,7 @@ import client from '@/lib/client'
 import { useSession } from '@/lib/useSession'
 import { Tabs, TabView } from '@/common/Tabs'
 import { LabelerConfig } from 'components/config/Labeler'
-import { UserConfig } from 'components/config/User'
+import { MemberConfig } from 'components/config/Member'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
@@ -12,7 +12,7 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 
 enum Views {
   Configure,
-  Users,
+  Members,
 }
 
 export default function ConfigurePageContent() {
@@ -23,7 +23,7 @@ export default function ConfigurePageContent() {
   }, [])
   const isServiceAccount = !!session && session?.did === session?.config.did
   const [currentView, setCurrentView] = useState<Views>(
-    isServiceAccount ? Views.Configure : Views.Users,
+    isServiceAccount ? Views.Configure : Views.Members,
   )
   const searchParams = useSearchParams()
   const router = useRouter()
@@ -50,8 +50,8 @@ export default function ConfigurePageContent() {
     })
   }
   views.push({
-    view: Views.Users,
-    label: 'Users',
+    view: Views.Members,
+    label: 'Members',
   })
 
   return (
@@ -65,7 +65,7 @@ export default function ConfigurePageContent() {
       {currentView === Views.Configure && (
         <LabelerConfig session={session} isServiceAccount={isServiceAccount} />
       )}
-      {currentView === Views.Users && <UserConfig />}
+      {currentView === Views.Members && <MemberConfig />}
 
       <ModActionPanelQuick
         open={!!quickOpenParam}

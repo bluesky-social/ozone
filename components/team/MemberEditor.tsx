@@ -1,4 +1,4 @@
-import { ToolsOzoneModeratorDefs } from '@atproto/api'
+import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { FormEvent, useState } from 'react'
 import { toast } from 'react-toastify'
 
@@ -9,13 +9,13 @@ import { Checkbox, FormLabel, Input, Select } from '@/common/forms'
 import client from '@/lib/client'
 import { getDidFromHandle } from '@/lib/identity'
 import { queryClient } from 'components/QueryClient'
-import { ModeratorRoleNames } from './Role'
+import { MemberRoleNames } from './Role'
 
-const useUserEditor = ({
-  isNewUser,
+const useMemberEditor = ({
+  isNewMember,
   onSuccess,
 }: {
-  isNewUser: boolean
+  isNewMember: boolean
   onSuccess: () => void
 }) => {
   const [submission, setSubmission] = useState<{
@@ -30,8 +30,10 @@ const useUserEditor = ({
     try {
       setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
-      let didOrHandle = formData.get(isNewUser ? 'identifier' : 'did') as string
-      const role = formData.get('role') as ToolsOzoneModeratorDefs.User['role']
+      let didOrHandle = formData.get(
+        isNewMember ? 'identifier' : 'did',
+      ) as string
+      const role = formData.get('role') as ToolsOzoneTeamDefs.Member['role']
       let did = didOrHandle
 
       if (didOrHandle.startsWith('@') || didOrHandle.includes('.')) {
@@ -49,14 +51,14 @@ const useUserEditor = ({
       // Normally we wouldn't use <any> but the result of the request does not change
       // anything in the UI so we don't need to type it
       let request: Promise<any>
-      if (isNewUser) {
-        request = client.api.tools.ozone.moderator.addUser({
+      if (isNewMember) {
+        request = client.api.tools.ozone.team.addMember({
           did,
           role,
         })
       } else {
         const disabled = formData.get('disabled') === 'true'
-        request = client.api.tools.ozone.moderator.updateUser({
+        request = client.api.tools.ozone.team.updateMember({
           did,
           role,
           disabled,
@@ -64,19 +66,23 @@ const useUserEditor = ({
       }
 
       await toast.promise(request, {
-        pending: 'Saving user...',
+        pending: 'Saving member...',
         success: {
           render() {
-            return isNewUser ? 'New user added' : 'User updated successfully'
+            return isNewMember
+              ? 'New member added'
+              : 'Member updated successfully'
           },
         },
         error: {
           render() {
-            return isNewUser ? 'Error adding new user' : 'Error updating user'
+            return isNewMember
+              ? 'Error adding new member'
+              : 'Error updating member'
           },
         },
       })
-      queryClient.invalidateQueries(['userList'])
+      queryClient.invalidateQueries(['memberList'])
       setSubmission({ isSubmitting: false, error: '' })
       ev.target.reset()
       onSuccess()
@@ -88,15 +94,17 @@ const useUserEditor = ({
   return { onFormSubmit, submission }
 }
 
-export function UserEditor({
-  user,
+export function MemberEditor({
+  member,
+  onCancel,
   onSuccess,
 }: {
-  user: ToolsOzoneModeratorDefs.User | null
+  member: ToolsOzoneTeamDefs.Member | null
+  onCancel: () => void
   onSuccess: () => void
 }) {
-  const { onFormSubmit, submission } = useUserEditor({
-    isNewUser: !user,
+  const { onFormSubmit, submission } = useMemberEditor({
+    isNewMember: !member,
     onSuccess,
   })
   return (
@@ -104,17 +112,17 @@ export function UserEditor({
       <form action="" onSubmit={onFormSubmit}>
         <div className="mb-3">
           <FormLabel label="Handle/DID" htmlFor="identifier" className="flex-1">
-            {user && <input value={user.did} hidden name="did" />}
+            {member && <input value={member.did} hidden name="did" />}
             <Input
               required
               type="text"
               id="identifier"
               name="identifier"
-              autoFocus={!user}
+              autoFocus={!member}
               className="block w-full"
-              value={user?.did}
-              disabled={!!user || submission.isSubmitting}
-              placeholder="user.bsky.social or did:plc:...."
+              value={member?.did}
+              disabled={!!member || submission.isSubmitting}
+              placeholder="member.bsky.social or did:plc:...."
             />
           </FormLabel>
         </div>
@@ -125,14 +133,14 @@ export function UserEditor({
                 required
                 id="role"
                 name="role"
-                autoFocus={!!user}
+                autoFocus={!!member}
                 disabled={submission.isSubmitting}
               >
-                {Object.entries(ModeratorRoleNames).map(([role, name]) => (
+                {Object.entries(MemberRoleNames).map(([role, name]) => (
                   <option
                     key={role}
                     value={role}
-                    selected={user?.role === role}
+                    selected={member?.role === role}
                   >
                     {name}
                   </option>
@@ -140,7 +148,7 @@ export function UserEditor({
               </Select>
             </FormLabel>
           </div>
-          {!!user && (
+          {!!member && (
             <div>
               <FormLabel
                 label="Access Control"
@@ -153,13 +161,22 @@ export function UserEditor({
                   name="disabled"
                   className="mb-3 flex items-center"
                   disabled={submission.isSubmitting}
-                  label="Disable access for this user"
+                  label="Disable access for this member"
                 />
               </FormLabel>
             </div>
           )}
         </div>
-        <div className="flex flex-row justify-end">
+        <div className="flex flex-row justify-end gap-2">
+          <ActionButton
+            size="sm"
+            type="button"
+            appearance="outlined"
+            onClick={onCancel}
+            disabled={submission.isSubmitting}
+          >
+            Cancel
+          </ActionButton>
           <ActionButton
             size="sm"
             type="submit"
@@ -167,12 +184,12 @@ export function UserEditor({
             disabled={submission.isSubmitting}
           >
             {!submission.isSubmitting
-              ? !!user
-                ? 'Update User'
-                : 'Add User'
-              : !!user
-              ? 'Updating User...'
-              : 'Adding User...'}
+              ? !!member
+                ? 'Update Member'
+                : 'Add Member'
+              : !!member
+              ? 'Updating Member...'
+              : 'Adding Member...'}
           </ActionButton>
         </div>
         {submission.error && (
@@ -180,7 +197,9 @@ export function UserEditor({
             <Alert
               type="error"
               body={submission.error}
-              title={!!user ? 'Failed to update user' : 'Failed to add user'}
+              title={
+                !!member ? 'Failed to update member' : 'Failed to add member'
+              }
             />
           </div>
         )}

@@ -1,11 +1,11 @@
 import client from '@/lib/client'
 import { useInfiniteQuery } from '@tanstack/react-query'
 
-export const useUserList = () =>
+export const useMemberList = () =>
   useInfiniteQuery({
-    queryKey: ['userList'],
+    queryKey: ['memberList'],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.tools.ozone.moderator.listUsers(
+      const { data } = await client.api.tools.ozone.team.listMembers(
         {
           limit: 25,
           cursor: pageParam,
