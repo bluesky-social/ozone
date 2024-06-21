@@ -12,6 +12,7 @@ import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 import { isSelfLabels } from '@atproto/api/dist/client/types/com/atproto/label/defs'
+import { StarterPackRecordCard } from './srtarterpacks/RecordCard'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -25,8 +26,14 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   if (parsed.collection === CollectionId.FeedGenerator) {
     return <FeedGeneratorRecordCard uri={uri} />
   }
+  if (parsed.collection === CollectionId.FeedGenerator) {
+    return <FeedGeneratorRecordCard uri={uri} />
+  }
   if (parsed.collection === CollectionId.List) {
     return <ListRecordCard uri={uri} />
+  }
+  if (parsed.collection === CollectionId.StarterPack) {
+    return <StarterPackRecordCard uri={uri} />
   }
   if (parsed?.collection === CollectionId.Profile) {
     return (
