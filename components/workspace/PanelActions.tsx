@@ -38,6 +38,7 @@ export const WorkspacePanelActions = ({
         appearance="outlined"
         size="xs"
         type="button"
+        title="Remove all items and empty workspace"
         onClick={handleEmptyWorkspace}
       >
         <NoSymbolIcon className="h-3 w-3" />

@@ -148,3 +148,15 @@ export const isValidHandle = (handle?: string | null) => handle?.includes('.')
 export function unique<T>(arr: T[]) {
   return [...new Set(arr)]
 }
+
+export function pluralize(
+  count: number,
+  singular: string,
+  {
+    plural = `${singular}s`,
+    includeCount = true,
+  }: { plural?: string; includeCount?: boolean } = {},
+) {
+  const suffix = count === 1 ? singular : plural
+  return includeCount ? `${count} ${suffix}` : suffix
+}

@@ -44,6 +44,11 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Lists } from 'components/list/Lists'
+import {
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
 
 enum Views {
   Details,
@@ -241,6 +246,9 @@ function Header({
   onReport: (did: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation
+  const { data: workspaceList } = useWorkspaceList()
   const { subjectStatus } = repo?.moderation ?? {}
   const displayActorName = repo
     ? profile?.displayName
@@ -270,6 +278,18 @@ function Header({
         onClick: () => {
           setIsMuteReportingOpen(true)
         },
+      })
+    }
+
+    if (!workspaceList?.includes(repo.did)) {
+      reportOptions.push({
+        text: 'Add to workspace',
+        onClick: () => addToWorkspace([repo.did]),
+      })
+    } else {
+      reportOptions.push({
+        text: 'Remove from workspace',
+        onClick: () => removeFromWorkspace([repo.did]),
       })
     }
   }

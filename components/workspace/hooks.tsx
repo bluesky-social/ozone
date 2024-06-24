@@ -1,12 +1,14 @@
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
+import { pluralize } from '@/lib/util'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
 const WORKSPACE_LIST_QUERY_KEY = 'workspace-list'
 
-// For now, these are just simple string lists stored in the localstorage of the user's browser. 
-// While the use of react-query might feel like an overkill here, in the future, we may want to 
+// For now, these are just simple string lists stored in the localstorage of the user's browser.
+// While the use of react-query might feel like an overkill here, in the future, we may want to
 // sync these with server and for that to work we would just swap out the query or mutation fn
 
 export const useWorkspaceList = () => {
@@ -28,7 +30,10 @@ export const useWorkspaceAddItemsMutation = () => {
       return addToList(items)
     },
     {
-      onSuccess: () => {
+      onSuccess: (_, addedItems) => {
+        toast.success(
+          `${pluralize(addedItems.length, 'subject')} added to workspace. `,
+        )
         queryClient.invalidateQueries([WORKSPACE_LIST_QUERY_KEY])
       },
     },
@@ -44,7 +49,13 @@ export const useWorkspaceRemoveItemsMutation = () => {
       return removeFromList(items)
     },
     {
-      onSuccess: () => {
+      onSuccess: (_, removedItems) => {
+        toast.success(
+          `${pluralize(
+            removedItems.length,
+            'subject',
+          )} removed from workspace.`,
+        )
         queryClient.invalidateQueries([WORKSPACE_LIST_QUERY_KEY])
       },
     },
