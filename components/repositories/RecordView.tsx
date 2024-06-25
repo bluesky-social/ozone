@@ -206,6 +206,21 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
+        {record.value?.['displayName'] && (
+          <DataField
+            label="Display Name"
+            value={`${record.value['displayName']}`}
+          />
+        )}
+        {record.value?.['name'] && (
+          <DataField label="Name" value={`${record.value['name']}`} />
+        )}
+        {record.value?.['description'] && (
+          <DataField
+            label="Description"
+            value={`${record.value['description']}`}
+          />
+        )}
         <DataField label="Handle" value={record.repo.handle} showCopyButton>
           <Link href={`/repositories/${record.repo.did}`} className="underline">
             {record.repo.handle}

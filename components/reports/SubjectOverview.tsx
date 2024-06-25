@@ -131,6 +131,28 @@ export function SubjectOverview(props: {
       )
     }
 
+    if (summary.collection === CollectionId.StarterPack) {
+      return (
+        <div className="flex flex-row items-center">
+          <CollectionLink
+            repoUrl={createAtUri(summary).replace('at://', '')}
+            uri={createAtUri(summary)}
+            collectionName="starterpack"
+          />
+          {!hideActor && (
+            <>
+              by
+              <OtherReportsForAuthorLink
+                did={summary.did}
+                repoText={repoText}
+                className="ml-1"
+              />
+            </>
+          )}
+        </div>
+      )
+    }
+
     if (summary.collection === CollectionId.Profile) {
       return (
         <div className="flex flex-row items-center">
