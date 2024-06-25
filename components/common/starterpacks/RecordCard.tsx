@@ -4,6 +4,7 @@ import { Loading, LoadingFailed } from '@/common/Loader'
 import client from '@/lib/client'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import { AppBskyGraphDefs } from '@atproto/api'
+import { SOCIAL_APP_URL, STARTER_PACK_OG_CARD_URL } from '@/lib/constants'
 
 export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
   const { error, data, isFetching } = useQuery({
@@ -36,21 +37,20 @@ export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
     starterPack: {
       creator,
       list,
-      listItemsSample,
       feeds,
       joinedWeekCount,
       joinedAllTimeCount,
-      labels,
       indexedAt,
       record,
     },
   } = data
   const displayName = record['name'] || 'Untitled'
+  const rkey = uri.split('/').pop()
 
   const meta: string[] = [
     `${joinedWeekCount} Joined last week`,
     `${joinedAllTimeCount} Joined all time`,
-    `${feeds?.length || 'no'} Feed included`,
+    `${feeds?.length || 'No'} feed(s) included`,
   ]
 
   if (indexedAt) {
@@ -79,7 +79,7 @@ export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
               </Link>
               <span className="ml-1">by</span>
               <Link href={`/repositories/${creator.did}`}>
-                <span className="ml-1 text-gray-500 dark:text-gra-50">
+                <span className="ml-1 text-gray-500 dark:text-gray-50">
                   @{creator.handle}
                 </span>
               </Link>
@@ -96,6 +96,16 @@ export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
         </div>
       </div>
       <div className="pb-2 pl-10">
+        <a
+          href={`${SOCIAL_APP_URL}/start/${creator.handle}/${rkey}`}
+          target="_blank"
+        >
+          <img
+            className="rounded"
+            src={`${STARTER_PACK_OG_CARD_URL}/${creator.did}/${rkey}`}
+            alt="Starter pack OG card"
+          />
+        </a>
         {!!feeds?.length && (
           <div className="text-gray-800 dark:text-gray-300">
             <h5 className="font-bold">Feeds</h5>
@@ -152,7 +162,7 @@ const ListSummary = ({ list }: { list: AppBskyGraphDefs.ListViewBasic }) => {
           href={buildBlueSkyAppUrl({
             did,
             rkey: rkey || '',
-            collection: 'list',
+            collection: 'lists',
           })}
           target="_blank"
           rel="noreferrer"
