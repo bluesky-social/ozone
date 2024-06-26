@@ -11,6 +11,7 @@ import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
+import { ExternalLabelerConfig } from '@/config/external-labeler'
 import { Checkbox, Textarea } from '@/common/forms'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
@@ -34,12 +35,14 @@ export default function ConfigurePageContent() {
             Configure
           </h3>
           <Card className="mt-4 p-4">
-            Please login as your service account{' '}
-            {session?.config.handle && <b>{session?.config.handle}</b>} in order
-            to configure Ozone.
+            Your service account owner{' '}
+            {session?.config.handle && <b>{session?.config.handle}</b>} will be
+            able to see more configuration here.
           </Card>
         </div>
       )}
+
+      <ExternalLabelerConfig />
     </div>
   )
 }

@@ -10,8 +10,7 @@ import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
-import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
-import { isSelfLabels } from '@atproto/api/dist/client/types/com/atproto/label/defs'
+import { AppBskyActorDefs, ComAtprotoLabelDefs } from '@atproto/api'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
@@ -93,7 +92,7 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
                 cid: record.cid,
                 author: record.repo,
                 record: record.value,
-                labels: isSelfLabels(record.value['labels'])
+                labels: ComAtprotoLabelDefs.isSelfLabels(record.value['labels'])
                   ? record.value['labels'].values.map(({ val }) => ({
                       val,
                       uri: record.uri,
@@ -250,7 +249,7 @@ export function InlineRepo(props: { did: string }) {
 const AssociatedProfileIcon = ({
   profile,
 }: {
-  profile?: ProfileViewDetailed
+  profile?: AppBskyActorDefs.ProfileViewDetailed
 }) => {
   let title = ''
 
