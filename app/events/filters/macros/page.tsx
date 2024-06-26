@@ -26,8 +26,7 @@ export default function EventFiltersMacrosListPage() {
     isLoading: isRemovingMacro,
   } = useFilterMacroRemoveMutation()
 
-  let pageTitle = `Moderation Filter Macros`
-  useTitle(pageTitle)
+  useTitle('Moderation Filter Macros')
 
   if (error) {
     return <LoadingFailed error={error} />
@@ -46,11 +45,7 @@ export default function EventFiltersMacrosListPage() {
         <h2 className="font-semibold text-gray-600 dark:text-gray-100 mb-3 mt-4">
           Event Filter Macros
         </h2>
-        <LinkButton
-          href="/events"
-          appearance="primary"
-          size="sm"
-        >
+        <LinkButton href="/events" appearance="primary" size="sm">
           <PlusIcon className="h-4 w-4 mr-1" />
           New Macro
         </LinkButton>
