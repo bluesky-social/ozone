@@ -10,6 +10,7 @@ import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { Checkbox, Textarea } from '@/common/forms'
+import { ExternalLabelerConfig } from './external-labeler'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -22,17 +23,25 @@ export function LabelerConfig({
   session: ClientSession
   isServiceAccount: boolean
 }) {
-  if (isServiceAccount) return <ConfigureDetails session={session} />
   return (
-    <div>
-      <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
-        Configure
-      </h3>
-      <Card className="mt-4 p-4">
-        Please login as your service account{' '}
-        {session?.config.handle && <b>{session?.config.handle}</b>} in order to
-        configure Ozone.
-      </Card>
+    <div className="pt-4">
+      {isServiceAccount && <ConfigureDetails session={session} />}
+      {!isServiceAccount && (
+        <div>
+          <div className="flex flex-row justify-between mb-4">
+            <h4 className="font-medium text-gray-700 dark:text-gray-100">
+              Labeler Configuration
+            </h4>
+          </div>
+          <Card className="mt-4 p-4">
+            Your service account owner{' '}
+            {session?.config.handle && <b>{session?.config.handle}</b>} will be
+            able to see more configuration here.
+          </Card>
+        </div>
+      )}
+
+      <ExternalLabelerConfig />
     </div>
   )
 }
@@ -42,7 +51,7 @@ function ConfigureDetails({ session }: { session: ClientSession }) {
   return (
     <div>
       <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
-        Configure
+        Labeler Configuration
       </h3>
       <Card className="mt-4 p-4 pb-6">
         <h4 className="font-medium text-gray-700 dark:text-gray-100">

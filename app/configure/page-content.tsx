@@ -15,6 +15,11 @@ enum Views {
   Members,
 }
 
+const TabKeys = {
+  configure: Views.Configure,
+  members: Views.Members,
+}
+
 export default function ConfigurePageContent() {
   useTitle('Configure')
   const session = useSession()
@@ -22,12 +27,18 @@ export default function ConfigurePageContent() {
     client.reconfigure() // Ensure config is up to date
   }, [])
   const isServiceAccount = !!session && session?.did === session?.config.did
-  const [currentView, setCurrentView] = useState<Views>(
-    isServiceAccount ? Views.Configure : Views.Members,
-  )
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+
+  const currentView =
+    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.configure
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
 
   const quickOpenParam = searchParams.get('quickOpen') ?? ''
   const setQuickActionPanelSubject = (subject: string) => {
@@ -41,18 +52,16 @@ export default function ConfigurePageContent() {
   }
 
   if (!session) return null
-  const views: TabView<Views>[] = []
-
-  if (isServiceAccount) {
-    views.push({
+  const views: TabView<Views>[] = [
+    {
       view: Views.Configure,
       label: 'Configure',
-    })
-  }
-  views.push({
-    view: Views.Members,
-    label: 'Members',
-  })
+    },
+    {
+      view: Views.Members,
+      label: 'Members',
+    },
+  ]
 
   return (
     <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
