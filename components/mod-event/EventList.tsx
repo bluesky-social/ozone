@@ -179,9 +179,17 @@ export const ModEventList = (
               <ModEventItem
                 key={modEvent.id}
                 modEvent={modEvent}
-                showContentAuthor={isEntireHistoryView}
+                showContentAuthor={
+                  // isEntireHistoryView means user is viewing the events page so
+                  // we need to provide context for each event and link to content details
+                  // Same when we are showing events by a certain author to since the author
+                  // may be reporting different subjects
+                  isEntireHistoryView || isShowingEventsByCreator
+                }
                 showContentDetails={
-                  includeAllUserRecords || isEntireHistoryView
+                  includeAllUserRecords ||
+                  isEntireHistoryView ||
+                  isShowingEventsByCreator
                 }
               />
             )
