@@ -9,10 +9,6 @@ import {
   AppBskyEmbedRecord,
 } from '@atproto/api'
 import Link from 'next/link'
-import Lightbox from 'yet-another-react-lightbox'
-import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
-import 'yet-another-react-lightbox/styles.css'
-import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
@@ -211,18 +207,7 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
-function ImageAltText({ alt }: { alt: string }) {
-  if (!alt) return null
-  return (
-    <p className="leading-2 text-gray-400 text-xs leading-3 mt-1">
-      <InformationCircleIcon className="w-4 h-4 inline mr-1" />
-      {alt}
-    </p>
-  )
-}
-
 export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
-  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed

@@ -4,9 +4,6 @@ import { InformationCircleIcon } from '@heroicons/react/24/outline'
 import Lightbox from 'yet-another-react-lightbox'
 import Captions from 'yet-another-react-lightbox/plugins/captions'
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
-import 'yet-another-react-lightbox/styles.css'
-import 'yet-another-react-lightbox/plugins/thumbnails.css'
-import 'yet-another-react-lightbox/plugins/captions.css'
 
 function ImageAltText({ alt }: { alt: string }) {
   if (!alt) return null
@@ -39,7 +36,7 @@ export const ImageList = ({
         }))}
       />
       {images.map((image, i) => (
-        <figure key={`img-${i}`}>
+        <figure key={image.thumb}>
           <button type="button" onClick={() => setIsImageViewerOpen(true)}>
             <img className={imageClassName} src={image.thumb} alt={image.alt} />
           </button>
