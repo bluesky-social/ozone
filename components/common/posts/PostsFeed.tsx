@@ -340,7 +340,7 @@ export function RecordEmbedView({
       rkey: `${rkey}`,
       collection: `lists`,
     })
-    console.log(embed.record)
+
     return (
       <div
         className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
