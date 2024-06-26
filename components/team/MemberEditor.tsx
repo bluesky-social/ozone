@@ -11,6 +11,16 @@ import { getDidFromHandle } from '@/lib/identity'
 import { queryClient } from 'components/QueryClient'
 import { MemberRoleNames } from './Role'
 
+const getSubmitButtonText = (
+  member: ToolsOzoneTeamDefs.Member | null,
+  isSubmitting: boolean,
+) => {
+  if (!isSubmitting) {
+    return !!member ? 'Update Member' : 'Add Member'
+  }
+  return !!member ? 'Updating Member...' : 'Adding Member...'
+}
+
 const useMemberEditor = ({
   isNewMember,
   onSuccess,
@@ -50,7 +60,7 @@ const useMemberEditor = ({
 
       // Normally we wouldn't use <any> but the result of the request does not change
       // anything in the UI so we don't need to type it
-      let request: Promise<any>
+      let request: Promise<unknown>
       if (isNewMember) {
         request = client.api.tools.ozone.team.addMember({
           did,
@@ -183,13 +193,7 @@ export function MemberEditor({
             appearance="primary"
             disabled={submission.isSubmitting}
           >
-            {!submission.isSubmitting
-              ? !!member
-                ? 'Update Member'
-                : 'Add Member'
-              : !!member
-              ? 'Updating Member...'
-              : 'Adding Member...'}
+            {getSubmitButtonText(member, submission.isSubmitting)}
           </ActionButton>
         </div>
         {submission.error && (

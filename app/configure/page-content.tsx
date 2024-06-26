@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useTitle } from 'react-use'
 import client from '@/lib/client'
 import { useSession } from '@/lib/useSession'

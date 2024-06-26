@@ -29,7 +29,6 @@ export function MemberConfig() {
           <ActionButton
             size="sm"
             appearance="primary"
-            disabled={!!editingMember}
             onClick={() => setShowMemberCreateForm((current) => !current)}
           >
             <PlusIcon className="h-3 w-3 mr-1" />
