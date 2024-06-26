@@ -49,8 +49,11 @@ export function takesKeyboardEvt(el?: EventTarget | null) {
   if (!el) return false
   const htmlEl = el as HTMLElement
   return (
-    ['TEXTAREA', 'INPUT', 'SELECT'].includes(htmlEl.tagName) &&
-    !htmlEl.getAttribute('disabled')
+    (['TEXTAREA', 'INPUT', 'SELECT'].includes(htmlEl.tagName) &&
+      !htmlEl.getAttribute('disabled')) ||
+    // We open images from posts in modal windows and the modals are wrapped in this class
+    // so we want to make sure users can navigate within the image modal without navigating within the queue
+    htmlEl.classList.contains('yarl__container')
   )
 }
 
