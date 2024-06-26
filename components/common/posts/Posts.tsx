@@ -6,6 +6,9 @@ import { PostsTable } from './PostsTable'
 import { ButtonGroup } from '../buttons'
 import { EmptyFeed } from '../feeds/EmptyFeed'
 import { Input } from '../forms'
+import { PostFilter } from './Filter'
+import { TypeFilterKey } from './constants'
+import { Loading } from '../Loader'
 
 enum Mode {
   Feed,
@@ -17,29 +20,42 @@ export function Posts({
   onReport,
   onLoadMore,
   isFetching,
+  searchQuery,
   setSearchQuery,
+  typeFilter,
+  setTypeFilter,
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
   onLoadMore?: () => void
   isFetching: boolean
+  searchQuery: string
   setSearchQuery: (query: string) => void
+  typeFilter: TypeFilterKey
+  setTypeFilter: (type: TypeFilterKey) => void
 }) {
   const [mode, setMode] = useState<Mode>(Mode.Feed)
 
   return (
     <div>
       <div className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 px-4 sticky top-0">
-        <div className="mx-auto max-w-3xl w-full sm:py-4 sm:px-6 lg:px-8 sm:flex sm:items-center sm:justify-between ">
-          <div className="w-2/3">
+        <div className="mx-auto max-w-3xl w-full py-4 sm:px-6 lg:px-8 sm:flex sm:items-start sm:justify-between ">
+          <div className="sm:w-2/3 flex gap-1">
             <Input
               name="search"
-              className="w-full p-2"
+              value={searchQuery}
+              className="sm:w-1/3 md:w-2/3 p-2"
               placeholder="Type keyword to search..."
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+            {!searchQuery && (
+              <PostFilter
+                selectedType={typeFilter}
+                setSelectedType={setTypeFilter}
+              />
+            )}
           </div>
-          <div className="sm:flex mt-3 sm:mt-0 sm:ml-4">
+          <div className="sm:flex mt-3 sm:mt-0">
             <ButtonGroup
               appearance="primary"
               items={[
@@ -85,6 +101,7 @@ export function Posts({
               onLoadMore={onLoadMore}
             />
           )}
+          {isFetching && <Loading />}
         </>
       )}
     </div>

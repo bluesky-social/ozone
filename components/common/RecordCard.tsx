@@ -15,6 +15,7 @@ import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
+import { StarterPackRecordCard } from './starterpacks/RecordCard'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -30,6 +31,9 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   }
   if (parsed.collection === CollectionId.List) {
     return <ListRecordCard uri={uri} />
+  }
+  if (parsed.collection === CollectionId.StarterPack) {
+    return <StarterPackRecordCard uri={uri} />
   }
   if (parsed?.collection === CollectionId.Profile) {
     return (
@@ -306,14 +310,12 @@ export function RepoCard(props: { did: string }) {
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
               href={`/repositories/${repo.did}`}
-              className="hover:underline"
+              className="hover:underline text-gray-500 dark:text-gray-50"
             >
               {profile?.displayName ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
-                  <span className="ml-1 text-gray-500 dark:text-gray-50">
-                    @{repo.handle}
-                  </span>
+                  <span className="ml-1">@{repo.handle}</span>
                 </>
               ) : (
                 <span className="font-bold">@{repo.handle}</span>
