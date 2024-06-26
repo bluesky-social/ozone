@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.12.17":
-  version "0.12.17"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.17.tgz#6fc98f9e4a831d5d0bb792a4dd2388713a587ed9"
-  integrity sha512-hj2LnEJGM27xPB1cugZHMnsvPDzjcIc0JtrGS11LO8+XJ/QYL192/HVdPQR82rN8XMlSPHXhNoeI2NJna8MUGQ==
+"@atproto/api@0.12.22":
+  version "0.12.22"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.12.22.tgz#1880a93a0caa4485cd8463bd1e10bf2424b9826c"
+  integrity sha512-TIXSnf3qqyX40Ei/FkK4H24w+7s5rOc63TPwrGakRBOqIgSNBKOggei8I600fJ/AXB7HO6Vp9tBmDVOt2+021A==
   dependencies:
     "@atproto/common-web" "^0.3.0"
     "@atproto/lexicon" "^0.4.0"
@@ -4887,6 +4887,11 @@ yauzl@^2.10.0:
   dependencies:
     buffer-crc32 "~0.2.3"
     fd-slicer "~1.1.0"
+
+yet-another-react-lightbox@^3.20.0:
+  version "3.20.0"
+  resolved "https://registry.yarnpkg.com/yet-another-react-lightbox/-/yet-another-react-lightbox-3.20.0.tgz#cb7ecb7372fbdfbb3a55d12e81f2131b265134c3"
+  integrity sha512-Ty0yrqfVJ5XVq0gr1EmN31Ng5gkjC79RePrtzqGi/Xn+erwiuzEDTmKqbO9pDqrfb05xfow2NwWcp3auk4RVuQ==
 
 yocto-queue@^0.1.0:
   version "0.1.0"

@@ -1,18 +1,29 @@
 import client from '@/lib/client'
+import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
+import { AppBskyLabelerDefs, ComAtprotoLabelDefs } from '@atproto/api'
 
-const key = 'external_labeler_dids'
+const KEY = 'external_labeler_dids'
+
+type LabelerDetails =
+  | (AppBskyLabelerDefs.LabelerViewDetailed & {
+      policies: AppBskyLabelerDefs.LabelerPolicies & {
+        definitionById: Record<string, ComAtprotoLabelDefs.LabelValueDefinition>
+      }
+    })
+  | null
+type ExternalLabelers = Record<string, LabelerDetails>
 
 export const getExternalLabelers = () => {
-  const labelers = localStorage.getItem(key)
+  const labelers = getLocalStorageData<ExternalLabelers>(KEY)
   if (!labelers) return {}
-  return JSON.parse(labelers)
+  return labelers
 }
 
-export const addExternalLabelerDid = (did: string, data: any) => {
+export const addExternalLabelerDid = (did: string, data: LabelerDetails) => {
   const labelers = getExternalLabelers()
   if (labelers[did]) return labelers
   labelers[did] = data
-  localStorage.setItem(key, JSON.stringify(labelers))
+  setLocalStorageData(KEY, labelers)
   return labelers
 }
 
@@ -22,6 +33,6 @@ export const removeExternalLabelerDid = (did: string) => {
   // Don't allow removing original service DID
   if (!labelers[did] || serviceDid === did) return labelers
   delete labelers[did]
-  localStorage.setItem(key, JSON.stringify(labelers))
+  setLocalStorageData(KEY, labelers)
   return labelers
 }
