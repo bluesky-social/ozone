@@ -1,4 +1,4 @@
-import { parseAtUri } from '@/lib/util'
+import { classNames, parseAtUri } from '@/lib/util'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { ReactNode } from 'react'
 import { RecordCard, RepoCard } from './RecordCard'
@@ -24,33 +24,35 @@ const getPreviewTitleForAtUri = (uri: string): string => {
 }
 
 export function PreviewCard({
-  did,
+  subject,
   title,
   children,
+  className,
 }: {
-  did: string
+  subject: string
   title?: string | ReactNode
   children?: ReactNode
+  className?: string
 }) {
-  if (did.startsWith('at://')) {
-    const displayTitle = title || getPreviewTitleForAtUri(did)
+  if (subject.startsWith('at://')) {
+    const displayTitle = title || getPreviewTitleForAtUri(subject)
     return (
-      <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
+      <div className={classNames(`rounded p-2 pb-0 mb-3`, className)}>
         <p className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
           {displayTitle}
         </p>
-        <RecordCard uri={did} />
+        <RecordCard uri={subject} />
         {children}
       </div>
     )
   }
-  if (did.startsWith('did:')) {
+  if (subject.startsWith('did:')) {
     return (
-      <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
+      <div className={classNames(`rounded p-2 pb-1 mb-3`, className)}>
         <p className="text-sm font-medium text-gray-500 mb-3">
           {title ? title : 'Reported user'}
         </p>
-        <RepoCard did={did} />
+        <RepoCard did={subject} />
         {children}
       </div>
     )
@@ -58,7 +60,7 @@ export function PreviewCard({
 
   // No preview, show placeholder
   return (
-    <div className="rounded border-2 border-dashed border-gray-300 p-2 mb-3 text-center">
+    <div className={classNames(`rounded p-2 mb-3 text-center`, className)}>
       <span className="text-xs text-gray-400">
         {title ? title : 'Preview placeholder'}
       </span>

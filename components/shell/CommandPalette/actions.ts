@@ -11,6 +11,15 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
     },
   },
   {
+    id: 'workspace-modal',
+    name: 'Open Workspace',
+    shortcut: ['w'],
+    keywords: 'workspace,panel',
+    perform: () => {
+      router.push('/reports?workspaceOpen=true')
+    },
+  },
+  {
     id: 'unresolved-queue',
     name: 'Open Unresolved Queue',
     shortcut: ['u'],
