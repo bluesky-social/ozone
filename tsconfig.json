@@ -31,6 +31,7 @@
       "@/entertainment/*": ["components/entertainment/*"],
       "@/mod-event/*": ["components/mod-event/*"],
       "@/subject/*": ["components/subject/*"],
+      "@/config/*": ["components/config/*"],
       "@/dms/*": ["components/dms/*"],
       "@/workspace/*": ["components/workspace/*"],
     }

@@ -13,6 +13,7 @@ declare namespace Cypress {
       getProfileResponse: any
       ozoneMetaResponse: any
       ozoneDidDataResponse: any
+      ozoneServerConfigResponse: any
     }): Chainable<any>
   }
 }

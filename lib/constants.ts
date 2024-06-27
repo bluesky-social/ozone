@@ -10,3 +10,5 @@ export const SOCIAL_APP_DOMAIN = 'bsky.app'
 export const SOCIAL_APP_URL = `https://${SOCIAL_APP_DOMAIN}`
 
 export const DM_DISABLE_TAG = 'chat-disabled'
+
+export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`

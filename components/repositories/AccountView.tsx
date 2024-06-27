@@ -49,6 +49,7 @@ import {
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
+import { checkPermission } from '@/lib/server-config'
 
 enum Views {
   Details,
@@ -152,8 +153,11 @@ export function AccountView({
     views.push(
       { view: Views.Invites, label: 'Invites', sublabel: String(numInvited) },
       { view: Views.Events, label: 'Events' },
-      { view: Views.Email, label: 'Email' },
     )
+
+    if (checkPermission('canSendEmail')) {
+      views.push({ view: Views.Email, label: 'Email' })
+    }
 
     return views
   }

@@ -34,6 +34,7 @@ import {
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
+import { ImageList } from './ImageList'
 
 export function PostsFeed({
   items,
@@ -213,16 +214,6 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
-function ImageAltText({ alt }: { alt: string }) {
-  if (!alt) return null
-  return (
-    <p className="leading-2 text-gray-400 text-xs leading-3 mt-1">
-      <InformationCircleIcon className="w-4 h-4 inline mr-1" />
-      {alt}
-    </p>
-  )
-}
-
 export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
@@ -244,21 +235,10 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     )
     return (
       <div className="flex gap-2 pb-2 pl-14">
-        {embed.images.map((image, i) => (
-          <a
-            key={`img-${i}`}
-            href={image.fullsize}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <img
-              className={embeddedImageClassName}
-              src={image.thumb}
-              alt={image.alt}
-            />
-            <ImageAltText alt={image.alt} />
-          </a>
-        ))}
+        <ImageList
+          images={embed.images}
+          imageClassName={embeddedImageClassName}
+        />
       </div>
     )
   }

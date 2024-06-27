@@ -1,21 +1,24 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect } from 'react'
 import { useTitle } from 'react-use'
-import Link from 'next/link'
-import dynamic from 'next/dynamic'
-import { useMutation } from '@tanstack/react-query'
-import { AppBskyLabelerService } from '@atproto/api'
-import client, { ClientSession } from '@/lib/client'
+import client from '@/lib/client'
 import { useSession } from '@/lib/useSession'
-import { ButtonGroup, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
-import { Card } from '@/common/Card'
-import { ErrorInfo } from '@/common/ErrorInfo'
-import { useSyncedState } from '@/lib/useSyncedState'
-import { isDarkModeEnabled } from '@/common/useColorScheme'
-import { Checkbox, Textarea } from '@/common/forms'
+import { Tabs, TabView } from '@/common/Tabs'
+import { LabelerConfig } from 'components/config/Labeler'
+import { MemberConfig } from 'components/config/Member'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import { emitEvent } from '@/mod-event/helpers/emitEvent'
+import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 
-const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
-  ssr: false,
-})
+enum Views {
+  Configure,
+  Members,
+}
+
+const TabKeys = {
+  configure: Views.Configure,
+  members: Views.Members,
+}
 
 export default function ConfigurePageContent() {
   useTitle('Configure')
@@ -23,289 +26,67 @@ export default function ConfigurePageContent() {
   useEffect(() => {
     client.reconfigure() // Ensure config is up to date
   }, [])
+  const isServiceAccount = !!session && session?.did === session?.config.did
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const currentView =
+    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.configure
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
+
+  const quickOpenParam = searchParams.get('quickOpen') ?? ''
+  const setQuickActionPanelSubject = (subject: string) => {
+    const newParams = new URLSearchParams(document.location.search)
+    if (!subject) {
+      newParams.delete('quickOpen')
+    } else {
+      newParams.set('quickOpen', subject)
+    }
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
+
   if (!session) return null
-  const isServiceAccount = session.did === session.config.did
+  const views: TabView<Views>[] = [
+    {
+      view: Views.Configure,
+      label: 'Configure',
+    },
+    {
+      view: Views.Members,
+      label: 'Members',
+    },
+  ]
+
   return (
     <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
-      {isServiceAccount && <ConfigureDetails session={session} />}
-      {!isServiceAccount && (
-        <div>
-          <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
-            Configure
-          </h3>
-          <Card className="mt-4 p-4">
-            Please login as your service account{' '}
-            {session?.config.handle && <b>{session?.config.handle}</b>} in order
-            to configure Ozone.
-          </Card>
-        </div>
+      <Tabs
+        currentView={currentView}
+        onSetCurrentView={setCurrentView}
+        views={views}
+        fullWidth
+      />
+      {currentView === Views.Configure && (
+        <LabelerConfig session={session} isServiceAccount={isServiceAccount} />
       )}
-    </div>
-  )
-}
+      {currentView === Views.Members && <MemberConfig />}
 
-function ConfigureDetails({ session }: { session: ClientSession }) {
-  const record = session.config.labeler ?? null
-  return (
-    <div>
-      <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
-        Configure
-      </h3>
-      <Card className="mt-4 p-4 pb-6">
-        <h4 className="font-medium text-gray-700 dark:text-gray-100">
-          Service Record
-        </h4>
-        <p className="mt-2">
-          The existence of a service record makes your service account <b></b>{' '}
-          available in the Bluesky application, allowing users to choose to use
-          your labeling service. It contains a labeling policy with two parts:
-          <ul className="list-disc list-inside mt-2 pl-4">
-            <li>
-              A list of{' '}
-              <b>
-                <code>labelValues</code>
-              </b>
-              : all label values that you intend to produce from your labeler.
-            </li>
-            <li>
-              A list of{' '}
-              <b>
-                <code>labelValueDefinitions</code>
-              </b>
-              : details about how each custom label should be respected by the
-              Bluesky application and presented to users.
-            </li>
-          </ul>
-        </p>
-        {!record && <RecordInitStep repo={session.config.did} />}
-        {record && <RecordEditStep repo={session.config.did} record={record} />}
-      </Card>
-    </div>
-  )
-}
-
-function RecordInitStep({ repo }: { repo: string }) {
-  const [checked, setChecked] = useState(false)
-  const createInitialRecord = useMutation({
-    mutationFn: async () => {
-      await client.api.com.atproto.repo.putRecord({
-        repo,
-        collection: 'app.bsky.labeler.service',
-        rkey: 'self',
-        record: {
-          createdAt: new Date().toISOString(),
-          policies: { labelValues: [] },
-        },
-      })
-      await client.reconfigure()
-    },
-  })
-  return (
-    <>
-      <p className="mt-4">
-        <b>You do not have a service record yet.</b> Would you like to create
-        one?
-      </p>
-      {!!createInitialRecord.error && (
-        <ErrorInfo>{createInitialRecord.error['message']}</ErrorInfo>
-      )}
-      <div className="text-center mt-4">
-        <ButtonPrimary
-          onClick={() => createInitialRecord.mutate()}
-          disabled={!checked || createInitialRecord.isLoading}
-        >
-          Yes, create service record
-        </ButtonPrimary>
-      </div>
-      <p className="text-center mt-2">
-        <Checkbox
-          checked={checked}
-          onChange={(ev) => setChecked(ev.target.checked)}
-          label={
-            <>
-              I have read the{' '}
-              <Link
-                href="https://bsky.social/about/support/community-guidelines#labeler"
-                target="_blank"
-                className="text-blue-500"
-              >
-                Bluesky Labeler Community Guidelines
-              </Link>
-            </>
-          }
-        />
-      </p>
-    </>
-  )
-}
-
-function RecordEditStep({
-  record,
-  repo,
-}: {
-  record: AppBskyLabelerService.Record
-  repo: string
-}) {
-  const [editorMode, setEditorMode] = useState<'json' | 'plain'>('json')
-  const darkMode = isDarkModeEnabled()
-  const [recordVal, setRecordVal] = useSyncedState(record)
-  const [plainTextRecord, setPlainTextRecord] = useSyncedState(
-    JSON.stringify(record.policies, null, 2),
-  )
-  const [isPlainTextInvalid, setIsPlainTextInvalid] = useState<boolean>(false)
-  const invalid = useMemo(() => {
-    const validation = AppBskyLabelerService.validateRecord(recordVal)
-    if (validation.success) return null
-    return validation.error.message
-  }, [recordVal])
-  const updateRecord = useMutation({
-    mutationFn: async () => {
-      await client.api.com.atproto.repo.putRecord({
-        repo,
-        collection: 'app.bsky.labeler.service',
-        rkey: 'self',
-        record: recordVal,
-      })
-      await client.reconfigure()
-    },
-  })
-  const addLabelValue = () => {
-    setRecordVal({
-      ...recordVal,
-      policies: {
-        ...recordVal.policies,
-        labelValues: ['label-name', ...recordVal.policies.labelValues],
-      },
-    })
-  }
-  const addLabelDefinition = () => {
-    setRecordVal({
-      ...recordVal,
-      policies: {
-        ...recordVal.policies,
-        labelValueDefinitions: [
-          {
-            identifier: 'label-name',
-            severity: 'inform|alert|none',
-            blurs: 'content|media|none',
-            defaultSetting: 'ignore|warn|hide',
-            adultOnly: false,
-            locales: [
-              {
-                lang: 'en',
-                name: 'Label Display Name',
-                description: 'Label description.',
-              },
-            ],
-          },
-          ...(recordVal.policies.labelValueDefinitions ?? []),
-        ],
-      },
-    })
-  }
-  return (
-    <div>
-      <div className="flex justify-evenly mt-4 mb-4">
-        <ButtonSecondary onClick={addLabelValue} className="mx-1">
-          Add label value
-        </ButtonSecondary>
-        <ButtonSecondary onClick={addLabelDefinition} className="mx-1">
-          Add label definition
-        </ButtonSecondary>
-        <div className="flex-grow text-right">
-          <ButtonPrimary
-            onClick={() => updateRecord.mutate()}
-            disabled={!!invalid || updateRecord.isLoading}
-            className="mx-1"
-          >
-            Save
-          </ButtonPrimary>
-        </div>
-      </div>
-
-      <div className="my-2 justify-end sm:flex">
-        <ButtonGroup
-          size="xs"
-          className="ml-0"
-          appearance="primary"
-          items={[
-            {
-              id: 'JSON',
-              text: 'JSON Editor',
-              isActive: editorMode === 'json',
-              onClick: () => setEditorMode('json'),
-            },
-            {
-              id: 'plain',
-              text: 'Plain Editor',
-              isActive: editorMode === 'plain',
-              onClick: () => setEditorMode('plain'),
-            },
-          ]}
-        />
-      </div>
-      {!!updateRecord.error && (
-        <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
-      )}
-      {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
-      {isPlainTextInvalid && editorMode === 'plain' && (
-        <ErrorInfo type="warn" className="mb-2">
-          Invalid JSON input. Your changes can not be saved.
-        </ErrorInfo>
-      )}
-      {editorMode === 'plain' ? (
-        <div>
-          <Textarea
-            value={plainTextRecord}
-            placeholder="Enter JSON here..."
-            onChange={(ev) => {
-              setPlainTextRecord(ev.target.value)
-              try {
-                setRecordVal({
-                  ...recordVal,
-                  policies: JSON.parse(ev.target.value) as any,
-                })
-                setIsPlainTextInvalid(false)
-              } catch (e) {
-                setIsPlainTextInvalid(true)
-              }
-            }}
-            className="w-full h-96"
-          />
-        </div>
-      ) : (
-        <BrowserReactJsonView
-          src={recordVal.policies}
-          theme={darkMode ? 'harmonic' : 'rjv-default'}
-          name={null}
-          quotesOnKeys={false}
-          displayObjectSize={false}
-          displayDataTypes={false}
-          enableClipboard={false}
-          validationMessage="Cannot delete property"
-          onEdit={(edit) => {
-            const newRecord = {
-              ...recordVal,
-              policies: edit.updated_src as any,
-            }
-            setRecordVal(newRecord)
-            setPlainTextRecord(JSON.stringify(newRecord.policies, null, 2))
-          }}
-          onDelete={(del) => {
-            const [key, ...others] = del.namespace
-            if (
-              others.length ||
-              (key !== 'labelValues' && key !== 'labelValueDefinitions')
-            ) {
-              // can only delete items directly out of labelValues and labelValueDefinitions
-              return false
-            }
-            const newRecord = { ...recordVal, policies: del.updated_src as any }
-            setRecordVal(newRecord)
-            setPlainTextRecord(JSON.stringify(newRecord.policies, null, 2))
-          }}
-        />
-      )}
+      <ModActionPanelQuick
+        open={!!quickOpenParam}
+        onClose={() => setQuickActionPanelSubject('')}
+        setSubject={setQuickActionPanelSubject}
+        subject={quickOpenParam} // select first subject if there are multiple
+        subjectOptions={[quickOpenParam]}
+        isInitialLoading={false}
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+          await emitEvent(vals)
+        }}
+      />
     </div>
   )
 }

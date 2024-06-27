@@ -8,6 +8,7 @@ const PreviewTitleMap = {
   [CollectionId.FeedGenerator]: 'Reported feed',
   [CollectionId.List]: 'Reported list',
   [CollectionId.Profile]: 'Reported profile',
+  [CollectionId.StarterPack]: 'Reported starter pack',
 }
 
 const getPreviewTitleForAtUri = (uri: string): string => {

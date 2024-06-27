@@ -7,7 +7,7 @@ export const Input = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
     return (
       <input
         ref={ref}
-        className={`rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500  sm:text-sm dark:text-gray-100 ${className}`}
+        className={`rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm disabled:text-gray-500 dark:text-gray-100 disabled:dark:text-gray-300 ${className}`}
         {...others}
       />
     )

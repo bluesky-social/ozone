@@ -25,14 +25,19 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
     shortcut: ['u'],
     keywords: 'unresolved,queue',
     perform: () =>
-      router.push('/reports?reviewState=tools.ozone.moderation.defs%23reviewOpen'),
+      router.push(
+        '/reports?reviewState=tools.ozone.moderation.defs%23reviewOpen',
+      ),
   },
   {
     id: 'resolved-queue',
     name: 'Open Resolved Queue',
     shortcut: ['r'],
     keywords: 'resolved,queue',
-    perform: () => router.push('/reports?reviewState=tools.ozone.moderation.defs%23reviewClosed'),
+    perform: () =>
+      router.push(
+        '/reports?reviewState=tools.ozone.moderation.defs%23reviewClosed',
+      ),
   },
   {
     id: 'escalated-queue',
@@ -60,5 +65,12 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
       router.push(
         '/reports?reviewState=tools.ozone.moderation.defs%23reviewOpen&appealed=true',
       ),
+  },
+  {
+    id: 'filter-macros',
+    name: 'Manage Filter Macros',
+    shortcut: ['f'],
+    keywords: 'filter,macros',
+    perform: () => router.push('/events/filters/macros'),
   },
 ]

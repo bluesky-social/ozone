@@ -2,10 +2,14 @@ import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
 import { OZONE_SERVICE_DID } from './constants'
+import { getExternalLabelers } from '@/config/data'
+import { parseServerConfig, ServerConfig } from './server-config'
+import { toast } from 'react-toastify'
 
 export interface ClientSession extends AtpSessionData {
   service: string
   config: OzoneConfig
+  serverConfig: ServerConfig
   skipRecord: boolean
 }
 
@@ -75,10 +79,11 @@ class ClientManager extends EventTarget {
       password,
     })
     const config = await this._getConfig()
-    await this._checkCredentials(agent, login.did, config.did)
+    const serverConfig = await this._getServerConfig(agent, config.did)
     this._session = {
       service,
       config,
+      serverConfig,
       skipRecord: config.did !== login.did, // skip if not logged-in as service account
       accessJwt: login.accessJwt,
       refreshJwt: login.refreshJwt,
@@ -126,7 +131,15 @@ class ClientManager extends EventTarget {
 
   proxyHeaders(override?: string): Record<string, string> {
     const proxy = this.getServiceDid(override)
-    return proxy ? { 'atproto-proxy': _ensureServiceId(proxy) } : {}
+    const externalLabelers = getExternalLabelers()
+    const labelerDids = Object.keys(externalLabelers).join(',')
+
+    return proxy
+      ? {
+          'atproto-proxy': _ensureServiceId(proxy),
+          'atproto-accept-labelers': labelerDids,
+        }
+      : {}
   }
 
   private async _setup() {
@@ -149,26 +162,40 @@ class ClientManager extends EventTarget {
     return await getConfig(builtIn)
   }
 
-  private async _checkCredentials(
-    agent: AtpAgent,
-    accountDid: string,
-    ozoneDid: string,
-  ) {
+  private async _getServerConfig(agent: AtpAgent, ozoneDid: string) {
+    const createUnAuthorizedError = () => {
+      throw new Error(
+        "Account does not have access to this Ozone service. If this seems in error, check Ozone's access configuration.",
+      )
+    }
     try {
-      await agent.api.tools.ozone.moderation.getRepo(
-        { did: accountDid },
+      const { data } = await agent.api.tools.ozone.server.getConfig(
+        {},
         { headers: this.proxyHeaders(ozoneDid) },
       )
+      if (!data.viewer?.role) throw createUnAuthorizedError()
+      return parseServerConfig(data)
     } catch (err) {
       if (err?.['status'] === 401) {
-        throw new Error(
-          "Account does not have access to this Ozone service. If this seems in error, check Ozone's access configuration.",
-        )
+        throw createUnAuthorizedError()
       }
+      throw err
     }
   }
 
-  private _onSessionChange(newSession?: AtpSessionData) {
+  async refetchServerConfig() {
+    if (!this._session || !this._agent) {
+      toast.error(`Must be logged in to fetch server config`)
+      return
+    }
+    const serverConfig = await this._getServerConfig(
+      this._agent,
+      this._session?.config.did,
+    )
+    this._onSessionChange({ ...this._session, serverConfig })
+  }
+
+  private _onSessionChange(newSession?: AtpSessionData | ClientSession) {
     if (newSession && this._session) {
       Object.assign(this._session, newSession)
       _saveSession(this._session)

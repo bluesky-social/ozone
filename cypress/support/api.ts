@@ -44,6 +44,8 @@ export const mockOzoneMetaResponse = (response: Record<string, any>) =>
   cy.intercept('GET', '/.well-known/ozone-metadata.json', response)
 export const mockOzoneDidDataResponse = (response: Record<string, any>) =>
   cy.intercept('GET', `${PLC_URL}/*/data`, response)
+export const mockServerConfigResponse = (response: Record<string, any>) =>
+  cy.intercept('GET', `${SERVER_URL}/tools.ozone.server.getConfig*`, response)
 
 export const mockEmitEventResponse = (response: {
   statusCode: number
