@@ -4,6 +4,7 @@ import { OzoneConfig, getConfig } from './client-config'
 import { OZONE_SERVICE_DID } from './constants'
 import { getExternalLabelers } from '@/config/data'
 import { parseServerConfig, ServerConfig } from './server-config'
+import { toast } from 'react-toastify'
 
 export interface ClientSession extends AtpSessionData {
   service: string
@@ -162,7 +163,7 @@ class ClientManager extends EventTarget {
   }
 
   private async _getServerConfig(agent: AtpAgent, ozoneDid: string) {
-    const throwUnAuthorizedError = () => {
+    const createUnAuthorizedError = () => {
       throw new Error(
         "Account does not have access to this Ozone service. If this seems in error, check Ozone's access configuration.",
       )
@@ -172,17 +173,29 @@ class ClientManager extends EventTarget {
         {},
         { headers: this.proxyHeaders(ozoneDid) },
       )
-      if (!data.viewer?.role) throwUnAuthorizedError()
+      if (!data.viewer?.role) throw createUnAuthorizedError()
       return parseServerConfig(data)
     } catch (err) {
       if (err?.['status'] === 401) {
-        throwUnAuthorizedError()
+        throw createUnAuthorizedError()
       }
       throw err
     }
   }
 
-  private _onSessionChange(newSession?: AtpSessionData) {
+  async refetchServerConfig() {
+    if (!this._session || !this._agent) {
+      toast.error(`Must be logged in to fetch server config`)
+      return
+    }
+    const serverConfig = await this._getServerConfig(
+      this._agent,
+      this._session?.config.did,
+    )
+    this._onSessionChange({ ...this._session, serverConfig })
+  }
+
+  private _onSessionChange(newSession?: AtpSessionData | ClientSession) {
     if (newSession && this._session) {
       Object.assign(this._session, newSession)
       _saveSession(this._session)

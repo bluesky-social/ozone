@@ -23,7 +23,6 @@ export function Lists({ actor }: { actor: string }) {
       getNextPageParam: (lastPage) => lastPage.cursor,
     })
 
-  console.log(data, hasNextPage)
 
   if (isInitialLoading) {
     return (

@@ -1,4 +1,4 @@
-import { ToolsOzoneServerGetConfig } from '@atproto/api'
+import { ToolsOzoneServerGetConfig, ToolsOzoneTeamDefs } from '@atproto/api'
 
 export type ServerConfig = {
   pds?: string
@@ -11,17 +11,17 @@ export type ServerConfig = {
     canLabel: boolean
     canManageChat: boolean
     canSendEmail: boolean
+    canManageTeam: boolean
+    canTakedownFeedGenerators: boolean
   }
 }
 
 export const parseServerConfig = (
   config: ToolsOzoneServerGetConfig.Response['data'],
 ): ServerConfig => {
-  const isAdmin =
-    config.viewer?.role === 'tools.ozone.moderator.defs#modRoleAdmin'
+  const isAdmin = config.viewer?.role === ToolsOzoneTeamDefs.ROLEADMIN
   const isModerator =
-    isAdmin ||
-    config.viewer?.role === 'tools.ozone.moderator.defs#modRoleModerator'
+    isAdmin || config.viewer?.role === ToolsOzoneTeamDefs.ROLEMODERATOR
 
   return {
     pds: config.pds?.url,
@@ -34,6 +34,8 @@ export const parseServerConfig = (
       canLabel: isModerator,
       canManageChat: !!config.chat?.url && isModerator,
       canSendEmail: !!config.pds?.url && isModerator,
+      canManageTeam: isAdmin,
+      canTakedownFeedGenerators: isAdmin,
     },
   }
 }

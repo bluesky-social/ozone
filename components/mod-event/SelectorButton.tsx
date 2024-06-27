@@ -69,7 +69,6 @@ export const ModEventSelectorButton = ({
   isSubjectDid: boolean
   serverConfig: ServerConfig
 }) => {
-  console.log(serverConfig)
   const availableActions = useMemo(() => {
     return actions.filter(({ key }) => {
       // Don't show resolve appeal action if subject is not already in appealed status

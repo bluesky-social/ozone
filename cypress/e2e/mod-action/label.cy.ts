@@ -19,7 +19,6 @@ describe('Mod Action -> Label', () => {
     })
     cy.fixture('seed.json').then((data) => {
       seedFixture = data
-      console.log(seedFixture)
       mockRepoResponse({ statusCode: 200, body: seedFixture.carla.repo })
     })
 

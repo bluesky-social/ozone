@@ -1,6 +1,7 @@
+import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { CopyButton } from '@/common/CopyButton'
-import { ClientSession } from '@/lib/client'
+import client, { ClientSession } from '@/lib/client'
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -9,19 +10,49 @@ import {
   CloudIcon,
   ChatBubbleLeftIcon,
 } from '@heroicons/react/24/solid'
+import { useState } from 'react'
+
+const RefetchConfigButton = () => {
+  const [isRefetching, setIsRefetching] = useState(false)
+  return (
+    <ActionButton
+      onClick={async () => {
+        setIsRefetching(true)
+        await client.refetchServerConfig()
+        setIsRefetching(false)
+        window.location.reload()
+      }}
+      size="xs"
+      disabled={isRefetching}
+      appearance="outlined"
+    >
+      {isRefetching ? 'Refetching...' : 'Refetch'}
+    </ActionButton>
+  )
+}
 
 export const ServerConfig = ({ session }: { session: ClientSession }) => {
   const config = session.serverConfig
   if (!config) {
-    return <p>No server config found</p>
+    return (
+      <div className="flex flex-row justify-between my-4">
+        <h4 className="font-medium text-gray-700 dark:text-gray-100">
+          No Server Config Found
+        </h4>
+        <RefetchConfigButton />
+      </div>
+    )
   }
 
   return (
     <>
-      <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100 my-4">
-        Server Config
-      </h3>
-      <Card>
+      <div className="flex flex-row justify-between my-4">
+        <h4 className="font-medium text-gray-700 dark:text-gray-100">
+          Server Config
+        </h4>
+        <RefetchConfigButton />
+      </div>
+      <Card className="mb-4 pb-4">
         <div className="p-2">
           {config.pds && <UrlDisplay label="PDS" url={config.pds} />}
           {config.appview && (
@@ -44,12 +75,20 @@ export const ServerConfig = ({ session }: { session: ClientSession }) => {
                 enabled={config.permissions.canTakedown}
               />
               <PermissionItem
+                label="Takedown Feed Generators"
+                enabled={config.permissions.canTakedownFeedGenerators}
+              />
+              <PermissionItem
                 label="Label"
                 enabled={config.permissions.canLabel}
               />
               <PermissionItem
                 label="Manage Chat"
                 enabled={config.permissions.canManageChat}
+              />
+              <PermissionItem
+                label="Manage Team"
+                enabled={config.permissions.canManageTeam}
               />
             </ul>
           </div>
@@ -83,17 +122,18 @@ type UrlDisplayProps = {
 }
 
 const getIcon = (label: UrlDisplayProps['label'] | string) => {
+  const classNames = 'h-5 w-5 text-gray-800 dark:text-gray-300'
   switch (label) {
     case 'PDS':
-      return <LinkIcon className="h-5 w-5" />
+      return <LinkIcon className={classNames} />
     case 'App View':
-      return <GlobeAltIcon className="h-5 w-5" />
+      return <GlobeAltIcon className={classNames} />
     case 'Blob Divert':
-      return <CloudIcon className="h-5 w-5" />
+      return <CloudIcon className={classNames} />
     case 'Chat':
-      return <ChatBubbleLeftIcon className="h-5 w-5" />
+      return <ChatBubbleLeftIcon className={classNames} />
     default:
-      return <LinkIcon className="h-5 w-5" />
+      return <LinkIcon className={classNames} />
   }
 }
 
@@ -102,7 +142,9 @@ const UrlDisplay: React.FC<UrlDisplayProps> = ({ label, url }) => {
   return (
     <div className="mb-2 flex items-center">
       {getIcon(label)}
-      <span className="font-medium ml-2">{label}:</span>
+      <span className="font-medium ml-2 text-gray-900 dark:text-gray-200">
+        {label}:
+      </span>
       <a
         href={url}
         target="_blank"

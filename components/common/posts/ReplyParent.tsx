@@ -2,6 +2,7 @@ import { AppBskyActorDefs, AppBskyFeedDefs } from '@atproto/api'
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
 import { useCallback } from 'react'
+import { useActionPanelLink } from '../useActionPanelLink'
 
 export const ReplyParent = ({
   reply,
@@ -12,24 +13,9 @@ export const ReplyParent = ({
 }) => {
   const parent = reply.parent
   const Wrapper = inline ? 'span' : 'p'
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-
-  const createLinkToActionPanel = useCallback(
-    (name: string, value: string) => {
-      const params = new URLSearchParams(searchParams.toString())
-      params.set(name, value)
-
-      return `${pathname}?${params.toString()}`
-    },
-    [searchParams, pathname],
-  )
-
+  const createLinkToActionPanel = useActionPanelLink()
   const linkToParentPost = (text: string = 'Reply') => (
-    <Link
-      className="underline"
-      href={createLinkToActionPanel('quickOpen', `${parent.uri}`)}
-    >
+    <Link className="underline" href={createLinkToActionPanel(`${parent.uri}`)}>
       {text}
     </Link>
   )
@@ -64,7 +50,7 @@ export const ReplyParent = ({
     <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
       {linkToParentPost()} to{' '}
       <Link
-        href={createLinkToActionPanel('quickOpen', parentAuthor.did)}
+        href={createLinkToActionPanel(parentAuthor.did)}
         className="underline"
       >
         {userText}
