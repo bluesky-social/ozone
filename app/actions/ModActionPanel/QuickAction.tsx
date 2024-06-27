@@ -629,6 +629,7 @@ function Form(
                     selectedAction={modEventType}
                     isSubjectDid={isSubjectDid}
                     hasBlobs={!!record?.blobs?.length}
+                    serverConfig={client.session.serverConfig}
                     setSelectedAction={(action) => setModEventType(action)}
                   />
                   <ModEventDetailsPopover modEventType={modEventType} />

@@ -17,7 +17,9 @@ export function MemberList({
   fetchNextPage,
   hasNextPage,
   onEdit,
+  canEdit = false,
 }: {
+  canEdit: boolean
   isInitialLoading: boolean
   members: ToolsOzoneTeamDefs.Member[] | undefined
   fetchNextPage: () => void
@@ -101,7 +103,7 @@ export function MemberList({
                     </div>
                   </div>
                   <div>
-                    {!isCurrentMember && (
+                    {!isCurrentMember && canEdit && (
                       <ActionButton
                         size="xs"
                         appearance="outlined"

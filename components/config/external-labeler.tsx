@@ -31,7 +31,6 @@ export const ExternalLabelerConfig = () => {
   useEffect(() => {
     setLabelers(getExternalLabelers())
   }, [])
-
   const alreadySubscribed = !!labelerDetails.find(([d]) => d === did)
 
   return (
@@ -141,7 +140,7 @@ export const ExternalLabelerConfig = () => {
                         setLabelers(labelers)
                       }}
                     >
-                      <span className="text-sm">Unsubscribe</span>
+                      <span className="text-sm sm:text-base">Unsubscribe</span>
                     </ActionButton>
                   )}
                 </div>

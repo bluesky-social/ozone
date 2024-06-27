@@ -147,8 +147,11 @@ export function AccountView({
     views.push(
       { view: Views.Invites, label: 'Invites', sublabel: String(numInvited) },
       { view: Views.Events, label: 'Events' },
-      { view: Views.Email, label: 'Email' },
     )
+
+    if (client.session.serverConfig?.permissions.canSendEmail) {
+      views.push({ view: Views.Email, label: 'Email' })
+    }
 
     return views
   }

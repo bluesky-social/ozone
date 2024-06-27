@@ -1,8 +1,8 @@
 import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyFeedDefs,
-  AppBskyActorDefs,
   ToolsOzoneModerationDefs,
+  AppBskyActorDefs,
   ComAtprotoLabelDefs,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'

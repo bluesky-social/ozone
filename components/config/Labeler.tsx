@@ -11,6 +11,7 @@ import { useSyncedState } from '@/lib/useSyncedState'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { Checkbox, Textarea } from '@/common/forms'
 import { ExternalLabelerConfig } from './external-labeler'
+import { ServerConfig } from './server-config'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -41,6 +42,7 @@ export function LabelerConfig({
         </div>
       )}
 
+      <ServerConfig session={session} />
       <ExternalLabelerConfig />
     </div>
   )

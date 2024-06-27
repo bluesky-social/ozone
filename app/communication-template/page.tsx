@@ -11,6 +11,8 @@ import { Loading, LoadingFailed } from '@/common/Loader'
 import { useCommunicationTemplateList } from 'components/communication-template/hooks'
 import { CommunicationTemplateDeleteConfirmationModal } from 'components/communication-template/delete-confirmation-modal'
 import { ActionButton, LinkButton } from '@/common/buttons'
+import client from '@/lib/client'
+import { ErrorInfo } from '@/common/ErrorInfo'
 
 export default function CommunicationTemplatePage() {
   const { data, error, isLoading } = useCommunicationTemplateList({})
@@ -21,6 +23,14 @@ export default function CommunicationTemplatePage() {
     ? [...data].sort((prev, next) => prev.name.localeCompare(next.name))
     : []
   useTitle(`Communication Templates`)
+
+  if (!client.session.serverConfig?.permissions.canManageTemplates) {
+    return (
+      <ErrorInfo type="warn">
+        Sorry, you don{"'"}t have permission to manage communication templates.
+      </ErrorInfo>
+    )
+  }
 
   if (isLoading) {
     return <Loading message="Loading templates" />
