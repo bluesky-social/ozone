@@ -38,3 +38,5 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.DISABLE_DMS]: 'Disable DMs',
   [MOD_EVENTS.ENABLE_DMS]: 'Enable DMs',
 }
+
+export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'

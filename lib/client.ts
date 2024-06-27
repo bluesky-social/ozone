@@ -131,9 +131,7 @@ class ClientManager extends EventTarget {
   proxyHeaders(override?: string): Record<string, string> {
     const proxy = this.getServiceDid(override)
     const externalLabelers = getExternalLabelers()
-    const labelerDids = Object.keys(externalLabelers)
-      .map(_ensureServiceId)
-      .join(',')
+    const labelerDids = Object.keys(externalLabelers).join(',')
 
     return proxy
       ? {
