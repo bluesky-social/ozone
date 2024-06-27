@@ -44,6 +44,7 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Lists } from 'components/list/Lists'
+import { checkPermission } from '@/lib/server-config'
 
 enum Views {
   Details,
@@ -149,7 +150,7 @@ export function AccountView({
       { view: Views.Events, label: 'Events' },
     )
 
-    if (client.session.serverConfig?.permissions.canSendEmail) {
+    if (checkPermission('canSendEmail')) {
       views.push({ view: Views.Email, label: 'Email' })
     }
 

@@ -1,4 +1,5 @@
 import { ToolsOzoneServerGetConfig, ToolsOzoneTeamDefs } from '@atproto/api'
+import client from './client'
 
 export type ServerConfig = {
   pds?: string
@@ -13,6 +14,7 @@ export type ServerConfig = {
     canSendEmail: boolean
     canManageTeam: boolean
     canTakedownFeedGenerators: boolean
+    canDivertBlob: boolean
   }
 }
 
@@ -36,6 +38,19 @@ export const parseServerConfig = (
       canSendEmail: !!config.pds?.url && isModerator,
       canManageTeam: isAdmin,
       canTakedownFeedGenerators: isAdmin,
+      canDivertBlob: !!config.blobDivert?.url && isModerator,
     },
+  }
+}
+
+export const checkPermission = (
+  permission: keyof ServerConfig['permissions'],
+) => {
+  try {
+    return client.session.serverConfig?.permissions[permission]
+  } catch (e) {
+    // Trying to access client.session while unauthenticated throws an error in which case,
+    // we can safely assume the user does not have the permission
+    return false
   }
 }

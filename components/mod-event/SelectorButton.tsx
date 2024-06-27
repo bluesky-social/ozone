@@ -5,7 +5,7 @@ import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
 import { DM_DISABLE_TAG } from '@/lib/constants'
-import { ServerConfig } from '@/lib/server-config'
+import { checkPermission } from '@/lib/server-config'
 
 const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
@@ -60,15 +60,16 @@ export const ModEventSelectorButton = ({
   setSelectedAction,
   hasBlobs,
   isSubjectDid,
-  serverConfig,
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
   hasBlobs: boolean
   isSubjectDid: boolean
-  serverConfig: ServerConfig
 }) => {
+  const canDivertBlob = checkPermission('canDivertBlob')
+  const canTakedown = checkPermission('canTakedown')
+  const canManageChat = checkPermission('canManageChat')
   const availableActions = useMemo(() => {
     return actions.filter(({ key }) => {
       // Don't show resolve appeal action if subject is not already in appealed status
@@ -87,16 +88,13 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show divert action if the subject does not have any blobs
-      if (
-        key === MOD_EVENTS.DIVERT &&
-        (!hasBlobs || !serverConfig.blobDivert)
-      ) {
+      if (key === MOD_EVENTS.DIVERT && (!hasBlobs || !canDivertBlob)) {
         return false
       }
       // Don't show reverse takedown action if subject is not takendown
       if (
         key === MOD_EVENTS.REVERSE_TAKEDOWN &&
-        (!subjectStatus?.takendown || !serverConfig.permissions.canTakedown)
+        (!subjectStatus?.takendown || !canTakedown)
       ) {
         return false
       }
@@ -134,7 +132,7 @@ export const ModEventSelectorButton = ({
         key === MOD_EVENTS.DISABLE_DMS &&
         (subjectStatus?.tags?.includes(DM_DISABLE_TAG) ||
           !isSubjectDid ||
-          !serverConfig.permissions.canManageChat)
+          !canManageChat)
       ) {
         return false
       }
@@ -142,7 +140,7 @@ export const ModEventSelectorButton = ({
         key === MOD_EVENTS.ENABLE_DMS &&
         (!subjectStatus?.tags?.includes(DM_DISABLE_TAG) ||
           !isSubjectDid ||
-          !serverConfig.permissions.canManageChat)
+          !canManageChat)
       ) {
         return false
       }
@@ -158,7 +156,9 @@ export const ModEventSelectorButton = ({
     subjectStatus?.tags,
     hasBlobs,
     isSubjectDid,
-    serverConfig,
+    canManageChat,
+    canTakedown,
+    canDivertBlob,
   ])
 
   return (

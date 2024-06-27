@@ -13,6 +13,7 @@ import { CommunicationTemplateDeleteConfirmationModal } from 'components/communi
 import { ActionButton, LinkButton } from '@/common/buttons'
 import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { checkPermission } from '@/lib/server-config'
 
 export default function CommunicationTemplatePage() {
   const { data, error, isLoading } = useCommunicationTemplateList({})
@@ -24,7 +25,7 @@ export default function CommunicationTemplatePage() {
     : []
   useTitle(`Communication Templates`)
 
-  if (!client.session.serverConfig?.permissions.canManageTemplates) {
+  if (!checkPermission('canManageTemplates')) {
     return (
       <ErrorInfo type="warn">
         Sorry, you don{"'"}t have permission to manage communication templates.
