@@ -1,4 +1,5 @@
 import { ActionButton } from '@/common/buttons'
+import client from '@/lib/client'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { MemberEditor } from 'components/team/MemberEditor'
@@ -18,6 +19,7 @@ export function MemberConfig() {
       setShowMemberCreateForm(false)
     }
   }
+  const canManageTeam = client.session?.serverConfig
 
   return (
     <div className="pt-4">
@@ -25,7 +27,7 @@ export function MemberConfig() {
         <h4 className="font-medium text-gray-700 dark:text-gray-100">
           Manage Members
         </h4>
-        {!showMemberCreateForm && !editingMember && (
+        {!showMemberCreateForm && !editingMember && canManageTeam && (
           <ActionButton
             size="sm"
             appearance="primary"
@@ -36,7 +38,7 @@ export function MemberConfig() {
           </ActionButton>
         )}
       </div>
-      {(showMemberCreateForm || !!editingMember) && (
+      {(showMemberCreateForm || !!editingMember) && canManageTeam && (
         <MemberEditor
           member={editingMember}
           onCancel={hideEditorForm}
@@ -49,6 +51,7 @@ export function MemberConfig() {
           fetchNextPage,
           isInitialLoading,
           onEdit: setEditingMember,
+          canEdit: canManageTeam,
           members: data?.pages.map((page) => page.members).flat(),
         }}
       />
