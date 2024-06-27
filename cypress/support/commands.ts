@@ -4,6 +4,7 @@ import {
   mockProfileResponse,
   mockOzoneMetaResponse,
   mockOzoneDidDataResponse,
+  mockServerConfigResponse,
   API_URL,
 } from './api'
 
@@ -15,11 +16,16 @@ Cypress.Commands.add(
     getProfileResponse: any
     ozoneMetaResponse: any
     ozoneDidDataResponse: any
+    ozoneServerConfigResponse: any
   }) => {
     // Setup the auth response
     mockAuthResponse({
       statusCode: 200,
       body: authFixture.createSessionResponse,
+    })
+    mockServerConfigResponse({
+      statusCode: 200,
+      body: authFixture.ozoneServerConfigResponse,
     })
     mockRepoResponse({
       statusCode: 200,

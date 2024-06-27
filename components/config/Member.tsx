@@ -1,5 +1,6 @@
 import { ActionButton } from '@/common/buttons'
 import client from '@/lib/client'
+import { checkPermission } from '@/lib/server-config'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { MemberEditor } from 'components/team/MemberEditor'
@@ -19,7 +20,7 @@ export function MemberConfig() {
       setShowMemberCreateForm(false)
     }
   }
-  const canManageTeam = client.session?.serverConfig
+  const canManageTeam = checkPermission('canManageTeam')
 
   return (
     <div className="pt-4">
