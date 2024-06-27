@@ -25,7 +25,6 @@ export const ICONS = {
 export type SidebarNavItem = {
   name: string
   icon: keyof typeof ICONS
-  serviceAccountOnly?: boolean
 } & (
   | {
       href: string

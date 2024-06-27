@@ -1,5 +1,10 @@
 import { useQuery } from '@tanstack/react-query'
-import { AppBskyFeedDefs, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  AppBskyFeedDefs,
+  AppBskyActorDefs,
+  ToolsOzoneModerationDefs,
+  ComAtprotoLabelDefs,
+} from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
 import { PostAsCard } from './posts/PostsFeed'
@@ -10,7 +15,6 @@ import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
-import { AppBskyActorDefs, ComAtprotoLabelDefs } from '@atproto/api'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
