@@ -19,7 +19,7 @@ export function MemberConfig() {
       setShowMemberCreateForm(false)
     }
   }
-  const canManageTeam = client.session?.serverConfig
+  const { canManageTeam } = client.session.serverConfig?.permissions || {}
 
   return (
     <div className="pt-4">
