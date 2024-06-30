@@ -18,12 +18,10 @@ import {
   LabelList,
   LabelListEmpty,
   diffLabels,
-  displayLabel,
   getLabelsForSubject,
   toLabelVal,
-  getLabelGroupInfo,
-  unFlagSelfLabel,
   isSelfLabel,
+  ModerationLabel,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -33,14 +31,14 @@ import {
   ArrowRightIcon,
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
-import { LabelSelector } from '@/common/labels/Grid'
+import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
-import { CollectionId, createSubjectFromId } from '@/reports/helpers/subject'
+import { createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
@@ -48,6 +46,10 @@ import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
+import { DM_DISABLE_TAG } from '@/lib/constants'
+import { MessageActorMeta } from '@/dms/MessageActorMeta'
+import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
+import { LockClosedIcon } from '@heroicons/react/24/solid'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -138,6 +140,19 @@ export function ModActionPanelQuick(
   )
 }
 
+const getDeactivatedAt = ({
+  repo,
+  record,
+}: Awaited<ReturnType<typeof getSubject>>) => {
+  const deactivatedAt = repo?.deactivatedAt || record?.repo?.deactivatedAt
+
+  if (!deactivatedAt) {
+    return ''
+  }
+
+  return dateFormatter.format(new Date(deactivatedAt))
+}
+
 function Form(
   props: {
     onCancel: () => void
@@ -167,7 +182,7 @@ function Form(
     queryKey: ['modActionSubject', { subject }],
     queryFn: () => getSubject(subject),
   })
-  const isSubjetDid = subject.startsWith('did:')
+  const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
@@ -184,9 +199,13 @@ function Form(
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
+  const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
-    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
+    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
+  const deactivatedAt = getDeactivatedAt(
+    repo ? { repo } : record ? { record } : {},
+  )
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -267,6 +286,28 @@ function Form(
         coreEvent.remove = remove
       }
 
+      // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
+      if (coreEvent.$type === MOD_EVENTS.APPEAL) {
+        coreEvent.$type = MOD_EVENTS.REPORT
+        coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
+      }
+
+      // Enable and disable dm actions are just tag operations behind the scenes
+      // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
+      if (
+        coreEvent.$type === MOD_EVENTS.DISABLE_DMS ||
+        coreEvent.$type === MOD_EVENTS.ENABLE_DMS
+      ) {
+        if (coreEvent.$type === MOD_EVENTS.DISABLE_DMS) {
+          coreEvent.add = [DM_DISABLE_TAG]
+          coreEvent.remove = []
+        }
+        if (coreEvent.$type === MOD_EVENTS.ENABLE_DMS) {
+          coreEvent.add = []
+          coreEvent.remove = [DM_DISABLE_TAG]
+        }
+        coreEvent.$type = MOD_EVENTS.TAG
+      }
       const { subject: subjectInfo, record: recordInfo } =
         await createSubjectFromId(subject)
 
@@ -357,9 +398,6 @@ function Form(
 
         await Promise.all(labelSubmissions)
       } else {
-        if (coreEvent.$type === MOD_EVENTS.REPORT) {
-          coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
-        }
         await onSubmit({
           subject: subjectInfo,
           createdBy: client.session.did,
@@ -495,7 +533,14 @@ function Form(
             </div>
             {/* PREVIEWS */}
             <div className="max-w-xl">
-              <PreviewCard did={subject} />
+              <PreviewCard did={subject}>
+                {deactivatedAt && (
+                  <p className="pt-1 pb-1 flex flex-row items-center">
+                    <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
+                    Account deactivated on {deactivatedAt}
+                  </p>
+                )}
+              </PreviewCard>
             </div>
 
             {!!subjectStatus && (
@@ -539,19 +584,22 @@ function Form(
                 />
               </FormLabel>
             )}
+            {isSubjectDid && (
+              <div className="mb-3">
+                <MessageActorMeta did={subject} />
+              </div>
+            )}
             <div className={`mb-3`}>
               <FormLabel label="Labels">
                 <LabelList className="-ml-1">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
-                  {currentLabels.map((label) => {
-                    const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
+                  {allLabels.map((label) => {
                     return (
-                      <LabelChip
-                        key={label}
-                        style={{ color: labelGroup.color }}
-                      >
-                        {displayLabel(label)}
-                      </LabelChip>
+                      <ModerationLabel
+                        key={label.val}
+                        label={label}
+                        recordAuthorDid={`${repo?.did || record?.repo.did}`}
+                      />
                     )
                   })}
                 </LabelList>
@@ -575,13 +623,15 @@ function Form(
               <ModEventList subject={subject} />
             ) : (
               <div className="px-1">
-                <div className="relative">
+                <div className="relative flex flex-row gap-1 items-center">
                   <ModEventSelectorButton
                     subjectStatus={subjectStatus}
                     selectedAction={modEventType}
+                    isSubjectDid={isSubjectDid}
                     hasBlobs={!!record?.blobs?.length}
                     setSelectedAction={(action) => setModEventType(action)}
                   />
+                  <ModEventDetailsPopover modEventType={modEventType} />
                 </div>
                 {shouldShowDurationInHoursField && (
                   <FormLabel
@@ -596,8 +646,17 @@ function Form(
                   </FormLabel>
                 )}
 
+                {isMuteReporterEvent && (
+                  <p className="text-xs my-3">
+                    When a reporter is muted, that account will still be able to
+                    report and their reports will show up in the event log.
+                    However, their reports {"won't"} change moderation review
+                    state of the subject {"they're"} reporting
+                  </p>
+                )}
+
                 {isLabelEvent && (
-                  <FormLabel label="Labels" className="mt-2">
+                  <div className="mt-2">
                     <LabelSelector
                       id="labels"
                       name="labels"
@@ -606,7 +665,7 @@ function Form(
                         (label) => !isSelfLabel(label),
                       )}
                     />
-                  </FormLabel>
+                  </div>
                 )}
 
                 {isTagEvent && (
@@ -640,7 +699,7 @@ function Form(
                 )}
 
                 {/* Only show this when moderator tries to apply labels to a DID subject */}
-                {isLabelEvent && isSubjetDid && (
+                {isLabelEvent && isSubjectDid && (
                   <p className="mb-3 text-xs">
                     NOTE: Applying labels to an account overall is a strong
                     intervention. You may want to apply the labels to the

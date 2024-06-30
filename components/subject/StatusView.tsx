@@ -1,7 +1,7 @@
 import { DataField, DataFieldProps } from '@/common/DataField'
 import { Json } from '@/common/Json'
 import { RecordCard, RepoCard } from '@/common/RecordCard'
-import { classNames } from '@/lib/util'
+import { Tabs } from '@/common/Tabs'
 import { ModEventList } from '@/mod-event/EventList'
 import { AtUri, ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronLeftIcon } from '@heroicons/react/20/solid'
@@ -67,8 +67,11 @@ export const SubjectStatusView = ({
               {subjectStatus ? (
                 <>
                   <Tabs
+                    views={[
+                      { view: Views.Details, label: 'Details' },
+                      { view: Views.Events, label: 'Events' },
+                    ]}
                     currentView={currentView}
-                    subjectStatus={subjectStatus}
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && (
@@ -93,55 +96,6 @@ export const SubjectStatusView = ({
               )}
             </article>
           </main>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Tabs({
-  currentView,
-  subjectStatus,
-  onSetCurrentView,
-}: {
-  currentView: Views
-  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
-  onSetCurrentView: (v: Views) => void
-}) {
-  const Tab = ({
-    view,
-    label,
-    sublabel,
-  }: {
-    view: Views
-    label: string
-    sublabel?: string
-  }) => (
-    <span
-      className={classNames(
-        view === currentView
-          ? 'border-pink-500 text-gray-900'
-          : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300',
-        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
-      )}
-      aria-current={view === currentView ? 'page' : undefined}
-      onClick={() => onSetCurrentView(view)}
-    >
-      {label}{' '}
-      {sublabel ? (
-        <span className="text-xs font-bold text-gray-400">{sublabel}</span>
-      ) : undefined}
-    </span>
-  )
-
-  return (
-    <div className="mt-6 sm:mt-2 2xl:mt-5">
-      <div className="border-b border-gray-200">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" />
-            <Tab view={Views.Events} label="Events" />
-          </nav>
         </div>
       </div>
     </div>
@@ -192,13 +146,13 @@ function Details({
           value: new Date(lastReviewedAt).toLocaleString(),
         }
       : null,
-      lastAppealedAt
-        ? {
-            label: 'Appealed at',
-            showCopyButton: true,
-            value: new Date(lastAppealedAt).toLocaleString(),
-          }
-        : null,
+    lastAppealedAt
+      ? {
+          label: 'Appealed at',
+          showCopyButton: true,
+          value: new Date(lastAppealedAt).toLocaleString(),
+        }
+      : null,
     muteUntil
       ? {
           label: 'Muted Until',

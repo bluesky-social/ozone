@@ -1,12 +1,14 @@
 'use client'
 import Image from 'next/image'
-import { FormEvent, useState, useEffect, useContext } from 'react'
+import { FormEvent, useState, useEffect, useContext, createRef } from 'react'
 import { LockClosedIcon, XCircleIcon } from '@heroicons/react/20/solid'
 import { AuthChangeContext, AuthContext } from './AuthContext'
 import { AuthState } from '@/lib/types'
 import Client from '@/lib/client'
 import { ConfigurationFlow } from './ConfigurationFlow'
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { Alert } from '@/common/Alert'
+import { ComAtprotoServerCreateSession } from '@atproto/api'
 
 export function LoginModal() {
   const { isValidatingAuth, isLoggedIn, authState } = useContext(AuthContext)
@@ -15,6 +17,16 @@ export function LoginModal() {
   const [service, setService] = useState('https://bsky.social')
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
+  const [authFactor, setAuthFactor] = useState<{
+    token: string
+    isInvalid: boolean
+    isNeeded: boolean
+  }>({
+    token: '',
+    isNeeded: false,
+    isInvalid: false,
+  })
+  const handleRef = createRef<HTMLInputElement>()
 
   const submitButtonClassNames = `group relative flex w-full justify-center rounded-md border border-transparent py-2 px-4 text-sm font-medium text-white focus:outline-none focus:ring-2 focus:ring-rose-500 dark:focus:ring-slate-500 focus:ring-offset-2 ${
     isValidatingAuth
@@ -47,11 +59,25 @@ export function LoginModal() {
     e.stopPropagation()
     try {
       setAuthContextData(AuthState.Validating)
-      const authState = await Client.signin(service, handle, password)
+      const authState = await Client.signin(
+        service,
+        handle,
+        password,
+        authFactor.token.trim(),
+      )
       setAuthContextData(authState)
     } catch (e: any) {
       console.error(e)
-      setError(e.toString())
+      const errMsg = e.toString()
+      if (
+        e instanceof ComAtprotoServerCreateSession.AuthFactorTokenRequiredError
+      ) {
+        setAuthFactor({ ...authFactor, isNeeded: true })
+      } else if (errMsg.includes('Token is invalid')) {
+        setAuthFactor({ ...authFactor, isInvalid: true })
+      } else {
+        setError(errMsg)
+      }
     }
   }
 
@@ -120,6 +146,7 @@ export function LoginModal() {
                     name="handle"
                     type="text"
                     required
+                    ref={handleRef}
                     disabled={isValidatingAuth}
                     className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
                     placeholder="Account handle"
@@ -138,13 +165,73 @@ export function LoginModal() {
                     autoComplete="current-password"
                     required
                     disabled={isValidatingAuth}
-                    className="relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm"
+                    className={`relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm ${
+                      authFactor.isNeeded ? '' : 'rounded-b-md'
+                    }`}
                     placeholder="Password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
+
+                {/* When user fills in the token and hits submit again, the AuthState value changes to Validating so the input field goes away which is a bit odd */}
+                {authFactor.isNeeded && (
+                  <div>
+                    <label htmlFor="authFactorToken" className="sr-only">
+                      2FA Confirmation
+                    </label>
+                    <input
+                      id="authFactorToken"
+                      name="authFactorToken"
+                      type="text"
+                      autoComplete="one-time-code"
+                      required
+                      autoFocus
+                      className={
+                        'relative block w-full appearance-none rounded-none border border-gray-300 dark:border-slate-600 px-3 py-2 dark:bg-slate-800 text-gray-900 dark:text-gray-200 placeholder-gray-500 focus:z-10 focus:border-rose-500 focus:outline-none focus:ring-rose-500 dark:focus:ring-slate-500 sm:text-sm rounded-b-md'
+                      }
+                      placeholder="Confirmation Code"
+                      value={authFactor.token}
+                      onChange={(e) =>
+                        setAuthFactor({ ...authFactor, token: e.target.value })
+                      }
+                    />
+                  </div>
+                )}
               </div>
+
+              {authFactor.isNeeded && (
+                <Alert
+                  type={authFactor.isInvalid ? 'error' : 'warning'}
+                  title={
+                    authFactor.isInvalid
+                      ? 'Invalid confirmation code!'
+                      : 'Email with confirmation code sent!'
+                  }
+                  body={
+                    <>
+                      Check your email for a confirmation code and enter it here
+                      or{' '}
+                      <button
+                        className="underline"
+                        onClick={(e) => {
+                          e.preventDefault()
+                          setAuthFactor({
+                            token: '',
+                            isNeeded: false,
+                            isInvalid: false,
+                          })
+                          setHandle('')
+                          setPassword('')
+                          handleRef.current?.focus()
+                        }}
+                      >
+                        try a different account
+                      </button>
+                    </>
+                  }
+                />
+              )}
 
               {error ? <ErrorInfo>{error}</ErrorInfo> : undefined}
 

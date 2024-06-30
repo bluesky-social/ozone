@@ -68,4 +68,6 @@ const eventTexts = {
   [MOD_EVENTS.TAKEDOWN]: 'taken-down',
   [MOD_EVENTS.COMMENT]: 'commented',
   [MOD_EVENTS.LABEL]: 'labeled',
+  [MOD_EVENTS.MUTE]: 'Muted',
+  [MOD_EVENTS.UNMUTE]: 'Unmuted',
 }

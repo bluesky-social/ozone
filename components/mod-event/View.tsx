@@ -15,6 +15,7 @@ import { DataField, DataFieldProps } from '@/common/DataField'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { MOD_EVENT_TITLES } from './constants'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
+import { Tabs } from '@/common/Tabs'
 
 enum Views {
   Details,
@@ -78,8 +79,8 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
                 <>
                   <Tabs
                     currentView={currentView}
-                    event={event}
                     onSetCurrentView={setCurrentView}
+                    views={[{ view: Views.Details, label: 'Details' }]}
                   />
                   {currentView === Views.Details && <Details event={event} />}
                 </>
@@ -90,54 +91,6 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
               )}
             </article>
           </main>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function Tabs({
-  currentView,
-  onSetCurrentView,
-}: {
-  currentView: Views
-  event: GetEvent.OutputSchema
-  actions?: GetPostThread.OutputSchema
-  onSetCurrentView: (v: Views) => void
-}) {
-  const Tab = ({
-    view,
-    label,
-    sublabel,
-  }: {
-    view: Views
-    label: string
-    sublabel?: string
-  }) => (
-    <span
-      className={classNames(
-        view === currentView
-          ? 'border-pink-500 dark:border-teal-400 text-gray-900 dark:text-teal-500'
-          : 'border-transparent text-gray-500 dark:text-gray-50 hover:text-gray-700 dark:hover:text-teal-200 hover:border-gray-300 dark:hover:border-teal-300',
-        'whitespace-nowrap py-4 px-1 border-b-2 font-medium text-sm cursor-pointer',
-      )}
-      aria-current={view === currentView ? 'page' : undefined}
-      onClick={() => onSetCurrentView(view)}
-    >
-      {label}{' '}
-      {sublabel ? (
-        <span className="text-xs font-bold text-gray-400">{sublabel}</span>
-      ) : undefined}
-    </span>
-  )
-
-  return (
-    <div className="mt-6 sm:mt-2 2xl:mt-5">
-      <div className="border-b border-gray-200">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
-            <Tab view={Views.Details} label="Details" />
-          </nav>
         </div>
       </div>
     </div>

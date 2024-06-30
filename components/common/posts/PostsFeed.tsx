@@ -7,31 +7,27 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  AppBskyActorDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
   LanguageIcon,
+  InformationCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
 import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
-import {
-  LabelChip,
-  LabelList,
-  doesLabelNeedBlur,
-  toLabelVal,
-  LabelGroupInfo,
-  getLabelGroupInfo,
-} from '../labels'
+import { LabelList, doesLabelNeedBlur, ModerationLabel } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { SOCIAL_APP_URL } from '@/lib/constants'
+import { ReplyParent } from './ReplyParent'
+import { ImageList } from './ImageList'
 
 export function PostsFeed({
   items,
@@ -132,7 +128,7 @@ function PostHeader({
             </Link>
             &nbsp;&middot;&nbsp;
             <a
-              href={`https://bsky.app/profile/${item.post.uri
+              href={`${SOCIAL_APP_URL}/profile/${item.post.uri
                 .replace('at://', '')
                 .replace(CollectionId.Post, 'post')}`}
               target="_blank"
@@ -141,28 +137,7 @@ function PostHeader({
               Peek
             </a>
           </p>
-          {item.reply ? (
-            <p className="text-gray-500 dark:text-gray-50 text-sm">
-              Reply to{' '}
-              <Link
-                href={`/repositories/${
-                  (
-                    item.reply.parent
-                      .author as AppBskyActorDefs.ProfileViewBasic
-                  ).handle
-                }`}
-                className="hover:underline"
-              >
-                @
-                {
-                  (
-                    item.reply.parent
-                      .author as AppBskyActorDefs.ProfileViewBasic
-                  ).handle
-                }
-              </Link>
-            </p>
-          ) : undefined}
+          {item.reply ? <ReplyParent reply={item.reply} /> : undefined}
         </div>
       </div>
     </div>
@@ -190,7 +165,11 @@ function PostContent({
     )
   }, [uri])
   return (
-    <div className={`${dense ? 'prose-sm pl-10' : 'prose pl-14'} pb-2`}>
+    <div
+      className={`${
+        dense ? 'prose-sm pl-10' : 'prose pl-14'
+      } pb-2 dark:text-gray-100`}
+    >
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
       {showActionLine && (
         <p className="text-xs mt-0">
@@ -228,8 +207,7 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
-// @TODO record embeds
-function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
@@ -250,20 +228,10 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     )
     return (
       <div className="flex gap-2 pb-2 pl-14">
-        {embed.images.map((image, i) => (
-          <a
-            key={`img-${i}`}
-            href={image.fullsize}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <img
-              className={embeddedImageClassName}
-              src={image.thumb}
-              alt={image.alt}
-            />
-          </a>
-        ))}
+        <ImageList
+          images={embed.images}
+          imageClassName={embeddedImageClassName}
+        />
       </div>
     )
   }
@@ -277,7 +245,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
             src={embed.external.thumb}
           />
         ) : undefined}
-        <div>
+        <div className="dark:text-gray-300">
           <div>{embed.external.title}</div>
           <div>{embed.external.description}</div>
           <div>
@@ -297,84 +265,136 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   }
   // render quote posts embeds
   if (AppBskyEmbedRecord.isView(embed)) {
-    if (
-      AppBskyEmbedRecord.isViewRecord(embed.record) &&
-      AppBskyFeedPost.isRecord(embed.record.value) &&
-      AppBskyFeedPost.validateRecord(embed.record.value).success
-    ) {
-      return (
-        <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
-          <div className="flex flex-row">
-            <ProfileAvatar
-              profile={embed.record.author}
-              className="w-6 h-6 rounded-full"
-            />
-            <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
-              <Link
-                href={`/repositories/${embed.record.author.did}`}
-                className="hover:underline"
-              >
-                {embed.record.author.displayName ? (
-                  <>
-                    <span className="font-bold">
-                      {embed.record.author.displayName}
-                    </span>
-                    <span className="ml-1 text-gray-500 dark:text-gray-50">
-                      @{embed.record.author.handle}
-                    </span>
-                  </>
-                ) : (
-                  <span className="font-bold">
-                    @{embed.record.author.handle}
-                  </span>
-                )}
-              </Link>
-              &nbsp;&middot;&nbsp;
-              <Link
-                href={`/repositories/${embed.record.uri.replace('at://', '')}`}
-                className="text-gray-500 dark:text-gray-50 hover:underline"
-              >
-                {new Date(embed.record.indexedAt).toLocaleString()}
-              </Link>
-            </p>
-          </div>
-          <div className={`prose-sm pl-10 pb-2`}>
-            <RichText post={embed.record.value} />
-          </div>
-        </div>
-      )
-    } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
-      const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
-      const peekLink = buildBlueSkyAppUrl({
-        did: `${did}`,
-        rkey: `${rkey}`,
-        collection: `${collection?.split('.').pop()}`,
-      })
-      const repoLink = `/repositories/${did}/${collection}/${rkey}`
-      return (
-        <div className="flex gap-2 pb-2 pl-14 flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2">
-          <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
-            The author of the original post blocked the author.{' '}
-            <Link
-              className=" text-gray-900 dark:text-gray-200 underline"
-              href={repoLink}
-            >
-              See quoted post
-            </Link>
-            {' · '}
-            <a
-              target="_blank"
-              className=" text-gray-900 dark:text-gray-200 underline"
-              href={peekLink}
-            >
-              Peek
-            </a>
-          </p>
-        </div>
-      )
+    const recordView = <RecordEmbedView embed={embed} />
+    if (recordView) {
+      return recordView
     }
   }
   return <span />
+}
+
+export function RecordEmbedView({
+  embed,
+  leftAligned = true,
+}: {
+  embed: AppBskyEmbedRecord.View | { $type: string; [k: string]: unknown }
+  leftAligned?: boolean
+}) {
+  const leftPadding = !leftAligned ? 'pl-14' : 'pl-2'
+  if (
+    AppBskyEmbedRecord.isViewRecord(embed.record) &&
+    AppBskyFeedPost.isRecord(embed.record.value) &&
+    AppBskyFeedPost.validateRecord(embed.record.value).success
+  ) {
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <div className="flex flex-row gap-1">
+          <ProfileAvatar
+            profile={embed.record.author}
+            className="w-6 h-6 rounded-full"
+          />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+            <Link
+              href={`/repositories/${embed.record.author.did}`}
+              className="hover:underline"
+            >
+              {embed.record.author.displayName ? (
+                <>
+                  <span className="font-bold">
+                    {embed.record.author.displayName}
+                  </span>
+                  <span className="ml-1 text-gray-500 dark:text-gray-50">
+                    @{embed.record.author.handle}
+                  </span>
+                </>
+              ) : (
+                <span className="font-bold">@{embed.record.author.handle}</span>
+              )}
+            </Link>
+            &nbsp;&middot;&nbsp;
+            <Link
+              href={`/repositories/${embed.record.uri.replace('at://', '')}`}
+              className="text-gray-500 dark:text-gray-50 hover:underline"
+            >
+              {new Date(embed.record.indexedAt).toLocaleString()}
+            </Link>
+          </p>
+        </div>
+        <div
+          className={`prose-sm ${
+            leftAligned ? 'pl-6' : 'pl-10'
+          } pb-2 dark:text-gray-100`}
+        >
+          <RichText post={embed.record.value} />
+        </div>
+      </div>
+    )
+  } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
+    const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
+    const peekLink = buildBlueSkyAppUrl({
+      did: `${did}`,
+      rkey: `${rkey}`,
+      collection: `${collection?.split('.').pop()}`,
+    })
+    const repoLink = `/repositories/${did}/${collection}/${rkey}`
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
+          The author of the original post blocked the author.{' '}
+          <Link
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={repoLink}
+          >
+            See quoted post
+          </Link>
+          {' · '}
+          <a
+            target="_blank"
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={peekLink}
+          >
+            Peek
+          </a>
+        </p>
+      </div>
+    )
+  } else if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
+    const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
+    const peekLink = buildBlueSkyAppUrl({
+      did: `${did}`,
+      rkey: `${rkey}`,
+      collection: `${collection?.split('.').pop()}`,
+    })
+    const repoLink = `/repositories/${did}/${collection}/${rkey}`
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <p className="text-sm font-medium text-gray-600 dark:text-gray-100">
+          The embedded record could not be found.{' '}
+          <Link
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={repoLink}
+          >
+            See record
+          </Link>
+          {' · '}
+          <a
+            target="_blank"
+            className=" text-gray-900 dark:text-gray-200 underline"
+            href={peekLink}
+          >
+            Peek
+          </a>
+        </p>
+      </div>
+    )
+  }
+  return null
 }
 
 function PostControls({
@@ -418,21 +438,15 @@ function PostLabels({
     <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
       {labels?.map((label, i) => {
         const { val, src } = label
-        const labelGroup = getLabelGroupInfo(val)
         return (
-          <LabelChip
-            className={`${i === 0 ? 'ml-0' : ''} text-[${
-              labelGroup.color
-            }]`}
-            // TODO: Ideally, we should just use inline class name but it only works when the class names are static
-            // so trying to work around that with style prop for now
-            style={{ color: labelGroup.color }}
+          <ModerationLabel
+            recordAuthorDid={item.post.author.did}
+            label={label}
+            className={`${i === 0 ? 'ml-0' : ''}`}
             // there may be multiple labels with the same val for the same cid, where the labeler is different
             // so we need to use the label src is in the key to guaranty uniqueness
             key={`${cid}_${val}_${src}`}
-          >
-            {toLabelVal(label, item.post.author.did)}
-          </LabelChip>
+          />
         )
       })}
     </LabelList>

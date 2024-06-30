@@ -1,4 +1,5 @@
 import { CollectionId } from '@/reports/helpers/subject'
+import { SOCIAL_APP_URL } from './constants'
 import { AtUri } from '@atproto/api'
 
 export function classNames(...classes: (string | undefined)[]) {
@@ -48,8 +49,11 @@ export function takesKeyboardEvt(el?: EventTarget | null) {
   if (!el) return false
   const htmlEl = el as HTMLElement
   return (
-    ['TEXTAREA', 'INPUT', 'SELECT'].includes(htmlEl.tagName) &&
-    !htmlEl.getAttribute('disabled')
+    (['TEXTAREA', 'INPUT', 'SELECT'].includes(htmlEl.tagName) &&
+      !htmlEl.getAttribute('disabled')) ||
+    // We open images from posts in modal windows and the modals are wrapped in this class
+    // so we want to make sure users can navigate within the image modal without navigating within the queue
+    htmlEl.classList.contains('yarl__container')
   )
 }
 
@@ -60,7 +64,7 @@ export const isBlueSkyAppUrl = (url: string) => blueSkyUrlMatcher.test(url)
 export const buildBlueSkyAppUrl = (
   params: { did: string } & ({ collection: string; rkey: string } | {}),
 ) => {
-  let url = `https://bsky.app/profile`
+  let url = `${SOCIAL_APP_URL}/profile`
 
   if ('did' in params) {
     url += `/${params.did}`

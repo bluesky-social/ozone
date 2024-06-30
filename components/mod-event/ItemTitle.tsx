@@ -1,5 +1,9 @@
+import { DM_DISABLE_TAG } from '@/lib/constants'
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { ToolsOzoneModerationDefs, ComAtprotoModerationDefs } from '@atproto/api'
+import {
+  ToolsOzoneModerationDefs,
+  ComAtprotoModerationDefs,
+} from '@atproto/api'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -29,8 +33,14 @@ export const ItemTitle = ({
   if (ToolsOzoneModerationDefs.isModEventReport(modEvent.event)) {
     const isAppeal =
       modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
+    const isMessageReport =
+      modEvent.subject.$type === 'chat.bsky.convo.defs#messageRef'
     eventColor = isAppeal ? 'text-orange-500' : 'text-orange-300'
-    eventTitle = isAppeal ? 'Appealed' : 'Reported'
+    eventTitle = isAppeal
+      ? 'Appealed'
+      : isMessageReport
+      ? 'Message Reported'
+      : 'Reported'
   }
   if (ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event)) {
     eventColor = 'text-blue-400'
@@ -52,13 +62,25 @@ export const ItemTitle = ({
   }
   if (ToolsOzoneModerationDefs.isModEventTag(modEvent.event)) {
     eventColor = 'text-blue-400'
-    eventTitle = 'Tagged'
+    if (modEvent.event.add.includes(DM_DISABLE_TAG)) {
+      eventTitle = 'Disabled DMs'
+    } else if (modEvent.event.remove.includes(DM_DISABLE_TAG)) {
+      eventTitle = 'Enabled DMs'
+    } else {
+      eventTitle = 'Tagged'
+    }
   }
-  if (ToolsOzoneModerationDefs.isModEventMute(modEvent.event)) {
+  if (
+    ToolsOzoneModerationDefs.isModEventMute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event)
+  ) {
     eventColor = 'text-blue-400'
     eventTitle = 'Muted'
   }
-  if (ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event)) {
+  if (
+    ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventUnmuteReporter(modEvent.event)
+  ) {
     eventColor = 'text-blue-400'
     eventTitle = 'Unmuted'
   }

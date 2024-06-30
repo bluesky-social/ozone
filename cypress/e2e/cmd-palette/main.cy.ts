@@ -1,5 +1,7 @@
 /// <reference types="cypress" />"
 
+import { mockServerConfigResponse } from '../../support/api'
+
 describe('Command Palette', () => {
   const SERVER_URL = 'https://bsky.social/xrpc'
   const PLC_URL = 'https://plc.directory'
@@ -55,10 +57,6 @@ describe('Command Palette', () => {
       statusCode: 200,
       body: authFixture.getProfileResponse,
     })
-    mockModerationReportsResponse({
-      statusCode: 200,
-      body: { cursor: null, subjectStatuses: [] },
-    })
     mockOzoneMetaResponse({
       statusCode: 200,
       body: authFixture.ozoneMetaResponse,
@@ -66,6 +64,10 @@ describe('Command Palette', () => {
     mockOzoneDidDataResponse({
       statusCode: 200,
       body: authFixture.ozoneDidDataResponse,
+    })
+    mockServerConfigResponse({
+      statusCode: 200,
+      body: authFixture.ozoneServerConfigResponse,
     })
   }
 

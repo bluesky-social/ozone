@@ -1,18 +1,32 @@
+import client from '@/lib/client'
 import { Card } from '@/common/Card'
-import {
-  LabelChip,
-  LabelList,
-  displayLabel,
-  getLabelGroupInfo,
-  unFlagSelfLabel,
-} from '@/common/labels'
+import { LabelChip, LabelList, ModerationLabel } from '@/common/labels'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import {
   ToolsOzoneModerationDefs,
   ComAtprotoModerationDefs,
+  ChatBskyConvoDefs,
 } from '@atproto/api'
-import { MOD_EVENTS } from './constants'
 import { ItemTitle } from './ItemTitle'
+import { MessageContext } from '@/dms/MessageContext'
+
+const LinkToAuthor = ({
+  creatorHandle,
+  createdBy,
+}: {
+  creatorHandle?: string
+  createdBy: string
+}) => {
+  return (
+    <a
+      target="_blank"
+      href={`/repositories/${createdBy}?quickOpen=${createdBy}`}
+      className="underline"
+    >
+      {creatorHandle ? `@${creatorHandle}` : createdBy}
+    </a>
+  )
+}
 
 const Comment = ({
   modEvent,
@@ -22,23 +36,27 @@ const Comment = ({
       | ToolsOzoneModerationDefs.ModEventEscalate
       | ToolsOzoneModerationDefs.ModEventAcknowledge
       | ToolsOzoneModerationDefs.ModEventComment
+      | ToolsOzoneModerationDefs.ModEventUnmute
+      | ToolsOzoneModerationDefs.ModEventUnmuteReporter
   }
 }) => {
   return (
     <Card>
-      <p className="flex justify-between text-gray-500">
+      <div className="flex justify-between text-gray-500">
         <span>
           By{' '}
           {modEvent.creatorHandle
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-        {!!modEvent.event.sticky && (
-          <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-            Sticky
-          </span>
-        )}
-      </p>
+        <div>
+          {!!modEvent.event.sticky && (
+            <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
+              Sticky
+            </span>
+          )}
+        </div>
+      </div>
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
@@ -76,6 +94,12 @@ const Email = ({
   )
 }
 
+function isMessageSubject(
+  subject: ToolsOzoneModerationDefs.ModEventView['subject'],
+): subject is ChatBskyConvoDefs.MessageRef {
+  return subject.messageId !== undefined
+}
+
 const Report = ({
   modEvent,
 }: {
@@ -87,19 +111,31 @@ const Report = ({
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
     <Card>
-      <p className="flex justify-between">
+      <div className="flex justify-between">
         <span>
           By{' '}
-          {modEvent.creatorHandle
-            ? `@${modEvent.creatorHandle}`
-            : modEvent.createdBy}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
         </span>
-        {modEvent.event.reportType && !isAppeal && (
-          <ReasonBadge reasonType={modEvent.event.reportType} />
-        )}
-      </p>
+        <div>
+          {modEvent.event.reportType && !isAppeal && (
+            <ReasonBadge reasonType={modEvent.event.reportType} />
+          )}
+          {modEvent.event.isReporterMuted && (
+            <LabelChip className="bg-violet-100 text-violet-800">
+              Muted Report
+            </LabelChip>
+          )}
+        </div>
+      </div>
       {modEvent.event.comment && (
         <p className="mt-1">{modEvent.event.comment}</p>
+      )}
+
+      {isMessageSubject(modEvent.subject) && (
+        <MessageContext className="mt-3" subject={modEvent.subject} />
       )}
     </Card>
   )
@@ -112,24 +148,32 @@ const TakedownOrMute = ({
     event:
       | ToolsOzoneModerationDefs.ModEventTakedown
       | ToolsOzoneModerationDefs.ModEventMute
+      | ToolsOzoneModerationDefs.ModEventMuteReporter
   } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
   return (
     <Card>
-      <p className="flex justify-between">
+      <div className="flex justify-between">
         <span>
           By{' '}
           {modEvent.creatorHandle
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-        {!!modEvent.event.durationInHours && (
-          <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-            {modEvent.event.durationInHours}hrs
-          </span>
-        )}
-      </p>
+        <div>
+          {!!modEvent.event.durationInHours && (
+            <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
+              {modEvent.event.durationInHours}hrs
+            </span>
+          )}
+          {ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event) && (
+            <LabelChip className="bg-violet-100 text-violet-800">
+              Muted Reporter
+            </LabelChip>
+          )}
+        </div>
+      </div>
       {expiresAt && (
         <p className="mt-1">Until {dateFormatter.format(expiresAt)}</p>
       )}
@@ -152,20 +196,32 @@ const TakedownOrMute = ({
 const EventLabels = ({
   header,
   labels,
+  isTag = false,
 }: {
   header: string
   labels?: string[]
+  isTag?: boolean
 }) => {
   if (!labels?.length) return null
   return (
     <LabelList>
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
-        const labelGroup = getLabelGroupInfo(unFlagSelfLabel(label))
+        if (isTag) {
+          return <LabelChip key={label}>{label}</LabelChip>
+        }
+        // Moderation events being displayed means that these events were added by the current service
+        // so we can assume that the src is the same as the configured ozone service DID
         return (
-          <LabelChip key={label} style={{ color: labelGroup.color }}>
-            {displayLabel(label)}
-          </LabelChip>
+          <ModerationLabel
+            key={label}
+            label={{
+              val: label,
+              src: client.getServiceDid() || '',
+              uri: '',
+              cts: '',
+            }}
+          />
         )
       })}
     </LabelList>
@@ -218,8 +274,8 @@ const Tag = ({
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
-      <EventLabels header="Added: " labels={modEvent.event.add} />
-      <EventLabels header="Removed: " labels={modEvent.event.remove} />
+      <EventLabels isTag header="Added: " labels={modEvent.event.add} />
+      <EventLabels isTag header="Removed: " labels={modEvent.event.remove} />
     </Card>
   )
 }
@@ -255,21 +311,22 @@ export const ModEventItem = ({
     ToolsOzoneModerationDefs.isModEventEscalate(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventComment(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventUnmuteReporter(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event) ||
     ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event) ||
-    // This is temporary since the api package with this new type check is not yet published
-    modEvent.event.$type === 'tools.ozone.moderation.defs#modEventDivert'
+    ToolsOzoneModerationDefs.isModEventDivert(modEvent.event)
   ) {
     eventItem = <Comment modEvent={modEvent} />
   }
   if (
     ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventMute(modEvent.event)
+    ToolsOzoneModerationDefs.isModEventMute(modEvent.event) ||
+    ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event)
   ) {
     eventItem = <TakedownOrMute modEvent={modEvent} />
   }
-  if (modEvent.event.$type === MOD_EVENTS.REPORT) {
-    //@ts-ignore
+  if (ToolsOzoneModerationDefs.isModEventReport(modEvent.event)) {
+    // @ts-ignore
     eventItem = <Report modEvent={modEvent} />
   }
   if (ToolsOzoneModerationDefs.isModEventLabel(modEvent.event)) {

@@ -74,6 +74,10 @@ type EventListAction =
       payload: EventListFilterPayload
     }
   | {
+      type: 'SET_FILTERS'
+      payload: Partial<EventListState>
+    }
+  | {
       type: 'RESET'
     }
 
@@ -88,6 +92,8 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
         return state
       }
       return { ...state, [action.payload.field]: action.payload.value }
+    case 'SET_FILTERS':
+      return { ...state, ...action.payload }
     case 'RESET':
       return initialListState
     default:
@@ -236,7 +242,9 @@ export const useModEventList = (
       setCommentFilter({ enabled: true, keyword })
     },
     changeListFilter: (payload: EventListFilterPayload) =>
-      dispatch({ type: 'SET_FILTER', payload: payload }),
+      dispatch({ type: 'SET_FILTER', payload }),
+    applyFilterMacro: (payload: Partial<EventListState>) =>
+      dispatch({ type: 'SET_FILTERS', payload }),
     resetListFilters: () => dispatch({ type: 'RESET' }),
 
     // State data

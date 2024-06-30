@@ -11,6 +11,8 @@ import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
 import { doesLabelNeedBlur } from '../labels'
 import { classNames } from '@/lib/util'
+import { ReplyParent } from './ReplyParent'
+import { ImageList } from './ImageList'
 
 export function PostsTable({
   items,
@@ -78,10 +80,7 @@ export function PostAsRow({
             </Link>
           </span>
         ) : undefined}
-        <Link
-          className="block"
-          href={`/repositories/${item.post.author.did}`}
-        >
+        <Link className="block" href={`/repositories/${item.post.author.did}`}>
           @{item.post.author.handle}
         </Link>
         <dl className="font-normal lg:hidden">
@@ -125,25 +124,10 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   // TODO entities
   return (
     <>
-      {item.reply ? (
-        <span className="block text-gray-500 dark:text-gray-50 text-sm">
-          Reply to{' '}
-          <Link
-            href={`/repositories/${
-              (item.reply.parent.author as AppBskyActorDefs.ProfileViewBasic)
-                .handle
-            }`}
-            className="hover:underline"
-          >
-            @
-            {
-              (item.reply.parent.author as AppBskyActorDefs.ProfileViewBasic)
-                .handle
-            }
-          </Link>
-        </span>
-      ) : undefined}
-      <span className="block dark:text-gray-300">{(item.post.record as any)?.text}</span>
+      {item.reply ? <ReplyParent reply={item.reply} inline /> : undefined}
+      <span className="block dark:text-gray-300">
+        {(item.post.record as any)?.text}
+      </span>
       <PostEmbeds item={item} />
     </>
   )
@@ -172,16 +156,10 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     )
     return (
       <span className="flex gap-2 pt-2">
-        {embed.images.map((image, i) => (
-          <a
-            key={`img-${i}`}
-            href={image.fullsize}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <img className={embeddedImageClassName} src={image.thumb} />
-          </a>
-        ))}
+        <ImageList
+          images={embed.images}
+          imageClassName={embeddedImageClassName}
+        />
       </span>
     )
   }
