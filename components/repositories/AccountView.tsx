@@ -45,6 +45,7 @@ import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Lists } from 'components/list/Lists'
 import { checkPermission } from '@/lib/server-config'
+import { LoadMoreButton } from '@/common/LoadMoreButton'
 
 enum Views {
   Details,
@@ -136,6 +137,10 @@ export function AccountView({
           view: Views.Followers,
           label: 'Followers',
           sublabel: String(profile.followersCount),
+        },
+        {
+          view: Views.Blocks,
+          label: 'Blocks',
         },
       )
 
@@ -542,18 +547,60 @@ function Blocks({ id }: { id: string }) {
     useInfiniteQuery({
       queryKey: ['blocks', { id }],
       queryFn: async ({ pageParam }) => {
-        const { data } = await client.api.app.bsky.graph.getBlocks(
-          { cursor: pageParam },
+        const { data } = await client.api.com.atproto.repo.listRecords(
+          {
+            cursor: pageParam,
+            repo: id,
+            collection: 'app.bsky.graph.block',
+            // Limit to 25 blocks because getProfiles allow 25 items per request
+            limit: 25,
+          },
           { headers: client.proxyHeaders() },
         )
-        return data
+        const actors = data.records.map((record) => {
+          const blockedDid = record.value['subject'] as string
+          return blockedDid
+        })
+        if (!actors.length) {
+          return { accounts: [], cursor: null }
+        }
+        const { data: profileData } =
+          await client.api.app.bsky.actor.getProfiles(
+            {
+              actors,
+            },
+            { headers: client.proxyHeaders() },
+          )
+
+        const accounts: AppBskyActorDefs.ProfileViewDetailed[] = []
+        actors.forEach((did) => {
+          const profile = profileData.profiles.find((p) => p.did === did)
+          if (profile) {
+            accounts.push(profile)
+          }
+        })
+
+        return {
+          accounts,
+          cursor: data.cursor,
+        }
       },
       getNextPageParam: (lastPage) => lastPage.cursor,
     })
-  const blockedAccounts = data?.pages.flatMap((page) => page.blocks) ?? []
+  const blockedAccounts = data?.pages.flatMap((page) => page.accounts) ?? []
   return (
     <div>
-      <AccountsGrid error={String(error ?? '')} accounts={blockedAccounts} />
+      <AccountsGrid
+        isLoading={isInitialLoading}
+        error={String(error ?? '')}
+        accounts={blockedAccounts}
+      />
+
+      {hasNextPage && (
+        <div className="flex justify-center py-6">
+          <LoadMoreButton onClick={() => fetchNextPage()} />
+        </div>
+      )}
     </div>
   )
 }
