@@ -557,10 +557,7 @@ function Blocks({ id }: { id: string }) {
           },
           { headers: client.proxyHeaders() },
         )
-        const actors = data.records.map((record) => {
-          const blockedDid = record.value['subject'] as string
-          return blockedDid
-        })
+        const actors = data.records.map((record) => record.value['subject'] as string)
         if (!actors.length) {
           return { accounts: [], cursor: null }
         }
