@@ -168,7 +168,13 @@ export const EventFilterPanel = ({
             className="flex-1 mt-2"
           >
             <RepoFinder
-              inputProps={{ className: 'w-full' }}
+              inputProps={{
+                className: 'w-full',
+                type: 'text',
+                id: 'createdBy',
+                name: 'createdBy',
+                placeholder: 'DID of the author of the event',
+              }}
               onChange={(value) =>
                 changeListFilter({
                   field: 'createdBy',
