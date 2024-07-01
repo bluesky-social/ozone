@@ -14,6 +14,7 @@ import { CreateMacroForm } from './CreateMacroForm'
 import { useFilterMacroUpsertMutation } from './useFilterMacrosList'
 import { MacroList } from './MacroPicker'
 import { useState } from 'react'
+import { RepoFinder } from 'components/repo/Finder'
 
 export const EventFilterPanel = ({
   types,
@@ -166,20 +167,14 @@ export const EventFilterPanel = ({
             htmlFor="createdBy"
             className="flex-1 mt-2"
           >
-            <Input
-              type="text"
-              id="createdBy"
-              name="createdBy"
-              placeholder="DID of the author of the event"
-              className="block w-full"
-              value={createdBy || ''}
-              onChange={(ev) =>
+            <RepoFinder
+              inputProps={{ className: 'w-full' }}
+              onChange={(value) =>
                 changeListFilter({
                   field: 'createdBy',
-                  value: ev.target.value,
+                  value,
                 })
               }
-              autoComplete="off"
             />
           </FormLabel>
 
