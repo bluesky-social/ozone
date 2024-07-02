@@ -64,7 +64,9 @@ export const ExternalLabelerConfig = () => {
               size="sm"
               appearance="primary"
               className="px-2 sm:px-4 sm:mr-2 py-1.5"
-              disabled={!data || alreadyPresent || did === config.did}
+              disabled={
+                isLoading || !data || alreadyPresent || did === config.did
+              }
               onClick={() => {
                 setLabelers([...labelers, did])
                 setDid('')
@@ -96,19 +98,15 @@ export const ExternalLabelerConfig = () => {
             <ExternalLabelerView did={config.did} />
 
             {labelers.map((labelerDid) => (
-              <>
-                <hr
-                  key={`hr-${labelerDid}`}
-                  className="dark:border-gray-600 border-gray-300 my-2"
-                />
+              <div key={labelerDid}>
+                <hr className="dark:border-gray-600 border-gray-300 my-2" />
                 <ExternalLabelerView
-                  key={`view-${labelerDid}`}
                   did={labelerDid}
                   onUnsubscribe={() => {
                     setLabelers(labelers.filter((d) => d !== labelerDid))
                   }}
                 />
-              </>
+              </div>
             ))}
           </div>
         </div>

@@ -6,19 +6,18 @@ import { usePdsAgent } from '@/shell/AuthContext'
 export const useLabelerDefinitionQuery = (did: string) => {
   const pdsAgent = usePdsAgent()
 
-  return useQuery<ExtendedLabelerServiceDef>({
-    refetchOnWindowFocus: false,
+  return useQuery<ExtendedLabelerServiceDef | null>({
     queryKey: ['labelerDef', { did }],
     queryFn: async () => {
       if (!did?.startsWith('did:')) {
-        throw new Error(`Invalid DID "${did}"`)
+        return null
       }
       const { data } = await pdsAgent.api.app.bsky.labeler.getServices({
         dids: [did],
         detailed: true,
       })
       if (!data.views?.[0]) {
-        throw new Error(`Unknown DID "${did}"`)
+        return null
       }
 
       const labelerDef = data.views[0] as ExtendedLabelerServiceDef

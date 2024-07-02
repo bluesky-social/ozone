@@ -71,7 +71,7 @@ function useOAuthClient(
 ) {
   const {
     client: optionClient,
-    clientId,
+    clientId: optionClientId,
     clientMetadata,
     handleResolver,
     responseMode,
@@ -82,10 +82,9 @@ function useOAuthClient(
     | null
     | 'forced'
     | OAuthClientMetadataInput
-    | OAuthClientIdLoopback =
-    !optionClient && (!clientId || clientMetadata != null)
-      ? clientMetadata || 'forced'
-      : null
+    | OAuthClientIdLoopback = optionClient
+    ? null
+    : clientMetadata || (!optionClientId ? 'forced' : null)
 
   const fetch = useCallbackRef(options.fetch || globalThis.fetch)
 
@@ -112,21 +111,21 @@ function useOAuthClient(
     ],
   )
 
-  const optionsClientId =
-    (!optionClient && !optionsClientMetadata && clientId) || null
+  const clientId =
+    (!optionClient && !optionsClientMetadata && optionClientId) || null
 
   const optionsLoad = useMemo<null | BrowserOAuthClientLoadOptions>(
     () =>
-      optionsClientId && handleResolver
+      clientId && handleResolver
         ? {
-            clientId: optionsClientId,
+            clientId,
             handleResolver,
             responseMode,
             plcDirectoryUrl,
             fetch,
           }
         : null,
-    [optionsClientId, handleResolver, responseMode, plcDirectoryUrl, fetch],
+    [clientId, handleResolver, responseMode, plcDirectoryUrl, fetch],
   )
 
   const [client, setClient] = useState<null | BrowserOAuthClient>(null)
@@ -165,6 +164,7 @@ function useOAuthClient(
       // Should never happen...
       setClient(null)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [optionClient || oauthClientOptions || optionsLoad])
 
   return client

@@ -2,16 +2,9 @@
 
 import { AppBskyActorDefs, BskyAgent } from '@atproto/api'
 import { isLoopbackHost } from '@atproto/oauth-client-browser'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react'
+import { createContext, ReactNode, useContext, useMemo } from 'react'
 
 import { Loading } from '@/common/Loader'
 import { SetupModal } from '@/common/SetupModal'
