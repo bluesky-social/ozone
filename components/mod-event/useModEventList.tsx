@@ -1,10 +1,10 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
-import client from '@/lib/client'
-import { useContext, useEffect, useReducer } from 'react'
-import { AuthContext } from '@/shell/AuthContext'
 import { ToolsOzoneModerationQueryEvents } from '@atproto/api'
-import { MOD_EVENT_TITLES } from './constants'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { addDays } from 'date-fns'
+import { useEffect, useReducer } from 'react'
+
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { MOD_EVENT_TITLES } from './constants'
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -104,7 +104,7 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
 export const useModEventList = (
   props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
-  const { isLoggedIn } = useContext(AuthContext)
+  const labelerAgent = useLabelerAgent()
   const [listState, dispatch] = useReducer(eventListReducer, initialListState)
 
   const setCommentFilter = (value: CommentFilter) => {
@@ -128,7 +128,6 @@ export const useModEventList = (
   }, [props.createdBy])
 
   const results = useInfiniteQuery({
-    enabled: isLoggedIn,
     queryKey: ['modEventList', { listState }],
     queryFn: async ({ pageParam }) => {
       const {
@@ -203,7 +202,12 @@ export const useModEventList = (
         queryParams.addedTags = removedTags.trim().split(',')
       }
 
-      return await getModerationEvents(queryParams)
+      const { data } =
+        await labelerAgent.api.tools.ozone.moderation.queryEvents({
+          limit: 25,
+          ...queryParams,
+        })
+      return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
     ...(props.queryOptions || {}),
@@ -253,17 +257,4 @@ export const useModEventList = (
     // Derived data from state
     hasFilter,
   }
-}
-
-async function getModerationEvents(
-  opts: ToolsOzoneModerationQueryEvents.QueryParams = {},
-) {
-  const { data } = await client.api.tools.ozone.moderation.queryEvents(
-    {
-      limit: 25,
-      ...opts,
-    },
-    { headers: client.proxyHeaders() },
-  )
-  return data
 }

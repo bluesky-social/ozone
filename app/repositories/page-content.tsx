@@ -2,84 +2,81 @@ import { SectionHeader } from '../../components/SectionHeader'
 import { RepositoriesTable } from '@/repositories/RepositoriesTable'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import client from '@/lib/client'
 import { useTitle } from 'react-use'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 const isEmailSearch = (q: string) => q.startsWith('email:')
 
-const getSearchResults = async ({
-  q,
-  cursor,
-}: {
-  q: string
-  cursor?: string
-}): Promise<{
-  cursor?: string
-  repos: ToolsOzoneModerationDefs.RepoView[]
-}> => {
-  const headers = { headers: client.proxyHeaders() }
-  const limit = 25
+function useSearchResultsQuery(q: string) {
+  const labelerAgent = useLabelerAgent()
 
-  if (!isEmailSearch(q)) {
-    const { data } = await client.api.tools.ozone.moderation.searchRepos(
-      { q, limit, cursor },
-      headers,
-    )
+  return useInfiniteQuery({
+    queryKey: ['repositories', { q }],
+    queryFn: async ({ pageParam }) => {
+      const limit = 25
 
-    return data
-  }
+      if (!isEmailSearch(q)) {
+        const { data } =
+          await labelerAgent.api.tools.ozone.moderation.searchRepos({
+            q,
+            limit,
+            cursor: pageParam,
+          })
 
-  const email = q.replace('email:', '').trim()
+        return data
+      }
 
-  if (!email) {
-    return { repos: [], cursor: undefined }
-  }
+      const email = q.replace('email:', '').trim()
 
-  const { data } = await client.api.com.atproto.admin.searchAccounts(
-    { email, limit, cursor },
-    headers,
-  )
+      if (!email) {
+        return { repos: [], cursor: undefined }
+      }
 
-  if (!data.accounts.length) {
-    return { repos: [], cursor: data.cursor }
-  }
+      const { data } = await labelerAgent.api.com.atproto.admin.searchAccounts({
+        email,
+        limit,
+        cursor: pageParam,
+      })
 
-  const repos: Record<string, ToolsOzoneModerationDefs.RepoView> = {}
-  data.accounts.forEach((account) => {
-    repos[account.did] = {
-      ...account,
-      // Set placeholder properties that will be later filled in with data from ozone
-      relatedRecords: [],
-      indexedAt: account.indexedAt,
-      moderation: {},
-      labels: [],
-    }
-  })
+      if (!data.accounts.length) {
+        return { repos: [], cursor: data.cursor }
+      }
 
-  await Promise.allSettled(
-    data.accounts.map(async (account) => {
-      const { data } = await client.api.tools.ozone.moderation.getRepo(
-        { did: account.did },
-        headers,
+      const repos: Record<string, ToolsOzoneModerationDefs.RepoView> = {}
+      data.accounts.forEach((account) => {
+        repos[account.did] = {
+          ...account,
+          // Set placeholder properties that will be later filled in with data from ozone
+          relatedRecords: [],
+          indexedAt: account.indexedAt,
+          moderation: {},
+          labels: [],
+        }
+      })
+
+      await Promise.allSettled(
+        data.accounts.map(async (account) => {
+          const { data } =
+            await labelerAgent.api.tools.ozone.moderation.getRepo({
+              did: account.did,
+            })
+          repos[account.did] = { ...repos[account.did], ...data }
+        }),
       )
-      repos[account.did] = { ...repos[account.did], ...data }
-    }),
-  )
 
-  return { repos: Object.values(repos), cursor: data.cursor }
+      return { repos: Object.values(repos), cursor: data.cursor }
+    },
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  })
 }
 
 export default function RepositoriesListPage() {
   const params = useSearchParams()
+
   const q = params.get('term') ?? ''
-  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: ['repositories', { q }],
-    queryFn: async ({ pageParam }) => {
-      return getSearchResults({ q, cursor: pageParam })
-    },
-    getNextPageParam: (lastPage) => lastPage.cursor,
-  })
+
+  const { data, fetchNextPage, hasNextPage } = useSearchResultsQuery(q)
 
   let pageTitle = `Repositories`
   if (q) {

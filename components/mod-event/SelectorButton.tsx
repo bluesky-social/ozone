@@ -5,7 +5,7 @@ import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
 import { DM_DISABLE_TAG } from '@/lib/constants'
-import { checkPermission } from '@/lib/server-config'
+import { usePermission } from '@/shell/ConfigurationContext'
 
 const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
@@ -67,9 +67,10 @@ export const ModEventSelectorButton = ({
   hasBlobs: boolean
   isSubjectDid: boolean
 }) => {
-  const canDivertBlob = checkPermission('canDivertBlob')
-  const canTakedown = checkPermission('canTakedown')
-  const canManageChat = checkPermission('canManageChat')
+  const canDivertBlob = usePermission('canDivertBlob')
+  const canTakedown = usePermission('canTakedown')
+  const canManageChat = usePermission('canManageChat')
+
   const availableActions = useMemo(() => {
     return actions.filter(({ key }) => {
       // Don't show resolve appeal action if subject is not already in appealed status

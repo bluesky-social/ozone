@@ -2,7 +2,6 @@ import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { LabelChip } from '@/common/labels'
 import { useActionPanelLink } from '@/common/useActionPanelLink'
-import { useSession } from '@/lib/useSession'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { PencilIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
@@ -10,6 +9,7 @@ import { RoleTag } from './Role'
 import { SOCIAL_APP_URL } from '@/lib/constants'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { useAuthDid } from '@/shell/AuthContext'
 
 export function MemberList({
   members,
@@ -27,7 +27,7 @@ export function MemberList({
   onEdit: (member: ToolsOzoneTeamDefs.Member) => void
 }) {
   const createActionPanelLink = useActionPanelLink()
-  const session = useSession()
+  const authDid = useAuthDid()
   return (
     <>
       <Card className="mb-3 py-3">
@@ -37,7 +37,7 @@ export function MemberList({
           <div>
             {!members?.length && <p>No members found.</p>}
             {members?.map((member, i) => {
-              const isCurrentMember = session?.did === member.did
+              const isCurrentMember = authDid === member.did
               const lastItem = i === members.length - 1
               return (
                 <div

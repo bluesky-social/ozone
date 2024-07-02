@@ -12,7 +12,7 @@ import {
   TagIcon,
 } from '@heroicons/react/24/outline'
 import { ComponentProps, Fragment } from 'react'
-import { useLabelerServiceDef } from './useLabelerDefinition'
+import { useLabelerDefinitionQuery } from './useLabelerDefinition'
 import { isSelfLabel, toLabelVal } from './util'
 
 export function LabelList(props: ComponentProps<'div'>) {
@@ -91,7 +91,7 @@ export const ModerationLabel = ({
   label: ComAtprotoLabelDefs.Label
   recordAuthorDid?: string
 } & ComponentProps<'span'>) => {
-  const labelerServiceDef = useLabelerServiceDef(label.src)
+  const { data: labelerServiceDef } = useLabelerDefinitionQuery(label.src)
   const isFromCurrentService = label.src === OZONE_SERVICE_DID
 
   const labelVal = toLabelVal(label, recordAuthorDid)

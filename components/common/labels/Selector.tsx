@@ -1,6 +1,9 @@
-import { useState } from 'react'
-import { ALL_LABELS, getCustomLabels } from './util'
+import { useMemo, useState } from 'react'
+
+import { unique } from '@/lib/util'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { Input } from '../forms'
+import { ALL_LABELS } from './util'
 
 const EMPTY_ARR = []
 
@@ -13,25 +16,27 @@ export const LabelSelector = (props: LabelsProps) => {
     disabled,
     onChange,
   } = props
+  const { config } = useConfigurationContext()
   const [query, setQuery] = useState<string>('')
-  const [selectedLabels, setSelectedLabels] = useState<string[]>(
-    defaultLabels.map((label) => label),
+  const [selectedLabels, setSelectedLabels] = useState<string[]>(defaultLabels)
+
+  const selectorOptions = useMemo(
+    () =>
+      unique([
+        ...(config?.labeler?.policies.labelValues || []),
+        ...Object.values(ALL_LABELS).map(({ identifier }) => identifier),
+        ...selectedLabels,
+      ])
+        // If there's a query string, filter to only show the labels that match the query
+        // this is also used to show a message when no labels are found to allow the user
+        // add the custom input as a label
+        .filter((label) => {
+          if (!query) return true
+          return label.toLowerCase().includes(query.toLowerCase())
+        })
+        .sort((prev, next) => prev.localeCompare(next)),
+    [config, query, selectedLabels],
   )
-  const selectorOptions = Array.from(
-    new Set([
-      ...getCustomLabels(),
-      ...Object.values(ALL_LABELS).map(({ identifier }) => identifier),
-      ...selectedLabels,
-    ]),
-  )
-    // If there's a query string, filter to only show the labels that match the query
-    // this is also used to show a message when no labels are found to allow the user
-    // add the custom input as a label
-    .filter((label) => {
-      if (!query) return true
-      return label.toLowerCase().includes(query.toLowerCase())
-    })
-    .sort((prev, next) => prev.localeCompare(next))
 
   // Function to toggle label selection
   const toggleLabel = (label) => {

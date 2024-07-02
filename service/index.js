@@ -38,8 +38,9 @@ async function main() {
       publicKey: ozone.ctx.signingKey.did(),
     })
   })
-  ozone.app.get('*', (req, res) => {
-    return frontendHandler(req, res)
+  // Note: We must use `use()` here. This should be the last middleware.
+  ozone.app.use((req, res) => {
+    void frontendHandler(req, res, undefined)
   })
   // run
   const httpServer = await ozone.start()

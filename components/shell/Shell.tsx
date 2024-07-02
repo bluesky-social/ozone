@@ -4,10 +4,9 @@ import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
-import { LoginModal } from './LoginModal'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
-import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
+import { useFluentReportSearchUpdate } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 import Image from 'next/image'
 import { Suspense } from 'react'
@@ -19,7 +18,6 @@ export function Shell({ children }: React.PropsWithChildren) {
 
   return (
     <MobileMenuProvider>
-      <LoginModal />
       <div className="flex h-full">
         {/* Narrow sidebar */}
         <div className="hidden w-28 overflow-y-auto bg-rose-700 dark:bg-teal-800 md:block">
@@ -94,7 +92,7 @@ export function Shell({ children }: React.PropsWithChildren) {
 
 function SearchInput() {
   const params = useSearchParams()
-  const { updateParams } = useFluentReportSearch()
+  const updateParams = useFluentReportSearchUpdate()
   const [termInput, setTermInput] = useSyncedState(params.get('term') ?? '')
 
   return (
