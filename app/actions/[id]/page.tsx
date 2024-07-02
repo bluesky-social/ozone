@@ -1,9 +1,8 @@
 'use client'
-
+import { useQuery } from '@tanstack/react-query'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { EventView } from '@/mod-event/View'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useQuery } from '@tanstack/react-query'
 
 export default function Action({ params }: { params: { id: string } }) {
   const labelerAgent = useLabelerAgent()

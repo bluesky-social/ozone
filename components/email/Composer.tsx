@@ -1,8 +1,8 @@
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import { commands } from '@uiw/react-md-editor'
-import dynamic from 'next/dynamic'
 import { useRef } from 'react'
 import { toast } from 'react-toastify'
+import dynamic from 'next/dynamic'
 
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'

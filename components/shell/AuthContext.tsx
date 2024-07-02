@@ -125,6 +125,10 @@ export function useAuthContext(): AuthContext {
   throw new Error(`useAuthContext() must be used within an <AuthProvider />`)
 }
 
+export function usePdsAgent() {
+  return useAuthContext().pdsAgent
+}
+
 export const useAuthDid = () => {
   const { pdsAgent } = useAuthContext()
   return pdsAgent.getDid()

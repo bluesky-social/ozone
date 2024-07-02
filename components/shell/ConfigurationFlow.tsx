@@ -225,8 +225,7 @@ function IdentityConfigurationFlow({
   reconfigure: ReconfigureFn
 }) {
   const [token, setToken] = useState('')
-  const { signOut } = useAuthContext()
-  const { pdsAgent } = useAuthContext()
+  const { pdsAgent, signOut } = useAuthContext()
 
   const requestPlcOperationSignature = useMutation({
     mutationKey: [pdsAgent.did, config.did],

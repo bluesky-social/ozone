@@ -12,7 +12,7 @@ import { Checkbox, Textarea } from '@/common/forms'
 import { ExternalLabelerConfig } from './external-labeler'
 import { ServerConfig } from './server-config'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
-import { useAuthContext } from '@/shell/AuthContext'
+import { usePdsAgent } from '@/shell/AuthContext'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -91,7 +91,8 @@ function ConfigureDetails() {
 
 function RecordInitStep({ repo }: { repo: string }) {
   const [checked, setChecked] = useState(false)
-  const { pdsAgent } = useAuthContext()
+  const pdsAgent = usePdsAgent()
+
   const { reconfigure } = useConfigurationContext()
 
   const createInitialRecord = useMutation({
@@ -154,7 +155,8 @@ function RecordEditStep({
   record: AppBskyLabelerService.Record
   repo: string
 }) {
-  const { pdsAgent } = useAuthContext()
+  const pdsAgent = usePdsAgent()
+
   const { reconfigure } = useConfigurationContext()
 
   const [editorMode, setEditorMode] = useState<'json' | 'plain'>('json')

@@ -19,12 +19,11 @@ const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
 
 export const ExternalLabelerConfig = () => {
   const { config } = useConfigurationContext()
-  const { dids, add, remove } = useExternalLabelers()
-
-  const [did, setDid] = useState<string>('')
+  const [labelers, setLabelers] = useExternalLabelers()
+  const [did, setDid] = useState('')
 
   const { data, error, isLoading } = useLabelerDefinitionQuery(did)
-  const alreadyPresent = dids.some((d) => d === did)
+  const alreadyPresent = labelers.some((d) => d === did)
 
   return (
     <>
@@ -67,7 +66,7 @@ export const ExternalLabelerConfig = () => {
               className="px-2 sm:px-4 sm:mr-2 py-1.5"
               disabled={!data || alreadyPresent || did === config.did}
               onClick={() => {
-                add(did)
+                setLabelers([...labelers, did])
                 setDid('')
               }}
             >
@@ -96,13 +95,18 @@ export const ExternalLabelerConfig = () => {
 
             <ExternalLabelerView did={config.did} />
 
-            {dids.map((labelerDid) => (
+            {labelers.map((labelerDid) => (
               <>
-                <hr className="border-t dark:border-gray-600 border-gray-300 my-2" />
+                <hr
+                  key={`hr-${labelerDid}`}
+                  className="dark:border-gray-600 border-gray-300 my-2"
+                />
                 <ExternalLabelerView
-                  key={labelerDid}
+                  key={`view-${labelerDid}`}
                   did={labelerDid}
-                  onUnsubscribe={() => remove(labelerDid)}
+                  onUnsubscribe={() => {
+                    setLabelers(labelers.filter((d) => d !== labelerDid))
+                  }}
                 />
               </>
             ))}

@@ -7,19 +7,19 @@ import { AppBskyFeedDefs } from '@atproto/api'
 import { TypeFilterKey, TypeFiltersByKey } from '../posts/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-export function AuthorFeed({
+export const useAuthorFeedQuery = ({
   id,
-  onReport,
+  query,
+  typeFilter,
 }: {
   id: string
-  onReport: (uri: string) => void
-}) {
-  const [query, setQuery] = useState('')
-  const [typeFilter, setTypeFilter] = useState<TypeFilterKey>('no_filter')
+  query: string
+  typeFilter: TypeFilterKey
+}) => {
   const { data: repoData } = useRepoAndProfile({ id })
   const labelerAgent = useLabelerAgent()
 
-  const { data, fetchNextPage, hasNextPage, isFetching } = useInfiniteQuery({
+  return useInfiniteQuery({
     queryKey: ['authorFeed', { id, query, typeFilter }],
     queryFn: async ({ pageParam }) => {
       const searchPosts = query.length && repoData?.repo.handle
@@ -87,6 +87,23 @@ export function AuthorFeed({
       return { feed: filteredFeed, cursor }
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+  })
+}
+
+export function AuthorFeed({
+  id,
+  onReport,
+}: {
+  id: string
+  onReport: (uri: string) => void
+}) {
+  const [query, setQuery] = useState('')
+  const [typeFilter, setTypeFilter] = useState<TypeFilterKey>('no_filter')
+
+  const { data, fetchNextPage, hasNextPage, isFetching } = useAuthorFeedQuery({
+    id,
+    query,
+    typeFilter,
   })
   const items = data?.pages.flatMap((page) => page.feed) ?? []
 

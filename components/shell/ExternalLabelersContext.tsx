@@ -1,64 +1,77 @@
 import {
   createContext,
   ReactNode,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
-  useState,
 } from 'react'
 
-import { ExtendedLabelerServiceDef } from '@/common/labels'
-import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
-import { useQueryClient } from '@tanstack/react-query'
 import { unique } from '@/lib/util'
+import { useQueryClient } from '@tanstack/react-query'
+import { useLocalStorage } from 'react-use'
 import { useConfigurationContext } from './ConfigurationContext'
 
-const KEY = 'external_labeler_dids'
+const KEY = 'external_labeler_value'
 
 export type ExternalLabelers = string[]
-export type ExternalLabelersManager = {
-  dids: ExternalLabelers
-  add: (did: string) => void
-  remove: (did: string) => void
-}
+export type ExternalLabelersData = [
+  labelers: ExternalLabelers,
+  setLabelers: (value: ExternalLabelers) => void,
+]
 
 export const ExternalLabelersContext =
-  createContext<ExternalLabelersManager | null>(null)
+  createContext<ExternalLabelersData | null>(null)
 
 export const ExternalLabelersProvider = ({
   children,
 }: {
   children: ReactNode
 }) => {
-  const [externalLabelers, setExternalLabelers] = useState(getExternalLabelers)
+  const { config, labelerAgent } = useConfigurationContext()
+  const queryClient = useQueryClient()
+
+  const [state = [], setState] = useLocalStorage<ExternalLabelers>(KEY, [], {
+    raw: false,
+    serializer: JSON.stringify,
+    deserializer: (value) => {
+      try {
+        const parsed = JSON.parse(value)
+        if (Array.isArray(parsed)) return unique(parsed)
+        // Migrate legacy data
+        return Object.keys(parsed)
+      } catch {
+        return []
+      }
+    },
+  })
+
+  const externalLabelers = useMemo<ExternalLabelers>(
+    () => unique([config.did, ...state]),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [config.did, ...state],
+  )
+  const setExternalLabelers = useCallback(
+    (value: ExternalLabelers): void => {
+      setState(unique(value).filter((did) => did !== config.did))
+    },
+    [setState, config.did],
+  )
 
   // Keep the labelers header up-to-date with the external labelers
-  const { config, labelerAgent } = useConfigurationContext()
   useEffect(() => {
-    labelerAgent?.configureLabelersHeader(
-      unique([config.did, ...externalLabelers]),
-    )
-  }, [labelerAgent, config.did, externalLabelers])
+    labelerAgent?.configureLabelersHeader(externalLabelers)
+  }, [labelerAgent, externalLabelers])
 
   // Invalidate all queries whenever the external labelers change
-  const queryClient = useQueryClient()
   useEffect(() => {
     queryClient.invalidateQueries()
   }, [queryClient, externalLabelers])
 
-  // Expose external labelers management instance to children
-  const value = useMemo<ExternalLabelersManager>(
-    () => ({
-      dids: externalLabelers,
-      add: (did: string) => {
-        if (did === config.did) return
-        setExternalLabelers(addExternalLabelerDid(did))
-      },
-      remove: (did: string) => {
-        setExternalLabelers(removeExternalLabelerDid(did))
-      },
-    }),
-    [externalLabelers, config.did],
+  // Expose external labelers state as context value
+  const value = useMemo<ExternalLabelersData>(
+    () => [externalLabelers, setExternalLabelers] as const,
+    [externalLabelers, setExternalLabelers],
   )
 
   return (
@@ -75,44 +88,4 @@ export function useExternalLabelers() {
   throw new Error(
     'useExternalLabelersContext must be used within an ExternalLabelersProvider',
   )
-}
-
-type ExternalLabelersLegacy = Record<string, ExtendedLabelerServiceDef>
-
-function getExternalLabelers(): ExternalLabelers {
-  const labelers = getLocalStorageData<
-    ExternalLabelers | ExternalLabelersLegacy
-  >(KEY)
-  if (labelers === undefined) return []
-
-  if (!Array.isArray(labelers)) {
-    // Migrate legacy data
-    try {
-      const dids = Object.keys(labelers)
-      setLocalStorageData<ExternalLabelers>(KEY, dids)
-      return dids
-    } catch (e) {
-      removeExternalLabelerDid(KEY)
-      return []
-    }
-  }
-
-  return labelers
-}
-
-function addExternalLabelerDid(did: string) {
-  const labelers = getExternalLabelers()
-  if (labelers.includes(did)) return labelers
-  labelers.push(did)
-  setLocalStorageData<ExternalLabelers>(KEY, labelers)
-  return labelers
-}
-
-function removeExternalLabelerDid(did: string) {
-  const labelers = getExternalLabelers()
-  const index = labelers.indexOf(did)
-  if (index === -1) return labelers
-  labelers.splice(index, 1)
-  setLocalStorageData<ExternalLabelers>(KEY, labelers)
-  return labelers
 }

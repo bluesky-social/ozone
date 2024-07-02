@@ -1,10 +1,9 @@
 'use client'
-
+import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyFeedGetPostThread as GetPostThread,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
-import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect } from 'react'
 import { useTitle } from 'react-use'
@@ -17,7 +16,7 @@ import { ReportPanel } from '@/reports/ReportPanel'
 import { CollectionId } from '@/reports/helpers/subject'
 import { RecordView } from '@/repositories/RecordView'
 import { useCreateReport } from '@/repositories/createReport'
-import { useAuthContext } from '@/shell/AuthContext'
+import { usePdsAgent } from '@/shell/AuthContext'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 
@@ -56,7 +55,7 @@ export default function RecordViewPageContent({
   params: { id: string; record: string[] }
 }) {
   const labelerAgent = useLabelerAgent()
-  const { pdsAgent } = useAuthContext()
+  const pdsAgent = usePdsAgent()
 
   const emitEvent = useEmitEvent()
   const createReport = useCreateReport()

@@ -572,9 +572,6 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
   })
 
   const onClickRevoke = useCallback(async () => {
-    if (!labelerAgent) {
-      return alert('Labeler is not initialized')
-    }
     if (!confirm('Are you sure you want to revoke their invite codes?')) {
       return
     }

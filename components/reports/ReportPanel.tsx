@@ -1,13 +1,12 @@
 import { useEffect, useState } from 'react'
-import { ComAtprotoModerationDefs } from '@atproto/api'
 import { ActionPanel } from '../common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
 import { FormLabel, Input, Select, Textarea } from '../common/forms'
 import { RecordCard, RepoCard } from '../common/RecordCard'
 import { PropsOf } from '@/lib/types'
+import { useQueryClient } from '@tanstack/react-query'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { reasonTypeOptions } from './helpers/getType'
-import { useQueryClient } from '@tanstack/react-query'
 
 export function ReportPanel(
   props: PropsOf<typeof ActionPanel> & {

@@ -1,10 +1,10 @@
 import { ComAtprotoLabelDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
 import { ExtendedLabelerServiceDef } from './util'
-import { useAuthContext } from '@/shell/AuthContext'
+import { usePdsAgent } from '@/shell/AuthContext'
 
 export const useLabelerDefinitionQuery = (did: string) => {
-  const { pdsAgent } = useAuthContext()
+  const pdsAgent = usePdsAgent()
 
   return useQuery<ExtendedLabelerServiceDef>({
     refetchOnWindowFocus: false,
