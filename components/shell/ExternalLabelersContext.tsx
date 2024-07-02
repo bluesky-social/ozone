@@ -5,6 +5,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
 } from 'react'
 
 import { unique } from '@/lib/util'
@@ -63,9 +64,13 @@ export const ExternalLabelersProvider = ({
     labelerAgent?.configureLabelersHeader(externalLabelers)
   }, [labelerAgent, externalLabelers])
 
-  // Invalidate all queries whenever the external labelers change
+  // Invalidate all queries whenever the external labelers (really) change
+  const externalLabelersRef = useRef(externalLabelers)
   useEffect(() => {
-    queryClient.invalidateQueries()
+    if (externalLabelersRef.current !== externalLabelers) {
+      externalLabelersRef.current = externalLabelers
+      queryClient.invalidateQueries()
+    }
   }, [queryClient, externalLabelers])
 
   // Expose external labelers state as context value
