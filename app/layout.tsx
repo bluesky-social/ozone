@@ -8,10 +8,12 @@ import { ToastContainer } from 'react-toastify'
 import { Shell } from '@/shell/Shell'
 import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
 import { AuthProvider } from '@/shell/AuthContext'
-import { AuthQueryClientProvider } from '@/shell/AuthQueryClient'
+import { DefaultQueryClientProvider } from '@/shell/QueryClient'
+import { GlobalQueryClientProvider } from '@/shell/QueryClient'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { PLC_DIRECTORY_URL, SOCIAL_APP_URL } from '@/lib/constants'
 import { ConfigurationProvider } from '@/shell/ConfigurationContext'
+import { ExternalLabelersProvider } from '@/shell/ExternalLabelersContext'
 
 export default function RootLayout({
   children,
@@ -47,18 +49,22 @@ export default function RootLayout({
           closeOnClick
         />
 
-        <AuthProvider
-          plcDirectoryUrl={PLC_DIRECTORY_URL}
-          handleResolver={SOCIAL_APP_URL}
-        >
-          <AuthQueryClientProvider>
-            <ConfigurationProvider>
-              <CommandPaletteRoot>
-                <Shell>{children}</Shell>
-              </CommandPaletteRoot>
-            </ConfigurationProvider>
-          </AuthQueryClientProvider>
-        </AuthProvider>
+        <GlobalQueryClientProvider>
+          <AuthProvider
+            plcDirectoryUrl={PLC_DIRECTORY_URL}
+            handleResolver={SOCIAL_APP_URL}
+          >
+            <DefaultQueryClientProvider>
+              <ConfigurationProvider>
+                <ExternalLabelersProvider>
+                  <CommandPaletteRoot>
+                    <Shell>{children}</Shell>
+                  </CommandPaletteRoot>
+                </ExternalLabelersProvider>
+              </ConfigurationProvider>
+            </DefaultQueryClientProvider>
+          </AuthProvider>
+        </GlobalQueryClientProvider>
       </body>
     </html>
   )

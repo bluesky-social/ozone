@@ -1,6 +1,7 @@
 'use client'
 
 import { BskyAgent } from '@atproto/api'
+import { useQuery } from '@tanstack/react-query'
 import {
   createContext,
   ReactNode,
@@ -12,16 +13,15 @@ import {
 } from 'react'
 
 import { SetupModal } from '@/common/SetupModal'
-import { getExternalLabelers } from '@/config/data'
 import { getConfig, OzoneConfig } from '@/lib/client-config'
 import {
   parseServerConfig,
   PermissionName,
   ServerConfig,
 } from '@/lib/server-config'
-import { useQuery } from '@tanstack/react-query'
 import { useAuthContext } from './AuthContext'
 import { ConfigurationFlow } from './ConfigurationFlow'
+import { GLOBAL_QUERY_CONTEXT } from './QueryClient'
 
 export enum ConfigurationState {
   Pending,
@@ -58,6 +58,9 @@ export const ConfigurationProvider = ({
     error: configError,
     refetch: refetchConfig,
   } = useQuery<OzoneConfig, Error>({
+    // Use the global query client to avoid clearing the cache when the user
+    // changes.
+    context: GLOBAL_QUERY_CONTEXT,
     retry: (failureCount: number, error: Error): boolean => {
       // TODO: change getConfig() to throw a specific error when a network
       // error occurs, so we can distinguish between network errors and
@@ -78,13 +81,7 @@ export const ConfigurationProvider = ({
     if (!config?.did) return undefined
 
     const [did, id = 'atproto_labeler'] = config.did.split('#')
-    const labelerAgent = pdsAgent.withProxy(id, did)
-
-    const externalLabelers = getExternalLabelers()
-    const labelerDids = Object.keys(externalLabelers)
-    labelerAgent.configureLabelersHeader([did, ...labelerDids])
-
-    return labelerAgent
+    return pdsAgent.withProxy(id, did)
   }, [pdsAgent, config?.did])
 
   // Fetch the user's server configuration
@@ -98,7 +95,7 @@ export const ConfigurationProvider = ({
       if (error?.['status'] === 401) return false
       return failureCount < 3
     },
-    queryKey: ['server-config', labelerAgent?.did ?? '<anonymous>'],
+    queryKey: ['server-config'],
     queryFn: async ({ signal }) => {
       const { data } = await labelerAgent!.api.tools.ozone.server.getConfig(
         {},

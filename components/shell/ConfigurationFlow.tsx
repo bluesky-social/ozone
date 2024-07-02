@@ -66,8 +66,7 @@ export function ConfigurationFlow({
     )
   }
 
-  // Note conditions here are redundant, but required for type safety
-  if (state === ConfigurationState.Pending || !config || !labelerAgent) {
+  if (state === ConfigurationState.Pending) {
     if (error) {
       return (
         <>
@@ -88,6 +87,11 @@ export function ConfigurationFlow({
     }
 
     return <Loading message="Loading configuration..." />
+  }
+
+  if (!config || !labelerAgent) {
+    // Should never happen. Required for type safety.
+    throw new Error('Invalid state: configuration is missing')
   }
 
   if (config.needs.key || config.needs.service) {

@@ -3,21 +3,22 @@ import { useQuery } from '@tanstack/react-query'
 import { ExtendedLabelerServiceDef } from './util'
 import { useAuthContext } from '@/shell/AuthContext'
 
-export const useLabelerServiceDef = (did: string) => {
+export const useLabelerDefinitionQuery = (did: string) => {
   const { pdsAgent } = useAuthContext()
 
-  const { data: labelerDef } = useQuery<ExtendedLabelerServiceDef | null>({
+  return useQuery<ExtendedLabelerServiceDef>({
+    refetchOnWindowFocus: false,
     queryKey: ['labelerDef', { did }],
     queryFn: async () => {
-      if (!did) {
-        return null
+      if (!did?.startsWith('did:')) {
+        throw new Error(`Invalid DID "${did}"`)
       }
       const { data } = await pdsAgent.api.app.bsky.labeler.getServices({
         dids: [did],
         detailed: true,
       })
       if (!data.views?.[0]) {
-        return null
+        throw new Error(`Unknown DID "${did}"`)
       }
 
       const labelerDef = data.views[0] as ExtendedLabelerServiceDef
@@ -39,6 +40,4 @@ export const useLabelerServiceDef = (did: string) => {
     staleTime: 60 * 60 * 1000,
     cacheTime: 60 * 60 * 1000,
   })
-
-  return labelerDef || null
 }

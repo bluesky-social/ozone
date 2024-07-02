@@ -61,24 +61,24 @@ function ConfigureDetails() {
           The existence of a service record makes your service account <b></b>{' '}
           available in the Bluesky application, allowing users to choose to use
           your labeling service. It contains a labeling policy with two parts:
-          <ul className="list-disc list-inside mt-2 pl-4">
-            <li>
-              A list of{' '}
-              <b>
-                <code>labelValues</code>
-              </b>
-              : all label values that you intend to produce from your labeler.
-            </li>
-            <li>
-              A list of{' '}
-              <b>
-                <code>labelValueDefinitions</code>
-              </b>
-              : details about how each custom label should be respected by the
-              Bluesky application and presented to users.
-            </li>
-          </ul>
         </p>
+        <ul className="list-disc list-inside mt-2 pl-4">
+          <li>
+            A list of{' '}
+            <b>
+              <code>labelValues</code>
+            </b>
+            : all label values that you intend to produce from your labeler.
+          </li>
+          <li>
+            A list of{' '}
+            <b>
+              <code>labelValueDefinitions</code>
+            </b>
+            : details about how each custom label should be respected by the
+            Bluesky application and presented to users.
+          </li>
+        </ul>
         {config.labeler ? (
           <RecordEditStep repo={config.did} record={config.labeler} />
         ) : (

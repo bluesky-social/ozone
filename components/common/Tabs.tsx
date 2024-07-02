@@ -1,5 +1,5 @@
 import { classNames } from '@/lib/util'
-import { HTMLAttributes, ReactNode, useEffect, useState } from 'react'
+import { HTMLAttributes, Key, ReactNode, useEffect, useState } from 'react'
 
 export type TabView<ViewName> = {
   view: ViewName
@@ -68,7 +68,7 @@ function Tab<ViewName>({
   )
 }
 
-export function TabsPanel<ViewName>({
+export function TabsPanel<ViewName extends Key>({
   views,
   fallback,
   ...props
@@ -94,7 +94,7 @@ export function TabsPanel<ViewName>({
         currentView={currentView}
         onSetCurrentView={setCurrentView}
       />
-      {current?.content ?? fallback}
+      <div key={currentView}>{current?.content ?? fallback}</div>
     </div>
   )
 }

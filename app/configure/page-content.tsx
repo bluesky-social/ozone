@@ -23,7 +23,7 @@ export default function ConfigurePageContent() {
   useTitle('Configure')
 
   const { reconfigure } = useConfigurationContext()
-  useEffect(reconfigure, [reconfigure]) // Ensure config is up to date
+  useEffect(() => void reconfigure(), [reconfigure]) // Ensure config is up to date
 
   const emitEvent = useEmitEvent()
 

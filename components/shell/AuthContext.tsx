@@ -96,7 +96,7 @@ export const AuthProvider = ({
     )
   }
 
-  if (isInitializing) {
+  if (!value && isInitializing) {
     return (
       <SetupModal>
         <Loading message="Initializing..." />
