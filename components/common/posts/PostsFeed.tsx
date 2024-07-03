@@ -7,6 +7,8 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
+  AppBskyGraphList,
+  AppBskyGraphDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -328,6 +330,67 @@ export function RecordEmbedView({
           } pb-2 dark:text-gray-100`}
         >
           <RichText post={embed.record.value} />
+        </div>
+      </div>
+    )
+  } else if (AppBskyGraphDefs.isListView(embed.record)) {
+    const { did, rkey } = parseAtUri(embed.record.uri) || {}
+    const peekLink = buildBlueSkyAppUrl({
+      did: `${did}`,
+      rkey: `${rkey}`,
+      collection: `lists`,
+    })
+
+    return (
+      <div
+        className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
+      >
+        <div className="flex flex-row gap-1">
+          <ProfileAvatar
+            profile={{
+              avatar: embed.record.avatar,
+              did: embed.record.creator.did,
+              handle: embed.record.name,
+            }}
+            className="w-6 h-6 rounded-full"
+          />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200 pl-2">
+            <Link
+              href={`/repositories/${embed.record.uri.replace('at://', '')}`}
+              className="hover:underline"
+            >
+              {embed.record.name ? (
+                <>
+                  <span className="font-bold">{embed.record.name}</span>
+                </>
+              ) : (
+                <span className="font-bold">
+                  @{embed.record.creator.handle}
+                </span>
+              )}
+            </Link>
+            &nbsp;&middot;&nbsp;
+            <a
+              target="_blank"
+              className=" text-gray-900 dark:text-gray-200"
+              href={peekLink}
+            >
+              Peek
+            </a>
+          </p>
+        </div>
+        <div
+          className={`prose-sm ${
+            leftAligned ? 'pl-6' : 'pl-10'
+          } pb-2 dark:text-gray-100`}
+        >
+          <p className="mb-0">{embed.record.description} </p>
+          <p className="mt-0 text-gray-900 dark:text-gray-200">
+            {embed.record.purpose.split('#')[1]} by @
+            <Link href={`/repositories/${embed.record.creator.did}`}>
+              {embed.record.creator.handle}
+            </Link>
+          </p>
         </div>
       </div>
     )
