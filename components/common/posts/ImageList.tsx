@@ -23,6 +23,13 @@ export const ImageList = ({
   images: AppBskyEmbedImages.ViewImage[]
 }) => {
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+    }
+  }
+
   return (
     <>
       <Lightbox
@@ -34,6 +41,17 @@ export const ImageList = ({
           src: img.fullsize,
           description: img.alt,
         }))}
+        on={{
+          // The lightbox may open from other Dialog/modal components
+          // in that case, we want to make sure that esc button presses
+          // only close the lightbox and not the parent Dialog/modal underneath
+          entered: () => {
+            document.addEventListener('keydown', handleKeyDown)
+          },
+          exited: () => {
+            document.removeEventListener('keydown', handleKeyDown)
+          },
+        }}
       />
       {images.map((image, i) => (
         <figure key={image.thumb}>
