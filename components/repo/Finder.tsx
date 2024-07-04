@@ -122,7 +122,7 @@ export function RepoFinder({
         ) : (
           items.map((item) => (
             <Combobox.Option
-              key={item.handle}
+              key={item.did}
               value={selectionType === 'did' ? item.did : item.handle}
               className={({ active }) =>
                 `cursor-pointer p-2 flex items-center space-x-3 ${
