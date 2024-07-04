@@ -360,9 +360,7 @@ export function RecordEmbedView({
               className="hover:underline"
             >
               {embed.record.name ? (
-                <>
-                  <span className="font-bold">{embed.record.name}</span>
-                </>
+                <span className="font-bold">{embed.record.name}</span>
               ) : (
                 <span className="font-bold">
                   @{embed.record.creator.handle}
