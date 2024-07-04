@@ -1,7 +1,7 @@
 'use client'
 import { ComponentProps, useEffect, useState } from 'react'
 import Link from 'next/link'
-import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useQuery } from '@tanstack/react-query'
 import {
   AppBskyActorGetProfile as GetProfile,
   ToolsOzoneModerationGetRepo as GetRepo,
@@ -45,7 +45,7 @@ import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Lists } from 'components/list/Lists'
 import { checkPermission } from '@/lib/server-config'
-import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { Blocks } from './Blocks'
 
 enum Views {
   Details,
@@ -216,7 +216,7 @@ export function AccountView({
                   {currentView === Views.Followers && <Followers id={id} />}
                   {currentView === Views.Lists && <Lists actor={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
-                  {currentView === Views.Blocks && <Blocks id={id} />}
+                  {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
                   )}
@@ -542,66 +542,6 @@ function Follows({ id }: { id: string }) {
   )
 }
 
-function Blocks({ id }: { id: string }) {
-  const { data, error, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
-    useInfiniteQuery({
-      queryKey: ['blocks', { id }],
-      queryFn: async ({ pageParam }) => {
-        const { data } = await client.api.com.atproto.repo.listRecords(
-          {
-            cursor: pageParam,
-            repo: id,
-            collection: 'app.bsky.graph.block',
-            // Limit to 25 blocks because getProfiles allow 25 items per request
-            limit: 25,
-          },
-          { headers: client.proxyHeaders() },
-        )
-        const actors = data.records.map((record) => record.value['subject'] as string)
-        if (!actors.length) {
-          return { accounts: [], cursor: null }
-        }
-        const { data: profileData } =
-          await client.api.app.bsky.actor.getProfiles(
-            {
-              actors,
-            },
-            { headers: client.proxyHeaders() },
-          )
-
-        const accounts: AppBskyActorDefs.ProfileViewDetailed[] = []
-        actors.forEach((did) => {
-          const profile = profileData.profiles.find((p) => p.did === did)
-          if (profile) {
-            accounts.push(profile)
-          }
-        })
-
-        return {
-          accounts,
-          cursor: data.cursor,
-        }
-      },
-      getNextPageParam: (lastPage) => lastPage.cursor,
-    })
-  const blockedAccounts = data?.pages.flatMap((page) => page.accounts) ?? []
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isInitialLoading}
-        error={String(error ?? '')}
-        accounts={blockedAccounts}
-      />
-
-      {hasNextPage && (
-        <div className="flex justify-center py-6">
-          <LoadMoreButton onClick={() => fetchNextPage()} />
-        </div>
-      )}
-    </div>
-  )
-}
-
 function Followers({ id }: { id: string }) {
   const {
     error,
@@ -723,7 +663,7 @@ export function AccountsGrid({
 }) {
   if (isLoading) {
     return (
-      <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
+      <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl dark:text-gray-300">
         Loading...
       </div>
     )
@@ -731,7 +671,7 @@ export function AccountsGrid({
   return (
     <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
       {!!error && (
-        <div className="mt-1">
+        <div className="mt-1 dark:text-gray-300">
           <p>{error}</p>
         </div>
       )}
