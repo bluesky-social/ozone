@@ -26,7 +26,6 @@ export function Blocks({ did }: { did: string }) {
         url.searchParams.set('cursor', pageParam)
         const res = await fetch(url)
         const data = await res.json()
-        console.log(data)
         const actors = data.records.map(
           (record) => record.value['subject'] as string,
         )
