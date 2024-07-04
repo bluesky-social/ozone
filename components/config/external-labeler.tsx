@@ -15,7 +15,7 @@ import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { buildBlueSkyAppUrl } from '@/lib/util'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
-import { RepoFinder } from 'components/repo/Finder'
+import { RepoFinder } from '@/repositories/Finder'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,

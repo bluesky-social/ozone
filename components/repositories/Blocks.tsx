@@ -1,31 +1,18 @@
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import client from '@/lib/client'
-import { getServiceUrlFromDoc } from '@/lib/client-config'
-import { resolveDidDocData } from '@/lib/identity'
 import { AppBskyActorDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { AccountsGrid } from './AccountView'
+import { listRecords } from './api'
 
 export function Blocks({ did }: { did: string }) {
   const { data, error, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
     useInfiniteQuery({
       queryKey: ['blocks', { did }],
       queryFn: async ({ pageParam }) => {
-        const doc = await resolveDidDocData(did)
-        if (!doc) {
-          throw new Error('Could not resolve DID doc')
-        }
-        const pdsUrl = getServiceUrlFromDoc(doc, 'atproto_pds')
-        if (!pdsUrl) {
-          throw new Error('Could not determine PDS service URL')
-        }
-        const url = new URL('/xrpc/com.atproto.repo.listRecords', pdsUrl)
-        url.searchParams.set('repo', did)
-        url.searchParams.set('collection', 'app.bsky.graph.block')
-        url.searchParams.set('limit', `25`)
-        url.searchParams.set('cursor', pageParam)
-        const res = await fetch(url)
-        const data = await res.json()
+        const data = await listRecords(did, 'app.bsky.graph.block', {
+          cursor: pageParam,
+        })
         const actors = data.records.map(
           (record) => record.value['subject'] as string,
         )
