@@ -14,7 +14,7 @@ import { CreateMacroForm } from './CreateMacroForm'
 import { useFilterMacroUpsertMutation } from './useFilterMacrosList'
 import { MacroList } from './MacroPicker'
 import { useState } from 'react'
-import { RepoFinder } from 'components/repo/Finder'
+import { RepoFinder } from '@/repositories/Finder'
 
 export const EventFilterPanel = ({
   types,
