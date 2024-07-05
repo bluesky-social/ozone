@@ -427,5 +427,5 @@ export const useCommandPaletteAsyncSearch = () => {
     return actions.map(createAction)
   }, [search, didFromHandle, typeaheadResults])
 
-  useRegisterActions(memoizedActions, [search, didFromHandle])
+  useRegisterActions(memoizedActions, [search, didFromHandle, typeaheadResults])
 }
