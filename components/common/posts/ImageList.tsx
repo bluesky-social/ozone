@@ -36,6 +36,7 @@ export const ImageList = ({
         open={isImageViewerOpen}
         plugins={[Thumbnails, Captions]}
         carousel={{ finite: true }}
+        controller={{ closeOnBackdropClick: true }}
         close={() => setIsImageViewerOpen(false)}
         slides={images.map((img) => ({
           src: img.fullsize,
