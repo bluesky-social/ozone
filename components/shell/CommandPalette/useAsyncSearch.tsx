@@ -180,7 +180,10 @@ export const useCommandPaletteAsyncSearch = () => {
     search: state.searchQuery,
   }))
 
-  const { data: typeaheadResults } = useSearchActorsTypeahead(search)
+  // Only pass the query to the typeahead if it starts with @ since we want to show other results for input that does not start with @
+  const { data: typeaheadResults } = useSearchActorsTypeahead(
+    search.startsWith('@') ? search : '',
+  )
 
   const [didFromHandle, setDidFromHandle] = useState<{
     did: string
