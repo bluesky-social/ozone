@@ -73,7 +73,7 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
     )
   }
 
-  if (!value && isInitializing) {
+  if (isInitializing || !oauthClient) {
     return (
       <SetupModal>
         <Loading message="Initializing..." />

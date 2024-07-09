@@ -7,8 +7,6 @@ import {
   BrowserOAuthClientOptions,
   LoginContinuedInParentWindowError,
   OAuthAtpAgent,
-  OAuthClientIdLoopback,
-  OAuthClientMetadataInput,
 } from '@atproto/oauth-client-browser'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
@@ -70,7 +68,7 @@ function useOAuthClient(
   >,
 ) {
   const {
-    client: optionClient,
+    client: clientInput,
     clientId,
     clientMetadata,
     handleResolver,
@@ -78,75 +76,40 @@ function useOAuthClient(
     plcDirectoryUrl,
   } = options
 
-  const optionsClientMetadata:
-    | null
-    | 'forced'
-    | OAuthClientMetadataInput
-    | OAuthClientIdLoopback =
-    !optionClient && (!clientId || clientMetadata != null)
-      ? clientMetadata || 'forced'
-      : null
-
+  const [client, setClient] = useState<null | BrowserOAuthClient>(
+    clientInput || null,
+  )
   const fetch = useCallbackRef(options.fetch || globalThis.fetch)
 
-  const oauthClientOptions = useMemo<null | BrowserOAuthClientOptions>(
-    () =>
-      optionsClientMetadata && handleResolver
-        ? {
-            clientMetadata:
-              optionsClientMetadata === 'forced'
-                ? undefined
-                : optionsClientMetadata,
-            handleResolver,
-            responseMode,
-            plcDirectoryUrl,
-            fetch,
-          }
-        : null,
-    [
-      optionsClientMetadata,
-      handleResolver,
-      responseMode,
-      plcDirectoryUrl,
-      fetch,
-    ],
-  )
-
-  const optionsClientId =
-    (!optionClient && !optionsClientMetadata && clientId) || null
-
-  const optionsLoad = useMemo<null | BrowserOAuthClientLoadOptions>(
-    () =>
-      optionsClientId && handleResolver
-        ? {
-            clientId: optionsClientId,
-            handleResolver,
-            responseMode,
-            plcDirectoryUrl,
-            fetch,
-          }
-        : null,
-    [optionsClientId, handleResolver, responseMode, plcDirectoryUrl, fetch],
-  )
-
-  const [client, setClient] = useState<null | BrowserOAuthClient>(
-    optionClient || null,
-  )
-
   useEffect(() => {
-    if (optionClient) {
-      setClient(optionClient) // no-op on initial render
-    } else if (oauthClientOptions) {
-      const client = new BrowserOAuthClient(oauthClientOptions)
+    if (clientInput) {
+      setClient(clientInput)
+    } else if (!handleResolver) {
+      throw new TypeError('handleResolver is required')
+    } else if (clientMetadata || !clientId) {
+      const client = new BrowserOAuthClient({
+        clientMetadata,
+        handleResolver,
+        responseMode,
+        plcDirectoryUrl,
+        fetch,
+      })
       setClient(client)
       return () => client.dispose()
-    } else if (optionsLoad) {
+    } else {
       const ac = new AbortController()
       const { signal } = ac
 
       setClient(null)
 
-      void BrowserOAuthClient.load({ ...optionsLoad, signal }).then(
+      void BrowserOAuthClient.load({
+        clientId,
+        handleResolver,
+        responseMode,
+        plcDirectoryUrl,
+        fetch,
+        signal,
+      }).then(
         (client) => {
           if (!signal.aborted) {
             signal.addEventListener('abort', () => client.dispose(), {
@@ -163,12 +126,16 @@ function useOAuthClient(
       )
 
       return () => ac.abort()
-    } else {
-      // Should never happen...
-      setClient(null)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [optionClient || oauthClientOptions || optionsLoad])
+  }, [
+    clientInput,
+    clientId,
+    clientMetadata,
+    handleResolver,
+    responseMode,
+    plcDirectoryUrl,
+    fetch,
+  ])
 
   return client
 }
@@ -186,12 +153,13 @@ export function useOAuth(options: UseOAuthOptions) {
   const onSignedOut = useCallbackRef(options.onSignedOut)
   const getState = useCallbackRef(options.getState)
 
+  const clientForInit = useOAuthClient(options)
+
   const [agent, setAgent] = useState<null | OAuthAtpAgent>(null)
   const [client, setClient] = useState<BrowserOAuthClient | null>(null)
-  const [isInitializing, setIsInitializing] = useState(client != null)
+  const [isInitializing, setIsInitializing] = useState(true)
   const [isLoginPopup, setIsLoginPopup] = useState(false)
 
-  const clientForInit = useOAuthClient(options)
   const clientForInitRef = useRef<typeof clientForInit>()
   useEffect(() => {
     // In strict mode, we don't want to re-init() the client if it's the same

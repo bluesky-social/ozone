@@ -22,6 +22,7 @@ import {
 import { useAuthContext } from './AuthContext'
 import { ConfigurationFlow } from './ConfigurationFlow'
 import { GLOBAL_QUERY_CONTEXT } from './QueryClient'
+import { useLocalStorage } from 'react-use'
 
 export enum ConfigurationState {
   Pending,
@@ -52,6 +53,9 @@ export const ConfigurationProvider = ({
 }: {
   children: ReactNode
 }) => {
+  const [cachedConfig, setCachedConfig] =
+    useLocalStorage<OzoneConfig>('labeler-config')
+
   // Fetch the labeler static configuration
   const {
     data: config,
@@ -69,9 +73,16 @@ export const ConfigurationProvider = ({
     },
     queryKey: ['labeler-config'],
     queryFn: async () => getConfig(),
+    initialData: cachedConfig,
     // Refetching will be handled manually
     refetchOnWindowFocus: false,
   })
+
+  console.error('config', config)
+
+  useEffect(() => {
+    if (config) setCachedConfig(config)
+  }, [config, setCachedConfig])
 
   // Derive an agent for communicating with the labeler, if we have a config and
   // an (authenticated) PDS agent.
@@ -83,6 +94,9 @@ export const ConfigurationProvider = ({
     const [did, id = 'atproto_labeler'] = config.did.split('#')
     return pdsAgent.withProxy(id, did)
   }, [pdsAgent, config?.did])
+
+  const [cachedServerConfig, setCachedServerConfig] =
+    useLocalStorage<ServerConfig>('labeler-server-config')
 
   // Fetch the user's server configuration
   const {
@@ -103,8 +117,13 @@ export const ConfigurationProvider = ({
       )
       return parseServerConfig(data)
     },
+    initialData: cachedServerConfig,
     refetchOnWindowFocus: false,
   })
+
+  useEffect(() => {
+    if (serverConfig) setCachedServerConfig(serverConfig)
+  }, [serverConfig, setCachedServerConfig])
 
   // Allow ignoring the creation of a record when reconfiguring
   const [skipRecord, setSkipRecord] = useState(false)
