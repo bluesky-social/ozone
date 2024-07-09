@@ -1,5 +1,12 @@
 import { classNames } from '@/lib/util'
-import { HTMLAttributes, Key, ReactNode, useEffect, useState } from 'react'
+import {
+  HTMLAttributes,
+  Key,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
 
 export type TabView<ViewName> = {
   view: ViewName
@@ -68,33 +75,56 @@ function Tab<ViewName>({
   )
 }
 
+export type TabsPanelProps<ViewName extends Key> = {
+  views: (TabView<ViewName> & { content: ReactNode })[]
+  currentView?: ViewName
+  onCurrentView?: (v: ViewName) => void
+  fallback?: ReactNode
+} & HTMLAttributes<HTMLDivElement>
+
 export function TabsPanel<ViewName extends Key>({
   views,
   fallback,
+  currentView: currentViewExternal,
+  onCurrentView,
   ...props
-}: {
-  views: (TabView<ViewName> & { content: ReactNode })[]
-  fallback?: ReactNode
-} & HTMLAttributes<HTMLDivElement>) {
+}: TabsPanelProps<ViewName>) {
   const available = views.filter((v) => v.content)
-  const defaultView = available[0]?.view
+  const defaultView = available[0]?.view as ViewName | undefined
 
-  const [currentView, setCurrentView] = useState(defaultView)
-
-  const current = available.find((v) => v.view === currentView)
+  const [currentViewInternal, setCurrentViewInternal] = useState(defaultView)
+  const setCurrent = useCallback(
+    (v: ViewName) => {
+      setCurrentViewInternal(v)
+      onCurrentView?.(v)
+    },
+    [onCurrentView],
+  )
+  const current =
+    (currentViewExternal != null
+      ? available.find((v) => v.view === currentViewExternal)
+      : undefined) ??
+    (currentViewInternal != null
+      ? available.find((v) => v.view === currentViewInternal)
+      : undefined) ??
+    available[0]
 
   useEffect(() => {
-    if (!current?.view) setCurrentView(defaultView)
-  }, [current?.view, defaultView])
+    if (current?.view !== currentViewExternal) onCurrentView?.(current?.view)
+  }, [current?.view, currentViewExternal, onCurrentView])
+
+  useEffect(() => {
+    setCurrentViewInternal(current?.view)
+  }, [current?.view])
 
   return (
     <div {...props}>
       <Tabs
         views={available}
-        currentView={currentView}
-        onSetCurrentView={setCurrentView}
+        currentView={current?.view}
+        onSetCurrentView={setCurrent}
       />
-      <div key={currentView}>{current?.content ?? fallback}</div>
+      <div key={current?.view}>{current?.content ?? fallback}</div>
     </div>
   )
 }
