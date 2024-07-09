@@ -12,25 +12,24 @@ import {
   ChevronLeftIcon,
   ExclamationCircleIcon,
 } from '@heroicons/react/20/solid'
-import { Json } from '../common/Json'
+import { Json } from '@/common/Json'
 import { classNames, parseAtUri } from '@/lib/util'
-import { PostAsCard } from '../common/posts/PostsFeed'
+import { PostAsCard } from '@/common/posts/PostsFeed'
 import { BlobsTable } from './BlobsTable'
 import {
-  LabelChip,
   LabelList,
   LabelListEmpty,
-  displayLabel,
-  toLabelVal,
   getLabelsForSubject,
   ModerationLabel,
-} from '../common/labels'
+} from '@/common/labels'
 import { DataField } from '@/common/DataField'
 import { AccountsGrid } from './AccountView'
 import { ModEventList } from '@/mod-event/EventList'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
 import { Dropdown } from '@/common/Dropdown'
 import { Tabs, TabView } from '@/common/Tabs'
+import { Likes } from '@/common/feeds/Likes'
+import { Reposts } from '@/common/feeds/Reposts'
 
 enum Views {
   Details,
@@ -38,6 +37,8 @@ enum Views {
   Thread,
   Blobs,
   ModEvents,
+  Likes,
+  Reposts,
 }
 
 export function RecordView({
@@ -69,6 +70,21 @@ export function RecordView({
         view: Views.Thread,
         label: 'Post Thread',
       })
+
+      if (AppBskyFeedDefs.isThreadViewPost(thread.thread)) {
+        views.push(
+          {
+            view: Views.Likes,
+            label: 'Likes',
+            sublabel: String(thread.thread.post.likeCount),
+          },
+          {
+            view: Views.Reposts,
+            label: 'Reposts',
+            sublabel: String(thread.thread.post.repostCount),
+          },
+        )
+      }
     }
     views.push(
       {
@@ -120,6 +136,22 @@ export function RecordView({
                   {currentView === Views.Profiles && !!profiles?.length && (
                     <AccountsGrid error="" accounts={profiles} />
                   )}
+                  {currentView === Views.Likes &&
+                    !!thread &&
+                    AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
+                      <Likes
+                        uri={thread.thread.post.uri}
+                        cid={thread.thread.post.cid}
+                      />
+                    )}
+                  {currentView === Views.Reposts &&
+                    !!thread &&
+                    AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
+                      <Reposts
+                        uri={thread.thread.post.uri}
+                        cid={thread.thread.post.cid}
+                      />
+                    )}
                   {currentView === Views.Thread && thread && (
                     <Thread thread={thread.thread} />
                   )}

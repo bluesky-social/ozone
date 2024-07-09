@@ -12,6 +12,7 @@ import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { Loading } from '@/common/Loader'
 import { useExternalLabelers } from '@/shell/ExternalLabelersContext'
+import { RepoFinder } from '@/repositories/Finder'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -50,14 +51,14 @@ export const ExternalLabelerConfig = () => {
 
           <div className="flex flex-row justify-end items-end my-3 gap-2">
             <FormLabel label="Labeler DID" htmlFor="did" className="flex-1">
-              <Input
-                type="text"
-                id="did"
-                name="did"
-                required
-                placeholder="did:plc:..."
-                className="block w-full"
-                onChange={(e) => setDid(e.target.value)}
+              <RepoFinder
+                onChange={(value) => setDid(value)}
+                inputProps={{
+                  required: true,
+                  className: 'block w-full',
+                  id: 'did',
+                  name: 'did',
+                }}
               />
             </FormLabel>
             <ActionButton
