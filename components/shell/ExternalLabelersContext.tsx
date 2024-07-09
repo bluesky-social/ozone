@@ -48,9 +48,8 @@ export const ExternalLabelersProvider = ({
   })
 
   const externalLabelers = useMemo<ExternalLabelers>(
-    () => unique([config.did, ...state]),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [config.did, ...state],
+    () => unique(state.filter((did) => did !== config.did)),
+    [config.did, state],
   )
   const setExternalLabelers = useCallback(
     (value: ExternalLabelers): void => {
@@ -61,8 +60,8 @@ export const ExternalLabelersProvider = ({
 
   // Keep the labelers header up-to-date with the external labelers
   useEffect(() => {
-    labelerAgent?.configureLabelersHeader(externalLabelers)
-  }, [labelerAgent, externalLabelers])
+    labelerAgent.configureLabelers([config.did, ...externalLabelers])
+  }, [labelerAgent, config.did, externalLabelers])
 
   // Invalidate all queries whenever the external labelers (really) change
   const externalLabelersRef = useRef(externalLabelers)
@@ -75,7 +74,7 @@ export const ExternalLabelersProvider = ({
 
   // Expose external labelers state as context value
   const value = useMemo<ExternalLabelersData>(
-    () => [externalLabelers, setExternalLabelers] as const,
+    () => [externalLabelers, setExternalLabelers],
     [externalLabelers, setExternalLabelers],
   )
 
