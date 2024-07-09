@@ -1,5 +1,3 @@
-// TODO: This is badly named so that we can rebuild this component without
-// breaking the old one
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
@@ -165,7 +163,7 @@ function Form(
 ) {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
-  const accountDid = labelerAgent.getDid()
+  const { accountDid } = labelerAgent
 
   const {
     subject,

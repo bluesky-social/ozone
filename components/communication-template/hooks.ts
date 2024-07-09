@@ -82,7 +82,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
               subject,
               name,
               disabled,
-              updatedBy: labelerAgent.getDid(),
+              updatedBy: labelerAgent.accountDid,
             },
             { encoding: 'application/json' },
           )
@@ -91,7 +91,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
               contentMarkdown,
               subject,
               name,
-              createdBy: labelerAgent.getDid(),
+              createdBy: labelerAgent.accountDid,
             },
             { encoding: 'application/json' },
           ),

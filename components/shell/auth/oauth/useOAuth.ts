@@ -6,14 +6,14 @@ import {
   BrowserOAuthClientLoadOptions,
   BrowserOAuthClientOptions,
   LoginContinuedInParentWindowError,
-  OAuthAgent,
+  OAuthAtpAgent,
   OAuthClientIdLoopback,
   OAuthClientMetadataInput,
 } from '@atproto/oauth-client-browser'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
-export type OnRestored = (agent: OAuthAgent | null) => void
-export type OnSignedIn = (agent: OAuthAgent, state: null | string) => void
+export type OnRestored = (agent: OAuthAtpAgent | null) => void
+export type OnSignedIn = (agent: OAuthAtpAgent, state: null | string) => void
 export type OnSignedOut = () => void
 export type GetState = () =>
   | undefined
@@ -71,7 +71,7 @@ function useOAuthClient(
 ) {
   const {
     client: optionClient,
-    clientId: optionClientId,
+    clientId,
     clientMetadata,
     handleResolver,
     responseMode,
@@ -82,9 +82,10 @@ function useOAuthClient(
     | null
     | 'forced'
     | OAuthClientMetadataInput
-    | OAuthClientIdLoopback = optionClient
-    ? null
-    : clientMetadata || (!optionClientId ? 'forced' : null)
+    | OAuthClientIdLoopback =
+    !optionClient && (!clientId || clientMetadata != null)
+      ? clientMetadata || 'forced'
+      : null
 
   const fetch = useCallbackRef(options.fetch || globalThis.fetch)
 
@@ -111,28 +112,30 @@ function useOAuthClient(
     ],
   )
 
-  const clientId =
-    (!optionClient && !optionsClientMetadata && optionClientId) || null
+  const optionsClientId =
+    (!optionClient && !optionsClientMetadata && clientId) || null
 
   const optionsLoad = useMemo<null | BrowserOAuthClientLoadOptions>(
     () =>
-      clientId && handleResolver
+      optionsClientId && handleResolver
         ? {
-            clientId,
+            clientId: optionsClientId,
             handleResolver,
             responseMode,
             plcDirectoryUrl,
             fetch,
           }
         : null,
-    [clientId, handleResolver, responseMode, plcDirectoryUrl, fetch],
+    [optionsClientId, handleResolver, responseMode, plcDirectoryUrl, fetch],
   )
 
-  const [client, setClient] = useState<null | BrowserOAuthClient>(null)
+  const [client, setClient] = useState<null | BrowserOAuthClient>(
+    optionClient || null,
+  )
 
   useEffect(() => {
     if (optionClient) {
-      setClient(optionClient)
+      setClient(optionClient) // no-op on initial render
     } else if (oauthClientOptions) {
       const client = new BrowserOAuthClient(oauthClientOptions)
       setClient(client)
@@ -183,7 +186,7 @@ export function useOAuth(options: UseOAuthOptions) {
   const onSignedOut = useCallbackRef(options.onSignedOut)
   const getState = useCallbackRef(options.getState)
 
-  const [agent, setAgent] = useState<null | OAuthAgent>(null)
+  const [agent, setAgent] = useState<null | OAuthAtpAgent>(null)
   const [client, setClient] = useState<BrowserOAuthClient | null>(null)
   const [isInitializing, setIsInitializing] = useState(client != null)
   const [isLoginPopup, setIsLoginPopup] = useState(false)
@@ -237,7 +240,7 @@ export function useOAuth(options: UseOAuthOptions) {
 
         setIsInitializing(false)
       })
-  }, [clientForInit])
+  }, [clientForInit, onSignedIn, onRestored])
 
   useEffect(() => {
     if (!client) return
@@ -248,7 +251,7 @@ export function useOAuth(options: UseOAuthOptions) {
     client.addEventListener(
       'updated',
       ({ detail: { sub } }) => {
-        if (!agent || agent.sub !== sub) {
+        if (!agent || agent.did !== sub) {
           setAgent(null)
           client.restore(sub, false).then((agent) => {
             if (!signal.aborted) setAgent(agent)
@@ -262,7 +265,7 @@ export function useOAuth(options: UseOAuthOptions) {
       client.addEventListener(
         'deleted',
         ({ detail: { sub } }) => {
-          if (agent.sub === sub) {
+          if (agent.did === sub) {
             setAgent(null)
             void onSignedOut()
           }
@@ -276,7 +279,7 @@ export function useOAuth(options: UseOAuthOptions) {
     return () => {
       controller.abort()
     }
-  }, [client, agent])
+  }, [client, agent, onSignedOut])
 
   const signIn = useCallback(
     async (input: string, options?: AuthorizeOptions) => {
@@ -288,7 +291,7 @@ export function useOAuth(options: UseOAuthOptions) {
       await onSignedIn(agent, state ?? null)
       return agent
     },
-    [client],
+    [client, getState, onSignedIn],
   )
 
   // Memoize the return value to avoid re-renders in consumers

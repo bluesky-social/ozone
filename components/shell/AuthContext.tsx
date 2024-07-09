@@ -1,6 +1,6 @@
 'use client'
 
-import { AppBskyActorDefs, BskyAgent } from '@atproto/api'
+import { AppBskyActorDefs, ApiAgent } from '@atproto/api'
 import { isLoopbackHost } from '@atproto/oauth-client-browser'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
@@ -15,18 +15,16 @@ import { AuthForm } from './AuthForm'
 export type Profile = AppBskyActorDefs.ProfileViewDetailed
 
 export type AuthContext = {
-  pdsAgent: BskyAgent
-  signOut: () => Promise<void>
+  pdsAgent: ApiAgent
 }
 
 const AuthContext = createContext<AuthContext | null>(null)
 
-export const AuthProvider = ({
-  children,
-  ...options
-}: {
+export type AuthProviderProps = {
   children: ReactNode
-} & UseOAuthOptions) => {
+} & UseOAuthOptions
+
+export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -59,27 +57,13 @@ export const AuthProvider = ({
         : undefined),
   })
 
-  const {
-    session: atpSession,
-    signIn: atpSignIn,
-    signOut: atpSignOut,
-  } = useAtpAuth()
+  const { agent: atpAgent, signIn: atpSignIn } = useAtpAuth()
 
-  const value = useMemo<AuthContext | null>(
-    () =>
-      oauthAgent
-        ? {
-            pdsAgent: new BskyAgent(oauthAgent),
-            signOut: () => oauthAgent.signOut(),
-          }
-        : atpSession
-        ? {
-            pdsAgent: new BskyAgent(atpSession),
-            signOut: atpSignOut,
-          }
-        : null,
-    [atpSession, oauthAgent, atpSignOut],
-  )
+  const value = useMemo<AuthContext | null>(() => {
+    if (oauthAgent) return { pdsAgent: oauthAgent }
+    if (atpAgent) return { pdsAgent: atpAgent }
+    return null
+  }, [atpAgent, oauthAgent])
 
   if (isLoginPopup) {
     return (
@@ -124,12 +108,12 @@ export function usePdsAgent() {
 
 export const useAuthDid = () => {
   const { pdsAgent } = useAuthContext()
-  return pdsAgent.getDid()
+  return pdsAgent.accountDid
 }
 
 export const useAuthProfileQuery = () => {
   const { pdsAgent } = useAuthContext()
-  const did = pdsAgent.getDid()
+  const did = pdsAgent.accountDid
 
   return useQuery({
     queryKey: ['profile', did],

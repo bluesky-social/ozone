@@ -39,7 +39,7 @@ const useMuteReporting = ({
             $type: 'com.atproto.admin.defs#repoRef',
             did,
           },
-          createdBy: labelerAgent.getDid(),
+          createdBy: labelerAgent.accountDid,
         },
         { encoding: 'application/json' },
       )

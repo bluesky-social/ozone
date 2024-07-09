@@ -1,37 +1,31 @@
-import { AtpSessionData, AtpSessionManager } from '@atproto/api'
+import { AtpSessionData, AtpAgent } from '@atproto/api'
 import { useCallback, useMemo, useState } from 'react'
 
 type Session = AtpSessionData & { service: string }
 
 export function useAtpAuth() {
-  const persistSession = useCallback((session?: Session) => {
-    if (session) {
-      saveSession(session)
-    } else {
-      deleteSession()
-      setSession(null)
-    }
+  const createAgent = useCallback((service: string) => {
+    const agent = new AtpAgent({
+      service,
+      persistSession: (type, session) => {
+        if (session) {
+          saveSession({ ...session, service })
+        } else {
+          setAgent((a) => (a === agent ? null : a))
+          deleteSession()
+        }
+      },
+    })
+    return agent
   }, [])
 
-  const [session, setSession] = useState<null | AtpSessionManager>(() => {
+  const [agent, setAgent] = useState<null | AtpAgent>(() => {
     const prev = loadSession()
     if (!prev) return null
 
-    const { service } = prev
-
-    const session = new AtpSessionManager({
-      service,
-      persistSession: (type, session) => {
-        persistSession(session && { ...session, service })
-      },
-    })
-
-    void session.resumeSession(prev).catch((err) => {
-      console.warn('Failed to resume session', err)
-      setSession((s) => (s === session ? null : s))
-    })
-
-    return session
+    const agent = createAgent(prev.service)
+    agent.resumeSession(prev)
+    return agent
   })
 
   const signIn = useCallback(
@@ -46,35 +40,17 @@ export function useAtpAuth() {
       authFactorToken?: string
       service: string
     }) => {
-      const session = new AtpSessionManager({
-        service,
-        persistSession: (type, session) => {
-          persistSession(session && { ...session, service })
-        },
-      })
-      await session.login({ identifier, password, authFactorToken })
-      setSession(session)
+      const agent = createAgent(service)
+      await agent.login({ identifier, password, authFactorToken })
+      setAgent(agent)
     },
-    [],
+    [createAgent],
   )
 
-  const signOut = useCallback(async () => {
-    if (session) {
-      // Is there no way to clear credentials?
-      // await session.logout()
-
-      deleteSession()
-      setSession(null)
-    }
-  }, [session])
-
-  return useMemo(
-    () => ({ signIn, signOut, session }),
-    [signIn, signOut, session],
-  )
+  return useMemo(() => ({ signIn, agent }), [signIn, agent])
 }
 
-const SESSION_KEY = 'ozone_session'
+const SESSION_KEY = '@@ATPROTO/SESSION'
 
 function loadSession(): Session | undefined {
   try {

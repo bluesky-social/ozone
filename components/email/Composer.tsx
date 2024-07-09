@@ -62,7 +62,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
               content: htmlContent,
             },
             subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-            createdBy: labelerAgent.getDid(),
+            createdBy: labelerAgent.accountDid,
           },
           { encoding: 'application/json' },
         ),

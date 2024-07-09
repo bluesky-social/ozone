@@ -10,14 +10,14 @@ import {
 } from './AuthContext'
 
 export function ProfileMenu() {
-  const { signOut } = useAuthContext()
+  const { pdsAgent } = useAuthContext()
 
   const identifier = useAuthIdentifier()
   const avatar = useAuthProfile()?.avatar
 
   const onClickSignout = async (e: SyntheticEvent) => {
     e.preventDefault()
-    await signOut()
+    await pdsAgent.signOut()
     window.location.reload()
   }
 

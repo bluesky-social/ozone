@@ -18,7 +18,7 @@ import {
   getServiceUrlFromDoc,
   withDocAndMeta,
 } from '@/lib/client-config'
-import { BskyAgent } from '@atproto/api'
+import { ApiAgent } from '@atproto/api'
 import { useAuthContext, useAuthDid, useAuthIdentifier } from './AuthContext'
 import { ConfigurationState, ReconfigureOptions } from './ConfigurationContext'
 
@@ -28,7 +28,7 @@ export type ConfigurationFlowProps = {
   state: ConfigurationState
   config: OzoneConfig | undefined
   error: Error | null
-  labelerAgent: BskyAgent | undefined
+  labelerAgent: ApiAgent | undefined
   reconfigure: ReconfigureFn
 }
 
@@ -39,7 +39,7 @@ export function ConfigurationFlow({
   labelerAgent,
   reconfigure,
 }: ConfigurationFlowProps) {
-  const { signOut } = useAuthContext()
+  const { pdsAgent } = useAuthContext()
 
   const authDid = useAuthDid()
   const authIdentifier = useAuthIdentifier()
@@ -58,7 +58,7 @@ export function ConfigurationFlow({
         <Button
           className="w-full mt-2"
           icon={<ArrowLeftOnRectangleIcon />}
-          onClick={signOut}
+          onClick={() => pdsAgent.signOut()}
         >
           Restart
         </Button>
@@ -106,7 +106,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={signOut}
+            onClick={() => pdsAgent.signOut()}
           >
             Restart
           </Button>
@@ -125,7 +125,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={signOut}
+            onClick={() => pdsAgent.signOut()}
           >
             Restart
           </Button>
@@ -143,7 +143,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={signOut}
+            onClick={() => pdsAgent.signOut()}
           >
             Restart
           </Button>
@@ -161,7 +161,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={signOut}
+            onClick={() => pdsAgent.signOut()}
           >
             Restart
           </Button>
@@ -225,12 +225,12 @@ function IdentityConfigurationFlow({
   reconfigure: ReconfigureFn
 }) {
   const [token, setToken] = useState('')
-  const { pdsAgent, signOut } = useAuthContext()
+  const { pdsAgent } = useAuthContext()
 
   const requestPlcOperationSignature = useMutation({
     mutationKey: [pdsAgent.did, config.did],
     mutationFn: async () => {
-      await pdsAgent.api.com.atproto.identity.requestPlcOperationSignature()
+      await pdsAgent.com.atproto.identity.requestPlcOperationSignature()
     },
   })
   const submitPlcOperation = useMutation({
@@ -264,7 +264,7 @@ function IdentityConfigurationFlow({
             disabled={requestPlcOperationSignature.isLoading}
             className="w-full mr-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={signOut}
+            onClick={() => pdsAgent.signOut()}
           >
             Cancel
           </Button>
@@ -305,7 +305,7 @@ function IdentityConfigurationFlow({
               }
               className="w-full mr-2"
               icon={<ArrowLeftOnRectangleIcon />}
-              onClick={signOut}
+              onClick={() => pdsAgent.signOut()}
             >
               Cancel
             </Button>
@@ -343,7 +343,7 @@ function RecordConfigurationFlow({
 
   const putServiceRecord = useMutation({
     mutationFn: async () => {
-      await pdsAgent.api.com.atproto.repo.putRecord({
+      await pdsAgent.com.atproto.repo.putRecord({
         repo: config.did,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
@@ -464,7 +464,7 @@ function Button({
 }
 
 async function updatePlcIdentity(
-  client: BskyAgent,
+  client: ApiAgent,
   token: string,
   config: OzoneConfigFull,
 ) {
@@ -481,18 +481,17 @@ async function updatePlcIdentity(
   if (verificationMethods) {
     verificationMethods['atproto_label'] = config.meta.publicKey
   }
-  const { data: signed } =
-    await client.api.com.atproto.identity.signPlcOperation({
-      token,
-      verificationMethods,
-      services,
-    })
-  await client.api.com.atproto.identity.submitPlcOperation({
+  const { data: signed } = await client.com.atproto.identity.signPlcOperation({
+    token,
+    verificationMethods,
+    services,
+  })
+  await client.com.atproto.identity.submitPlcOperation({
     operation: signed.operation,
   })
   if (config.handle) {
     // @NOTE temp hack to push an identity op through
-    await client.api.com.atproto.identity.updateHandle({
+    await client.com.atproto.identity.updateHandle({
       handle: config.handle,
     })
   }

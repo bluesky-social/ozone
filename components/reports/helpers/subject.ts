@@ -1,5 +1,5 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { BskyAgent, ToolsOzoneModerationDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { useCallback } from 'react'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
