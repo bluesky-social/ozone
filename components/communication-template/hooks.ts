@@ -75,26 +75,20 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
       disabled: boolean
     }) =>
       templateId
-        ? labelerAgent.api.tools.ozone.communication.updateTemplate(
-            {
-              id: `${templateId}`,
-              contentMarkdown,
-              subject,
-              name,
-              disabled,
-              updatedBy: labelerAgent.accountDid,
-            },
-            { encoding: 'application/json' },
-          )
-        : labelerAgent.api.tools.ozone.communication.createTemplate(
-            {
-              contentMarkdown,
-              subject,
-              name,
-              createdBy: labelerAgent.accountDid,
-            },
-            { encoding: 'application/json' },
-          ),
+        ? labelerAgent.api.tools.ozone.communication.updateTemplate({
+            id: `${templateId}`,
+            contentMarkdown,
+            subject,
+            name,
+            disabled,
+            updatedBy: labelerAgent.accountDid,
+          })
+        : labelerAgent.api.tools.ozone.communication.createTemplate({
+            contentMarkdown,
+            subject,
+            name,
+            createdBy: labelerAgent.accountDid,
+          }),
     [labelerAgent, templateId],
   )
 

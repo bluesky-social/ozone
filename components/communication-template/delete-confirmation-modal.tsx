@@ -24,10 +24,9 @@ export const CommunicationTemplateDeleteConfirmationModal = ({
   const onDelete = async () => {
     setIsDeleting(true)
     try {
-      await labelerAgent.api.tools.ozone.communication.deleteTemplate(
-        { id: templateId },
-        { encoding: 'application/json' },
-      )
+      await labelerAgent.api.tools.ozone.communication.deleteTemplate({
+        id: templateId,
+      })
       toast.success('Template deleted')
       queryClient.invalidateQueries(['communicationTemplateList'])
       setIsDeleting(false)

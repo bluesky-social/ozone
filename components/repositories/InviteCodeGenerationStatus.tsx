@@ -27,18 +27,17 @@ const useInviteCodeMutation = ({ did, id }) => {
         ? 'disableAccountInvites'
         : 'enableAccountInvites'
 
-      const result = await labelerAgent.api.com.atproto.admin[mutator](
-        { account: did, note },
-        { encoding: 'application/json' },
-      )
+      const result = await labelerAgent.api.com.atproto.admin[mutator]({
+        account: did,
+        note,
+      })
 
       // When disabling invites, check if moderator wants to also disable existing codes
       // If yes, get invite codes through getRepo and disable the active ones
       if (disableInvites && disableExistingCodes) {
-        await labelerAgent.api.com.atproto.admin.disableInviteCodes(
-          { accounts: [did] },
-          { encoding: 'application/json' },
-        )
+        await labelerAgent.api.com.atproto.admin.disableInviteCodes({
+          accounts: [did],
+        })
       }
 
       return result

@@ -16,9 +16,7 @@ export function useEmitEvent() {
     async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
       const emitModerationEventAsync = async () => {
         const { data } =
-          await labelerAgent.api.tools.ozone.moderation.emitEvent(vals, {
-            encoding: 'application/json',
-          })
+          await labelerAgent.api.tools.ozone.moderation.emitEvent(vals)
         return data
       }
 

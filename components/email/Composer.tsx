@@ -53,19 +53,16 @@ export const EmailComposer = ({ did }: { did: string }) => {
         .toString()
 
       await toast.promise(
-        labelerAgent.api.tools.ozone.moderation.emitEvent(
-          {
-            event: {
-              $type: MOD_EVENTS.EMAIL,
-              comment,
-              subjectLine: subject,
-              content: htmlContent,
-            },
-            subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-            createdBy: labelerAgent.accountDid,
+        labelerAgent.api.tools.ozone.moderation.emitEvent({
+          event: {
+            $type: MOD_EVENTS.EMAIL,
+            comment,
+            subjectLine: subject,
+            content: htmlContent,
           },
-          { encoding: 'application/json' },
-        ),
+          subject: { $type: 'com.atproto.admin.defs#repoRef', did },
+          createdBy: labelerAgent.accountDid,
+        }),
         {
           pending: 'Sending email...',
           success: {

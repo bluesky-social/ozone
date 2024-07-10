@@ -27,22 +27,19 @@ const useMuteReporting = ({
     unknown
   >(
     async (params) => {
-      const result = await labelerAgent.api.tools.ozone.moderation.emitEvent(
-        {
-          event: {
-            $type: isReportingMuted
-              ? `tools.ozone.moderation.defs#modEventUnmuteReporter`
-              : `tools.ozone.moderation.defs#modEventMuteReporter`,
-            ...params,
-          },
-          subject: {
-            $type: 'com.atproto.admin.defs#repoRef',
-            did,
-          },
-          createdBy: labelerAgent.accountDid,
+      const result = await labelerAgent.api.tools.ozone.moderation.emitEvent({
+        event: {
+          $type: isReportingMuted
+            ? `tools.ozone.moderation.defs#modEventUnmuteReporter`
+            : `tools.ozone.moderation.defs#modEventMuteReporter`,
+          ...params,
         },
-        { encoding: 'application/json' },
-      )
+        subject: {
+          $type: 'com.atproto.admin.defs#repoRef',
+          did,
+        },
+        createdBy: labelerAgent.accountDid,
+      })
 
       return result
     },

@@ -15,10 +15,10 @@ export function useCreateReport() {
       await toast.promise(
         async () => {
           const { subject } = await createSubjectFromId(vals.subject)
-          return labelerAgent.api.com.atproto.moderation.createReport(
-            { ...vals, subject },
-            { encoding: 'application/json' },
-          )
+          return labelerAgent.api.com.atproto.moderation.createReport({
+            ...vals,
+            subject,
+          })
         },
         {
           pending: 'Submitting report...',
