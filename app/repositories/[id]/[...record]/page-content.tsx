@@ -16,7 +16,6 @@ import { ReportPanel } from '@/reports/ReportPanel'
 import { CollectionId } from '@/reports/helpers/subject'
 import { RecordView } from '@/repositories/RecordView'
 import { useCreateReport } from '@/repositories/createReport'
-import { usePdsAgent } from '@/shell/AuthContext'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 
@@ -55,7 +54,6 @@ export default function RecordViewPageContent({
   params: { id: string; record: string[] }
 }) {
   const labelerAgent = useLabelerAgent()
-  const pdsAgent = usePdsAgent()
 
   const emitEvent = useEmitEvent()
   const createReport = useCreateReport()
@@ -106,9 +104,10 @@ export default function RecordViewPageContent({
           return undefined
         }
         // TODO: We need pagination here, right? how come getPostThread doesn't need it?
-        const { data: listData } = await pdsAgent.api.app.bsky.graph.getList({
-          list: uri,
-        })
+        const { data: listData } =
+          await labelerAgent.api.app.bsky.graph.getList({
+            list: uri,
+          })
         return listData.items.map(({ subject }) => subject)
       }
       const [record, profiles, thread] = await Promise.all([
