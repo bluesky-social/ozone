@@ -1,6 +1,6 @@
 'use client'
 
-import { ApiAgent } from '@atproto/api'
+import { Agent } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
 import {
   createContext,
@@ -37,7 +37,7 @@ export type ReconfigureOptions = {
 
 export type ConfigurationContextData = {
   /** An agent to use in order to communicate with the labeler on the user's behalf. */
-  labelerAgent: ApiAgent
+  labelerAgent: Agent
   isServiceAccount: boolean
   config: OzoneConfig
   serverConfig: ServerConfig
@@ -87,7 +87,7 @@ export const ConfigurationProvider = ({
   // Derive an agent for communicating with the labeler, if we have a config and
   // an (authenticated) PDS agent.
   const { pdsAgent } = useAuthContext()
-  const labelerAgent = useMemo<ApiAgent | undefined>(() => {
+  const labelerAgent = useMemo<Agent | undefined>(() => {
     if (!pdsAgent) return undefined
     if (!config?.did) return undefined
 

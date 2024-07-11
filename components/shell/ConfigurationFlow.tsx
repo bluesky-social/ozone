@@ -18,7 +18,7 @@ import {
   getServiceUrlFromDoc,
   withDocAndMeta,
 } from '@/lib/client-config'
-import { ApiAgent } from '@atproto/api'
+import { Agent } from '@atproto/api'
 import { useAuthContext, useAuthDid, useAuthIdentifier } from './AuthContext'
 import { ConfigurationState, ReconfigureOptions } from './ConfigurationContext'
 
@@ -28,7 +28,7 @@ export type ConfigurationFlowProps = {
   state: ConfigurationState
   config: OzoneConfig | undefined
   error: Error | null
-  labelerAgent: ApiAgent | undefined
+  labelerAgent: Agent | undefined
   reconfigure: ReconfigureFn
 }
 
@@ -464,7 +464,7 @@ function Button({
 }
 
 async function updatePlcIdentity(
-  client: ApiAgent,
+  client: Agent,
   token: string,
   config: OzoneConfigFull,
 ) {

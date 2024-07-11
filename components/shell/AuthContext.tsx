@@ -1,6 +1,6 @@
 'use client'
 
-import { AppBskyActorDefs, ApiAgent } from '@atproto/api'
+import { AppBskyActorDefs, Agent } from '@atproto/api'
 import { isLoopbackHost } from '@atproto/oauth-client-browser'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
@@ -15,7 +15,7 @@ import { AuthForm } from './AuthForm'
 export type Profile = AppBskyActorDefs.ProfileViewDetailed
 
 export type AuthContext = {
-  pdsAgent: ApiAgent
+  pdsAgent: Agent
 }
 
 const AuthContext = createContext<AuthContext | null>(null)

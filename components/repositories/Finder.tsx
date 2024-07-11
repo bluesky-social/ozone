@@ -1,4 +1,4 @@
-import { ApiAgent } from '@atproto/api'
+import { Agent } from '@atproto/api'
 import { Combobox } from '@headlessui/react'
 import { useEffect, useState } from 'react'
 
@@ -31,7 +31,7 @@ const ErrorResult = {
 }
 
 const getProfilesForQuery = async (
-  agent: ApiAgent,
+  agent: Agent,
   q: string,
 ): Promise<TypeaheadResult[]> => {
   if (q.startsWith('did:')) {
