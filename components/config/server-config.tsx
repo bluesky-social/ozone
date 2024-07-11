@@ -1,7 +1,10 @@
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { CopyButton } from '@/common/CopyButton'
-import client, { ClientSession } from '@/lib/client'
+import {
+  useConfigurationContext,
+  useServerConfig,
+} from '@/shell/ConfigurationContext'
 import {
   CheckCircleIcon,
   XCircleIcon,
@@ -10,39 +13,26 @@ import {
   CloudIcon,
   ChatBubbleLeftIcon,
 } from '@heroicons/react/24/solid'
-import { useState } from 'react'
+import { useMutation } from '@tanstack/react-query'
 
 const RefetchConfigButton = () => {
-  const [isRefetching, setIsRefetching] = useState(false)
+  const { reconfigure } = useConfigurationContext()
+  const updateRecord = useMutation({ mutationFn: async () => reconfigure() })
+
   return (
     <ActionButton
-      onClick={async () => {
-        setIsRefetching(true)
-        await client.refetchServerConfig()
-        setIsRefetching(false)
-        window.location.reload()
-      }}
+      onClick={() => updateRecord.mutate()}
       size="xs"
-      disabled={isRefetching}
+      disabled={updateRecord.isLoading}
       appearance="outlined"
     >
-      {isRefetching ? 'Refetching...' : 'Refetch'}
+      {updateRecord.isLoading ? 'Refetching...' : 'Refetch'}
     </ActionButton>
   )
 }
 
-export const ServerConfig = ({ session }: { session: ClientSession }) => {
-  const config = session.serverConfig
-  if (!config) {
-    return (
-      <div className="flex flex-row justify-between my-4">
-        <h4 className="font-medium text-gray-700 dark:text-gray-100">
-          No Server Config Found
-        </h4>
-        <RefetchConfigButton />
-      </div>
-    )
-  }
+export const ServerConfig = () => {
+  const config = useServerConfig()
 
   return (
     <>

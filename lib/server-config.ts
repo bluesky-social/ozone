@@ -1,11 +1,11 @@
 import { ToolsOzoneServerGetConfig, ToolsOzoneTeamDefs } from '@atproto/api'
-import client from './client'
 
 export type ServerConfig = {
   pds?: string
   appview?: string
   blobDivert?: string
   chat?: string
+  role?: ToolsOzoneServerGetConfig.ViewerConfig['role']
   permissions: {
     canManageTemplates: boolean
     canTakedown: boolean
@@ -18,8 +18,10 @@ export type ServerConfig = {
   }
 }
 
+export type PermissionName = keyof ServerConfig['permissions']
+
 export const parseServerConfig = (
-  config: ToolsOzoneServerGetConfig.Response['data'],
+  config: ToolsOzoneServerGetConfig.OutputSchema,
 ): ServerConfig => {
   const isAdmin = config.viewer?.role === ToolsOzoneTeamDefs.ROLEADMIN
   const isModerator =
@@ -30,6 +32,7 @@ export const parseServerConfig = (
     blobDivert: config.blobDivert?.url,
     appview: config.appview?.url,
     chat: config.chat?.url,
+    role: config.viewer?.role,
     permissions: {
       canManageTemplates: isModerator,
       canTakedown: !!config.pds?.url && isModerator,
@@ -40,17 +43,5 @@ export const parseServerConfig = (
       canTakedownFeedGenerators: isAdmin,
       canDivertBlob: !!config.blobDivert?.url && isModerator,
     },
-  }
-}
-
-export const checkPermission = (
-  permission: keyof ServerConfig['permissions'],
-) => {
-  try {
-    return client.session.serverConfig?.permissions[permission]
-  } catch (e) {
-    // Trying to access client.session while unauthenticated throws an error in which case,
-    // we can safely assume the user does not have the permission
-    return false
   }
 }

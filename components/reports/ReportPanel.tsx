@@ -1,11 +1,10 @@
 import { useEffect, useState } from 'react'
-import { ComAtprotoModerationDefs } from '@atproto/api'
 import { ActionPanel } from '../common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '../common/buttons'
 import { FormLabel, Input, Select, Textarea } from '../common/forms'
 import { RecordCard, RepoCard } from '../common/RecordCard'
 import { PropsOf } from '@/lib/types'
-import { queryClient } from 'components/QueryClient'
+import { useQueryClient } from '@tanstack/react-query'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { reasonTypeOptions } from './helpers/getType'
 
@@ -44,6 +43,7 @@ function Form(props: {
   } = props
   const [subject, setSubject] = useState(fixedSubject ?? '')
   const [submitting, setSubmitting] = useState(false)
+  const queryClient = useQueryClient()
 
   // Update the subject when parent renderer wants to update it
   // This happens when the subject is loaded async on the renderer component

@@ -1,24 +1,26 @@
 'use client'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useQuery } from '@tanstack/react-query'
-import client from '@/lib/client'
-import { Loading, LoadingFailed } from '@/common/Loader'
 import { useSearchParams } from 'next/navigation'
-import { SubjectStatusView } from '@/subject/StatusView'
-import { useEffect } from 'react'
 import { useTitle } from 'react-use'
+
+import { Loading, LoadingFailed } from '@/common/Loader'
+import { SubjectStatusView } from '@/subject/StatusView'
 
 export default function SubjectStatus() {
   const params = useSearchParams()
+  const labelerAgent = useLabelerAgent()
+
   const subject = params.get('uri') || params.get('did')
-  const { data, error, status } = useQuery({
+  const { data, error, isLoading } = useQuery({
     queryKey: ['moderationStatus', { subject }],
     queryFn: async () => {
       if (!subject) return null
       const { data } =
-        await client.api.tools.ozone.moderation.queryStatuses(
-          { subject, limit: 1 },
-          { headers: client.proxyHeaders() },
-        )
+        await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+          subject,
+          limit: 1,
+        })
       return data
     },
   })
@@ -31,7 +33,7 @@ export default function SubjectStatus() {
 
   useTitle(pageTitle)
 
-  if (status === 'loading') {
+  if (isLoading) {
     return <Loading />
   }
 

@@ -1,12 +1,14 @@
 'use client'
-import { AccountView } from '@/repositories/AccountView'
-import { createReport } from '@/repositories/createReport'
-import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
-import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { useTitle } from 'react-use'
+
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import { AccountView } from '@/repositories/AccountView'
+import { useCreateReport } from '@/repositories/createReport'
+import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 
 const buildPageTitle = ({
   handle,
@@ -36,6 +38,9 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
     refetch,
     isLoading: isInitialLoading,
   } = useRepoAndProfile({ id })
+
+  const createReport = useCreateReport()
+  const emitEvent = useEmitEvent()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -66,9 +71,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
           refetch()
         }}

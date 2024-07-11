@@ -1,13 +1,15 @@
-import client from '@/lib/client'
 import { AccountsGrid } from '@/repositories/AccountView'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { LoadMoreButton } from '../LoadMoreButton'
+import { usePdsAgent } from '@/shell/AuthContext'
 
 const useLikes = (uri: string, cid?: string) => {
+  const pdsAgent = usePdsAgent()
+
   return useInfiniteQuery({
     queryKey: ['likes', { uri, cid }],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.app.bsky.feed.getLikes({
+      const { data } = await pdsAgent.api.app.bsky.feed.getLikes({
         uri,
         cid,
         limit: 50,

@@ -428,7 +428,7 @@ export const useCommandPaletteAsyncSearch = () => {
     }
 
     return actions.map(createAction)
-  }, [search, didFromHandle, typeaheadResults])
+  }, [router, search, didFromHandle, typeaheadResults, kBarQuery])
 
   useRegisterActions(memoizedActions, [search, didFromHandle, typeaheadResults])
 }

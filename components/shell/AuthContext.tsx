@@ -1,50 +1,137 @@
-import { AuthState } from '@/lib/types'
-import { createContext, useState } from 'react'
+'use client'
 
-// This may seem a bit over-engineered but this is only the groundwork so while the current data model is simplistic
-// and could probably be handled in a simpler setup, the below setup helps us evolve the context to hold much complex
-// model and expose only what may be needed by UI if/when we have complex authorization based on user role etc.
+import { AppBskyActorDefs, Agent } from '@atproto/api'
+import { isLoopbackHost } from '@atproto/oauth-client-browser'
+import { useQuery } from '@tanstack/react-query'
+import { usePathname, useRouter } from 'next/navigation'
+import { createContext, ReactNode, useContext, useMemo } from 'react'
 
-export { AuthState } from '@/lib/types'
+import { Loading } from '@/common/Loader'
+import { SetupModal } from '@/common/SetupModal'
+import { useAtpAuth } from './auth/atp/useAtpAuth'
+import { useOAuth, UseOAuthOptions } from './auth/oauth/useOAuth'
+import { AuthForm } from './AuthForm'
 
-type AuthContextData = {
-  authState: AuthState
-  isLoggedIn: boolean
-  isValidatingAuth: boolean
+export type Profile = AppBskyActorDefs.ProfileViewDetailed
+
+export type AuthContext = {
+  pdsAgent: Agent
 }
 
-const getAuthContextDataFromState = (authState: AuthState): AuthContextData => {
-  return {
-    authState,
-    isLoggedIn: authState === AuthState.LoggedIn,
-    isValidatingAuth: authState === AuthState.Validating,
+const AuthContext = createContext<AuthContext | null>(null)
+
+export type AuthProviderProps = {
+  children: ReactNode
+} & UseOAuthOptions
+
+export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const {
+    isLoginPopup,
+    isInitializing,
+    client: oauthClient,
+    agent: oauthAgent,
+    signIn: oauthSignIn,
+  } = useOAuth({
+    ...options,
+
+    getState: async () => {
+      // Save the current path before signing in
+      return pathname
+    },
+    onSignedIn: async (agent, state) => {
+      // Restore the previous path after signing in
+      if (state) router.push(state)
+    },
+
+    // use "https://ozone.example.com/oauth-client.json" in prod and a loopback URL in dev
+    clientId:
+      options['clientId'] ??
+      (options['clientMetadata'] == null
+        ? typeof window === 'undefined' ||
+          isLoopbackHost(window.location.hostname)
+          ? undefined
+          : new URL(`/oauth-client.json`, window.location.origin).href
+        : undefined),
+  })
+
+  const { agent: atpAgent, signIn: atpSignIn } = useAtpAuth()
+
+  const value = useMemo<AuthContext | null>(() => {
+    if (oauthAgent) return { pdsAgent: oauthAgent }
+    if (atpAgent) return { pdsAgent: atpAgent }
+    return null
+  }, [atpAgent, oauthAgent])
+
+  if (isLoginPopup) {
+    return (
+      <SetupModal>
+        <p className="text-center">This window can be closed</p>
+      </SetupModal>
+    )
   }
+
+  if (isInitializing || !oauthClient) {
+    return (
+      <SetupModal>
+        <Loading message="Initializing..." />
+      </SetupModal>
+    )
+  }
+
+  if (!value) {
+    return (
+      <SetupModal>
+        <AuthForm
+          atpSignIn={atpSignIn}
+          oauthSignIn={oauthClient ? oauthSignIn : undefined}
+        />
+      </SetupModal>
+    )
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-const initialContextData = {
-  authState: AuthState.Validating,
-  isValidatingAuth: true,
-  isLoggedIn: false,
+export function useAuthContext(): AuthContext {
+  const context = useContext(AuthContext)
+  if (context) return context
+
+  throw new Error(`useAuthContext() must be used within an <AuthProvider />`)
 }
 
-export const AuthContext = createContext<AuthContextData>(initialContextData)
-export const AuthChangeContext = createContext<(authState: AuthState) => void>(
-  (_: AuthState) => null,
-)
+export function usePdsAgent() {
+  return useAuthContext().pdsAgent
+}
 
-export const AuthProvider = ({ children }) => {
-  const [authContextData, setAuthContextData] =
-    useState<AuthContextData>(initialContextData) // immediately corrected in useEffect below
+export const useAuthDid = () => {
+  const { pdsAgent } = useAuthContext()
+  return pdsAgent.accountDid
+}
 
-  return (
-    <AuthContext.Provider value={authContextData}>
-      <AuthChangeContext.Provider
-        value={(authState) =>
-          setAuthContextData(getAuthContextDataFromState(authState))
-        }
-      >
-        {children}
-      </AuthChangeContext.Provider>
-    </AuthContext.Provider>
-  )
+export const useAuthProfileQuery = () => {
+  const { pdsAgent } = useAuthContext()
+  const did = pdsAgent.accountDid
+
+  return useQuery({
+    queryKey: ['profile', did],
+    queryFn: async () => pdsAgent.getProfile({ actor: did }),
+  })
+}
+
+export const useAuthProfile = () => {
+  const profileQuery = useAuthProfileQuery()
+  return profileQuery.data?.data
+}
+
+export const useAuthHandle = () => {
+  return useAuthProfile()?.handle
+}
+
+export const useAuthIdentifier = () => {
+  const handle = useAuthHandle()
+  const did = useAuthDid()
+  return handle ?? did
 }

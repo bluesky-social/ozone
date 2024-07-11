@@ -1,30 +1,27 @@
 import { LabelChip, ModerationLabel } from '@/common/labels'
 import { Loading } from '@/common/Loader'
-import client from '@/lib/client'
 import { buildBlueSkyAppUrl } from '@/lib/util'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 
 export function Lists({ actor }: { actor: string }) {
-  const { data, fetchNextPage, hasNextPage, isInitialLoading } =
-    useInfiniteQuery({
-      queryKey: ['lists', { actor }],
-      queryFn: async ({ pageParam }) => {
-        const { data } = await client.api.app.bsky.graph.getLists(
-          {
-            actor,
-            limit: 25,
-            cursor: pageParam,
-          },
-          { headers: client.proxyHeaders() },
-        )
-        return data
-      },
-      getNextPageParam: (lastPage) => lastPage.cursor,
-    })
+  const labelerAgent = useLabelerAgent()
 
+  const { data, isLoading } = useInfiniteQuery({
+    queryKey: ['lists', { actor }],
+    queryFn: async ({ pageParam }) => {
+      const { data } = await labelerAgent.api.app.bsky.graph.getLists({
+        actor,
+        limit: 25,
+        cursor: pageParam,
+      })
+      return data
+    },
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  })
 
-  if (isInitialLoading) {
+  if (isLoading) {
     return (
       <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
         <Loading />

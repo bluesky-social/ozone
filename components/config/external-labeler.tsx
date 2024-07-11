@@ -1,20 +1,17 @@
-import { useEffect, useState } from 'react'
+import { HTMLAttributes, PropsWithChildren, useEffect, useState } from 'react'
 
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { FormLabel, Input } from '@/common/forms'
-import { useLabelerServiceDef } from '@/common/labels/useLabelerDefinition'
-import {
-  addExternalLabelerDid,
-  getExternalLabelers,
-  removeExternalLabelerDid,
-} from './data'
+import { useLabelerDefinitionQuery } from '@/common/labels/useLabelerDefinition'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
 import dynamic from 'next/dynamic'
-import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
-import { buildBlueSkyAppUrl } from '@/lib/util'
+import { buildBlueSkyAppUrl, classNames } from '@/lib/util'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
+import { Loading } from '@/common/Loader'
+import { useExternalLabelers } from '@/shell/ExternalLabelersContext'
 import { RepoFinder } from '@/repositories/Finder'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
@@ -22,17 +19,12 @@ const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
 })
 
 export const ExternalLabelerConfig = () => {
-  const [labelers, setLabelers] = useState<Record<string, any>>({})
-  const [did, setDid] = useState<string>('')
-  const labelerServiceDef = useLabelerServiceDef(did)
-  const labelerDetails = Object.entries(labelers)
-  const darkMode = isDarkModeEnabled()
-  const originalServiceDid = client.getServiceDid()?.split('#')[0]
+  const { config } = useConfigurationContext()
+  const [labelers, setLabelers] = useExternalLabelers()
+  const [did, setDid] = useState('')
 
-  useEffect(() => {
-    setLabelers(getExternalLabelers())
-  }, [])
-  const alreadySubscribed = !!labelerDetails.find(([d]) => d === did)
+  const { data, error, isLoading } = useLabelerDefinitionQuery(did)
+  const alreadyPresent = labelers.some((d) => d === did)
 
   return (
     <>
@@ -73,85 +65,124 @@ export const ExternalLabelerConfig = () => {
               size="sm"
               appearance="primary"
               className="px-2 sm:px-4 sm:mr-2 py-1.5"
-              disabled={!labelerServiceDef || alreadySubscribed}
+              disabled={
+                isLoading || !data || alreadyPresent || did === config.did
+              }
               onClick={() => {
-                const labelers = addExternalLabelerDid(did, labelerServiceDef)
-                setLabelers(labelers)
+                setLabelers([...labelers, did])
                 setDid('')
               }}
             >
               <span className="text-sm sm:text-base">Subscribe</span>
             </ActionButton>
           </div>
-          {did && !labelerServiceDef && (
-            <ErrorInfo type="warn">Labeler profile not found!</ErrorInfo>
+          {did && !data && !isLoading && (
+            <ErrorInfo key="error" type="warn">
+              {String(error || 'Labeler profile not found!')}
+            </ErrorInfo>
           )}
-          {did && alreadySubscribed && (
-            <ErrorInfo type="warn">
+          {did && alreadyPresent && (
+            <ErrorInfo key="alreadyPresent" type="warn">
               You{"'"}re already subscribed to this labeler!
             </ErrorInfo>
           )}
-
-          {labelerDetails.length ? (
-            <div className="mt-4">
-              <h4 className="font-bold pb-2 text-sm">Configured labelers</h4>
-              {labelerDetails.map(([labelerDid, labeler], i) => (
-                <div
-                  key={labeler.uri}
-                  className={`pb-2 dark:border-gray-600 border-gray-300 ${
-                    i < labelerDetails.length - 1 ? 'border-b mb-2' : ''
-                  }`}
-                >
-                  <h5 className="text-base flex items-center">
-                    <a
-                      target="_blank"
-                      href={buildBlueSkyAppUrl({
-                        did: labelerDid,
-                      })}
-                    >
-                      {labeler.creator.displayName}
-                    </a>{' '}
-                    <ArrowTopRightOnSquareIcon className="ml-1 h-4 w-4" />
-                  </h5>
-                  <p className="text-sm text-gray-700 dark:text-gray-300">
-                    {labeler.creator.description}
-                  </p>
-                  <div className="my-2">
-                    <BrowserReactJsonView
-                      collapsed
-                      src={labeler}
-                      theme={darkMode ? 'harmonic' : 'rjv-default'}
-                      name={null}
-                      quotesOnKeys={false}
-                      displayObjectSize={false}
-                      displayDataTypes={false}
-                      enableClipboard={false}
-                      validationMessage="Cannot delete property"
-                    />
-                  </div>
-                  {originalServiceDid !== labeler.creator.did && (
-                    <ActionButton
-                      size="xs"
-                      appearance="outlined"
-                      className="px-2 sm:px-4 sm:mr-2"
-                      onClick={() => {
-                        const labelers = removeExternalLabelerDid(
-                          labeler.creator.did,
-                        )
-                        setLabelers(labelers)
-                      }}
-                    >
-                      <span className="text-sm sm:text-base">Unsubscribe</span>
-                    </ActionButton>
-                  )}
-                </div>
-              ))}
-            </div>
-          ) : (
-            <p className="mt-2">No external labeler configured</p>
+          {did && did === config.did && (
+            <ErrorInfo key="config" type="warn">
+              The current service{"'"}s DID cannot be subscribed to as an
+              external labeler.
+            </ErrorInfo>
           )}
+
+          <div className="mt-4">
+            <h4 className="font-bold pb-2 text-sm">Configured labelers</h4>
+
+            <ExternalLabelerView did={config.did} />
+
+            {labelers.map((labelerDid) => (
+              <div key={labelerDid}>
+                <hr className="dark:border-gray-600 border-gray-300 my-2" />
+                <ExternalLabelerView
+                  did={labelerDid}
+                  onUnsubscribe={() => {
+                    setLabelers(labelers.filter((d) => d !== labelerDid))
+                  }}
+                />
+              </div>
+            ))}
+          </div>
         </div>
       </Card>
     </>
+  )
+}
+
+function ExternalLabelerView({
+  did,
+  onUnsubscribe,
+  className,
+  children,
+  ...props
+}: HTMLAttributes<HTMLDivElement> & {
+  did: string
+  onUnsubscribe?: () => void
+}) {
+  const darkMode = isDarkModeEnabled()
+  const { isLoading, data, error, refetch } = useLabelerDefinitionQuery(did)
+
+  return (
+    <div className={classNames(`pb-2`, className)} {...props}>
+      <h5 className="text-base flex items-center">
+        <a target="_blank" href={buildBlueSkyAppUrl({ did })}>
+          {data ? data.creator.displayName : did}
+        </a>{' '}
+        <ArrowTopRightOnSquareIcon className="ml-1 h-4 w-4" />
+      </h5>
+      {data ? (
+        <>
+          <p className="text-sm text-gray-700 dark:text-gray-300 mb-2">
+            {data.creator.description}
+          </p>
+
+          <BrowserReactJsonView
+            collapsed
+            src={data}
+            theme={darkMode ? 'harmonic' : 'rjv-default'}
+            name={null}
+            quotesOnKeys={false}
+            displayObjectSize={false}
+            displayDataTypes={false}
+            enableClipboard={false}
+            validationMessage="Cannot delete property"
+          />
+        </>
+      ) : isLoading ? (
+        <Loading />
+      ) : (
+        <ErrorInfo type="error">
+          {String(error || 'Failed to load.')}{' '}
+          <ActionButton
+            size="xs"
+            appearance="secondary"
+            onClick={() => refetch()}
+          >
+            Reload
+          </ActionButton>
+          .
+        </ErrorInfo>
+      )}
+
+      {onUnsubscribe && (
+        <ActionButton
+          key="unsubscribe"
+          size="xs"
+          appearance="outlined"
+          className="mt-2 px-2 sm:px-4 sm:mr-2"
+          onClick={() => onUnsubscribe()}
+        >
+          <span className="text-sm sm:text-base">Unsubscribe</span>
+        </ActionButton>
+      )}
+      {children}
+    </div>
   )
 }
