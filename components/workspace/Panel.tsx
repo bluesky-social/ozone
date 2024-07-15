@@ -33,9 +33,6 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
-  const [replaceFormWithEvents, setReplaceFormWithEvents] = useState(false)
-  const breakpoint = useBreakpoint()
-  const isMobileView = breakpoint === 'xs'
 
   const formRef = useRef<HTMLFormElement>(null)
   const [showActionForm, setShowActionForm] = useState(false)
@@ -44,6 +41,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const [modEventType, setModEventType] = useState<string>(
     MOD_EVENTS.ACKNOWLEDGE,
   )
+  const [showItemCreator, setShowItemCreator] = useState(false)
 
   const handleSelectAll = () => {
     const checkboxes = formRef.current?.querySelectorAll<HTMLInputElement>(
@@ -153,18 +151,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       title={
         <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
           Workspace
-          {isMobileView && (
-            <button
-              className={`sm:hidden text-xs rounded px-2 ${
-                replaceFormWithEvents
-                  ? 'bg-indigo-700 text-white'
-                  : 'bg-indigo-100 text-indigo-700'
-              }`}
-              onClick={() => setReplaceFormWithEvents(!replaceFormWithEvents)}
-            >
-              Events
-            </button>
-          )}
         </Dialog.Title>
       }
       onClose={onClose}
@@ -184,53 +170,65 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           </>
         </div>
       ) : (
-        <form ref={formRef} id={WORKSPACE_FORM_ID} onSubmit={onFormSubmit}>
-          {showActionForm && (
-            <WorkspacePanelActionForm
-              {...{
-                modEventType,
-                setModEventType,
-                onCancel: () => setShowActionForm((current) => !current),
-              }}
+        <>
+          {showItemCreator && (
+            <WorkspaceItemCreator
+              size="sm"
+              onCancel={() => setShowItemCreator(false)}
             />
           )}
-          <div className="mb-2 flex space-x-2">
-            <WorkspacePanelActions
-              {...{
-                handleSelectAll,
-                handleRemoveSelected,
-                handleEmptyWorkspace,
-                setShowActionForm,
-                showActionForm,
-              }}
-            />
-          </div>
-          {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
-          {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
-          {/* @ts-ignore */}
-          <style jsx>{`
-            .scrollable-container {
-              height: calc(100vh - 100px);
-            }
-            @supports (-webkit-touch-callout: none) {
+          <form ref={formRef} id={WORKSPACE_FORM_ID} onSubmit={onFormSubmit}>
+            {showActionForm && (
+              <WorkspacePanelActionForm
+                {...{
+                  modEventType,
+                  setModEventType,
+                  onCancel: () => setShowActionForm((current) => !current),
+                }}
+              />
+            )}
+            {!showItemCreator && (
+              <div className="mb-2 flex space-x-2">
+                <WorkspacePanelActions
+                  {...{
+                    handleSelectAll,
+                    handleRemoveSelected,
+                    handleEmptyWorkspace,
+                    setShowActionForm,
+                    setShowItemCreator,
+                    showActionForm,
+                    workspaceList,
+                  }}
+                />
+              </div>
+            )}
+            {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
+            {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
+            {/* @ts-ignore */}
+            <style jsx>{`
               .scrollable-container {
-                height: calc(100svh - 100px);
+                height: calc(100vh - 100px);
               }
-            }
-            @media (min-width: 640px) {
-              .scrollable-container {
-                height: calc(100vh - 180px);
+              @supports (-webkit-touch-callout: none) {
+                .scrollable-container {
+                  height: calc(100svh - 100px);
+                }
               }
-            }
-          `}</style>
-          <div className="scrollable-container overflow-y-auto">
-            <WorkspaceList
-              list={workspaceList}
-              onRemoveItem={handleRemoveItem}
-              subjectStatuses={workspaceListStatuses || {}}
-            />
-          </div>
-        </form>
+              @media (min-width: 640px) {
+                .scrollable-container {
+                  height: calc(100vh - 180px);
+                }
+              }
+            `}</style>
+            <div className="scrollable-container overflow-y-auto">
+              <WorkspaceList
+                list={workspaceList}
+                onRemoveItem={handleRemoveItem}
+                subjectStatuses={workspaceListStatuses || {}}
+              />
+            </div>
+          </form>
+        </>
       )}
     </FullScreenActionPanel>
   )
