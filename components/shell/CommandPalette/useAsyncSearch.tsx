@@ -1,7 +1,8 @@
 import { getDidFromHandle } from '@/lib/identity'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
-import { AtUri } from '@atproto/api'
+import { useSearchActorsTypeahead } from '@/repositories/useSearchActorsTypeahead'
+import { AppBskyActorDefs, AtUri } from '@atproto/api'
 import {
   ChatBubbleLeftIcon,
   UserGroupIcon,
@@ -15,6 +16,7 @@ import {
   useRegisterActions,
   createAction,
   ActionSection,
+  KBarQuery,
 } from 'kbar'
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 import { useRouter } from 'next/navigation'
@@ -104,6 +106,29 @@ const buildItemForDid = ({
   return actions
 }
 
+const buildItemFromTypeahead = ({
+  search,
+  actors = [],
+  kBarQuery,
+}: Omit<ItemBuilderProps, 'profileKey' | 'type' | 'router'> & {
+  actors: AppBskyActorDefs.ProfileViewBasic[]
+  kBarQuery: KBarQuery
+}): Action[] => {
+  return actors.map((actor) => ({
+    id: `profile-${actor.did}`,
+    name: `@${actor.handle}`,
+    keywords: `${search},actor,${actor.displayName}, ${actor.handle}`,
+    icon: <RepoIcon className={iconClassName} />,
+    subtitle: `${actor.displayName || actor.did}`,
+    section: ActionSections.actions,
+    priority: 1,
+    perform: () => {
+      kBarQuery.setSearch(actor.did)
+      kBarQuery.toggle()
+    },
+  }))
+}
+
 const buildItemForProfile = ({
   type,
   search,
@@ -169,9 +194,15 @@ const buildItemForProfile = ({
 
 export const useCommandPaletteAsyncSearch = () => {
   const router = useRouter()
-  const { search } = useKBar<{ search: string }>((state) => ({
+  const { search, query: kBarQuery } = useKBar<{ search: string }>((state) => ({
     search: state.searchQuery,
   }))
+
+  // Only pass the query to the typeahead if it starts with @ since we want to show other results for input that does not start with @
+  const { data: typeaheadResults } = useSearchActorsTypeahead(
+    search.startsWith('@') ? search : '',
+  )
+
   const [didFromHandle, setDidFromHandle] = useState<{
     did: string
     handle: string
@@ -403,6 +434,15 @@ export const useCommandPaletteAsyncSearch = () => {
           addToWorkspace,
         }),
       )
+    } else if (search.startsWith('@')) {
+      actions.push(
+        ...buildItemFromTypeahead({
+          addToWorkspace,
+          search,
+          actors: typeaheadResults || [],
+          kBarQuery,
+        }),
+      )
     } else if (isValidHandle(search)) {
       actions.push(
         ...buildItemForProfile({
@@ -428,7 +468,7 @@ export const useCommandPaletteAsyncSearch = () => {
     }
 
     return actions.map(createAction)
-  }, [search, didFromHandle])
+  }, [search, didFromHandle, typeaheadResults])
 
-  useRegisterActions(memoizedActions, [search, didFromHandle])
+  useRegisterActions(memoizedActions, [search, didFromHandle, typeaheadResults])
 }

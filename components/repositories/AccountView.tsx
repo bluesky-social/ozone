@@ -50,6 +50,7 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { checkPermission } from '@/lib/server-config'
+import { Blocks } from './Blocks'
 
 enum Views {
   Details,
@@ -57,6 +58,7 @@ enum Views {
   Follows,
   Followers,
   Invites,
+  Blocks,
   Events,
   Email,
   Lists,
@@ -69,6 +71,7 @@ const TabKeys = {
   followers: Views.Followers,
   lists: Views.Lists,
   invites: Views.Invites,
+  blocks: Views.Blocks,
   events: Views.Events,
   email: Views.Email,
 }
@@ -139,6 +142,10 @@ export function AccountView({
           view: Views.Followers,
           label: 'Followers',
           sublabel: String(profile.followersCount),
+        },
+        {
+          view: Views.Blocks,
+          label: 'Blocks',
         },
       )
 
@@ -214,6 +221,7 @@ export function AccountView({
                   {currentView === Views.Followers && <Followers id={id} />}
                   {currentView === Views.Lists && <Lists actor={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
+                  {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
                   )}
@@ -529,7 +537,11 @@ function Posts({
 }
 
 function Follows({ id }: { id: string }) {
-  const { error, data: follows } = useQuery({
+  const {
+    error,
+    data: follows,
+    isLoading,
+  } = useQuery({
     queryKey: ['follows', { id }],
     queryFn: async () => {
       const { data } = await client.api.app.bsky.graph.getFollows(
@@ -541,13 +553,21 @@ function Follows({ id }: { id: string }) {
   })
   return (
     <div>
-      <AccountsGrid error={String(error ?? '')} accounts={follows?.follows} />
+      <AccountsGrid
+        isLoading={isLoading}
+        error={String(error ?? '')}
+        accounts={follows?.follows}
+      />
     </div>
   )
 }
 
 function Followers({ id }: { id: string }) {
-  const { error, data: followers } = useQuery({
+  const {
+    error,
+    isLoading,
+    data: followers,
+  } = useQuery({
     queryKey: ['followers', { id }],
     queryFn: async () => {
       const { data } = await client.api.app.bsky.graph.getFollowers(
@@ -562,6 +582,7 @@ function Followers({ id }: { id: string }) {
   return (
     <div>
       <AccountsGrid
+        isLoading={isLoading}
         error={String(error ?? '')}
         accounts={followers?.followers}
       />
@@ -570,7 +591,11 @@ function Followers({ id }: { id: string }) {
 }
 
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
-  const { error, data: invitedUsers } = useQuery({
+  const {
+    error,
+    isLoading,
+    data: invitedUsers,
+  } = useQuery({
     queryKey: ['invitedUsers', { id: repo.did }],
     queryFn: async () => {
       const actors: string[] = []
@@ -649,22 +674,29 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
 type FollowOrFollower = AppBskyActorDefs.ProfileView
 export function AccountsGrid({
   error,
+  isLoading,
   accounts,
 }: {
   error: string
+  isLoading?: boolean
   accounts?: FollowOrFollower[]
 }) {
-  if (!accounts) {
+  if (isLoading) {
     return (
-      <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
+      <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl dark:text-gray-300">
         Loading...
       </div>
     )
   }
   return (
     <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      {!!error && (
+        <div className="mt-1 dark:text-gray-300">
+          <p>{error}</p>
+        </div>
+      )}
       <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
-        {accounts.map((account) => (
+        {accounts?.map((account) => (
           <div
             key={account.handle}
             className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
