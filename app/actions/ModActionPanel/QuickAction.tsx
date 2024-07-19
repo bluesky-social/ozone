@@ -399,14 +399,14 @@ function Form(
           )
         }
 
-        // await Promise.all(labelSubmissions)
+        await Promise.all(labelSubmissions)
       } else {
-        // await onSubmit({
-        //   subject: subjectInfo,
-        //   createdBy: client.session.did,
-        //   subjectBlobCids,
-        //   event: coreEvent,
-        // })
+        await onSubmit({
+          subject: subjectInfo,
+          createdBy: client.session.did,
+          subjectBlobCids,
+          event: coreEvent,
+        })
       }
 
       if (formData.get('additionalAcknowledgeEvent')) {
