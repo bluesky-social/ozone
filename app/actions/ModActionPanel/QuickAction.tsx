@@ -365,7 +365,6 @@ function Form(
         const labelSubmissions: Promise<void>[] = []
 
         Object.keys(negatingLabelsByCid).forEach((labelCid) => {
-          console.log(labelCid)
           labelSubmissions.push(
             onSubmit({
               subject: { ...subjectInfo, cid: labelCid },
