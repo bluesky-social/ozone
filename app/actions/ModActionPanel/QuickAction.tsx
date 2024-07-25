@@ -364,7 +364,8 @@ function Form(
 
         const labelSubmissions: Promise<void>[] = []
 
-        Object.keys(negatingLabelsByCid).forEach((labelCid) =>
+        Object.keys(negatingLabelsByCid).forEach((labelCid) => {
+          console.log(labelCid)
           labelSubmissions.push(
             onSubmit({
               subject: { ...subjectInfo, cid: labelCid },
@@ -379,8 +380,8 @@ function Form(
                 negateLabelVals: negatingLabelsByCid[labelCid],
               },
             }),
-          ),
-        )
+          )
+        })
 
         // TODO: Typecasting here is not ideal
         if (
