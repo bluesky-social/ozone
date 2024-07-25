@@ -75,10 +75,11 @@ export default function RecordViewPageContent({
 
       const uri = createAtUri({ did, collection, rkey })
       const getRecord = async () => {
-        const { data: record } = await client.api.tools.ozone.moderation.getRecord(
-          { uri },
-          { headers: client.proxyHeaders() },
-        )
+        const { data: record } =
+          await client.api.tools.ozone.moderation.getRecord(
+            { uri },
+            { headers: client.proxyHeaders() },
+          )
         return record
       }
       const getThread = async () => {
@@ -103,17 +104,24 @@ export default function RecordViewPageContent({
           return undefined
         }
         // TODO: We need pagination here, right? how come getPostThread doesn't need it?
-        const { data: listData } = await client.api.app.bsky.graph.getList({
-          list: uri,
-        })
+        const { data: listData } = await client.api.app.bsky.graph.getList(
+          {
+            list: uri,
+          },
+          { headers: client.proxyHeaders() },
+        )
         return listData.items.map(({ subject }) => subject)
       }
-      const [record, profiles, thread] = await Promise.all([
+      const [record, profiles, thread] = await Promise.allSettled([
         getRecord(),
         getListProfiles(),
         getThread(),
       ])
-      return { record, thread, profiles }
+      return {
+        record: record.status === 'fulfilled' ? record.value : undefined,
+        thread: thread.status === 'fulfilled' ? thread.value : undefined,
+        profiles: profiles.status === 'fulfilled' ? profiles.value : undefined,
+      }
     },
   })
 
@@ -158,7 +166,7 @@ export default function RecordViewPageContent({
   if (error) {
     return <LoadingFailed error={error} />
   }
-  if (!data) {
+  if (!data && isInitialLoading) {
     return <Loading />
   }
   return (
@@ -170,9 +178,7 @@ export default function RecordViewPageContent({
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
           refetch()
         }}
@@ -186,13 +192,15 @@ export default function RecordViewPageContent({
           refetch()
         }}
       />
-      <RecordView
-        record={data.record}
-        thread={data.thread}
-        profiles={data.profiles}
-        onReport={setReportUri}
-        onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
-      />
+      {data?.record && (
+        <RecordView
+          record={data.record}
+          thread={data.thread}
+          profiles={data.profiles}
+          onReport={setReportUri}
+          onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
+        />
+      )}
     </>
   )
 }
