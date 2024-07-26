@@ -336,32 +336,35 @@ function Form(
         const negatingLabelsByCid: Record<string, string[]> = {}
 
         if (recordInfo?.labels?.length && 'cid' in subjectInfo) {
+          // go through each label we intended to remove
           labels.negateLabelVals.forEach((label) => {
-            const existingLabelWithDifferentCid = recordInfo.labels?.find(
-              ({ val: originalLabel, cid, src }) => {
-                return (
-                  originalLabel === label &&
-                  cid !== subjectInfo.cid &&
-                  // Ignore self labels
-                  src !== recordInfo.repo.did
-                )
-              },
-            )
-            if (!!existingLabelWithDifferentCid?.cid) {
-              negatingLabelsByCid[existingLabelWithDifferentCid.cid] ??= []
+            // go through each label on the record and check if the same label is being removed from multiple CIDs
+            recordInfo.labels?.forEach(({ val: originalLabel, cid, src }) => {
+              if (
+                // Ignore self labels
+                src === recordInfo.repo.did ||
+                originalLabel !== label ||
+                !cid
+              ) {
+                return
+              }
+              negatingLabelsByCid[cid] ??= []
 
-              negatingLabelsByCid[existingLabelWithDifferentCid.cid].push(label)
-              // Since the label being negated is going to be removed from a different CID
+              // for the same cid, one label can only exist once so we if it's not already in the list, add it
+              if (!negatingLabelsByCid[cid].includes(label)) {
+                negatingLabelsByCid[cid].push(label)
+              }
+              // Since the label being negated is going to be removed from a different CID, let's remove it from the coreEvent
               coreEvent.negateLabelVals = labels.negateLabelVals.filter(
                 (l) => l !== label,
               )
-            }
+            })
           })
         }
 
         const labelSubmissions: Promise<void>[] = []
 
-        Object.keys(negatingLabelsByCid).forEach((labelCid) =>
+        Object.keys(negatingLabelsByCid).forEach((labelCid) => {
           labelSubmissions.push(
             onSubmit({
               subject: { ...subjectInfo, cid: labelCid },
@@ -376,8 +379,8 @@ function Form(
                 negateLabelVals: negatingLabelsByCid[labelCid],
               },
             }),
-          ),
-        )
+          )
+        })
 
         // TODO: Typecasting here is not ideal
         if (
@@ -827,6 +830,7 @@ async function getSubject(subject: string) {
       },
       { headers: client.proxyHeaders() },
     )
+
     return { record }
   } else {
     return {}

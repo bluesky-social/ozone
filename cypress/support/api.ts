@@ -22,13 +22,26 @@ export const mockRepoResponse = (response: {
   )
 }
 
+export const mockRecordResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) => {
+  cy.intercept(
+    'GET',
+    `${SERVER_URL}/tools.ozone.moderation.getRecord?uri=${encodeURIComponent(
+      response.body.uri,
+    )}`,
+    response,
+  )
+}
+
 export const mockProfileResponse = (response: {
   statusCode: number
   body: Record<string, any>
 }) =>
   cy.intercept(
     'GET',
-    `${SERVER_URL}/app.bsky.actor.getProfile?did=${encodeURIComponent(
+    `${SERVER_URL}/app.bsky.actor.getProfile?actor=${encodeURIComponent(
       response.body.did,
     )}`,
     response,
