@@ -10,10 +10,10 @@ export const emitEvent = async (
   vals: ToolsOzoneModerationEmitEvent.InputSchema,
 ) => {
   const emitModerationEventAsync = async () => {
-    const { data } = await client.api.tools.ozone.moderation.emitEvent(
-      vals,
-      { encoding: 'application/json', headers: client.proxyHeaders() },
-    )
+    const { data } = await client.api.tools.ozone.moderation.emitEvent(vals, {
+      encoding: 'application/json',
+      headers: client.proxyHeaders(),
+    })
 
     return data
   }
