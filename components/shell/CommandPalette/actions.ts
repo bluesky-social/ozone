@@ -1,6 +1,15 @@
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
+import { ReadonlyURLSearchParams } from 'next/navigation'
 
-export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
+export const getStaticActions = ({
+  router,
+  pathname,
+  searchParams,
+}: {
+  router: AppRouterInstance
+  pathname: string
+  searchParams: ReadonlyURLSearchParams
+}) => [
   {
     id: 'quick-action-modal',
     name: 'Open Quick Action Panel',
@@ -16,7 +25,9 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
     shortcut: ['w'],
     keywords: 'workspace,panel',
     perform: () => {
-      router.push('/reports?workspaceOpen=true')
+      const newParams = new URLSearchParams(searchParams)
+      newParams.set('workspaceOpen', 'true')
+      router.push((pathname ?? '') + '?' + newParams.toString())
     },
   },
   {

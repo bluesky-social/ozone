@@ -27,6 +27,7 @@ import { useTitle } from 'react-use'
 import { LanguagePicker } from '@/common/LanguagePicker'
 import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
 import { WorkspacePanel } from 'components/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const TABS = [
   {
@@ -163,7 +164,6 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
 export const ReportsPageContent = () => {
   const params = useSearchParams()
   const quickOpenParam = params.get('quickOpen') ?? ''
-  const workspaceOpenParam = params.get('workspaceOpen') ?? ''
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
   const onlyMuted = !!params.get('onlyMuted')
@@ -186,15 +186,7 @@ export const ReportsPageContent = () => {
     }
     router.push((pathname ?? '') + '?' + searchParams.toString())
   }
-  const toggleWorkspacePanel = () => {
-    const searchParams = new URLSearchParams(params)
-    if (workspaceOpenParam) {
-      searchParams.delete('workspaceOpen')
-    } else {
-      searchParams.set('workspaceOpen', 'true')
-    }
-    router.push((pathname ?? '') + '?' + searchParams.toString())
-  }
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
@@ -320,7 +312,7 @@ export const ReportsPageContent = () => {
         }}
       />
       <WorkspacePanel
-        open={!!workspaceOpenParam}
+        open={isWorkspaceOpen}
         onClose={() => toggleWorkspacePanel()}
       />
     </>

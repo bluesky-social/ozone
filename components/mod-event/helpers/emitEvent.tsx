@@ -65,23 +65,12 @@ export const emitEvent = async (
 }
 
 export const actionSubjects = async (
-  eventData: Omit<ToolsOzoneModerationEmitEvent.InputSchema, 'subject'>,
+  eventData: Pick<
+    ToolsOzoneModerationEmitEvent.InputSchema,
+    'event' | 'createdBy'
+  >,
   subjects: string[],
 ) => {
-  const emit = async (
-    subject: ToolsOzoneModerationEmitEvent.InputSchema['subject'],
-  ) => {
-    const { data } = await client.api.tools.ozone.moderation.emitEvent(
-      { subject, ...eventData },
-      {
-        encoding: 'application/json',
-        headers: client.proxyHeaders(),
-      },
-    )
-
-    return data
-  }
-
   try {
     const results: { succeeded: string[]; failed: string[] } = {
       succeeded: [],
@@ -91,7 +80,13 @@ export const actionSubjects = async (
       subjects.map(async (sub) => {
         try {
           const { subject } = await createSubjectFromId(sub)
-          await emit(subject)
+          await client.api.tools.ozone.moderation.emitEvent(
+            { subject, ...eventData },
+            {
+              encoding: 'application/json',
+              headers: client.proxyHeaders(),
+            },
+          )
           results.succeeded.push(sub)
         } catch (err) {
           results.failed.push(sub)
@@ -126,6 +121,6 @@ const eventTexts = {
   [MOD_EVENTS.TAKEDOWN]: 'taken-down',
   [MOD_EVENTS.COMMENT]: 'commented',
   [MOD_EVENTS.LABEL]: 'labeled',
-  [MOD_EVENTS.MUTE]: 'Muted',
-  [MOD_EVENTS.UNMUTE]: 'Unmuted',
+  [MOD_EVENTS.MUTE]: 'muted',
+  [MOD_EVENTS.UNMUTE]: 'unmuted',
 }

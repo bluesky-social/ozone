@@ -123,7 +123,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       await actionSubjects(
         {
           event: coreEvent,
-          subjectBlobCids: [],
           createdBy: clientManager.session.did,
         },
         Array.from(formData.getAll('workspaceItem') as string[]),
@@ -141,7 +140,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   }
 
   const { data: workspaceList } = useWorkspaceList()
-  //   @TODO: Probably don't need a loading state for subject statuses here?
   const { data: workspaceListStatuses } = useSubjectStatuses({
     subjects: workspaceList || [],
   })

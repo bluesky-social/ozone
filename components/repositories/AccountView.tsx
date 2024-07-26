@@ -259,7 +259,7 @@ function Header({
   onShowActionPanel: (subject: string) => void
 }) {
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
-  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation
+  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
   const { data: workspaceList } = useWorkspaceList()
   const { subjectStatus } = repo?.moderation ?? {}
   const displayActorName = repo
