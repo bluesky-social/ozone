@@ -15,6 +15,12 @@ export const TakedownActionDurations = {
   168: {
     text: '7 Days',
   },
+  720: {
+    text: '30 Days',
+  },
+  2160: {
+    text: '90 Days',
+  },
 }
 
 export const MuteActionDurations = {
