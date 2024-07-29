@@ -21,6 +21,7 @@ jobs:
         with:
           build: yarn build
           start: yarn start
+          browser: chrome
       - name: Setup Screenshot Artifacts
         if: failure()
         uses: actions/upload-artifact@v3
