@@ -47,8 +47,9 @@ export const useSubjectStatuses = ({ subjects }: { subjects: string[] }) => {
                 statusBySubject[subject] = null
               }
             })
-            .catch(() => {
+            .catch((err) => {
               statusBySubject[subject] = null
+              console.error(err)
             })
         }),
       )

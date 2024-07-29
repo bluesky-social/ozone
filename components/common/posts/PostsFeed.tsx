@@ -475,7 +475,7 @@ function PostControls({
   const { data: workspaceList } = useWorkspaceList()
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
   const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
-  const isInWorkspace = workspaceList?.find((uri) => uri === item.post.uri)
+  const isInWorkspace = workspaceList?.includes(item.post.uri)
   return (
     <div className="flex gap-3 pl-10">
       <Link
