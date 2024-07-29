@@ -31,7 +31,9 @@ describe('Mod Action -> Label', () => {
   it('Allows removing and adding a label to a subject', () => {
     const NUDITY_LABEL = 'nudity'
     cy.get('table').should('include.text', seedFixture.carla.repo.handle)
+    cy.wait(1000)
     cy.contains('button', 'Take Action').click()
+    cy.wait(1000)
     cy.get('[data-cy="label-list"]').contains(
       seedFixture.carla.repo.labels[0].val,
     )
