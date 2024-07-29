@@ -75,9 +75,7 @@ describe('Command Palette', () => {
     const comboKey = Cypress.platform === 'darwin' ? '{cmd}k' : '{ctrl}k'
     cy.get('body').type(comboKey)
     if (input) {
-      cy.get('[aria-controls="kbar-listbox"]').clear().type(input, {
-        delay: 0,
-      })
+      cy.get('[aria-controls="kbar-listbox"]').clear().type(input)
       cy.wait(300)
     }
   }
