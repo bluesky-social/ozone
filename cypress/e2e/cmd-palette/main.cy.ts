@@ -78,6 +78,7 @@ describe('Command Palette', () => {
       cy.get('[aria-controls="kbar-listbox"]').clear().type(input, {
         delay: 0,
       })
+      cy.wait(300)
     }
   }
 
@@ -103,7 +104,7 @@ describe('Command Palette', () => {
     // Setup the auth response
     openCommandPalette(bskyPostUrlWithHandle)
     cy.get('#kbar-listbox-item-1').contains('Take action on Post').click()
-    cy.wait(500)
+    cy.wait(300)
     cy.location('href').then((href) => {
       expect(decodeURIComponent(href)).to.include(
         `quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a`,
@@ -112,11 +113,9 @@ describe('Command Palette', () => {
 
     cy.wait(1000)
     openCommandPalette(bskyPostUrlWithHandle)
-    cy.get('#kbar-listbox-item-2')
-      .scrollIntoView()
-      .contains('Take action on alice.test')
-      .click()
-    cy.wait(500)
+    cy.get('#kbar-listbox').parent().scrollTo(0, 0)
+    cy.get('#kbar-listbox-item-2').contains('Take action on alice.test').click()
+    cy.wait(300)
     cy.location('href').then((href) => {
       expect(decodeURIComponent(href)).to.include(
         `quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst`,
