@@ -112,7 +112,10 @@ describe('Command Palette', () => {
 
     cy.wait(1000)
     openCommandPalette(bskyPostUrlWithHandle)
-    cy.get('#kbar-listbox-item-2').contains('Take action on alice.test').click()
+    cy.get('#kbar-listbox-item-2')
+      .scrollIntoView()
+      .contains('Take action on alice.test')
+      .click()
     cy.wait(500)
     cy.location('href').then((href) => {
       expect(decodeURIComponent(href)).to.include(
