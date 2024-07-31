@@ -1,5 +1,5 @@
 'use client'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useInterval, useTitle } from 'react-use'
 import dynamic from 'next/dynamic'
 
