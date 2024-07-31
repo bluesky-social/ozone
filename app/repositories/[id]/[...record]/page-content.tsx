@@ -17,6 +17,8 @@ import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { useEffect } from 'react'
 import { useTitle } from 'react-use'
 import { getDidFromHandle } from '@/lib/identity'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { WorkspacePanel } from '@/workspace/Panel'
 
 const buildPageTitle = ({
   handle,
@@ -149,6 +151,7 @@ export default function RecordViewPageContent({
     }
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   useEffect(() => {
     if (reportUri === 'default' && data?.record) {
@@ -182,6 +185,10 @@ export default function RecordViewPageContent({
           await emitEvent(vals)
           refetch()
         }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
       />
       <ReportPanel
         open={!!reportUri}

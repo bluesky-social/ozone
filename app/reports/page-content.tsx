@@ -26,6 +26,8 @@ import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { LanguagePicker } from '@/common/LanguagePicker'
 import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
+import { WorkspacePanel } from 'components/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const TABS = [
   {
@@ -184,6 +186,7 @@ export const ReportsPageContent = () => {
     }
     router.push((pathname ?? '') + '?' + searchParams.toString())
   }
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
@@ -307,6 +310,10 @@ export const ReportsPageContent = () => {
           await emitEvent(vals)
           refetch()
         }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
       />
     </>
   )

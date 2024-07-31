@@ -16,6 +16,8 @@ import {
   ExclamationCircleIcon,
   LanguageIcon,
   InformationCircleIcon,
+  FolderMinusIcon,
+  FolderPlusIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
@@ -29,6 +31,11 @@ import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { SOCIAL_APP_URL } from '@/lib/constants'
 import { ReplyParent } from './ReplyParent'
+import {
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
 import { ImageList } from './ImageList'
 
 export function PostsFeed({
@@ -465,23 +472,46 @@ function PostControls({
   item: AppBskyFeedDefs.FeedViewPost
   onReport?: (uri: string) => void
 }) {
+  const { data: workspaceList } = useWorkspaceList()
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
+  const isInWorkspace = workspaceList?.includes(item.post.uri)
   return (
-    <div className="flex gap-1 pl-10">
+    <div className="flex gap-3 pl-10">
       <Link
         href={`/repositories/${item.post.uri.replace('at://', '')}`}
-        className="flex flex-col items-center rounded-md px-4 pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:bg-blue-100 hover:text-blue-700 cursor-pointer"
+        className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
       >
-        <DocumentMagnifyingGlassIcon className="w-6 h-6" />
+        <DocumentMagnifyingGlassIcon className="w-4 h-4" />
         <span className="text-sm">View</span>
       </Link>
       <button
         type="button"
-        className="flex flex-col items-center rounded-md px-4 pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:bg-rose-100 hover:text-rose-700 cursor-pointer"
+        className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
         onClick={() => onReport?.(item.post.uri)}
       >
-        <ExclamationCircleIcon className="w-6 h-6" />
+        <ExclamationCircleIcon className="w-4 h-4" />
         <span className="text-sm">Report</span>
       </button>
+      {isInWorkspace ? (
+        <button
+          type="button"
+          className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+          onClick={() => removeFromWorkspace([item.post.uri])}
+        >
+          <FolderMinusIcon className="w-4 h-4" />
+          <span className="text-sm">Remove from workspace</span>
+        </button>
+      ) : (
+        <button
+          type="button"
+          className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+          onClick={() => addToWorkspace([item.post.uri])}
+        >
+          <FolderPlusIcon className="w-4 h-4" />
+          <span className="text-sm">Add to workspace</span>
+        </button>
+      )}
     </div>
   )
 }

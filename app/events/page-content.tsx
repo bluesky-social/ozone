@@ -4,6 +4,8 @@ import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { WorkspacePanel } from '@/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 export default function EventListPageContent() {
   const searchParams = useSearchParams()
@@ -20,6 +22,8 @@ export default function EventListPageContent() {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
 
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
+
   useTitle(`Moderation Events`)
 
   return (
@@ -34,11 +38,13 @@ export default function EventListPageContent() {
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={[quickOpenParam]}
         isInitialLoading={false}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
         }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
       />
     </div>
   )

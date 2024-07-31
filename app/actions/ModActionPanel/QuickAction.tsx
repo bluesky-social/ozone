@@ -536,7 +536,10 @@ function Form(
             </div>
             {/* PREVIEWS */}
             <div className="max-w-xl">
-              <PreviewCard did={subject}>
+              <PreviewCard
+                subject={subject}
+                className="border-2 border-dashed border-gray-300"
+              >
                 {deactivatedAt && (
                   <p className="pt-1 pb-1 flex flex-row items-center">
                     <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />

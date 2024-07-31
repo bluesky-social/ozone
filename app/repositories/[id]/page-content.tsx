@@ -7,6 +7,8 @@ import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { useTitle } from 'react-use'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { WorkspacePanel } from '@/workspace/Panel'
 
 const buildPageTitle = ({
   handle,
@@ -50,6 +52,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
   const tab = searchParams.get('tab')
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const pageTitle = buildPageTitle({
     handle: profile?.handle || repo?.handle || id,
@@ -59,6 +62,10 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
 
   return (
     <>
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
+      />
       <ModActionPanelQuick
         open={!!quickOpenParam}
         onClose={() => setQuickActionPanelSubject('')}
@@ -66,9 +73,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
         subject={quickOpenParam} // select first subject if there are multiple
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
-        onSubmit={async (
-          vals: ToolsOzoneModerationEmitEvent.InputSchema,
-        ) => {
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
           refetch()
         }}

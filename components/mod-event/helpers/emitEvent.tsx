@@ -5,6 +5,8 @@ import { displayError } from '../../common/Loader'
 import { queryClient } from 'components/QueryClient'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import { createSubjectFromId } from '@/reports/helpers/subject'
+import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
 
 export const emitEvent = async (
   vals: ToolsOzoneModerationEmitEvent.InputSchema,
@@ -62,12 +64,63 @@ export const emitEvent = async (
   }
 }
 
+export const actionSubjects = async (
+  eventData: Pick<
+    ToolsOzoneModerationEmitEvent.InputSchema,
+    'event' | 'createdBy'
+  >,
+  subjects: string[],
+) => {
+  try {
+    const results: { succeeded: string[]; failed: string[] } = {
+      succeeded: [],
+      failed: [],
+    }
+    const actions = Promise.allSettled(
+      subjects.map(async (sub) => {
+        try {
+          const { subject } = await createSubjectFromId(sub)
+          await client.api.tools.ozone.moderation.emitEvent(
+            { subject, ...eventData },
+            {
+              encoding: 'application/json',
+              headers: client.proxyHeaders(),
+            },
+          )
+          results.succeeded.push(sub)
+        } catch (err) {
+          results.failed.push(sub)
+        }
+      }),
+    )
+    await toast.promise(actions, {
+      pending: `Taking action on ${buildItemsSummary(
+        groupSubjects(subjects),
+      )}...`,
+      success: {
+        render() {
+          return results.failed.length
+            ? `Actioned ${buildItemsSummary(
+                groupSubjects(results.succeeded),
+              )}. Failed to action ${buildItemsSummary(
+                groupSubjects(results.failed),
+              )}`
+            : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`
+        },
+      },
+    })
+  } catch (err) {
+    toast.error(`Error taking action: ${displayError(err)}`)
+    throw err
+  }
+}
+
 const eventTexts = {
   [MOD_EVENTS.ACKNOWLEDGE]: 'acknowledged',
   [MOD_EVENTS.ESCALATE]: 'escalated',
   [MOD_EVENTS.TAKEDOWN]: 'taken-down',
   [MOD_EVENTS.COMMENT]: 'commented',
   [MOD_EVENTS.LABEL]: 'labeled',
-  [MOD_EVENTS.MUTE]: 'Muted',
-  [MOD_EVENTS.UNMUTE]: 'Unmuted',
+  [MOD_EVENTS.MUTE]: 'muted',
+  [MOD_EVENTS.UNMUTE]: 'unmuted',
 }

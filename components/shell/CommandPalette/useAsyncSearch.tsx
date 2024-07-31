@@ -1,5 +1,6 @@
 import { getDidFromHandle } from '@/lib/identity'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
+import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { useSearchActorsTypeahead } from '@/repositories/useSearchActorsTypeahead'
 import { AppBskyActorDefs, AtUri } from '@atproto/api'
 import {
@@ -8,6 +9,7 @@ import {
   PuzzlePieceIcon,
   LifebuoyIcon,
 } from '@heroicons/react/24/outline'
+import { UseMutateFunction } from '@tanstack/react-query'
 import {
   useKBar,
   Action,
@@ -36,6 +38,7 @@ type ItemBuilderProps = {
   profileKey: string
   search: string
   router: AppRouterInstance
+  addToWorkspace: UseMutateFunction<string[], unknown, string[], unknown>
 }
 const ActionSections: Record<string, ActionSection> = {
   actions: {
@@ -57,6 +60,7 @@ const buildItemForDid = ({
   did,
   handle,
   router,
+  addToWorkspace,
 }: Omit<ItemBuilderProps, 'profileKey' | 'type'> & {
   did: string
   handle?: string
@@ -72,6 +76,18 @@ const buildItemForDid = ({
       priority: 5,
       perform: () => {
         router.push(`?quickOpen=${did}`)
+      },
+    },
+    {
+      id: `add-did-to-workspace`,
+      name: `Add to workspace`,
+      keywords: `${search},workspace,action,did`,
+      icon: <RepoIcon className={iconClassName} />,
+      subtitle: `Add ${handle || did} to workspace`,
+      section: ActionSections.actions,
+      priority: 5,
+      perform: () => {
+        addToWorkspace([did])
       },
     },
     {
@@ -118,6 +134,7 @@ const buildItemForProfile = ({
   search,
   profileKey,
   router,
+  addToWorkspace,
 }: ItemBuilderProps): Action[] => {
   const typeText = type === 'did' ? type.toUpperCase() : type
   const actions: Action[] = []
@@ -129,6 +146,7 @@ const buildItemForProfile = ({
         search,
         router,
         did: profileKey,
+        addToWorkspace,
       }),
     )
   }
@@ -194,12 +212,13 @@ export const useCommandPaletteAsyncSearch = () => {
     if (!handle) return
     getDidFromHandle(handle).then((did) => {
       if (did) {
-        setDidFromHandle({ did, handle })
+        setDidFromHandle((current) => ({ ...current, did, handle }))
       } else {
-        setDidFromHandle({ did: '', handle })
+        setDidFromHandle((current) => ({ ...current, did: '', handle }))
       }
     })
   }
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
 
   useEffect(() => {
     // When full url is pasted in, it may contain user handle
@@ -251,6 +270,7 @@ export const useCommandPaletteAsyncSearch = () => {
             router,
             type: 'did',
             profileKey: fragments.did,
+            addToWorkspace,
           }),
         )
       }
@@ -262,6 +282,7 @@ export const useCommandPaletteAsyncSearch = () => {
             router,
             type: 'handle',
             profileKey: fragments.handle,
+            addToWorkspace,
           }),
         )
       }
@@ -357,7 +378,7 @@ export const useCommandPaletteAsyncSearch = () => {
             subtitle: 'Open action panel for post',
             // for a complete record uri, we would want it to be the first action
             // the account actions should come after it
-            priority: 7,
+            priority: 8,
             perform: () => {
               router.push(
                 `?quickOpen=${AtUri.make(did, collection, rkey).toString()}`,
@@ -375,6 +396,20 @@ export const useCommandPaletteAsyncSearch = () => {
               router.push(`/repositories/${did}/${collection}/${rkey}`)
             },
           },
+          {
+            id: `add-${readableCollection}-to-workspace`,
+            name: `Add to workspace`,
+            section: ActionSections.actions,
+            icon: <PostIcon className={iconClassName} />,
+            keywords: `workspace,${readableCollection},${search}`,
+            subtitle: `Add ${readableCollection} ${rkey} to workspace`,
+            // for a complete record uri, we would want it to be the first action
+            // the account actions should come after it
+            priority: 7,
+            perform: () => {
+              addToWorkspace([AtUri.make(did, collection, rkey).toString()])
+            },
+          },
         )
       }
 
@@ -385,6 +420,7 @@ export const useCommandPaletteAsyncSearch = () => {
             router,
             type: 'did',
             profileKey: did,
+            addToWorkspace,
           }),
         )
       }
@@ -395,11 +431,13 @@ export const useCommandPaletteAsyncSearch = () => {
           router,
           type: 'did',
           profileKey: search,
+          addToWorkspace,
         }),
       )
     } else if (search.startsWith('@')) {
       actions.push(
         ...buildItemFromTypeahead({
+          addToWorkspace,
           search,
           actors: typeaheadResults || [],
           kBarQuery,
@@ -412,6 +450,7 @@ export const useCommandPaletteAsyncSearch = () => {
           router,
           type: 'handle',
           profileKey: search,
+          addToWorkspace,
         }),
       )
     }
@@ -423,6 +462,7 @@ export const useCommandPaletteAsyncSearch = () => {
           router,
           handle: didFromHandle.handle,
           did: didFromHandle.did,
+          addToWorkspace,
         }),
       )
     }
