@@ -62,17 +62,23 @@ const useMemberEditor = ({
       // anything in the UI so we don't need to type it
       let request: Promise<unknown>
       if (isNewMember) {
-        request = client.api.tools.ozone.team.addMember({
-          did,
-          role,
-        })
+        request = client.api.tools.ozone.team.addMember(
+          {
+            did,
+            role,
+          },
+          { encoding: 'application/json', headers: client.proxyHeaders() },
+        )
       } else {
         const disabled = formData.get('disabled') === 'true'
-        request = client.api.tools.ozone.team.updateMember({
-          did,
-          role,
-          disabled,
-        })
+        request = client.api.tools.ozone.team.updateMember(
+          {
+            did,
+            role,
+            disabled,
+          },
+          { encoding: 'application/json', headers: client.proxyHeaders() },
+        )
       }
 
       await toast.promise(request, {
