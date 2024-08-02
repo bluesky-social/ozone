@@ -164,7 +164,9 @@ export function ConfigurationFlow() {
         key={config.updatedAt}
         session={session}
         onComplete={(skip) => {
-          client.reconfigure({ skipRecord: skip })
+          client
+            .reconfigure({ skipRecord: skip })
+            .then(() => client.refetchServerConfig())
         }}
       />
     )
@@ -241,6 +243,7 @@ function IdentityConfigurationFlow({
             placeholder="Confirmation Code"
             className="block w-full mt-2"
             value={token}
+            autoFocus
             onChange={(ev) => setToken(ev.target.value)}
           />
           {submitPlcOperation.isError && (

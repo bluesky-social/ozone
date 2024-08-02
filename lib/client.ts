@@ -79,7 +79,13 @@ class ClientManager extends EventTarget {
       password,
     })
     const config = await this._getConfig()
-    const serverConfig = await this._getServerConfig(agent, config.did)
+    // If the labeler needs further configuration, let's generate a mock serverConfig
+    // and let the user move forward with configuration steps
+    const needsConfiguration =
+      config.needs.key || config.needs.service || config.needs.record
+    const serverConfig = await (needsConfiguration
+      ? parseServerConfig({})
+      : this._getServerConfig(agent, config.did))
     this._session = {
       service,
       config,
