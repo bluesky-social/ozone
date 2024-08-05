@@ -4,6 +4,6 @@
   "main": "index.js",
   "dependencies": {
     "@atproto/ozone": "0.1.11",
-    "next": "14.0.1"
+    "next": "14.2.5"
   }
 }
