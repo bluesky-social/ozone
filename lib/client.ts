@@ -79,7 +79,12 @@ class ClientManager extends EventTarget {
       password,
     })
     const config = await this._getConfig()
-    const serverConfig = await this._getServerConfig(agent, config.did)
+    // Cannot make authed requests until the labeler's DID document reflects a
+    // service URL. We will use an empty server config until the user goes through
+    // the configuration flow to setup their DID document with a service URL.
+    const serverConfig = config.needs.service
+      ? parseServerConfig({})
+      : await this._getServerConfig(agent, config.did)
     this._session = {
       service,
       config,

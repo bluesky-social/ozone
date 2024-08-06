@@ -50,6 +50,7 @@ import { DM_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LockClosedIcon } from '@heroicons/react/24/solid'
+import { checkPermission } from '@/lib/server-config'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -206,6 +207,7 @@ function Form(
   const deactivatedAt = getDeactivatedAt(
     repo ? { repo } : record ? { record } : {},
   )
+  const canManageChat = checkPermission('canManageChat')
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -590,7 +592,7 @@ function Form(
                 />
               </FormLabel>
             )}
-            {isSubjectDid && (
+            {isSubjectDid && canManageChat && (
               <div className="mb-3">
                 <MessageActorMeta did={subject} />
               </div>

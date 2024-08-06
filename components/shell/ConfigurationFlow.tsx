@@ -119,7 +119,13 @@ export function ConfigurationFlow() {
       <IdentityConfigurationFlow
         key={config.updatedAt}
         config={withDocAndMeta(config)}
-        onComplete={() => client.reconfigure()}
+        onComplete={async () => {
+          await client.reconfigure()
+          // Now that the labeler's DID document should reflect a service URL
+          // (i.e. config.needs.service is now false) we are able to make authed
+          // requests to ozone, so can now fetch server config.
+          await client.refetchServerConfig()
+        }}
       />
     )
   }
@@ -241,6 +247,19 @@ function IdentityConfigurationFlow({
             placeholder="Confirmation Code"
             className="block w-full mt-2"
             value={token}
+            autoFocus
+            onKeyDown={(ev) => {
+              // This is the only input field on this screen but it's not wrapped in a form
+              // so on Enter key, let's emulate form submission
+              if (
+                ev.key === 'Enter' &&
+                !submitPlcOperation.isLoading &&
+                !submitPlcOperation.isSuccess &&
+                token
+              ) {
+                submitPlcOperation.mutate()
+              }
+            }}
             onChange={(ev) => setToken(ev.target.value)}
           />
           {submitPlcOperation.isError && (
