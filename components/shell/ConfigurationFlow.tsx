@@ -119,7 +119,13 @@ export function ConfigurationFlow() {
       <IdentityConfigurationFlow
         key={config.updatedAt}
         config={withDocAndMeta(config)}
-        onComplete={() => client.reconfigure()}
+        onComplete={async () => {
+          await client.reconfigure()
+          // Now that the labeler's DID document should reflect a service URL
+          // (i.e. config.needs.service is now false) we are able to make authed
+          // requests to ozone, so can now fetch server config.
+          await client.refetchServerConfig()
+        }}
       />
     )
   }
@@ -164,9 +170,7 @@ export function ConfigurationFlow() {
         key={config.updatedAt}
         session={session}
         onComplete={(skip) => {
-          client
-            .reconfigure({ skipRecord: skip })
-            .then(() => client.refetchServerConfig())
+          client.reconfigure({ skipRecord: skip })
         }}
       />
     )

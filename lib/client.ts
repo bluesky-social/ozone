@@ -79,12 +79,12 @@ class ClientManager extends EventTarget {
       password,
     })
     const config = await this._getConfig()
-    // If the labeler needs further configuration, let's generate a mock serverConfig
-    // and let the user move forward with configuration steps
-    const needsConfiguration = config.needs.key || config.needs.service
-    const serverConfig = await (needsConfiguration
+    // Cannot make authed requests until the labeler's DID document reflects a
+    // service URL. We will use an empty server config until the user goes through
+    // the configuration flow to setup their DID document with a service URL.
+    const serverConfig = config.needs.service
       ? parseServerConfig({})
-      : this._getServerConfig(agent, config.did))
+      : await this._getServerConfig(agent, config.did)
     this._session = {
       service,
       config,
