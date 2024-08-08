@@ -8,6 +8,8 @@ import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
+import { WorkspacePanel } from '@/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 enum Views {
   Configure,
@@ -40,6 +42,7 @@ export default function ConfigurePageContent() {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
 
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
   const quickOpenParam = searchParams.get('quickOpen') ?? ''
   const setQuickActionPanelSubject = (subject: string) => {
     const newParams = new URLSearchParams(document.location.search)
@@ -83,6 +86,10 @@ export default function ConfigurePageContent() {
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(vals)
         }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
       />
     </div>
   )

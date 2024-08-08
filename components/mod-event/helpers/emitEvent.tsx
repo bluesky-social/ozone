@@ -3,10 +3,13 @@ import { toast } from 'react-toastify'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
+import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
+
 import { displayError } from '../../common/Loader'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useCallback } from 'react'
+import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
@@ -70,12 +73,68 @@ export function useEmitEvent() {
   )
 }
 
+export const useActionSubjects = () => {
+  const createSubjectFromId = useCreateSubjectFromId()
+  const labelerAgent = useLabelerAgent()
+
+  return useCallback(
+    async (
+      eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
+      subjects: string[],
+    ) => {
+      try {
+        const results: { succeeded: string[]; failed: string[] } = {
+          succeeded: [],
+          failed: [],
+        }
+        const actions = Promise.allSettled(
+          subjects.map(async (sub) => {
+            try {
+              const { subject } = await createSubjectFromId(sub)
+              await labelerAgent.api.tools.ozone.moderation.emitEvent({
+                subject,
+                createdBy: labelerAgent.accountDid,
+                ...eventData,
+              })
+              results.succeeded.push(sub)
+            } catch (err) {
+              results.failed.push(sub)
+            }
+          }),
+        )
+        await toast.promise(actions, {
+          pending: `Taking action on ${buildItemsSummary(
+            groupSubjects(subjects),
+          )}...`,
+          success: {
+            render() {
+              return results.failed.length
+                ? `Actioned ${buildItemsSummary(
+                    groupSubjects(results.succeeded),
+                  )}. Failed to action ${buildItemsSummary(
+                    groupSubjects(results.failed),
+                  )}`
+                : `Actioned ${buildItemsSummary(
+                    groupSubjects(results.succeeded),
+                  )}`
+            },
+          },
+        })
+      } catch (err) {
+        toast.error(`Error taking action: ${displayError(err)}`)
+        throw err
+      }
+    },
+    [labelerAgent, createSubjectFromId],
+  )
+}
+
 const eventTexts = {
   [MOD_EVENTS.ACKNOWLEDGE]: 'acknowledged',
   [MOD_EVENTS.ESCALATE]: 'escalated',
   [MOD_EVENTS.TAKEDOWN]: 'taken-down',
   [MOD_EVENTS.COMMENT]: 'commented',
   [MOD_EVENTS.LABEL]: 'labeled',
-  [MOD_EVENTS.MUTE]: 'Muted',
-  [MOD_EVENTS.UNMUTE]: 'Unmuted',
+  [MOD_EVENTS.MUTE]: 'muted',
+  [MOD_EVENTS.UNMUTE]: 'unmuted',
 }

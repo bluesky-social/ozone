@@ -18,6 +18,8 @@ import { RecordView } from '@/repositories/RecordView'
 import { useCreateReport } from '@/repositories/createReport'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { WorkspacePanel } from '@/workspace/Panel'
 
 const buildPageTitle = ({
   handle,
@@ -110,12 +112,16 @@ export default function RecordViewPageContent({
           })
         return listData.items.map(({ subject }) => subject)
       }
-      const [record, profiles, thread] = await Promise.all([
+      const [record, profiles, thread] = await Promise.allSettled([
         getRecord(),
         getListProfiles(),
         getThread(),
       ])
-      return { record, thread, profiles }
+      return {
+        record: record.status === 'fulfilled' ? record.value : undefined,
+        thread: thread.status === 'fulfilled' ? thread.value : undefined,
+        profiles: profiles.status === 'fulfilled' ? profiles.value : undefined,
+      }
     },
   })
 
@@ -143,6 +149,7 @@ export default function RecordViewPageContent({
     }
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   useEffect(() => {
     if (reportUri === 'default' && data?.record) {
@@ -161,7 +168,7 @@ export default function RecordViewPageContent({
   if (error) {
     return <LoadingFailed error={error} />
   }
-  if (!data) {
+  if (!data && isInitialLoading) {
     return <Loading />
   }
   return (
@@ -178,6 +185,10 @@ export default function RecordViewPageContent({
           refetch()
         }}
       />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
+      />
       <ReportPanel
         open={!!reportUri}
         onClose={() => setReportUri(undefined)}
@@ -187,13 +198,15 @@ export default function RecordViewPageContent({
           refetch()
         }}
       />
-      <RecordView
-        record={data.record}
-        thread={data.thread}
-        profiles={data.profiles}
-        onReport={setReportUri}
-        onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
-      />
+      {data?.record && (
+        <RecordView
+          record={data.record}
+          thread={data.thread}
+          profiles={data.profiles}
+          onReport={setReportUri}
+          onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
+        />
+      )}
     </>
   )
 }

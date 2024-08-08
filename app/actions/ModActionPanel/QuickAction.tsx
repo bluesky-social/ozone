@@ -48,7 +48,7 @@ import { DM_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LockClosedIcon } from '@heroicons/react/24/solid'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -209,6 +209,7 @@ function Form(
   const deactivatedAt = getDeactivatedAt(
     repo ? { repo } : record ? { record } : {},
   )
+  const canManageChat = usePermission('canManageChat')
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -342,32 +343,35 @@ function Form(
         const negatingLabelsByCid: Record<string, string[]> = {}
 
         if (recordInfo?.labels?.length && 'cid' in subjectInfo) {
+          // go through each label we intended to remove
           labels.negateLabelVals.forEach((label) => {
-            const existingLabelWithDifferentCid = recordInfo.labels?.find(
-              ({ val: originalLabel, cid, src }) => {
-                return (
-                  originalLabel === label &&
-                  cid !== subjectInfo.cid &&
-                  // Ignore self labels
-                  src !== recordInfo.repo.did
-                )
-              },
-            )
-            if (!!existingLabelWithDifferentCid?.cid) {
-              negatingLabelsByCid[existingLabelWithDifferentCid.cid] ??= []
+            // go through each label on the record and check if the same label is being removed from multiple CIDs
+            recordInfo.labels?.forEach(({ val: originalLabel, cid, src }) => {
+              if (
+                // Ignore self labels
+                src === recordInfo.repo.did ||
+                originalLabel !== label ||
+                !cid
+              ) {
+                return
+              }
+              negatingLabelsByCid[cid] ??= []
 
-              negatingLabelsByCid[existingLabelWithDifferentCid.cid].push(label)
-              // Since the label being negated is going to be removed from a different CID
+              // for the same cid, one label can only exist once so we if it's not already in the list, add it
+              if (!negatingLabelsByCid[cid].includes(label)) {
+                negatingLabelsByCid[cid].push(label)
+              }
+              // Since the label being negated is going to be removed from a different CID, let's remove it from the coreEvent
               coreEvent.negateLabelVals = labels.negateLabelVals.filter(
                 (l) => l !== label,
               )
-            }
+            })
           })
         }
 
         const labelSubmissions: Promise<void>[] = []
 
-        Object.keys(negatingLabelsByCid).forEach((labelCid) =>
+        Object.keys(negatingLabelsByCid).forEach((labelCid) => {
           labelSubmissions.push(
             onSubmit({
               subject: { ...subjectInfo, cid: labelCid },
@@ -382,8 +386,8 @@ function Form(
                 negateLabelVals: negatingLabelsByCid[labelCid],
               },
             }),
-          ),
-        )
+          )
+        })
 
         // TODO: Typecasting here is not ideal
         if (
@@ -539,7 +543,10 @@ function Form(
             </div>
             {/* PREVIEWS */}
             <div className="max-w-xl">
-              <PreviewCard did={subject}>
+              <PreviewCard
+                subject={subject}
+                className="border-2 border-dashed border-gray-300"
+              >
                 {deactivatedAt && (
                   <p className="pt-1 pb-1 flex flex-row items-center">
                     <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
@@ -590,7 +597,7 @@ function Form(
                 />
               </FormLabel>
             )}
-            {isSubjectDid && (
+            {isSubjectDid && canManageChat && (
               <div className="mb-3">
                 <MessageActorMeta did={subject} />
               </div>

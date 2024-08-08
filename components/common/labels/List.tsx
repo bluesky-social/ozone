@@ -97,7 +97,7 @@ export const ModerationLabel = ({
   const labelVal = toLabelVal(label, recordAuthorDid)
   const isSelfLabeled = isSelfLabel(labelVal)
   const labelDefFromService =
-    labelerServiceDef?.policies.definitionById[label.val]
+    labelerServiceDef?.policies.definitionById?.[label.val]
   const labelerProfile = labelerServiceDef?.creator
   const labelClassNames = getLabelChipClassNames({
     label,

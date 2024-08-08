@@ -84,7 +84,7 @@ export const ModEventSelectorButton = ({
       // Don't show takedown action if subject is already takendown
       if (
         (key === MOD_EVENTS.TAKEDOWN || key === MOD_EVENTS.DIVERT) &&
-        subjectStatus?.takendown
+        (subjectStatus?.takendown || !canTakedown)
       ) {
         return false
       }

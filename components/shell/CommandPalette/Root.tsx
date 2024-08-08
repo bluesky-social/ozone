@@ -9,7 +9,7 @@ import {
 } from 'kbar'
 import React from 'react'
 import { getStaticActions } from './actions'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 import { CommandPaletteResultItem } from './ResultItem'
 
@@ -46,7 +46,9 @@ export const CommandPaletteRoot = ({
   children: React.ReactNode
 }) => {
   const router = useRouter()
-  const staticActions = getStaticActions({ router })
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const staticActions = getStaticActions({ router, pathname, searchParams })
   return (
     <KBarProvider actions={staticActions}>
       <KBarPortal>

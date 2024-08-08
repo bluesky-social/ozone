@@ -75,9 +75,8 @@ describe('Command Palette', () => {
     const comboKey = Cypress.platform === 'darwin' ? '{cmd}k' : '{ctrl}k'
     cy.get('body').type(comboKey)
     if (input) {
-      cy.get('[aria-controls="kbar-listbox"]').clear().type(input, {
-        delay: 0,
-      })
+      cy.get('[aria-controls="kbar-listbox"]').clear().type(input)
+      cy.wait(300)
     }
   }
 
@@ -99,21 +98,25 @@ describe('Command Palette', () => {
     })
   })
 
-  it('Shows options from bsky app post url', () => {
-    // Setup the auth response
+  it('Shows post options from bsky app post url', () => {
     openCommandPalette(bskyPostUrlWithHandle)
     cy.get('#kbar-listbox-item-1').contains('Take action on Post').click()
-    cy.location('href').should(
-      'contain',
-      `quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a`,
-    )
+    cy.wait(300)
+    cy.location('href').then((href) => {
+      expect(decodeURIComponent(href)).to.include(
+        `quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a`,
+      )
+    })
+  })
 
-    cy.wait(1000)
+  it('Shows user options from bsky app post url', () => {
     openCommandPalette(bskyPostUrlWithHandle)
     cy.get('#kbar-listbox-item-2').contains('Take action on alice.test').click()
-    cy.location('href').should(
-      'contain',
-      `quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst`,
-    )
+    cy.wait(300)
+    cy.location('href').then((href) => {
+      expect(decodeURIComponent(href)).to.include(
+        `quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst`,
+      )
+    })
   })
 })

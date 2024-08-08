@@ -33,6 +33,7 @@
       "@/subject/*": ["components/subject/*"],
       "@/config/*": ["components/config/*"],
       "@/dms/*": ["components/dms/*"],
+      "@/workspace/*": ["components/workspace/*"],
     }
   },
   "include": [

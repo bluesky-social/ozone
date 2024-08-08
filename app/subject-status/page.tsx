@@ -1,8 +1,8 @@
 'use client'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useQuery } from '@tanstack/react-query'
 import { useSearchParams } from 'next/navigation'
 import { useTitle } from 'react-use'
+import { useSubjectStatus } from '@/subject/useSubjectStatus'
 
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { SubjectStatusView } from '@/subject/StatusView'
@@ -12,18 +12,7 @@ export default function SubjectStatus() {
   const labelerAgent = useLabelerAgent()
 
   const subject = params.get('uri') || params.get('did')
-  const { data, error, isLoading } = useQuery({
-    queryKey: ['moderationStatus', { subject }],
-    queryFn: async () => {
-      if (!subject) return null
-      const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryStatuses({
-          subject,
-          limit: 1,
-        })
-      return data
-    },
-  })
+  const { data, isLoading, error } = useSubjectStatus({ subject })
 
   let pageTitle = `Subject Status`
 

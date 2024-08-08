@@ -26,6 +26,8 @@ import { unique } from '@/lib/util'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { WorkspacePanel } from 'components/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const TABS = [
   {
@@ -178,6 +180,7 @@ export const ReportsPageContent = () => {
     }
     router.push((pathname ?? '') + '?' + searchParams.toString())
   }
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
     useModerationQueueQuery()
@@ -233,6 +236,10 @@ export const ReportsPageContent = () => {
           await emitEvent(vals)
           refetch()
         }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
       />
     </>
   )

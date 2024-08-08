@@ -289,6 +289,19 @@ function IdentityConfigurationFlow({
             placeholder="Confirmation Code"
             className="block w-full mt-2"
             value={token}
+            autoFocus
+            onKeyDown={(ev) => {
+              // This is the only input field on this screen but it's not wrapped in a form
+              // so on Enter key, let's emulate form submission
+              if (
+                ev.key === 'Enter' &&
+                !submitPlcOperation.isLoading &&
+                !submitPlcOperation.isSuccess &&
+                token
+              ) {
+                submitPlcOperation.mutate()
+              }
+            }}
             onChange={(ev) => setToken(ev.target.value)}
           />
           {submitPlcOperation.isError && (

@@ -3,6 +3,8 @@
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTitle } from 'react-use'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { WorkspacePanel } from '@/workspace/Panel'
 
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { AccountView } from '@/repositories/AccountView'
@@ -55,6 +57,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
   const tab = searchParams.get('tab')
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const pageTitle = buildPageTitle({
     handle: profile?.handle || repo?.handle || id,
@@ -64,6 +67,10 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
 
   return (
     <>
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
+      />
       <ModActionPanelQuick
         open={!!quickOpenParam}
         onClose={() => setQuickActionPanelSubject('')}
