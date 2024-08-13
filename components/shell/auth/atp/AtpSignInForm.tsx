@@ -57,9 +57,9 @@ export function AtpSignInForm({
           authFactorToken: authFactor.isNeeded ? authFactor.token : undefined,
         })
       } catch (err) {
-        const errMsg = e.toString()
+        const errMsg = (err as Error).toString()
         if (
-          e instanceof
+          err instanceof
           ComAtprotoServerCreateSession.AuthFactorTokenRequiredError
         ) {
           setAuthFactor({ ...authFactor, isNeeded: true })

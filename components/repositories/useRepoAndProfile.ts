@@ -21,7 +21,7 @@ export const useRepoAndProfile = ({ id }: { id: string }) => {
       const getProfile = async () => {
         try {
           const { data: profile } =
-            await labelerAgent.api.app.bsky.actor.getProfile({ actor: id })
+            await labelerAgent.app.bsky.actor.getProfile({ actor: id })
           return profile
         } catch (err) {
           if (err?.['error'] === 'AccountTakedown') {

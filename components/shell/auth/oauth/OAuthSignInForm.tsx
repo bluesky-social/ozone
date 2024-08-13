@@ -1,4 +1,4 @@
-import { AuthorizeOptions } from '@atproto/oauth-client-browser'
+import type { AuthorizeOptions } from '@atproto/oauth-client-browser'
 import { LockClosedIcon } from '@heroicons/react/20/solid'
 import { FormEvent, useCallback, useState } from 'react'
 

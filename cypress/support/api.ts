@@ -1,6 +1,7 @@
-export const API_URL = 'https://bsky.social'
+export const API_URL = 'http://localhost:2583'
 export const SERVER_URL = `${API_URL}/xrpc`
 export const PLC_URL = 'https://plc.directory'
+export const HANDLE_RESOLVER_URL = 'https://bsky.social/xrpc'
 
 export const mockAuthResponse = (response: Record<string, any>) =>
   cy.intercept(
@@ -31,6 +32,26 @@ export const mockRecordResponse = (response: {
     `${SERVER_URL}/tools.ozone.moderation.getRecord?uri=${encodeURIComponent(
       response.body.uri,
     )}`,
+    response,
+  )
+}
+
+export const mockLabelerServiceRecordResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) => {
+  const [did, collection, rkey] = response.body.uri
+    .replace('at://', '')
+    .split('/')
+  const queryParams = `repo=${encodeURIComponent(
+    did,
+  )}&collection=${encodeURIComponent(collection)}&rkey=${encodeURIComponent(
+    rkey,
+  )}`
+
+  cy.intercept(
+    'GET',
+    `${SERVER_URL}/com.atproto.repo.getRecord?${queryParams}`,
     response,
   )
 }

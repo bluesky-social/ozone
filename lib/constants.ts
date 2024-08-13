@@ -22,6 +22,12 @@ export const SOCIAL_APP_URL =
     ? 'http://localhost:2584'
     : 'https://bsky.app')
 
+export const HANDLE_RESOLVER_URL =
+  process.env.NEXT_PUBLIC_HANDLE_RESOLVER_URL ||
+  (process.env.NODE_ENV === 'development'
+    ? 'http://localhost:2584'
+    : 'https://bsky.social')
+
 export const DM_DISABLE_TAG = 'chat-disabled'
 
 export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`

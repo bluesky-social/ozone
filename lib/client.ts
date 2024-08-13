@@ -1,7 +1,9 @@
-import { BskyAgent } from '@atproto/api'
-import { SOCIAL_APP_URL } from './constants'
+import { AtpAgent } from '@atproto/api'
+import { HANDLE_RESOLVER_URL } from './constants'
 
 // exported api
 // =
 
-export const globalAgent = new BskyAgent({ service: SOCIAL_APP_URL })
+export const globalAgent = new AtpAgent({
+  service: HANDLE_RESOLVER_URL,
+})

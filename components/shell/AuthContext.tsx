@@ -1,7 +1,6 @@
 'use client'
 
 import { AppBskyActorDefs, Agent } from '@atproto/api'
-import { isLoopbackHost } from '@atproto/oauth-client-browser'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
 import { createContext, ReactNode, useContext, useMemo } from 'react'
@@ -16,9 +15,14 @@ export type Profile = AppBskyActorDefs.ProfileViewDetailed
 
 export type AuthContext = {
   pdsAgent: Agent
+  signOut: () => Promise<void>
 }
 
 const AuthContext = createContext<AuthContext | null>(null)
+
+const isLoopbackHost = (host: string) => {
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
+}
 
 export type AuthProviderProps = {
   children: ReactNode
@@ -60,8 +64,10 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
   const { agent: atpAgent, signIn: atpSignIn } = useAtpAuth()
 
   const value = useMemo<AuthContext | null>(() => {
-    if (oauthAgent) return { pdsAgent: oauthAgent }
-    if (atpAgent) return { pdsAgent: atpAgent }
+    if (oauthAgent)
+      return { pdsAgent: oauthAgent, signOut: () => oauthAgent.signOut() }
+    if (atpAgent)
+      return { pdsAgent: atpAgent, signOut: () => atpAgent.logout() }
     return null
   }, [atpAgent, oauthAgent])
 
@@ -117,7 +123,11 @@ export const useAuthProfileQuery = () => {
 
   return useQuery({
     queryKey: ['profile', did],
-    queryFn: async () => pdsAgent.getProfile({ actor: did }),
+    queryFn: async () =>
+      pdsAgent.getProfile({ actor: did }).catch((err) => {
+        console.error('Failed to fetch profile', err)
+        throw err
+      }),
   })
 }
 

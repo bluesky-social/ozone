@@ -39,7 +39,7 @@ export function ConfigurationFlow({
   labelerAgent,
   reconfigure,
 }: ConfigurationFlowProps) {
-  const { pdsAgent } = useAuthContext()
+  const { signOut } = useAuthContext()
 
   const authDid = useAuthDid()
   const authIdentifier = useAuthIdentifier()
@@ -58,7 +58,7 @@ export function ConfigurationFlow({
         <Button
           className="w-full mt-2"
           icon={<ArrowLeftOnRectangleIcon />}
-          onClick={() => pdsAgent.signOut()}
+          onClick={signOut}
         >
           Restart
         </Button>
@@ -106,7 +106,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => pdsAgent.signOut()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -125,7 +125,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => pdsAgent.signOut()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -143,7 +143,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => pdsAgent.signOut()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -161,7 +161,7 @@ export function ConfigurationFlow({
           <Button
             className="w-full mt-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => pdsAgent.signOut()}
+            onClick={signOut}
           >
             Restart
           </Button>
@@ -225,7 +225,7 @@ function IdentityConfigurationFlow({
   reconfigure: ReconfigureFn
 }) {
   const [token, setToken] = useState('')
-  const { pdsAgent } = useAuthContext()
+  const { pdsAgent, signOut } = useAuthContext()
 
   const requestPlcOperationSignature = useMutation({
     mutationKey: [pdsAgent.did, config.did],
@@ -264,7 +264,7 @@ function IdentityConfigurationFlow({
             disabled={requestPlcOperationSignature.isLoading}
             className="w-full mr-2"
             icon={<ArrowLeftOnRectangleIcon />}
-            onClick={() => pdsAgent.signOut()}
+            onClick={signOut}
           >
             Cancel
           </Button>
@@ -318,7 +318,7 @@ function IdentityConfigurationFlow({
               }
               className="w-full mr-2"
               icon={<ArrowLeftOnRectangleIcon />}
-              onClick={() => pdsAgent.signOut()}
+              onClick={signOut}
             >
               Cancel
             </Button>

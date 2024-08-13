@@ -78,8 +78,6 @@ export const ConfigurationProvider = ({
     refetchOnWindowFocus: false,
   })
 
-  console.error('config', config)
-
   useEffect(() => {
     if (config) setCachedConfig(config)
   }, [config, setCachedConfig])
@@ -111,7 +109,7 @@ export const ConfigurationProvider = ({
     },
     queryKey: ['server-config'],
     queryFn: async ({ signal }) => {
-      const { data } = await labelerAgent!.api.tools.ozone.server.getConfig(
+      const { data } = await labelerAgent!.tools.ozone.server.getConfig(
         {},
         { signal },
       )

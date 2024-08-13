@@ -299,7 +299,17 @@ export const useCommandPaletteAsyncSearch = () => {
             // When we have an exact content by rkey, we want to prioritize it over action for the account by did
             priority: 6,
             perform: () => {
-              router.push(`?quickOpen=${atUri}`)
+              if (fragments.did) {
+                return router.push(`?quickOpen=${atUri}`)
+              }
+
+              const { handle } = fragments
+              if (handle) {
+                getDidFromHandle(handle).then((did) => {
+                  if (!did) return
+                  router.push(`?quickOpen=${atUri.replace(handle, did)}`)
+                })
+              }
             },
           })
         }

@@ -1,11 +1,10 @@
 'use client'
 
-import {
-  AuthorizeOptions,
+import type {
   BrowserOAuthClient,
+  AuthorizeOptions,
   BrowserOAuthClientLoadOptions,
   BrowserOAuthClientOptions,
-  LoginContinuedInParentWindowError,
   OAuthAtpAgent,
 } from '@atproto/oauth-client-browser'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
@@ -86,44 +85,51 @@ function useOAuthClient(
       setClient(clientInput)
     } else if (!handleResolver) {
       throw new TypeError('handleResolver is required')
-    } else if (clientMetadata || !clientId) {
-      const client = new BrowserOAuthClient({
-        clientMetadata,
-        handleResolver,
-        responseMode,
-        plcDirectoryUrl,
-        fetch,
-      })
-      setClient(client)
-      return () => client.dispose()
     } else {
       const ac = new AbortController()
       const { signal } = ac
 
       setClient(null)
 
-      void BrowserOAuthClient.load({
-        clientId,
-        handleResolver,
-        responseMode,
-        plcDirectoryUrl,
-        fetch,
-        signal,
-      }).then(
-        (client) => {
-          if (!signal.aborted) {
-            signal.addEventListener('abort', () => client.dispose(), {
-              once: true,
-            })
-            setClient(client)
-          } else {
-            client.dispose()
-          }
-        },
-        (err) => {
-          if (!signal.aborted) throw err
-        },
-      )
+      import('@atproto/oauth-client-browser').then(({ BrowserOAuthClient }) => {
+        if (signal.aborted) return
+        if (clientMetadata || !clientId) {
+          const client = new BrowserOAuthClient({
+            clientMetadata,
+            handleResolver,
+            responseMode,
+            plcDirectoryUrl,
+            fetch,
+          })
+          signal.addEventListener('abort', () => client.dispose(), {
+            once: true,
+          })
+          setClient(client)
+        } else {
+          BrowserOAuthClient.load({
+            clientId,
+            handleResolver,
+            responseMode,
+            plcDirectoryUrl,
+            fetch,
+            signal,
+          }).then(
+            (client) => {
+              if (!signal.aborted) {
+                signal.addEventListener('abort', () => client.dispose(), {
+                  once: true,
+                })
+                setClient(client)
+              } else {
+                client.dispose()
+              }
+            },
+            (err) => {
+              if (!signal.aborted) throw err
+            },
+          )
+        }
+      })
 
       return () => ac.abort()
     }
@@ -192,6 +198,9 @@ export function useOAuth(options: UseOAuthOptions) {
         },
         async (err) => {
           if (clientForInitRef.current !== clientForInit) return
+          const { LoginContinuedInParentWindowError } = await import(
+            '@atproto/oauth-client-browser'
+          )
           if (err instanceof LoginContinuedInParentWindowError) {
             setIsLoginPopup(true)
             return

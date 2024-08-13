@@ -12,7 +12,7 @@ describe('Mod Action -> Label', () => {
   let seedFixture
 
   beforeEach(() => {
-    cy.visit('http://localhost:3000')
+    cy.visit('http://127.0.0.1:3000')
     cy.fixture('statuses.json').then((data) => {
       statusesFixture = data
       mockModerationReportsResponse(statusesFixture.onlyRepo)

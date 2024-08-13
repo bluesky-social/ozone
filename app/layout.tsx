@@ -11,7 +11,10 @@ import { AuthProvider } from '@/shell/AuthContext'
 import { DefaultQueryClientProvider } from '@/shell/QueryClient'
 import { GlobalQueryClientProvider } from '@/shell/QueryClient'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
-import { PLC_DIRECTORY_URL, SOCIAL_APP_URL } from '@/lib/constants'
+import {
+  HANDLE_RESOLVER_URL,
+  PLC_DIRECTORY_URL,
+} from '@/lib/constants'
 import { ConfigurationProvider } from '@/shell/ConfigurationContext'
 import { ExternalLabelersProvider } from '@/shell/ExternalLabelersContext'
 
@@ -52,7 +55,7 @@ export default function RootLayout({
         <GlobalQueryClientProvider>
           <AuthProvider
             plcDirectoryUrl={PLC_DIRECTORY_URL}
-            handleResolver={SOCIAL_APP_URL}
+            handleResolver={HANDLE_RESOLVER_URL}
           >
             <DefaultQueryClientProvider>
               <ConfigurationProvider>
