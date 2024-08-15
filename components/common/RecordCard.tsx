@@ -4,6 +4,7 @@ import {
   ToolsOzoneModerationDefs,
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
+  AppBskyEmbedImages,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import client from '@/lib/client'
@@ -86,29 +87,56 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
     return (
       <BaseRecordCard
         uri={uri}
-        renderRecord={(record) => (
-          <PostAsCard
-            dense
-            controls={false}
-            item={{
-              post: {
-                uri: record.uri,
-                cid: record.cid,
-                author: record.repo,
-                record: record.value,
-                labels: ComAtprotoLabelDefs.isSelfLabels(record.value['labels'])
-                  ? record.value['labels'].values.map(({ val }) => ({
-                      val,
-                      uri: record.uri,
-                      src: record.repo.did,
-                      cts: new Date(0).toISOString(),
-                    }))
-                  : [],
-                indexedAt: new Date(0).toISOString(),
-              },
-            }}
-          />
-        )}
+        renderRecord={(record) => {
+          const postRebuiltFromRecord: AppBskyFeedDefs.PostView = {
+            uri: record.uri,
+            cid: record.cid,
+            author: record.repo,
+            record: record.value,
+            labels: ComAtprotoLabelDefs.isSelfLabels(record.value['labels'])
+              ? record.value['labels'].values.map(({ val }) => ({
+                  val,
+                  uri: record.uri,
+                  src: record.repo.did,
+                  cts: new Date(0).toISOString(),
+                }))
+              : [],
+            indexedAt: new Date(0).toISOString(),
+          }
+
+          // we need to rebuild the post embeds to include the fullsize and thumb urls for blocked posts
+          // this only handles image embeds, we would have to do similar fill-ins for other embed types
+          if (record.value?.['embed']?.['$type'] === 'app.bsky.embed.images') {
+            postRebuiltFromRecord.embed = {
+              ...record.value['embed'],
+              $type: 'app.bsky.embed.images#view',
+              images: (
+                record.value['embed']['images'] as AppBskyEmbedImages.Image[]
+              ).map((img) => {
+                const blobUrl = `${
+                  client.session.service
+                }/xrpc/com.atproto.sync.getBlob?did=${
+                  record.repo.did
+                }&cid=${img.image.ref.toString()}`
+                return {
+                  ...img,
+                  thumb: blobUrl,
+                  fullsize: blobUrl,
+                }
+              }),
+            }
+          }
+
+          return (
+            <PostAsCard
+              dense
+              controls={false}
+              item={{
+                post: postRebuiltFromRecord,
+              }}
+            />
+          )
+        }}
       />
     )
   }

@@ -7,7 +7,6 @@ import {
   AppBskyEmbedRecordWithMedia,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  AppBskyGraphList,
   AppBskyGraphDefs,
 } from '@atproto/api'
 import Link from 'next/link'
@@ -15,7 +14,6 @@ import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
   LanguageIcon,
-  InformationCircleIcon,
   FolderMinusIcon,
   FolderPlusIcon,
 } from '@heroicons/react/24/outline'
