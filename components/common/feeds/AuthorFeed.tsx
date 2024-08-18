@@ -4,7 +4,7 @@ import { Posts } from '../posts/Posts'
 import client from '@/lib/client'
 import { useState } from 'react'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { AppBskyFeedDefs } from '@atproto/api'
+import { AppBskyFeedDefs, AppBskyFeedGetAuthorFeed } from '@atproto/api'
 import { TypeFilterKey, TypeFiltersByKey } from '../posts/constants'
 
 const getAuthorFeed = async ({ id, pageParam, typeFilter, options }) => {
@@ -22,15 +22,55 @@ const getAuthorFeed = async ({ id, pageParam, typeFilter, options }) => {
   ].includes(typeFilter)
 
   while (filteredFeed.length < limit) {
-    const { data } = await client.api.app.bsky.feed.getAuthorFeed(
-      {
-        limit,
-        actor: id,
-        cursor,
-        ...(isPostFilter ? { filter: typeFilter } : {}),
-      },
-      options,
-    )
+    let data: AppBskyFeedGetAuthorFeed.OutputSchema | null = null
+    const requestParams = {
+      limit,
+      actor: id,
+      cursor,
+      ...(isPostFilter ? { filter: typeFilter } : {}),
+    }
+    try {
+      const response = await client.api.app.bsky.feed.getAuthorFeed(
+        requestParams,
+        options,
+      )
+      data = response.data
+    } catch (e) {
+      // If the author is blocking the requester, let's request the author feed directly from the appview
+      // without passing any auth headers to ensure that the block behavior is not triggered
+      // One downside of this is that the feed will not include takendown posts as it normally would
+      // if the request was going through mod service that has admin access on the appview
+      if (e instanceof AppBskyFeedGetAuthorFeed.BlockedByActorError) {
+        // There are usually 2 header values passed, atproto-proxy and atproto-accept-labelers
+        // we want to keep the atproto-accept-labelers header so that all the labels are included in the response
+        delete options.headers['atproto-proxy']
+        // @TODO: move the appview url to somewhere more centralized
+        const url = new URL(
+          'https://api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed',
+        )
+        Object.entries(requestParams).forEach(([key, value]) => {
+          // Passing cursor=undefined breaks the request so let's exclude that from the request params
+          if (key === 'cursor' && !value) {
+            return
+          }
+          url.searchParams.append(key, value)
+        })
+
+        const response = await fetch(url.toString(), {
+          headers: { ...options.headers },
+          body: null,
+          method: 'GET',
+        })
+        data = await response.json()
+      } else {
+        // If the error is not a blocked actor error, it's something we can't handle so just throw it back
+        throw e
+      }
+    }
+
+    if (!data) {
+      break
+    }
 
     // Only repost/quote post filters are applied on the client side
     if (!isQuoteOrRepostFilter) {
