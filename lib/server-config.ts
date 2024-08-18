@@ -15,6 +15,7 @@ export type ServerConfig = {
     canManageTeam: boolean
     canTakedownFeedGenerators: boolean
     canDivertBlob: boolean
+    canManageSets: boolean
   }
 }
 
@@ -38,6 +39,7 @@ export const parseServerConfig = (
       canSendEmail: !!config.pds?.url && isModerator,
       canManageTeam: isAdmin,
       canTakedownFeedGenerators: isAdmin,
+      canManageSets: isAdmin,
       canDivertBlob: !!config.blobDivert?.url && isModerator,
     },
   }
