@@ -237,7 +237,7 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
       <div className="flex gap-2 pb-2 pl-4" aria-label={embed.video.alt}>
         <VideoPlayer
           source={embed.video.playlist}
-          poster={embed.video.thumbnail}
+          thumbnail={embed.video.thumbnail}
         />
       </div>
     )

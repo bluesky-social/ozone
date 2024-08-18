@@ -3,12 +3,13 @@ import { useEffect, useRef, useState } from 'react'
 
 export default function VideoPlayer({
   source,
-  poster,
+  thumbnail,
 }: {
   source: string
-  poster: string
+  thumbnail: string
 }) {
   const [hls] = useState(() => new Hls())
+  const [isUnsupported, setIsUnsupported] = useState(false)
 
   const ref = useRef<HTMLVideoElement>(null)
 
@@ -25,16 +26,17 @@ export default function VideoPlayer({
   useEffect(() => {
     if (ref.current) {
       if (Hls.isSupported()) {
+        setIsUnsupported(false)
         hls.loadSource(source)
       } else {
-        // TODO: fallback
+        setIsUnsupported(true)
       }
     }
   }, [source, hls])
 
   return (
     <video
-      poster={poster}
+      poster={thumbnail}
       ref={ref}
       style={{ flex: 1 }}
       playsInline
@@ -42,6 +44,13 @@ export default function VideoPlayer({
       controls
       loop
       muted
-    />
+    >
+      {isUnsupported && (
+        <p>
+          Your browser does not seem to support HLS videos. Please switch to a
+          different browser to view this content.
+        </p>
+      )}
+    </video>
   )
 }
