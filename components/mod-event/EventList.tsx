@@ -6,7 +6,11 @@ import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
 import { useState } from 'react'
 import { ActionButton } from '@/common/buttons'
-import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
+import {
+  FunnelIcon as FunnelEmptyIcon,
+  EyeSlashIcon,
+  EyeIcon,
+} from '@heroicons/react/24/outline'
 import { FunnelIcon as FunnelFilledIcon } from '@heroicons/react/24/solid'
 import { EventFilterPanel } from './FilterPanel'
 
@@ -80,9 +84,11 @@ export const ModEventList = (
     oldestFirst,
     createdAfter,
     createdBefore,
+    showContentPreview,
     applyFilterMacro,
     changeListFilter,
     resetListFilters,
+    toggleContentPreview,
   } = useModEventList(props)
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
@@ -90,6 +96,8 @@ export const ModEventList = (
   const subjectTitle = getSubjectTitle(modEvents?.[0]?.subject)
   const noEvents = modEvents.length === 0 && !isInitialLoadingModEvents
   const isShowingEventsByCreator = !!props.createdBy
+  const isMultiSubjectView =
+    includeAllUserRecords || isEntireHistoryView || isShowingEventsByCreator
   return (
     <div className="mr-1">
       <div className="flex flex-row justify-between items-center">
@@ -111,18 +119,35 @@ export const ModEventList = (
             Moderation event stream
           </h4>
         )}
-        <ActionButton
-          size="xs"
-          appearance="outlined"
-          onClick={() => setShowFiltersPanel((current) => !current)}
-        >
-          {hasFilter ? (
-            <FunnelFilledIcon className="h-3 w-3 mr-1" />
-          ) : (
-            <FunnelEmptyIcon className="h-3 w-3 mr-1" />
+        <div className="flex flex-row">
+          {isMultiSubjectView && (
+            <ActionButton
+              size="xs"
+              className="mr-2"
+              appearance="outlined"
+              title="Show record content preview for each event"
+              onClick={() => toggleContentPreview()}
+            >
+              {showContentPreview ? (
+                <EyeSlashIcon className="h-3 w-3 mx-1" />
+              ) : (
+                <EyeIcon className="h-3 w-3 mx-1" />
+              )}
+            </ActionButton>
           )}
-          <span className="text-xs">Configure</span>
-        </ActionButton>
+          <ActionButton
+            size="xs"
+            appearance="outlined"
+            onClick={() => setShowFiltersPanel((current) => !current)}
+          >
+            {hasFilter ? (
+              <FunnelFilledIcon className="h-3 w-3 mr-1" />
+            ) : (
+              <FunnelEmptyIcon className="h-3 w-3 mr-1" />
+            )}
+            <span className="text-xs">Configure</span>
+          </ActionButton>
+        </div>
       </div>
       {showFiltersPanel && (
         <EventFilterPanel
@@ -177,11 +202,10 @@ export const ModEventList = (
                   // may be reporting different subjects
                   isEntireHistoryView || isShowingEventsByCreator
                 }
-                showContentDetails={
-                  includeAllUserRecords ||
-                  isEntireHistoryView ||
-                  isShowingEventsByCreator
-                }
+                // When the event history is being displayed for a single record/subject
+                // there's no point showing the preview in each event
+                showContentPreview={showContentPreview && isMultiSubjectView}
+                showContentDetails={isMultiSubjectView}
               />
             )
           })

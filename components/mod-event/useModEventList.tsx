@@ -39,6 +39,7 @@ const initialListState = {
   removedLabels: [],
   addedTags: '',
   removedTags: '',
+  showContentPreview: false,
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
@@ -51,6 +52,7 @@ export type EventListState = Omit<
   reportTypes: string[]
   addedLabels: string[]
   removedLabels: string[]
+  showContentPreview: boolean
 }
 
 type EventListFilterPayload =
@@ -80,6 +82,9 @@ type EventListAction =
   | {
       type: 'RESET'
     }
+  | {
+      type: 'TOGGLE_CONTENT_PREVIEW'
+    }
 
 const eventListReducer = (state: EventListState, action: EventListAction) => {
   switch (action.type) {
@@ -96,6 +101,8 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
       return { ...state, ...action.payload }
     case 'RESET':
       return initialListState
+    case 'TOGGLE_CONTENT_PREVIEW':
+      return { ...state, showContentPreview: !state.showContentPreview }
     default:
       return state
   }
@@ -246,6 +253,7 @@ export const useModEventList = (
     applyFilterMacro: (payload: Partial<EventListState>) =>
       dispatch({ type: 'SET_FILTERS', payload }),
     resetListFilters: () => dispatch({ type: 'RESET' }),
+    toggleContentPreview: () => dispatch({ type: 'TOGGLE_CONTENT_PREVIEW' }),
 
     // State data
     ...listState,
