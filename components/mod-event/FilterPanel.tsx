@@ -31,7 +31,7 @@ export const EventFilterPanel = ({
   toggleCommentFilter,
   setCommentFilterKeyword,
   changeListFilter,
-}: Omit<EventListState, 'includeAllUserRecords'> &
+}: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> &
   Pick<
     ReturnType<typeof useModEventList>,
     | 'changeListFilter'
