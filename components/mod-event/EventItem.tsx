@@ -10,6 +10,7 @@ import { MessageContext } from '@/dms/MessageContext'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
+import { PreviewCard } from '@/common/PreviewCard'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -42,7 +43,7 @@ const Comment = ({
   }
 }) => {
   return (
-    <Card>
+    <>
       <div className="flex justify-between text-gray-500">
         <span>
           By{' '}
@@ -68,7 +69,7 @@ const Comment = ({
         header="Removed: "
         labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
-    </Card>
+    </>
   )
 }
 
@@ -80,7 +81,7 @@ const Email = ({
   }
 }) => {
   return (
-    <Card>
+    <>
       <p className="text-gray-500">
         By{' '}
         {modEvent.creatorHandle
@@ -91,7 +92,7 @@ const Email = ({
         <p>Subject: {modEvent.event.subjectLine}</p>
       )}
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
-    </Card>
+    </>
   )
 }
 
@@ -111,7 +112,7 @@ const Report = ({
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
   return (
-    <Card>
+    <>
       <div className="flex justify-between">
         <span>
           By{' '}
@@ -138,7 +139,7 @@ const Report = ({
       {isMessageSubject(modEvent.subject) && (
         <MessageContext className="mt-3" subject={modEvent.subject} />
       )}
-    </Card>
+    </>
   )
 }
 
@@ -154,7 +155,7 @@ const TakedownOrMute = ({
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
   return (
-    <Card>
+    <>
       <div className="flex justify-between">
         <span>
           By{' '}
@@ -190,7 +191,7 @@ const TakedownOrMute = ({
         header="Removed: "
         labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
-    </Card>
+    </>
   )
 }
 
@@ -239,7 +240,7 @@ const Label = ({
   } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   return (
-    <Card>
+    <>
       <p>
         <span>
           By{' '}
@@ -253,7 +254,7 @@ const Label = ({
       ) : null}
       <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
       <EventLabels header="Removed: " labels={modEvent.event.negateLabelVals} />
-    </Card>
+    </>
   )
 }
 
@@ -265,7 +266,7 @@ const Tag = ({
   } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   return (
-    <Card>
+    <>
       <p>
         <span>
           By{' '}
@@ -279,7 +280,7 @@ const Tag = ({
       ) : null}
       <EventLabels isTag header="Added: " labels={modEvent.event.add} />
       <EventLabels isTag header="Removed: " labels={modEvent.event.remove} />
-    </Card>
+    </>
   )
 }
 
@@ -303,10 +304,12 @@ export const ModEventItem = ({
   modEvent,
   showContentDetails,
   showContentAuthor,
+  showContentPreview,
 }: {
   modEvent: ToolsOzoneModerationDefs.ModEventView
   showContentDetails: boolean
   showContentAuthor: boolean
+  showContentPreview: boolean
 }) => {
   let eventItem: JSX.Element = <p>{modEvent.event.$type as string}</p>
   if (
@@ -344,10 +347,18 @@ export const ModEventItem = ({
     //@ts-ignore
     eventItem = <Email modEvent={modEvent} />
   }
+  const previewSubject = modEvent.subject.uri || modEvent.subject.did
   return (
     <div className="mt-4">
       <ItemTitle {...{ modEvent, showContentDetails, showContentAuthor }} />
-      {eventItem}
+      <Card>
+        {eventItem}
+        {typeof previewSubject === 'string' && showContentPreview && (
+          <div className="border-t dark:border-gray-500 mt-2">
+            <PreviewCard subject={previewSubject} />
+          </div>
+        )}
+      </Card>
     </div>
   )
 }
