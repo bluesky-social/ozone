@@ -6,7 +6,6 @@ import { FormEvent, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
 import { PropsOf } from '@/lib/types'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { createBreakpoint } from 'react-use'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { Dialog } from '@headlessui/react'
@@ -22,13 +21,6 @@ import { WorkspacePanelActions } from './PanelActions'
 import { WORKSPACE_FORM_ID } from './constants'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
-
-const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
