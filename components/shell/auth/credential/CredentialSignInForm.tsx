@@ -5,7 +5,7 @@ import { createRef, FormEvent, useCallback, useState } from 'react'
 import { Alert } from '@/common/Alert'
 import { ErrorInfo } from '@/common/ErrorInfo'
 
-export type AtpSignIn = (input: {
+export type CredentialSignIn = (input: {
   identifier: string
   password: string
   authFactorToken?: string
@@ -16,11 +16,11 @@ export type AtpSignIn = (input: {
  * @returns Nice tailwind css form asking to enter either a handle or the host
  *   to use to login.
  */
-export function AtpSignInForm({
+export function CredentialSignInForm({
   signIn,
   ...props
 }: {
-  signIn: AtpSignIn
+  signIn: CredentialSignIn
 } & Omit<React.HTMLAttributes<HTMLFormElement>, 'onSubmit'>) {
   const [error, setError] = useState<string | null>(null)
   const [isValidatingAuth, setIsValidatingAuth] = useState(false)

@@ -1,31 +1,28 @@
-import { AtpSessionData, AtpAgent } from '@atproto/api'
+import { AtpSessionData, CredentialSession } from '@atproto/api'
 import { useCallback, useMemo, useState } from 'react'
 
 type Session = AtpSessionData & { service: string }
 
-export function useAtpAuth() {
-  const createAgent = useCallback((service: string) => {
-    const agent = new AtpAgent({
-      service,
-      persistSession: (type, session) => {
-        if (session) {
-          saveSession({ ...session, service })
-        } else {
-          setAgent((a) => (a === agent ? null : a))
-          deleteSession()
-        }
-      },
-    })
-    return agent
+export function useCredential() {
+  const createSession = useCallback((service: string) => {
+    const persistSession = (type, session) => {
+      if (session) {
+        saveSession({ ...session, service })
+      } else {
+        setSession((a) => (a === session ? null : a))
+        deleteSession()
+      }
+    }
+    return new CredentialSession(new URL(service), undefined, persistSession)
   }, [])
 
-  const [agent, setAgent] = useState<null | AtpAgent>(() => {
+  const [session, setSession] = useState<null | CredentialSession>(() => {
     const prev = loadSession()
     if (!prev) return null
 
-    const agent = createAgent(prev.service)
-    agent.resumeSession(prev)
-    return agent
+    const session = createSession(prev.service)
+    session.resumeSession(prev)
+    return session
   })
 
   const signIn = useCallback(
@@ -40,14 +37,17 @@ export function useAtpAuth() {
       authFactorToken?: string
       service: string
     }) => {
-      const agent = createAgent(service)
-      await agent.login({ identifier, password, authFactorToken })
-      setAgent(agent)
+      const session = createSession(service)
+      await session.login({ identifier, password, authFactorToken })
+      setSession(session)
     },
-    [createAgent],
+    [createSession],
   )
 
-  return useMemo(() => ({ signIn, agent }), [signIn, agent])
+  return useMemo(
+    () => ({ session, signIn, signOut: () => session?.logout() }),
+    [session, signIn],
+  )
 }
 
 const SESSION_KEY = '@@ATPROTO/SESSION'

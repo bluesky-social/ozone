@@ -163,7 +163,7 @@ function Form(
 ) {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
-  const { accountDid } = labelerAgent
+  const accountDid = labelerAgent.assertDid
 
   const {
     subject,

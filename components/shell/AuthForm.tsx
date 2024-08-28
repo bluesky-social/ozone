@@ -1,15 +1,18 @@
 import { HTMLAttributes } from 'react'
 
 import { TabsPanel } from '@/common/Tabs'
-import { AtpSignIn, AtpSignInForm } from './auth/atp/AtpSignInForm'
+import {
+  CredentialSignIn,
+  CredentialSignInForm,
+} from './auth/credential/CredentialSignInForm'
 import { OAuthSignIn, OAuthSignInForm } from './auth/oauth/OAuthSignInForm'
 
 export function AuthForm({
-  atpSignIn,
+  credentialSignIn,
   oauthSignIn,
   ...props
 }: {
-  atpSignIn?: AtpSignIn
+  credentialSignIn?: CredentialSignIn
   oauthSignIn?: OAuthSignIn
 } & HTMLAttributes<HTMLDivElement>) {
   return (
@@ -18,13 +21,13 @@ export function AuthForm({
       fallback={<div>No auth method available</div>}
       views={[
         {
-          view: 'atp',
+          view: 'credentials',
           label: 'Credentials',
-          content: atpSignIn ? (
-            <AtpSignInForm
-              key="atp"
+          content: credentialSignIn ? (
+            <CredentialSignInForm
+              key="credential"
               className="mt-8 space-y-6"
-              signIn={atpSignIn}
+              signIn={credentialSignIn}
             />
           ) : undefined,
         },

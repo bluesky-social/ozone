@@ -7,7 +7,7 @@ import { createContext, ReactNode, useContext, useMemo } from 'react'
 
 import { Loading } from '@/common/Loader'
 import { SetupModal } from '@/common/SetupModal'
-import { useAtpAuth } from './auth/atp/useAtpAuth'
+import { useCredential } from './auth/credential/useCredential'
 import { useOAuth, UseOAuthOptions } from './auth/oauth/useOAuth'
 import { AuthForm } from './AuthForm'
 
@@ -15,7 +15,7 @@ export type Profile = AppBskyActorDefs.ProfileViewDetailed
 
 export type AuthContext = {
   pdsAgent: Agent
-  signOut: () => Promise<void>
+  signOut: () => void | Promise<void>
 }
 
 const AuthContext = createContext<AuthContext | null>(null)
@@ -32,13 +32,7 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
   const pathname = usePathname()
   const router = useRouter()
 
-  const {
-    isLoginPopup,
-    isInitializing,
-    client: oauthClient,
-    agent: oauthAgent,
-    signIn: oauthSignIn,
-  } = useOAuth({
+  const oauth = useOAuth({
     ...options,
 
     getState: async () => {
@@ -61,17 +55,21 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
         : undefined),
   })
 
-  const { agent: atpAgent, signIn: atpSignIn } = useAtpAuth()
+  const credential = useCredential()
 
+  const auth = oauth.session ? oauth : credential
   const value = useMemo<AuthContext | null>(() => {
-    if (oauthAgent)
-      return { pdsAgent: oauthAgent, signOut: () => oauthAgent.signOut() }
-    if (atpAgent)
-      return { pdsAgent: atpAgent, signOut: () => atpAgent.logout() }
-    return null
-  }, [atpAgent, oauthAgent])
+    if (auth.session) {
+      return {
+        pdsAgent: new Agent(auth.session),
+        signOut: auth.signOut,
+      }
+    }
 
-  if (isLoginPopup) {
+    return null
+  }, [auth.session, auth.signOut])
+
+  if (oauth.isLoginPopup) {
     return (
       <SetupModal>
         <p className="text-center">This window can be closed</p>
@@ -79,7 +77,7 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
     )
   }
 
-  if (isInitializing || !oauthClient) {
+  if (oauth.isInitializing || !oauth.client) {
     return (
       <SetupModal>
         <Loading message="Initializing..." />
@@ -91,8 +89,8 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
     return (
       <SetupModal>
         <AuthForm
-          atpSignIn={atpSignIn}
-          oauthSignIn={oauthClient ? oauthSignIn : undefined}
+          credentialSignIn={credential.signIn}
+          oauthSignIn={oauth.client ? oauth.signIn : undefined}
         />
       </SetupModal>
     )
@@ -114,12 +112,12 @@ export function usePdsAgent() {
 
 export const useAuthDid = () => {
   const { pdsAgent } = useAuthContext()
-  return pdsAgent.accountDid
+  return pdsAgent.assertDid
 }
 
 export const useAuthProfileQuery = () => {
   const { pdsAgent } = useAuthContext()
-  const did = pdsAgent.accountDid
+  const did = pdsAgent.assertDid
 
   return useQuery({
     queryKey: ['profile', did],

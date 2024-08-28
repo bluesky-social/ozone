@@ -61,7 +61,7 @@ export const EmailComposer = ({ did }: { did: string }) => {
             content: htmlContent,
           },
           subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-          createdBy: labelerAgent.accountDid,
+          createdBy: labelerAgent.assertDid,
         }),
         {
           pending: 'Sending email...',

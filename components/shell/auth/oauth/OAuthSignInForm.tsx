@@ -3,8 +3,9 @@ import { LockClosedIcon } from '@heroicons/react/20/solid'
 import { FormEvent, useCallback, useState } from 'react'
 
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { OAuthSignIn } from './useOAuth'
 
-export type OAuthSignIn = (input: string, options?: AuthorizeOptions) => unknown
+export type { OAuthSignIn }
 
 /**
  * @returns Nice tailwind css form asking to enter either a handle or the host

@@ -93,7 +93,7 @@ export const useActionSubjects = () => {
               const { subject } = await createSubjectFromId(sub)
               await labelerAgent.api.tools.ozone.moderation.emitEvent({
                 subject,
-                createdBy: labelerAgent.accountDid,
+                createdBy: labelerAgent.assertDid,
                 ...eventData,
               })
               results.succeeded.push(sub)

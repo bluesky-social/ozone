@@ -81,13 +81,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             subject,
             name,
             disabled,
-            updatedBy: labelerAgent.accountDid,
+            updatedBy: labelerAgent.assertDid,
           })
         : labelerAgent.api.tools.ozone.communication.createTemplate({
             contentMarkdown,
             subject,
             name,
-            createdBy: labelerAgent.accountDid,
+            createdBy: labelerAgent.assertDid,
           }),
     [labelerAgent, templateId],
   )
