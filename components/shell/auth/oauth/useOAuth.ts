@@ -100,7 +100,7 @@ function useOAuthClient(
             clientMetadata:
               clientMetadata ??
               atprotoLoopbackClientMetadata(
-                'http://localhost?scope=atproto&scope=transition%3Ageneric&scope=transition%3Achat.bsky',
+                'http://localhost?redirect_uri=http%3A%2F%2F127.0.0.1%3A3000%2F&scope=atproto&scope=transition%3Ageneric&scope=transition%3Achat.bsky',
               ),
             handleResolver,
             responseMode,
