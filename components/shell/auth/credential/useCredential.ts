@@ -9,7 +9,7 @@ export function useCredential() {
       if (session) {
         saveSession({ ...session, service })
       } else {
-        setSession((a) => (a === session ? null : a))
+        setSession(null)
         deleteSession()
       }
     }
