@@ -101,13 +101,18 @@ export const ConfigurationProvider = ({
     data: serverConfig,
     error: serverConfigError,
     refetch: refetchServerConfig,
+    isLoading: isServerConfigLoading,
   } = useQuery({
     enabled: labelerAgent != null,
     retry: (failureCount: number, error: Error): boolean => {
       if (error?.['status'] === 401) return false
       return failureCount < 3
     },
-    queryKey: ['server-config'],
+    queryKey: [
+      'server-config',
+      labelerAgent?.assertDid || null,
+      labelerAgent?.proxy || null,
+    ],
     queryFn: async ({ signal }) => {
       const { data } = await labelerAgent!.tools.ozone.server.getConfig(
         {},
@@ -132,16 +137,20 @@ export const ConfigurationProvider = ({
   const state = useMemo<ConfigurationState>(() => {
     if (serverConfigError?.['status'] === 401) {
       return ConfigurationState.Unauthorized
-    } else if (!config || !serverConfig) {
+    } else if (!config) {
       return ConfigurationState.Pending
-    } else if (!serverConfig.role) {
-      return ConfigurationState.Unauthorized
     } else if (
       config.needs.key ||
       config.needs.service ||
       (config.needs.record && config.did === accountDid && !skipRecord)
     ) {
       return ConfigurationState.Unconfigured
+    } else if (isServerConfigLoading) {
+      return ConfigurationState.Pending
+    } else if (!serverConfig) {
+      return ConfigurationState.Unconfigured
+    } else if (!serverConfig.role) {
+      return ConfigurationState.Unauthorized
     } else {
       return ConfigurationState.Ready
     }

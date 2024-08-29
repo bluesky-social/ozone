@@ -1,5 +1,5 @@
 import { AtpSessionData, CredentialSession } from '@atproto/api'
-import { useCallback, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 
 type Session = AtpSessionData & { service: string }
 
@@ -16,14 +16,15 @@ export function useCredential() {
     return new CredentialSession(new URL(service), undefined, persistSession)
   }, [])
 
-  const [session, setSession] = useState<null | CredentialSession>(() => {
+  const [session, setSession] = useState<null | CredentialSession>(null)
+
+  useEffect(() => {
     const prev = loadSession()
-    if (!prev) return null
+    if (!prev) return
 
     const session = createSession(prev.service)
-    session.resumeSession(prev)
-    return session
-  })
+    session.resumeSession(prev).then(() => setSession((s) => s || session))
+  }, [])
 
   const signIn = useCallback(
     async ({

@@ -270,7 +270,7 @@ export function useOAuth(options: UseOAuthOptions) {
       if (!client) throw new Error('Client not initialized')
 
       const session = await client.signIn(input, {
-        scope: 'atproto transition:generic transition:chat.bsky',
+        scope: OAUTH_SCOPE,
         state: (await getState()) ?? undefined,
       })
       setSession(session)
