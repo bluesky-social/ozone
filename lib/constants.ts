@@ -1,4 +1,5 @@
 export const OAUTH_SCOPE = 'atproto transition:generic'
+export const ENABLE_OAUTH = !!process.env.NEXT_PUBLIC_ENABLE_OAUTH
 
 export const OZONE_SERVICE_DID =
   process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
