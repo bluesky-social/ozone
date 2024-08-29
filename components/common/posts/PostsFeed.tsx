@@ -234,10 +234,11 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
 
   if (AppBskyEmbedVideo.isView(embed)) {
     return (
-      <div className="flex gap-2 pb-2 pl-4" aria-label={embed.video.alt}>
+      <div className="flex gap-2 pb-2 pl-4" aria-label={embed.alt}>
         <VideoPlayer
-          source={embed.video.playlist}
-          thumbnail={embed.video.thumbnail}
+          source={embed.playlist}
+          thumbnail={embed.thumbnail}
+          alt={embed.alt}
         />
       </div>
     )
