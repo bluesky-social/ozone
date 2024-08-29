@@ -153,6 +153,8 @@ export const ModEventSelectorButton = ({
         return false
       }
 
+      // Checking canManageChat is not ideal but for now, only bsky mod service has control on both
+      // so it makes sense to rely on that one check for both actions
       if (
         key === MOD_EVENTS.DISABLE_VIDEO_UPLOAD &&
         (subjectStatus?.tags?.includes(VIDEO_UPLOAD_DISABLE_TAG) ||
