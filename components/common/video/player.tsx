@@ -1,5 +1,7 @@
 import Hls from 'hls.js/dist/hls.light' // Use light build of hls.
 import { useEffect, useId, useRef, useState } from 'react'
+import { ActionButton } from '../buttons'
+import { useSubtitle } from './useSubtitle'
 
 export default function VideoPlayer({
   source,
@@ -12,6 +14,7 @@ export default function VideoPlayer({
 }) {
   const [hls] = useState(() => new Hls())
   const [isUnsupported, setIsUnsupported] = useState(false)
+  const { subtitle, loadSubtitle } = useSubtitle(source)
   const figId = useId()
   const ref = useRef<HTMLVideoElement>(null)
 
@@ -49,6 +52,15 @@ export default function VideoPlayer({
         muted
         aria-labelledby={alt ? figId : undefined}
       >
+        {!!subtitle.url && (
+          <track
+            label="English"
+            kind="subtitles"
+            srcLang="en"
+            src={subtitle.url}
+            default
+          />
+        )}
         {isUnsupported && (
           <p>
             Your browser does not seem to support HLS videos. Please switch to a
@@ -56,6 +68,20 @@ export default function VideoPlayer({
           </p>
         )}
       </video>
+      <figcaption className="flex flex-row justify-end mt-2">
+        <ActionButton
+          appearance={subtitle.url ? 'primary' : 'outlined'}
+          disabled={subtitle.isLoading}
+          onClick={() => loadSubtitle()}
+          size="sm"
+        >
+          {subtitle.isLoading
+            ? 'Loading Subtitles...'
+            : subtitle.url
+            ? 'Hide Subtitles'
+            : 'Show Subtitles'}
+        </ActionButton>
+      </figcaption>
       {alt && (
         <figcaption
           id={figId}
