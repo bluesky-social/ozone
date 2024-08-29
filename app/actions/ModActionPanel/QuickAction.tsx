@@ -669,9 +669,13 @@ function Form(
                       id="labels"
                       name="labels"
                       formId={FORM_ID}
-                      defaultLabels={currentLabels.filter(
-                        (label) => !isSelfLabel(label),
-                      )}
+                      defaultLabels={currentLabels.filter((label) => {
+                        const serviceDid = client.getServiceDid()?.split('#')[0]
+                        const isExternalLabel = allLabels.some((l) => {
+                          return l.val === label && l.src !== serviceDid
+                        })
+                        return !isSelfLabel(label) && !isExternalLabel
+                      })}
                     />
                   </div>
                 )}

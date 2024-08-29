@@ -37,7 +37,7 @@
                   "labels":[
                       {
                           "ver":1,
-                          "src":"did:plc:4wke3qtisoohr7tf6vfhe5r2",
+                          "src":"did:plc:ozone",
                           "uri":"did:plc:jttgywq7eusytkmurmjbum6h",
                           "val":"impersonation",
                           "cts":"2024-05-13T14:35:09.154Z",
@@ -148,7 +148,7 @@
               "labels": [
                 {
                   "ver": 1,
-                  "src": "did:plc:ar7c4by46qjdydhdevvrndac",
+                  "src": "did:plc:ozone",
                   "uri": "at://did:plc:jttgywq7eusytkmurmjbum6h/app.bsky.actor.profile/self",
                   "cid": "bafyreifar3ib273ksyfwp4faluaj32aahuc6u2pdnxaygzbkqdhrjejhhi",
                   "val": "porn",
@@ -160,7 +160,7 @@
       
                 {
                   "ver": 1,
-                  "src": "did:plc:ar7c4by46qjdydhdevvrndac",
+                  "src": "did:plc:ozone",
                   "uri": "at://did:plc:jttgywq7eusytkmurmjbum6h/app.bsky.actor.profile/self",
                   "cid": "bafyreifar3ib273xczfwp4faluaj32aahuc6u2pdnxaygzbkqdhrjejhhi",
                   "val": "porn",
