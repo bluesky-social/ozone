@@ -4,7 +4,7 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
-import { DM_DISABLE_TAG } from '@/lib/constants'
+import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { checkPermission } from '@/lib/server-config'
 
 const actions = [
@@ -47,6 +47,14 @@ const actions = [
   {
     text: 'Enable DMs',
     key: MOD_EVENTS.ENABLE_DMS,
+  },
+  {
+    text: 'Disable Video Upload',
+    key: MOD_EVENTS.DISABLE_VIDEO_UPLOAD,
+  },
+  {
+    text: 'Enable Video Upload',
+    key: MOD_EVENTS.ENABLE_VIDEO_UPLOAD,
   },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
@@ -139,6 +147,25 @@ export const ModEventSelectorButton = ({
       if (
         key === MOD_EVENTS.ENABLE_DMS &&
         (!subjectStatus?.tags?.includes(DM_DISABLE_TAG) ||
+          !isSubjectDid ||
+          !canManageChat)
+      ) {
+        return false
+      }
+
+      // Checking canManageChat is not ideal but for now, only bsky mod service has control on both
+      // so it makes sense to rely on that one check for both actions
+      if (
+        key === MOD_EVENTS.DISABLE_VIDEO_UPLOAD &&
+        (subjectStatus?.tags?.includes(VIDEO_UPLOAD_DISABLE_TAG) ||
+          !isSubjectDid ||
+          !canManageChat)
+      ) {
+        return false
+      }
+      if (
+        key === MOD_EVENTS.ENABLE_VIDEO_UPLOAD &&
+        (!subjectStatus?.tags?.includes(VIDEO_UPLOAD_DISABLE_TAG) ||
           !isSubjectDid ||
           !canManageChat)
       ) {
