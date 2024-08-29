@@ -1,4 +1,4 @@
-import { AtpAgent, AtpServiceClient, AtpSessionData } from '@atproto/api'
+import { AtpAgent, Agent, AtpSessionData } from '@atproto/api'
 import { AuthState } from './types'
 import { OzoneConfig, getConfig } from './client-config'
 import { OZONE_SERVICE_DID } from './constants'
@@ -36,7 +36,7 @@ class ClientManager extends EventTarget {
     return AuthState.LoggedIn
   }
 
-  get api(): AtpServiceClient {
+  get api(): Agent {
     if (this._agent) {
       return this._agent.api
     }
