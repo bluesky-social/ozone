@@ -26,7 +26,9 @@ export async function getConfig(): Promise<OzoneConfig> {
   if (!did) {
     throw new Error('Could not determine an Ozone service DID')
   } else if (labelerDid && did !== labelerDid) {
-    throw new Error('Mismatch between Ozone service DID and Ozone service metadata')
+    throw new Error(
+      'Mismatch between Ozone service DID and Ozone service metadata',
+    )
   }
 
   const labelerUrl = doc && getServiceUrlFromDoc(doc, 'atproto_labeler')
