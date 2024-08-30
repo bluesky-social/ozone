@@ -54,8 +54,8 @@ export function ConfigurationFlow({
     return (
       <>
         <ErrorInfo type="warn" className="mt-2">
-          Your credentials are not authorized on this network. Please login as
-          an authorized user in order to configure Ozone.
+          {`You're`} not logged-in. Please login using your Ozone service
+          account in order to configure Ozone.
         </ErrorInfo>
         <Button
           className="w-full mt-2"
