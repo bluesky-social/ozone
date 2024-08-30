@@ -58,9 +58,15 @@ export function AuthProvider({ children, ...options }: AuthProviderProps) {
       !ozonePublicUrl || typeof window === 'undefined'
         ? undefined // Disabled server side
         : isLoopbackHost(ozonePublicUrl.hostname)
-        ? `http://localhost?redirect_uri=${encodeURIComponent(
-            new URL('/', ozonePublicUrl.origin).href as OAuthClientIdLoopback,
-          )}&scope=${OAUTH_SCOPE.split(' ').map(encodeURIComponent).join('+')}`
+        ? // The following requires a yet to be released version of the oauth-client:
+          // &scope=${OAUTH_SCOPE.split(' ').map(encodeURIComponent).join('+')}
+          `http://localhost?redirect_uri=${encodeURIComponent(
+            new URL(
+              `http://127.0.0.1${
+                window.location.port ? `:${window.location.port}` : ''
+              }`,
+            ).href,
+          )}`
         : `${ozonePublicUrl.origin as `https://${string}`}/oauth-client.json`,
   })
 

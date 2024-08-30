@@ -9,10 +9,16 @@ export async function getConfig(): Promise<OzoneConfig> {
   if (labelerDid) {
     doc = await resolveDidDocData(labelerDid)
     const labelerUrl = doc && getServiceUrlFromDoc(doc, 'atproto_labeler')
-    if (labelerUrl) {
-      meta = await getOzoneMeta(labelerUrl)
+    if (process.env.NODE_ENV === 'development' && doc && labelerUrl) {
+      meta = {
+        did: labelerDid,
+        url: labelerUrl,
+        publicKey: getDidKeyFromDoc(doc, 'atproto_label')!,
+      }
     } else {
-      meta = await getOzoneMeta(OZONE_PUBLIC_URL || window.location.origin)
+      meta = await getOzoneMeta(
+        labelerUrl || OZONE_PUBLIC_URL || window.location.origin,
+      )
     }
   } else {
     meta = await getOzoneMeta(OZONE_PUBLIC_URL || window.location.origin)
