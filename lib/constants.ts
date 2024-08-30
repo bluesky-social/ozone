@@ -24,7 +24,7 @@ export const HANDLE_RESOLVER_URL =
   process.env.NEXT_PUBLIC_HANDLE_RESOLVER_URL ||
   (process.env.NODE_ENV === 'development'
     ? 'http://localhost:2584'
-    : 'https://bsky.social')
+    : 'https://api.bsky.app')
 
 export const DM_DISABLE_TAG = 'chat-disabled'
 export const VIDEO_UPLOAD_DISABLE_TAG = 'video-upload-disabled'
