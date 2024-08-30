@@ -1,13 +1,14 @@
 'use client'
 import { useEffect, useState } from 'react'
+import dynamic from 'next/dynamic'
 import {
   AppBskyFeedDefs,
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
   AppBskyEmbedRecordWithMedia,
+  AppBskyEmbedVideo,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  AppBskyGraphList,
   AppBskyGraphDefs,
 } from '@atproto/api'
 import Link from 'next/link'
@@ -15,7 +16,6 @@ import {
   DocumentMagnifyingGlassIcon,
   ExclamationCircleIcon,
   LanguageIcon,
-  InformationCircleIcon,
   FolderMinusIcon,
   FolderPlusIcon,
 } from '@heroicons/react/24/outline'
@@ -37,6 +37,9 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
+const VideoPlayer = dynamic(() => import('@/common/video/player'), {
+  ssr: false,
+})
 
 export function PostsFeed({
   items,
@@ -228,6 +231,18 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     `border border-gray-200 rounded`,
     imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
   )
+
+  if (AppBskyEmbedVideo.isView(embed)) {
+    return (
+      <div className="flex gap-2 pb-2 pl-4" aria-label={embed.alt}>
+        <VideoPlayer
+          source={embed.playlist}
+          thumbnail={embed.thumbnail}
+          alt={embed.alt}
+        />
+      </div>
+    )
+  }
 
   // render image embeds
   if (AppBskyEmbedImages.isView(embed)) {

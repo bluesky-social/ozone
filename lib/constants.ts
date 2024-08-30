@@ -27,5 +27,6 @@ export const HANDLE_RESOLVER_URL =
     : 'https://bsky.social')
 
 export const DM_DISABLE_TAG = 'chat-disabled'
+export const VIDEO_UPLOAD_DISABLE_TAG = 'video-upload-disabled'
 
 export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`

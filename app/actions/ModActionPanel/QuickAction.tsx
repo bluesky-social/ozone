@@ -44,7 +44,7 @@ import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
-import { DM_DISABLE_TAG } from '@/lib/constants'
+import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LockClosedIcon } from '@heroicons/react/24/solid'
@@ -299,11 +299,13 @@ function Form(
         coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
       }
 
-      // Enable and disable dm actions are just tag operations behind the scenes
+      // Enable and disable dm/video-upload actions are just tag operations behind the scenes
       // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
       if (
-        coreEvent.$type === MOD_EVENTS.DISABLE_DMS ||
-        coreEvent.$type === MOD_EVENTS.ENABLE_DMS
+        MOD_EVENTS.DISABLE_DMS === coreEvent.$type ||
+        MOD_EVENTS.ENABLE_DMS === coreEvent.$type ||
+        MOD_EVENTS.DISABLE_VIDEO_UPLOAD === coreEvent.$type ||
+        MOD_EVENTS.ENABLE_VIDEO_UPLOAD === coreEvent.$type
       ) {
         if (coreEvent.$type === MOD_EVENTS.DISABLE_DMS) {
           coreEvent.add = [DM_DISABLE_TAG]
@@ -312,6 +314,14 @@ function Form(
         if (coreEvent.$type === MOD_EVENTS.ENABLE_DMS) {
           coreEvent.add = []
           coreEvent.remove = [DM_DISABLE_TAG]
+        }
+        if (coreEvent.$type === MOD_EVENTS.DISABLE_VIDEO_UPLOAD) {
+          coreEvent.add = [VIDEO_UPLOAD_DISABLE_TAG]
+          coreEvent.remove = []
+        }
+        if (coreEvent.$type === MOD_EVENTS.ENABLE_VIDEO_UPLOAD) {
+          coreEvent.add = []
+          coreEvent.remove = [VIDEO_UPLOAD_DISABLE_TAG]
         }
         coreEvent.$type = MOD_EVENTS.TAG
       }
@@ -674,9 +684,13 @@ function Form(
                       id="labels"
                       name="labels"
                       formId={FORM_ID}
-                      defaultLabels={currentLabels.filter(
-                        (label) => !isSelfLabel(label),
-                      )}
+                      defaultLabels={currentLabels.filter((label) => {
+                        const serviceDid = client.getServiceDid()?.split('#')[0]
+                        const isExternalLabel = allLabels.some((l) => {
+                          return l.val === label && l.src !== serviceDid
+                        })
+                        return !isSelfLabel(label) && !isExternalLabel
+                      })}
                     />
                   </div>
                 )}

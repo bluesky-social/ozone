@@ -32,6 +32,7 @@
     "date-fns": "^2.29.3",
     "eslint": "^8.57.0",
     "eslint-config-next": "^14.2.4",
+    "hls.js": "^1.5.13",
     "kbar": "^0.1.0-beta.45",
     "lande": "^1.0.10",
     "next": "14.2.5",
