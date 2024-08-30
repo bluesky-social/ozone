@@ -1,15 +1,10 @@
 export const OAUTH_SCOPE = 'atproto transition:generic'
-export const ENABLE_OAUTH = !!process.env.NEXT_PUBLIC_ENABLE_OAUTH
 
 export const OZONE_SERVICE_DID =
   process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
 
 export const OZONE_PUBLIC_URL =
-  process.env.NEXT_PUBLIC_OZONE_PUBLIC_URL ||
-  (process.env.NODE_ENV === 'development'
-    ? 'http://localhost:2587'
-    : // Defaults to "window.location.origin"
-      undefined)
+  process.env.NEXT_PUBLIC_OZONE_PUBLIC_URL || undefined
 
 export const PLC_DIRECTORY_URL =
   process.env.NEXT_PUBLIC_PLC_DIRECTORY_URL ||

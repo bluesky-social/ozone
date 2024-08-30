@@ -6,7 +6,6 @@ import {
   CredentialSignInForm,
 } from './auth/credential/CredentialSignInForm'
 import { OAuthSignIn, OAuthSignInForm } from './auth/oauth/OAuthSignInForm'
-import { ENABLE_OAUTH } from '@/lib/constants'
 
 export function AuthForm({
   credentialSignIn,
@@ -16,20 +15,11 @@ export function AuthForm({
   credentialSignIn?: CredentialSignIn
   oauthSignIn?: OAuthSignIn
 } & HTMLAttributes<HTMLDivElement>) {
-  if (!ENABLE_OAUTH && credentialSignIn) {
-    return (
-      <CredentialSignInForm
-        key="credential"
-        className="mt-8 space-y-6"
-        signIn={credentialSignIn}
-      />
-    )
-  }
-
   return (
     <TabsPanel
       {...props}
       fallback={<div>No auth method available</div>}
+      autoHide
       views={[
         {
           view: 'credentials',

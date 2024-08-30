@@ -52,11 +52,11 @@ export default function RootLayout({
         />
 
         <GlobalQueryClientProvider>
-          <AuthProvider
-            plcDirectoryUrl={PLC_DIRECTORY_URL}
-            handleResolver={HANDLE_RESOLVER_URL}
-          >
-            <ConfigProvider>
+          <ConfigProvider>
+            <AuthProvider
+              plcDirectoryUrl={PLC_DIRECTORY_URL}
+              handleResolver={HANDLE_RESOLVER_URL}
+            >
               <DefaultQueryClientProvider>
                 <ConfigurationProvider>
                   <ExternalLabelersProvider>
@@ -66,8 +66,8 @@ export default function RootLayout({
                   </ExternalLabelersProvider>
                 </ConfigurationProvider>
               </DefaultQueryClientProvider>
-            </ConfigProvider>
-          </AuthProvider>
+            </AuthProvider>
+          </ConfigProvider>
         </GlobalQueryClientProvider>
       </body>
     </html>

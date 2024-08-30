@@ -1,15 +1,18 @@
 'use client'
 
-import { AppBskyActorDefs, Agent } from '@atproto/api'
+import { Agent, AppBskyActorDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
 import { usePathname, useRouter } from 'next/navigation'
 import { createContext, ReactNode, useContext, useMemo } from 'react'
 
 import { Loading } from '@/common/Loader'
 import { SetupModal } from '@/common/SetupModal'
+import { OAUTH_SCOPE, OZONE_PUBLIC_URL } from '@/lib/constants'
+import { OAuthClientIdLoopback } from '@atproto/oauth-types'
 import { useCredential } from './auth/credential/useCredential'
 import { useOAuth, UseOAuthOptions } from './auth/oauth/useOAuth'
 import { AuthForm } from './AuthForm'
+import { useConfigContext } from './ConfigContext'
 
 export type Profile = AppBskyActorDefs.ProfileViewDetailed
 
@@ -28,31 +31,37 @@ export type AuthProviderProps = {
   children: ReactNode
 } & UseOAuthOptions
 
-export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
+const ozonePublicUrl = OZONE_PUBLIC_URL
+  ? new URL(OZONE_PUBLIC_URL)
+  : typeof window !== 'undefined'
+  ? new URL(window.location.origin)
+  : undefined
+
+export function AuthProvider({ children, ...options }: AuthProviderProps) {
+  const { config } = useConfigContext()
+
   const pathname = usePathname()
   const router = useRouter()
 
   const oauth = useOAuth({
     ...options,
 
-    getState: async () => {
-      // Save the current path before signing in
-      return pathname
-    },
+    state: pathname,
+    scope: OAUTH_SCOPE, // Won't be needed in future version of the oauth-client (as it will default to the metadata value)
+
     onSignedIn: async (agent, state) => {
       // Restore the previous path after signing in
       if (state) router.push(state)
     },
 
-    // use "https://ozone.example.com/oauth-client.json" in prod and a loopback URL in dev
     clientId:
-      options['clientId'] ??
-      (options['clientMetadata'] == null
-        ? typeof window === 'undefined' ||
-          isLoopbackHost(window.location.hostname)
-          ? undefined
-          : new URL(`/oauth-client.json`, window.location.origin).href
-        : undefined),
+      !ozonePublicUrl || typeof window === 'undefined'
+        ? undefined // Disabled server side
+        : isLoopbackHost(ozonePublicUrl.hostname)
+        ? `http://localhost?redirect_uri=${encodeURIComponent(
+            new URL('/', ozonePublicUrl.origin).href as OAuthClientIdLoopback,
+          )}&scope=${OAUTH_SCOPE.split(' ').map(encodeURIComponent).join('+')}`
+        : `${ozonePublicUrl.origin as `https://${string}`}/oauth-client.json`,
   })
 
   const credential = useCredential()
@@ -90,7 +99,9 @@ export const AuthProvider = ({ children, ...options }: AuthProviderProps) => {
       <SetupModal>
         <AuthForm
           credentialSignIn={credential.signIn}
-          oauthSignIn={oauth.client ? oauth.signIn : undefined}
+          oauthSignIn={
+            oauth.client && !config.needs.service ? oauth.signIn : undefined
+          }
         />
       </SetupModal>
     )
@@ -121,11 +132,8 @@ export const useAuthProfileQuery = () => {
 
   return useQuery({
     queryKey: ['profile', did],
-    queryFn: async () =>
-      pdsAgent.getProfile({ actor: did }).catch((err) => {
-        console.error('Failed to fetch profile', err)
-        throw err
-      }),
+    queryFn: async () => pdsAgent.getProfile({ actor: did }),
+    refetchOnWindowFocus: false,
   })
 }
 
