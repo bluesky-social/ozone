@@ -1,6 +1,7 @@
 'use client'
 
 import {
+  // Only type imports are allowed here to avoid SSR issues
   type BrowserOAuthClient,
   type BrowserOAuthClientLoadOptions,
   type OAuthSession,
@@ -9,9 +10,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useCallbackRef } from '@/lib/useCallbackRef'
 import { useValueRef } from '@/lib/useValueRef'
-
-export type Simplify<T> = { [K in keyof T]: T[K] } & {}
-export type Gettable<T> = () => PromiseLike<T> | T
+import { useSignaledEffect } from '@/lib/useSignaledEffect'
 
 export type OAuthSignIn = (input: string) => unknown
 
@@ -19,90 +18,54 @@ export type OnRestored = (session: OAuthSession | null) => void
 export type OnSignedIn = (session: OAuthSession, state: null | string) => void
 export type OnSignedOut = () => void
 
-type ClientOptions =
-  | { client: BrowserOAuthClient }
-  | Simplify<
-      Partial<
-        Pick<
-          BrowserOAuthClientLoadOptions,
-          | 'clientId'
-          | 'handleResolver'
-          | 'responseMode'
-          | 'plcDirectoryUrl'
-          | 'fetch'
-        >
-      >
-    >
+type ClientOptions = Partial<
+  Pick<
+    BrowserOAuthClientLoadOptions,
+    'clientId' | 'handleResolver' | 'responseMode' | 'plcDirectoryUrl' | 'fetch'
+  >
+>
 
-function useOAuthClient(options: ClientOptions): null | BrowserOAuthClient
-function useOAuthClient(
-  options: Partial<
-    { client: BrowserOAuthClient } & BrowserOAuthClientLoadOptions
-  >,
-) {
-  const {
-    client: clientInput,
-    clientId,
-    handleResolver,
-    responseMode,
-    plcDirectoryUrl,
-  } = options
+function useOAuthClient(options: ClientOptions) {
+  const { clientId, handleResolver, responseMode, plcDirectoryUrl } = options
 
-  const [client, setClient] = useState<null | BrowserOAuthClient>(
-    clientInput || null,
-  )
+  const [client, setClient] = useState<null | BrowserOAuthClient>(null)
   const fetch = useCallbackRef(options.fetch || globalThis.fetch)
 
-  useEffect(() => {
-    if (clientInput) {
-      setClient(clientInput)
-    } else if (clientId && handleResolver) {
-      const ac = new AbortController()
-      const { signal } = ac
+  useSignaledEffect(
+    (signal) => {
+      if (clientId && handleResolver) {
+        // Clear current value (if any)
+        setClient(null)
 
-      setClient(null)
+        // "oauth-client-browser" is not compatible with SSR, so we load it
+        // dynamically from an effect. Only type imports are allowed at the top.
+        void import('@atproto/oauth-client-browser').then(async (mod) => {
+          if (signal.aborted) return
 
-      import('@atproto/oauth-client-browser').then((module) => {
-        if (signal.aborted) return
+          const client = await mod.BrowserOAuthClient.load({
+            clientId,
+            handleResolver,
+            responseMode,
+            plcDirectoryUrl,
+            fetch,
+            signal,
+          })
 
-        const { BrowserOAuthClient } = module
-
-        BrowserOAuthClient.load({
-          clientId,
-          handleResolver,
-          responseMode,
-          plcDirectoryUrl,
-          fetch,
-          signal,
-        }).then(
-          (client) => {
-            if (!signal.aborted) {
-              signal.addEventListener('abort', () => client.dispose(), {
-                once: true,
-              })
-              setClient(client)
-            } else {
-              client.dispose()
-            }
-          },
-          (err) => {
-            if (!signal.aborted) throw err
-          },
-        )
-      })
-
-      return () => ac.abort()
-    } else {
-      setClient(null)
-    }
-  }, [
-    clientInput,
-    clientId,
-    handleResolver,
-    responseMode,
-    plcDirectoryUrl,
-    fetch,
-  ])
+          if (signal.aborted) {
+            client.dispose()
+          } else {
+            signal.addEventListener('abort', () => client.dispose(), {
+              once: true,
+            })
+            setClient(client)
+          }
+        })
+      } else {
+        setClient(null)
+      }
+    },
+    [clientId, handleResolver, responseMode, plcDirectoryUrl, fetch],
+  )
 
   return client
 }
