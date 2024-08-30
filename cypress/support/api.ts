@@ -1,7 +1,7 @@
 export const API_URL = 'http://localhost:2583'
 export const SERVER_URL = `${API_URL}/xrpc`
 export const PLC_URL = 'https://plc.directory'
-export const HANDLE_RESOLVER_URL = 'https://bsky.social/xrpc'
+export const HANDLE_RESOLVER_URL = 'https://api.bsky.app/xrpc'
 
 export const mockAuthResponse = (response: Record<string, any>) =>
   cy.intercept(
