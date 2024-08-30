@@ -51,19 +51,18 @@ export function useCredential() {
   )
 }
 
-const SESSION_KEY = '@@ATPROTO/SESSION'
+const SESSION_KEY = 'ozone_session'
 
 function loadSession(): Session | undefined {
   try {
     const str = localStorage.getItem(SESSION_KEY)
     const obj: unknown = str ? JSON.parse(str) : undefined
     if (
-      obj &&
-      obj['service'] &&
-      obj['refreshJwt'] &&
-      obj['accessJwt'] &&
-      obj['handle'] &&
-      obj['did']
+      obj?.['service'] &&
+      obj?.['refreshJwt'] &&
+      obj?.['accessJwt'] &&
+      obj?.['handle'] &&
+      obj?.['did']
     ) {
       return obj as Session
     }
