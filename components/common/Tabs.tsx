@@ -79,6 +79,7 @@ export type TabsPanelProps<ViewName extends Key> = {
   views: (TabView<ViewName> & { content: ReactNode })[]
   currentView?: ViewName
   onCurrentView?: (v: ViewName) => void
+  autoHide?: boolean
   fallback?: ReactNode
 } & HTMLAttributes<HTMLDivElement>
 
@@ -86,6 +87,7 @@ export function TabsPanel<ViewName extends Key>({
   views,
   fallback,
   currentView: currentViewExternal,
+  autoHide = false,
   onCurrentView,
   ...props
 }: TabsPanelProps<ViewName>) {
@@ -119,12 +121,17 @@ export function TabsPanel<ViewName extends Key>({
 
   return (
     <div {...props}>
-      <Tabs
-        views={available}
-        currentView={current?.view}
-        onSetCurrentView={setCurrent}
-      />
-      <div key={current?.view}>{current?.content ?? fallback}</div>
+      {autoHide && available.length <= 1 ? null : (
+        <Tabs
+          key="tabs"
+          views={available}
+          currentView={current?.view}
+          onSetCurrentView={setCurrent}
+        />
+      )}
+      <div key={current?.view ?? 'fallback'}>
+        {current?.content ?? fallback}
+      </div>
     </div>
   )
 }
