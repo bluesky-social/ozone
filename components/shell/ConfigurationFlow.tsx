@@ -20,16 +20,16 @@ import {
 } from '@/lib/client-config'
 import { Agent } from '@atproto/api'
 import { useAuthContext, useAuthDid, useAuthIdentifier } from './AuthContext'
-import { ConfigurationState, ReconfigureOptions } from './ConfigurationContext'
-
-type ReconfigureFn = (options?: ReconfigureOptions) => void | Promise<void>
+import { ConfigurationState } from './ConfigurationContext'
 
 export type ConfigurationFlowProps = {
   state: ConfigurationState
   config: OzoneConfig | undefined
-  error: Error | null
+  error: unknown
   labelerAgent: Agent | undefined
-  reconfigure: ReconfigureFn
+  skipRecordCreation: () => void | Promise<void>
+  createRecord: () => void | Promise<void>
+  reconfigure: () => void | Promise<void>
 }
 
 export function ConfigurationFlow({
@@ -37,6 +37,8 @@ export function ConfigurationFlow({
   config,
   error,
   labelerAgent,
+  skipRecordCreation,
+  createRecord,
   reconfigure,
 }: ConfigurationFlowProps) {
   const { signOut } = useAuthContext()
@@ -67,13 +69,13 @@ export function ConfigurationFlow({
   }
 
   if (state === ConfigurationState.Pending) {
-    if (error) {
+    if (error != null) {
       return (
         <>
           <ErrorInfo type="error" className="mt-2">
             We encountered an error loading the service configuration:
             <br />
-            {error.message}
+            {error instanceof Error ? error.message : String(error)}
           </ErrorInfo>
           <Button
             className="w-full mt-2"
@@ -171,7 +173,7 @@ export function ConfigurationFlow({
     return (
       <IdentityConfigurationFlow
         config={withDocAndMeta(config)}
-        reconfigure={reconfigure}
+        onIdentityUpdated={reconfigure}
       />
     )
   }
@@ -211,7 +213,13 @@ export function ConfigurationFlow({
   }
 
   if (config.needs.record) {
-    return <RecordConfigurationFlow config={config} reconfigure={reconfigure} />
+    return (
+      <RecordConfigurationFlow
+        config={config}
+        onSkip={skipRecordCreation}
+        onCreate={createRecord}
+      />
+    )
   }
 
   return <Loading message="Redirecting..." />
@@ -219,25 +227,25 @@ export function ConfigurationFlow({
 
 function IdentityConfigurationFlow({
   config,
-  reconfigure,
+  onIdentityUpdated,
 }: {
   config: OzoneConfigFull
-  reconfigure: ReconfigureFn
+  onIdentityUpdated: () => unknown
 }) {
   const [token, setToken] = useState('')
   const { pdsAgent, signOut } = useAuthContext()
 
   const requestPlcOperationSignature = useMutation({
-    mutationKey: [pdsAgent.did, config.did],
+    mutationKey: [pdsAgent.assertDid, config.did],
     mutationFn: async () => {
       await pdsAgent.com.atproto.identity.requestPlcOperationSignature()
     },
   })
   const submitPlcOperation = useMutation({
-    mutationKey: [pdsAgent.did, config.did, config.updatedAt],
+    mutationKey: [pdsAgent.assertDid, config.did, config.updatedAt],
     mutationFn: async () => {
       await updatePlcIdentity(pdsAgent, token, config)
-      await reconfigure()
+      await onIdentityUpdated()
     },
   })
   return (
@@ -343,30 +351,22 @@ function IdentityConfigurationFlow({
 
 function RecordConfigurationFlow({
   config,
-  reconfigure,
+  onSkip,
+  onCreate,
 }: {
   config: OzoneConfig
-  reconfigure: ReconfigureFn
+  onSkip: () => void | Promise<void>
+  onCreate: () => void | Promise<void>
 }) {
   const [checked, setChecked] = useState(false)
   const authDid = useAuthDid()
 
-  const { pdsAgent } = useAuthContext()
   const identifier = useAuthIdentifier()
 
   const putServiceRecord = useMutation({
-    mutationFn: async () => {
-      await pdsAgent.com.atproto.repo.putRecord({
-        repo: config.did,
-        collection: 'app.bsky.labeler.service',
-        rkey: 'self',
-        record: {
-          createdAt: new Date().toISOString(),
-          policies: { labelValues: [] },
-        },
-      })
-    },
+    mutationFn: async () => onCreate(),
   })
+
   return (
     <div className="text-gray-600 dark:text-gray-100 mt-4">
       <p className="mt-4">
@@ -407,9 +407,7 @@ function RecordConfigurationFlow({
           disabled={putServiceRecord.isLoading || putServiceRecord.isSuccess}
           className="w-full mr-2"
           icon={<ArrowRightOnRectangleIcon />}
-          onClick={async () => {
-            await reconfigure({ skipRecord: true })
-          }}
+          onClick={onSkip}
         >
           Skip
         </Button>
@@ -423,10 +421,7 @@ function RecordConfigurationFlow({
           }
           className="w-full ml-2"
           icon={<ArrowRightCircleIcon />}
-          onClick={async () => {
-            await putServiceRecord.mutateAsync()
-            await reconfigure({ skipRecord: false })
-          }}
+          onClick={() => putServiceRecord.mutateAsync()}
         >
           Submit
         </Button>

@@ -1,7 +1,6 @@
 'use client'
 
 import { Agent } from '@atproto/api'
-import { useQuery } from '@tanstack/react-query'
 import {
   createContext,
   ReactNode,
@@ -13,16 +12,12 @@ import {
 } from 'react'
 
 import { SetupModal } from '@/common/SetupModal'
-import { getConfig, OzoneConfig } from '@/lib/client-config'
-import {
-  parseServerConfig,
-  PermissionName,
-  ServerConfig,
-} from '@/lib/server-config'
+import { OzoneConfig } from '@/lib/client-config'
+import { PermissionName, ServerConfig } from '@/lib/server-config'
 import { useAuthContext } from './AuthContext'
+import { useConfigContext } from './ConfigContext'
+import { useServerConfigQuery } from './ConfigurationContext/useServerConfigQuery'
 import { ConfigurationFlow } from './ConfigurationFlow'
-import { GLOBAL_QUERY_CONTEXT } from './QueryClient'
-import { useLocalStorage } from 'react-use'
 
 export enum ConfigurationState {
   Pending,
@@ -31,17 +26,13 @@ export enum ConfigurationState {
   Unauthorized,
 }
 
-export type ReconfigureOptions = {
-  skipRecord?: boolean
-}
-
 export type ConfigurationContextData = {
   /** An agent to use in order to communicate with the labeler on the user's behalf. */
   labelerAgent: Agent
   isServiceAccount: boolean
   config: OzoneConfig
   serverConfig: ServerConfig
-  reconfigure: (options?: ReconfigureOptions) => void
+  reconfigure: () => void
 }
 
 const ConfigurationContext = createContext<ConfigurationContextData | null>(
@@ -53,48 +44,16 @@ export const ConfigurationProvider = ({
 }: {
   children: ReactNode
 }) => {
-  const [cachedConfig, setCachedConfig] =
-    useLocalStorage<OzoneConfig>('labeler-config')
-
   // Fetch the labeler static configuration
-  const {
-    data: config,
-    error: configError,
-    refetch: refetchConfig,
-  } = useQuery<OzoneConfig, Error>({
-    // Use the global query client to avoid clearing the cache when the user
-    // changes.
-    context: GLOBAL_QUERY_CONTEXT,
-    retry: (failureCount: number, error: Error): boolean => {
-      // TODO: change getConfig() to throw a specific error when a network
-      // error occurs, so we can distinguish between network errors and
-      // configuration errors.
-      return false
-    },
-    queryKey: ['labeler-config'],
-    queryFn: async () => getConfig(),
-    initialData: cachedConfig,
-    // Refetching will be handled manually
-    refetchOnWindowFocus: false,
-  })
-
-  useEffect(() => {
-    if (config) setCachedConfig(config)
-  }, [config, setCachedConfig])
+  const { config, configError, refetchConfig } = useConfigContext()
 
   // Derive an agent for communicating with the labeler, if we have a config and
   // an (authenticated) PDS agent.
   const { pdsAgent } = useAuthContext()
-  const labelerAgent = useMemo<Agent | undefined>(() => {
-    if (!pdsAgent) return undefined
-    if (!config?.did) return undefined
-
+  const labelerAgent = useMemo<Agent>(() => {
     const [did, id = 'atproto_labeler'] = config.did.split('#')
     return pdsAgent.withProxy(id, did)
-  }, [pdsAgent, config?.did])
-
-  const [cachedServerConfig, setCachedServerConfig] =
-    useLocalStorage<ServerConfig>('labeler-server-config')
+  }, [pdsAgent, config.did])
 
   // Fetch the user's server configuration
   const {
@@ -102,68 +61,35 @@ export const ConfigurationProvider = ({
     error: serverConfigError,
     refetch: refetchServerConfig,
     isLoading: isServerConfigLoading,
-  } = useQuery({
-    enabled: labelerAgent != null,
-    retry: (failureCount: number, error: Error): boolean => {
-      if (error?.['status'] === 401) return false
-      return failureCount < 3
-    },
-    queryKey: [
-      'server-config',
-      labelerAgent?.assertDid || null,
-      labelerAgent?.proxy || null,
-    ],
-    queryFn: async ({ signal }) => {
-      const { data } = await labelerAgent!.tools.ozone.server.getConfig(
-        {},
-        { signal },
-      )
-      return parseServerConfig(data)
-    },
-    initialData: cachedServerConfig,
-    refetchOnWindowFocus: false,
-  })
-
-  useEffect(() => {
-    if (serverConfig) setCachedServerConfig(serverConfig)
-  }, [serverConfig, setCachedServerConfig])
+  } = useServerConfigQuery(labelerAgent)
 
   // Allow ignoring the creation of a record when reconfiguring
   const [skipRecord, setSkipRecord] = useState(false)
-  useEffect(() => setSkipRecord(false), [labelerAgent]) // Reset on credential change
+
+  // Reset "skipRecord" on credential change
+  useEffect(() => setSkipRecord(false), [labelerAgent])
 
   const accountDid = labelerAgent?.did
 
-  const state = useMemo<ConfigurationState>(() => {
-    if (serverConfigError?.['status'] === 401) {
-      return ConfigurationState.Unauthorized
-    } else if (!config) {
-      return ConfigurationState.Pending
-    } else if (
-      config.needs.key ||
-      config.needs.service ||
-      (config.needs.record && config.did === accountDid && !skipRecord)
-    ) {
-      return ConfigurationState.Unconfigured
-    } else if (isServerConfigLoading) {
-      return ConfigurationState.Pending
-    } else if (!serverConfig) {
-      return ConfigurationState.Unconfigured
-    } else if (!serverConfig.role) {
-      return ConfigurationState.Unauthorized
-    } else {
-      return ConfigurationState.Ready
-    }
-  }, [config, serverConfigError, serverConfig, skipRecord, accountDid])
+  const state =
+    serverConfigError?.['status'] === 401
+      ? ConfigurationState.Unauthorized
+      : config.needs.key ||
+        config.needs.service ||
+        (config.needs.record && config.did === accountDid && !skipRecord)
+      ? ConfigurationState.Unconfigured
+      : !serverConfig
+      ? isServerConfigLoading
+        ? ConfigurationState.Pending
+        : ConfigurationState.Unconfigured
+      : !serverConfig.role
+      ? ConfigurationState.Unauthorized
+      : ConfigurationState.Ready
 
-  const reconfigure = useCallback(
-    async (options?: ReconfigureOptions) => {
-      if (options?.skipRecord != null) setSkipRecord(options.skipRecord)
-      await refetchConfig()
-      await refetchServerConfig()
-    },
-    [refetchConfig, refetchServerConfig],
-  )
+  const reconfigure = useCallback(async () => {
+    await refetchConfig()
+    await refetchServerConfig()
+  }, [refetchConfig, refetchServerConfig])
 
   const configurationContextData = useMemo<ConfigurationContextData | null>(
     () =>
@@ -191,6 +117,20 @@ export const ConfigurationProvider = ({
           state={state}
           error={configError || serverConfigError}
           reconfigure={reconfigure}
+          skipRecordCreation={() => setSkipRecord(true)}
+          createRecord={async () => {
+            await pdsAgent.com.atproto.repo.putRecord({
+              repo: config!.did,
+              collection: 'app.bsky.labeler.service',
+              rkey: 'self',
+              record: {
+                createdAt: new Date().toISOString(),
+                policies: { labelValues: [] },
+              },
+            })
+
+            await reconfigure()
+          }}
           labelerAgent={labelerAgent}
         />
       </SetupModal>

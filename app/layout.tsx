@@ -5,16 +5,15 @@ import 'yet-another-react-lightbox/styles.css'
 import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import 'yet-another-react-lightbox/plugins/captions.css'
 import { ToastContainer } from 'react-toastify'
+
 import { Shell } from '@/shell/Shell'
 import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
 import { AuthProvider } from '@/shell/AuthContext'
 import { DefaultQueryClientProvider } from '@/shell/QueryClient'
 import { GlobalQueryClientProvider } from '@/shell/QueryClient'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
-import {
-  HANDLE_RESOLVER_URL,
-  PLC_DIRECTORY_URL,
-} from '@/lib/constants'
+import { HANDLE_RESOLVER_URL, PLC_DIRECTORY_URL } from '@/lib/constants'
+import { ConfigProvider } from '@/shell/ConfigContext'
 import { ConfigurationProvider } from '@/shell/ConfigurationContext'
 import { ExternalLabelersProvider } from '@/shell/ExternalLabelersContext'
 
@@ -57,15 +56,17 @@ export default function RootLayout({
             plcDirectoryUrl={PLC_DIRECTORY_URL}
             handleResolver={HANDLE_RESOLVER_URL}
           >
-            <DefaultQueryClientProvider>
-              <ConfigurationProvider>
-                <ExternalLabelersProvider>
-                  <CommandPaletteRoot>
-                    <Shell>{children}</Shell>
-                  </CommandPaletteRoot>
-                </ExternalLabelersProvider>
-              </ConfigurationProvider>
-            </DefaultQueryClientProvider>
+            <ConfigProvider>
+              <DefaultQueryClientProvider>
+                <ConfigurationProvider>
+                  <ExternalLabelersProvider>
+                    <CommandPaletteRoot>
+                      <Shell>{children}</Shell>
+                    </CommandPaletteRoot>
+                  </ExternalLabelersProvider>
+                </ConfigurationProvider>
+              </DefaultQueryClientProvider>
+            </ConfigProvider>
           </AuthProvider>
         </GlobalQueryClientProvider>
       </body>

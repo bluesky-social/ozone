@@ -20,6 +20,7 @@
     "@atproto/api": "^0.13.4",
     "@atproto/oauth-client-browser": "^0.2.0",
     "@atproto/oauth-types": "^0.1.4",
+    "@atproto/xrpc": "^0.6.1",
     "@headlessui/react": "^1.7.7",
     "@heroicons/react": "^2.0.13",
     "@tanstack/react-query": "^4.22.0",
