@@ -5,7 +5,10 @@ on:
   push:
     branches:
       - main
-
+env:
+  NEXT_PUBLIC_OZONE_SERVICE_DID: did:plc:ar7c4by46qjdydhdevvrndac
+  NEXT_PUBLIC_PLC_DIRECTORY_URL: https://plc.directory
+  NEXT_PUBLIC_HANDLE_RESOLVER_URL: https://api.bsky.app
 jobs:
   cypress-run:
     runs-on: ubuntu-22.04
