@@ -48,7 +48,11 @@ import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LockClosedIcon } from '@heroicons/react/24/solid'
-import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
+import {
+  useConfigurationContext,
+  useLabelerAgent,
+  usePermission,
+} from '@/shell/ConfigurationContext'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -161,6 +165,7 @@ function Form(
     replaceFormWithEvents: boolean
   } & Pick<Props, 'setSubject' | 'subject' | 'subjectOptions' | 'onSubmit'>,
 ) {
+  const { config } = useConfigurationContext()
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const accountDid = labelerAgent.assertDid
@@ -685,9 +690,8 @@ function Form(
                       name="labels"
                       formId={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
-                        const serviceDid = client.getServiceDid()?.split('#')[0]
                         const isExternalLabel = allLabels.some((l) => {
-                          return l.val === label && l.src !== serviceDid
+                          return l.val === label && l.src !== config.did
                         })
                         return !isSelfLabel(label) && !isExternalLabel
                       })}
