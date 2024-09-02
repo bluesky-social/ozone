@@ -63,7 +63,7 @@ const buildPageTitle = ({
   currentTab: string
   takendown: boolean
   includeMuted: boolean
-  appealed: boolean
+  appealed: string | null
 }) => {
   const titleFromTab =
     currentTab === 'all'
@@ -79,8 +79,12 @@ const buildPageTitle = ({
     additionalFragments.push('Include Muted')
   }
 
-  if (appealed) {
-    additionalFragments.push('Appealed')
+  if (appealed === null) {
+    if (appealed === 'true') {
+      additionalFragments.push('Only Appeals')
+    } else {
+      additionalFragments.push('No Appeals')
+    }
   }
 
   const additionalTitle = additionalFragments.length
@@ -137,9 +141,23 @@ const ResolvedFilters = () => {
         },
         {
           id: 'appealed',
-          text: 'Appealed',
-          onClick: () => updateParams('appealed', true),
-          isActive: appealed === 'true',
+          text:
+            appealed === 'true'
+              ? 'Only Appeals'
+              : appealed === 'false'
+              ? 'No Appeals'
+              : 'Appeals',
+          onClick: () => {
+            if (appealed === 'true') {
+              updateParams('appealed', false)
+            } else if (appealed === 'false') {
+              // setting the same value toggles the param off
+              updateParams('appealed', false)
+            } else {
+              updateParams('appealed', true)
+            }
+          },
+          isActive: appealed === 'true' || appealed === 'false',
         },
       ]}
     />
@@ -167,7 +185,7 @@ export const ReportsPageContent = () => {
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
   const onlyMuted = !!params.get('onlyMuted')
-  const appealed = !!params.get('appealed')
+  const appealed = params.get('appealed')
   const reviewState = params.get('reviewState')
   const tags = params.get('tags')
   const excludeTags = params.get('excludeTags')
@@ -232,7 +250,9 @@ export const ReportsPageContent = () => {
         }
 
         if (appealed) {
-          queryParams.appealed = appealed
+          // If not specifically set to true but there is a value, we can default to false
+          // No value will pass undefined which will be ignored
+          queryParams.appealed = appealed === 'true'
         }
 
         if (tags) {
