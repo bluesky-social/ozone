@@ -79,7 +79,7 @@ const buildPageTitle = ({
     additionalFragments.push('Include Muted')
   }
 
-  if (appealed === null) {
+  if (appealed !== null) {
     if (appealed === 'true') {
       additionalFragments.push('Only Appeals')
     } else {
