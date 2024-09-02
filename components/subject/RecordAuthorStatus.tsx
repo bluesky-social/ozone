@@ -13,7 +13,6 @@ export const RecordAuthorStatus = ({
 }: {
   repo: ToolsOzoneModerationDefs.RepoView
 }) => {
-  repo.deactivatedAt = new Date(Date.now() - 86400000).toISOString()
   const isNew =
     differenceInDays(new Date(repo.indexedAt), new Date()) <
     NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
@@ -23,7 +22,7 @@ export const RecordAuthorStatus = ({
       })
     : ''
 
-  const isTakendown = !repo.moderation.subjectStatus?.takendown
+  const isTakendown = !!repo.moderation.subjectStatus?.takendown
   return (
     <>
       {isNew && (

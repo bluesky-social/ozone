@@ -189,9 +189,6 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
-  const deactivatedAt = getDeactivatedAt(
-    repo ? { repo } : record ? { record } : {},
-  )
   const canManageChat = checkPermission('canManageChat')
 
   // navigate to next or prev report
@@ -537,13 +534,6 @@ function Form(
                 subject={subject}
                 className="border-2 border-dashed border-gray-300"
               >
-                {/* {deactivatedAt && (
-                  <p className="pt-1 pb-1 flex flex-row items-center">
-                    <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
-                    Account deactivated on {deactivatedAt}
-                  </p>
-                )} */}
-
                 {!isSubjectDid && record?.repo && (
                   <div className="-ml-1 my-2">
                     <RecordAuthorStatus repo={record.repo} />
