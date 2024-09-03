@@ -47,7 +47,6 @@ import { Card } from '@/common/Card'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
-import { checkPermission } from '@/lib/server-config'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import {
