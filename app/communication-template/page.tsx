@@ -15,14 +15,23 @@ import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { checkPermission } from '@/lib/server-config'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
+import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 
 export default function CommunicationTemplatePage() {
   const { data, error, isLoading } = useCommunicationTemplateList({})
+  const [selectedLang, setSelectedLang] = useState<string | undefined>()
   const [deletingTemplateId, setDeletingTemplateId] = useState<
     string | undefined
   >()
   const templates = data
-    ? [...data].sort((prev, next) => prev.name.localeCompare(next.name))
+    ? [...data]
+        .filter((tpl) => {
+          if (!selectedLang) {
+            return true
+          }
+          return tpl.lang === selectedLang
+        })
+        .sort((prev, next) => prev.name.localeCompare(next.name))
     : []
   useTitle(`Communication Templates`)
 
@@ -48,14 +57,17 @@ export default function CommunicationTemplatePage() {
         <h2 className="font-semibold text-gray-600 dark:text-gray-100 mb-3 mt-4">
           Communication Templates
         </h2>
-        <LinkButton
-          href="/communication-template/create"
-          appearance="primary"
-          size="sm"
-        >
-          <PlusIcon className="h-4 w-4 mr-1" />
-          New Template
-        </LinkButton>
+        <div className="flex flex-row gap-2">
+          <LanguageSelectorDropdown {...{ selectedLang, setSelectedLang }} />
+          <LinkButton
+            href="/communication-template/create"
+            appearance="primary"
+            size="sm"
+          >
+            <PlusIcon className="h-4 w-4 mr-1" />
+            New Template
+          </LinkButton>
+        </div>
       </div>
       <CommunicationTemplateDeleteConfirmationModal
         templateId={deletingTemplateId}
@@ -64,7 +76,13 @@ export default function CommunicationTemplatePage() {
       <ul>
         {!templates.length && (
           <div className="shadow bg-white dark:bg-slate-800 rounded-sm p-5 text-gray-700 dark:text-gray-100 mb-3 text-center">
-            <p>No templates found</p>
+            <p>
+              {selectedLang
+                ? `No ${
+                    LANGUAGES_MAP_CODE2[selectedLang]?.name || selectedLang
+                  } templates found`
+                : 'No templates found'}
+            </p>
             <p className="text-sm text-gray-900 dark:text-gray-200">
               Create a new template to send emails to users.
             </p>
