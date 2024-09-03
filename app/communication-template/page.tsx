@@ -11,11 +11,10 @@ import { Loading, LoadingFailed } from '@/common/Loader'
 import { useCommunicationTemplateList } from 'components/communication-template/hooks'
 import { CommunicationTemplateDeleteConfirmationModal } from 'components/communication-template/delete-confirmation-modal'
 import { ActionButton, LinkButton } from '@/common/buttons'
-import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { checkPermission } from '@/lib/server-config'
-import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
+import { getLanguageName } from '@/lib/locale/helpers'
 
 export default function CommunicationTemplatePage() {
   const { data, error, isLoading } = useCommunicationTemplateList({})
@@ -78,9 +77,7 @@ export default function CommunicationTemplatePage() {
           <div className="shadow bg-white dark:bg-slate-800 rounded-sm p-5 text-gray-700 dark:text-gray-100 mb-3 text-center">
             <p>
               {selectedLang
-                ? `No ${
-                    LANGUAGES_MAP_CODE2[selectedLang]?.name || selectedLang
-                  } templates found`
+                ? `No ${getLanguageName(selectedLang)} templates found`
                 : 'No templates found'}
             </p>
             <p className="text-sm text-gray-900 dark:text-gray-200">
@@ -103,7 +100,7 @@ export default function CommunicationTemplatePage() {
                 )}
                 {!!template.lang && (
                   <LabelChip className="dark:bg-slate-600 dark:text-gray-200">
-                    {LANGUAGES_MAP_CODE2[template.lang]?.name || template.lang}
+                    {getLanguageName(template.lang)}
                   </LabelChip>
                 )}
               </div>

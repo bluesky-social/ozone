@@ -4,8 +4,8 @@ import { Fragment, useState } from 'react'
 import { Combobox, Transition } from '@headlessui/react'
 import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
-import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 import { LabelChip } from '@/common/labels'
+import { getLanguageName } from '@/lib/locale/helpers'
 
 export const TemplateSelector = ({
   defaultLang,
@@ -111,9 +111,8 @@ export const TemplateSelector = ({
                               {tpl.name}
                             </span>
                             {!!tpl.lang && (
-                              <LabelChip className='dark:bg-slate-800 dark:text-gray-200 ml-2'>
-                                {LANGUAGES_MAP_CODE2[tpl.lang]?.name ||
-                                  tpl.lang}
+                              <LabelChip className="dark:bg-slate-800 dark:text-gray-200 ml-2">
+                                {getLanguageName(tpl.lang)}
                               </LabelChip>
                             )}
                           </div>
@@ -141,11 +140,7 @@ const NoTemplateOption = ({
   return (
     <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
       No template found {query.length ? `matching "${query}"` : ''}{' '}
-      {selectedLang
-        ? `in ${
-            LANGUAGES_MAP_CODE2[selectedLang]?.name || selectedLang
-          } language`
-        : ''}
+      {selectedLang ? `in ${getLanguageName(selectedLang)} language` : ''}
     </div>
   )
 }

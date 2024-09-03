@@ -1,3 +1,4 @@
+import { getLanguageName } from '@/lib/locale/helpers'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 import { Popover, Transition } from '@headlessui/react'
 import { CheckIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
@@ -207,7 +208,7 @@ const LanguageList = ({
               onClick={() => !isDisabled && onSelect(code2)}
               key={code2}
             >
-              {LANGUAGES_MAP_CODE2[code2].name}
+              {getLanguageName(code2)}
               {selected.includes(code2) && (
                 <CheckIcon className="h-4 w-4 text-green-700" />
               )}
