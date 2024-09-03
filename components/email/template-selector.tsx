@@ -5,6 +5,7 @@ import { Combobox, Transition } from '@headlessui/react'
 import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
+import { LabelChip } from '@/common/labels'
 
 export const TemplateSelector = ({
   defaultLang,
@@ -89,13 +90,6 @@ export const TemplateSelector = ({
                     >
                       {({ selected, active }) => (
                         <>
-                          <span
-                            className={`block truncate ${
-                              selected ? 'font-medium' : 'font-normal'
-                            }`}
-                          >
-                            {tpl.name}
-                          </span>
                           {selected ? (
                             <span
                               className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
@@ -108,6 +102,21 @@ export const TemplateSelector = ({
                               />
                             </span>
                           ) : null}
+                          <div className="flex flex-row">
+                            <span
+                              className={`block truncate ${
+                                selected ? 'font-medium' : 'font-normal'
+                              }`}
+                            >
+                              {tpl.name}
+                            </span>
+                            {!!tpl.lang && (
+                              <LabelChip className='dark:bg-slate-800 dark:text-gray-200 ml-2'>
+                                {LANGUAGES_MAP_CODE2[tpl.lang]?.name ||
+                                  tpl.lang}
+                              </LabelChip>
+                            )}
+                          </div>
                         </>
                       )}
                     </Combobox.Option>
