@@ -63,11 +63,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
   const saveFunc = ({
     contentMarkdown,
     name,
+    lang,
     subject,
     disabled,
   }: {
     contentMarkdown: string
     name: string
+    lang?: string
     subject: string
     disabled: boolean
   }) =>
@@ -78,6 +80,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             contentMarkdown,
             subject,
             name,
+            lang,
             disabled,
             updatedBy: client.session.did,
           },
@@ -88,6 +91,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             contentMarkdown,
             subject,
             name,
+            lang,
             createdBy: client.session.did,
           },
           { headers: client.proxyHeaders(), encoding: 'application/json' },
@@ -98,12 +102,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name')?.toString() ?? ''
     const subject = formData.get('subject')?.toString() ?? ''
+    const lang = formData.get('lang')?.toString() ?? ''
     const disabled = formData.get('disabled') === 'true'
 
     setIsSaving(true)
     try {
       await toast.promise(
-        saveFunc({ contentMarkdown, name, subject, disabled }),
+        saveFunc({ contentMarkdown, name, lang, subject, disabled }),
         {
           pending: 'Saving template...',
           success: {

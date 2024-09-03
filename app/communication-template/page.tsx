@@ -14,6 +14,7 @@ import { ActionButton, LinkButton } from '@/common/buttons'
 import client from '@/lib/client'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { checkPermission } from '@/lib/server-config'
+import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 
 export default function CommunicationTemplatePage() {
   const { data, error, isLoading } = useCommunicationTemplateList({})
@@ -74,14 +75,21 @@ export default function CommunicationTemplatePage() {
             key={template.id}
             className="shadow dark:shadow-slate-700 bg-white dark:bg-slate-800 rounded-sm p-3 text-gray-700 dark:text-gray-100 mb-3"
           >
-            <p className="flex flex-row justify-between">
-              <span className="text-sm text-gray-900 dark:text-gray-200">
+            <div className="flex flex-row justify-between">
+              <p className="text-sm text-gray-900 dark:text-gray-200">
                 {template.name}
-              </span>
-              {template.disabled && (
-                <LabelChip className="bg-red-200">Disabled</LabelChip>
-              )}
-            </p>
+              </p>
+              <div>
+                {!!template.disabled && (
+                  <LabelChip className="bg-red-200">Disabled</LabelChip>
+                )}
+                {!!template.lang && (
+                  <LabelChip className="dark:bg-slate-600 dark:text-gray-200">
+                    {LANGUAGES_MAP_CODE2[template.lang]?.name || template.lang}
+                  </LabelChip>
+                )}
+              </div>
+            </div>
             <p className="text-sm">Subject: {template.subject}</p>
             <div className="text-sm flex flex-row justify-between">
               <span>
