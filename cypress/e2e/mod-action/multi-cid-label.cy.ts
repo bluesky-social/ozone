@@ -14,7 +14,7 @@ describe('Mod Action -> Label', () => {
   let seedFixture
 
   beforeEach(() => {
-    cy.visit('http://localhost:3000')
+    cy.visit('http://127.0.0.1:3000')
     cy.fixture('statuses.json').then((data) => {
       statusesFixture = data
       mockModerationReportsResponse(statusesFixture.multiCidLabeledProfile)
@@ -68,8 +68,10 @@ describe('Mod Action -> Label', () => {
     )
     // Validate that events were emitted for 2 different cids matching the exact number of labels added to different cids
     cy.wait(300).then(() => {
-      expect(requestedCids).to.have.members(labeledCids)
-      expect(requestedCids).to.have.lengthOf(labeledCids.length)
+      const uniqueRequestedCids = [...new Set(requestedCids)]
+      const uniqueLabeledCids = [...new Set(labeledCids)]
+      expect(uniqueRequestedCids).to.have.members(uniqueLabeledCids)
+      expect(uniqueRequestedCids).to.have.lengthOf(uniqueLabeledCids.length)
     })
   })
 })

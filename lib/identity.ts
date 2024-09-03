@@ -1,15 +1,11 @@
-import clientManager from './client'
+import { globalAgent } from './client'
 import { PLC_DIRECTORY_URL } from './constants'
 
 export const getDidFromHandle = async (
   handle: string,
 ): Promise<string | null> => {
   try {
-    const { data } = await clientManager.api.com.atproto.identity.resolveHandle(
-      {
-        handle,
-      },
-    )
+    const { data } = await globalAgent.resolveHandle({ handle })
     return data.did
   } catch (err) {
     return null
@@ -18,10 +14,11 @@ export const getDidFromHandle = async (
 
 export const resolveDidDocData = async function (
   did: string,
+  signal?: AbortSignal,
 ): Promise<DidDocData | null> {
   if (did.startsWith('did:plc:')) {
     const url = new URL(`/${did}/data`, PLC_DIRECTORY_URL)
-    const res = await fetch(url)
+    const res = await fetch(url, { signal })
     if (res.status !== 200) return null
     const doc = await res.json()
     return doc
@@ -29,7 +26,7 @@ export const resolveDidDocData = async function (
   if (did.startsWith('did:web:')) {
     const hostname = did.slice('did:web:'.length)
     const url = new URL(`/.well-known/did.json`, hostname)
-    const res = await fetch(url)
+    const res = await fetch(url, { signal })
     if (res.status !== 200) return null
     const doc = await res.json().catch(() => null)
     if (!doc || typeof doc !== 'object' || doc['id'] !== did) return null
@@ -38,7 +35,10 @@ export const resolveDidDocData = async function (
   return null
 }
 
-function didDocToData(doc: { id: string; [key: string]: unknown }): DidDocData {
+export function didDocToData(doc: {
+  id: string
+  [key: string]: unknown
+}): DidDocData {
   return {
     did: doc.id,
     alsoKnownAs: Array.isArray(doc['alsoKnownAs']) ? doc['alsoKnownAs'] : [],

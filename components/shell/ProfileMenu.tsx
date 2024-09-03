@@ -1,64 +1,23 @@
 'use client'
-import {
-  useEffect,
-  useState,
-  SyntheticEvent,
-  Fragment,
-  useContext,
-} from 'react'
 import { Menu, Transition } from '@headlessui/react'
+import { Fragment, SyntheticEvent } from 'react'
+
 import { classNames } from '@/lib/util'
-import Client from '@/lib/client'
-import { AuthChangeContext, AuthContext, AuthState } from './AuthContext'
+import {
+  useAuthContext,
+  useAuthIdentifier,
+  useAuthProfile,
+} from './AuthContext'
 
 export function ProfileMenu() {
-  const { isLoggedIn } = useContext(AuthContext)
-  const setAuthContextData = useContext(AuthChangeContext)
-  const [handle, setHandle] = useState<string>('')
-  const [avatar, setAvatar] = useState<string>('')
+  const { pdsAgent, signOut } = useAuthContext()
 
-  useEffect(() => {
-    const onClientChange = () => setAuthContextData(Client.authState)
-    Client.addEventListener('change', onClientChange)
-    return () => Client.removeEventListener('change', onClientChange)
-  }, [])
+  const identifier = useAuthIdentifier()
+  const avatar = useAuthProfile()?.avatar
 
-  useEffect(() => {
-    let aborted = false
-    if (Client.authState !== AuthState.LoggedIn) {
-      localStorage.cachedProfileHandle = ''
-      localStorage.cachedProfileAvatar = ''
-      setHandle('')
-      setAvatar('')
-      return
-    }
-    if (
-      Client.session.handle === localStorage.cachedProfileHandle &&
-      localStorage.cachedProfileAvatar
-    ) {
-      setHandle(localStorage.cachedProfileHandle)
-      setAvatar(localStorage.cachedProfileAvatar)
-      return
-    }
-    Client.api.app.bsky.actor.getProfile({ actor: Client.session.did }).then(
-      (res) => {
-        localStorage.cachedProfileHandle = res.data.handle
-        localStorage.cachedProfileAvatar = res.data.avatar || ''
-        setHandle(res.data.handle)
-        setAvatar(res.data.avatar || '')
-      },
-      (err) => {
-        console.error('Failed to fetch user profile', err)
-      },
-    )
-    return () => {
-      aborted = true
-    }
-  }, [isLoggedIn])
-
-  const onClickSignout = (e: SyntheticEvent) => {
+  const onClickSignout = async (e: SyntheticEvent) => {
     e.preventDefault()
-    Client.signout()
+    await signOut()
     window.location.reload()
   }
 
@@ -70,7 +29,7 @@ export function ProfileMenu() {
           <Menu.Button className="flex rounded-full bg-white dark:bg-slate-900 text-sm items-center focus:outline-none focus:ring-2 focus:ring-rose-500 focus:ring-offset-2">
             <span className="sr-only">Open user menu</span>
             <span className="hidden md:inline mr-2 font-semibold text-base text-gray-600 dark:text-gray-100">
-              {handle || ''}
+              {identifier || ''}
             </span>
             <img
               className="h-10 w-10 rounded-full"

@@ -1,5 +1,5 @@
 'use client'
-import { ComponentProps, useEffect, useState } from 'react'
+import { ComponentProps, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -18,7 +18,6 @@ import {
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
 import { buildBlueSkyAppUrl, classNames, truncate } from '@/lib/util'
-import client from '@/lib/client'
 import { ReportPanel } from '../reports/ReportPanel'
 import React from 'react'
 import {
@@ -44,12 +43,12 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Lists } from 'components/list/Lists'
+import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
 import {
   useWorkspaceAddItemsMutation,
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
-import { checkPermission } from '@/lib/server-config'
 import { Blocks } from './Blocks'
 
 enum Views {
@@ -119,6 +118,8 @@ export function AccountView({
     }
   }, [repo, reportUri])
 
+  const canSendEmail = usePermission('canSendEmail')
+
   const getTabViews = () => {
     const numInvited = (repo?.invites || []).reduce(
       (acc, invite) => acc + invite.uses.length,
@@ -162,7 +163,7 @@ export function AccountView({
       { view: Views.Events, label: 'Events' },
     )
 
-    if (checkPermission('canSendEmail')) {
+    if (canSendEmail) {
       views.push({ view: Views.Email, label: 'Email' })
     }
 
@@ -537,6 +538,7 @@ function Posts({
 }
 
 function Follows({ id }: { id: string }) {
+  const labelerAgent = useLabelerAgent()
   const {
     error,
     data: follows,
@@ -544,10 +546,9 @@ function Follows({ id }: { id: string }) {
   } = useQuery({
     queryKey: ['follows', { id }],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollows(
-        { actor: id },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.app.bsky.graph.getFollows({
+        actor: id,
+      })
       return data
     },
   })
@@ -563,6 +564,7 @@ function Follows({ id }: { id: string }) {
 }
 
 function Followers({ id }: { id: string }) {
+  const labelerAgent = useLabelerAgent()
   const {
     error,
     isLoading,
@@ -570,12 +572,9 @@ function Followers({ id }: { id: string }) {
   } = useQuery({
     queryKey: ['followers', { id }],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollowers(
-        {
-          actor: id,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.app.bsky.graph.getFollowers({
+        actor: id,
+      })
       return data
     },
   })
@@ -591,6 +590,7 @@ function Followers({ id }: { id: string }) {
 }
 
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
+  const labelerAgent = useLabelerAgent()
   const {
     error,
     isLoading,
@@ -609,27 +609,21 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       if (actors.length === 0) {
         return { profiles: [] }
       }
-      const { data } = await client.api.app.bsky.actor.getProfiles(
-        {
-          actors,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.app.bsky.actor.getProfiles({
+        actors,
+      })
       return data
     },
   })
 
-  const onClickRevoke = React.useCallback(async () => {
+  const onClickRevoke = useCallback(async () => {
     if (!confirm('Are you sure you want to revoke their invite codes?')) {
       return
     }
-    await client.api.com.atproto.admin.disableInviteCodes(
-      {
-        accounts: [repo.did],
-      },
-      { encoding: 'application/json', headers: client.proxyHeaders() },
-    )
-  }, [client])
+    await labelerAgent.api.com.atproto.admin.disableInviteCodes({
+      accounts: [repo.did],
+    })
+  }, [labelerAgent, repo.did])
 
   return (
     <div>

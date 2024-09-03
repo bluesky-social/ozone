@@ -110,14 +110,14 @@ export const ItemTitle = ({
         </i>
       </p>
       {showContentDetails && (
-        <p>
+        <div>
           <SubjectOverview
             withTruncation
             subject={modEvent.subject}
             hideActor={!showContentAuthor}
             subjectRepoHandle={modEvent.subjectHandle}
           />
-        </p>
+        </div>
       )}
     </div>
   )

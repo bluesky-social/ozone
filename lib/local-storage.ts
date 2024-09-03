@@ -1,10 +1,11 @@
-const getItem = (key: string) => localStorage.getItem(key)
-const setItem = (key: string, value: string) =>
-  localStorage.setItem(key, value)
+// TODO : replace this with useLocalStorage from 'react-use'
 
-export const getLocalStorageData = <T>(key: string): T | null => {
+const getItem = (key: string) => localStorage.getItem(key)
+const setItem = (key: string, value: string) => localStorage.setItem(key, value)
+
+export const getLocalStorageData = <T>(key: string): T | undefined => {
   const data = getItem(key)
-  if (!data) return null
+  if (!data) return undefined
   try {
     return JSON.parse(data)
   } catch (err) {
