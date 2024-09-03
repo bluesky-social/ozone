@@ -19,11 +19,10 @@ export const useCommunicationTemplateList = ({
     cacheTime: 60 * 60 * 1000,
     staleTime: 60 * 60 * 1000,
     queryFn: async () => {
-      const { data } =
-        await client.api.tools.ozone.communication.listTemplates(
-          {},
-          { headers: client.proxyHeaders() },
-        )
+      const { data } = await client.api.tools.ozone.communication.listTemplates(
+        {},
+        { headers: client.proxyHeaders() },
+      )
       return data.communicationTemplates
     },
   })
@@ -113,8 +112,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             },
           },
           error: {
-            render() {
-              return 'Error saving template'
+            render({ data }: { data?: { message: string } }) {
+              return (
+                <div>
+                  <p>Error saving template</p>
+                  {!!data?.message && <p className="text-sm">{data.message}</p>}
+                </div>
+              )
             },
           },
         },
