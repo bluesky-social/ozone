@@ -1,8 +1,12 @@
 import { LabelChip } from '@/common/labels'
-import { NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS } from '@/lib/constants'
+import {
+  NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,
+  YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,
+} from '@/lib/constants'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   LockClosedIcon,
+  MoonIcon,
   ShieldExclamationIcon,
   SunIcon,
 } from '@heroicons/react/24/solid'
@@ -13,10 +17,10 @@ export const RecordAuthorStatus = ({
 }: {
   repo: ToolsOzoneModerationDefs.RepoView
 }) => {
-  const isNew =
-    differenceInDays(new Date(repo.indexedAt), new Date()) <
-    NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
-  const deactivatedAt = !!repo.deactivatedAt
+  const accountAge = differenceInDays(new Date(repo.indexedAt), new Date())
+  const isNew = accountAge < NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
+  const isYoung = accountAge < YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
+  const deactivatedAt = repo.deactivatedAt
     ? formatDistance(new Date(repo.deactivatedAt), new Date(), {
         addSuffix: true,
       })
@@ -25,13 +29,17 @@ export const RecordAuthorStatus = ({
   const isTakendown = !!repo.moderation.subjectStatus?.takendown
   return (
     <>
-      {isNew && (
+      {(isNew || isYoung) && (
         <LabelChip
           className="dark:bg-slate-700 dark:text-gray-200 rounded-xs"
           title={`Account was created less than ${NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS} days ago`}
         >
-          <SunIcon className="w-4 h-4 mr-1 text-green-700" />
-          New account
+          {isNew ? (
+            <SunIcon className="w-4 h-4 mr-1 dark:text-yellow-300 text-yellow-500" />
+          ) : (
+            <MoonIcon className="w-4 h-4 mr-1 text-green-700" />
+          )}
+          {isNew ? 'New' : 'Young'} account
         </LabelChip>
       )}
       {!!deactivatedAt && (
