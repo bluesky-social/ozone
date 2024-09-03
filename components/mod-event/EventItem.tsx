@@ -1,14 +1,15 @@
-import client from '@/lib/client'
+import {
+  ChatBskyConvoDefs,
+  ComAtprotoModerationDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
+
 import { Card } from '@/common/Card'
 import { LabelChip, LabelList, ModerationLabel } from '@/common/labels'
-import { ReasonBadge } from '@/reports/ReasonBadge'
-import {
-  ToolsOzoneModerationDefs,
-  ComAtprotoModerationDefs,
-  ChatBskyConvoDefs,
-} from '@atproto/api'
-import { ItemTitle } from './ItemTitle'
 import { MessageContext } from '@/dms/MessageContext'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
+import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
 
 const LinkToAuthor = ({
@@ -203,6 +204,8 @@ const EventLabels = ({
   labels?: string[]
   isTag?: boolean
 }) => {
+  const { config } = useConfigurationContext()
+
   if (!labels?.length) return null
   return (
     <LabelList>
@@ -218,7 +221,7 @@ const EventLabels = ({
             key={label}
             label={{
               val: label,
-              src: client.getServiceDid() || '',
+              src: config.did,
               uri: '',
               cts: '',
             }}

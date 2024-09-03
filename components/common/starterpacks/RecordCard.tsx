@@ -1,22 +1,20 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { Loading, LoadingFailed } from '@/common/Loader'
-import client from '@/lib/client'
 import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import { AppBskyGraphDefs } from '@atproto/api'
 import { SOCIAL_APP_URL, STARTER_PACK_OG_CARD_URL } from '@/lib/constants'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
+  const lablerAgent = useLabelerAgent()
   const { error, data, isFetching } = useQuery({
     retry: false,
     queryKey: ['starterpack', uri],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getStarterPack(
-        {
-          starterPack: uri,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await lablerAgent.api.app.bsky.graph.getStarterPack({
+        starterPack: uri,
+      })
       return data
     },
   })

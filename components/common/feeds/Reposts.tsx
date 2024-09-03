@@ -1,13 +1,14 @@
-import client from '@/lib/client'
 import { AccountsGrid } from '@/repositories/AccountView'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { LoadMoreButton } from '../LoadMoreButton'
+import { usePdsAgent } from '@/shell/AuthContext'
 
 const useReposts = (uri: string, cid?: string) => {
+  const pdsAgent = usePdsAgent()
   return useInfiniteQuery({
     queryKey: ['reposts', { uri, cid }],
     queryFn: async ({ pageParam }) => {
-      const { data } = await client.api.app.bsky.feed.getRepostedBy({
+      const { data } = await pdsAgent.api.app.bsky.feed.getRepostedBy({
         uri,
         cid,
         limit: 50,

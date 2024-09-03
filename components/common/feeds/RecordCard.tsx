@@ -1,20 +1,19 @@
 import { useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
+
 import { Loading, LoadingFailed } from '@/common/Loader'
-import client from '@/lib/client'
 import { buildBlueSkyAppUrl } from '@/lib/util'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
+  const labelerAgent = useLabelerAgent()
   const { error, data, isFetching } = useQuery({
     retry: false,
-    queryKey: ['feed-generator', uri],
+    queryKey: ['feed-generator', { uri }],
     queryFn: async () => {
-      const { data } = await client.api.app.bsky.feed.getFeedGenerator(
-        {
-          feed: uri,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.app.bsky.feed.getFeedGenerator({
+        feed: uri,
+      })
       return data
     },
   })
@@ -91,9 +90,7 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
       </div>
       <div className="pb-2 pl-10 text-gray-500 dark:text-gray-50">
         {description && <p className="text-sm">{description}</p>}
-        {!!meta.length && (
-          <p className="text-sm">{meta.join(' - ')}</p>
-        )}
+        {!!meta.length && <p className="text-sm">{meta.join(' - ')}</p>}
       </div>
     </div>
   )

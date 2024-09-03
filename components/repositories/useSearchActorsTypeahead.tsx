@@ -1,7 +1,8 @@
-import client from '@/lib/client'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useQuery } from '@tanstack/react-query'
 
 export const useSearchActorsTypeahead = (query: string) => {
+  const labelerAgent = useLabelerAgent()
   const q = query.startsWith('@') ? query.slice(1) : query
   return useQuery({
     queryKey: ['searchActorsTypeahead', { q }],
@@ -9,10 +10,8 @@ export const useSearchActorsTypeahead = (query: string) => {
     queryFn: async () => {
       // don't make request for empty query string
       if (!q) return []
-      const { data } = await client.api.app.bsky.actor.searchActorsTypeahead(
-        { q },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } =
+        await labelerAgent.api.app.bsky.actor.searchActorsTypeahead({ q })
       return data.actors
     },
   })
