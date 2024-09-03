@@ -32,7 +32,11 @@ export const RecordAuthorStatus = ({
       {(isNew || isYoung) && (
         <LabelChip
           className="dark:bg-slate-700 dark:text-gray-200 rounded-xs"
-          title={`Account was created less than ${NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS} days ago`}
+          title={`Account was created less than ${
+            isNew
+              ? NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
+              : YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
+          } days ago`}
         >
           {isNew ? (
             <SunIcon className="w-4 h-4 mr-1 dark:text-yellow-300 text-yellow-500" />
