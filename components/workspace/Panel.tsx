@@ -112,7 +112,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       // No need to break if one of the requests fail, continue on with others
-      await actionSubjects(
+      const results = await actionSubjects(
         { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
       )
@@ -123,6 +123,19 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ error: '', isSubmitting: false })
+
+      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
+      if (results.failed.length) {
+        document
+          .querySelectorAll<HTMLInputElement>(
+            'input[type="checkbox"][name="workspaceItem"]',
+          )
+          .forEach((checkbox) => {
+            if (results.failed.includes(checkbox.value)) {
+              checkbox.checked = true
+            }
+          })
+      }
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }

@@ -163,3 +163,11 @@ export function pluralize(
   const suffix = count === 1 ? singular : plural
   return includeCount ? `${count} ${suffix}` : suffix
 }
+
+export function chunkArray<T>(arr: T[], chunkSize: number) {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    chunks.push(arr.slice(i, i + chunkSize))
+  }
+  return chunks
+}
