@@ -30,3 +30,13 @@ export const DM_DISABLE_TAG = 'chat-disabled'
 export const VIDEO_UPLOAD_DISABLE_TAG = 'video-upload-disabled'
 
 export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`
+
+export const NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS = process.env
+  .NEXT_PUBLIC_NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
+  ? parseInt(process.env.NEXT_PUBLIC_NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS)
+  : 7
+
+export const YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS = process.env
+  .NEXT_PUBLIC_YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
+  ? parseInt(process.env.NEXT_PUBLIC_YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS)
+  : 30

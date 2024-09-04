@@ -47,7 +47,8 @@ import { Card } from '@/common/Card'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
-import { LockClosedIcon } from '@heroicons/react/24/solid'
+import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
+import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import {
   useConfigurationContext,
   useLabelerAgent,
@@ -64,11 +65,6 @@ type Props = {
   isInitialLoading: boolean
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 export function ModActionPanelQuick(
   props: PropsOf<typeof ActionPanel> & Props,
@@ -143,22 +139,6 @@ export function ModActionPanelQuick(
   )
 }
 
-const getDeactivatedAt = ({
-  repo,
-  record,
-}: {
-  repo?: ToolsOzoneModerationDefs.RepoViewDetail
-  record?: ToolsOzoneModerationDefs.RecordViewDetail
-}) => {
-  const deactivatedAt = repo?.deactivatedAt || record?.repo?.deactivatedAt
-
-  if (!deactivatedAt) {
-    return ''
-  }
-
-  return dateFormatter.format(new Date(deactivatedAt))
-}
-
 function Form(
   props: {
     onCancel: () => void
@@ -211,9 +191,6 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
-  const deactivatedAt = getDeactivatedAt(
-    repo ? { repo } : record ? { record } : {},
-  )
   const canManageChat = usePermission('canManageChat')
 
   // navigate to next or prev report
@@ -562,11 +539,10 @@ function Form(
                 subject={subject}
                 className="border-2 border-dashed border-gray-300"
               >
-                {deactivatedAt && (
-                  <p className="pt-1 pb-1 flex flex-row items-center">
-                    <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
-                    Account deactivated on {deactivatedAt}
-                  </p>
+                {!isSubjectDid && record?.repo && (
+                  <div className="-ml-1 my-2">
+                    <RecordAuthorStatus repo={record.repo} />
+                  </div>
                 )}
               </PreviewCard>
             </div>
@@ -575,22 +551,7 @@ function Form(
               <div className="pb-4">
                 <p>
                   <SubjectReviewStateBadge subjectStatus={subjectStatus} />
-
-                  {subjectStatus.lastReviewedAt ? (
-                    <span className="pl-1">
-                      Last{' '}
-                      {subjectStatus.reviewState ===
-                      ToolsOzoneModerationDefs.REVIEWNONE
-                        ? 'event'
-                        : 'reviewed'}{' '}
-                      at:{' '}
-                      {dateFormatter.format(
-                        new Date(subjectStatus.lastReviewedAt),
-                      )}
-                    </span>
-                  ) : (
-                    <span className="pl-1">Not yet reviewed</span>
-                  )}
+                  <LastReviewedTimestamp subjectStatus={subjectStatus} />
                 </p>
                 {!!subjectStatus.comment && (
                   <Card hint="important" className="mt-2">
