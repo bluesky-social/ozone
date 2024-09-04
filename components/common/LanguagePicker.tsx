@@ -228,7 +228,7 @@ export const LanguageSelectorDropdown = ({
   setSelectedLang: (lang?: string) => void
 }) => {
   const selectedText = selectedLang
-    ? LANGUAGES_MAP_CODE2[selectedLang].name
+    ? getLanguageName(selectedLang)
     : 'No Specific Language'
 
   return (
@@ -242,7 +242,7 @@ export const LanguageSelectorDropdown = ({
         },
         ...availableLanguageCodes.map((lang) => ({
           id: lang,
-          text: LANGUAGES_MAP_CODE2[lang].name,
+          text: getLanguageName(lang),
           onClick: () => setSelectedLang(lang),
         })),
       ]}
