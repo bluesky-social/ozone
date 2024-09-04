@@ -27,7 +27,7 @@ export function CredentialSignInForm({
 
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
-  const [service, setService] = useState('http://localhost:2583')
+  const [service, setService] = useState('https://bsky.social')
   const [authFactor, setAuthFactor] = useState<{
     token: string
     isInvalid: boolean
