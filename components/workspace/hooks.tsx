@@ -32,7 +32,7 @@ export const useWorkspaceAddItemsMutation = () => {
     {
       onSuccess: (_, addedItems) => {
         toast.success(
-          `${pluralize(addedItems.length, 'subject')} added to workspace. `,
+          `${pluralize(addedItems.length, 'subject')} in your workspace now. `,
         )
         queryClient.invalidateQueries([WORKSPACE_LIST_QUERY_KEY])
       },

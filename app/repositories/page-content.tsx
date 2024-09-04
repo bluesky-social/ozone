@@ -5,6 +5,8 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useTitle } from 'react-use'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { ActionButton } from '@/common/buttons'
+import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 
 const isEmailSearch = (q: string) => q.startsWith('email:')
 
@@ -73,10 +75,9 @@ function useSearchResultsQuery(q: string) {
 
 export default function RepositoriesListPage() {
   const params = useSearchParams()
-
   const q = params.get('term') ?? ''
-
   const { data, fetchNextPage, hasNextPage } = useSearchResultsQuery(q)
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
 
   let pageTitle = `Repositories`
   if (q) {
@@ -88,7 +89,33 @@ export default function RepositoriesListPage() {
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
   return (
     <>
-      <SectionHeader title="Repositories" tabs={[]} current="all" />
+      <SectionHeader
+        title="Repositories"
+        tabs={[
+          {
+            key: 'all',
+            name: 'All',
+            href: `/repositories`,
+          },
+        ]}
+        current="all"
+      >
+        <div className="flex-1 lg:text-right lg:pr-2 pb-4 px-1 pt-5 lg:pt-0">
+          <ActionButton
+            size="sm"
+            disabled={!repos?.length}
+            title={
+              !repos.length
+                ? 'No users to be added to workspace'
+                : 'All visible users in the list will be added to workspace'
+            }
+            appearance={!!repos.length ? 'primary' : 'outlined'}
+            onClick={() => addToWorkspace(repos.map((repo) => repo.did))}
+          >
+            Add all to workspace
+          </ActionButton>
+        </div>
+      </SectionHeader>
 
       <RepositoriesTable
         repos={repos}
