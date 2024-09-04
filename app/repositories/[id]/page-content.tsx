@@ -1,14 +1,16 @@
 'use client'
-import { AccountView } from '@/repositories/AccountView'
-import { createReport } from '@/repositories/createReport'
-import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
-import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { useTitle } from 'react-use'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { WorkspacePanel } from '@/workspace/Panel'
+
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import { AccountView } from '@/repositories/AccountView'
+import { useCreateReport } from '@/repositories/createReport'
+import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 
 const buildPageTitle = ({
   handle,
@@ -38,6 +40,9 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
     refetch,
     isLoading: isInitialLoading,
   } = useRepoAndProfile({ id })
+
+  const createReport = useCreateReport()
+  const emitEvent = useEmitEvent()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()

@@ -6,6 +6,8 @@ import {
   mockOzoneDidDataResponse,
   mockServerConfigResponse,
   API_URL,
+  mockRecordResponse,
+  mockLabelerServiceRecordResponse,
 } from './api'
 
 Cypress.Commands.add(
@@ -13,6 +15,7 @@ Cypress.Commands.add(
   (authFixture: {
     createSessionResponse: any
     getRepoResponse: any
+    getLabelerRecordResponse: any
     getProfileResponse: any
     ozoneMetaResponse: any
     ozoneDidDataResponse: any
@@ -42,6 +45,10 @@ Cypress.Commands.add(
     mockOzoneDidDataResponse({
       statusCode: 200,
       body: authFixture.ozoneDidDataResponse,
+    })
+    mockLabelerServiceRecordResponse({
+      statusCode: 200,
+      body: authFixture.getLabelerRecordResponse,
     })
 
     cy.get('#service-url').should('have.value', API_URL)

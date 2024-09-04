@@ -1,5 +1,5 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
@@ -10,9 +10,7 @@ import { ActionPanel } from '@/common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
-import client from '@/lib/client'
 import { BlobList } from './BlobList'
-import { queryClient } from 'components/QueryClient'
 import {
   LabelChip,
   LabelList,
@@ -38,8 +36,8 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
-import { createSubjectFromId } from '@/reports/helpers/subject'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
+import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
@@ -49,8 +47,13 @@ import { Card } from '@/common/Card'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
-import { LockClosedIcon } from '@heroicons/react/24/solid'
-import { checkPermission } from '@/lib/server-config'
+import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
+import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
+import {
+  useConfigurationContext,
+  useLabelerAgent,
+  usePermission,
+} from '@/shell/ConfigurationContext'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -62,11 +65,6 @@ type Props = {
   isInitialLoading: boolean
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
 
 export function ModActionPanelQuick(
   props: PropsOf<typeof ActionPanel> & Props,
@@ -141,25 +139,17 @@ export function ModActionPanelQuick(
   )
 }
 
-const getDeactivatedAt = ({
-  repo,
-  record,
-}: Awaited<ReturnType<typeof getSubject>>) => {
-  const deactivatedAt = repo?.deactivatedAt || record?.repo?.deactivatedAt
-
-  if (!deactivatedAt) {
-    return ''
-  }
-
-  return dateFormatter.format(new Date(deactivatedAt))
-}
-
 function Form(
   props: {
     onCancel: () => void
     replaceFormWithEvents: boolean
   } & Pick<Props, 'setSubject' | 'subject' | 'subjectOptions' | 'onSubmit'>,
 ) {
+  const { config } = useConfigurationContext()
+  const queryClient = useQueryClient()
+  const labelerAgent = useLabelerAgent()
+  const accountDid = labelerAgent.assertDid
+
   const {
     subject,
     setSubject,
@@ -173,16 +163,13 @@ function Form(
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
-  const { data: subjectStatus, refetch: refetchSubjectStatus } = useQuery({
-    // subject of the report
-    queryKey: ['modSubjectStatus', { subject }],
-    queryFn: () => getSubjectStatus(subject),
-  })
-  const { data: { record, repo } = {}, refetch: refetchSubject } = useQuery({
-    // subject of the report
-    queryKey: ['modActionSubject', { subject }],
-    queryFn: () => getSubject(subject),
-  })
+
+  const { data: subjectStatus, refetch: refetchSubjectStatus } =
+    useSubjectStatusQuery(subject)
+
+  const { data: { record, repo } = {}, refetch: refetchSubject } =
+    useSubjectQuery(subject)
+
   const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
@@ -204,10 +191,7 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
-  const deactivatedAt = getDeactivatedAt(
-    repo ? { repo } : record ? { record } : {},
-  )
-  const canManageChat = checkPermission('canManageChat')
+  const canManageChat = usePermission('canManageChat')
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -253,6 +237,9 @@ function Form(
       window.removeEventListener('keydown', downHandler)
     }
   }, [])
+
+  const createSubjectFromId = useCreateSubjectFromId()
+
   // on form submit
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
@@ -380,7 +367,7 @@ function Form(
           labelSubmissions.push(
             onSubmit({
               subject: { ...subjectInfo, cid: labelCid },
-              createdBy: client.session.did,
+              createdBy: accountDid,
               subjectBlobCids: formData
                 .getAll('subjectBlobCids')
                 .map((cid) => String(cid)),
@@ -402,7 +389,7 @@ function Form(
           labelSubmissions.push(
             onSubmit({
               subject: subjectInfo,
-              createdBy: client.session.did,
+              createdBy: accountDid,
               subjectBlobCids: formData
                 .getAll('subjectBlobCids')
                 .map((cid) => String(cid)),
@@ -415,7 +402,7 @@ function Form(
       } else {
         await onSubmit({
           subject: subjectInfo,
-          createdBy: client.session.did,
+          createdBy: accountDid,
           subjectBlobCids,
           event: coreEvent,
         })
@@ -424,7 +411,7 @@ function Form(
       if (formData.get('additionalAcknowledgeEvent')) {
         await onSubmit({
           subject: subjectInfo,
-          createdBy: client.session.did,
+          createdBy: accountDid,
           subjectBlobCids: formData
             .getAll('subjectBlobCids')
             .map((cid) => String(cid)),
@@ -552,11 +539,10 @@ function Form(
                 subject={subject}
                 className="border-2 border-dashed border-gray-300"
               >
-                {deactivatedAt && (
-                  <p className="pt-1 pb-1 flex flex-row items-center">
-                    <LockClosedIcon className="inline-block mr-1 w-4 h-4 text-red-400" />
-                    Account deactivated on {deactivatedAt}
-                  </p>
+                {!isSubjectDid && record?.repo && (
+                  <div className="-ml-1 my-2">
+                    <RecordAuthorStatus repo={record.repo} />
+                  </div>
                 )}
               </PreviewCard>
             </div>
@@ -565,22 +551,7 @@ function Form(
               <div className="pb-4">
                 <p>
                   <SubjectReviewStateBadge subjectStatus={subjectStatus} />
-
-                  {subjectStatus.lastReviewedAt ? (
-                    <span className="pl-1">
-                      Last{' '}
-                      {subjectStatus.reviewState ===
-                      ToolsOzoneModerationDefs.REVIEWNONE
-                        ? 'event'
-                        : 'reviewed'}{' '}
-                      at:{' '}
-                      {dateFormatter.format(
-                        new Date(subjectStatus.lastReviewedAt),
-                      )}
-                    </span>
-                  ) : (
-                    <span className="pl-1">Not yet reviewed</span>
-                  )}
+                  <LastReviewedTimestamp subjectStatus={subjectStatus} />
                 </p>
                 {!!subjectStatus.comment && (
                   <Card hint="important" className="mt-2">
@@ -680,9 +651,8 @@ function Form(
                       name="labels"
                       formId={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
-                        const serviceDid = client.getServiceDid()?.split('#')[0]
                         const isExternalLabel = allLabels.some((l) => {
-                          return l.val === label && l.src !== serviceDid
+                          return l.val === label && l.src !== config.did
                         })
                         return !isSelfLabel(label) && !isExternalLabel
                       })}
@@ -830,41 +800,48 @@ function Form(
   )
 }
 
-async function getSubject(subject: string) {
-  if (subject.startsWith('did:')) {
-    const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
-      {
-        did: subject,
-      },
-      { headers: client.proxyHeaders() },
-    )
-    return { repo }
-  } else if (subject.startsWith('at://')) {
-    const { data: record } = await client.api.tools.ozone.moderation.getRecord(
-      {
-        uri: subject,
-      },
-      { headers: client.proxyHeaders() },
-    )
+function useSubjectQuery(subject: string) {
+  const labelerAgent = useLabelerAgent()
 
-    return { record }
-  } else {
-    return {}
-  }
+  return useQuery({
+    // subject of the report
+    queryKey: ['modActionSubject', { subject }],
+    queryFn: async () => {
+      if (subject.startsWith('did:')) {
+        const { data: repo } =
+          await labelerAgent.api.tools.ozone.moderation.getRepo({
+            did: subject,
+          })
+        return { repo }
+      } else if (subject.startsWith('at://')) {
+        const { data: record } =
+          await labelerAgent.api.tools.ozone.moderation.getRecord({
+            uri: subject,
+          })
+        return { record }
+      } else {
+        return {}
+      }
+    },
+  })
 }
 
-async function getSubjectStatus(subject: string) {
-  const {
-    data: { subjectStatuses },
-  } = await client.api.tools.ozone.moderation.queryStatuses(
-    {
-      subject,
-      includeMuted: true,
-      limit: 1,
+function useSubjectStatusQuery(subject: string) {
+  const labelerAgent = useLabelerAgent()
+  return useQuery({
+    // subject of the report
+    queryKey: ['modSubjectStatus', { subject }],
+    queryFn: async () => {
+      const {
+        data: { subjectStatuses },
+      } = await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+        subject,
+        includeMuted: true,
+        limit: 1,
+      })
+      return subjectStatuses.at(0) || null
     },
-    { headers: client.proxyHeaders() },
-  )
-  return subjectStatuses.at(0) || null
+  })
 }
 
 function isMultiPress(ev: KeyboardEvent) {

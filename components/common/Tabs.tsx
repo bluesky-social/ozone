@@ -1,4 +1,12 @@
 import { classNames } from '@/lib/util'
+import {
+  HTMLAttributes,
+  Key,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useState,
+} from 'react'
 
 export type TabView<ViewName> = {
   view: ViewName
@@ -64,5 +72,66 @@ function Tab<ViewName>({
         <span className="text-xs font-bold text-gray-400">{sublabel}</span>
       ) : undefined}
     </span>
+  )
+}
+
+export type TabsPanelProps<ViewName extends Key> = {
+  views: (TabView<ViewName> & { content: ReactNode })[]
+  currentView?: ViewName
+  onCurrentView?: (v: ViewName) => void
+  autoHide?: boolean
+  fallback?: ReactNode
+} & HTMLAttributes<HTMLDivElement>
+
+export function TabsPanel<ViewName extends Key>({
+  views,
+  fallback,
+  currentView: currentViewExternal,
+  autoHide = false,
+  onCurrentView,
+  ...props
+}: TabsPanelProps<ViewName>) {
+  const available = views.filter((v) => v.content)
+  const defaultView = available[0]?.view as ViewName | undefined
+
+  const [currentViewInternal, setCurrentViewInternal] = useState(defaultView)
+  const setCurrent = useCallback(
+    (v: ViewName) => {
+      setCurrentViewInternal(v)
+      onCurrentView?.(v)
+    },
+    [onCurrentView],
+  )
+  const current =
+    (currentViewExternal != null
+      ? available.find((v) => v.view === currentViewExternal)
+      : undefined) ??
+    (currentViewInternal != null
+      ? available.find((v) => v.view === currentViewInternal)
+      : undefined) ??
+    available[0]
+
+  useEffect(() => {
+    if (current?.view !== currentViewExternal) onCurrentView?.(current?.view)
+  }, [current?.view, currentViewExternal, onCurrentView])
+
+  useEffect(() => {
+    setCurrentViewInternal(current?.view)
+  }, [current?.view])
+
+  return (
+    <div {...props}>
+      {autoHide && available.length <= 1 ? null : (
+        <Tabs
+          key="tabs"
+          views={available}
+          currentView={current?.view}
+          onSetCurrentView={setCurrent}
+        />
+      )}
+      <div key={current?.view ?? 'fallback'}>
+        {current?.content ?? fallback}
+      </div>
+    </div>
   )
 }

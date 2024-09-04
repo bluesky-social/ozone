@@ -12,9 +12,9 @@ import { useCommunicationTemplateList } from 'components/communication-template/
 import { CommunicationTemplateDeleteConfirmationModal } from 'components/communication-template/delete-confirmation-modal'
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { ErrorInfo } from '@/common/ErrorInfo'
-import { checkPermission } from '@/lib/server-config'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 import { getLanguageName } from '@/lib/locale/helpers'
+import { usePermission } from '@/shell/ConfigurationContext'
 
 export default function CommunicationTemplatePage() {
   const { data, error, isLoading } = useCommunicationTemplateList({})
@@ -34,7 +34,9 @@ export default function CommunicationTemplatePage() {
     : []
   useTitle(`Communication Templates`)
 
-  if (!checkPermission('canManageTemplates')) {
+  const canManageTemplates = usePermission('canManageTemplates')
+
+  if (!canManageTemplates) {
     return (
       <ErrorInfo type="warn">
         Sorry, you don{"'"}t have permission to manage communication templates.

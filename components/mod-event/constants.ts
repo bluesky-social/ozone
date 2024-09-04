@@ -36,6 +36,7 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.EMAIL]: 'Email Sent',
   [MOD_EVENTS.RESOLVE_APPEAL]: 'Appeal Resolved',
   [MOD_EVENTS.TAG]: 'Tag',
+  [MOD_EVENTS.APPEAL]: 'Appeal',
   [MOD_EVENTS.DIVERT]: 'Divert',
   [MOD_EVENTS.DISABLE_DMS]: 'Disable DMs',
   [MOD_EVENTS.ENABLE_DMS]: 'Enable DMs',

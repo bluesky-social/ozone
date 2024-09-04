@@ -1,50 +1,159 @@
-import { AuthState } from '@/lib/types'
-import { createContext, useState } from 'react'
+'use client'
 
-// This may seem a bit over-engineered but this is only the groundwork so while the current data model is simplistic
-// and could probably be handled in a simpler setup, the below setup helps us evolve the context to hold much complex
-// model and expose only what may be needed by UI if/when we have complex authorization based on user role etc.
+import { Agent, AppBskyActorDefs } from '@atproto/api'
+import { useQuery } from '@tanstack/react-query'
+import { usePathname, useRouter } from 'next/navigation'
+import { createContext, ReactNode, useContext, useMemo } from 'react'
 
-export { AuthState } from '@/lib/types'
+import { Loading } from '@/common/Loader'
+import { SetupModal } from '@/common/SetupModal'
+import { OAUTH_SCOPE, OZONE_PUBLIC_URL } from '@/lib/constants'
+import { OAuthClientIdLoopback } from '@atproto/oauth-types'
+import { useCredential } from './auth/credential/useCredential'
+import { useOAuth, UseOAuthOptions } from './auth/oauth/useOAuth'
+import { AuthForm } from './AuthForm'
+import { useConfigContext } from './ConfigContext'
 
-type AuthContextData = {
-  authState: AuthState
-  isLoggedIn: boolean
-  isValidatingAuth: boolean
+export type Profile = AppBskyActorDefs.ProfileViewDetailed
+
+export type AuthContext = {
+  pdsAgent: Agent
+  signOut: () => void | Promise<void>
 }
 
-const getAuthContextDataFromState = (authState: AuthState): AuthContextData => {
-  return {
-    authState,
-    isLoggedIn: authState === AuthState.LoggedIn,
-    isValidatingAuth: authState === AuthState.Validating,
+const AuthContext = createContext<AuthContext | null>(null)
+
+const isLoopbackHost = (host: string) => {
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
+}
+
+export type AuthProviderProps = {
+  children: ReactNode
+} & UseOAuthOptions
+
+const ozonePublicUrl = OZONE_PUBLIC_URL
+  ? new URL(OZONE_PUBLIC_URL)
+  : typeof window !== 'undefined'
+  ? new URL(window.location.origin)
+  : undefined
+
+export function AuthProvider({ children, ...options }: AuthProviderProps) {
+  const { config } = useConfigContext()
+
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const oauth = useOAuth({
+    ...options,
+
+    state: pathname,
+    scope: OAUTH_SCOPE, // Won't be needed in future version of the oauth-client (as it will default to the metadata value)
+
+    onSignedIn: async (agent, state) => {
+      // Restore the previous path after signing in
+      if (state) router.push(state)
+    },
+
+    clientId:
+      !ozonePublicUrl || typeof window === 'undefined'
+        ? undefined // Disabled server side
+        : isLoopbackHost(ozonePublicUrl.hostname)
+        ? // The following requires a yet to be released version of the oauth-client:
+          // &scope=${OAUTH_SCOPE.split(' ').map(encodeURIComponent).join('+')}
+          `http://localhost?redirect_uri=${encodeURIComponent(
+            new URL(
+              `http://127.0.0.1${
+                window.location.port ? `:${window.location.port}` : ''
+              }`,
+            ).href,
+          )}`
+        : `${ozonePublicUrl.origin as `https://${string}`}/oauth-client.json`,
+  })
+
+  const credential = useCredential()
+
+  const auth = oauth.session ? oauth : credential
+  const value = useMemo<AuthContext | null>(() => {
+    if (auth.session) {
+      return {
+        pdsAgent: new Agent(auth.session),
+        signOut: auth.signOut,
+      }
+    }
+
+    return null
+  }, [auth.session, auth.signOut])
+
+  if (oauth.isLoginPopup) {
+    return (
+      <SetupModal>
+        <p className="text-center">This window can be closed</p>
+      </SetupModal>
+    )
   }
+
+  if (oauth.isInitializing || !oauth.client) {
+    return (
+      <SetupModal>
+        <Loading message="Initializing..." />
+      </SetupModal>
+    )
+  }
+
+  if (!value) {
+    return (
+      <SetupModal>
+        <AuthForm
+          credentialSignIn={credential.signIn}
+          oauthSignIn={
+            oauth.client && !config.needs.service ? oauth.signIn : undefined
+          }
+        />
+      </SetupModal>
+    )
+  }
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
-const initialContextData = {
-  authState: AuthState.Validating,
-  isValidatingAuth: true,
-  isLoggedIn: false,
+export function useAuthContext(): AuthContext {
+  const context = useContext(AuthContext)
+  if (context) return context
+
+  throw new Error(`useAuthContext() must be used within an <AuthProvider />`)
 }
 
-export const AuthContext = createContext<AuthContextData>(initialContextData)
-export const AuthChangeContext = createContext<(authState: AuthState) => void>(
-  (_: AuthState) => null,
-)
+export function usePdsAgent() {
+  return useAuthContext().pdsAgent
+}
 
-export const AuthProvider = ({ children }) => {
-  const [authContextData, setAuthContextData] =
-    useState<AuthContextData>(initialContextData) // immediately corrected in useEffect below
+export const useAuthDid = () => {
+  const { pdsAgent } = useAuthContext()
+  return pdsAgent.assertDid
+}
 
-  return (
-    <AuthContext.Provider value={authContextData}>
-      <AuthChangeContext.Provider
-        value={(authState) =>
-          setAuthContextData(getAuthContextDataFromState(authState))
-        }
-      >
-        {children}
-      </AuthChangeContext.Provider>
-    </AuthContext.Provider>
-  )
+export const useAuthProfileQuery = () => {
+  const { pdsAgent } = useAuthContext()
+  const did = pdsAgent.assertDid
+
+  return useQuery({
+    queryKey: ['profile', did],
+    queryFn: async () => pdsAgent.getProfile({ actor: did }),
+    refetchOnWindowFocus: false,
+  })
+}
+
+export const useAuthProfile = () => {
+  const profileQuery = useAuthProfileQuery()
+  return profileQuery.data?.data
+}
+
+export const useAuthHandle = () => {
+  return useAuthProfile()?.handle
+}
+
+export const useAuthIdentifier = () => {
+  const handle = useAuthHandle()
+  const did = useAuthDid()
+  return handle ?? did
 }

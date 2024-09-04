@@ -1,16 +1,18 @@
-import clientManager from '@/lib/client'
 import { ComAtprotoLabelDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
 import { ExtendedLabelerServiceDef } from './util'
+import { usePdsAgent } from '@/shell/AuthContext'
 
-export const useLabelerServiceDef = (did: string) => {
-  const { data: labelerDef } = useQuery({
+export const useLabelerDefinitionQuery = (did: string) => {
+  const pdsAgent = usePdsAgent()
+
+  return useQuery<ExtendedLabelerServiceDef | null>({
     queryKey: ['labelerDef', { did }],
     queryFn: async () => {
-      if (!did) {
+      if (!did?.startsWith('did:')) {
         return null
       }
-      const { data } = await clientManager.api.app.bsky.labeler.getServices({
+      const { data } = await pdsAgent.api.app.bsky.labeler.getServices({
         dids: [did],
         detailed: true,
       })
@@ -37,6 +39,4 @@ export const useLabelerServiceDef = (did: string) => {
     staleTime: 60 * 60 * 1000,
     cacheTime: 60 * 60 * 1000,
   })
-
-  return labelerDef || null
 }
