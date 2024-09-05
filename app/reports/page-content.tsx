@@ -288,12 +288,14 @@ function useModerationQueueQuery() {
   const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters } = useFluentReportSearchParams()
+  const { lastReviewedBy, subject, reporters, forAccount } =
+    useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
       'events',
       {
+        forAccount,
         subject,
         sortField,
         sortDirection,
@@ -314,7 +316,10 @@ function useModerationQueueQuery() {
         cursor: pageParam,
       }
 
-      if (subject) {
+      // Sending both will cause only forAccount to be used so might as well send only one
+      if (forAccount) {
+        queryParams.forAccount = forAccount
+      } else if (subject) {
         queryParams.subject = subject
       }
 
