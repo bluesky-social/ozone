@@ -1,7 +1,6 @@
+import { DOMAINS_ALLOWING_EMAIL_COMMUNICATION } from '@/lib/constants'
 import { resolveDidDocData } from '@/lib/identity'
 import { useQuery } from '@tanstack/react-query'
-
-const ALLOWED_DOMAINS = ['bsky.network']
 
 export const useEmailRecipientStatus = (
   did: string,
@@ -19,7 +18,7 @@ export const useEmailRecipientStatus = (
         return false
       }
 
-      return ALLOWED_DOMAINS.some((domain) => {
+      return DOMAINS_ALLOWING_EMAIL_COMMUNICATION.some((domain) => {
         return pdsEndpoint.endsWith(domain)
       })
     },
