@@ -17,7 +17,7 @@ export function Follows({ id, count }: { id: string; count?: number }) {
     useInfiniteQuery({
       queryKey: ['follows', { id }],
       queryFn: async ({ pageParam }) => {
-        const { data } = await labelerAgent.api.app.bsky.graph.getFollows({
+        const { data } = await labelerAgent.app.bsky.graph.getFollows({
           actor: id,
           cursor: pageParam,
         })
@@ -39,7 +39,7 @@ export function Follows({ id, count }: { id: string; count?: number }) {
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
-        const nextFollows = await labelerAgent.api.app.bsky.graph.getFollows({
+        const nextFollows = await labelerAgent.app.bsky.graph.getFollows({
           actor: id,
           cursor,
         })
