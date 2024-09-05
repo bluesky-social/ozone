@@ -1,6 +1,6 @@
 /// <reference types="cypress" />"
 
-import { mockAuthResponse } from '../../support/api'
+import { API_URL, mockAuthResponse } from '../../support/api'
 
 describe('Authentication', () => {
   let authFixture
@@ -21,7 +21,7 @@ describe('Authentication', () => {
       },
     })
 
-    cy.get('#service-url').should('have.value', 'http://localhost:2583')
+    cy.get('#service-url').clear().type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()

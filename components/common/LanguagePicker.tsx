@@ -17,6 +17,8 @@ export const availableLanguageCodes = [
   'ko',
   'pt',
   'ru',
+  'zh',
+  'ar',
 ]
 
 const SelectionTitle = ({

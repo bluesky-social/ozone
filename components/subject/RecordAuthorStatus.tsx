@@ -17,7 +17,7 @@ export const RecordAuthorStatus = ({
 }: {
   repo: ToolsOzoneModerationDefs.RepoView
 }) => {
-  const accountAge = differenceInDays(new Date(repo.indexedAt), new Date())
+  const accountAge = differenceInDays(new Date(), new Date(repo.indexedAt))
   const isNew = accountAge < NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
   const isYoung = accountAge < YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
   const deactivatedAt = repo.deactivatedAt
@@ -25,8 +25,8 @@ export const RecordAuthorStatus = ({
         addSuffix: true,
       })
     : ''
-
   const isTakendown = !!repo.moderation.subjectStatus?.takendown
+
   return (
     <>
       {(isNew || isYoung) && (
