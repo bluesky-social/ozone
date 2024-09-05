@@ -91,6 +91,17 @@ const buildItemForDid = ({
       },
     },
     {
+      id: `search-subjects-of-did`,
+      name: `Subjects of ${handle || did}`,
+      keywords: `${search},search,did`,
+      icon: <LifebuoyIcon className={iconClassName} />,
+      subtitle: `Go to reports page and see all subjects that authored by this user`,
+      section: ActionSections.reports,
+      perform: () => {
+        router.push(`/reports?term=forAccount:${did}`)
+      },
+    },
+    {
       id: `search-subjects-last-reviewed-by-did`,
       name: `Subjects last reviewed by ${handle || did}`,
       keywords: `${search},search,did`,
