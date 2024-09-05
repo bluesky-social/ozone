@@ -41,17 +41,12 @@ export const useWorkspaceAddItemsMutation = () => {
           'subject',
         )} in your workspace now.`
 
-        if (!toastId.current) {
-          toastId.current = toast.success(message)
-        } else {
-          // Only when pass the onClose here because if we pass it during instantiation, the update essentially triggers onClose
-          // causing the toast to close indefinitely
+        if (toastId.current && toast.isActive(toastId.current)) {
           toast.update(toastId.current, {
             render: message,
-            onClose: () => {
-              toastId.current = null
-            },
           })
+        } else {
+          toastId.current = toast.success(message)
         }
 
         queryClient.invalidateQueries([WORKSPACE_LIST_QUERY_KEY])
