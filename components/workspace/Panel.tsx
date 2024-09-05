@@ -133,6 +133,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           .forEach((checkbox) => {
             if (results.failed.includes(checkbox.value)) {
               checkbox.checked = true
+              // There's an event handler on the checkbox for mousedown event that syncs with a react state
+              // for last checked index. We need to trigger that event to keep the state in sync
+              checkbox.dispatchEvent(new Event('mousedown'))
             }
           })
       }
