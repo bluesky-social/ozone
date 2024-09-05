@@ -144,6 +144,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { data: workspaceList } = useWorkspaceList()
   const { data: workspaceListStatuses } = useSubjectStatuses({
     subjects: workspaceList || [],
+    // Make sure we aren't constantly refreshing the data unless the panel is open
+    enabled: props.open,
   })
 
   return (

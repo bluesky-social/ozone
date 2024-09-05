@@ -8,7 +8,7 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 export function Blocks({ did }: { did: string }) {
   const labelerAgent = useLabelerAgent()
 
-  const { data, error, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
+  const { data, error, fetchNextPage, hasNextPage, isInitialLoading } =
     useInfiniteQuery({
       queryKey: ['blocks', { did }],
       queryFn: async ({ pageParam }) => {
