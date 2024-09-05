@@ -90,6 +90,7 @@ const emitEventsInBulk = async ({
   subjects: string[]
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>
 }) => {
+  const toastId = 'workspace-bulk-action'
   try {
     const results: BulkActionResults = {
       succeeded: [],
@@ -112,24 +113,30 @@ const emitEventsInBulk = async ({
       }),
     )
     await toast.promise(actions, {
-      pending: `Taking action on ${buildItemsSummary(
-        groupSubjects(subjects),
-      )}...`,
+      pending: {
+        toastId,
+        render: `Taking action on ${buildItemsSummary(
+          groupSubjects(subjects),
+        )}...`,
+      },
       success: {
+        toastId,
         render() {
           return results.failed.length
             ? `Actioned ${buildItemsSummary(
                 groupSubjects(results.succeeded),
               )}. Failed to action ${buildItemsSummary(
                 groupSubjects(results.failed),
-              )}`
+              )}. Failed items will remain selected.`
             : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`
         },
       },
     })
     return results
   } catch (err) {
-    toast.error(`Error taking action: ${displayError(err)}`)
+    toast.error(`Error taking action: ${displayError(err)}`, {
+      toastId,
+    })
     throw err
   }
 }
