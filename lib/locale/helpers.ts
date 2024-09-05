@@ -22,6 +22,10 @@ export function codeToLanguageName(lang: string): string {
   return LANGUAGES_MAP_CODE2[lang2]?.name || lang
 }
 
+export function getLanguageName(lang: string): string {
+  return LANGUAGES_MAP_CODE2[lang]?.name || lang
+}
+
 export async function getPostLanguage(
   post: AppBskyFeedDefs.PostView,
 ): Promise<string | undefined> {

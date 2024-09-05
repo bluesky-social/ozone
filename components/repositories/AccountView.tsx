@@ -25,6 +25,7 @@ import {
   LabelListEmpty,
   getLabelsForSubject,
   ModerationLabel,
+  LabelChip,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
@@ -433,6 +434,7 @@ function Details({
   id: string
 }) {
   const labels = getLabelsForSubject({ repo })
+  const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
@@ -482,6 +484,14 @@ function Details({
                 key={label.val}
                 recordAuthorDid={repo.did}
               />
+            ))}
+          </LabelList>
+        </DataField>
+        <DataField label="Tags">
+          <LabelList>
+            {!tags.length && <LabelListEmpty />}
+            {tags.map((tag) => (
+              <LabelChip key={tag}>{tag}</LabelChip>
             ))}
           </LabelList>
         </DataField>
