@@ -8,7 +8,8 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 
-const isEmailSearch = (q: string) => q.startsWith('email:')
+const isEmailSearch = (q: string) =>
+  q.startsWith('email:') || q.startsWith('ip:')
 
 function useSearchResultsQuery(q: string) {
   const labelerAgent = useLabelerAgent()
@@ -29,7 +30,7 @@ function useSearchResultsQuery(q: string) {
         return data
       }
 
-      const email = q.replace('email:', '').trim()
+      const email = q.replace('email:', '').replace('ip:', '').trim()
 
       if (!email) {
         return { repos: [], cursor: undefined }

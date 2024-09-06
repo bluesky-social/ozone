@@ -66,11 +66,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
     async ({
       contentMarkdown,
       name,
+      lang,
       subject,
       disabled,
     }: {
       contentMarkdown: string
       name: string
+      lang?: string
       subject: string
       disabled: boolean
     }) =>
@@ -80,6 +82,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             contentMarkdown,
             subject,
             name,
+            lang,
             disabled,
             updatedBy: labelerAgent.assertDid,
           })
@@ -87,6 +90,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             contentMarkdown,
             subject,
             name,
+            lang,
             createdBy: labelerAgent.assertDid,
           }),
     [labelerAgent, templateId],
@@ -97,12 +101,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name')?.toString() ?? ''
     const subject = formData.get('subject')?.toString() ?? ''
+    const lang = formData.get('lang')?.toString() ?? ''
     const disabled = formData.get('disabled') === 'true'
 
     setIsSaving(true)
     try {
       await toast.promise(
-        saveFunc({ contentMarkdown, name, subject, disabled }),
+        saveFunc({ contentMarkdown, name, lang, subject, disabled }),
         {
           pending: 'Saving template...',
           success: {
@@ -111,8 +116,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             },
           },
           error: {
-            render() {
-              return 'Error saving template'
+            render({ data }: { data?: { message: string } }) {
+              return (
+                <div>
+                  <p>Error saving template</p>
+                  {!!data?.message && <p className="text-sm">{data.message}</p>}
+                </div>
+              )
             },
           },
         },

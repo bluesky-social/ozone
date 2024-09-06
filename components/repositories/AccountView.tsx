@@ -14,6 +14,7 @@ import {
   ExclamationCircleIcon,
   UserCircleIcon,
   XCircleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
@@ -25,6 +26,7 @@ import {
   LabelListEmpty,
   getLabelsForSubject,
   ModerationLabel,
+  LabelChip,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
@@ -439,10 +441,12 @@ function Details({
   id: string
 }) {
   const labels = getLabelsForSubject({ repo })
+  const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
+  const ip = typeof repo.ip === 'string' ? repo.ip : undefined
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -454,6 +458,14 @@ function Details({
             value={profile.displayName}
             showCopyButton
           />
+        )}
+        {ip && (
+          <DataField value={ip} label="IP" showCopyButton>
+            {obscureIp(ip)}{' '}
+            <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+          </DataField>
         )}
         <DataField
           label="Email Verification"
@@ -488,6 +500,14 @@ function Details({
                 key={label.val}
                 recordAuthorDid={repo.did}
               />
+            ))}
+          </LabelList>
+        </DataField>
+        <DataField label="Tags">
+          <LabelList>
+            {!tags.length && <LabelListEmpty />}
+            {tags.map((tag) => (
+              <LabelChip key={tag}>{tag}</LabelChip>
             ))}
           </LabelList>
         </DataField>
@@ -741,4 +761,10 @@ const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
       <EmailComposer {...props} />
     </div>
   )
+}
+
+function obscureIp(ip: string) {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return '***.***.***.***'
+  return `${parts[0]}.${parts[1]}.***.***`
 }
