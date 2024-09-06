@@ -95,10 +95,10 @@ const buildItemForDid = ({
       name: `Subjects of ${handle || did}`,
       keywords: `${search},search,did`,
       icon: <LifebuoyIcon className={iconClassName} />,
-      subtitle: `Go to reports page and see all subjects that authored by this user`,
+      subtitle: `Go to moderation queue and see all subjects that authored by this user`,
       section: ActionSections.reports,
       perform: () => {
-        router.push(`/reports?term=forAccount:${did}`)
+        router.push(`/reports?term=includeAllUserRecords:${did}`)
       },
     },
     {
@@ -106,7 +106,7 @@ const buildItemForDid = ({
       name: `Subjects last reviewed by ${handle || did}`,
       keywords: `${search},search,did`,
       icon: <LifebuoyIcon className={iconClassName} />,
-      subtitle: `Go to reports page and see all subjects that were last reviewed by this moderator`,
+      subtitle: `Go to moderation queue and see all subjects that were last reviewed by this moderator`,
       section: ActionSections.reports,
       perform: () => {
         router.push(`/reports?term=lastReviewedBy:${did}`)
