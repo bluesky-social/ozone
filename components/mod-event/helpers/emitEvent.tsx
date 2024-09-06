@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { toast } from 'react-toastify'
-import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import { Agent, ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
@@ -10,6 +10,7 @@ import { MOD_EVENTS } from '@/mod-event/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useCallback } from 'react'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
+import { chunkArray } from '@/lib/util'
 
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
@@ -73,6 +74,73 @@ export function useEmitEvent() {
   )
 }
 
+type BulkActionResults = {
+  succeeded: string[]
+  failed: string[]
+}
+
+const emitEventsInBulk = async ({
+  labelerAgent,
+  createSubjectFromId,
+  subjects,
+  eventData,
+}: {
+  labelerAgent: Agent
+  createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
+  subjects: string[]
+  eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>
+}) => {
+  const toastId = 'workspace-bulk-action'
+  try {
+    const results: BulkActionResults = {
+      succeeded: [],
+      failed: [],
+    }
+
+    const actions = Promise.allSettled(
+      subjects.map(async (sub) => {
+        try {
+          const { subject } = await createSubjectFromId(sub)
+          await labelerAgent.api.tools.ozone.moderation.emitEvent({
+            subject,
+            createdBy: labelerAgent.assertDid,
+            ...eventData,
+          })
+          results.succeeded.push(sub)
+        } catch (err) {
+          results.failed.push(sub)
+        }
+      }),
+    )
+    await toast.promise(actions, {
+      pending: {
+        toastId,
+        render: `Taking action on ${buildItemsSummary(
+          groupSubjects(subjects),
+        )}...`,
+      },
+      success: {
+        toastId,
+        render() {
+          return results.failed.length
+            ? `Actioned ${buildItemsSummary(
+                groupSubjects(results.succeeded),
+              )}. Failed to action ${buildItemsSummary(
+                groupSubjects(results.failed),
+              )}. Failed items will remain selected.`
+            : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`
+        },
+      },
+    })
+    return results
+  } catch (err) {
+    toast.error(`Error taking action: ${displayError(err)}`, {
+      toastId,
+    })
+    throw err
+  }
+}
+
 export const useActionSubjects = () => {
   const createSubjectFromId = useCreateSubjectFromId()
   const labelerAgent = useLabelerAgent()
@@ -82,48 +150,35 @@ export const useActionSubjects = () => {
       eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
       subjects: string[],
     ) => {
-      try {
-        const results: { succeeded: string[]; failed: string[] } = {
-          succeeded: [],
-          failed: [],
-        }
-        const actions = Promise.allSettled(
-          subjects.map(async (sub) => {
-            try {
-              const { subject } = await createSubjectFromId(sub)
-              await labelerAgent.api.tools.ozone.moderation.emitEvent({
-                subject,
-                createdBy: labelerAgent.assertDid,
-                ...eventData,
-              })
-              results.succeeded.push(sub)
-            } catch (err) {
-              results.failed.push(sub)
-            }
-          }),
-        )
-        await toast.promise(actions, {
-          pending: `Taking action on ${buildItemsSummary(
-            groupSubjects(subjects),
-          )}...`,
-          success: {
-            render() {
-              return results.failed.length
-                ? `Actioned ${buildItemsSummary(
-                    groupSubjects(results.succeeded),
-                  )}. Failed to action ${buildItemsSummary(
-                    groupSubjects(results.failed),
-                  )}`
-                : `Actioned ${buildItemsSummary(
-                    groupSubjects(results.succeeded),
-                  )}`
-            },
-          },
-        })
-      } catch (err) {
-        toast.error(`Error taking action: ${displayError(err)}`)
-        throw err
+      if (!subjects.length) {
+        toast.error(`No subject to action`)
+        return { succeeded: [], failed: [] }
       }
+
+      const results: BulkActionResults = {
+        succeeded: [],
+        failed: [],
+      }
+
+      for (const chunk of chunkArray(subjects, 50)) {
+        const { succeeded, failed } = await emitEventsInBulk({
+          labelerAgent,
+          createSubjectFromId,
+          subjects: chunk,
+          eventData,
+        })
+
+        results.succeeded.push(...succeeded)
+        results.failed.push(...failed)
+        if (subjects.length > 300) {
+          // add a delay of 1s between each batch if we are going to be processing more than 6 batches
+          // this is kinda arbitrary and not backed by any particular limit but this gives the server a bit of room
+          // avoids potential rate limiting
+          await new Promise((resolve) => setTimeout(resolve, 1000))
+        }
+      }
+
+      return results
     },
     [labelerAgent, createSubjectFromId],
   )

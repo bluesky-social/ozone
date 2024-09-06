@@ -29,9 +29,16 @@ export type StatusBySubject = Record<
 // Ideally, this would be replaced with a bulk fetcher so that we aren't firing 1 req for each subject
 // but even with a bulk fetcher, there would probably be some kind of restriction on how many subjects
 // we can fetch at once, so we would need some kind of queue/list fetcher anyways
-export const useSubjectStatuses = ({ subjects }: { subjects: string[] }) => {
+export const useSubjectStatuses = ({
+  subjects,
+  enabled,
+}: {
+  subjects: string[]
+  enabled: boolean
+}) => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
+    enabled,
     queryKey: ['moderationStatuses', subjects],
     cacheTime: 60 * 1000,
     staleTime: 60 * 1000,

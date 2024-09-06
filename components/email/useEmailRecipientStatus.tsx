@@ -19,7 +19,7 @@ export const useEmailRecipientStatus = (
       }
 
       return DOMAINS_ALLOWING_EMAIL_COMMUNICATION.some((domain) => {
-        return pdsEndpoint.endsWith(domain)
+        return !!domain && pdsEndpoint.endsWith(domain)
       })
     },
   })

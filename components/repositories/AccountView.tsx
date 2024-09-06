@@ -14,6 +14,7 @@ import {
   ExclamationCircleIcon,
   UserCircleIcon,
   XCircleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
@@ -53,6 +54,8 @@ import {
 import { Blocks } from './Blocks'
 import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
 import { Alert } from '@/common/Alert'
+import { Follows } from 'components/graph/Follows'
+import { Followers } from 'components/graph/Followers'
 
 enum Views {
   Details,
@@ -221,8 +224,12 @@ export function AccountView({
                   {currentView === Views.Posts && (
                     <Posts id={id} onReport={setReportUri} />
                   )}
-                  {currentView === Views.Follows && <Follows id={id} />}
-                  {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Follows && (
+                    <Follows count={profile?.followersCount} id={id} />
+                  )}
+                  {currentView === Views.Followers && (
+                    <Followers count={profile?.followersCount} id={id} />
+                  )}
                   {currentView === Views.Lists && <Lists actor={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Blocks && <Blocks did={id} />}
@@ -441,6 +448,7 @@ function Details({
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
+  const ip = typeof repo.ip === 'string' ? repo.ip : undefined
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -452,6 +460,14 @@ function Details({
             value={profile.displayName}
             showCopyButton
           />
+        )}
+        {ip && (
+          <DataField value={ip} label="IP" showCopyButton>
+            {obscureIp(ip)}{' '}
+            <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+          </DataField>
         )}
         <DataField
           label="Email Verification"
@@ -549,58 +565,6 @@ function Posts({
   return <AuthorFeed id={id} onReport={onReport} />
 }
 
-function Follows({ id }: { id: string }) {
-  const labelerAgent = useLabelerAgent()
-  const {
-    error,
-    data: follows,
-    isLoading,
-  } = useQuery({
-    queryKey: ['follows', { id }],
-    queryFn: async () => {
-      const { data } = await labelerAgent.api.app.bsky.graph.getFollows({
-        actor: id,
-      })
-      return data
-    },
-  })
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isLoading}
-        error={String(error ?? '')}
-        accounts={follows?.follows}
-      />
-    </div>
-  )
-}
-
-function Followers({ id }: { id: string }) {
-  const labelerAgent = useLabelerAgent()
-  const {
-    error,
-    isLoading,
-    data: followers,
-  } = useQuery({
-    queryKey: ['followers', { id }],
-    queryFn: async () => {
-      const { data } = await labelerAgent.api.app.bsky.graph.getFollowers({
-        actor: id,
-      })
-      return data
-    },
-  })
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isLoading}
-        error={String(error ?? '')}
-        accounts={followers?.followers}
-      />
-    </div>
-  )
-}
-
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
   const labelerAgent = useLabelerAgent()
   const {
@@ -657,6 +621,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
         <EmptyDataset message="No invited users found" />
       ) : (
         <AccountsGrid
+          isLoading={isLoading}
           error={String(error ?? '')}
           accounts={invitedUsers?.profiles}
         />
@@ -809,4 +774,10 @@ const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
       <EmailComposer {...props} />
     </div>
   )
+}
+
+function obscureIp(ip: string) {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return '***.***.***.***'
+  return `${parts[0]}.${parts[1]}.***.***`
 }
