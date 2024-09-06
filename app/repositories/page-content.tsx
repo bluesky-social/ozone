@@ -6,7 +6,8 @@ import { useTitle } from 'react-use'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-const isEmailSearch = (q: string) => q.startsWith('email:')
+const isEmailSearch = (q: string) =>
+  q.startsWith('email:') || q.startsWith('ip:')
 
 function useSearchResultsQuery(q: string) {
   const labelerAgent = useLabelerAgent()
@@ -27,7 +28,7 @@ function useSearchResultsQuery(q: string) {
         return data
       }
 
-      const email = q.replace('email:', '').trim()
+      const email = q.replace('email:', '').replace('ip:', '').trim()
 
       if (!email) {
         return { repos: [], cursor: undefined }
