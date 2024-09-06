@@ -52,6 +52,8 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { Blocks } from './Blocks'
+import { Follows } from 'components/graph/Follows'
+import { Followers } from 'components/graph/Followers'
 
 enum Views {
   Details,
@@ -220,8 +222,12 @@ export function AccountView({
                   {currentView === Views.Posts && (
                     <Posts id={id} onReport={setReportUri} />
                   )}
-                  {currentView === Views.Follows && <Follows id={id} />}
-                  {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Follows && (
+                    <Follows count={profile?.followersCount} id={id} />
+                  )}
+                  {currentView === Views.Followers && (
+                    <Followers count={profile?.followersCount} id={id} />
+                  )}
                   {currentView === Views.Lists && <Lists actor={id} />}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Blocks && <Blocks did={id} />}
@@ -557,58 +563,6 @@ function Posts({
   return <AuthorFeed id={id} onReport={onReport} />
 }
 
-function Follows({ id }: { id: string }) {
-  const labelerAgent = useLabelerAgent()
-  const {
-    error,
-    data: follows,
-    isLoading,
-  } = useQuery({
-    queryKey: ['follows', { id }],
-    queryFn: async () => {
-      const { data } = await labelerAgent.api.app.bsky.graph.getFollows({
-        actor: id,
-      })
-      return data
-    },
-  })
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isLoading}
-        error={String(error ?? '')}
-        accounts={follows?.follows}
-      />
-    </div>
-  )
-}
-
-function Followers({ id }: { id: string }) {
-  const labelerAgent = useLabelerAgent()
-  const {
-    error,
-    isLoading,
-    data: followers,
-  } = useQuery({
-    queryKey: ['followers', { id }],
-    queryFn: async () => {
-      const { data } = await labelerAgent.api.app.bsky.graph.getFollowers({
-        actor: id,
-      })
-      return data
-    },
-  })
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isLoading}
-        error={String(error ?? '')}
-        accounts={followers?.followers}
-      />
-    </div>
-  )
-}
-
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
   const labelerAgent = useLabelerAgent()
   const {
@@ -665,6 +619,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
         <EmptyDataset message="No invited users found" />
       ) : (
         <AccountsGrid
+          isLoading={isLoading}
           error={String(error ?? '')}
           accounts={invitedUsers?.profiles}
         />

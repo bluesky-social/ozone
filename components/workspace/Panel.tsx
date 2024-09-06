@@ -112,7 +112,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       // No need to break if one of the requests fail, continue on with others
-      await actionSubjects(
+      const results = await actionSubjects(
         { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
       )
@@ -123,6 +123,22 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ error: '', isSubmitting: false })
+
+      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
+      if (results.failed.length) {
+        document
+          .querySelectorAll<HTMLInputElement>(
+            'input[type="checkbox"][name="workspaceItem"]',
+          )
+          .forEach((checkbox) => {
+            if (results.failed.includes(checkbox.value)) {
+              checkbox.checked = true
+              // There's an event handler on the checkbox for mousedown event that syncs with a react state
+              // for last checked index. We need to trigger that event to keep the state in sync
+              checkbox.dispatchEvent(new Event('mousedown'))
+            }
+          })
+      }
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
@@ -131,6 +147,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { data: workspaceList } = useWorkspaceList()
   const { data: workspaceListStatuses } = useSubjectStatuses({
     subjects: workspaceList || [],
+    // Make sure we aren't constantly refreshing the data unless the panel is open
+    enabled: props.open,
   })
 
   return (
