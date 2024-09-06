@@ -3,82 +3,152 @@ import { RepositoriesTable } from '@/repositories/RepositoriesTable'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useTitle } from 'react-use'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
+import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { WorkspacePanel } from '@/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const isEmailSearch = (q: string) =>
   q.startsWith('email:') || q.startsWith('ip:')
 
-function useSearchResultsQuery(q: string) {
-  const labelerAgent = useLabelerAgent()
+const getRepos =
+  ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
+  async ({
+    pageParam,
+    excludeRepo,
+  }: {
+    pageParam?: string
+    excludeRepo?: boolean
+  }) => {
+    const limit = 25
 
-  return useInfiniteQuery({
-    queryKey: ['repositories', { q }],
-    queryFn: async ({ pageParam }) => {
-      const limit = 25
-
-      if (!isEmailSearch(q)) {
-        const { data } =
-          await labelerAgent.api.tools.ozone.moderation.searchRepos({
-            q,
-            limit,
-            cursor: pageParam,
-          })
-
-        return data
-      }
-
-      const email = q.replace('email:', '').replace('ip:', '').trim()
-
-      if (!email) {
-        return { repos: [], cursor: undefined }
-      }
-
-      const { data } = await labelerAgent.api.com.atproto.admin.searchAccounts({
-        email,
+    if (!isEmailSearch(q)) {
+      const { data } = await labelerAgent.tools.ozone.moderation.searchRepos({
+        q,
         limit,
         cursor: pageParam,
       })
 
-      if (!data.accounts.length) {
-        return { repos: [], cursor: data.cursor }
+      return data
+    }
+
+    const email = q.replace('email:', '').replace('ip:', '').trim()
+
+    if (!email) {
+      return { repos: [], cursor: undefined }
+    }
+
+    const { data } = await labelerAgent.com.atproto.admin.searchAccounts({
+      email,
+      limit,
+      cursor: pageParam,
+    })
+
+    if (!data.accounts.length) {
+      return { repos: [], cursor: data.cursor }
+    }
+
+    const repos: Record<string, ToolsOzoneModerationDefs.RepoView> = {}
+    data.accounts.forEach((account) => {
+      repos[account.did] = {
+        ...account,
+        // Set placeholder properties that will be later filled in with data from ozone
+        relatedRecords: [],
+        indexedAt: account.indexedAt,
+        moderation: {},
+        labels: [],
       }
+    })
 
-      const repos: Record<string, ToolsOzoneModerationDefs.RepoView> = {}
-      data.accounts.forEach((account) => {
-        repos[account.did] = {
-          ...account,
-          // Set placeholder properties that will be later filled in with data from ozone
-          relatedRecords: [],
-          indexedAt: account.indexedAt,
-          moderation: {},
-          labels: [],
-        }
-      })
-
+    if (!excludeRepo) {
       await Promise.allSettled(
         data.accounts.map(async (account) => {
-          const { data } =
-            await labelerAgent.api.tools.ozone.moderation.getRepo({
-              did: account.did,
-            })
+          const { data } = await labelerAgent.tools.ozone.moderation.getRepo({
+            did: account.did,
+          })
           repos[account.did] = { ...repos[account.did], ...data }
         }),
       )
+    }
 
-      return { repos: Object.values(repos), cursor: data.cursor }
-    },
+    return { repos: Object.values(repos), cursor: data.cursor }
+  }
+
+function useSearchResultsQuery(q: string) {
+  const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
+  const [isAdding, setIsAdding] = useState(false)
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const labelerAgent = useLabelerAgent()
+  const getRepoPage = getRepos({ q, labelerAgent })
+
+  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
+    queryKey: ['repositories', { q }],
+    queryFn: getRepoPage,
+    refetchOnWindowFocus: false,
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
+  const repos = data?.pages.flatMap((page) => page.repos) ?? []
+
+  const confirmAddToWorkspace = async () => {
+    // add items that are already loaded
+    await addToWorkspace(repos.map((f) => f.did))
+    if (!data?.pageParams) {
+      setIsConfirmationOpen(false)
+      return
+    }
+    setIsAdding(true)
+
+    try {
+      let cursor = data.pageParams[0] as string | undefined
+      do {
+        // When we just want the dids of the users, no need to do an extra fetch to include repos
+        const nextPage = await getRepoPage({
+          pageParam: cursor,
+          excludeRepo: true,
+        })
+        const dids = nextPage.repos.map((f) => f.did)
+        if (dids.length) await addToWorkspace(dids)
+        cursor = nextPage.cursor
+        //   if the modal is closed, that means the user decided not to add any more user to workspace
+      } while (cursor && isConfirmationOpen)
+    } catch (e) {
+      toast.error(`Something went wrong: ${(e as Error).message}`)
+    }
+    setIsAdding(false)
+    setIsConfirmationOpen(false)
+  }
+
+  return {
+    repos,
+    fetchNextPage,
+    hasNextPage,
+    confirmAddToWorkspace,
+    isConfirmationOpen,
+    setIsConfirmationOpen,
+    setIsAdding,
+    isAdding,
+  }
 }
 
 export default function RepositoriesListPage() {
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
   const params = useSearchParams()
   const q = params.get('term') ?? ''
-  const { data, fetchNextPage, hasNextPage } = useSearchResultsQuery(q)
-  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const {
+    repos,
+    fetchNextPage,
+    hasNextPage,
+    setIsConfirmationOpen,
+    isAdding,
+    setIsAdding,
+    isConfirmationOpen,
+    confirmAddToWorkspace,
+  } = useSearchResultsQuery(q)
 
   let pageTitle = `Repositories`
   if (q) {
@@ -87,7 +157,6 @@ export default function RepositoriesListPage() {
 
   useTitle(pageTitle)
 
-  const repos = data?.pages.flatMap((page) => page.repos) ?? []
   return (
     <>
       <SectionHeader
@@ -108,13 +177,36 @@ export default function RepositoriesListPage() {
             title={
               !repos.length
                 ? 'No users to be added to workspace'
-                : 'All visible users in the list will be added to workspace'
+                : 'All users will be added to workspace'
             }
             appearance={!!repos.length ? 'primary' : 'outlined'}
-            onClick={() => addToWorkspace(repos.map((repo) => repo.did))}
+            onClick={() => setIsConfirmationOpen(true)}
           >
             Add all to workspace
           </ActionButton>
+          <ConfirmationModal
+            onConfirm={() => {
+              if (isAdding) {
+                setIsAdding(false)
+                setIsConfirmationOpen(false)
+                return
+              }
+
+              confirmAddToWorkspace()
+            }}
+            isOpen={isConfirmationOpen}
+            setIsOpen={setIsConfirmationOpen}
+            confirmButtonText={isAdding ? 'Stop adding' : 'Yes, add all'}
+            title={`Add to workspace?`}
+            description={
+              <>
+                Once confirmed, all users from this page will be added to the
+                workspace. If there are a lot of users matching your search
+                query, this may take quite some time but you can always stop the
+                process and already added users will remain in the workspace.
+              </>
+            }
+          />
         </div>
       </SectionHeader>
 
@@ -124,6 +216,10 @@ export default function RepositoriesListPage() {
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
         showEmptySearch={!q?.length && !repos.length}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
       />
     </>
   )
