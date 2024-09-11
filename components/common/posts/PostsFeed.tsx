@@ -233,12 +233,14 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   )
 
   if (AppBskyEmbedVideo.isView(embed)) {
+    const captions = item.post.record?.['embed']?.['captions']
     return (
       <div className="flex gap-2 pb-2 pl-4" aria-label={embed.alt}>
         <VideoPlayer
           source={embed.playlist}
           thumbnail={embed.thumbnail}
           alt={embed.alt}
+          captions={captions ? (captions as AppBskyEmbedVideo.Caption[]) : []}
         />
       </div>
     )
