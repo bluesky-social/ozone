@@ -1,5 +1,8 @@
+import { createCSV, downloadCSV } from '@/lib/csv'
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
-import { pluralize } from '@/lib/util'
+import { buildBlueSkyAppUrl, chunkArray, pluralize } from '@/lib/util'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { AppBskyActorProfile, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef } from 'react'
 import { toast } from 'react-toastify'
@@ -93,6 +96,77 @@ export const useWorkspaceEmptyMutation = () => {
   )
 
   return mutation
+}
+
+export const useWorkspaceExportMutation = () => {
+  const labelerAgent = useLabelerAgent()
+  return useMutation({
+    mutationFn: async (items: string[]) => {
+      // Items are exported in groups so we can expect all items in the group to be of same type
+      // For now, only support exporting accounts
+      if (!items[0].startsWith('did:')) {
+        toast.error(`Exporting is only enabled for accounts.`)
+        return []
+      }
+
+      const data: Record<
+        string,
+        ToolsOzoneModerationDefs.RepoViewDetail | null
+      > = {}
+
+      for (const itemChunk of chunkArray(items, 50)) {
+        await Promise.all(
+          itemChunk.map(async (did) => {
+            try {
+              const { data: repo } =
+                await labelerAgent.tools.ozone.moderation.getRepo({
+                  did,
+                })
+
+              data[did] = repo
+            } catch (error) {
+              // For now we're just swallowing errors and exporting what I can
+              console.error(error)
+              data[did] = null
+            }
+          }),
+        )
+      }
+
+      downloadCSV(
+        createCSV({
+          headers: [
+            'did',
+            'handle',
+            'email',
+            'ip',
+            'name',
+            'labels',
+            'profile',
+          ],
+          lines: Object.values(data).map((repo) => {
+            if (!repo) return ''
+            const profile = AppBskyActorProfile.isRecord(repo.relatedRecords[0])
+              ? (repo.relatedRecords[0] as AppBskyActorProfile.Record)
+              : null
+
+            const line: string[] = [
+              repo.did,
+              repo.handle,
+              repo.email || 'Unknown',
+              `${repo.ip || 'Unknown'}`,
+              `${profile?.displayName || 'Unknown'}`,
+              repo.labels?.map(({ val }) => val).join(', ') || 'None',
+              buildBlueSkyAppUrl({ did: repo.did }),
+            ]
+            return line.join(',')
+          }),
+        }),
+      )
+
+      return data
+    },
+  })
 }
 
 const getList = (): string[] => {

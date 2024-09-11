@@ -12,11 +12,16 @@ import { StatusBySubject } from '@/subject/useSubjectStatus'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { PreviewCard } from '@/common/PreviewCard'
+import { useWorkspaceExportMutation } from './hooks'
 
 interface WorkspaceListProps {
   list: string[]
   subjectStatuses: StatusBySubject
   onRemoveItem: (item: string) => void
+}
+
+const GroupTitles = {
+  dids: 'Accounts',
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
@@ -28,7 +33,7 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
   return (
     <div>
       <div className="space-y-2">
-        {Object.entries(groupedItems).map(([key, items], parentIndex) => {
+        {Object.entries(groupedItems).map(([key, items]) => {
           if (!items.length) return null
           return (
             <ListGroup
@@ -36,7 +41,11 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
               items={items}
               subjectStatuses={subjectStatuses}
               onRemoveItem={onRemoveItem}
-              title={`${key.charAt(0).toUpperCase()}${key.slice(1)}`}
+              canExport={key === 'dids'}
+              title={
+                GroupTitles[key] ||
+                `${key.charAt(0).toUpperCase()}${key.slice(1)}`
+              }
             />
           )
         })}
@@ -50,14 +59,17 @@ const ListGroup = ({
   title,
   subjectStatuses,
   onRemoveItem,
+  canExport,
 }: {
   items: string[]
   title: string
+  canExport?: boolean
 } & Omit<WorkspaceListProps, 'list'>) => {
   const [lastCheckedIndex, setLastCheckedIndex] = useState<number | null>(null)
   const checkboxesRef = useRef<(HTMLInputElement | null)[]>([])
   const [detailShown, setDetailShown] = useState<string[]>([])
   const areAllDetailShown = items.every((item) => detailShown.includes(item))
+  const exportMutation = useWorkspaceExportMutation()
 
   //   This ensures that when shift+clicking checkboxes, all checkboxes between the last interacted item are toggled
   const handleChange = (
@@ -79,12 +91,23 @@ const ListGroup = ({
   }
 
   return (
-    <div className="pb-2">
+    <div className="py-2">
       <div className="flex justify-between mb-1 mr-2">
         <h5 className="text-base font-semibold">
           {title}({items.length})
         </h5>
-        <div>
+        <div className="flex gap-1">
+          {canExport && (
+            <ActionButton
+              size="sm"
+              appearance="outlined"
+              onClick={() => exportMutation.mutateAsync(items)}
+            >
+              <span className="text-xs">
+                {exportMutation.isLoading ? 'Exporting...' : 'Export'}
+              </span>
+            </ActionButton>
+          )}
           <ActionButton
             size="sm"
             appearance="outlined"
