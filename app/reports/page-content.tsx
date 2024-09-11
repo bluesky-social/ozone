@@ -8,6 +8,7 @@ import {
 } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
+  Agent,
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -356,15 +357,19 @@ function useModerationQueueQuery() {
         }
       })
 
-      return getQueueItems(labelerAgent, queueName, queryParams)
+      return getQueueItems(labelerAgent, queryParams, queueName)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
 }
 
-const getQueueItems = async (labelerAgent, queueName, queryParams) => {
+const getQueueItems = async (
+  labelerAgent: Agent,
+  queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
+  queueName: string | null,
+) => {
   const pageSize = 50
-  const { data } = await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+  const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
     limit: pageSize,
     includeMuted: true,
     ...queryParams,
@@ -387,10 +392,14 @@ const getQueueItems = async (labelerAgent, queueName, queryParams) => {
   // This is a recursive call to get items in queue if the current page
   // gives us less than full page size and there are more items to fetch
   if (statusesInQueue.length === 0 && data.cursor) {
-    return getQueueItems(labelerAgent, queueName, {
-      ...queryParams,
-      cursor: data.cursor,
-    })
+    return getQueueItems(
+      labelerAgent,
+      {
+        ...queryParams,
+        cursor: data.cursor,
+      },
+      queueName,
+    )
   }
 
   return { cursor: data.cursor, subjectStatuses: statusesInQueue }
