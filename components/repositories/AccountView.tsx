@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { buildBlueSkyAppUrl, classNames, truncate } from '@/lib/util'
+import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
 import { ReportPanel } from '../reports/ReportPanel'
 import React from 'react'
 import {
@@ -52,6 +52,8 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { Blocks } from './Blocks'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import { Alert } from '@/common/Alert'
 import { Follows } from 'components/graph/Follows'
 import { Followers } from 'components/graph/Followers'
 
@@ -745,6 +747,7 @@ export const EventsView = ({ did }: { did: string }) => {
 }
 
 const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
+  const { cantReceive } = useEmailRecipientStatus(props.did)
   return (
     <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
       <div className="flex flex-row justify-end items-center">
@@ -758,6 +761,16 @@ const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
           <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 ml-1" />
         </LinkButton>
       </div>
+      {cantReceive && (
+        <div className="my-2">
+          <Alert
+            showIcon
+            type="warning"
+            title="Can not send email to this user"
+            body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
+          />
+        </div>
+      )}
       <EmailComposer {...props} />
     </div>
   )
