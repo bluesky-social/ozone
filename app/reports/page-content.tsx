@@ -29,6 +29,10 @@ import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import {
+  EmbedTypePicker,
+  EmbedTypePickerForModerationQueue,
+} from '@/common/EmbedTypePicker'
 
 const TABS = [
   {
@@ -233,7 +237,10 @@ export const ReportsPageContent = () => {
         </div>
       </SectionHeader>
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
-        <LanguagePicker />
+        <div className='flex flex-row items-center gap-2'>
+          <LanguagePicker />
+          <EmbedTypePickerForModerationQueue />
+        </div>
         <ResolvedFilters />
       </div>
       <SubjectTable
