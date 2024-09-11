@@ -367,6 +367,7 @@ const getQueueItems = async (
   labelerAgent: Agent,
   queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
   queueName: string | null,
+  attempt = 0,
 ) => {
   const pageSize = 50
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
@@ -391,7 +392,8 @@ const getQueueItems = async (
 
   // This is a recursive call to get items in queue if the current page
   // gives us less than full page size and there are more items to fetch
-  if (statusesInQueue.length === 0 && data.cursor) {
+  // also, use a circuit breaker to make sure we never accidentally call this more than 10 times
+  if (statusesInQueue.length === 0 && data.cursor && attempt < 10) {
     return getQueueItems(
       labelerAgent,
       {
@@ -399,6 +401,7 @@ const getQueueItems = async (
         cursor: data.cursor,
       },
       queueName,
+      ++attempt,
     )
   }
 
