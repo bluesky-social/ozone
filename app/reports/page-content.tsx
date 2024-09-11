@@ -356,29 +356,42 @@ function useModerationQueueQuery() {
         }
       })
 
-      const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryStatuses({
-          limit: 50,
-          includeMuted: true,
-          ...queryParams,
-        })
-
-      const queueDivider = QUEUE_NAMES.length
-      const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
-      const statusesInQueue = queueName
-        ? data.subjectStatuses.filter((status) => {
-            const subjectDid =
-              status.subject.$type === 'com.atproto.admin.defs#repoRef'
-                ? status.subject.did
-                : new AtUri(`${status.subject.uri}`).host
-            const queueDeciderCharCode =
-              `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
-            return queueDeciderCharCode % queueDivider === queueIndex
-          })
-        : data.subjectStatuses
-
-      return { cursor: data.cursor, subjectStatuses: statusesInQueue }
+      return getQueueItems(labelerAgent, queueName, queryParams)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
+}
+
+const getQueueItems = async (labelerAgent, queueName, queryParams) => {
+  const pageSize = 50
+  const { data } = await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+    limit: pageSize,
+    includeMuted: true,
+    ...queryParams,
+  })
+
+  const queueDivider = QUEUE_NAMES.length
+  const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
+  const statusesInQueue = queueName
+    ? data.subjectStatuses.filter((status) => {
+        const subjectDid =
+          status.subject.$type === 'com.atproto.admin.defs#repoRef'
+            ? status.subject.did
+            : new AtUri(`${status.subject.uri}`).host
+        const queueDeciderCharCode =
+          `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
+        return queueDeciderCharCode % queueDivider === queueIndex
+      })
+    : data.subjectStatuses
+
+  // This is a recursive call to get items in queue if the current page
+  // gives us less than full page size and there are more items to fetch
+  if (statusesInQueue.length === 0 && data.cursor) {
+    return getQueueItems(labelerAgent, queueName, {
+      ...queryParams,
+      cursor: data.cursor,
+    })
+  }
+
+  return { cursor: data.cursor, subjectStatuses: statusesInQueue }
 }
