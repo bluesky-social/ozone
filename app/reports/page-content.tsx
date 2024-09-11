@@ -330,10 +330,10 @@ function useModerationQueueQuery() {
         queryParams.onlyMuted = onlyMuted
       }
 
-      if (appealed) {
-        // If not specifically set to true but there is a value, we can default to false
-        // No value will pass undefined which will be ignored
-        queryParams.appealed = appealed === 'true'
+      if (appealed === 'true') {
+        queryParams.appealed = true
+      } else if (appealed === 'false') {
+        queryParams.appealed = false
       }
 
       if (tags) {
