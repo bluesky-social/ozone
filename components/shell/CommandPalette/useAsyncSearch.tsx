@@ -98,7 +98,10 @@ const buildItemForDid = ({
       subtitle: `Go to moderation queue and see all subjects that authored by this user`,
       section: ActionSections.reports,
       perform: () => {
-        router.push(`/reports?term=includeAllUserRecords:${did}`)
+        const term = encodeURIComponent(
+          `subject:${did} includeAllUserRecords:true`,
+        )
+        router.push(`/reports?term=${term}`)
       },
     },
     {
