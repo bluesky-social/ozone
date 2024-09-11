@@ -30,15 +30,17 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
     try {
       const formData = new FormData(event.currentTarget)
       const items = formData.get('items') as string
-      const isPossiblyHandle = (item) => item.includes('.')
+      const isDid = (item) => item.startsWith('did:')
+      const isAtUri = (item) => item.startsWith('at://')
+      // if it's not did or at-uri but contains .s it's possibly a handle
+      const isPossiblyHandle = (item) =>
+        item.includes('.') && !isDid(item) && !isAtUri(item)
+
       const itemList = items
         .split(',')
         .map((item) => item.trim())
         .filter(
-          (item) =>
-            item.startsWith('did:') ||
-            item.startsWith('at://') ||
-            isPossiblyHandle(item),
+          (item) => isDid(item) || isAtUri(item) || isPossiblyHandle(item),
         )
 
       const handleList = itemList.filter(isPossiblyHandle)
