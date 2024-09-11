@@ -8,6 +8,7 @@ import {
 } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
+  Agent,
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -336,10 +337,10 @@ function useModerationQueueQuery() {
         queryParams.onlyMuted = onlyMuted
       }
 
-      if (appealed) {
-        // If not specifically set to true but there is a value, we can default to false
-        // No value will pass undefined which will be ignored
-        queryParams.appealed = appealed === 'true'
+      if (appealed === 'true') {
+        queryParams.appealed = true
+      } else if (appealed === 'false') {
+        queryParams.appealed = false
       }
 
       if (tags) {
@@ -362,29 +363,53 @@ function useModerationQueueQuery() {
         }
       })
 
-      const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryStatuses({
-          limit: 50,
-          includeMuted: true,
-          ...queryParams,
-        })
-
-      const queueDivider = QUEUE_NAMES.length
-      const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
-      const statusesInQueue = queueName
-        ? data.subjectStatuses.filter((status) => {
-            const subjectDid =
-              status.subject.$type === 'com.atproto.admin.defs#repoRef'
-                ? status.subject.did
-                : new AtUri(`${status.subject.uri}`).host
-            const queueDeciderCharCode =
-              `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
-            return queueDeciderCharCode % queueDivider === queueIndex
-          })
-        : data.subjectStatuses
-
-      return { cursor: data.cursor, subjectStatuses: statusesInQueue }
+      return getQueueItems(labelerAgent, queryParams, queueName)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
+}
+
+const getQueueItems = async (
+  labelerAgent: Agent,
+  queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
+  queueName: string | null,
+  attempt = 0,
+) => {
+  const pageSize = 50
+  const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
+    limit: pageSize,
+    includeMuted: true,
+    ...queryParams,
+  })
+
+  const queueDivider = QUEUE_NAMES.length
+  const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
+  const statusesInQueue = queueName
+    ? data.subjectStatuses.filter((status) => {
+        const subjectDid =
+          status.subject.$type === 'com.atproto.admin.defs#repoRef'
+            ? status.subject.did
+            : new AtUri(`${status.subject.uri}`).host
+        const queueDeciderCharCode =
+          `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
+        return queueDeciderCharCode % queueDivider === queueIndex
+      })
+    : data.subjectStatuses
+
+  // This is a recursive call to get items in queue if the current page
+  // gives us less than full page size and there are more items to fetch
+  // also, use a circuit breaker to make sure we never accidentally call this more than 10 times
+  if (statusesInQueue.length === 0 && data.cursor && attempt < 10) {
+    return getQueueItems(
+      labelerAgent,
+      {
+        ...queryParams,
+        cursor: data.cursor,
+      },
+      queueName,
+      ++attempt,
+    )
+  }
+
+  return { cursor: data.cursor, subjectStatuses: statusesInQueue }
 }

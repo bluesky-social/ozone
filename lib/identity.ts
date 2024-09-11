@@ -1,5 +1,6 @@
 import { globalAgent } from './client'
 import { PLC_DIRECTORY_URL } from './constants'
+import { chunkArray } from './util'
 
 export const getDidFromHandle = async (
   handle: string,
@@ -10,6 +11,21 @@ export const getDidFromHandle = async (
   } catch (err) {
     return null
   }
+}
+
+export const getDidFromHandleInBatch = async (handles: string[]) => {
+  const handleToDid: Record<string, string | null> = {}
+
+  for (const handleChunk of chunkArray(handles, 50)) {
+    await Promise.all(
+      handleChunk.map(async (handle) => {
+        const did = await getDidFromHandle(handle)
+        handleToDid[handle] = did
+      }),
+    )
+  }
+
+  return handleToDid
 }
 
 export const resolveDidDocData = async function (
