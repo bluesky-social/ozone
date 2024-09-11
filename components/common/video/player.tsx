@@ -18,7 +18,6 @@ export default function VideoPlayer({
   const [isUnsupported, setIsUnsupported] = useState(false)
   const figId = useId()
   const ref = useRef<HTMLVideoElement>(null)
-  const hasSubtitles = captions.length > 0
 
   useEffect(() => {
     if (ref.current && Hls.isSupported()) {
