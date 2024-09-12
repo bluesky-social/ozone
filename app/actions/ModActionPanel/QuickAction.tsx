@@ -189,8 +189,9 @@ function Form(
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
+  const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const shouldShowDurationInHoursField =
-    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
+    isTakedownEvent || isMuteEvent || isMuteReporterEvent
   const canManageChat = usePermission('canManageChat')
 
   // navigate to next or prev report
@@ -256,6 +257,13 @@ function Form(
 
       if (formData.get('durationInHours')) {
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
+      }
+
+      if (
+        modEventType === MOD_EVENTS.TAKEDOWN &&
+        formData.get('acknowledgeAccountSubjects')
+      ) {
+        coreEvent.acknowledgeAccountSubjects = true
       }
 
       if (formData.get('comment')) {
@@ -719,6 +727,22 @@ function Form(
                         {isEscalated
                           ? `De-escalate the subject and acknowledge all open reports after labeling`
                           : `Acknowledge all open reports after labeling`}
+                      </span>
+                    }
+                  />
+                )}
+
+                {isTakedownEvent && isSubjectDid && (
+                  <Checkbox
+                    value="true"
+                    defaultChecked
+                    id="acknowledgeAccountSubjects"
+                    name="acknowledgeAccountSubjects"
+                    className="mb-3 flex items-center leading-3"
+                    label={
+                      <span className="leading-4">
+                        Acknowledge all open/escalated/appealed reports on
+                        subjects created by this user
                       </span>
                     }
                   />

@@ -296,12 +296,14 @@ function useModerationQueueQuery() {
   const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters } = useFluentReportSearchParams()
+  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
+    useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
       'events',
       {
+        includeAllUserRecords,
         subject,
         sortField,
         sortDirection,
@@ -320,6 +322,10 @@ function useModerationQueueQuery() {
     queryFn: async ({ pageParam }) => {
       const queryParams: ToolsOzoneModerationQueryStatuses.QueryParams = {
         cursor: pageParam,
+      }
+
+      if (includeAllUserRecords) {
+        queryParams.includeAllUserRecords = includeAllUserRecords
       }
 
       if (subject) {

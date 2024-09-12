@@ -5,12 +5,14 @@ type SearchQueryParams = {
   subject?: string
   lastReviewedBy?: string
   reporters?: string[]
+  includeAllUserRecords?: boolean
 }
 
 const ParamPrefixes = {
   subject: 'subject',
   reporters: 'reporters',
   lastReviewedBy: 'lastReviewedBy',
+  includeAllUserRecords: 'includeAllUserRecords',
 }
 
 export const buildQueryFromParams = (
@@ -73,6 +75,7 @@ export const useFluentReportSearchParams = (): SearchQueryParams => {
       subject,
       lastReviewedBy: undefined,
       reporters: undefined,
+      includeAllUserRecords: undefined,
     }
 
     const paramsFromQuery = buildParamsFromQuery(subject)
@@ -80,6 +83,8 @@ export const useFluentReportSearchParams = (): SearchQueryParams => {
     // If the params built from query is not empty, that means the term is no longer just subject
     if (Object.keys(paramsFromQuery).length) {
       searchParams.subject = paramsFromQuery.subject
+      searchParams.includeAllUserRecords =
+        paramsFromQuery.includeAllUserRecords === 'true'
       searchParams.lastReviewedBy = paramsFromQuery.lastReviewedBy
       searchParams.reporters = paramsFromQuery.reporters
         ? paramsFromQuery.reporters.split(',')
