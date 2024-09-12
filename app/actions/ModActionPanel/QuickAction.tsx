@@ -735,7 +735,6 @@ function Form(
                 {isTakedownEvent && isSubjectDid && (
                   <Checkbox
                     value="true"
-                    defaultChecked
                     id="acknowledgeAccountSubjects"
                     name="acknowledgeAccountSubjects"
                     className="mb-3 flex items-center leading-3"
