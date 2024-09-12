@@ -261,9 +261,9 @@ function Form(
 
       if (
         modEventType === MOD_EVENTS.TAKEDOWN &&
-        formData.get('acknowledgeAllSubjectsOfAccount')
+        formData.get('acknowledgeAccountSubjects')
       ) {
-        coreEvent.acknowledgeAllSubjectsOfAccount = true
+        coreEvent.acknowledgeAccountSubjects = true
       }
 
       if (formData.get('comment')) {
@@ -736,8 +736,8 @@ function Form(
                   <Checkbox
                     value="true"
                     defaultChecked
-                    id="acknowledgeAllSubjectsOfAccount"
-                    name="acknowledgeAllSubjectsOfAccount"
+                    id="acknowledgeAccountSubjects"
+                    name="acknowledgeAccountSubjects"
                     className="mb-3 flex items-center leading-3"
                     label={
                       <span className="leading-4">
