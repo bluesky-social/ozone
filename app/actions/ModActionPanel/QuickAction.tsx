@@ -480,7 +480,6 @@ function Form(
       setModEventType(MOD_EVENTS.TAKEDOWN)
     }),
   )
-
   return (
     <>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
@@ -659,10 +658,11 @@ function Form(
                       name="labels"
                       formId={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
-                        const isExternalLabel = allLabels.some((l) => {
-                          return l.val === label && l.src !== config.did
+                        // If there's a label where the source is the current labeler, it's editable
+                        const isEditableLabel = allLabels.some((l) => {
+                          return l.val === label && l.src === config.did
                         })
-                        return !isSelfLabel(label) && !isExternalLabel
+                        return !isSelfLabel(label) && isEditableLabel
                       })}
                     />
                   </div>
