@@ -8,14 +8,17 @@ export default function VideoPlayer({
   alt,
   thumbnail,
   captions,
+  shouldBlur = false,
 }: {
   source: string
   alt?: string
   thumbnail?: string
   captions: AppBskyEmbedVideo.Caption[]
+  shouldBlur?: boolean
 }) {
   const [hls] = useState(() => new Hls())
   const [isUnsupported, setIsUnsupported] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
   const figId = useId()
   const ref = useRef<HTMLVideoElement>(null)
 
@@ -41,7 +44,10 @@ export default function VideoPlayer({
   }, [source, hls])
 
   return (
-    <figure>
+    <figure
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
       <video
         poster={thumbnail}
         ref={ref}
@@ -52,8 +58,14 @@ export default function VideoPlayer({
         loop
         muted
         crossOrigin="anonymous"
+        className={`transition-all duration-300 ease-in-out ${
+          isHovered || !shouldBlur ? 'blur-none' : 'blur-md'
+        }`}
         aria-labelledby={alt ? figId : undefined}
       >
+        {!isHovered && shouldBlur && (
+          <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-xl font-bold"></div>
+        )}
         {isUnsupported && (
           <p>
             Your browser does not seem to support HLS videos. Please switch to a

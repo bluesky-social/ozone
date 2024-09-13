@@ -141,12 +141,12 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
-  const imageRequiresBlur = doesLabelNeedBlur(
+  const mediaRequiresBlur = doesLabelNeedBlur(
     item.post.labels?.map(({ val }) => val),
   )
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
-    imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
+    mediaRequiresBlur ? 'blur-sm hover:blur-none' : '',
   )
 
   if (AppBskyEmbedImages.isView(embed)) {
