@@ -45,20 +45,20 @@ export default function VideoPlayer({
 
   return (
     <figure
+      className="flex-1"
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
     >
       <video
         poster={thumbnail}
         ref={ref}
-        style={{ flex: 1 }}
         playsInline
         preload="none"
         controls
         loop
         muted
         crossOrigin="anonymous"
-        className={`transition-all duration-300 ease-in-out ${
+        className={`w-full flex-1 transition-all duration-300 ease-in-out ${
           isHovered || !shouldBlur ? 'blur-none' : 'blur-md'
         }`}
         aria-labelledby={alt ? figId : undefined}
