@@ -1,0 +1,60 @@
+{
+  "$type": "app.bsky.labeler.service",
+  "Novel Class": {
+    "labelValues": ["Cultivador", "Patriarca", "Rei Demônio", "Deus Marcial", "Deus Civil", "Shizun", "Daozhang"],
+    "labelValueDefitions": [
+      {
+        "identifier": "Cultivador",
+        "severity": "inform",
+        "blurs": "none",
+        "defaultSetting": "warn",
+        "locales": [
+      {"lang": "pt", "name": "Cultivador", "description": "ex"}
+      {
+        "identifier": "Patriarca",
+        "severity": "inform",
+        "blurs": "none",
+        "defaultSetting": "warn",
+        "locales": [
+     {"lang": "pt", "name": "Patriarca", "description": "ex"}
+     {
+        "identifier": "Rei Demônio",
+        "severity": "inform",
+        "blurs": "none",
+        "defaultSetting": "warn",
+        "locales": [
+      {"lang": "pt", "name": "Rei Demônio", "description": "ex"}
+      {
+       "identifier": "Deus Marcial",
+        "severity": "inform",
+        "blurs": "none",
+        "defaultSetting": "warn",
+        "locales": [
+      {"lang": "pt", "name": "Deus Marcial", "description": "ex!"}
+      {
+       "identifier": "Deus Civil",
+        "severity": "inform",
+        "blurs": "none",
+        "defaultSetting": "warn",
+        "locales": [
+      {"lang": "pt", "name": "Deus Civil", "description": "ex!"}
+      {
+         "identifier": "Shizun",
+          "severity": "inform",
+          "blurs": "none",
+          "defaultSetting": "warn",
+          "locales": [
+            {"lang": "pt", "name": "Shizun", "description": "ex!"}
+        {
+       "identifier": "Daozhang",
+        "severity": "inform",
+        "blurs": "none",
+        "defaultSetting": "warn",
+        "locales": [
+          {"lang": "pt", "name": "Daozhang", "description": "ex!"}
+        ]
+      }
+    ]
+  },
+  "createdAt": "2024-03-03T05:31:08.938Z"
+}
