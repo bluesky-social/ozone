@@ -224,12 +224,12 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     ? item.post.embed.media
     : item.post.embed
 
-  const imageRequiresBlur = doesLabelNeedBlur(
+  const mediaRequiresBlur = doesLabelNeedBlur(
     item.post.labels?.map(({ val }) => val),
   )
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
-    imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
+    mediaRequiresBlur ? 'blur-sm hover:blur-none' : '',
   )
 
   if (AppBskyEmbedVideo.isView(embed)) {
@@ -240,6 +240,7 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
           source={embed.playlist}
           thumbnail={embed.thumbnail}
           alt={embed.alt}
+          shouldBlur={mediaRequiresBlur}
           captions={captions ? (captions as AppBskyEmbedVideo.Caption[]) : []}
         />
       </div>
