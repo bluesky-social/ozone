@@ -1,11 +1,16 @@
-import { ActionButton } from '@/common/buttons'
+import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { LabelChip } from '@/common/labels'
-import { useActionPanelLink } from '@/common/useActionPanelLink'
-import { useSession } from '@/lib/useSession'
 import { ToolsOzoneSetDefs } from '@atproto/api'
 import { PencilIcon } from '@heroicons/react/20/solid'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
+import Link from 'next/link'
+import { createSetPageLink } from './utils'
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
 
 export function SetList({
   sets,
@@ -14,7 +19,9 @@ export function SetList({
   hasNextPage,
   onEdit,
   canEdit = false,
+  searchQuery,
 }: {
+  searchQuery: string | null
   canEdit: boolean
   isInitialLoading: boolean
   sets: ToolsOzoneSetDefs.SetView[] | undefined
@@ -22,8 +29,6 @@ export function SetList({
   hasNextPage?: boolean
   onEdit: (set: ToolsOzoneSetDefs.Set) => void
 }) {
-  const createActionPanelLink = useActionPanelLink()
-  const session = useSession()
   return (
     <>
       <Card className="mb-3 py-3">
@@ -31,9 +36,20 @@ export function SetList({
           <p>Hang tight, we{"'"}re loading all sets...</p>
         ) : (
           <div>
-            {!sets?.length && <p>No sets found.</p>}
+            {!sets?.length && (
+              <p>
+                {!searchQuery
+                  ? 'No sets found.'
+                  : `No set matches the prefix "${searchQuery}". Please clear your search to see all sets`}
+              </p>
+            )}
             {sets?.map((set, i) => {
               const lastItem = i === sets.length - 1
+              const editUrl = createSetPageLink({
+                edit: set.name,
+                description: set.description || '',
+              })
+              const viewUrl = createSetPageLink({ view: set.name })
               return (
                 <div
                   key={set.name}
@@ -44,24 +60,31 @@ export function SetList({
                   }`}
                 >
                   <div>
-                    <p>{set.name}</p>
+                    <p>
+                      <Link href={viewUrl}>{set.name}</Link>
+                    </p>
                     <p className="text-sm">{set.description}</p>
                     <div className="-mx-1">
-                      <LabelChip className="text-red-600">
-                        {set.setSize} items
-                      </LabelChip>
+                      <Link href={viewUrl}>
+                        <LabelChip>{set.setSize} values</LabelChip>
+                      </Link>
+
+                      <span className="text-xs">
+                        Updated{' '}
+                        {dateFormatter.format(new Date(set.updatedAt))}
+                      </span>
                     </div>
                   </div>
                   <div>
                     {canEdit && (
-                      <ActionButton
+                      <LinkButton
                         size="xs"
                         appearance="outlined"
-                        onClick={() => onEdit(set)}
+                        href={editUrl}
                       >
                         <PencilIcon className="h-3 w-3 mr-1" />
                         <span className="text-xs">Edit</span>
-                      </ActionButton>
+                      </LinkButton>
                     )}
                   </div>
                 </div>

@@ -6,17 +6,14 @@ import { Alert } from '@/common/Alert'
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { FormLabel, Input, Textarea } from '@/common/forms'
-import client from '@/lib/client'
-import { queryClient } from 'components/QueryClient'
+import { useQueryClient } from '@tanstack/react-query'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-const getSubmitButtonText = (
-  set: ToolsOzoneSetDefs.Set | null,
-  isSubmitting: boolean,
-) => {
+const getSubmitButtonText = (setName: string | null, isSubmitting: boolean) => {
   if (!isSubmitting) {
-    return !!set ? 'Update Set' : 'Add Set'
+    return !!setName ? `Update Set` : 'Add Set'
   }
-  return !!set ? 'Updating Set...' : 'Adding Set...'
+  return !!setName ? `Updating Set...` : 'Adding Set...'
 }
 
 const useSetEditor = ({
@@ -26,6 +23,8 @@ const useSetEditor = ({
   isNewSet: boolean
   onSuccess: () => void
 }) => {
+  const queryClient = useQueryClient()
+  const labelerAgent = useLabelerAgent()
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
     error: string
@@ -42,13 +41,10 @@ const useSetEditor = ({
       const description = formData.get('description') as string
 
       await toast.promise(
-        client.api.tools.ozone.set.upsertSet(
-          {
-            name,
-            description,
-          },
-          { encoding: 'application/json', headers: client.proxyHeaders() },
-        ),
+        labelerAgent.tools.ozone.set.upsertSet({
+          name,
+          description,
+        }),
         {
           pending: 'Saving set...',
           success: {
@@ -76,16 +72,18 @@ const useSetEditor = ({
 }
 
 export function SetEditor({
-  set,
+  setName,
+  setDescription,
   onCancel,
   onSuccess,
 }: {
-  set: ToolsOzoneSetDefs.Set | null
+  setName: string | null
+  setDescription: string | null
   onCancel: () => void
   onSuccess: () => void
 }) {
   const { onFormSubmit, submission } = useSetEditor({
-    isNewSet: !set,
+    isNewSet: !setName,
     onSuccess,
   })
   return (
@@ -98,9 +96,10 @@ export function SetEditor({
               type="text"
               id="name"
               name="name"
-              autoFocus={!set}
+              autoFocus={!setName}
               className="block w-full"
-              disabled={!!set || submission.isSubmitting}
+              defaultValue={setName || ''}
+              disabled={submission.isSubmitting}
               placeholder="No spaces or special characters..."
             />
           </FormLabel>
@@ -111,7 +110,11 @@ export function SetEditor({
             htmlFor="description"
             className="flex-1"
           >
-            <Textarea name="description" className="block w-full" />
+            <Textarea
+              name="description"
+              defaultValue={setDescription || ''}
+              className="block w-full"
+            />
           </FormLabel>
         </div>
         <div className="flex flex-row justify-end gap-2">
@@ -130,7 +133,7 @@ export function SetEditor({
             appearance="primary"
             disabled={submission.isSubmitting}
           >
-            {getSubmitButtonText(set, submission.isSubmitting)}
+            {getSubmitButtonText(setName, submission.isSubmitting)}
           </ActionButton>
         </div>
         {submission.error && (
@@ -138,7 +141,7 @@ export function SetEditor({
             <Alert
               type="error"
               body={submission.error}
-              title={!!set ? 'Failed to update set' : 'Failed to add set'}
+              title={!!setName ? 'Failed to update set' : 'Failed to add set'}
             />
           </div>
         )}
