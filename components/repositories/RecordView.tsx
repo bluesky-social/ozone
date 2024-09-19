@@ -1,5 +1,5 @@
 'use client'
-import { ReactNode, useState } from 'react'
+import { useState } from 'react'
 import Link from 'next/link'
 import {
   ToolsOzoneModerationGetRecord as GetRecord,
@@ -13,8 +13,7 @@ import {
   ExclamationCircleIcon,
 } from '@heroicons/react/20/solid'
 import { Json } from '@/common/Json'
-import { classNames, parseAtUri } from '@/lib/util'
-import { PostAsCard } from '@/common/posts/PostsFeed'
+import { parseAtUri } from '@/lib/util'
 import { BlobsTable } from './BlobsTable'
 import {
   LabelList,
@@ -30,6 +29,7 @@ import { Dropdown } from '@/common/Dropdown'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Likes } from '@/common/feeds/Likes'
 import { Reposts } from '@/common/feeds/Reposts'
+import { Thread } from '@/common/feeds/PostThread'
 
 enum Views {
   Details,
@@ -297,83 +297,4 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
 
 function Blobs({ blobs }: { blobs: ToolsOzoneModerationDefs.BlobView[] }) {
   return <BlobsTable blobs={blobs} />
-}
-
-function Thread({ thread }: { thread: GetPostThread.OutputSchema['thread'] }) {
-  return (
-    <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
-      <ThreadPost highlight depth={getThreadDepth(thread)} thread={thread} />
-    </div>
-  )
-}
-
-function ThreadPost({
-  depth,
-  thread,
-  highlight,
-}: {
-  depth: number
-  thread: GetPostThread.OutputSchema['thread']
-  highlight?: boolean
-}) {
-  if (AppBskyFeedDefs.isThreadViewPost(thread)) {
-    return (
-      <>
-        {thread.parent && (
-          <ThreadPost depth={depth - 1} thread={thread.parent} />
-        )}
-        <ThreadPostWrapper depth={depth} highlight={highlight}>
-          <PostAsCard
-            className="bg-transparent"
-            item={thread}
-            controls={false}
-            dense
-          />
-        </ThreadPostWrapper>
-        {thread.replies?.map((reply, i) => (
-          <ThreadPost
-            key={`${thread.post.uri}-reply-${i}`}
-            depth={depth + 1}
-            thread={reply}
-          />
-        ))}
-      </>
-    )
-  } else if (AppBskyFeedDefs.isNotFoundPost(thread)) {
-    return (
-      <ThreadPostWrapper depth={depth}>
-        Not found: ${thread.uri}
-      </ThreadPostWrapper>
-    )
-  } else {
-    return <ThreadPostWrapper depth={depth}>Unknown</ThreadPostWrapper>
-  }
-}
-
-function ThreadPostWrapper({
-  depth,
-  highlight,
-  children,
-}: {
-  depth: number
-  highlight?: boolean
-  children: ReactNode
-}) {
-  return (
-    <div
-      style={{ marginLeft: depth * 12 }}
-      className={classNames('p-2', highlight ? 'bg-amber-100' : '')}
-    >
-      {children}
-    </div>
-  )
-}
-
-function getThreadDepth(thread: GetPostThread.OutputSchema['thread']) {
-  let depth = 0
-  while (AppBskyFeedDefs.isThreadViewPost(thread.parent)) {
-    thread = thread.parent
-    depth++
-  }
-  return depth
 }

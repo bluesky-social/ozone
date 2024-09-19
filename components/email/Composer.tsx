@@ -6,17 +6,53 @@ import dynamic from 'next/dynamic'
 
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
-import client from '@/lib/client'
-import { compileTemplateContent, getTemplate } from './helpers'
-import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { useEmailComposer } from './useComposer'
 import { useColorScheme } from '@/common/useColorScheme'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { compileTemplateContent, getTemplate } from './helpers'
 import { TemplateSelector } from './template-selector'
+import { availableLanguageCodes } from '@/common/LanguagePicker'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { useEmailComposer } from './useComposer'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
+const getRecipientsLanguages = (
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail,
+) => {
+  if (!repo) {
+    return { languages: [], defaultLang: undefined }
+  }
+  // If the recipient account is tagged with multiple languages, we can use that to pre-select the non-english language
+  const recipientsLanguageTags =
+    repo.moderation.subjectStatus?.tags
+      ?.filter((tag) => {
+        // there may be non-lang related tags and lang:und is set when we couldn't figure out the language
+        // this account associates with so no need to consider them
+        if (!tag.startsWith('lang:') || tag === 'lang:und') {
+          return false
+        }
+        return true
+      })
+      .map((tag) => tag.replace('lang:', '')) ?? []
+
+  // find out among the accepted languages, if there is any non-english one so that we can default to that
+  const nonEnglishLang = recipientsLanguageTags.find((lang) => {
+    return lang !== 'en' && availableLanguageCodes.includes(lang)
+  })
+
+  if (nonEnglishLang) {
+    return { defaultLang: nonEnglishLang, languages: recipientsLanguageTags }
+  }
+  return {
+    defaultLang: recipientsLanguageTags[0],
+    languages: recipientsLanguageTags,
+  }
+}
+
 export const EmailComposer = ({ did }: { did: string }) => {
+  const labelerAgent = useLabelerAgent()
   const {
     isSending,
     requiresConfirmation,
@@ -33,7 +69,13 @@ export const EmailComposer = ({ did }: { did: string }) => {
   const commentField = useRef<HTMLTextAreaElement>(null)
 
   const { data: { repo } = {} } = useRepoAndProfile({ id: did })
-
+  const recipientLanguages = getRecipientsLanguages(repo)
+  let templateLabel = `Template`
+  if (recipientLanguages.languages.length > 1) {
+    templateLabel = `Template (account languages: ${recipientLanguages.languages.join(
+      ', ',
+    )})`
+  }
   const onSubmit = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
@@ -52,19 +94,16 @@ export const EmailComposer = ({ did }: { did: string }) => {
         .toString()
 
       await toast.promise(
-        client.api.tools.ozone.moderation.emitEvent(
-          {
-            event: {
-              $type: MOD_EVENTS.EMAIL,
-              comment,
-              subjectLine: subject,
-              content: htmlContent,
-            },
-            subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-            createdBy: client.session.did,
+        labelerAgent.api.tools.ozone.moderation.emitEvent({
+          event: {
+            $type: MOD_EVENTS.EMAIL,
+            comment,
+            subjectLine: subject,
+            content: htmlContent,
           },
-          { headers: client.proxyHeaders(), encoding: 'application/json' },
-        ),
+          subject: { $type: 'com.atproto.admin.defs#repoRef', did },
+          createdBy: labelerAgent.assertDid,
+        }),
         {
           pending: 'Sending email...',
           success: {
@@ -109,10 +148,11 @@ export const EmailComposer = ({ did }: { did: string }) => {
 
   return (
     <form onSubmit={onSubmit}>
-      <FormLabel label="Template" htmlFor="template" className="mb-3">
+      <FormLabel label={templateLabel} htmlFor="template" className="mb-3">
         <TemplateSelector
           communicationTemplates={communicationTemplates}
           onSelect={onTemplateSelect}
+          defaultLang={recipientLanguages.defaultLang}
         />
       </FormLabel>
       <FormLabel label="Subject" htmlFor="subject" className="mb-3">

@@ -133,9 +133,9 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
 export const buildAtUriFromFragments = (
   fragments: BlueSkyAppUrlFragments | null,
 ) => {
-  if (fragments?.did) {
+  if (fragments?.did || fragments?.handle) {
     const uri = AtUri.make(
-      `${fragments?.did}`,
+      `${fragments?.did || fragments?.handle}`,
       fragments.collection,
       fragments.rkey,
     )
@@ -162,4 +162,12 @@ export function pluralize(
 ) {
   const suffix = count === 1 ? singular : plural
   return includeCount ? `${count} ${suffix}` : suffix
+}
+
+export function chunkArray<T>(arr: T[], chunkSize: number) {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    chunks.push(arr.slice(i, i + chunkSize))
+  }
+  return chunks
 }

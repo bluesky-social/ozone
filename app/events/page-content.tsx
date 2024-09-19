@@ -1,6 +1,6 @@
 import { useTitle } from 'react-use'
 import { ModEventList } from '@/mod-event/EventList'
-import { emitEvent } from '@/mod-event/helpers/emitEvent'
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -8,6 +8,7 @@ import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 export default function EventListPageContent() {
+  const emitEvent = useEmitEvent()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()

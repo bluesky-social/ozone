@@ -1,10 +1,10 @@
-import { useInfiniteQuery } from '@tanstack/react-query'
-import client from '@/lib/client'
-import { useContext, useEffect, useReducer } from 'react'
-import { AuthContext } from '@/shell/AuthContext'
 import { ToolsOzoneModerationQueryEvents } from '@atproto/api'
-import { MOD_EVENT_TITLES } from './constants'
+import { useInfiniteQuery } from '@tanstack/react-query'
 import { addDays } from 'date-fns'
+import { useEffect, useReducer } from 'react'
+
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { MOD_EVENT_TITLES } from './constants'
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -39,6 +39,7 @@ const initialListState = {
   removedLabels: [],
   addedTags: '',
   removedTags: '',
+  showContentPreview: false,
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
@@ -51,6 +52,7 @@ export type EventListState = Omit<
   reportTypes: string[]
   addedLabels: string[]
   removedLabels: string[]
+  showContentPreview: boolean
 }
 
 type EventListFilterPayload =
@@ -80,6 +82,9 @@ type EventListAction =
   | {
       type: 'RESET'
     }
+  | {
+      type: 'TOGGLE_CONTENT_PREVIEW'
+    }
 
 const eventListReducer = (state: EventListState, action: EventListAction) => {
   switch (action.type) {
@@ -96,6 +101,8 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
       return { ...state, ...action.payload }
     case 'RESET':
       return initialListState
+    case 'TOGGLE_CONTENT_PREVIEW':
+      return { ...state, showContentPreview: !state.showContentPreview }
     default:
       return state
   }
@@ -104,7 +111,7 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
 export const useModEventList = (
   props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
-  const { isLoggedIn } = useContext(AuthContext)
+  const labelerAgent = useLabelerAgent()
   const [listState, dispatch] = useReducer(eventListReducer, initialListState)
 
   const setCommentFilter = (value: CommentFilter) => {
@@ -128,7 +135,6 @@ export const useModEventList = (
   }, [props.createdBy])
 
   const results = useInfiniteQuery({
-    enabled: isLoggedIn,
     queryKey: ['modEventList', { listState }],
     queryFn: async ({ pageParam }) => {
       const {
@@ -203,7 +209,12 @@ export const useModEventList = (
         queryParams.addedTags = removedTags.trim().split(',')
       }
 
-      return await getModerationEvents(queryParams)
+      const { data } =
+        await labelerAgent.api.tools.ozone.moderation.queryEvents({
+          limit: 25,
+          ...queryParams,
+        })
+      return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
     ...(props.queryOptions || {}),
@@ -246,6 +257,7 @@ export const useModEventList = (
     applyFilterMacro: (payload: Partial<EventListState>) =>
       dispatch({ type: 'SET_FILTERS', payload }),
     resetListFilters: () => dispatch({ type: 'RESET' }),
+    toggleContentPreview: () => dispatch({ type: 'TOGGLE_CONTENT_PREVIEW' }),
 
     // State data
     ...listState,
@@ -253,17 +265,4 @@ export const useModEventList = (
     // Derived data from state
     hasFilter,
   }
-}
-
-async function getModerationEvents(
-  opts: ToolsOzoneModerationQueryEvents.QueryParams = {},
-) {
-  const { data } = await client.api.tools.ozone.moderation.queryEvents(
-    {
-      limit: 25,
-      ...opts,
-    },
-    { headers: client.proxyHeaders() },
-  )
-  return data
 }

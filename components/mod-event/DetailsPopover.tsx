@@ -275,6 +275,34 @@ const ModEventDetails = ({ modEventType }: { modEventType: string }) => {
     )
   }
 
+  if (modEventType === MOD_EVENTS.DISABLE_VIDEO_UPLOAD) {
+    return (
+      <p>
+        This event requests the configured video service on your ozone instance
+        to
+        <b> disable video upload</b> feature for a user.
+        <br />
+        <br />
+        This is only available on repo/DID subject that are not already marked
+        to disable video upload.
+      </p>
+    )
+  }
+
+  if (modEventType === MOD_EVENTS.ENABLE_VIDEO_UPLOAD) {
+    return (
+      <p>
+        This event requests the configured video service on your ozone instance
+        to
+        <b>enable video upload</b> feature for a user.
+        <br />
+        <br />
+        This is only available on repo/DID subjects that were already marked to
+        disable video upload.
+      </p>
+    )
+  }
+
   if (modEventType === MOD_EVENTS.COMMENT) {
     return (
       <p>

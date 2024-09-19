@@ -1,10 +1,10 @@
 'use client'
-import { useContext, useEffect, useState } from 'react'
-import { redirect, useRouter, useSearchParams } from 'next/navigation'
+
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 
 import { getDidFromHandle } from '@/lib/identity'
-import clientManager from '@/lib/client'
-import { AuthContext } from '@/shell/AuthContext'
+import { useSignaledEffect } from '@/lib/useSignaledEffect'
 
 export const useHandleToDidRedirect = (
   handle: string,
@@ -13,37 +13,41 @@ export const useHandleToDidRedirect = (
   const router = useRouter()
   const searchParams = useSearchParams()
   const [isFetching, setIsFetching] = useState<boolean>(true)
-  const { isLoggedIn } = useContext(AuthContext)
 
+  const paramsRef = useRef(searchParams.toString())
   useEffect(() => {
-    setIsFetching(true)
+    paramsRef.current = searchParams.toString()
+  }, [searchParams])
 
-    // If the handle is already a DID, don't try to resolve it
-    if (handle.startsWith('did:')) {
-      setIsFetching(false)
-      return
-    }
+  const buildRedirectUrlRef = useRef(buildRedirectUrl)
+  useEffect(() => {
+    buildRedirectUrlRef.current = buildRedirectUrl
+  }, [buildRedirectUrl])
 
-    // If we aren't logged in yet, leave the state at loading and don't try to resolve handle
-    if (!isLoggedIn) {
-      return
-    }
+  useSignaledEffect(
+    (signal) => {
+      // If the handle is already a DID, don't try to resolve it
+      if (handle.startsWith('did:')) {
+        setIsFetching(false)
+      } else {
+        setIsFetching(true)
 
-    const fetchDidAndRedirect = async () => {
-      const did = await getDidFromHandle(handle)
-      const params = searchParams.toString()
-      if (did) {
-        let url = buildRedirectUrl(did)
-        if (params) {
-          url += `?${params}`
-        }
-        router.replace(url)
+        void getDidFromHandle(handle).then((did) => {
+          if (signal.aborted) return
+
+          if (did) {
+            let url = buildRedirectUrlRef.current(did)
+            if (paramsRef.current) {
+              url += `?${paramsRef.current}`
+            }
+            router.replace(url)
+          }
+          setIsFetching(false)
+        })
       }
-      setIsFetching(false)
-    }
-
-    fetchDidAndRedirect()
-  }, [handle, isLoggedIn])
+    },
+    [router, handle],
+  )
 
   return { isFetching }
 }

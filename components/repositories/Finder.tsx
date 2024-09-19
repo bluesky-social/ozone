@@ -1,7 +1,9 @@
-import { useState, useEffect } from 'react'
+import { Agent } from '@atproto/api'
 import { Combobox } from '@headlessui/react'
-import client from '@/lib/client'
+import { useEffect, useState } from 'react'
+
 import { classNames } from '@/lib/util'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 type TypeaheadResult = {
   did: string
@@ -28,15 +30,14 @@ const ErrorResult = {
   displayName: 'Start typing to search...',
 }
 
-const getProfilesForQuery = async (q: string): Promise<TypeaheadResult[]> => {
-  const headers = { headers: client.proxyHeaders() }
+const getProfilesForQuery = async (
+  agent: Agent,
+  q: string,
+): Promise<TypeaheadResult[]> => {
   if (q.startsWith('did:')) {
-    const { data: profile } = await client.api.app.bsky.actor.getProfile(
-      {
-        actor: q,
-      },
-      headers,
-    )
+    const { data: profile } = await agent.app.bsky.actor.getProfile({
+      actor: q,
+    })
 
     return profile
       ? [
@@ -52,7 +53,7 @@ const getProfilesForQuery = async (q: string): Promise<TypeaheadResult[]> => {
 
   const {
     data: { actors },
-  } = await client.api.app.bsky.actor.searchActorsTypeahead({ q }, headers)
+  } = await agent.api.app.bsky.actor.searchActorsTypeahead({ q })
 
   return actors.map((actor) => ({
     displayName: actor.displayName,
@@ -71,11 +72,12 @@ export function RepoFinder({
   const [selectedItem, setSelectedItem] = useState<string>('')
   const [items, setItems] = useState<TypeaheadResult[]>([DefaultResult])
   const [loading, setLoading] = useState(false)
+  const labelerAgent = useLabelerAgent()
 
   useEffect(() => {
     if (query.length > 0) {
       setLoading(true)
-      getProfilesForQuery(query)
+      getProfilesForQuery(labelerAgent, query)
         .then((profiles) => {
           setItems(profiles)
           setLoading(false)
@@ -88,7 +90,7 @@ export function RepoFinder({
     } else {
       setItems([DefaultResult])
     }
-  }, [query])
+  }, [labelerAgent, query])
 
   return (
     <Combobox

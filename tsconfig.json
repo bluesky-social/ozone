@@ -37,6 +37,13 @@
       "@/sets/*": ["components/sets/*"],
     }
   },
-  "include": ["next-env.d.ts", "**/**/**/*.tsx", "**/**/**/*.ts", ".next/types/**/*.ts"],
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    // Folder with a dot in the name is not included by default (?)
+    "**/.*/**/*.ts",
+    ".next/types/**/*.ts"
+  ],
   "exclude": ["node_modules", "cypress/*"]
 }

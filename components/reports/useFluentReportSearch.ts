@@ -1,15 +1,18 @@
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useMemo } from 'react'
 
 type SearchQueryParams = {
   subject?: string
   lastReviewedBy?: string
   reporters?: string[]
+  includeAllUserRecords?: boolean
 }
 
 const ParamPrefixes = {
   subject: 'subject',
   reporters: 'reporters',
   lastReviewedBy: 'lastReviewedBy',
+  includeAllUserRecords: 'includeAllUserRecords',
 }
 
 export const buildQueryFromParams = (
@@ -49,37 +52,45 @@ export const buildParamsFromQuery = (
   return params
 }
 
-export const useFluentReportSearch = () => {
+export const useFluentReportSearchUpdate = () => {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
 
-  return {
-    updateParams: (query) => {
+  return useCallback(
+    (query) => {
       const nextParams = new URLSearchParams(params)
       nextParams.set('term', query)
-      router.push((pathname ?? '') + '?' + nextParams.toString())
+      router.push(`${pathname}?${nextParams}`)
     },
-    getReportSearchParams: (): SearchQueryParams => {
-      let subject = params.get('term') ?? undefined
-      const searchParams: SearchQueryParams = {
-        subject,
-        lastReviewedBy: undefined,
-        reporters: undefined,
-      }
+    [router, pathname, params],
+  )
+}
 
-      const paramsFromQuery = buildParamsFromQuery(subject)
+export const useFluentReportSearchParams = (): SearchQueryParams => {
+  const subject = useSearchParams().get('term') ?? undefined
 
-      // If the params built from query is not empty, that means the term is no longer just subject
-      if (Object.keys(paramsFromQuery).length) {
-        searchParams.subject = paramsFromQuery.subject
-        searchParams.lastReviewedBy = paramsFromQuery.lastReviewedBy
-        searchParams.reporters = paramsFromQuery.reporters
-          ? paramsFromQuery.reporters.split(',')
-          : undefined
-      }
+  return useMemo(() => {
+    const searchParams: SearchQueryParams = {
+      subject,
+      lastReviewedBy: undefined,
+      reporters: undefined,
+      includeAllUserRecords: undefined,
+    }
 
-      return searchParams
-    },
-  }
+    const paramsFromQuery = buildParamsFromQuery(subject)
+
+    // If the params built from query is not empty, that means the term is no longer just subject
+    if (Object.keys(paramsFromQuery).length) {
+      searchParams.subject = paramsFromQuery.subject
+      searchParams.includeAllUserRecords =
+        paramsFromQuery.includeAllUserRecords === 'true'
+      searchParams.lastReviewedBy = paramsFromQuery.lastReviewedBy
+      searchParams.reporters = paramsFromQuery.reporters
+        ? paramsFromQuery.reporters.split(',')
+        : undefined
+    }
+
+    return searchParams
+  }, [subject])
 }

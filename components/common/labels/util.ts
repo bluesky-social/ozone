@@ -1,5 +1,3 @@
-import client from '@/lib/client'
-import { unique } from '@/lib/util'
 import {
   AppBskyActorDefs,
   AppBskyLabelerDefs,
@@ -9,12 +7,11 @@ import {
 } from '@atproto/api'
 
 export type ExtendedLabelerServiceDef =
-  | (AppBskyLabelerDefs.LabelerViewDetailed & {
+  | AppBskyLabelerDefs.LabelerViewDetailed & {
       policies: AppBskyLabelerDefs.LabelerViewDetailed['policies'] & {
         definitionById: Record<string, ComAtprotoLabelDefs.LabelValueDefinition>
       }
-    })
-  | null
+    }
 
 export function diffLabels(current: string[], next: string[]) {
   return {
@@ -102,15 +99,4 @@ export const getLabelsForSubject = ({
   record?: ToolsOzoneModerationDefs.RecordViewDetail
 }) => {
   return record?.labels ?? repo?.labels ?? []
-}
-
-export const getCustomLabels = () =>
-  client.session?.config.labeler?.policies.labelValues || []
-
-export const buildAllLabelOptions = (
-  defaultLabels: string[],
-  options: string[],
-) => {
-  const customLabels = getCustomLabels()
-  return unique([...defaultLabels, ...options, ...(customLabels || [])]).sort()
 }

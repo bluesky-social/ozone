@@ -5,12 +5,17 @@ import 'yet-another-react-lightbox/styles.css'
 import 'yet-another-react-lightbox/plugins/thumbnails.css'
 import 'yet-another-react-lightbox/plugins/captions.css'
 import { ToastContainer } from 'react-toastify'
-import { QueryClientProvider } from '@tanstack/react-query'
+
 import { Shell } from '@/shell/Shell'
 import { CommandPaletteRoot } from '@/shell/CommandPalette/Root'
 import { AuthProvider } from '@/shell/AuthContext'
-import { queryClient } from 'components/QueryClient'
+import { DefaultQueryClientProvider } from '@/shell/QueryClient'
+import { GlobalQueryClientProvider } from '@/shell/QueryClient'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
+import { HANDLE_RESOLVER_URL, PLC_DIRECTORY_URL } from '@/lib/constants'
+import { ConfigProvider } from '@/shell/ConfigContext'
+import { ConfigurationProvider } from '@/shell/ConfigurationContext'
+import { ExternalLabelersProvider } from '@/shell/ExternalLabelersContext'
 
 export default function RootLayout({
   children,
@@ -45,13 +50,25 @@ export default function RootLayout({
           hideProgressBar={false}
           closeOnClick
         />
-        <AuthProvider>
-          <CommandPaletteRoot>
-            <QueryClientProvider client={queryClient}>
-              <Shell>{children}</Shell>
-            </QueryClientProvider>
-          </CommandPaletteRoot>
-        </AuthProvider>
+
+        <GlobalQueryClientProvider>
+          <ConfigProvider>
+            <AuthProvider
+              plcDirectoryUrl={PLC_DIRECTORY_URL}
+              handleResolver={HANDLE_RESOLVER_URL}
+            >
+              <DefaultQueryClientProvider>
+                <ConfigurationProvider>
+                  <ExternalLabelersProvider>
+                    <CommandPaletteRoot>
+                      <Shell>{children}</Shell>
+                    </CommandPaletteRoot>
+                  </ExternalLabelersProvider>
+                </ConfigurationProvider>
+              </DefaultQueryClientProvider>
+            </AuthProvider>
+          </ConfigProvider>
+        </GlobalQueryClientProvider>
       </body>
     </html>
   )

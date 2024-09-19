@@ -91,11 +91,25 @@ const buildItemForDid = ({
       },
     },
     {
+      id: `search-subjects-of-did`,
+      name: `Subjects of ${handle || did}`,
+      keywords: `${search},search,did`,
+      icon: <LifebuoyIcon className={iconClassName} />,
+      subtitle: `Go to moderation queue and see all subjects that authored by this user`,
+      section: ActionSections.reports,
+      perform: () => {
+        const term = encodeURIComponent(
+          `subject:${did} includeAllUserRecords:true`,
+        )
+        router.push(`/reports?term=${term}`)
+      },
+    },
+    {
       id: `search-subjects-last-reviewed-by-did`,
       name: `Subjects last reviewed by ${handle || did}`,
       keywords: `${search},search,did`,
       icon: <LifebuoyIcon className={iconClassName} />,
-      subtitle: `Go to reports page and see all subjects that were last reviewed by this moderator`,
+      subtitle: `Go to moderation queue and see all subjects that were last reviewed by this moderator`,
       section: ActionSections.reports,
       perform: () => {
         router.push(`/reports?term=lastReviewedBy:${did}`)
@@ -299,7 +313,17 @@ export const useCommandPaletteAsyncSearch = () => {
             // When we have an exact content by rkey, we want to prioritize it over action for the account by did
             priority: 6,
             perform: () => {
-              router.push(`?quickOpen=${atUri}`)
+              if (fragments.did) {
+                return router.push(`?quickOpen=${atUri}`)
+              }
+
+              const { handle } = fragments
+              if (handle) {
+                getDidFromHandle(handle).then((did) => {
+                  if (!did) return
+                  router.push(`?quickOpen=${atUri.replace(handle, did)}`)
+                })
+              }
             },
           })
         }
@@ -468,7 +492,7 @@ export const useCommandPaletteAsyncSearch = () => {
     }
 
     return actions.map(createAction)
-  }, [search, didFromHandle, typeaheadResults])
+  }, [router, search, didFromHandle, typeaheadResults, kBarQuery])
 
   useRegisterActions(memoizedActions, [search, didFromHandle, typeaheadResults])
 }

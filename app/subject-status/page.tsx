@@ -1,14 +1,18 @@
 'use client'
-import { Loading, LoadingFailed } from '@/common/Loader'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useSearchParams } from 'next/navigation'
-import { SubjectStatusView } from '@/subject/StatusView'
 import { useTitle } from 'react-use'
 import { useSubjectStatus } from '@/subject/useSubjectStatus'
 
+import { Loading, LoadingFailed } from '@/common/Loader'
+import { SubjectStatusView } from '@/subject/StatusView'
+
 export default function SubjectStatus() {
   const params = useSearchParams()
+  const labelerAgent = useLabelerAgent()
+
   const subject = params.get('uri') || params.get('did')
-  const { data, status, error } = useSubjectStatus({ subject })
+  const { data, isLoading, error } = useSubjectStatus({ subject })
 
   let pageTitle = `Subject Status`
 
@@ -18,7 +22,7 @@ export default function SubjectStatus() {
 
   useTitle(pageTitle)
 
-  if (status === 'loading') {
+  if (isLoading) {
     return <Loading />
   }
 
