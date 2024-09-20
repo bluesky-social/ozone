@@ -1,23 +1,24 @@
 import { ComponentProps, useState } from 'react'
 import Lightbox from 'yet-another-react-lightbox'
 
-import { doesProfileNeedBlur } from '@/common/labels'
 import { classNames } from '@/lib/util'
-
-type ProfileAndRepo = Parameters<typeof doesProfileNeedBlur>[0]
+import {
+  GraphicMediaFilterPreference,
+  useGraphicMediaPreferences,
+} from '@/config/useLocalPreferences'
+import { getProfileAndRepoLabels } from '@/common/labels'
+import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 
 export const avatarClassNames = (
-  profileAndRepo: ProfileAndRepo,
+  mediaFilters: GraphicMediaFilterPreference,
   additionalClassnames?: string,
 ) => {
-  if (doesProfileNeedBlur(profileAndRepo)) {
-    return classNames(
-      additionalClassnames,
-      'blur-sm hover:blur-none opacity-50 grayscale',
-    )
-  }
-
-  return additionalClassnames
+  return classNames(
+    additionalClassnames,
+    mediaFilters.blur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.grayscale ? 'grayscale' : '',
+    mediaFilters.translucent ? 'opacity-50 ' : '',
+  )
 }
 
 export const ProfileAvatar = ({
@@ -25,10 +26,16 @@ export const ProfileAvatar = ({
   repo,
   className,
   ...rest
-}: ProfileAndRepo & ComponentProps<'img'>) => {
+}: {
+  profile?: AppBskyActorDefs.ProfileViewBasic
+  repo?: ToolsOzoneModerationDefs.RepoView
+} & ComponentProps<'img'>) => {
   const avatarUrl = profile?.avatar
   const alt = `Avatar of ${profile?.displayname || profile?.handle || 'user'}`
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+  const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
+  const allLabels = getProfileAndRepoLabels({ profile, repo })
+  const mediaFilters = getMediaFiltersForLabels(allLabels)
 
   const handleKeyDown = (event) => {
     if (event.key === 'Escape') {
@@ -39,7 +46,7 @@ export const ProfileAvatar = ({
   const image = (
     <img
       alt={alt}
-      className={avatarClassNames({ profile, repo }, className)}
+      className={avatarClassNames(mediaFilters, className)}
       src={profile?.avatar || '/img/default-avatar.jpg'}
       {...rest}
     />

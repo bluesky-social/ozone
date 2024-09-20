@@ -24,7 +24,7 @@ import { isRepost } from '@/lib/types'
 import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
-import { LabelList, doesLabelNeedBlur, ModerationLabel } from '../labels'
+import { LabelList, ModerationLabel } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
@@ -37,6 +37,7 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
+import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -220,16 +221,18 @@ const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
 export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+  const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
 
-  const mediaRequiresBlur = doesLabelNeedBlur(
-    item.post.labels?.map(({ val }) => val),
-  )
+  const allLabels = item.post.labels?.map(({ val }) => val)
+  const mediaFilters = getMediaFiltersForLabels(allLabels)
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
-    mediaRequiresBlur ? 'blur-sm hover:blur-none opacity-50 grayscale' : '',
+    mediaFilters.blur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.grayscale ? 'grayscale' : '',
+    mediaFilters.translucent ? 'opacity-40' : '',
   )
 
   if (AppBskyEmbedVideo.isView(embed)) {
@@ -240,7 +243,7 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
           source={embed.playlist}
           thumbnail={embed.thumbnail}
           alt={embed.alt}
-          shouldBlur={mediaRequiresBlur}
+          mediaFilters={mediaFilters}
           captions={captions ? (captions as AppBskyEmbedVideo.Caption[]) : []}
         />
       </div>
