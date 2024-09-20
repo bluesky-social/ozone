@@ -64,7 +64,7 @@ export const LabelGroupInfo: Record<string, { color: string }> = {
   },
 }
 
-export const labelsRequiringBlur = [
+export const labelsRequiringMediaFilter = [
   LABELS['graphic-media'].identifier,
   LABELS.porn.identifier,
   LABELS.nudity.identifier,
