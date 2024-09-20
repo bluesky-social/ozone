@@ -1,6 +1,6 @@
 import {
   buildGraphicPreferenceKeyForLabel,
-  labelsRequiringBlur,
+  labelsRequiringMediaFilter,
   GraphicMediaFilter,
 } from '@/common/labels'
 import { useLocalStorage } from 'react-use'
@@ -15,7 +15,7 @@ export const useLocalPreferences = () => {
     graphicMediaPrefs: {},
   }
 
-  labelsRequiringBlur.forEach((label) => {
+  labelsRequiringMediaFilter.forEach((label) => {
     ;(['blur', 'grayscale', 'translucent'] as GraphicMediaFilter[]).forEach(
       (filter) => {
         initialValue.graphicMediaPrefs[
@@ -58,6 +58,15 @@ export const useGraphicMediaPreferences = () => {
       const filters = { blur: false, grayscale: false, translucent: false }
 
       if (!labels?.length) {
+        return filters
+      }
+
+      // In case the preference key is not found, meaning something went wrong with storing/fetching the preferences from localstorage
+      // we want to make sure we apply the blur effect by default for labels that require media filter
+      if (!localPreferences?.graphicMediaPrefs) {
+        filters.blur = labels.some((label) =>
+          labelsRequiringMediaFilter.includes(label),
+        )
         return filters
       }
 

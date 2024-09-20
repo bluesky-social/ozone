@@ -5,7 +5,7 @@ import {
   buildGraphicPreferenceKeyForLabel,
   GraphicMediaFilter,
   LabelChip,
-  labelsRequiringBlur,
+  labelsRequiringMediaFilter,
 } from '@/common/labels'
 import { useGraphicMediaPreferences } from './useLocalPreferences'
 import { toast } from 'react-toastify'
@@ -64,13 +64,13 @@ export const LocalPreferences = () => {
       <Card className="mb-4 pb-4">
         <p className="mb-1">Graphic media display</p>
         <p className="text-sm mb-2">
-          You can choose to make media content with certain labels appear on
-          your screen with different filters.
+          You can choose to make media content (video and image) with the
+          following labels appear on your screen with your preferred filter.
         </p>
 
         <form onSubmit={handleSubmit}>
           <div className="flex flex-row w-full gap-4 justify-between flex-wrap">
-            {labelsRequiringBlur.map((label) => {
+            {labelsRequiringMediaFilter.map((label) => {
               return (
                 <GraphicMediaPreferenceSelectorForLabel
                   key={label}
