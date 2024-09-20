@@ -10,7 +10,10 @@ export const avatarClassNames = (
   additionalClassnames?: string,
 ) => {
   if (doesProfileNeedBlur(profileAndRepo)) {
-    return classNames(additionalClassnames, 'blur-sm hover:blur-none')
+    return classNames(
+      additionalClassnames,
+      'blur-sm hover:blur-none opacity-40',
+    )
   }
 
   return additionalClassnames

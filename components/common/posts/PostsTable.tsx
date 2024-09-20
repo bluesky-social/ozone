@@ -146,7 +146,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   )
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
-    mediaRequiresBlur ? 'blur-sm hover:blur-none' : '',
+    mediaRequiresBlur ? 'blur-sm hover:blur-none opacity-40' : '',
   )
 
   if (AppBskyEmbedImages.isView(embed)) {
