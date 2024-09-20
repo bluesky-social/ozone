@@ -1,4 +1,5 @@
-import { ComponentProps } from 'react'
+import { ComponentProps, useState } from 'react'
+import Lightbox from 'yet-another-react-lightbox'
 
 import { doesProfileNeedBlur } from '@/common/labels'
 import { classNames } from '@/lib/util'
@@ -12,7 +13,7 @@ export const avatarClassNames = (
   if (doesProfileNeedBlur(profileAndRepo)) {
     return classNames(
       additionalClassnames,
-      'blur-sm hover:blur-none opacity-40',
+      'blur-sm hover:blur-none opacity-50 grayscale',
     )
   }
 
@@ -26,9 +27,18 @@ export const ProfileAvatar = ({
   ...rest
 }: ProfileAndRepo & ComponentProps<'img'>) => {
   const avatarUrl = profile?.avatar
+  const alt = `Avatar of ${profile?.displayname || profile?.handle || 'user'}`
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+    }
+  }
+
   const image = (
     <img
-      alt={`Avatar of ${profile?.displayname || profile?.handle || 'user'}`}
+      alt={alt}
       className={avatarClassNames({ profile, repo }, className)}
       src={profile?.avatar || '/img/default-avatar.jpg'}
       {...rest}
@@ -39,9 +49,38 @@ export const ProfileAvatar = ({
   if (avatarUrl) {
     // use the same classes on the image as the anchor tag
     return (
-      <a href={avatarUrl} target="_blank" className={className}>
-        {image}
-      </a>
+      <>
+        <Lightbox
+          open={isImageViewerOpen}
+          carousel={{ finite: true }}
+          controller={{ closeOnBackdropClick: true }}
+          close={() => setIsImageViewerOpen(false)}
+          slides={[
+            {
+              src: avatarUrl,
+              description: alt,
+            },
+          ]}
+          on={{
+            // The lightbox may open from other Dialog/modal components
+            // in that case, we want to make sure that esc button presses
+            // only close the lightbox and not the parent Dialog/modal underneath
+            entered: () => {
+              document.addEventListener('keydown', handleKeyDown)
+            },
+            exited: () => {
+              document.removeEventListener('keydown', handleKeyDown)
+            },
+          }}
+        />
+        <button
+          type="button"
+          className={className}
+          onClick={() => setIsImageViewerOpen(true)}
+        >
+          {image}
+        </button>
+      </>
     )
   }
 

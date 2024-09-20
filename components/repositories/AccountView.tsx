@@ -56,6 +56,7 @@ import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatu
 import { Alert } from '@/common/Alert'
 import { Follows } from 'components/graph/Follows'
 import { Followers } from 'components/graph/Followers'
+import Lightbox from 'yet-another-react-lightbox'
 
 enum Views {
   Details,
@@ -256,6 +257,69 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   timeStyle: 'short',
 })
 
+function ProfileHeaderImage({
+  profile,
+}: {
+  profile?: GetProfile.OutputSchema
+}) {
+  const alt = `Banner image for ${
+    profile?.displayName || profile?.handle || 'user'
+  }`
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+    }
+  }
+  const image = (
+    <img
+      className="h-32 w-full object-cover lg:h-48"
+      src={profile?.banner || '/img/default-banner.jpg'}
+      alt={alt}
+    />
+  )
+
+  if (!profile?.banner) {
+    return <div>{image}</div>
+  }
+
+  return (
+    <div>
+      <Lightbox
+        open={isImageViewerOpen}
+        carousel={{ finite: true }}
+        controller={{ closeOnBackdropClick: true }}
+        close={() => setIsImageViewerOpen(false)}
+        slides={[
+          {
+            src: profile.banner,
+            description: alt,
+          },
+        ]}
+        on={{
+          // The lightbox may open from other Dialog/modal components
+          // in that case, we want to make sure that esc button presses
+          // only close the lightbox and not the parent Dialog/modal underneath
+          entered: () => {
+            document.addEventListener('keydown', handleKeyDown)
+          },
+          exited: () => {
+            document.removeEventListener('keydown', handleKeyDown)
+          },
+        }}
+      />
+      <button
+        type="button"
+        className="w-full active:outline-none"
+        onClick={() => setIsImageViewerOpen(true)}
+      >
+        {image}
+      </button>
+    </div>
+  )
+}
+
 function Header({
   id,
   repo,
@@ -340,13 +404,7 @@ function Header({
           did={`${repo?.did || profile?.did}`}
         />
       )}
-      <div>
-        <img
-          className="h-32 w-full object-cover lg:h-48"
-          src={profile?.banner || '/img/default-banner.jpg'}
-          alt=""
-        />
-      </div>
+      <ProfileHeaderImage profile={profile} />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="-mt-12 sm:-mt-16 sm:flex sm:items-end sm:space-x-5">
           <div className="flex">

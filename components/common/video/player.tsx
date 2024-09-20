@@ -60,7 +60,7 @@ export default function VideoPlayer({
         crossOrigin="anonymous"
         className={`w-full flex-1 transition-all duration-300 ease-in-out ${
           isHovered || !shouldBlur ? 'blur-none' : 'blur-md'
-        }`}
+        } ${shouldBlur ? 'grayscale opacity-50' : ''}`}
         aria-labelledby={alt ? figId : undefined}
       >
         {!isHovered && shouldBlur && (
