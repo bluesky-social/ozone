@@ -2,19 +2,21 @@ import { getLanguageName } from '@/lib/locale/helpers'
 import { AppBskyEmbedVideo } from '@atproto/api'
 import Hls from 'hls.js/dist/hls.light' // Use light build of hls.
 import { useEffect, useId, useRef, useState } from 'react'
+import { GraphicMediaFilterPreference } from '@/config/useLocalPreferences'
+import { classNames } from '@/lib/util'
 
 export default function VideoPlayer({
   source,
   alt,
   thumbnail,
   captions,
-  shouldBlur = false,
+  mediaFilters,
 }: {
   source: string
   alt?: string
   thumbnail?: string
   captions: AppBskyEmbedVideo.Caption[]
-  shouldBlur?: boolean
+  mediaFilters: GraphicMediaFilterPreference
 }) {
   const [hls] = useState(() => new Hls())
   const [isUnsupported, setIsUnsupported] = useState(false)
@@ -58,12 +60,15 @@ export default function VideoPlayer({
         loop
         muted
         crossOrigin="anonymous"
-        className={`w-full flex-1 transition-all duration-300 ease-in-out ${
-          isHovered || !shouldBlur ? 'blur-none' : 'blur-md'
-        }`}
+        className={classNames(
+          `w-full flex-1 transition-all duration-300 ease-in-out`,
+          isHovered || !mediaFilters.blur ? 'blur-none' : 'blur-md',
+          mediaFilters.grayscale ? 'grayscale' : '',
+          mediaFilters.translucent ? 'opacity-50' : '',
+        )}
         aria-labelledby={alt ? figId : undefined}
       >
-        {!isHovered && shouldBlur && (
+        {!isHovered && mediaFilters.blur && (
           <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-50 text-white text-xl font-bold"></div>
         )}
         {isUnsupported && (

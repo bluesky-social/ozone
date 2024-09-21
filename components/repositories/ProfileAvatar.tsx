@@ -1,19 +1,24 @@
-import { ComponentProps } from 'react'
+import { ComponentProps, useState } from 'react'
+import Lightbox from 'yet-another-react-lightbox'
 
-import { doesProfileNeedBlur } from '@/common/labels'
 import { classNames } from '@/lib/util'
-
-type ProfileAndRepo = Parameters<typeof doesProfileNeedBlur>[0]
+import {
+  GraphicMediaFilterPreference,
+  useGraphicMediaPreferences,
+} from '@/config/useLocalPreferences'
+import { getProfileAndRepoLabels } from '@/common/labels'
+import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 
 export const avatarClassNames = (
-  profileAndRepo: ProfileAndRepo,
+  mediaFilters: GraphicMediaFilterPreference,
   additionalClassnames?: string,
 ) => {
-  if (doesProfileNeedBlur(profileAndRepo)) {
-    return classNames(additionalClassnames, 'blur-sm hover:blur-none')
-  }
-
-  return additionalClassnames
+  return classNames(
+    additionalClassnames,
+    mediaFilters.blur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.grayscale ? 'grayscale' : '',
+    mediaFilters.translucent ? 'opacity-50 ' : '',
+  )
 }
 
 export const ProfileAvatar = ({
@@ -21,12 +26,27 @@ export const ProfileAvatar = ({
   repo,
   className,
   ...rest
-}: ProfileAndRepo & ComponentProps<'img'>) => {
+}: {
+  profile?: AppBskyActorDefs.ProfileViewBasic
+  repo?: ToolsOzoneModerationDefs.RepoView
+} & ComponentProps<'img'>) => {
   const avatarUrl = profile?.avatar
+  const alt = `Avatar of ${profile?.displayname || profile?.handle || 'user'}`
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+  const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
+  const allLabels = getProfileAndRepoLabels({ profile, repo })
+  const mediaFilters = getMediaFiltersForLabels(allLabels)
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+    }
+  }
+
   const image = (
     <img
-      alt={`Avatar of ${profile?.displayname || profile?.handle || 'user'}`}
-      className={avatarClassNames({ profile, repo }, className)}
+      alt={alt}
+      className={avatarClassNames(mediaFilters, className)}
       src={profile?.avatar || '/img/default-avatar.jpg'}
       {...rest}
     />
@@ -36,9 +56,38 @@ export const ProfileAvatar = ({
   if (avatarUrl) {
     // use the same classes on the image as the anchor tag
     return (
-      <a href={avatarUrl} target="_blank" className={className}>
-        {image}
-      </a>
+      <>
+        <Lightbox
+          open={isImageViewerOpen}
+          carousel={{ finite: true }}
+          controller={{ closeOnBackdropClick: true }}
+          close={() => setIsImageViewerOpen(false)}
+          slides={[
+            {
+              src: avatarUrl,
+              description: alt,
+            },
+          ]}
+          on={{
+            // The lightbox may open from other Dialog/modal components
+            // in that case, we want to make sure that esc button presses
+            // only close the lightbox and not the parent Dialog/modal underneath
+            entered: () => {
+              document.addEventListener('keydown', handleKeyDown)
+            },
+            exited: () => {
+              document.removeEventListener('keydown', handleKeyDown)
+            },
+          }}
+        />
+        <button
+          type="button"
+          className={className}
+          onClick={() => setIsImageViewerOpen(true)}
+        >
+          {image}
+        </button>
+      </>
     )
   }
 

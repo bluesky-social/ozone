@@ -13,6 +13,7 @@ import { ExternalLabelerConfig } from './external-labeler'
 import { ServerConfig } from './server-config'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { usePdsAgent } from '@/shell/AuthContext'
+import { LocalPreferences } from './LocalPreferences'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -39,6 +40,7 @@ export function LabelerConfig() {
       )}
 
       <ServerConfig />
+      <LocalPreferences />
       <ExternalLabelerConfig />
     </div>
   )
