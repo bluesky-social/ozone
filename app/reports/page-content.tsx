@@ -382,7 +382,7 @@ const getQueueItems = async (
   queueName: string | null,
   attempt = 0,
 ) => {
-  const pageSize = 100
+  const pageSize = 50
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
     limit: pageSize,
     includeMuted: true,

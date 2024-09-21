@@ -39,7 +39,7 @@ const GraphicMediaPreferenceSelectorForLabel = ({
 }
 
 export const LocalPreferences = () => {
-  const { getPreference, setPreferences } = useGraphicMediaPreferences()
+  const { setPreferences } = useGraphicMediaPreferences()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
