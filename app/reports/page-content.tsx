@@ -237,7 +237,7 @@ export const ReportsPageContent = () => {
         </div>
       </SectionHeader>
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
-        <div className='flex flex-row items-center gap-2'>
+        <div className="flex flex-row items-center gap-2">
           <LanguagePicker />
           <EmbedTypePickerForModerationQueue />
         </div>
@@ -382,7 +382,7 @@ const getQueueItems = async (
   queueName: string | null,
   attempt = 0,
 ) => {
-  const pageSize = 50
+  const pageSize = 100
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
     limit: pageSize,
     includeMuted: true,

@@ -72,6 +72,11 @@ export const labelsRequiringMediaFilter = [
 ]
 
 export type GraphicMediaFilter = 'blur' | 'grayscale' | 'translucent'
+export const GraphicMediaFilterOptions = [
+  'blur',
+  'grayscale',
+  'translucent',
+] as const
 
 export const buildGraphicPreferenceKeyForLabel = (
   label: string,

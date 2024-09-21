@@ -2,6 +2,7 @@ import {
   buildGraphicPreferenceKeyForLabel,
   labelsRequiringMediaFilter,
   GraphicMediaFilter,
+  GraphicMediaFilterOptions,
 } from '@/common/labels'
 import { useLocalStorage } from 'react-use'
 
@@ -16,13 +17,11 @@ export const useLocalPreferences = () => {
   }
 
   labelsRequiringMediaFilter.forEach((label) => {
-    ;(['blur', 'grayscale', 'translucent'] as GraphicMediaFilter[]).forEach(
-      (filter) => {
-        initialValue.graphicMediaPrefs[
-          buildGraphicPreferenceKeyForLabel(label, filter)
-        ] = true
-      },
-    )
+    GraphicMediaFilterOptions.forEach((filter) => {
+      initialValue.graphicMediaPrefs[
+        buildGraphicPreferenceKeyForLabel(label, filter)
+      ] = true
+    })
   })
 
   const [localPreferences, setLocalPreferences] = useLocalStorage(
@@ -71,17 +70,15 @@ export const useGraphicMediaPreferences = () => {
       }
 
       labels.forEach((label) => {
-        ;(['blur', 'grayscale', 'translucent'] as GraphicMediaFilter[]).forEach(
-          (filter) => {
-            if (
-              !!localPreferences.graphicMediaPrefs?.[
-                buildGraphicPreferenceKeyForLabel(label, filter)
-              ]
-            ) {
-              filters[filter] = true
-            }
-          },
-        )
+        GraphicMediaFilterOptions.forEach((filter) => {
+          if (
+            !!localPreferences.graphicMediaPrefs?.[
+              buildGraphicPreferenceKeyForLabel(label, filter)
+            ]
+          ) {
+            filters[filter] = true
+          }
+        })
       })
 
       return filters

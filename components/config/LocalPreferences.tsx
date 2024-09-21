@@ -4,6 +4,7 @@ import { Checkbox } from '@/common/forms'
 import {
   buildGraphicPreferenceKeyForLabel,
   GraphicMediaFilter,
+  GraphicMediaFilterOptions,
   LabelChip,
   labelsRequiringMediaFilter,
 } from '@/common/labels'
@@ -20,21 +21,19 @@ const GraphicMediaPreferenceSelectorForLabel = ({
   return (
     <div className="my-2">
       <LabelChip className="ml-0 mb-2">{label}</LabelChip>
-      {(['blur', 'grayscale', 'translucent'] as GraphicMediaFilter[]).map(
-        (filter) => {
-          const key = buildGraphicPreferenceKeyForLabel(label, filter)
-          return (
-            <Checkbox
-              defaultChecked={getPreference(key)}
-              label={filter}
-              className="capitalize"
-              name={key}
-              key={key}
-              value="on"
-            />
-          )
-        },
-      )}
+      {GraphicMediaFilterOptions.map((filter) => {
+        const key = buildGraphicPreferenceKeyForLabel(label, filter)
+        return (
+          <Checkbox
+            defaultChecked={getPreference(key)}
+            label={filter}
+            className="capitalize"
+            name={key}
+            key={key}
+            value="on"
+          />
+        )
+      })}
     </div>
   )
 }
