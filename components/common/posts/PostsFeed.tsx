@@ -21,7 +21,12 @@ import {
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
-import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
+import {
+  buildBlueSkyAppUrl,
+  classNames,
+  parseAtUri,
+  pluralize,
+} from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
 import { LabelList, ModerationLabel } from '../labels'
@@ -38,6 +43,7 @@ import {
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import { HandThumbUpIcon } from '@heroicons/react/24/solid'
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -497,8 +503,25 @@ function PostControls({
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
   const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
   const isInWorkspace = workspaceList?.includes(item.post.uri)
+
   return (
     <div className="flex gap-3 pl-10">
+      <Link
+        href={`/repositories/${item.post.uri.replace('at://', '')}?tab=likes`}
+        className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+      >
+        <span className="text-sm">
+          {pluralize(item.post.likeCount || 0, 'like')}
+        </span>
+      </Link>
+      <Link
+        href={`/repositories/${item.post.uri.replace('at://', '')}?tab=reposts`}
+        className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+      >
+        <span className="text-sm">
+          {pluralize(item.post.repostCount || 0, 'repost')}
+        </span>
+      </Link>
       <Link
         href={`/repositories/${item.post.uri.replace('at://', '')}`}
         className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"

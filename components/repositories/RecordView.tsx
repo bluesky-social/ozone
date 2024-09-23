@@ -30,6 +30,7 @@ import { Tabs, TabView } from '@/common/Tabs'
 import { Likes } from '@/common/feeds/Likes'
 import { Reposts } from '@/common/feeds/Reposts'
 import { Thread } from '@/common/feeds/PostThread'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 
 enum Views {
   Details,
@@ -39,6 +40,16 @@ enum Views {
   ModEvents,
   Likes,
   Reposts,
+}
+
+const TabKeys = {
+  details: Views.Details,
+  profiles: Views.Profiles,
+  thread: Views.Thread,
+  blobs: Views.Blobs,
+  modevents: Views.ModEvents,
+  likes: Views.Likes,
+  reposts: Views.Reposts,
 }
 
 export function RecordView({
@@ -54,7 +65,18 @@ export function RecordView({
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
-  const [currentView, setCurrentView] = useState(Views.Details)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+
+  const currentView =
+    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
 
   const getTabViews = () => {
     const views: TabView<Views>[] = [{ view: Views.Details, label: 'Details' }]
