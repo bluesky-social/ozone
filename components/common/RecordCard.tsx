@@ -5,7 +5,7 @@ import {
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
 } from '@atproto/api'
-import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
+import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
@@ -339,6 +339,34 @@ export function RepoCard(props: { did: string }) {
             <p className="text-gray-500 dark:text-gray-50 break-words">
               {profile.description}
             </p>
+          )}
+          {!!profile && (
+            <div className="flex flex-row items-center gap-2">
+              <Link
+                href={`/repositories/${repo.did}?tab=followers`}
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+              >
+                <span className="text-sm">
+                  {pluralize(profile?.followersCount || 0, 'follower')}
+                </span>
+              </Link>
+              <Link
+                href={`/repositories/${repo.did}?tab=follows`}
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+              >
+                <span className="text-sm">
+                  {pluralize(profile?.followsCount || 0, 'follow')}
+                </span>
+              </Link>
+              <Link
+                href={`/repositories/${repo.did}?tab=posts`}
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+              >
+                <span className="text-sm">
+                  {pluralize(profile?.postsCount || 0, 'post')}
+                </span>
+              </Link>
+            </div>
           )}
           {takendown && (
             <p className="pt-1 pb-1">
