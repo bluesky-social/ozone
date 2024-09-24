@@ -272,7 +272,7 @@ export const useModEventList = (
       }
     })
 
-    addItemsToWorkspace([...items])
+    return addItemsToWorkspace([...items])
   }
 
   return {
