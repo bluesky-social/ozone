@@ -86,7 +86,7 @@ function PostCard({ uri, showLabels }: { uri: string; showLabels?: boolean }) {
         renderRecord={(record) => (
           <PostAsCard
             dense
-            controls={false}
+            controls={[]}
             item={{
               post: {
                 uri: record.uri,
@@ -116,9 +116,9 @@ function PostCard({ uri, showLabels }: { uri: string; showLabels?: boolean }) {
   return (
     <PostAsCard
       dense
-      controls={false}
-      item={{ post: data.thread.post }}
       showLabels={showLabels}
+      item={{ post: data.thread.post }}
+      controls={['like', 'repost', 'workspace']}
     />
   )
 }
