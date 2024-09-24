@@ -561,7 +561,7 @@ function PostControls({
         </button>
       )}
 
-      {controls.includes('repost') &&
+      {controls.includes('workspace') &&
         (isInWorkspace ? (
           <button
             type="button"
