@@ -1,4 +1,5 @@
 import {
+  ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationQueryEvents,
@@ -263,6 +264,8 @@ export const useModEventList = (
           items.add(event.subject.did)
         } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
           items.add(event.subject.uri)
+        } else if (ChatBskyConvoDefs.isMessageRef(event.subject)) {
+          items.add(event.subject.did)
         }
       } else if (showWorkspaceConfirmation === 'creators') {
         items.add(event.createdBy)
