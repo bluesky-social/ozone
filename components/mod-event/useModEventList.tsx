@@ -1,10 +1,21 @@
-import { ToolsOzoneModerationQueryEvents } from '@atproto/api'
+import {
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationQueryEvents,
+} from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { addDays } from 'date-fns'
-import { useEffect, useReducer } from 'react'
+import { useEffect, useReducer, useState } from 'react'
 
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { MOD_EVENT_TITLES } from './constants'
+import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
+
+export type WorkspaceConfirmationOptions =
+  | 'subjects'
+  | 'creators'
+  | 'subject-authors'
+  | null
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -111,6 +122,9 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
 export const useModEventList = (
   props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
+  const [showWorkspaceConfirmation, setShowWorkspaceConfirmation] =
+    useState<WorkspaceConfirmationOptions>(null)
+  const { mutateAsync: addItemsToWorkspace } = useWorkspaceAddItemsMutation()
   const labelerAgent = useLabelerAgent()
   const [listState, dispatch] = useReducer(eventListReducer, initialListState)
 
@@ -220,6 +234,8 @@ export const useModEventList = (
     ...(props.queryOptions || {}),
   })
 
+  const modEvents = results.data?.pages.map((page) => page.events).flat() || []
+
   const hasFilter =
     (listState.types.length > 0 &&
       listState.types.length !== allTypes.length) ||
@@ -234,9 +250,31 @@ export const useModEventList = (
     listState.addedTags.length > 0 ||
     listState.removedTags.length > 0
 
+  const addToWorkspace = async () => {
+    if (!showWorkspaceConfirmation) {
+      return
+    }
+
+    const items = new Set<string>()
+
+    modEvents.forEach((event) => {
+      if (showWorkspaceConfirmation === 'subjects') {
+        if (ComAtprotoAdminDefs.isRepoRef(event.subject)) {
+          items.add(event.subject.did)
+        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+          items.add(event.subject.uri)
+        }
+      } else if (showWorkspaceConfirmation === 'creators') {
+        items.add(event.createdBy)
+      }
+    })
+
+    addItemsToWorkspace([...items])
+  }
+
   return {
     // Data from react-query
-    modEvents: results.data?.pages.map((page) => page.events).flat() || [],
+    modEvents,
     fetchMoreModEvents: results.fetchNextPage,
     hasMoreModEvents: results.hasNextPage,
     refetchModEvents: results.refetch,
@@ -264,5 +302,9 @@ export const useModEventList = (
 
     // Derived data from state
     hasFilter,
+
+    showWorkspaceConfirmation,
+    setShowWorkspaceConfirmation,
+    addToWorkspace,
   }
 }
