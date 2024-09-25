@@ -480,6 +480,7 @@ function Form(
       setModEventType(MOD_EVENTS.TAKEDOWN)
     }),
   )
+  
   return (
     <>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
