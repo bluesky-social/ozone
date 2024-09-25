@@ -38,15 +38,20 @@ const CollectionLink = ({
   uri,
   collectionName,
   repoUrl,
+  omitQueryParams,
 }: {
   uri: string
   collectionName: string
   repoUrl: string
+  omitQueryParams?: string[]
 }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const newUrl = new URLSearchParams(searchParams)
   newUrl.set('quickOpen', uri)
+  if (omitQueryParams?.length) {
+    omitQueryParams.forEach((param) => newUrl.delete(param))
+  }
   return (
     <>
       <Link href={`/repositories/${repoUrl}`} target="_blank">
@@ -65,6 +70,7 @@ const CollectionLink = ({
 
 export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>
+  omitQueryParamsInLinks?: string[]
   subjectRepoHandle?: string
   withTruncation?: boolean
   hideActor?: boolean
@@ -94,6 +100,7 @@ export function SubjectOverview(props: {
             repoUrl={createAtUri(summary).replace('at://', '')}
             uri={createAtUri(summary)}
             collectionName="feed generator"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -116,6 +123,7 @@ export function SubjectOverview(props: {
             repoUrl={createAtUri(summary).replace('at://', '')}
             uri={createAtUri(summary)}
             collectionName="list"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -138,6 +146,7 @@ export function SubjectOverview(props: {
             repoUrl={createAtUri(summary).replace('at://', '')}
             uri={createAtUri(summary)}
             collectionName="starterpack"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -160,6 +169,7 @@ export function SubjectOverview(props: {
             repoUrl={summary.did}
             uri={createAtUri(summary)}
             collectionName="profile"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -181,6 +191,7 @@ export function SubjectOverview(props: {
           repoUrl={createAtUri(summary).replace('at://', '')}
           collectionName={shortCollection}
           uri={createAtUri(summary)}
+          omitQueryParams={props.omitQueryParamsInLinks}
         />
         {!hideActor && (
           <>

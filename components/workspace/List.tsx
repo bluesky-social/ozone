@@ -162,6 +162,11 @@ const ListItem = ({
             <>
               <SubjectOverview
                 subject={subjectStatus.subject}
+                // Some links in the subject overview open the subject in quick action panel
+                // however since this element is inside workspace panel, the link will have params
+                // to open both quick action panel and workspace which would cause overlapping issues.
+                // This ensures that we only open the quick action panel when the link is clicked.
+                omitQueryParamsInLinks={['workspaceOpen']}
                 subjectRepoHandle={subjectStatus.subjectRepoHandle}
               />
               <ReviewStateIcon subjectStatus={subjectStatus} className="ml-1" />
