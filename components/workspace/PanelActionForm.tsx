@@ -16,12 +16,14 @@ export const WorkspacePanelActionForm = ({
   setModEventType: (action: string) => void
   onCancel: () => void
 }) => {
+  const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
+
   return (
     <div className="mb-4 w-1/2">
       <div className="relative flex flex-row gap-1 items-center">
@@ -99,6 +101,21 @@ export const WorkspacePanelActionForm = ({
           label="Update the subject's persistent note with this comment"
         />
       )}
+      {isTakedownEvent && (
+        <Checkbox
+          value="true"
+          id="acknowledgeAccountSubjects"
+          name="acknowledgeAccountSubjects"
+          className="mb-3 flex items-center leading-3"
+          label={
+            <span className="leading-4">
+              Acknowledge all open/escalated/appealed reports on subjects
+              created by accounts that you are taking down.
+            </span>
+          }
+        />
+      )}
+
       <div className="flex flex-row gap-2">
         <ActionButton appearance="primary" type="submit" size="sm">
           Submit Action
