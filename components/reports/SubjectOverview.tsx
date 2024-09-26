@@ -9,15 +9,20 @@ const OtherReportsForAuthorLink = ({
   did,
   repoText,
   className,
+  omitQueryParams,
 }: {
   did: string
   repoText: string
   className?: string
+  omitQueryParams?: string[]
 }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const newUrl = new URLSearchParams(searchParams)
   newUrl.set('quickOpen', did)
+  if (omitQueryParams?.length) {
+    omitQueryParams.forEach((param) => newUrl.delete(param))
+  }
   return (
     <Link
       prefetch={false}
@@ -52,6 +57,7 @@ const CollectionLink = ({
   if (omitQueryParams?.length) {
     omitQueryParams.forEach((param) => newUrl.delete(param))
   }
+
   return (
     <>
       <Link href={`/repositories/${repoUrl}`} target="_blank">
@@ -109,6 +115,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -132,6 +139,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -155,6 +163,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -178,6 +187,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -200,6 +210,7 @@ export function SubjectOverview(props: {
               did={summary.did}
               repoText={repoText}
               className="ml-1"
+              omitQueryParams={props.omitQueryParamsInLinks}
             />
           </>
         )}
@@ -217,7 +228,11 @@ export function SubjectOverview(props: {
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
 
-      <OtherReportsForAuthorLink did={summary.did} repoText={repoText} />
+      <OtherReportsForAuthorLink
+        did={summary.did}
+        repoText={repoText}
+        omitQueryParams={props.omitQueryParamsInLinks}
+      />
     </div>
   )
 }
