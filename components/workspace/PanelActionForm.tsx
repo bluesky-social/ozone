@@ -106,7 +106,8 @@ export const WorkspacePanelActionForm = ({
           value="true"
           id="acknowledgeAccountSubjects"
           name="acknowledgeAccountSubjects"
-          className="mb-3 flex items-center leading-3"
+          className="mb-3 flex items-start leading-3"
+          inputClassName="mt-1"
           label={
             <span className="leading-4">
               Acknowledge all open/escalated/appealed reports on subjects
