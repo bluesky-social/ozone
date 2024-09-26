@@ -50,6 +50,14 @@ export const WorkspacePanelActionForm = ({
             formId={WORKSPACE_FORM_ID}
             defaultLabels={[]}
           />
+
+          <Checkbox
+            value="true"
+            id="removeLabels"
+            name="removeLabels"
+            className="my-3 flex items-center"
+            label="Remove selected labels from the subjects"
+          />
         </div>
       )}
 
@@ -62,6 +70,14 @@ export const WorkspacePanelActionForm = ({
             className="block w-full"
             placeholder="Comma separated tags"
             defaultValue=""
+          />
+
+          <Checkbox
+            value="true"
+            id="removeTags"
+            name="removeTags"
+            className="my-3 flex items-center"
+            label="Remove selected tags from the subjects"
           />
         </FormLabel>
       )}

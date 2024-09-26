@@ -93,16 +93,18 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
       if (formData.get('tags')) {
+        const isRemovingTags = formData.get('removeTags')
         const tags = String(formData.get('tags'))
           .split(',')
           .map((tag) => tag.trim())
-        coreEvent.add = tags
-        coreEvent.remove = []
+        coreEvent.add = isRemovingTags ? [] : tags
+        coreEvent.remove = isRemovingTags ? tags : []
       }
 
       if (labels?.length) {
-        coreEvent.createLabelVals = labels
-        coreEvent.negateLabelVals = []
+        const isRemovingLabels = formData.get('removeLabels')
+        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
+        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
       }
 
       // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
