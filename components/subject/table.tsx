@@ -250,7 +250,7 @@ function EmptyRows({
               title="No reports"
               className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
             />
-            {!mayHaveMoreItems ? (
+            {mayHaveMoreItems ? (
               <>
                 <span>No subjects to show</span>
                 <br />
