@@ -1,5 +1,6 @@
 import { ComponentProps, forwardRef } from 'react'
 import { CopyButton } from '../CopyButton'
+import { classNames } from '@/lib/util'
 
 export const Input = forwardRef<HTMLInputElement, ComponentProps<'input'>>(
   function Input(props: ComponentProps<'input'>, ref) {
@@ -138,33 +139,33 @@ export function FormLabel(
   )
 }
 
-export const Checkbox = forwardRef<
-  HTMLInputElement,
-  LabelProps & ComponentProps<'input'>
->(function CheckboxElement(
-  {
-    label,
-    required,
-    className,
-    ...rest
-  }: LabelProps & ComponentProps<'input'> & { className?: string },
-  ref,
-) {
-  return (
-    <div className={className}>
-      <input
-        ref={ref}
-        type="checkbox"
-        className="h-4 w-4 rounded border-gray-300 text-indigo-600 dark:text-teal-500 focus:ring-indigo-600 dark:focus:ring-teal-500 mr-1"
-        {...rest}
-      />
-      <label
-        htmlFor={rest.name}
-        className="ml-1 text-sm leading-6 font-medium text-gray-900 dark:text-gray-200"
-      >
-        {label}
-        {required && <sup className="text-red-500">*</sup>}
-      </label>
-    </div>
-  )
-})
+type CheckboxProps = LabelProps &
+  ComponentProps<'input'> & { className?: string; inputClassName?: string }
+
+export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
+  function CheckboxElement(
+    { label, required, className, inputClassName, ...rest }: CheckboxProps,
+    ref,
+  ) {
+    return (
+      <div className={className}>
+        <input
+          ref={ref}
+          type="checkbox"
+          className={classNames(
+            'h-4 w-4 rounded border-gray-300 text-indigo-600 dark:text-teal-500 focus:ring-indigo-600 dark:focus:ring-teal-500 mr-1',
+            inputClassName,
+          )}
+          {...rest}
+        />
+        <label
+          htmlFor={rest.name}
+          className="ml-1 text-sm leading-6 font-medium text-gray-900 dark:text-gray-200"
+        >
+          {label}
+          {required && <sup className="text-red-500">*</sup>}
+        </label>
+      </div>
+    )
+  },
+)

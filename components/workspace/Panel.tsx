@@ -113,6 +113,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
       }
 
+      if (
+        coreEvent.$type === MOD_EVENTS.TAKEDOWN &&
+        formData.get('acknowledgeAccountSubjects')
+      ) {
+        coreEvent.acknowledgeAccountSubjects = true
+      }
+
       // No need to break if one of the requests fail, continue on with others
       const results = await actionSubjects(
         { event: coreEvent },
