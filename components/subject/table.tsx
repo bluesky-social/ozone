@@ -232,7 +232,7 @@ function EmptyRows({
   mayHaveMoreItems,
 }: {
   isInitialLoading: boolean
-  mayHaveMoreItems
+  mayHaveMoreItems: boolean
 }) {
   return (
     <tr>
