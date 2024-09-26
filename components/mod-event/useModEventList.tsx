@@ -1,4 +1,5 @@
 import {
+  AtUri,
   ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
@@ -269,6 +270,15 @@ export const useModEventList = (
         }
       } else if (showWorkspaceConfirmation === 'creators') {
         items.add(event.createdBy)
+      } else if (showWorkspaceConfirmation === 'subject-authors') {
+        if (
+          ComAtprotoAdminDefs.isRepoRef(event.subject) ||
+          ChatBskyConvoDefs.isMessageRef(event.subject)
+        ) {
+          items.add(event.subject.did)
+        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+          items.add(new AtUri(event.subject.uri).host)
+        }
       }
     })
 
