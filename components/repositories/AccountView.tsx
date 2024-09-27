@@ -535,20 +535,15 @@ function Details({
         {hcapDetail && (
           <DataField value={ip} label="Hcaptcha">
             {Object.entries(hcapDetail).map(([property, value]) => (
-              <div key={property}>
-                {`${property}: ${shortenHcapSig(value)}`}
-                <Link
-                  href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
-                >
+              <Link
+                key={property}
+                href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
+              >
+                <LabelChip>
                   <MagnifyingGlassIcon className="h-3 w-3 inline" />
-                </Link>
-                <CopyButton
-                  text={value}
-                  className="ml-1"
-                  label={property}
-                  title={`Copy ${property} to clipboard`}
-                />
-              </div>
+                  {property}
+                </LabelChip>
+              </Link>
             ))}
           </DataField>
         )}
