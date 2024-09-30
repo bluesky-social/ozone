@@ -27,7 +27,12 @@ export const useWorkspaceList = () => {
 export const useWorkspaceAddItemsMutation = () => {
   const queryClient = useQueryClient()
   const toastId = useRef<number | string | null>(null)
-  const mutation = useMutation<string[], unknown, string[], unknown>(
+  const mutation = useMutation<
+    string[],
+    unknown,
+    string[],
+    unknown
+  >(
     async (items) => {
       return addToList(items)
     },
@@ -98,7 +103,8 @@ export const useWorkspaceEmptyMutation = () => {
 const getList = (): string[] => {
   const list = getLocalStorageData<string>(WORKSPACE_LIST_KEY)
   if (!list) return []
-  return list.split(WORKSPACE_LIST_DELIMITER)
+  // @TODO: could type check here
+  return list.split(WORKSPACE_LIST_DELIMITER) as string[]
 }
 
 const addToList = (items: string[]) => {

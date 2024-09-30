@@ -21,6 +21,7 @@ import { WorkspacePanelActions } from './PanelActions'
 import { WORKSPACE_FORM_ID } from './constants'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { useWorkspaceListData } from './useWorkspaceListData'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -51,7 +52,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         'input[type="checkbox"][name="workspaceItem"]:checked',
       ) || [],
     ).map((checkbox) => checkbox.value)
-    removeItemsMutation.mutate(selectedItems)
+    removeItemsMutation.mutate(selectedItems as string[])
   }
 
   const handleRemoveItem = (item: string) => {
@@ -154,7 +155,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   }
 
   const { data: workspaceList } = useWorkspaceList()
-  const { data: workspaceListStatuses } = useSubjectStatuses({
+  const { data: workspaceListStatuses } = useWorkspaceListData({
     subjects: workspaceList || [],
     // Make sure we aren't constantly refreshing the data unless the panel is open
     enabled: props.open,
@@ -238,7 +239,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
               <WorkspaceList
                 list={workspaceList}
                 onRemoveItem={handleRemoveItem}
-                subjectStatuses={workspaceListStatuses || {}}
+                listData={workspaceListStatuses || {}}
               />
             </div>
           </form>

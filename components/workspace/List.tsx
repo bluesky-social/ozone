@@ -8,33 +8,38 @@ import {
 } from '@heroicons/react/24/solid'
 import { Card } from '@/common/Card'
 import { groupSubjects } from './utils'
-import { StatusBySubject } from '@/subject/useSubjectStatus'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { PreviewCard } from '@/common/PreviewCard'
+import {
+  WorkspaceListData,
+  WorkspaceListItemData,
+} from './useWorkspaceListData'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { LabelChip, ModerationLabel } from '@/common/labels'
 
 interface WorkspaceListProps {
   list: string[]
-  subjectStatuses: StatusBySubject
+  listData: WorkspaceListData
   onRemoveItem: (item: string) => void
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
   list,
-  subjectStatuses,
+  listData,
   onRemoveItem,
 }) => {
   const groupedItems = groupSubjects(list)
   return (
     <div>
       <div className="space-y-2">
-        {Object.entries(groupedItems).map(([key, items], parentIndex) => {
+        {Object.entries(groupedItems).map(([key, items]) => {
           if (!items.length) return null
           return (
             <ListGroup
               key={key}
               items={items}
-              subjectStatuses={subjectStatuses}
+              listData={listData}
               onRemoveItem={onRemoveItem}
               title={`${key.charAt(0).toUpperCase()}${key.slice(1)}`}
             />
@@ -48,7 +53,7 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
 const ListGroup = ({
   items,
   title,
-  subjectStatuses,
+  listData,
   onRemoveItem,
 }: {
   items: string[]
@@ -105,7 +110,7 @@ const ListGroup = ({
         </div>
       </div>
       {items.map((item, index) => {
-        const subjectStatus = subjectStatuses[item]
+        const itemData = listData[item]
         return (
           <ListItem
             key={item}
@@ -120,7 +125,7 @@ const ListGroup = ({
             }
             onRef={(el) => (checkboxesRef.current[index] = el)}
             onChange={(event) => handleChange(index, event)}
-            subjectStatus={subjectStatus}
+            itemData={itemData}
             onRemoveItem={() => onRemoveItem(item)}
           />
         )
@@ -129,9 +134,9 @@ const ListGroup = ({
   )
 }
 
-const ListItem = ({
+const ListItem = <ItemType extends string>({
   item,
-  subjectStatus,
+  itemData,
   onRemoveItem,
   onChange,
   onRef,
@@ -140,12 +145,22 @@ const ListItem = ({
 }: {
   isDetailShown: boolean
   toggleDetail: () => void
-  item: string
-  subjectStatus: StatusBySubject[string]
+  item: ItemType
+  itemData: WorkspaceListItemData
   onRemoveItem: () => void
   onChange: (event: React.MouseEvent<HTMLInputElement>) => void
   onRef: (instance: HTMLInputElement | null) => void
 }) => {
+  const isRepo = ToolsOzoneModerationDefs.isRepoView(itemData)
+  let repoHandle = itemData?.moderation.subjectStatus?.subjectRepoHandle
+  if (!repoHandle && itemData) {
+    if (isRepo) {
+      repoHandle = itemData?.handle
+    } else if (ToolsOzoneModerationDefs.isRecordView(itemData)) {
+      repoHandle = itemData?.repo.handle
+    }
+  }
+
   return (
     <Card key={item}>
       <div className="flex items-center justify-between space-x-4">
@@ -158,18 +173,42 @@ const ListItem = ({
             ref={onRef}
             onMouseDown={onChange}
           />
-          {subjectStatus ? (
+          {itemData ? (
             <>
               <SubjectOverview
-                subject={subjectStatus.subject}
+                subject={
+                  item.startsWith('did:') ? { did: item } : { uri: item }
+                }
                 // Some links in the subject overview open the subject in quick action panel
                 // however since this element is inside workspace panel, the link will have params
                 // to open both quick action panel and workspace which would cause overlapping issues.
                 // This ensures that we only open the quick action panel when the link is clicked.
                 omitQueryParamsInLinks={['workspaceOpen']}
-                subjectRepoHandle={subjectStatus.subjectRepoHandle}
+                subjectRepoHandle={repoHandle}
               />
-              <ReviewStateIcon subjectStatus={subjectStatus} className="ml-1" />
+              {itemData.moderation.subjectStatus && (
+                <ReviewStateIcon
+                  subjectStatus={itemData.moderation.subjectStatus}
+                  className="ml-1"
+                />
+              )}
+              {!!itemData.labels?.length && (
+                <div className="flex">
+                  {itemData.labels.map((label) => (
+                    <ModerationLabel
+                      key={`${label.src}_${label.val}`}
+                      label={label}
+                    />
+                  ))}
+                </div>
+              )}
+              {!!itemData.moderation.subjectStatus?.tags?.length && (
+                <div className="flex">
+                  {itemData.moderation.subjectStatus?.tags.map((tag) => (
+                    <LabelChip key={tag}>{tag}</LabelChip>
+                  ))}
+                </div>
+              )}
             </>
           ) : (
             <span className="flex-grow">{item}</span>
