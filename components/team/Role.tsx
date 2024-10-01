@@ -2,9 +2,9 @@ import { LabelChip } from '@/common/labels'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 
 export const MemberRoleNames = {
-  [ToolsOzoneTeamDefs.ROLEADMIN]: 'Admin',
-  [ToolsOzoneTeamDefs.ROLEMODERATOR]: 'Moderator',
   [ToolsOzoneTeamDefs.ROLETRIAGE]: 'Triage',
+  [ToolsOzoneTeamDefs.ROLEMODERATOR]: 'Moderator',
+  [ToolsOzoneTeamDefs.ROLEADMIN]: 'Admin',
 }
 
 const getRoleText = (role: ToolsOzoneTeamDefs.Member['role']) => {
