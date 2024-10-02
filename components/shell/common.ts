@@ -7,6 +7,7 @@ import {
   SunIcon,
   MoonIcon,
   WrenchScrewdriverIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -20,6 +21,7 @@ export const ICONS = {
   sun: SunIcon,
   moon: MoonIcon,
   configure: WrenchScrewdriverIcon,
+  search: MagnifyingGlassIcon,
 }
 
 export type SidebarNavItem = {
@@ -50,14 +52,19 @@ export const NAV_ITEMS: SidebarNavItem[] = [
         kbar.query.toggle(),
   },
   {
-    name: 'Theme',
-    icon: 'sun',
-    onClick: ({ toggleTheme }) => toggleTheme,
+    name: 'Search',
+    href: '/search',
+    icon: 'search',
   },
   {
     name: 'Configure',
     href: '/configure',
     icon: 'configure',
+  },
+  {
+    name: 'Theme',
+    icon: 'sun',
+    onClick: ({ toggleTheme }) => toggleTheme,
   },
 ]
 

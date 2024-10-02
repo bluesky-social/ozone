@@ -14,7 +14,7 @@ import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const isEmailSearch = (q: string) =>
-  q.startsWith('email:') || q.startsWith('ip:')
+  q.startsWith('email:') || q.startsWith('ip:') || q.startsWith('hcap:')
 
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
@@ -37,7 +37,11 @@ const getRepos =
       return data
     }
 
-    const email = q.replace('email:', '').replace('ip:', '').trim()
+    const email = q
+      .replace('email:', '')
+      .replace('ip:', '')
+      .replace('hcap:', '')
+      .trim()
 
     if (!email) {
       return { repos: [], cursor: undefined }

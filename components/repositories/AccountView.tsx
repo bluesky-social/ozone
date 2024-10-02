@@ -57,6 +57,7 @@ import { Alert } from '@/common/Alert'
 import { Follows } from 'components/graph/Follows'
 import { Followers } from 'components/graph/Followers'
 import Lightbox from 'yet-another-react-lightbox'
+import { CopyButton } from '@/common/CopyButton'
 
 enum Views {
   Details,
@@ -507,6 +508,10 @@ function Details({
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
   const ip = typeof repo.ip === 'string' ? repo.ip : undefined
+  const hcapDetail =
+    typeof repo.hcaptchaDetails === 'object'
+      ? (repo.hcaptchaDetails as Record<string, string>)
+      : undefined
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -525,6 +530,21 @@ function Details({
             <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+          </DataField>
+        )}
+        {hcapDetail && (
+          <DataField value={ip} label="Hcaptcha">
+            {Object.entries(hcapDetail).map(([property, value]) => (
+              <Link
+                key={property}
+                href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
+              >
+                <LabelChip>
+                  <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                  {property}
+                </LabelChip>
+              </Link>
+            ))}
           </DataField>
         )}
         <DataField
@@ -838,4 +858,8 @@ function obscureIp(ip: string) {
   const parts = ip.split('.')
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
+}
+
+function shortenHcapSig(sig: string) {
+  return `${sig.slice(0, 24)}...`
 }
