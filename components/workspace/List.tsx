@@ -4,6 +4,8 @@ import { ActionButton } from '@/common/buttons'
 import {
   ChevronDownIcon,
   ChevronUpIcon,
+  EnvelopeIcon,
+  LockClosedIcon,
   TrashIcon,
 } from '@heroicons/react/24/solid'
 import { Card } from '@/common/Card'
@@ -151,12 +153,16 @@ const ListItem = <ItemType extends string>({
   onChange: (event: React.MouseEvent<HTMLInputElement>) => void
   onRef: (instance: HTMLInputElement | null) => void
 }) => {
-  const isRepo = ToolsOzoneModerationDefs.isRepoView(itemData)
+  const isRepo = ToolsOzoneModerationDefs.isRepoViewDetail(itemData)
   let repoHandle = itemData?.moderation.subjectStatus?.subjectRepoHandle
+  let deactivatedAt = isRepo
+    ? itemData?.deactivatedAt
+    : itemData?.repo?.deactivatedAt
+
   if (!repoHandle && itemData) {
     if (isRepo) {
       repoHandle = itemData?.handle
-    } else if (ToolsOzoneModerationDefs.isRecordView(itemData)) {
+    } else if (ToolsOzoneModerationDefs.isRecordViewDetail(itemData)) {
       repoHandle = itemData?.repo.handle
     }
   }
@@ -192,8 +198,21 @@ const ListItem = <ItemType extends string>({
                   className="ml-1"
                 />
               )}
+              {!!deactivatedAt && (
+                <LockClosedIcon
+                  className="w-4 h-4 ml-1 text-orange-700"
+                  title={`User account was deactivated at ${deactivatedAt}`}
+                />
+              )}
+              {/* emailConfirmedAt is only available on repoViewDetail */}
+              {isRepo && !itemData.emailConfirmedAt && (
+                <EnvelopeIcon
+                  className="w-4 h-4 ml-1 text-red-600"
+                  title={`User has not confirmed their email`}
+                />
+              )}
               {!!itemData.labels?.length && (
-                <div className="flex">
+                <div className="flex ml-1">
                   {itemData.labels.map((label) => (
                     <ModerationLabel
                       key={`${label.src}_${label.val}`}
@@ -203,7 +222,7 @@ const ListItem = <ItemType extends string>({
                 </div>
               )}
               {!!itemData.moderation.subjectStatus?.tags?.length && (
-                <div className="flex">
+                <div className="flex ml-1">
                   {itemData.moderation.subjectStatus?.tags.map((tag) => (
                     <LabelChip key={tag}>{tag}</LabelChip>
                   ))}
