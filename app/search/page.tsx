@@ -2,13 +2,10 @@
 import { Suspense } from 'react'
 import { SearchPageContent } from './page-content'
 
-export default function SearchHomePage({ searchParams }) {
+export default function SearchHomePage() {
   return (
     <Suspense fallback={<div></div>}>
-      <SearchPageContent
-        term={searchParams.term || ''}
-        section={searchParams.section}
-      />
+      <SearchPageContent />
     </Suspense>
   )
 }

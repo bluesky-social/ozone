@@ -1,12 +1,12 @@
-import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
+import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
-import { ConfirmationModal } from '@/common/modals/confirmation'
 import { PostAsCard } from '@/common/posts/PostsFeed'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { WorkspacePanel } from '@/workspace/Panel'
 import { useContentSearch } from 'components/search-content/useContentSearch'
 import { SectionHeader } from 'components/SectionHeader'
+import { useSearchParams } from 'next/navigation'
 import { useTitle } from 'react-use'
 
 const TABS = [
@@ -22,13 +22,11 @@ const TABS = [
   },
 ]
 
-export const SearchPageContent = ({
-  term,
-  section = 'top',
-}: {
-  term: string
-  section?: string
-}) => {
+export const SearchPageContent = () => {
+  const searchParams = useSearchParams()
+  const term = searchParams.get('term') ?? ''
+  const section = searchParams.get('section') ?? 'top'
+
   let pageTitle = `Search Content`
   if (term) {
     pageTitle += ` - ${term}`
@@ -70,6 +68,7 @@ export const SearchPageContent = ({
       </SectionHeader>
 
       <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
+        {isLoading && <Loading />}
         {posts.map((post) => (
           <div className="mb-4" key={post.uri}>
             <PostAsCard
