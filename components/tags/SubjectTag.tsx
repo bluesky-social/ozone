@@ -6,7 +6,11 @@ export const SubjectTag = ({ tag }: { tag: string }) => {
     const langCode = tag.split(':')[1]?.toLowerCase()
     const langDetails = LANGUAGES_MAP_CODE2[langCode]
     if (langDetails?.flag) {
-      return <span title={langDetails.name}>{langDetails.flag}</span>
+      return (
+        <span title={`${langDetails.name}, Tag: ${tag}`}>
+          {langDetails.flag}
+        </span>
+      )
     }
   }
   return <LabelChip>{tag}</LabelChip>
