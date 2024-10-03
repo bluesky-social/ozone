@@ -511,7 +511,6 @@ function Details({
   const hcapDetail = Array.isArray(repo.hcaptchaDetails)
     ? (repo.hcaptchaDetails as { property: string; value: string }[])
     : undefined
-  console.log(hcapDetail)
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -534,7 +533,7 @@ function Details({
         )}
         {hcapDetail && (
           <DataField value={ip} label="Hcaptcha">
-            {hcapDetail.map(({ property, value }) => (
+            {hcapDetail?.map(({ property, value }) => (
               <Link
                 key={property}
                 href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
