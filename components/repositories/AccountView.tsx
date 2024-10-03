@@ -58,6 +58,7 @@ import { Follows } from 'components/graph/Follows'
 import { Followers } from 'components/graph/Followers'
 import Lightbox from 'yet-another-react-lightbox'
 import { CopyButton } from '@/common/CopyButton'
+import { RelatedAccounts } from 'components/signature/RelatedAccounts'
 
 enum Views {
   Details,
@@ -69,6 +70,7 @@ enum Views {
   Events,
   Email,
   Lists,
+  RelatedAccounts,
 }
 
 const TabKeys = {
@@ -81,6 +83,7 @@ const TabKeys = {
   blocks: Views.Blocks,
   events: Views.Events,
   email: Views.Email,
+  related: Views.RelatedAccounts,
 }
 
 export function AccountView({
@@ -155,6 +158,10 @@ export function AccountView({
         {
           view: Views.Blocks,
           label: 'Blocks',
+        },
+        {
+          view: Views.RelatedAccounts,
+          label: 'Related',
         },
       )
 
@@ -233,6 +240,9 @@ export function AccountView({
                     <Followers count={profile?.followersCount} id={id} />
                   )}
                   {currentView === Views.Lists && <Lists actor={id} />}
+                  {currentView === Views.RelatedAccounts && (
+                    <RelatedAccounts id={id} />
+                  )}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
@@ -857,8 +867,4 @@ function obscureIp(ip: string) {
   const parts = ip.split('.')
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
-}
-
-function shortenHcapSig(sig: string) {
-  return `${sig.slice(0, 24)}...`
 }
