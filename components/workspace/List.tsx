@@ -18,12 +18,24 @@ import {
   WorkspaceListItemData,
 } from './useWorkspaceListData'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
-import { LabelChip, ModerationLabel } from '@/common/labels'
+import { ModerationLabel } from '@/common/labels'
+import { SubjectTag } from 'components/tags/SubjectTag'
 
 interface WorkspaceListProps {
   list: string[]
   listData: WorkspaceListData
   onRemoveItem: (item: string) => void
+}
+
+const getLangTagFromRecordValue = (
+  record: ToolsOzoneModerationDefs.RecordViewDetail,
+): string[] => {
+  console.log(record)
+  if (record?.moderation.subjectStatus?.tags?.length) return []
+  const langTags = record.value?.['langs']?.map(
+    (lang: string) => `lang:${lang}`,
+  )
+  return langTags || []
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
@@ -159,6 +171,11 @@ const ListItem = <ItemType extends string>({
     ? itemData?.deactivatedAt
     : itemData?.repo?.deactivatedAt
 
+  // Derive language tag from record value if there isn't any tag in moderation.subjectStatus
+  // which happens when a post has not been in the moderation system yet so we never tagged its language
+  const langTagsFromRecord =
+    !isRepo && itemData ? getLangTagFromRecordValue(itemData) : []
+
   if (!repoHandle && itemData) {
     if (isRepo) {
       repoHandle = itemData?.handle
@@ -224,7 +241,14 @@ const ListItem = <ItemType extends string>({
               {!!itemData.moderation.subjectStatus?.tags?.length && (
                 <div className="flex ml-1">
                   {itemData.moderation.subjectStatus?.tags.map((tag) => (
-                    <LabelChip key={tag}>{tag}</LabelChip>
+                    <SubjectTag key={tag} tag={tag} />
+                  ))}
+                </div>
+              )}
+              {!!langTagsFromRecord.length && (
+                <div className="flex ml-1">
+                  {langTagsFromRecord.map((tag) => (
+                    <SubjectTag key={tag} tag={tag} />
                   ))}
                 </div>
               )}

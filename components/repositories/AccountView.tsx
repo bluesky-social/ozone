@@ -58,6 +58,7 @@ import { Follows } from 'components/graph/Follows'
 import { Followers } from 'components/graph/Followers'
 import Lightbox from 'yet-another-react-lightbox'
 import { CopyButton } from '@/common/CopyButton'
+import { SubjectTag } from 'components/tags/SubjectTag'
 
 enum Views {
   Details,
@@ -587,7 +588,7 @@ function Details({
           <LabelList>
             {!tags.length && <LabelListEmpty />}
             {tags.map((tag) => (
-              <LabelChip key={tag}>{tag}</LabelChip>
+              <SubjectTag key={tag} tag={tag} />
             ))}
           </LabelList>
         </DataField>
