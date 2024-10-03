@@ -6,8 +6,9 @@ export const SubjectTag = ({ tag }: { tag: string }) => {
     const langCode = tag.split(':')[1]?.toLowerCase()
     const langDetails = LANGUAGES_MAP_CODE2[langCode]
     if (langDetails?.flag) {
+      const title = `${langDetails.name}, Tag: ${tag}`
       return (
-        <span title={`${langDetails.name}, Tag: ${tag}`}>
+        <span title={title} aria-label={title}>
           {langDetails.flag}
         </span>
       )
