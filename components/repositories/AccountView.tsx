@@ -869,7 +869,3 @@ function obscureIp(ip: string) {
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
 }
-
-function shortenHcapSig(sig: string) {
-  return `${sig.slice(0, 24)}...`
-}

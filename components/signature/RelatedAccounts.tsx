@@ -1,36 +1,40 @@
 import { ActionButton } from '@/common/buttons'
+import { LabelChip } from '@/common/labels'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ConfirmationModal } from '@/common/modals/confirmation'
-import { AccountsGrid } from '@/repositories/AccountView'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
+import { ToolsOzoneSignatureFindRelatedAccounts } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
+import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 
-export function RelatedAccounts({ id, count }: { id: string; count?: number }) {
+export function RelatedAccounts({ id }: { id: string }) {
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const labelerAgent = useLabelerAgent()
   const [isAdding, setIsAdding] = useState(false)
   const { mutateAsync: addItemsToWorkspace } = useWorkspaceAddItemsMutation()
   const { error, isLoading, data, fetchNextPage, hasNextPage } =
     useInfiniteQuery({
-      queryKey: ['followers', { id }],
+      queryKey: ['related_accounts', { id }],
       queryFn: async ({ pageParam }) => {
-        const { data } = await labelerAgent.api.app.bsky.graph.getFollowers({
-          actor: id,
-          cursor: pageParam,
-        })
+        const { data } =
+          await labelerAgent.tools.ozone.signature.findRelatedAccounts({
+            did: id,
+            cursor: pageParam,
+          })
+        console.log(data.accounts)
         return data
       },
       getNextPageParam: (lastPage) => lastPage.cursor,
     })
 
-  const followers = data?.pages.flatMap((page) => page.followers) ?? []
+  const accounts = data?.pages.flatMap((page) => page.accounts) ?? []
 
   const confirmAddToWorkspace = async () => {
     // add items that are already loaded
-    await addItemsToWorkspace(followers.map((f) => f.did))
+    await addItemsToWorkspace(accounts.map((a) => a.account.did))
     if (!data?.pageParams) {
       setIsConfirmationOpen(false)
       return
@@ -40,15 +44,15 @@ export function RelatedAccounts({ id, count }: { id: string; count?: number }) {
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
-        const nextFollowers =
-          await labelerAgent.api.app.bsky.graph.getFollowers({
-            actor: id,
+        const nextAccounts =
+          await labelerAgent.tools.ozone.signature.findRelatedAccounts({
+            did: id,
             cursor,
           })
         await addItemsToWorkspace(
-          nextFollowers.data.followers.map((f) => f.did),
+          nextAccounts.data.accounts.map((a) => a.account.did),
         )
-        cursor = nextFollowers.data.cursor
+        cursor = nextAccounts.data.cursor
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
@@ -60,7 +64,7 @@ export function RelatedAccounts({ id, count }: { id: string; count?: number }) {
 
   return (
     <div>
-      {!!count && (
+      {accounts && (
         <div className="flex flex-row justify-end pt-2 mx-auto mt-2 max-w-5xl px-4 sm:px-6 lg:px-8">
           <ActionButton
             appearance="primary"
@@ -83,23 +87,23 @@ export function RelatedAccounts({ id, count }: { id: string; count?: number }) {
             isOpen={isConfirmationOpen}
             setIsOpen={setIsConfirmationOpen}
             confirmButtonText={isAdding ? 'Stop adding' : 'Yes, add all'}
-            title={`Add followers to workspace?`}
+            title={`Add related accounts to workspace?`}
             description={
               <>
-                Once confirmed, all the followers of the user will be added to
-                the workspace. For users with a lot of followers, this may take
+                Once confirmed, all the related accounts will be added to the
+                workspace. For users with many related accounts, this may take
                 quite some time but you can always stop the process and already
-                added followers will remain in the workspace.
+                added accounts will remain in the workspace.
               </>
             }
           />
         </div>
       )}
 
-      <AccountsGrid
+      <RelatedAccountsList
         isLoading={isLoading}
         error={String(error ?? '')}
-        accounts={followers}
+        accounts={accounts}
       />
 
       {hasNextPage && (
@@ -107,6 +111,57 @@ export function RelatedAccounts({ id, count }: { id: string; count?: number }) {
           <LoadMoreButton onClick={() => fetchNextPage()} />
         </div>
       )}
+    </div>
+  )
+}
+
+export function RelatedAccountsList({
+  error,
+  isLoading,
+  accounts,
+}: {
+  error: string
+  isLoading?: boolean
+  accounts?: ToolsOzoneSignatureFindRelatedAccounts.RelatedAccount[]
+}) {
+  if (isLoading) {
+    return (
+      <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl dark:text-gray-300">
+        Loading...
+      </div>
+    )
+  }
+  return (
+    <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
+      {!!error && (
+        <div className="mt-1 dark:text-gray-300">
+          <p>{error}</p>
+        </div>
+      )}
+      <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
+        {accounts?.map((account) => (
+          <div
+            key={account.account.did}
+            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
+          >
+            <div className="min-w-0 flex-1">
+              <Link
+                href={`/repositories/${account.account.did}`}
+                className="focus:outline-none"
+              >
+                <span className="absolute inset-0" aria-hidden="true" />
+                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+                  {`@${account.account.handle}`}
+                </p>
+
+                {account.similarities?.map(({ property }) => (
+                  <LabelChip key={property}>{property}</LabelChip>
+                ))}
+              </Link>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
