@@ -57,8 +57,8 @@ import { Alert } from '@/common/Alert'
 import { Follows } from 'components/graph/Follows'
 import { Followers } from 'components/graph/Followers'
 import Lightbox from 'yet-another-react-lightbox'
-import { CopyButton } from '@/common/CopyButton'
 import { SubjectTag } from 'components/tags/SubjectTag'
+import { RelatedAccounts } from 'components/signature/RelatedAccounts'
 
 enum Views {
   Details,
@@ -70,6 +70,7 @@ enum Views {
   Events,
   Email,
   Lists,
+  RelatedAccounts,
 }
 
 const TabKeys = {
@@ -82,6 +83,7 @@ const TabKeys = {
   blocks: Views.Blocks,
   events: Views.Events,
   email: Views.Email,
+  related: Views.RelatedAccounts,
 }
 
 export function AccountView({
@@ -156,6 +158,10 @@ export function AccountView({
         {
           view: Views.Blocks,
           label: 'Blocks',
+        },
+        {
+          view: Views.RelatedAccounts,
+          label: 'Related',
         },
       )
 
@@ -234,6 +240,9 @@ export function AccountView({
                     <Followers count={profile?.followersCount} id={id} />
                   )}
                   {currentView === Views.Lists && <Lists actor={id} />}
+                  {currentView === Views.RelatedAccounts && (
+                    <RelatedAccounts id={id} />
+                  )}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
@@ -509,10 +518,9 @@ function Details({
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
   const ip = typeof repo.ip === 'string' ? repo.ip : undefined
-  const hcapDetail =
-    typeof repo.hcaptchaDetails === 'object'
-      ? (repo.hcaptchaDetails as Record<string, string>)
-      : undefined
+  const hcapDetail = Array.isArray(repo.hcaptchaDetails)
+    ? (repo.hcaptchaDetails as { property: string; value: string }[])
+    : undefined
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -535,7 +543,7 @@ function Details({
         )}
         {hcapDetail && (
           <DataField value={ip} label="Hcaptcha">
-            {Object.entries(hcapDetail).map(([property, value]) => (
+            {hcapDetail?.map(({ property, value }) => (
               <Link
                 key={property}
                 href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
@@ -859,8 +867,4 @@ function obscureIp(ip: string) {
   const parts = ip.split('.')
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
-}
-
-function shortenHcapSig(sig: string) {
-  return `${sig.slice(0, 24)}...`
 }
