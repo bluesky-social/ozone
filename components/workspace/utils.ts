@@ -1,4 +1,6 @@
 import { CollectionId } from '@/reports/helpers/subject'
+import { WorkspaceListItemData } from './useWorkspaceListData'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 
 export type GroupedSubjects = {
   dids: string[]
@@ -48,4 +50,52 @@ export const buildItemsSummary = (groupedItems: GroupedSubjects): string => {
   ]
     .filter(Boolean)
     .join(', ')
+}
+
+export const isItemDataSubjectStatusView = (
+  itemData: WorkspaceListItemData,
+): itemData is ToolsOzoneModerationDefs.SubjectStatusView => {
+  return !!itemData?.reviewState
+}
+
+export const getRepoHandleFromItemData = (itemData: WorkspaceListItemData) => {
+  if (ToolsOzoneModerationDefs.isRepoViewDetail(itemData)) {
+    return itemData.handle
+  }
+
+  if (ToolsOzoneModerationDefs.isRecordViewDetail(itemData)) {
+    return itemData.repo.handle
+  }
+
+  if (isItemDataSubjectStatusView(itemData)) {
+    return itemData.subjectRepoHandle
+  }
+
+  return ''
+}
+
+export const getAccountDeactivatedAtFromItemData = (
+  itemData: WorkspaceListItemData,
+) => {
+  if (ToolsOzoneModerationDefs.isRepoViewDetail(itemData)) {
+    return itemData.deactivatedAt
+  }
+
+  if (ToolsOzoneModerationDefs.isRecordViewDetail(itemData)) {
+    return itemData.repo.deactivatedAt
+  }
+
+  return ''
+}
+
+export const getSubjectStatusFromItemData = (
+  itemData: WorkspaceListItemData | undefined,
+) => {
+  if (!itemData) return undefined
+
+  if (isItemDataSubjectStatusView(itemData)) {
+    return itemData
+  }
+
+  return itemData.moderation.subjectStatus
 }

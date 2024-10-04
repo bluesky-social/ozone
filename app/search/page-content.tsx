@@ -1,9 +1,11 @@
 import { Dropdown } from '@/common/Dropdown'
+import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { PostAsCard } from '@/common/posts/PostsFeed'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { WorkspacePanel } from '@/workspace/Panel'
+import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { useContentSearch } from 'components/search-content/useContentSearch'
 import { SectionHeader } from 'components/SectionHeader'
 import { useSearchParams } from 'next/navigation'
@@ -68,7 +70,13 @@ export const SearchPageContent = () => {
       </SectionHeader>
 
       <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
-        {isLoading && <Loading />}
+        {!term && (
+          <EmptyDataset message="Please input a keyword on the top search bar">
+            <MagnifyingGlassIcon className="h-10 w-10" />
+          </EmptyDataset>
+        )}
+
+        {!!term && isLoading && <Loading />}
         {posts.map((post) => (
           <div className="mb-4" key={post.uri}>
             <PostAsCard

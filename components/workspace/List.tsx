@@ -9,7 +9,12 @@ import {
   TrashIcon,
 } from '@heroicons/react/24/solid'
 import { Card } from '@/common/Card'
-import { groupSubjects } from './utils'
+import {
+  getAccountDeactivatedAtFromItemData,
+  getRepoHandleFromItemData,
+  getSubjectStatusFromItemData,
+  groupSubjects,
+} from './utils'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -18,8 +23,8 @@ import {
   WorkspaceListItemData,
 } from './useWorkspaceListData'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
-import { ModerationLabel } from '@/common/labels'
 import { SubjectTag } from 'components/tags/SubjectTag'
+import { LabelChip, ModerationLabel } from '@/common/labels'
 
 interface WorkspaceListProps {
   list: string[]
@@ -165,23 +170,15 @@ const ListItem = <ItemType extends string>({
   onRef: (instance: HTMLInputElement | null) => void
 }) => {
   const isRepo = ToolsOzoneModerationDefs.isRepoViewDetail(itemData)
-  let repoHandle = itemData?.moderation.subjectStatus?.subjectRepoHandle
-  let deactivatedAt = isRepo
-    ? itemData?.deactivatedAt
-    : itemData?.repo?.deactivatedAt
-
+  const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(itemData)
   // Derive language tag from record value if there isn't any tag in moderation.subjectStatus
   // which happens when a post has not been in the moderation system yet so we never tagged its language
   const langTagsFromRecord =
     !isRepo && itemData ? getLangTagFromRecordValue(itemData) : []
 
-  if (!repoHandle && itemData) {
-    if (isRepo) {
-      repoHandle = itemData?.handle
-    } else if (ToolsOzoneModerationDefs.isRecordViewDetail(itemData)) {
-      repoHandle = itemData?.repo.handle
-    }
-  }
+  const subjectStatus = getSubjectStatusFromItemData(itemData)
+  let repoHandle = getRepoHandleFromItemData(itemData)
+  let deactivatedAt = getAccountDeactivatedAtFromItemData(itemData)
 
   return (
     <Card key={item}>
@@ -208,9 +205,9 @@ const ListItem = <ItemType extends string>({
                 omitQueryParamsInLinks={['workspaceOpen']}
                 subjectRepoHandle={repoHandle}
               />
-              {itemData.moderation.subjectStatus && (
+              {subjectStatus && (
                 <ReviewStateIcon
-                  subjectStatus={itemData.moderation.subjectStatus}
+                  subjectStatus={subjectStatus}
                   className="ml-1"
                 />
               )}
@@ -220,14 +217,30 @@ const ListItem = <ItemType extends string>({
                   title={`User account was deactivated at ${deactivatedAt}`}
                 />
               )}
-              {/* emailConfirmedAt is only available on repoViewDetail */}
+              {/* emailConfirmedAt is only available on repoViewDetail on record.repo we get repoView */}
               {isRepo && !itemData.emailConfirmedAt && (
                 <EnvelopeIcon
                   className="w-4 h-4 ml-1 text-red-600"
                   title={`User has not confirmed their email`}
                 />
               )}
-              {!!itemData.labels?.length && (
+              {/* if item data is neither repo or record, it means we failed to find the repo/record so only fetched subject status */}
+              {!isRepo && !isRecord && (
+                <TrashIcon
+                  className="w-4 h-4 ml-1 text-red-600"
+                  title={
+                    item.startsWith('did:')
+                      ? 'Account not found on the network'
+                      : 'Record not found on the network'
+                  }
+                  aria-label={
+                    item.startsWith('did:')
+                      ? 'Account not found on the network'
+                      : 'Record not found on the network'
+                  }
+                />
+              )}
+              {(isRepo || isRecord) && !!itemData.labels?.length && (
                 <div className="flex ml-1">
                   {itemData.labels.map((label) => (
                     <ModerationLabel
@@ -237,16 +250,16 @@ const ListItem = <ItemType extends string>({
                   ))}
                 </div>
               )}
-              {!!itemData.moderation.subjectStatus?.tags?.length && (
+              {!!langTagsFromRecord?.length && (
                 <div className="flex ml-1">
-                  {itemData.moderation.subjectStatus?.tags.map((tag) => (
+                  {langTagsFromRecord.map((tag) => (
                     <SubjectTag key={tag} tag={tag} />
                   ))}
                 </div>
               )}
-              {!!langTagsFromRecord.length && (
+              {!!subjectStatus?.tags?.length && (
                 <div className="flex ml-1">
-                  {langTagsFromRecord.map((tag) => (
+                  {subjectStatus?.tags.map((tag) => (
                     <SubjectTag key={tag} tag={tag} />
                   ))}
                 </div>

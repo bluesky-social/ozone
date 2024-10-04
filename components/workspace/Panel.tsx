@@ -36,16 +36,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const [showItemCreator, setShowItemCreator] = useState(false)
   const actionSubjects = useActionSubjects()
 
-  const handleSelectAll = () => {
-    const checkboxes = formRef.current?.querySelectorAll<HTMLInputElement>(
-      'input[type="checkbox"][name="workspaceItem"]',
-    )
-    const allSelected = Array.from(checkboxes || []).every(
-      (checkbox) => checkbox.checked,
-    )
-    checkboxes?.forEach((checkbox) => (checkbox.checked = !allSelected))
-  }
-
   const handleRemoveSelected = () => {
     const selectedItems = Array.from(
       formRef.current?.querySelectorAll<HTMLInputElement>(
@@ -206,13 +196,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
               <div className="mb-2 flex space-x-2">
                 <WorkspacePanelActions
                   {...{
-                    handleSelectAll,
                     handleRemoveSelected,
                     handleEmptyWorkspace,
                     setShowActionForm,
                     setShowItemCreator,
                     showActionForm,
                     workspaceList,
+                    listData: workspaceListStatuses || {},
                   }}
                 />
               </div>
