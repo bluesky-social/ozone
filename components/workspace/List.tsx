@@ -230,7 +230,11 @@ const ListItem = <ItemType extends string>({
               )}
             </>
           ) : (
-            <span className="flex-grow">{item}</span>
+            <SubjectOverview
+              subject={item.startsWith('did:') ? { did: item } : { uri: item }}
+              omitQueryParamsInLinks={['workspaceOpen']}
+              subjectRepoHandle={repoHandle}
+            />
           )}
         </div>
         <div className="flex gap-2">
