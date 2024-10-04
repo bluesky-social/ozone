@@ -31,6 +31,7 @@ export const WorkspacePanelActionForm = ({
           selectedAction={modEventType}
           isSubjectDid={false}
           hasBlobs={false}
+          forceDisplayActions={[MOD_EVENTS.RESOLVE_APPEAL]}
           setSelectedAction={(action) => setModEventType(action)}
         />
         <ModEventDetailsPopover modEventType={modEventType} />
