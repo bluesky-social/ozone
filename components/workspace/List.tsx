@@ -30,7 +30,6 @@ interface WorkspaceListProps {
 const getLangTagFromRecordValue = (
   record: ToolsOzoneModerationDefs.RecordViewDetail,
 ): string[] => {
-  console.log(record)
   if (record?.moderation.subjectStatus?.tags?.length) return []
   const langTags = record.value?.['langs']?.map(
     (lang: string) => `lang:${lang}`,
