@@ -61,9 +61,9 @@
   integrity sha512-WKILW2b3QbAYKh+w5U2x6p5FqqLl0nAeLwGeDY+KjX01K4Dq3vQTR9b/qNp0jZm48CabPQVrqCv0PPU9LgRRRg==
 
 "@atproto/api@^0.13.10":
-  version "0.13.10"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.10.tgz#63fbd08c674c2242fef01764f42eb5b8c3af350f"
-  integrity sha512-oa4YdZpMjtLSYpCi4GF9AgQoG4QkspcH8rqRH3b6C8EpAgQ8devB55J0CsbmnxUrBNDUIs/Sz69JX3T79Qfd8g==
+  version "0.13.11"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.11.tgz#936664d9b57686840231fbab222e19abbe3f93c9"
+  integrity sha512-YW+4WzZEGGj/SDYo9w+S2PkSaeSS+8Dosk21GFm4EFYq1eq7G0cxuMgvdcq6fov7f9zqsaTFQL2fA6cAgMA0ow==
   dependencies:
     "@atproto/common-web" "^0.3.1"
     "@atproto/lexicon" "^0.4.2"
