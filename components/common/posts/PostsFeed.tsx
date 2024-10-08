@@ -595,7 +595,7 @@ function PostLabels({
   const { labels, cid } = item.post
   if (!labels?.length) return null
   return (
-    <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
+    <LabelList className={`pb-2 flex-wrap ${dense ? 'pl-10' : 'pl-14'}`}>
       {labels?.map((label, i) => {
         const { val, src } = label
         return (

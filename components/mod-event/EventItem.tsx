@@ -208,7 +208,7 @@ const EventLabels = ({
 
   if (!labels?.length) return null
   return (
-    <LabelList>
+    <LabelList className='flex-wrap'>
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
         if (isTag) {

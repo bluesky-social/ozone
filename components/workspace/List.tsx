@@ -23,12 +23,23 @@ import {
   WorkspaceListItemData,
 } from './useWorkspaceListData'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { SubjectTag } from 'components/tags/SubjectTag'
 import { LabelChip, ModerationLabel } from '@/common/labels'
 
 interface WorkspaceListProps {
   list: string[]
   listData: WorkspaceListData
   onRemoveItem: (item: string) => void
+}
+
+const getLangTagFromRecordValue = (
+  record: ToolsOzoneModerationDefs.RecordViewDetail,
+): string[] => {
+  if (record?.moderation.subjectStatus?.tags?.length) return []
+  const langTags = record.value?.['langs']?.map(
+    (lang: string) => `lang:${lang}`,
+  )
+  return langTags || []
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
@@ -160,6 +171,11 @@ const ListItem = <ItemType extends string>({
 }) => {
   const isRepo = ToolsOzoneModerationDefs.isRepoViewDetail(itemData)
   const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(itemData)
+  // Derive language tag from record value if there isn't any tag in moderation.subjectStatus
+  // which happens when a post has not been in the moderation system yet so we never tagged its language
+  const langTagsFromRecord =
+    isRecord && itemData ? getLangTagFromRecordValue(itemData) : []
+
   const subjectStatus = getSubjectStatusFromItemData(itemData)
   let repoHandle = getRepoHandleFromItemData(itemData)
   let deactivatedAt = getAccountDeactivatedAtFromItemData(itemData)
@@ -234,10 +250,17 @@ const ListItem = <ItemType extends string>({
                   ))}
                 </div>
               )}
+              {!!langTagsFromRecord?.length && (
+                <div className="flex ml-1">
+                  {langTagsFromRecord.map((tag) => (
+                    <SubjectTag key={tag} tag={tag} />
+                  ))}
+                </div>
+              )}
               {!!subjectStatus?.tags?.length && (
                 <div className="flex ml-1">
                   {subjectStatus?.tags.map((tag) => (
-                    <LabelChip key={tag}>{tag}</LabelChip>
+                    <SubjectTag key={tag} tag={tag} />
                   ))}
                 </div>
               )}
