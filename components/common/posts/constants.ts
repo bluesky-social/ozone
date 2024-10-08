@@ -3,6 +3,7 @@ export type TypeFilterKey =
   | 'posts_no_replies'
   | 'posts_with_media'
   | 'reposts'
+  | 'no_reposts'
   | 'quotes'
   | 'quotes_and_reposts'
 
@@ -12,6 +13,7 @@ export const TypeFiltersByKey: Record<
 > = {
   no_filter: { key: 'no_filter', text: 'No Filter' },
   posts_no_replies: { key: 'posts_no_replies', text: 'Exclude replies' },
+  no_reposts: { key: 'no_reposts', text: 'Exclude reposts' },
   posts_with_media: { key: 'posts_with_media', text: 'Media Only' },
   reposts: { key: 'reposts', text: 'Reposts Only' },
   quotes: { key: 'quotes', text: 'Quotes Only' },

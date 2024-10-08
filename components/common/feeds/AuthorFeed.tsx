@@ -40,6 +40,7 @@ export const useAuthorFeedQuery = ({
         TypeFiltersByKey.posts_with_media.key,
       ].includes(typeFilter)
       const isQuoteOrRepostFilter = [
+        TypeFiltersByKey.no_reposts.key,
         TypeFiltersByKey.reposts.key,
         TypeFiltersByKey.quotes.key,
         TypeFiltersByKey.quotes_and_reposts.key,
@@ -65,6 +66,9 @@ export const useAuthorFeedQuery = ({
             item.post.embed?.$type === 'app.bsky.embed.record#view'
           if (typeFilter === TypeFiltersByKey.reposts.key) {
             return isRepost
+          }
+          if (typeFilter === TypeFiltersByKey.no_reposts.key) {
+            return !isRepost
           }
           if (typeFilter === TypeFiltersByKey.quotes.key) {
             // When a quoted post is reposted, we don't want to consider that a quote post
