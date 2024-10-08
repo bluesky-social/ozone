@@ -174,7 +174,7 @@ const ListItem = <ItemType extends string>({
   // Derive language tag from record value if there isn't any tag in moderation.subjectStatus
   // which happens when a post has not been in the moderation system yet so we never tagged its language
   const langTagsFromRecord =
-    !isRepo && itemData ? getLangTagFromRecordValue(itemData) : []
+    isRecord && itemData ? getLangTagFromRecordValue(itemData) : []
 
   const subjectStatus = getSubjectStatusFromItemData(itemData)
   let repoHandle = getRepoHandleFromItemData(itemData)
