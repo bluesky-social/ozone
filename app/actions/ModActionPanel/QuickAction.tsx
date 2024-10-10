@@ -54,6 +54,7 @@ import {
   useLabelerAgent,
   usePermission,
 } from '@/shell/ConfigurationContext'
+import { SubjectTag } from 'components/tags/SubjectTag'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -588,7 +589,7 @@ function Form(
             )}
             <div className={`mb-3`}>
               <FormLabel label="Labels">
-                <LabelList className="-ml-1">
+                <LabelList className="-ml-1 flex-wrap">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
                   {allLabels.map((label) => {
                     return (
@@ -605,9 +606,9 @@ function Form(
             {!!subjectStatus?.tags?.length && (
               <div className={`mb-3`}>
                 <FormLabel label="Tags">
-                  <LabelList className="-ml-1">
+                  <LabelList className="-ml-1 flex-wrap">
                     {subjectStatus.tags.map((tag) => {
-                      return <LabelChip key={tag}>{tag}</LabelChip>
+                      return <SubjectTag key={tag} tag={tag} />
                     })}
                   </LabelList>
                 </FormLabel>
@@ -659,10 +660,11 @@ function Form(
                       name="labels"
                       formId={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
-                        const isExternalLabel = allLabels.some((l) => {
-                          return l.val === label && l.src !== config.did
+                        // If there's a label where the source is the current labeler, it's editable
+                        const isEditableLabel = allLabels.some((l) => {
+                          return l.val === label && l.src === config.did
                         })
-                        return !isSelfLabel(label) && !isExternalLabel
+                        return !isSelfLabel(label) && isEditableLabel
                       })}
                     />
                   </div>

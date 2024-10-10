@@ -14,6 +14,8 @@ export const PLC_DIRECTORY_URL =
 
 export const QUEUE_CONFIG = process.env.NEXT_PUBLIC_QUEUE_CONFIG || '{}'
 
+export const QUEUE_SEED = process.env.NEXT_PUBLIC_QUEUE_SEED || ''
+
 export const SOCIAL_APP_URL =
   process.env.NEXT_PUBLIC_SOCIAL_APP_URL ||
   (process.env.NODE_ENV === 'development'

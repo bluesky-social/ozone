@@ -58,7 +58,10 @@ export function SubjectTable(
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
             {!subjectStatuses.length && (
-              <EmptyRows isInitialLoading={isInitialLoading} />
+              <EmptyRows
+                isInitialLoading={isInitialLoading}
+                mayHaveMoreItems={showLoadMore}
+              />
             )}
             {subjectStatuses.map((subjectStatus) => (
               <SubjectRow
@@ -224,7 +227,13 @@ function SubjectRowHead() {
   )
 }
 
-function EmptyRows({ isInitialLoading }: { isInitialLoading: boolean }) {
+function EmptyRows({
+  isInitialLoading,
+  mayHaveMoreItems,
+}: {
+  isInitialLoading: boolean
+  mayHaveMoreItems: boolean
+}) {
   return (
     <tr>
       <td colSpan={5} className="text-center">
@@ -241,7 +250,17 @@ function EmptyRows({ isInitialLoading }: { isInitialLoading: boolean }) {
               title="No reports"
               className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
             />
-            Moderation queue is empty
+            {mayHaveMoreItems ? (
+              <>
+                <span>No subjects to show</span>
+                <br />
+                <span className="text-sm">
+                  Please click {'"Load More"'} button to check for more items
+                </span>
+              </>
+            ) : (
+              'Moderation queue is empty'
+            )}
           </p>
         )}
       </td>

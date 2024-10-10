@@ -13,6 +13,7 @@ import {
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneModerationQueryStatuses,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -23,16 +24,14 @@ import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { LanguagePicker } from '@/common/LanguagePicker'
 import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
-import { unique } from '@/lib/util'
+import { simpleHash, unique } from '@/lib/util'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
-import {
-  EmbedTypePicker,
-  EmbedTypePickerForModerationQueue,
-} from '@/common/EmbedTypePicker'
+import { EmbedTypePickerForModerationQueue } from '@/common/EmbedTypePicker'
+import { QUEUE_SEED } from '@/lib/constants'
 
 const TABS = [
   {
@@ -237,7 +236,7 @@ export const ReportsPageContent = () => {
         </div>
       </SectionHeader>
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
-        <div className='flex flex-row items-center gap-2'>
+        <div className="flex flex-row items-center gap-2">
           <LanguagePicker />
           <EmbedTypePickerForModerationQueue />
         </div>
@@ -382,24 +381,20 @@ const getQueueItems = async (
   queueName: string | null,
   attempt = 0,
 ) => {
-  const pageSize = 50
+  const pageSize = 100
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
     limit: pageSize,
     includeMuted: true,
     ...queryParams,
   })
 
-  const queueDivider = QUEUE_NAMES.length
   const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
   const statusesInQueue = queueName
     ? data.subjectStatuses.filter((status) => {
-        const subjectDid =
-          status.subject.$type === 'com.atproto.admin.defs#repoRef'
-            ? status.subject.did
-            : new AtUri(`${status.subject.uri}`).host
-        const queueDeciderCharCode =
-          `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
-        return queueDeciderCharCode % queueDivider === queueIndex
+        const subjectDid = ComAtprotoAdminDefs.isRepoRef(status.subject)
+          ? status.subject.did
+          : new AtUri(`${status.subject.uri}`).host
+        return getQueueIndex(subjectDid) === queueIndex
       })
     : data.subjectStatuses
 
@@ -419,4 +414,8 @@ const getQueueItems = async (
   }
 
   return { cursor: data.cursor, subjectStatuses: statusesInQueue }
+}
+
+function getQueueIndex(did: string) {
+  return simpleHash(did + QUEUE_SEED) % QUEUE_NAMES.length
 }

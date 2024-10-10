@@ -171,3 +171,13 @@ export function chunkArray<T>(arr: T[], chunkSize: number) {
   }
   return chunks
 }
+
+// @NOTE hash function is insecure, though suitable for basic purposes such as bucketing.
+export function simpleHash(str: string) {
+  let hash = 0
+  for (let i = 0; i < str.length; ++i) {
+    const chr = str.charCodeAt(i)
+    hash = ((hash << 5) - hash + chr) | 0
+  }
+  return hash
+}

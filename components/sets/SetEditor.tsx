@@ -16,13 +16,7 @@ const getSubmitButtonText = (setName: string | null, isSubmitting: boolean) => {
   return !!setName ? `Updating Set...` : 'Adding Set...'
 }
 
-const useSetEditor = ({
-  isNewSet,
-  onSuccess,
-}: {
-  isNewSet: boolean
-  onSuccess: () => void
-}) => {
+const useSetEditor = ({ onSuccess }: { onSuccess: () => void }) => {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const [submission, setSubmission] = useState<{
@@ -83,7 +77,6 @@ export function SetEditor({
   onSuccess: () => void
 }) {
   const { onFormSubmit, submission } = useSetEditor({
-    isNewSet: !setName,
     onSuccess,
   })
   return (

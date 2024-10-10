@@ -9,10 +9,10 @@ import {
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
-import { doesLabelNeedBlur } from '../labels'
 import { classNames } from '@/lib/util'
 import { ReplyParent } from './ReplyParent'
 import { ImageList } from './ImageList'
+import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 
 export function PostsTable({
   items,
@@ -138,15 +138,19 @@ const getImageSizeClass = (imageCount: number) =>
 
 // @TODO record embeds
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+  const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
+
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
-  const imageRequiresBlur = doesLabelNeedBlur(
+  const mediaFilters = getMediaFiltersForLabels(
     item.post.labels?.map(({ val }) => val),
   )
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
-    imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.blur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.grayscale ? 'grayscale' : '',
+    mediaFilters.translucent ? 'opacity-50 ' : '',
   )
 
   if (AppBskyEmbedImages.isView(embed)) {

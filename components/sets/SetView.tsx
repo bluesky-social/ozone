@@ -12,6 +12,11 @@ import { Card } from '@/common/Card'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { LabelChip } from '@/common/labels'
 
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
 export const SetView = ({ setName }: { setName: string }) => {
   const { data, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useSetValueList(setName)
@@ -80,6 +85,9 @@ export const SetView = ({ setName }: { setName: string }) => {
             <div>
               <p className="text-sm">{set.name}</p>
               <p className="text-sm dark:text-gray-300">{set.description}</p>
+              <p className="text-sm dark:text-gray-300">
+                Last updated: {dateFormatter.format(new Date(set.updatedAt))}
+              </p>
             </div>
             <div>
               <LabelChip>{set.setSize} values</LabelChip>
@@ -130,7 +138,7 @@ export const SetView = ({ setName }: { setName: string }) => {
       </Card>
       {hasNextPage && (
         <div className="flex justify-center py-3">
-          <LoadMoreButton onClick={fetchNextPage} />
+          <LoadMoreButton onClick={() => fetchNextPage()} />
         </div>
       )}
     </div>
