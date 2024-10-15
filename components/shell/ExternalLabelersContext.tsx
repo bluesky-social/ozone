@@ -11,7 +11,10 @@ import {
 import { unique } from '@/lib/util'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLocalStorage } from 'react-use'
-import { useConfigurationContext } from './ConfigurationContext'
+import {
+  useAppviewAgent,
+  useConfigurationContext,
+} from './ConfigurationContext'
 
 const KEY = 'external_labeler_value'
 
@@ -29,7 +32,8 @@ export const ExternalLabelersProvider = ({
 }: {
   children: ReactNode
 }) => {
-  const { config, labelerAgent, appviewAgent } = useConfigurationContext()
+  const { config, labelerAgent } = useConfigurationContext()
+  const appviewAgent = useAppviewAgent()
   const queryClient = useQueryClient()
 
   const [state = [], setState] = useLocalStorage<ExternalLabelers>(KEY, [], {
@@ -58,14 +62,18 @@ export const ExternalLabelersProvider = ({
     [setState, config.did],
   )
 
-  // Keep the labelers header up-to-date with the external labelers
+  // Keep the labeler agent's header up-to-date with the external labelers
   useEffect(() => {
     labelerAgent.configureLabelers([config.did, ...externalLabelers])
+  }, [labelerAgent, config.did, externalLabelers])
+
+  // Keep the appview agent's header up-to-date with the external labelers
+  useEffect(() => {
     // If we have an appviewAgent, make sure it respects all configured labelers
     if (appviewAgent) {
       appviewAgent.configureLabelers([config.did, ...externalLabelers])
     }
-  }, [labelerAgent, appviewAgent, config.did, externalLabelers])
+  }, [appviewAgent, config.did, externalLabelers])
 
   // Invalidate all queries whenever the external labelers (really) change
   const externalLabelersRef = useRef(externalLabelers)
