@@ -1,12 +1,12 @@
 /// <reference types="cypress" />"
 
-import { mockAuthResponse } from '../../support/api'
+import { API_URL, mockAuthResponse } from '../../support/api'
 
 describe('Authentication', () => {
   let authFixture
 
   beforeEach(() => {
-    cy.visit('http://localhost:3000')
+    cy.visit('http://127.0.0.1:3000')
     cy.fixture('auth.json').then((data) => (authFixture = data))
   })
 
@@ -21,7 +21,7 @@ describe('Authentication', () => {
       },
     })
 
-    cy.get('#service-url').should('have.value', 'https://bsky.social')
+    cy.get('#service-url').clear().type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()

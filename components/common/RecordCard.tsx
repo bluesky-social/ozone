@@ -5,8 +5,7 @@ import {
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
 } from '@atproto/api'
-import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
-import client from '@/lib/client'
+import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
 import { PostAsCard } from './posts/PostsFeed'
 import Link from 'next/link'
 import { LoadingDense, displayError, LoadingFailedDense } from './Loader'
@@ -16,6 +15,7 @@ import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   const { uri, showLabels = false } = props
@@ -53,19 +53,16 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   )
 }
 
-function PostCard(props: { uri: string; showLabels?: boolean }) {
-  const { uri, showLabels } = props
+function PostCard({ uri, showLabels }: { uri: string; showLabels?: boolean }) {
+  const labelerAgent = useLabelerAgent()
+
   const { error, data } = useQuery({
     retry: false,
     queryKey: ['postCard', { uri }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down posts
-      const { data: post } = await client.api.app.bsky.feed.getPostThread(
-        {
-          uri,
-          depth: 0,
-        },
-        { headers: client.proxyHeaders() },
+      const { data: post } = await labelerAgent.api.app.bsky.feed.getPostThread(
+        { uri, depth: 0 },
       )
       return post
     },
@@ -89,7 +86,7 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
         renderRecord={(record) => (
           <PostAsCard
             dense
-            controls={false}
+            controls={[]}
             item={{
               post: {
                 uri: record.uri,
@@ -119,28 +116,31 @@ function PostCard(props: { uri: string; showLabels?: boolean }) {
   return (
     <PostAsCard
       dense
-      controls={false}
-      item={{ post: data.thread.post }}
       showLabels={showLabels}
+      item={{ post: data.thread.post }}
+      controls={['like', 'repost', 'workspace']}
     />
   )
 }
 
-function BaseRecordCard(props: {
+function BaseRecordCard({
+  uri,
+  renderRecord,
+}: {
   uri: string
   renderRecord: (
     record: ToolsOzoneModerationDefs.RecordViewDetail,
   ) => JSX.Element
 }) {
-  const { uri, renderRecord } = props
+  const labelerAgent = useLabelerAgent()
+
   const { data: record, error } = useQuery({
     retry: false,
     queryKey: ['recordCard', { uri }],
     queryFn: async () => {
-      const { data } = await client.api.tools.ozone.moderation.getRecord(
-        { uri },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.tools.ozone.moderation.getRecord({
+        uri,
+      })
       return data
     },
   })
@@ -178,26 +178,26 @@ function GenericRecordCard({
 }
 
 const useRepoAndProfile = ({ did }: { did: string }) => {
+  const labelerAgent = useLabelerAgent()
+
   return useQuery({
     retry: false,
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
       // @TODO when unifying admin auth, ensure admin can see taken-down profiles
       const getRepo = async () => {
-        const { data: repo } = await client.api.tools.ozone.moderation.getRepo(
-          { did },
-          { headers: client.proxyHeaders() },
-        )
+        const { data: repo } =
+          await labelerAgent.api.tools.ozone.moderation.getRepo({
+            did,
+          })
         return repo
       }
       const getProfile = async () => {
         try {
-          const { data: profile } = await client.api.app.bsky.actor.getProfile(
-            {
+          const { data: profile } =
+            await labelerAgent.api.app.bsky.actor.getProfile({
               actor: did,
-            },
-            { headers: client.proxyHeaders() },
-          )
+            })
           return profile
         } catch (err) {
           if (err?.['status'] === 400) {
@@ -339,6 +339,34 @@ export function RepoCard(props: { did: string }) {
             <p className="text-gray-500 dark:text-gray-50 break-words">
               {profile.description}
             </p>
+          )}
+          {!!profile && (
+            <div className="flex flex-row items-center gap-2">
+              <Link
+                href={`/repositories/${repo.did}?tab=followers`}
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+              >
+                <span className="text-sm">
+                  {pluralize(profile?.followersCount || 0, 'follower')}
+                </span>
+              </Link>
+              <Link
+                href={`/repositories/${repo.did}?tab=follows`}
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+              >
+                <span className="text-sm">
+                  {pluralize(profile?.followsCount || 0, 'follow')}
+                </span>
+              </Link>
+              <Link
+                href={`/repositories/${repo.did}?tab=posts`}
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+              >
+                <span className="text-sm">
+                  {pluralize(profile?.postsCount || 0, 'post')}
+                </span>
+              </Link>
+            </div>
           )}
           {takendown && (
             <p className="pt-1 pb-1">

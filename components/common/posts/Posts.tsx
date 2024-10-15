@@ -9,6 +9,7 @@ import { Input } from '../forms'
 import { PostFilter } from './Filter'
 import { TypeFilterKey } from './constants'
 import { Loading } from '../Loader'
+import { Alert } from '../Alert'
 
 enum Mode {
   Feed,
@@ -16,6 +17,7 @@ enum Mode {
 }
 
 export function Posts({
+  isFromAppview,
   items,
   onReport,
   onLoadMore,
@@ -25,6 +27,7 @@ export function Posts({
   typeFilter,
   setTypeFilter,
 }: {
+  isFromAppview?: boolean
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
   onLoadMore?: () => void
@@ -82,6 +85,17 @@ export function Posts({
           </div>
         </div>
       </div>
+
+      {isFromAppview && (
+        <div className="mx-auto max-w-3xl w-full pt-2 sm:pt-4 sm:px-6 lg:px-8">
+          <Alert
+            type="warning"
+            title="Posts sourced from appview"
+            body={`The user may have blocked your labeler so the posts were loaded directly from appview without authentication. This may cause takendown posts to not show up in the feed.`}
+          />
+        </div>
+      )}
+
       {!isFetching && !items.length ? (
         <EmptyFeed />
       ) : (

@@ -3,10 +3,12 @@
 import { commands } from '@uiw/react-md-editor'
 import dynamic from 'next/dynamic'
 import { DocumentCheckIcon } from '@heroicons/react/24/outline'
+import { useState } from 'react'
 
 import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { useCommunicationTemplateEditor } from './hooks'
+import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -24,9 +26,17 @@ export const CommunicationTemplateForm = ({
     onSubmit,
     isSaving,
   } = useCommunicationTemplateEditor(templateId)
+  const [lang, setLang] = useState<string | undefined>()
 
   return (
     <form onSubmit={onSubmit}>
+      <FormLabel label="Language" htmlFor="lang" className="flex-1 mb-3">
+        <input type="hidden" name="lang" value={lang} />
+        <LanguageSelectorDropdown
+          selectedLang={lang}
+          setSelectedLang={setLang}
+        />
+      </FormLabel>
       <FormLabel label="Name" htmlFor="name" className="flex-1 mb-3">
         <Input
           type="text"

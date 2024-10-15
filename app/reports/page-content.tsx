@@ -1,5 +1,5 @@
 'use client'
-import { useContext, useCallback } from 'react'
+import { useCallback } from 'react'
 import {
   ReadonlyURLSearchParams,
   usePathname,
@@ -8,26 +8,30 @@ import {
 } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
+  Agent,
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneModerationQueryStatuses,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
-import client from '@/lib/client'
 import { validSubjectString } from '@/lib/types'
-import { emitEvent } from '@/mod-event/helpers/emitEvent'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
-import { AuthContext } from '@/shell/AuthContext'
 import { ButtonGroup } from '@/common/buttons'
-import { useFluentReportSearch } from '@/reports/useFluentReportSearch'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { LanguagePicker } from '@/common/LanguagePicker'
 import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
+import { simpleHash, unique } from '@/lib/util'
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { EmbedTypePickerForModerationQueue } from '@/common/EmbedTypePicker'
+import { QUEUE_SEED } from '@/lib/constants'
 
 const TABS = [
   {
@@ -63,7 +67,7 @@ const buildPageTitle = ({
   currentTab: string
   takendown: boolean
   includeMuted: boolean
-  appealed: boolean
+  appealed: string | null
 }) => {
   const titleFromTab =
     currentTab === 'all'
@@ -79,8 +83,10 @@ const buildPageTitle = ({
     additionalFragments.push('Include Muted')
   }
 
-  if (appealed) {
-    additionalFragments.push('Appealed')
+  if (appealed === 'true') {
+    additionalFragments.push('Only Appeals')
+  } else if (appealed === 'false') {
+    additionalFragments.push('No Appeals')
   }
 
   const additionalTitle = additionalFragments.length
@@ -137,9 +143,23 @@ const ResolvedFilters = () => {
         },
         {
           id: 'appealed',
-          text: 'Appealed',
-          onClick: () => updateParams('appealed', true),
-          isActive: appealed === 'true',
+          text:
+            appealed === 'true'
+              ? 'Only Appeals'
+              : appealed === 'false'
+              ? 'No Appeals'
+              : 'Appeals',
+          onClick: () => {
+            if (appealed === 'true') {
+              updateParams('appealed', false)
+            } else if (appealed === 'false') {
+              // setting the same value toggles the param off
+              updateParams('appealed', false)
+            } else {
+              updateParams('appealed', true)
+            }
+          },
+          isActive: appealed === 'true' || appealed === 'false',
         },
       ]}
     />
@@ -162,19 +182,13 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
 }
 
 export const ReportsPageContent = () => {
+  const emitEvent = useEmitEvent()
   const params = useSearchParams()
   const quickOpenParam = params.get('quickOpen') ?? ''
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
-  const onlyMuted = !!params.get('onlyMuted')
-  const appealed = !!params.get('appealed')
+  const appealed = params.get('appealed')
   const reviewState = params.get('reviewState')
-  const tags = params.get('tags')
-  const excludeTags = params.get('excludeTags')
-  const queueName = params.get('queueName')
-  const { sortField, sortDirection } = getSortParams(params)
-  const { getReportSearchParams } = useFluentReportSearch()
-  const { lastReviewedBy, subject, reporters } = getReportSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const setQuickActionPanelSubject = (subject: string) => {
@@ -188,77 +202,9 @@ export const ReportsPageContent = () => {
   }
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
-  const { isLoggedIn } = useContext(AuthContext)
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
-    useInfiniteQuery({
-      enabled: isLoggedIn,
-      queryKey: [
-        'events',
-        {
-          subject,
-          sortField,
-          sortDirection,
-          reviewState,
-          lastReviewedBy,
-          reporters,
-          takendown,
-          appealed,
-          tags,
-          excludeTags,
-          queueName,
-          includeMuted,
-          onlyMuted,
-        },
-      ],
-      queryFn: async ({ pageParam }) => {
-        const queryParams: Parameters<typeof getModerationQueue>[0] = {
-          cursor: pageParam,
-        }
+    useModerationQueueQuery()
 
-        if (subject) {
-          queryParams.subject = subject
-        }
-
-        if (takendown) {
-          queryParams.takendown = takendown
-        }
-
-        if (includeMuted) {
-          queryParams.includeMuted = includeMuted
-        }
-
-        if (onlyMuted) {
-          queryParams.onlyMuted = onlyMuted
-        }
-
-        if (appealed) {
-          queryParams.appealed = appealed
-        }
-
-        if (tags) {
-          queryParams.tags = tags.split(',')
-        }
-
-        if (excludeTags) {
-          queryParams.excludeTags = excludeTags.split(',')
-        }
-
-        // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
-        Object.entries({
-          sortField,
-          sortDirection,
-          reviewState,
-          lastReviewedBy,
-        }).forEach(([key, value]) => {
-          if (value) {
-            queryParams[key] = value
-          }
-        })
-
-        return await getModerationQueue(queryParams, queueName)
-      },
-      getNextPageParam: (lastPage) => lastPage.cursor,
-    })
   const subjectStatuses =
     data?.pages.flatMap((page) => page.subjectStatuses) ?? []
   const currentTab = getTabFromParams({ reviewState })
@@ -290,7 +236,10 @@ export const ReportsPageContent = () => {
         </div>
       </SectionHeader>
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
-        <LanguagePicker />
+        <div className="flex flex-row items-center gap-2">
+          <LanguagePicker />
+          <EmbedTypePickerForModerationQueue />
+        </div>
         <ResolvedFilters />
       </div>
       <SubjectTable
@@ -333,39 +282,140 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
   return 'all'
 }
 
-async function getModerationQueue(
-  opts: ToolsOzoneModerationQueryStatuses.QueryParams = {},
-  queueName: string | null,
-) {
-  const { data } = await client.api.tools.ozone.moderation.queryStatuses(
-    {
-      limit: 50,
-      includeMuted: true,
-      ...opts,
-    },
-    { headers: client.proxyHeaders() },
-  )
+function useModerationQueueQuery() {
+  const labelerAgent = useLabelerAgent()
+  const params = useSearchParams()
 
-  const queueDivider = QUEUE_NAMES.length
+  const takendown = !!params.get('takendown')
+  const includeMuted = !!params.get('includeMuted')
+  const onlyMuted = !!params.get('onlyMuted')
+  const appealed = params.get('appealed')
+  const reviewState = params.get('reviewState')
+  const tags = params.get('tags')
+  const excludeTags = params.get('excludeTags')
+  const queueName = params.get('queueName')
+  const { sortField, sortDirection } = getSortParams(params)
+  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
+    useFluentReportSearchParams()
+
+  return useInfiniteQuery({
+    queryKey: [
+      'events',
+      {
+        includeAllUserRecords,
+        subject,
+        sortField,
+        sortDirection,
+        reviewState,
+        lastReviewedBy,
+        reporters,
+        takendown,
+        appealed,
+        tags,
+        excludeTags,
+        queueName,
+        includeMuted,
+        onlyMuted,
+      },
+    ],
+    queryFn: async ({ pageParam }) => {
+      const queryParams: ToolsOzoneModerationQueryStatuses.QueryParams = {
+        cursor: pageParam,
+      }
+
+      if (includeAllUserRecords) {
+        queryParams.includeAllUserRecords = includeAllUserRecords
+      }
+
+      if (subject) {
+        queryParams.subject = subject
+      }
+
+      if (takendown) {
+        queryParams.takendown = takendown
+      }
+
+      if (includeMuted) {
+        queryParams.includeMuted = includeMuted
+      }
+
+      if (onlyMuted) {
+        queryParams.onlyMuted = onlyMuted
+      }
+
+      if (appealed === 'true') {
+        queryParams.appealed = true
+      } else if (appealed === 'false') {
+        queryParams.appealed = false
+      }
+
+      if (tags) {
+        queryParams.tags = tags.split(',')
+      }
+
+      if (excludeTags) {
+        queryParams.excludeTags = excludeTags.split(',')
+      }
+
+      // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
+      Object.entries({
+        sortField,
+        sortDirection,
+        reviewState,
+        lastReviewedBy,
+      }).forEach(([key, value]) => {
+        if (value) {
+          queryParams[key] = value
+        }
+      })
+
+      return getQueueItems(labelerAgent, queryParams, queueName)
+    },
+    getNextPageParam: (lastPage) => lastPage.cursor,
+  })
+}
+
+const getQueueItems = async (
+  labelerAgent: Agent,
+  queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
+  queueName: string | null,
+  attempt = 0,
+) => {
+  const pageSize = 100
+  const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
+    limit: pageSize,
+    includeMuted: true,
+    ...queryParams,
+  })
+
   const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
   const statusesInQueue = queueName
     ? data.subjectStatuses.filter((status) => {
-        const subjectDid =
-          status.subject.$type === 'com.atproto.admin.defs#repoRef'
-            ? status.subject.did
-            : new AtUri(`${status.subject.uri}`).host
-        const queueDeciderCharCode =
-          `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
-        return queueDeciderCharCode % queueDivider === queueIndex
+        const subjectDid = ComAtprotoAdminDefs.isRepoRef(status.subject)
+          ? status.subject.did
+          : new AtUri(`${status.subject.uri}`).host
+        return getQueueIndex(subjectDid) === queueIndex
       })
     : data.subjectStatuses
+
+  // This is a recursive call to get items in queue if the current page
+  // gives us less than full page size and there are more items to fetch
+  // also, use a circuit breaker to make sure we never accidentally call this more than 10 times
+  if (statusesInQueue.length === 0 && data.cursor && attempt < 10) {
+    return getQueueItems(
+      labelerAgent,
+      {
+        ...queryParams,
+        cursor: data.cursor,
+      },
+      queueName,
+      ++attempt,
+    )
+  }
 
   return { cursor: data.cursor, subjectStatuses: statusesInQueue }
 }
 
-function unique<T>(arr: T[]) {
-  const set = new Set(arr)
-  const result: T[] = []
-  set.forEach((val) => result.push(val))
-  return result
+function getQueueIndex(did: string) {
+  return simpleHash(did + QUEUE_SEED) % QUEUE_NAMES.length
 }

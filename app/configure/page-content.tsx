@@ -1,34 +1,37 @@
 import { useEffect } from 'react'
 import { useTitle } from 'react-use'
-import client from '@/lib/client'
-import { useSession } from '@/lib/useSession'
 import { Tabs, TabView } from '@/common/Tabs'
 import { LabelerConfig } from 'components/config/Labeler'
 import { MemberConfig } from 'components/config/Member'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
-import { emitEvent } from '@/mod-event/helpers/emitEvent'
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { SetsConfig } from '@/config/Sets'
 
 enum Views {
   Configure,
   Members,
+  Sets,
 }
 
 const TabKeys = {
   configure: Views.Configure,
   members: Views.Members,
+  sets: Views.Sets,
 }
 
 export default function ConfigurePageContent() {
   useTitle('Configure')
-  const session = useSession()
-  useEffect(() => {
-    client.reconfigure() // Ensure config is up to date
-  }, [])
-  const isServiceAccount = !!session && session?.did === session?.config.did
+
+  const { reconfigure } = useConfigurationContext()
+  useEffect(() => void reconfigure(), [reconfigure]) // Ensure config is up to date
+
+  const emitEvent = useEmitEvent()
+
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -54,7 +57,6 @@ export default function ConfigurePageContent() {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
 
-  if (!session) return null
   const views: TabView<Views>[] = [
     {
       view: Views.Configure,
@@ -63,6 +65,10 @@ export default function ConfigurePageContent() {
     {
       view: Views.Members,
       label: 'Members',
+    },
+    {
+      view: Views.Sets,
+      label: 'Sets',
     },
   ]
 
@@ -74,10 +80,9 @@ export default function ConfigurePageContent() {
         views={views}
         fullWidth
       />
-      {currentView === Views.Configure && (
-        <LabelerConfig session={session} isServiceAccount={isServiceAccount} />
-      )}
+      {currentView === Views.Configure && <LabelerConfig />}
       {currentView === Views.Members && <MemberConfig />}
+      {currentView === Views.Sets && <SetsConfig />}
 
       <ModActionPanelQuick
         open={!!quickOpenParam}

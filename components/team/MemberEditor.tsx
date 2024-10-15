@@ -6,10 +6,10 @@ import { Alert } from '@/common/Alert'
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { Checkbox, FormLabel, Input, Select } from '@/common/forms'
-import client from '@/lib/client'
 import { getDidFromHandle } from '@/lib/identity'
-import { queryClient } from 'components/QueryClient'
 import { MemberRoleNames } from './Role'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useQueryClient } from '@tanstack/react-query'
 
 const getSubmitButtonText = (
   member: ToolsOzoneTeamDefs.Member | null,
@@ -28,6 +28,9 @@ const useMemberEditor = ({
   isNewMember: boolean
   onSuccess: () => void
 }) => {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
     error: string
@@ -62,23 +65,17 @@ const useMemberEditor = ({
       // anything in the UI so we don't need to type it
       let request: Promise<unknown>
       if (isNewMember) {
-        request = client.api.tools.ozone.team.addMember(
-          {
-            did,
-            role,
-          },
-          { encoding: 'application/json', headers: client.proxyHeaders() },
-        )
+        request = labelerAgent.api.tools.ozone.team.addMember({
+          did,
+          role,
+        })
       } else {
         const disabled = formData.get('disabled') === 'true'
-        request = client.api.tools.ozone.team.updateMember(
-          {
-            did,
-            role,
-            disabled,
-          },
-          { encoding: 'application/json', headers: client.proxyHeaders() },
-        )
+        request = labelerAgent.api.tools.ozone.team.updateMember({
+          did,
+          role,
+          disabled,
+        })
       }
 
       await toast.promise(request, {

@@ -1,9 +1,10 @@
-import { Alert } from '@/common/Alert'
-import { ComponentProps, useState } from 'react'
-import client from '@/lib/client'
-import { useQuery } from '@tanstack/react-query'
-import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { ChatBskyModerationGetActorMetadata } from '@atproto/api'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
+import { useQuery } from '@tanstack/react-query'
+import { ComponentProps, useState } from 'react'
+
+import { Alert } from '@/common/Alert'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const useMessageActorMeta = ({
   did,
@@ -12,6 +13,7 @@ export const useMessageActorMeta = ({
   did: string
   enabled: boolean
 }) => {
+  const labelerAgent = useLabelerAgent()
   // This query is a bit expensive but the data does change relatively frequently so we wanna cache it for only 10m
   return useQuery<
     unknown,
@@ -24,10 +26,10 @@ export const useMessageActorMeta = ({
     enabled,
     queryKey: ['messageActorMeta', { did }],
     queryFn: async () => {
-      const { data } = await client.api.chat.bsky.moderation.getActorMetadata(
-        { actor: did },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } =
+        await labelerAgent.api.chat.bsky.moderation.getActorMetadata({
+          actor: did,
+        })
 
       return data
     },

@@ -1,22 +1,21 @@
 'use client'
 import { useQuery } from '@tanstack/react-query'
 import { useTitle } from 'react-use'
-import client from '@/lib/client'
+
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { EventView } from '@/mod-event/View'
 import { MOD_EVENT_TITLES } from '@/mod-event/constants'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export default function EventViewPage({ params }: { params: { id: string } }) {
   const id = decodeURIComponent(params.id)
+  const labelerAgent = useLabelerAgent()
   const { data: event, error } = useQuery({
     queryKey: ['event', { id }],
     queryFn: async () => {
-      const { data } = await client.api.tools.ozone.moderation.getEvent(
-        {
-          id: parseInt(id, 10),
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.tools.ozone.moderation.getEvent({
+        id: parseInt(id, 10),
+      })
       return data
     },
   })

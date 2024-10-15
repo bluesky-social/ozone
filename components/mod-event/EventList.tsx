@@ -1,14 +1,83 @@
-import { ModEventListQueryOptions, useModEventList } from './useModEventList'
+import {
+  ModEventListQueryOptions,
+  useModEventList,
+  WorkspaceConfirmationOptions,
+} from './useModEventList'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ModEventItem } from './EventItem'
-import { Dropdown } from '@/common/Dropdown'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
 import { useState } from 'react'
 import { ActionButton } from '@/common/buttons'
-import { FunnelIcon as FunnelEmptyIcon } from '@heroicons/react/24/outline'
-import { FunnelIcon as FunnelFilledIcon } from '@heroicons/react/24/solid'
+import {
+  FunnelIcon as FunnelEmptyIcon,
+  EyeSlashIcon,
+  EyeIcon,
+} from '@heroicons/react/24/outline'
+import {
+  Cog8ToothIcon,
+  FunnelIcon as FunnelFilledIcon,
+} from '@heroicons/react/24/solid'
 import { EventFilterPanel } from './FilterPanel'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+
+const getConfirmWorkspaceTitle = (
+  showWorkspaceConfirmation: WorkspaceConfirmationOptions,
+) => {
+  switch (showWorkspaceConfirmation) {
+    case 'creators':
+      return 'Add creators to workspace'
+    case 'subjects':
+      return 'Add subjects to workspace'
+    case 'subject-authors':
+      return 'Add subject authors to workspace'
+    default:
+      return ''
+  }
+}
+
+const WorkspaceConfirmationDescription = ({
+  showWorkspaceConfirmation,
+}: {
+  showWorkspaceConfirmation: WorkspaceConfirmationOptions
+}) => {
+  if (showWorkspaceConfirmation === 'creators') {
+    return (
+      <p>
+        The creators of all the events you can see below will be added to
+        workspace. <br />A use-case for this may be when needing to bulk review
+        all reports of a certain subject.
+      </p>
+    )
+  }
+
+  if (showWorkspaceConfirmation === 'subjects') {
+    return (
+      <p>
+        Subjects (accounts, posts, lists, starterpacks etc.) of all the events
+        you can see below will be added to workspace. <br />A use-case for this
+        may be when needing to bulk review all subjects reported with a certain
+        keyword or all subjects that were labelled with a certain label in the
+        last 24hrs.
+      </p>
+    )
+  }
+
+  if (showWorkspaceConfirmation === 'subject-authors') {
+    return (
+      <p>
+        Authors of the subjects (posts, lists, starterpacks etc.) of all the
+        events you can see below will be added to workspace. <br />A use-case
+        for this may be when needing to bulk review <b>only</b> the authors of
+        posts/lists/starterpacks etc. reported with a certain keyword in the
+        last 24hrs.
+      </p>
+    )
+  }
+
+  return null
+}
 
 const Header = ({
   subjectTitle,
@@ -80,9 +149,14 @@ export const ModEventList = (
     oldestFirst,
     createdAfter,
     createdBefore,
+    showContentPreview,
     applyFilterMacro,
     changeListFilter,
     resetListFilters,
+    toggleContentPreview,
+    showWorkspaceConfirmation,
+    setShowWorkspaceConfirmation,
+    addToWorkspace,
   } = useModEventList(props)
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
@@ -90,6 +164,41 @@ export const ModEventList = (
   const subjectTitle = getSubjectTitle(modEvents?.[0]?.subject)
   const noEvents = modEvents.length === 0 && !isInitialLoadingModEvents
   const isShowingEventsByCreator = !!props.createdBy
+  const isMultiSubjectView =
+    includeAllUserRecords || isEntireHistoryView || isShowingEventsByCreator
+  const eventActions: DropdownItem[] = [
+    {
+      text: (
+        <span className="flex flex-row items-center">
+          {!hasFilter ? (
+            <FunnelEmptyIcon className="h-3 w-3 mr-1" />
+          ) : (
+            <FunnelFilledIcon className="h-3 w-3 mr-1" />
+          )}{' '}
+          {showFiltersPanel ? 'Hide Config' : 'Show Config'}
+        </span>
+      ),
+      onClick: () => setShowFiltersPanel((current) => !current),
+    },
+  ]
+
+  if (!noEvents) {
+    eventActions.push(
+      {
+        text: 'Add creators to workspace',
+        onClick: () => setShowWorkspaceConfirmation('creators'),
+      },
+      {
+        text: 'Add subjects to workspace',
+        onClick: () => setShowWorkspaceConfirmation('subjects'),
+      },
+      {
+        text: 'Add subject authors to workspace',
+        onClick: () => setShowWorkspaceConfirmation('subject-authors'),
+      },
+    )
+  }
+
   return (
     <div className="mr-1">
       <div className="flex flex-row justify-between items-center">
@@ -111,18 +220,49 @@ export const ModEventList = (
             Moderation event stream
           </h4>
         )}
-        <ActionButton
-          size="xs"
-          appearance="outlined"
-          onClick={() => setShowFiltersPanel((current) => !current)}
-        >
-          {hasFilter ? (
-            <FunnelFilledIcon className="h-3 w-3 mr-1" />
-          ) : (
-            <FunnelEmptyIcon className="h-3 w-3 mr-1" />
+        <div className="flex flex-row">
+          {isMultiSubjectView && (
+            <ActionButton
+              size="xs"
+              className="mr-2"
+              appearance="outlined"
+              title="Show record content preview for each event"
+              onClick={() => toggleContentPreview()}
+            >
+              {showContentPreview ? (
+                <EyeSlashIcon className="h-3 w-3 mx-1" />
+              ) : (
+                <EyeIcon className="h-3 w-3 mx-1" />
+              )}
+            </ActionButton>
           )}
-          <span className="text-xs">Configure</span>
-        </ActionButton>
+
+          <ConfirmationModal
+            onConfirm={() => {
+              addToWorkspace().then(() => setShowWorkspaceConfirmation(null))
+            }}
+            isOpen={!!showWorkspaceConfirmation}
+            setIsOpen={() => setShowWorkspaceConfirmation(null)}
+            confirmButtonText={'Add to workspace'}
+            title={getConfirmWorkspaceTitle(showWorkspaceConfirmation)}
+            description={
+              <WorkspaceConfirmationDescription
+                showWorkspaceConfirmation={showWorkspaceConfirmation}
+              />
+            }
+          />
+          <Dropdown
+            className="inline-flex flex-row justify-center rounded-md border border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 px-4 py-1 text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 items-center"
+            items={eventActions}
+            rightAligned
+          >
+            <Cog8ToothIcon
+              className="-ml-1 mr-2 h-4 w-4 text-gray-400"
+              aria-hidden="true"
+            />
+            <span className="text-xs">Options</span>
+          </Dropdown>
+        </div>
       </div>
       {showFiltersPanel && (
         <EventFilterPanel
@@ -177,11 +317,10 @@ export const ModEventList = (
                   // may be reporting different subjects
                   isEntireHistoryView || isShowingEventsByCreator
                 }
-                showContentDetails={
-                  includeAllUserRecords ||
-                  isEntireHistoryView ||
-                  isShowingEventsByCreator
-                }
+                // When the event history is being displayed for a single record/subject
+                // there's no point showing the preview in each event
+                showContentPreview={showContentPreview && isMultiSubjectView}
+                showContentDetails={isMultiSubjectView}
               />
             )
           })

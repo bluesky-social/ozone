@@ -12,7 +12,7 @@ import {
   TagIcon,
 } from '@heroicons/react/24/outline'
 import { ComponentProps, Fragment } from 'react'
-import { useLabelerServiceDef } from './useLabelerDefinition'
+import { useLabelerDefinitionQuery } from './useLabelerDefinition'
 import { isSelfLabel, toLabelVal } from './util'
 
 export function LabelList(props: ComponentProps<'div'>) {
@@ -39,7 +39,7 @@ export function LabelChip(props: ComponentProps<'span'>) {
   const { className = '', ...others } = props
   return (
     <span
-      className={`inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold ${className}`}
+      className={`${className} inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold`}
       {...others}
     />
   )
@@ -91,7 +91,7 @@ export const ModerationLabel = ({
   label: ComAtprotoLabelDefs.Label
   recordAuthorDid?: string
 } & ComponentProps<'span'>) => {
-  const labelerServiceDef = useLabelerServiceDef(label.src)
+  const { data: labelerServiceDef } = useLabelerDefinitionQuery(label.src)
   const isFromCurrentService = label.src === OZONE_SERVICE_DID
 
   const labelVal = toLabelVal(label, recordAuthorDid)
@@ -106,7 +106,7 @@ export const ModerationLabel = ({
   })
 
   return (
-    <Popover className="relative">
+    <Popover className="relative z-20">
       {({ open }) => (
         <>
           <Popover.Button className="ring-none">

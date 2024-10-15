@@ -133,9 +133,9 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
 export const buildAtUriFromFragments = (
   fragments: BlueSkyAppUrlFragments | null,
 ) => {
-  if (fragments?.did) {
+  if (fragments?.did || fragments?.handle) {
     const uri = AtUri.make(
-      `${fragments?.did}`,
+      `${fragments?.did || fragments?.handle}`,
       fragments.collection,
       fragments.rkey,
     )
@@ -162,4 +162,22 @@ export function pluralize(
 ) {
   const suffix = count === 1 ? singular : plural
   return includeCount ? `${count} ${suffix}` : suffix
+}
+
+export function chunkArray<T>(arr: T[], chunkSize: number) {
+  const chunks: T[][] = []
+  for (let i = 0; i < arr.length; i += chunkSize) {
+    chunks.push(arr.slice(i, i + chunkSize))
+  }
+  return chunks
+}
+
+// @NOTE hash function is insecure, though suitable for basic purposes such as bucketing.
+export function simpleHash(str: string) {
+  let hash = 0
+  for (let i = 0; i < str.length; ++i) {
+    const chr = str.charCodeAt(i)
+    hash = ((hash << 5) - hash + chr) | 0
+  }
+  return hash
 }

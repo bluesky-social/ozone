@@ -1,37 +1,49 @@
 import { AppBskyLabelerService } from '@atproto/api'
+import { OZONE_PUBLIC_URL, OZONE_SERVICE_DID } from './constants'
 import { DidDocData, resolveDidDocData } from './identity'
 
-export async function getConfig(labelerDid?: string): Promise<OzoneConfig> {
+export async function getConfig(): Promise<OzoneConfig> {
   let doc: DidDocData | null = null
   let meta: OzoneMeta | null = null
-  labelerDid = labelerDid?.split('#')[0] // ensure no service id
+  const labelerDid = OZONE_SERVICE_DID?.split('#')[0] // ensure no service id
   if (labelerDid) {
     doc = await resolveDidDocData(labelerDid)
     const labelerUrl = doc && getServiceUrlFromDoc(doc, 'atproto_labeler')
-    if (labelerUrl) {
-      meta = await getOzoneMeta(labelerUrl)
+    if (process.env.NODE_ENV === 'development' && doc && labelerUrl) {
+      meta = {
+        did: labelerDid,
+        url: labelerUrl,
+        publicKey: getDidKeyFromDoc(doc, 'atproto_label')!,
+      }
     } else {
-      meta = await getOzoneMeta()
+      meta = await getOzoneMeta(
+        labelerUrl || OZONE_PUBLIC_URL || window.location.origin,
+      )
     }
   } else {
-    meta = await getOzoneMeta()
+    meta = await getOzoneMeta(OZONE_PUBLIC_URL || window.location.origin)
     if (meta) {
       doc = await resolveDidDocData(meta.did)
     }
   }
-  labelerDid ??= meta?.did
-  if (!labelerDid) {
+
+  const did = meta?.did ?? labelerDid
+
+  if (!did) {
     throw new Error('Could not determine an Ozone service DID')
+  } else if (labelerDid && did !== labelerDid) {
+    throw new Error(
+      'Mismatch between Ozone service DID and Ozone service metadata',
+    )
   }
+
   const labelerUrl = doc && getServiceUrlFromDoc(doc, 'atproto_labeler')
   const labelerKey = doc && getDidKeyFromDoc(doc, 'atproto_label')
   const handle = doc && getHandleFromDoc(doc)
   const pdsUrl = doc && getServiceUrlFromDoc(doc, 'atproto_pds')
-  const record = pdsUrl
-    ? await getLabelerServiceRecord(pdsUrl, labelerDid)
-    : null
+  const record = pdsUrl ? await getLabelerServiceRecord(pdsUrl, did) : null
   return {
-    did: labelerDid,
+    did,
     doc,
     meta,
     handle,
@@ -54,7 +66,7 @@ export async function getConfig(labelerDid?: string): Promise<OzoneConfig> {
   }
 }
 
-async function getOzoneMeta(serviceUrl = window.location.origin) {
+async function getOzoneMeta(serviceUrl: string) {
   try {
     const url = new URL('/.well-known/ozone-metadata.json', serviceUrl)
     const res = await fetch(url)
@@ -75,10 +87,7 @@ function getHandleFromDoc(doc: DidDocData) {
   return handleAka.replace('at://', '')
 }
 
-export function getDidKeyFromDoc(
-  doc: DidDocData,
-  keyId: string,
-): string | null {
+function getDidKeyFromDoc(doc: DidDocData, keyId: string): string | null {
   return doc.verificationMethods[keyId] ?? null
 }
 
@@ -113,7 +122,7 @@ export function withDocAndMeta(config: OzoneConfig) {
   return config as OzoneConfigFull
 }
 
-export type OzoneMeta = { did: string; url: string; publicKey: string }
+type OzoneMeta = { did: string; url: string; publicKey: string }
 
 export type OzoneConfig = {
   did: string

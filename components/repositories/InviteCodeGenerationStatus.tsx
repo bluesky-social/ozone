@@ -2,14 +2,16 @@ import { Dialog, Transition } from '@headlessui/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useState } from 'react'
 
-import { ActionButton } from '@/common/buttons'
-import { LabelChip } from '@/common/labels'
-import client from '@/lib/client'
-import { Checkbox, Textarea } from '@/common/forms'
 import { Alert } from '@/common/Alert'
+import { ActionButton } from '@/common/buttons'
+import { Checkbox, Textarea } from '@/common/forms'
+import { LabelChip } from '@/common/labels'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 const useInviteCodeMutation = ({ did, id }) => {
   const queryClient = useQueryClient()
+  const labelerAgent = useLabelerAgent()
+
   const mutation = useMutation<
     { success: boolean },
     unknown,
@@ -25,23 +27,17 @@ const useInviteCodeMutation = ({ did, id }) => {
         ? 'disableAccountInvites'
         : 'enableAccountInvites'
 
-      const result = await client.api.com.atproto.admin[mutator](
-        { account: did, note },
-        {
-          headers: client.proxyHeaders(),
-          encoding: 'application/json',
-        },
-      )
+      const result = await labelerAgent.api.com.atproto.admin[mutator]({
+        account: did,
+        note,
+      })
 
       // When disabling invites, check if moderator wants to also disable existing codes
       // If yes, get invite codes through getRepo and disable the active ones
       if (disableInvites && disableExistingCodes) {
-        await client.api.com.atproto.admin.disableInviteCodes(
-          {
-            accounts: [did],
-          },
-          { encoding: 'application/json', headers: client.proxyHeaders() },
-        )
+        await labelerAgent.api.com.atproto.admin.disableInviteCodes({
+          accounts: [did],
+        })
       }
 
       return result
@@ -210,11 +206,16 @@ export const InviteCodeGenerationStatus = ({
         <dt className="text-sm font-medium text-gray-500 dark:text-gray-50">
           Invite Code Generation
         </dt>
-        <dd className="mt-1 text-sm text-gray-900 dark:text-gray-200" title={currentStatus}>
+        <dd
+          className="mt-1 text-sm text-gray-900 dark:text-gray-200"
+          title={currentStatus}
+        >
           <button onClick={() => setIsDialogOpen(true)}>
             <LabelChip
               className={`ml-0 text-white ${
-                invitesDisabled ? 'bg-rose-600' : 'bg-green-400 dark:bg-lime-400'
+                invitesDisabled
+                  ? 'bg-rose-600'
+                  : 'bg-green-400 dark:bg-lime-400'
               }`}
             >
               {currentStatus}

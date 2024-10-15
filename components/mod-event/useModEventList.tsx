@@ -1,10 +1,23 @@
+import {
+  AtUri,
+  ChatBskyConvoDefs,
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationQueryEvents,
+} from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import client from '@/lib/client'
-import { useContext, useEffect, useReducer } from 'react'
-import { AuthContext } from '@/shell/AuthContext'
-import { ToolsOzoneModerationQueryEvents } from '@atproto/api'
-import { MOD_EVENT_TITLES } from './constants'
 import { addDays } from 'date-fns'
+import { useEffect, useReducer, useState } from 'react'
+
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { MOD_EVENT_TITLES } from './constants'
+import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
+
+export type WorkspaceConfirmationOptions =
+  | 'subjects'
+  | 'creators'
+  | 'subject-authors'
+  | null
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -39,6 +52,7 @@ const initialListState = {
   removedLabels: [],
   addedTags: '',
   removedTags: '',
+  showContentPreview: false,
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
@@ -51,6 +65,7 @@ export type EventListState = Omit<
   reportTypes: string[]
   addedLabels: string[]
   removedLabels: string[]
+  showContentPreview: boolean
 }
 
 type EventListFilterPayload =
@@ -80,6 +95,9 @@ type EventListAction =
   | {
       type: 'RESET'
     }
+  | {
+      type: 'TOGGLE_CONTENT_PREVIEW'
+    }
 
 const eventListReducer = (state: EventListState, action: EventListAction) => {
   switch (action.type) {
@@ -96,6 +114,8 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
       return { ...state, ...action.payload }
     case 'RESET':
       return initialListState
+    case 'TOGGLE_CONTENT_PREVIEW':
+      return { ...state, showContentPreview: !state.showContentPreview }
     default:
       return state
   }
@@ -104,7 +124,10 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
 export const useModEventList = (
   props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
 ) => {
-  const { isLoggedIn } = useContext(AuthContext)
+  const [showWorkspaceConfirmation, setShowWorkspaceConfirmation] =
+    useState<WorkspaceConfirmationOptions>(null)
+  const { mutateAsync: addItemsToWorkspace } = useWorkspaceAddItemsMutation()
+  const labelerAgent = useLabelerAgent()
   const [listState, dispatch] = useReducer(eventListReducer, initialListState)
 
   const setCommentFilter = (value: CommentFilter) => {
@@ -128,7 +151,6 @@ export const useModEventList = (
   }, [props.createdBy])
 
   const results = useInfiniteQuery({
-    enabled: isLoggedIn,
     queryKey: ['modEventList', { listState }],
     queryFn: async ({ pageParam }) => {
       const {
@@ -203,11 +225,18 @@ export const useModEventList = (
         queryParams.addedTags = removedTags.trim().split(',')
       }
 
-      return await getModerationEvents(queryParams)
+      const { data } =
+        await labelerAgent.api.tools.ozone.moderation.queryEvents({
+          limit: 25,
+          ...queryParams,
+        })
+      return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
     ...(props.queryOptions || {}),
   })
+
+  const modEvents = results.data?.pages.map((page) => page.events).flat() || []
 
   const hasFilter =
     (listState.types.length > 0 &&
@@ -223,9 +252,42 @@ export const useModEventList = (
     listState.addedTags.length > 0 ||
     listState.removedTags.length > 0
 
+  const addToWorkspace = async () => {
+    if (!showWorkspaceConfirmation) {
+      return
+    }
+
+    const items = new Set<string>()
+
+    modEvents.forEach((event) => {
+      if (showWorkspaceConfirmation === 'subjects') {
+        if (ComAtprotoAdminDefs.isRepoRef(event.subject)) {
+          items.add(event.subject.did)
+        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+          items.add(event.subject.uri)
+        } else if (ChatBskyConvoDefs.isMessageRef(event.subject)) {
+          items.add(event.subject.did)
+        }
+      } else if (showWorkspaceConfirmation === 'creators') {
+        items.add(event.createdBy)
+      } else if (showWorkspaceConfirmation === 'subject-authors') {
+        if (
+          ComAtprotoAdminDefs.isRepoRef(event.subject) ||
+          ChatBskyConvoDefs.isMessageRef(event.subject)
+        ) {
+          items.add(event.subject.did)
+        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+          items.add(new AtUri(event.subject.uri).host)
+        }
+      }
+    })
+
+    return addItemsToWorkspace([...items])
+  }
+
   return {
     // Data from react-query
-    modEvents: results.data?.pages.map((page) => page.events).flat() || [],
+    modEvents,
     fetchMoreModEvents: results.fetchNextPage,
     hasMoreModEvents: results.hasNextPage,
     refetchModEvents: results.refetch,
@@ -246,24 +308,16 @@ export const useModEventList = (
     applyFilterMacro: (payload: Partial<EventListState>) =>
       dispatch({ type: 'SET_FILTERS', payload }),
     resetListFilters: () => dispatch({ type: 'RESET' }),
+    toggleContentPreview: () => dispatch({ type: 'TOGGLE_CONTENT_PREVIEW' }),
 
     // State data
     ...listState,
 
     // Derived data from state
     hasFilter,
-  }
-}
 
-async function getModerationEvents(
-  opts: ToolsOzoneModerationQueryEvents.QueryParams = {},
-) {
-  const { data } = await client.api.tools.ozone.moderation.queryEvents(
-    {
-      limit: 25,
-      ...opts,
-    },
-    { headers: client.proxyHeaders() },
-  )
-  return data
+    showWorkspaceConfirmation,
+    setShowWorkspaceConfirmation,
+    addToWorkspace,
+  }
 }

@@ -4,8 +4,8 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
-import { DM_DISABLE_TAG } from '@/lib/constants'
-import { checkPermission } from '@/lib/server-config'
+import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import { usePermission } from '@/shell/ConfigurationContext'
 
 const actions = [
   { text: 'Acknowledge', key: MOD_EVENTS.ACKNOWLEDGE },
@@ -48,6 +48,14 @@ const actions = [
     text: 'Enable DMs',
     key: MOD_EVENTS.ENABLE_DMS,
   },
+  {
+    text: 'Disable Video Upload',
+    key: MOD_EVENTS.DISABLE_VIDEO_UPLOAD,
+  },
+  {
+    text: 'Enable Video Upload',
+    key: MOD_EVENTS.ENABLE_VIDEO_UPLOAD,
+  },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
   acc[action.key] = action.text
@@ -60,20 +68,27 @@ export const ModEventSelectorButton = ({
   setSelectedAction,
   hasBlobs,
   isSubjectDid,
+  forceDisplayActions = [],
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
   hasBlobs: boolean
   isSubjectDid: boolean
+  forceDisplayActions?: string[]
 }) => {
-  const canDivertBlob = checkPermission('canDivertBlob')
-  const canTakedown = checkPermission('canTakedown')
-  const canManageChat = checkPermission('canManageChat')
+  const canDivertBlob = usePermission('canDivertBlob')
+  const canTakedown = usePermission('canTakedown')
+  const canManageChat = usePermission('canManageChat')
+
   const availableActions = useMemo(() => {
     return actions.filter(({ key }) => {
       // Don't show resolve appeal action if subject is not already in appealed status
-      if (key === MOD_EVENTS.RESOLVE_APPEAL && !subjectStatus?.appealed) {
+      if (
+        key === MOD_EVENTS.RESOLVE_APPEAL &&
+        !subjectStatus?.appealed &&
+        !forceDisplayActions.includes(MOD_EVENTS.RESOLVE_APPEAL)
+      ) {
         return false
       }
       // Don't show appeal action if subject is already in appealed status
@@ -145,6 +160,25 @@ export const ModEventSelectorButton = ({
         return false
       }
 
+      // Checking canManageChat is not ideal but for now, only bsky mod service has control on both
+      // so it makes sense to rely on that one check for both actions
+      if (
+        key === MOD_EVENTS.DISABLE_VIDEO_UPLOAD &&
+        (subjectStatus?.tags?.includes(VIDEO_UPLOAD_DISABLE_TAG) ||
+          !isSubjectDid ||
+          !canManageChat)
+      ) {
+        return false
+      }
+      if (
+        key === MOD_EVENTS.ENABLE_VIDEO_UPLOAD &&
+        (!subjectStatus?.tags?.includes(VIDEO_UPLOAD_DISABLE_TAG) ||
+          !isSubjectDid ||
+          !canManageChat)
+      ) {
+        return false
+      }
+
       return true
     })
   }, [
@@ -159,6 +193,7 @@ export const ModEventSelectorButton = ({
     canManageChat,
     canTakedown,
     canDivertBlob,
+    forceDisplayActions,
   ])
 
   return (

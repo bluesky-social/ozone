@@ -1,6 +1,7 @@
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
 import { pluralize } from '@/lib/util'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useRef } from 'react'
 import { toast } from 'react-toastify'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
@@ -25,15 +26,29 @@ export const useWorkspaceList = () => {
 
 export const useWorkspaceAddItemsMutation = () => {
   const queryClient = useQueryClient()
+  const toastId = useRef<number | string | null>(null)
   const mutation = useMutation<string[], unknown, string[], unknown>(
     async (items) => {
       return addToList(items)
     },
     {
-      onSuccess: (_, addedItems) => {
-        toast.success(
-          `${pluralize(addedItems.length, 'subject')} added to workspace. `,
-        )
+      onSuccess: (allItems, addedItems) => {
+        const message = `Attempted to add ${pluralize(
+          addedItems.length,
+          'subject',
+        )}, there are ${pluralize(
+          allItems.length,
+          'subject',
+        )} in your workspace now.`
+
+        if (toastId.current && toast.isActive(toastId.current)) {
+          toast.update(toastId.current, {
+            render: message,
+          })
+        } else {
+          toastId.current = toast.success(message)
+        }
+
         queryClient.invalidateQueries([WORKSPACE_LIST_QUERY_KEY])
       },
     },

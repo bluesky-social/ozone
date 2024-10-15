@@ -1,12 +1,14 @@
 import { LoadMoreButton } from '@/common/LoadMoreButton'
-import client from '@/lib/client'
 import { AppBskyActorDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { AccountsGrid } from './AccountView'
 import { listRecords } from './api'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export function Blocks({ did }: { did: string }) {
-  const { data, error, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
+  const labelerAgent = useLabelerAgent()
+
+  const { data, error, fetchNextPage, hasNextPage, isInitialLoading } =
     useInfiniteQuery({
       queryKey: ['blocks', { did }],
       queryFn: async ({ pageParam }) => {
@@ -20,12 +22,9 @@ export function Blocks({ did }: { did: string }) {
           return { accounts: [], cursor: null }
         }
         const { data: profileData } =
-          await client.api.app.bsky.actor.getProfiles(
-            {
-              actors,
-            },
-            { headers: client.proxyHeaders() },
-          )
+          await labelerAgent.api.app.bsky.actor.getProfiles({
+            actors,
+          })
 
         const accounts: AppBskyActorDefs.ProfileViewDetailed[] = []
         actors.forEach((did) => {

@@ -17,6 +17,8 @@ export const MOD_EVENTS = {
   APPEAL: 'appeal',
   DISABLE_DMS: 'disableDms',
   ENABLE_DMS: 'enableDms',
+  DISABLE_VIDEO_UPLOAD: 'disableVideoUpload',
+  ENABLE_VIDEO_UPLOAD: 'enableVideoUpload',
 } as const
 
 export const MOD_EVENT_TITLES = {
@@ -34,9 +36,12 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.EMAIL]: 'Email Sent',
   [MOD_EVENTS.RESOLVE_APPEAL]: 'Appeal Resolved',
   [MOD_EVENTS.TAG]: 'Tag',
+  [MOD_EVENTS.APPEAL]: 'Appeal',
   [MOD_EVENTS.DIVERT]: 'Divert',
   [MOD_EVENTS.DISABLE_DMS]: 'Disable DMs',
   [MOD_EVENTS.ENABLE_DMS]: 'Enable DMs',
+  [MOD_EVENTS.DISABLE_VIDEO_UPLOAD]: 'Disable Video Upload',
+  [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: 'Enable Video Upload',
 }
 
 export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'

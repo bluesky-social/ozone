@@ -1,5 +1,5 @@
 'use client'
-import { ComponentProps, useEffect, useState } from 'react'
+import { ComponentProps, useCallback, useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useQuery } from '@tanstack/react-query'
 import {
@@ -14,11 +14,11 @@ import {
   ExclamationCircleIcon,
   UserCircleIcon,
   XCircleIcon,
+  MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { buildBlueSkyAppUrl, classNames, truncate } from '@/lib/util'
-import client from '@/lib/client'
+import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
 import { ReportPanel } from '../reports/ReportPanel'
 import React from 'react'
 import {
@@ -26,6 +26,7 @@ import {
   LabelListEmpty,
   getLabelsForSubject,
   ModerationLabel,
+  LabelChip,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
@@ -44,13 +45,20 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { MuteReporting } from './MuteReporting'
 import { Tabs, TabView } from '@/common/Tabs'
 import { Lists } from 'components/list/Lists'
+import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
 import {
   useWorkspaceAddItemsMutation,
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
-import { checkPermission } from '@/lib/server-config'
 import { Blocks } from './Blocks'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import { Alert } from '@/common/Alert'
+import { Follows } from 'components/graph/Follows'
+import { Followers } from 'components/graph/Followers'
+import Lightbox from 'yet-another-react-lightbox'
+import { SubjectTag } from 'components/tags/SubjectTag'
+import { RelatedAccounts } from 'components/signature/RelatedAccounts'
 
 enum Views {
   Details,
@@ -62,6 +70,7 @@ enum Views {
   Events,
   Email,
   Lists,
+  RelatedAccounts,
 }
 
 const TabKeys = {
@@ -74,6 +83,7 @@ const TabKeys = {
   blocks: Views.Blocks,
   events: Views.Events,
   email: Views.Email,
+  related: Views.RelatedAccounts,
 }
 
 export function AccountView({
@@ -119,6 +129,8 @@ export function AccountView({
     }
   }, [repo, reportUri])
 
+  const canSendEmail = usePermission('canSendEmail')
+
   const getTabViews = () => {
     const numInvited = (repo?.invites || []).reduce(
       (acc, invite) => acc + invite.uses.length,
@@ -147,6 +159,10 @@ export function AccountView({
           view: Views.Blocks,
           label: 'Blocks',
         },
+        {
+          view: Views.RelatedAccounts,
+          label: 'Related',
+        },
       )
 
       if (profile.associated?.lists) {
@@ -162,7 +178,7 @@ export function AccountView({
       { view: Views.Events, label: 'Events' },
     )
 
-    if (checkPermission('canSendEmail')) {
+    if (canSendEmail) {
       views.push({ view: Views.Email, label: 'Email' })
     }
 
@@ -217,9 +233,16 @@ export function AccountView({
                   {currentView === Views.Posts && (
                     <Posts id={id} onReport={setReportUri} />
                   )}
-                  {currentView === Views.Follows && <Follows id={id} />}
-                  {currentView === Views.Followers && <Followers id={id} />}
+                  {currentView === Views.Follows && (
+                    <Follows count={profile?.followersCount} id={id} />
+                  )}
+                  {currentView === Views.Followers && (
+                    <Followers count={profile?.followersCount} id={id} />
+                  )}
                   {currentView === Views.Lists && <Lists actor={id} />}
+                  {currentView === Views.RelatedAccounts && (
+                    <RelatedAccounts id={id} />
+                  )}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
@@ -244,6 +267,69 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
 })
+
+function ProfileHeaderImage({
+  profile,
+}: {
+  profile?: GetProfile.OutputSchema
+}) {
+  const alt = `Banner image for ${
+    profile?.displayName || profile?.handle || 'user'
+  }`
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+    }
+  }
+  const image = (
+    <img
+      className="h-32 w-full object-cover lg:h-48"
+      src={profile?.banner || '/img/default-banner.jpg'}
+      alt={alt}
+    />
+  )
+
+  if (!profile?.banner) {
+    return <div>{image}</div>
+  }
+
+  return (
+    <div>
+      <Lightbox
+        open={isImageViewerOpen}
+        carousel={{ finite: true }}
+        controller={{ closeOnBackdropClick: true }}
+        close={() => setIsImageViewerOpen(false)}
+        slides={[
+          {
+            src: profile.banner,
+            description: alt,
+          },
+        ]}
+        on={{
+          // The lightbox may open from other Dialog/modal components
+          // in that case, we want to make sure that esc button presses
+          // only close the lightbox and not the parent Dialog/modal underneath
+          entered: () => {
+            document.addEventListener('keydown', handleKeyDown)
+          },
+          exited: () => {
+            document.removeEventListener('keydown', handleKeyDown)
+          },
+        }}
+      />
+      <button
+        type="button"
+        className="w-full active:outline-none"
+        onClick={() => setIsImageViewerOpen(true)}
+      >
+        {image}
+      </button>
+    </div>
+  )
+}
 
 function Header({
   id,
@@ -329,13 +415,7 @@ function Header({
           did={`${repo?.did || profile?.did}`}
         />
       )}
-      <div>
-        <img
-          className="h-32 w-full object-cover lg:h-48"
-          src={profile?.banner || '/img/default-banner.jpg'}
-          alt=""
-        />
-      </div>
+      <ProfileHeaderImage profile={profile} />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="-mt-12 sm:-mt-16 sm:flex sm:items-end sm:space-x-5">
           <div className="flex">
@@ -432,10 +512,15 @@ function Details({
   id: string
 }) {
   const labels = getLabelsForSubject({ repo })
+  const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
+  const ip = typeof repo.ip === 'string' ? repo.ip : undefined
+  const hcapDetail = Array.isArray(repo.hcaptchaDetails)
+    ? (repo.hcaptchaDetails as { property: string; value: string }[])
+    : undefined
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -447,6 +532,29 @@ function Details({
             value={profile.displayName}
             showCopyButton
           />
+        )}
+        {ip && (
+          <DataField value={ip} label="IP" showCopyButton>
+            {obscureIp(ip)}{' '}
+            <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+          </DataField>
+        )}
+        {hcapDetail && (
+          <DataField value={ip} label="Hcaptcha">
+            {hcapDetail?.map(({ property, value }) => (
+              <Link
+                key={property}
+                href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
+              >
+                <LabelChip>
+                  <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                  {property}
+                </LabelChip>
+              </Link>
+            ))}
+          </DataField>
         )}
         <DataField
           label="Email Verification"
@@ -481,6 +589,14 @@ function Details({
                 key={label.val}
                 recordAuthorDid={repo.did}
               />
+            ))}
+          </LabelList>
+        </DataField>
+        <DataField label="Tags">
+          <LabelList>
+            {!tags.length && <LabelListEmpty />}
+            {tags.map((tag) => (
+              <SubjectTag key={tag} tag={tag} />
             ))}
           </LabelList>
         </DataField>
@@ -536,61 +652,8 @@ function Posts({
   return <AuthorFeed id={id} onReport={onReport} />
 }
 
-function Follows({ id }: { id: string }) {
-  const {
-    error,
-    data: follows,
-    isLoading,
-  } = useQuery({
-    queryKey: ['follows', { id }],
-    queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollows(
-        { actor: id },
-        { headers: client.proxyHeaders() },
-      )
-      return data
-    },
-  })
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isLoading}
-        error={String(error ?? '')}
-        accounts={follows?.follows}
-      />
-    </div>
-  )
-}
-
-function Followers({ id }: { id: string }) {
-  const {
-    error,
-    isLoading,
-    data: followers,
-  } = useQuery({
-    queryKey: ['followers', { id }],
-    queryFn: async () => {
-      const { data } = await client.api.app.bsky.graph.getFollowers(
-        {
-          actor: id,
-        },
-        { headers: client.proxyHeaders() },
-      )
-      return data
-    },
-  })
-  return (
-    <div>
-      <AccountsGrid
-        isLoading={isLoading}
-        error={String(error ?? '')}
-        accounts={followers?.followers}
-      />
-    </div>
-  )
-}
-
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
+  const labelerAgent = useLabelerAgent()
   const {
     error,
     isLoading,
@@ -609,27 +672,21 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       if (actors.length === 0) {
         return { profiles: [] }
       }
-      const { data } = await client.api.app.bsky.actor.getProfiles(
-        {
-          actors,
-        },
-        { headers: client.proxyHeaders() },
-      )
+      const { data } = await labelerAgent.api.app.bsky.actor.getProfiles({
+        actors,
+      })
       return data
     },
   })
 
-  const onClickRevoke = React.useCallback(async () => {
+  const onClickRevoke = useCallback(async () => {
     if (!confirm('Are you sure you want to revoke their invite codes?')) {
       return
     }
-    await client.api.com.atproto.admin.disableInviteCodes(
-      {
-        accounts: [repo.did],
-      },
-      { encoding: 'application/json', headers: client.proxyHeaders() },
-    )
-  }, [client])
+    await labelerAgent.api.com.atproto.admin.disableInviteCodes({
+      accounts: [repo.did],
+    })
+  }, [labelerAgent, repo.did])
 
   return (
     <div>
@@ -651,6 +708,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
         <EmptyDataset message="No invited users found" />
       ) : (
         <AccountsGrid
+          isLoading={isLoading}
           error={String(error ?? '')}
           accounts={invitedUsers?.profiles}
         />
@@ -776,6 +834,7 @@ export const EventsView = ({ did }: { did: string }) => {
 }
 
 const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
+  const { cantReceive } = useEmailRecipientStatus(props.did)
   return (
     <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
       <div className="flex flex-row justify-end items-center">
@@ -789,7 +848,23 @@ const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
           <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 ml-1" />
         </LinkButton>
       </div>
+      {cantReceive && (
+        <div className="my-2">
+          <Alert
+            showIcon
+            type="warning"
+            title="Can not send email to this user"
+            body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
+          />
+        </div>
+      )}
       <EmailComposer {...props} />
     </div>
   )
+}
+
+function obscureIp(ip: string) {
+  const parts = ip.split('.')
+  if (parts.length !== 4) return '***.***.***.***'
+  return `${parts[0]}.${parts[1]}.***.***`
 }

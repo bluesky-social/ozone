@@ -9,15 +9,20 @@ const OtherReportsForAuthorLink = ({
   did,
   repoText,
   className,
+  omitQueryParams,
 }: {
   did: string
   repoText: string
   className?: string
+  omitQueryParams?: string[]
 }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const newUrl = new URLSearchParams(searchParams)
   newUrl.set('quickOpen', did)
+  if (omitQueryParams?.length) {
+    omitQueryParams.forEach((param) => newUrl.delete(param))
+  }
   return (
     <Link
       prefetch={false}
@@ -38,15 +43,21 @@ const CollectionLink = ({
   uri,
   collectionName,
   repoUrl,
+  omitQueryParams,
 }: {
   uri: string
   collectionName: string
   repoUrl: string
+  omitQueryParams?: string[]
 }) => {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const newUrl = new URLSearchParams(searchParams)
   newUrl.set('quickOpen', uri)
+  if (omitQueryParams?.length) {
+    omitQueryParams.forEach((param) => newUrl.delete(param))
+  }
+
   return (
     <>
       <Link href={`/repositories/${repoUrl}`} target="_blank">
@@ -65,6 +76,7 @@ const CollectionLink = ({
 
 export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>
+  omitQueryParamsInLinks?: string[]
   subjectRepoHandle?: string
   withTruncation?: boolean
   hideActor?: boolean
@@ -94,6 +106,7 @@ export function SubjectOverview(props: {
             repoUrl={createAtUri(summary).replace('at://', '')}
             uri={createAtUri(summary)}
             collectionName="feed generator"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -102,6 +115,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -116,6 +130,7 @@ export function SubjectOverview(props: {
             repoUrl={createAtUri(summary).replace('at://', '')}
             uri={createAtUri(summary)}
             collectionName="list"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -124,6 +139,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -138,6 +154,7 @@ export function SubjectOverview(props: {
             repoUrl={createAtUri(summary).replace('at://', '')}
             uri={createAtUri(summary)}
             collectionName="starterpack"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -146,6 +163,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -160,6 +178,7 @@ export function SubjectOverview(props: {
             repoUrl={summary.did}
             uri={createAtUri(summary)}
             collectionName="profile"
+            omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (
             <>
@@ -168,6 +187,7 @@ export function SubjectOverview(props: {
                 did={summary.did}
                 repoText={repoText}
                 className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
               />
             </>
           )}
@@ -181,6 +201,7 @@ export function SubjectOverview(props: {
           repoUrl={createAtUri(summary).replace('at://', '')}
           collectionName={shortCollection}
           uri={createAtUri(summary)}
+          omitQueryParams={props.omitQueryParamsInLinks}
         />
         {!hideActor && (
           <>
@@ -189,6 +210,7 @@ export function SubjectOverview(props: {
               did={summary.did}
               repoText={repoText}
               className="ml-1"
+              omitQueryParams={props.omitQueryParamsInLinks}
             />
           </>
         )}
@@ -206,7 +228,11 @@ export function SubjectOverview(props: {
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
 
-      <OtherReportsForAuthorLink did={summary.did} repoText={repoText} />
+      <OtherReportsForAuthorLink
+        did={summary.did}
+        repoText={repoText}
+        omitQueryParams={props.omitQueryParamsInLinks}
+      />
     </div>
   )
 }

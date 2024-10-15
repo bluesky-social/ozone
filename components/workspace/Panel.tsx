@@ -6,7 +6,6 @@ import { FormEvent, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
 import { PropsOf } from '@/lib/types'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { createBreakpoint } from 'react-use'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { Dialog } from '@headlessui/react'
@@ -21,15 +20,8 @@ import { useSubjectStatuses } from '@/subject/useSubjectStatus'
 import { WorkspacePanelActions } from './PanelActions'
 import { WORKSPACE_FORM_ID } from './constants'
 import { WorkspacePanelActionForm } from './PanelActionForm'
-import clientManager from '@/lib/client'
-import { actionSubjects } from '@/mod-event/helpers/emitEvent'
-
-const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
-
-const dateFormatter = new Intl.DateTimeFormat('en-US', {
-  dateStyle: 'medium',
-  timeStyle: 'short',
-})
+import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { useWorkspaceListData } from './useWorkspaceListData'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -42,16 +34,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     MOD_EVENTS.ACKNOWLEDGE,
   )
   const [showItemCreator, setShowItemCreator] = useState(false)
-
-  const handleSelectAll = () => {
-    const checkboxes = formRef.current?.querySelectorAll<HTMLInputElement>(
-      'input[type="checkbox"][name="workspaceItem"]',
-    )
-    const allSelected = Array.from(checkboxes || []).every(
-      (checkbox) => checkbox.checked,
-    )
-    checkboxes?.forEach((checkbox) => (checkbox.checked = !allSelected))
-  }
+  const actionSubjects = useActionSubjects()
 
   const handleRemoveSelected = () => {
     const selectedItems = Array.from(
@@ -59,7 +42,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         'input[type="checkbox"][name="workspaceItem"]:checked',
       ) || [],
     ).map((checkbox) => checkbox.value)
-    removeItemsMutation.mutate(selectedItems)
+    removeItemsMutation.mutate(selectedItems as string[])
   }
 
   const handleRemoveItem = (item: string) => {
@@ -101,16 +84,18 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
       if (formData.get('tags')) {
+        const isRemovingTags = formData.get('removeTags')
         const tags = String(formData.get('tags'))
           .split(',')
           .map((tag) => tag.trim())
-        coreEvent.add = tags
-        coreEvent.remove = []
+        coreEvent.add = isRemovingTags ? [] : tags
+        coreEvent.remove = isRemovingTags ? tags : []
       }
 
       if (labels?.length) {
-        coreEvent.createLabelVals = labels
-        coreEvent.negateLabelVals = []
+        const isRemovingLabels = formData.get('removeLabels')
+        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
+        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
       }
 
       // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
@@ -119,12 +104,16 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
       }
 
+      if (
+        coreEvent.$type === MOD_EVENTS.TAKEDOWN &&
+        formData.get('acknowledgeAccountSubjects')
+      ) {
+        coreEvent.acknowledgeAccountSubjects = true
+      }
+
       // No need to break if one of the requests fail, continue on with others
-      await actionSubjects(
-        {
-          event: coreEvent,
-          createdBy: clientManager.session.did,
-        },
+      const results = await actionSubjects(
+        { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
       )
 
@@ -134,14 +123,32 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ error: '', isSubmitting: false })
+
+      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
+      if (results.failed.length) {
+        document
+          .querySelectorAll<HTMLInputElement>(
+            'input[type="checkbox"][name="workspaceItem"]',
+          )
+          .forEach((checkbox) => {
+            if (results.failed.includes(checkbox.value)) {
+              checkbox.checked = true
+              // There's an event handler on the checkbox for mousedown event that syncs with a react state
+              // for last checked index. We need to trigger that event to keep the state in sync
+              checkbox.dispatchEvent(new Event('mousedown'))
+            }
+          })
+      }
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
 
   const { data: workspaceList } = useWorkspaceList()
-  const { data: workspaceListStatuses } = useSubjectStatuses({
+  const { data: workspaceListStatuses } = useWorkspaceListData({
     subjects: workspaceList || [],
+    // Make sure we aren't constantly refreshing the data unless the panel is open
+    enabled: props.open,
   })
 
   return (
@@ -189,13 +196,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
               <div className="mb-2 flex space-x-2">
                 <WorkspacePanelActions
                   {...{
-                    handleSelectAll,
                     handleRemoveSelected,
                     handleEmptyWorkspace,
                     setShowActionForm,
                     setShowItemCreator,
                     showActionForm,
                     workspaceList,
+                    listData: workspaceListStatuses || {},
                   }}
                 />
               </div>
@@ -222,7 +229,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
               <WorkspaceList
                 list={workspaceList}
                 onRemoveItem={handleRemoveItem}
-                subjectStatuses={workspaceListStatuses || {}}
+                listData={workspaceListStatuses || {}}
               />
             </div>
           </form>

@@ -13,3 +13,16 @@ export const isReporterMuted = (
   if (!subjectStatus?.muteReportingUntil) return false
   return new Date(subjectStatus.muteReportingUntil) > new Date()
 }
+
+const dateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+})
+
+export const getLastReviewedAt = (
+  subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView,
+) => {
+  return subjectStatus?.lastReviewedAt
+    ? dateFormatter.format(new Date(subjectStatus.lastReviewedAt))
+    : ''
+}

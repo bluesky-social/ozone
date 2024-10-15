@@ -1,16 +1,16 @@
 import { useQuery } from '@tanstack/react-query'
-
-import client from '@/lib/client'
-import { queryClient } from 'components/QueryClient'
 import { toast } from 'react-toastify'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const useCommunicationTemplateList = ({
   enabled = true,
 }: {
   enabled?: boolean
-}) => {
+} = {}) => {
+  const labelerAgent = useLabelerAgent()
+
   return useQuery({
     queryKey: ['communicationTemplateList'],
     enabled,
@@ -20,16 +20,15 @@ export const useCommunicationTemplateList = ({
     staleTime: 60 * 60 * 1000,
     queryFn: async () => {
       const { data } =
-        await client.api.tools.ozone.communication.listTemplates(
-          {},
-          { headers: client.proxyHeaders() },
-        )
+        await labelerAgent.api.tools.ozone.communication.listTemplates()
       return data.communicationTemplates
     },
   })
 }
 
 export const useCommunicationTemplateEditor = (templateId?: string) => {
+  const labelerAgent = useLabelerAgent()
+
   const [contentMarkdown, setContentMarkdown] = useState('')
   const [isSaving, setIsSaving] = useState(false)
 
@@ -41,7 +40,9 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
   const router = useRouter()
   // Enable the query when we have a templateId, otherwise, it means the hook is being mounted on the create page
   // where we don't need to load any existing template
-  const { data } = useCommunicationTemplateList({ enabled: !!templateId })
+  const { data, refetch } = useCommunicationTemplateList({
+    enabled: !!templateId,
+  })
 
   useEffect(() => {
     if (templateId && data?.length) {
@@ -61,50 +62,52 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
     }
   }, [templateId, data])
 
-  const saveFunc = ({
-    contentMarkdown,
-    name,
-    subject,
-    disabled,
-  }: {
-    contentMarkdown: string
-    name: string
-    subject: string
-    disabled: boolean
-  }) =>
-    templateId
-      ? client.api.tools.ozone.communication.updateTemplate(
-          {
+  const saveFunc = useCallback(
+    async ({
+      contentMarkdown,
+      name,
+      lang,
+      subject,
+      disabled,
+    }: {
+      contentMarkdown: string
+      name: string
+      lang?: string
+      subject: string
+      disabled: boolean
+    }) =>
+      templateId
+        ? labelerAgent.api.tools.ozone.communication.updateTemplate({
             id: `${templateId}`,
             contentMarkdown,
             subject,
             name,
+            lang,
             disabled,
-            updatedBy: client.session.did,
-          },
-          { encoding: 'application/json', headers: client.proxyHeaders() },
-        )
-      : client.api.tools.ozone.communication.createTemplate(
-          {
+            updatedBy: labelerAgent.assertDid,
+          })
+        : labelerAgent.api.tools.ozone.communication.createTemplate({
             contentMarkdown,
             subject,
             name,
-            createdBy: client.session.did,
-          },
-          { headers: client.proxyHeaders(), encoding: 'application/json' },
-        )
+            lang,
+            createdBy: labelerAgent.assertDid,
+          }),
+    [labelerAgent, templateId],
+  )
 
   const onSubmit = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name')?.toString() ?? ''
     const subject = formData.get('subject')?.toString() ?? ''
+    const lang = formData.get('lang')?.toString() ?? ''
     const disabled = formData.get('disabled') === 'true'
 
     setIsSaving(true)
     try {
       await toast.promise(
-        saveFunc({ contentMarkdown, name, subject, disabled }),
+        saveFunc({ contentMarkdown, name, lang, subject, disabled }),
         {
           pending: 'Saving template...',
           success: {
@@ -113,8 +116,13 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
             },
           },
           error: {
-            render() {
-              return 'Error saving template'
+            render({ data }: { data?: { message: string } }) {
+              return (
+                <div>
+                  <p>Error saving template</p>
+                  {!!data?.message && <p className="text-sm">{data.message}</p>}
+                </div>
+              )
             },
           },
         },
@@ -122,9 +130,7 @@ export const useCommunicationTemplateEditor = (templateId?: string) => {
       // Reset the form if email is sent successfully
       e.target.reset()
       setContentMarkdown('')
-      queryClient.invalidateQueries({
-        queryKey: ['communicationTemplateList'],
-      })
+      refetch()
       router.push('/communication-template')
       // On error, we are already showing a generic error message within the toast so
       // swallowing actual error here and resetting local state back afterwards
