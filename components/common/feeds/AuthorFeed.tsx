@@ -56,10 +56,17 @@ export const useAuthorFeedQuery = ({
           ...(isPostFilter ? { filter: typeFilter } : {}),
         }
         let data: AppBskyFeedGetAuthorFeed.OutputSchema
+
         try {
-          const authorFeedThroughOzone =
-            await labelerAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
-          data = authorFeedThroughOzone.data
+          if (isFromAppview && appviewAgent) {
+            const authorFeedThroughAppview =
+              await appviewAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
+            data = authorFeedThroughAppview.data
+          } else {
+            const authorFeedThroughOzone =
+              await labelerAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
+            data = authorFeedThroughOzone.data
+          }
         } catch (e) {
           if (
             e instanceof AppBskyFeedGetAuthorFeed.BlockedByActorError &&
@@ -68,7 +75,7 @@ export const useAuthorFeedQuery = ({
             const authorFeedThroughAppview =
               await appviewAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
             data = authorFeedThroughAppview.data
-            isFromAppview = true
+            if (!isFromAppview) isFromAppview = true
           } else {
             throw e
           }

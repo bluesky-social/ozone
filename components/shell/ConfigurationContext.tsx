@@ -32,7 +32,6 @@ export type ConfigurationContextData = {
   isServiceAccount: boolean
   config: OzoneConfig
   serverConfig: ServerConfig
-  appviewAgent: Agent | null
   reconfigure: () => void
 }
 
@@ -63,13 +62,6 @@ export const ConfigurationProvider = ({
     refetch: refetchServerConfig,
     isLoading: isServerConfigLoading,
   } = useServerConfigQuery(labelerAgent)
-
-  const appviewAgent = useMemo<Agent | null>(() => {
-    if (serverConfig?.appview) {
-      return new Agent(new CredentialSession(new URL(serverConfig.appview)))
-    }
-    return null
-  }, [serverConfig?.appview])
 
   // Allow ignoring the creation of a record when reconfiguring
   const [skipRecord, setSkipRecord] = useState(false)
@@ -111,7 +103,6 @@ export const ConfigurationProvider = ({
             isServiceAccount: accountDid === config.did,
             serverConfig,
             labelerAgent,
-            appviewAgent,
             reconfigure,
           }
         : null,
@@ -175,5 +166,12 @@ export function usePermission(name: PermissionName) {
 }
 
 export function useAppviewAgent() {
-  return useConfigurationContext().appviewAgent
+  const { appview } = useConfigurationContext().serverConfig
+
+  return useMemo<Agent | null>(() => {
+    if (appview) {
+      return new Agent(new CredentialSession(new URL(appview)))
+    }
+    return null
+  }, [appview])
 }
