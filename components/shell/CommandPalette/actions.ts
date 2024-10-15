@@ -84,4 +84,13 @@ export const getStaticActions = ({
     keywords: 'filter,macros',
     perform: () => router.push('/events/filters/macros'),
   },
+  {
+    id: 'view-sets',
+    name: 'See All Sets',
+    shortcut: ['s'],
+    keywords: 'sets,settings',
+    perform: () => {
+      router.push('/configure?tab=sets')
+    },
+  },
 ]

@@ -10,15 +10,18 @@ import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { SetsConfig } from '@/config/Sets'
 
 enum Views {
   Configure,
   Members,
+  Sets,
 }
 
 const TabKeys = {
   configure: Views.Configure,
   members: Views.Members,
+  sets: Views.Sets,
 }
 
 export default function ConfigurePageContent() {
@@ -63,6 +66,10 @@ export default function ConfigurePageContent() {
       view: Views.Members,
       label: 'Members',
     },
+    {
+      view: Views.Sets,
+      label: 'Sets',
+    },
   ]
 
   return (
@@ -75,6 +82,7 @@ export default function ConfigurePageContent() {
       />
       {currentView === Views.Configure && <LabelerConfig />}
       {currentView === Views.Members && <MemberConfig />}
+      {currentView === Views.Sets && <SetsConfig />}
 
       <ModActionPanelQuick
         open={!!quickOpenParam}

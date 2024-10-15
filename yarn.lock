@@ -60,10 +60,10 @@
   resolved "https://registry.yarnpkg.com/@atproto-labs/simple-store/-/simple-store-0.1.1.tgz#e743a2722b5d8732166f0a72aca8bd10e9bff106"
   integrity sha512-WKILW2b3QbAYKh+w5U2x6p5FqqLl0nAeLwGeDY+KjX01K4Dq3vQTR9b/qNp0jZm48CabPQVrqCv0PPU9LgRRRg==
 
-"@atproto/api@^0.13.10":
-  version "0.13.11"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.11.tgz#936664d9b57686840231fbab222e19abbe3f93c9"
-  integrity sha512-YW+4WzZEGGj/SDYo9w+S2PkSaeSS+8Dosk21GFm4EFYq1eq7G0cxuMgvdcq6fov7f9zqsaTFQL2fA6cAgMA0ow==
+"@atproto/api@^0.13.12":
+  version "0.13.12"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.12.tgz#e7bfe42fcd530219f4e1dafc42dd397bc0850d6c"
+  integrity sha512-U/qimbjlX0MA4MsR+GDuAnFtmdFuGi7eMQZm51s9gbDUw6y4RARL6gaZ0Ju9fBZpS45sI+ShlUHzIoEiBaRvkg==
   dependencies:
     "@atproto/common-web" "^0.3.1"
     "@atproto/lexicon" "^0.4.2"
@@ -5374,9 +5374,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tlds@^1.234.0:
-  version "1.252.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.252.0.tgz#71d9617f4ef4cc7347843bee72428e71b8b0f419"
-  integrity sha512-GA16+8HXvqtfEnw/DTcwB0UU354QE1n3+wh08oFjr6Znl7ZLAeUgYzCcK+/CCrOyE0vnHR8/pu3XXG3vDijXpQ==
+  version "1.255.0"
+  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.255.0.tgz#53c2571766c10da95928c716c48dfcf141341e3f"
+  integrity sha512-tcwMRIioTcF/FcxLev8MJWxCp+GUALRhFEqbDoZrnowmKSGqPrl5pqS+Sut2m8BgJ6S4FExCSSpGffZ0Tks6Aw==
 
 tmp@~0.2.1:
   version "0.2.1"
