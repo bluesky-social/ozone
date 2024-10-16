@@ -24,7 +24,6 @@ export function RelatedAccounts({ id }: { id: string }) {
             did: id,
             cursor: pageParam,
           })
-        console.log(data.accounts)
         return data
       },
       getNextPageParam: (lastPage) => lastPage.cursor,

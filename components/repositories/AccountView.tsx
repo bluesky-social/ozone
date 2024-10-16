@@ -234,7 +234,7 @@ export function AccountView({
                     <Posts id={id} onReport={setReportUri} />
                   )}
                   {currentView === Views.Follows && (
-                    <Follows count={profile?.followersCount} id={id} />
+                    <Follows count={profile?.followsCount} id={id} />
                   )}
                   {currentView === Views.Followers && (
                     <Followers count={profile?.followersCount} id={id} />

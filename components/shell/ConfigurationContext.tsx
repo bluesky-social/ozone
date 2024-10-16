@@ -1,6 +1,6 @@
 'use client'
 
-import { Agent } from '@atproto/api'
+import { Agent, CredentialSession } from '@atproto/api'
 import {
   createContext,
   ReactNode,
@@ -163,4 +163,15 @@ export function useServerConfig() {
 
 export function usePermission(name: PermissionName) {
   return useServerConfig().permissions[name]
+}
+
+export function useAppviewAgent() {
+  const { appview } = useConfigurationContext().serverConfig
+
+  return useMemo<Agent | null>(() => {
+    if (appview) {
+      return new Agent(new CredentialSession(new URL(appview)))
+    }
+    return null
+  }, [appview])
 }
