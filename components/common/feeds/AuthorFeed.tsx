@@ -22,10 +22,10 @@ export const useAuthorFeedQuery = ({
   return useInfiniteQuery({
     queryKey: ['authorFeed', { id, query, typeFilter }],
     queryFn: async ({ pageParam }) => {
-      const searchPosts = query.length && repoData?.repo.handle
+      const searchPosts = query.length && repoData?.repo?.handle
       if (searchPosts) {
         const { data } = await labelerAgent.app.bsky.feed.searchPosts({
-          q: `from:${repoData?.repo.handle} ${query}`,
+          q: `from:${repoData?.repo?.handle} ${query}`,
           limit: 30,
           cursor: pageParam,
         })

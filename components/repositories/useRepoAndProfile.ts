@@ -2,11 +2,16 @@ import { getDidFromHandle } from '@/lib/identity'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useQuery } from '@tanstack/react-query'
 
-export const useRepoAndProfile = ({ id }: { id: string }) => {
+export const useRepoAndProfile = ({ id }: { id?: string }) => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
     queryKey: ['accountView', { id }],
+    enabled: !!id,
     queryFn: async () => {
+      if (!id) {
+        return { repo: undefined, profile: undefined }
+      }
+
       const getRepo = async () => {
         let did
         if (id.startsWith('did:')) {

@@ -55,6 +55,7 @@ import {
   usePermission,
 } from '@/shell/ConfigurationContext'
 import { SubjectTag } from 'components/tags/SubjectTag'
+import { EmailComposer } from 'components/email/Composer'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -184,6 +185,7 @@ function Form(
   const [modEventType, setModEventType] = useState<string>(
     MOD_EVENTS.ACKNOWLEDGE,
   )
+  const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
@@ -443,6 +445,27 @@ function Form(
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
+
+  const handleEmailSubmit = async (event) => {
+    try {
+      setSubmission({ isSubmitting: true, error: '' })
+      await onSubmit({
+        event,
+        subject: {
+          $type: 'com.atproto.admin.defs#repoRef',
+          did: subject,
+        },
+        createdBy: accountDid,
+      })
+      // email event does not change the subject status so no need to refetch
+      queryClient.invalidateQueries(['modEventList'])
+      setModEventType(MOD_EVENTS.ACKNOWLEDGE)
+      setSubmission({ isSubmitting: false, error: '' })
+    } catch (err) {
+      setSubmission({ error: (err as Error).message, isSubmitting: false })
+    }
+  }
+
   // Keyboard shortcuts for action types
   const submitButton = useRef<HTMLButtonElement>(null)
   const moveToNextSubjectRef = useRef<HTMLInputElement>(null)
@@ -503,299 +526,310 @@ function Form(
         }
       `}</style>
       <div className="flex overflow-y-auto scrollable-container pt-1">
-        <form
-          id={FORM_ID}
-          onSubmit={onFormSubmit}
-          {...others}
-          className="flex sm:w-1/2 flex-col"
-        >
-          <div className="flex flex-col">
-            <div className="flex flex-row items-end mb-3">
-              <FormLabel
-                label="Subject"
-                htmlFor="subject"
-                className="flex-1"
-                copyButton={{ text: subject, label: 'Copy subject' }}
-                extraLabel={
-                  <SubjectSwitchButton
-                    subject={subject}
-                    setSubject={setSubject}
+        <div className="flex sm:w-1/2 flex-col" {...others}>
+          <form id={FORM_ID} onSubmit={onFormSubmit}>
+            <div className="flex flex-col">
+              <div className="flex flex-row items-end mb-3">
+                <FormLabel
+                  label="Subject"
+                  htmlFor="subject"
+                  className="flex-1"
+                  copyButton={{ text: subject, label: 'Copy subject' }}
+                  extraLabel={
+                    <SubjectSwitchButton
+                      subject={subject}
+                      setSubject={setSubject}
+                    />
+                  }
+                >
+                  <Input
+                    type="text"
+                    id="subject"
+                    name="subject"
+                    required
+                    list="subject-suggestions"
+                    placeholder="Subject"
+                    className="block w-full"
+                    value={subject}
+                    onChange={(ev) => setSubject(ev.target.value)}
+                    autoComplete="off"
                   />
-                }
-              >
-                <Input
-                  type="text"
-                  id="subject"
-                  name="subject"
-                  required
-                  list="subject-suggestions"
-                  placeholder="Subject"
-                  className="block w-full"
-                  value={subject}
-                  onChange={(ev) => setSubject(ev.target.value)}
-                  autoComplete="off"
-                />
-                <datalist id="subject-suggestions">
-                  {subjectOptions?.map((subject) => (
-                    <option key={subject} value={subject} />
-                  ))}
-                </datalist>
-              </FormLabel>
-            </div>
-            {/* PREVIEWS */}
-            <div className="max-w-xl">
-              <PreviewCard
-                subject={subject}
-                className="border-2 border-dashed border-gray-300"
-              >
-                {!isSubjectDid && record?.repo && (
-                  <div className="-ml-1 my-2">
-                    <RecordAuthorStatus repo={record.repo} />
-                  </div>
-                )}
-              </PreviewCard>
-            </div>
-
-            {!!subjectStatus && (
-              <div className="pb-4">
-                <p>
-                  <SubjectReviewStateBadge subjectStatus={subjectStatus} />
-                  <LastReviewedTimestamp subjectStatus={subjectStatus} />
-                </p>
-                {!!subjectStatus.comment && (
-                  <Card hint="important" className="mt-2">
-                    <strong>Note:</strong> {subjectStatus.comment}
-                  </Card>
-                )}
+                  <datalist id="subject-suggestions">
+                    {subjectOptions?.map((subject) => (
+                      <option key={subject} value={subject} />
+                    ))}
+                  </datalist>
+                </FormLabel>
               </div>
-            )}
-
-            {record?.blobs && (
-              <FormLabel
-                label="Blobs"
-                className={`mb-3 ${subjectStatus ? 'opacity-75' : ''}`}
-              >
-                <BlobList
-                  blobs={record.blobs}
-                  name="subjectBlobCids"
-                  disabled={false}
-                />
-              </FormLabel>
-            )}
-            {isSubjectDid && canManageChat && (
-              <div className="mb-3">
-                <MessageActorMeta did={subject} />
+              {/* PREVIEWS */}
+              <div className="max-w-xl">
+                <PreviewCard
+                  subject={subject}
+                  className="border-2 border-dashed border-gray-300"
+                >
+                  {!isSubjectDid && record?.repo && (
+                    <div className="-ml-1 my-2">
+                      <RecordAuthorStatus repo={record.repo} />
+                    </div>
+                  )}
+                </PreviewCard>
               </div>
-            )}
-            <div className={`mb-3`}>
-              <FormLabel label="Labels">
-                <LabelList className="-ml-1 flex-wrap">
-                  {!currentLabels.length && <LabelListEmpty className="ml-1" />}
-                  {allLabels.map((label) => {
-                    return (
-                      <ModerationLabel
-                        key={label.val}
-                        label={label}
-                        recordAuthorDid={`${repo?.did || record?.repo.did}`}
-                      />
-                    )
-                  })}
-                </LabelList>
-              </FormLabel>
-            </div>
-            {!!subjectStatus?.tags?.length && (
+
+              {!!subjectStatus && (
+                <div className="pb-4">
+                  <p>
+                    <SubjectReviewStateBadge subjectStatus={subjectStatus} />
+                    <LastReviewedTimestamp subjectStatus={subjectStatus} />
+                  </p>
+                  {!!subjectStatus.comment && (
+                    <Card hint="important" className="mt-2">
+                      <strong>Note:</strong> {subjectStatus.comment}
+                    </Card>
+                  )}
+                </div>
+              )}
+
+              {record?.blobs && (
+                <FormLabel
+                  label="Blobs"
+                  className={`mb-3 ${subjectStatus ? 'opacity-75' : ''}`}
+                >
+                  <BlobList
+                    blobs={record.blobs}
+                    name="subjectBlobCids"
+                    disabled={false}
+                  />
+                </FormLabel>
+              )}
+              {isSubjectDid && canManageChat && (
+                <div className="mb-3">
+                  <MessageActorMeta did={subject} />
+                </div>
+              )}
               <div className={`mb-3`}>
-                <FormLabel label="Tags">
+                <FormLabel label="Labels">
                   <LabelList className="-ml-1 flex-wrap">
-                    {subjectStatus.tags.map((tag) => {
-                      return <SubjectTag key={tag} tag={tag} />
+                    {!currentLabels.length && (
+                      <LabelListEmpty className="ml-1" />
+                    )}
+                    {allLabels.map((label) => {
+                      return (
+                        <ModerationLabel
+                          key={label.val}
+                          label={label}
+                          recordAuthorDid={`${repo?.did || record?.repo.did}`}
+                        />
+                      )
                     })}
                   </LabelList>
                 </FormLabel>
               </div>
-            )}
-
-            {/* This is only meant to be switched on in mobile/small screen view */}
-            {/* The parent component ensures to toggle this based on the screen size */}
-            {replaceFormWithEvents ? (
-              <ModEventList subject={subject} />
-            ) : (
-              <div className="px-1">
-                <div className="relative flex flex-row gap-1 items-center">
-                  <ModEventSelectorButton
-                    subjectStatus={subjectStatus}
-                    selectedAction={modEventType}
-                    isSubjectDid={isSubjectDid}
-                    hasBlobs={!!record?.blobs?.length}
-                    setSelectedAction={(action) => setModEventType(action)}
-                  />
-                  <ModEventDetailsPopover modEventType={modEventType} />
-                </div>
-                {shouldShowDurationInHoursField && (
-                  <FormLabel
-                    label=""
-                    htmlFor="durationInHours"
-                    className={`mb-3 mt-2`}
-                  >
-                    <ActionDurationSelector
-                      action={modEventType}
-                      labelText={isMuteEvent ? 'Mute duration' : ''}
-                    />
-                  </FormLabel>
-                )}
-
-                {isMuteReporterEvent && (
-                  <p className="text-xs my-3">
-                    When a reporter is muted, that account will still be able to
-                    report and their reports will show up in the event log.
-                    However, their reports {"won't"} change moderation review
-                    state of the subject {"they're"} reporting
-                  </p>
-                )}
-
-                {isLabelEvent && (
-                  <div className="mt-2">
-                    <LabelSelector
-                      id="labels"
-                      name="labels"
-                      formId={FORM_ID}
-                      defaultLabels={currentLabels.filter((label) => {
-                        // If there's a label where the source is the current labeler, it's editable
-                        const isEditableLabel = allLabels.some((l) => {
-                          return l.val === label && l.src === config.did
-                        })
-                        return !isSelfLabel(label) && isEditableLabel
+              {!!subjectStatus?.tags?.length && (
+                <div className={`mb-3`}>
+                  <FormLabel label="Tags">
+                    <LabelList className="-ml-1 flex-wrap">
+                      {subjectStatus.tags.map((tag) => {
+                        return <SubjectTag key={tag} tag={tag} />
                       })}
-                    />
-                  </div>
-                )}
-
-                {isTagEvent && (
-                  <FormLabel label="Tags" className="mt-2">
-                    <Input
-                      type="text"
-                      id="tags"
-                      name="tags"
-                      className="block w-full"
-                      placeholder="Comma separated tags"
-                      defaultValue={subjectStatus?.tags?.join(',') || ''}
-                    />
+                    </LabelList>
                   </FormLabel>
-                )}
-
-                <div className="mt-2">
-                  <Textarea
-                    name="comment"
-                    placeholder="Reason for action (optional)"
-                    className="block w-full mb-3"
-                  />
                 </div>
-                {isCommentEvent && (
-                  <Checkbox
-                    value="true"
-                    id="sticky"
-                    name="sticky"
-                    className="mb-3 flex items-center"
-                    label="Update the subject's persistent note with this comment"
-                  />
-                )}
+              )}
 
-                {/* Only show this when moderator tries to apply labels to a DID subject */}
-                {isLabelEvent && isSubjectDid && (
-                  <p className="mb-3 text-xs">
-                    NOTE: Applying labels to an account overall is a strong
-                    intervention. You may want to apply the labels to the
-                    user&apos;s profile record instead.{' '}
-                    <a
-                      href="#"
-                      className="underline"
-                      onClick={() => setSubject(getProfileUriForDid(subject))}
-                    >
-                      Click here to switch the subject from account to profile
-                      record.
-                    </a>
-                  </p>
-                )}
-
-                {isLabelEvent && !isReviewClosed && (
-                  <Checkbox
-                    value="true"
-                    defaultChecked
-                    id="additionalAcknowledgeEvent"
-                    name="additionalAcknowledgeEvent"
-                    className="mb-3 flex items-center leading-3"
-                    label={
-                      <span className="leading-4">
-                        {isEscalated
-                          ? `De-escalate the subject and acknowledge all open reports after labeling`
-                          : `Acknowledge all open reports after labeling`}
-                      </span>
-                    }
-                  />
-                )}
-
-                {isTakedownEvent && isSubjectDid && (
-                  <Checkbox
-                    value="true"
-                    id="acknowledgeAccountSubjects"
-                    name="acknowledgeAccountSubjects"
-                    className="mb-3 flex items-center leading-3"
-                    label={
-                      <span className="leading-4">
-                        Acknowledge all open/escalated/appealed reports on
-                        subjects created by this user
-                      </span>
-                    }
-                  />
-                )}
-
-                {submission.error && (
-                  <div className="my-2">
-                    <ActionError error={submission.error} />
-                  </div>
-                )}
-
-                <div className="mt-auto flex flex-row justify-between">
-                  <div>
-                    <input
-                      ref={moveToNextSubjectRef}
-                      type="hidden"
-                      name="moveToNextSubject"
-                      value="0"
+              {/* This is only meant to be switched on in mobile/small screen view */}
+              {/* The parent component ensures to toggle this based on the screen size */}
+              {replaceFormWithEvents ? (
+                <ModEventList subject={subject} />
+              ) : (
+                <div className="px-1">
+                  <div className="relative flex flex-row gap-1 items-center">
+                    <ModEventSelectorButton
+                      subjectStatus={subjectStatus}
+                      selectedAction={modEventType}
+                      isSubjectDid={isSubjectDid}
+                      hasBlobs={!!record?.blobs?.length}
+                      setSelectedAction={(action) => setModEventType(action)}
                     />
-                    <ButtonSecondary
-                      className="px-2 sm:px-4 sm:mr-2"
-                      disabled={submission.isSubmitting}
-                      onClick={onCancel}
-                    >
-                      <span className="text-sm sm:text-base">(C)ancel</span>
-                    </ButtonSecondary>
+                    <ModEventDetailsPopover modEventType={modEventType} />
                   </div>
-                  <div>
-                    <ButtonPrimary
-                      ref={submitButton}
-                      type="submit"
-                      disabled={submission.isSubmitting}
-                      className="mx-1 px-2 sm:px-4"
+                  {shouldShowDurationInHoursField && (
+                    <FormLabel
+                      label=""
+                      htmlFor="durationInHours"
+                      className={`mb-3 mt-2`}
                     >
-                      <span className="text-sm sm:text-base">(S)ubmit</span>
-                    </ButtonPrimary>
-                    <ButtonPrimary
-                      type="button"
-                      disabled={submission.isSubmitting}
-                      onClick={submitAndGoNext}
-                      className="px-2 sm:px-4"
-                    >
-                      <span className="text-sm sm:text-base">
-                        Submit & (N)ext
-                      </span>
-                    </ButtonPrimary>
-                  </div>
+                      <ActionDurationSelector
+                        action={modEventType}
+                        labelText={isMuteEvent ? 'Mute duration' : ''}
+                      />
+                    </FormLabel>
+                  )}
+
+                  {isMuteReporterEvent && (
+                    <p className="text-xs my-3">
+                      When a reporter is muted, that account will still be able
+                      to report and their reports will show up in the event log.
+                      However, their reports {"won't"} change moderation review
+                      state of the subject {"they're"} reporting
+                    </p>
+                  )}
+
+                  {isLabelEvent && (
+                    <div className="mt-2">
+                      <LabelSelector
+                        id="labels"
+                        name="labels"
+                        formId={FORM_ID}
+                        defaultLabels={currentLabels.filter((label) => {
+                          // If there's a label where the source is the current labeler, it's editable
+                          const isEditableLabel = allLabels.some((l) => {
+                            return l.val === label && l.src === config.did
+                          })
+                          return !isSelfLabel(label) && isEditableLabel
+                        })}
+                      />
+                    </div>
+                  )}
+
+                  {isTagEvent && (
+                    <FormLabel label="Tags" className="mt-2">
+                      <Input
+                        type="text"
+                        id="tags"
+                        name="tags"
+                        className="block w-full"
+                        placeholder="Comma separated tags"
+                        defaultValue={subjectStatus?.tags?.join(',') || ''}
+                      />
+                    </FormLabel>
+                  )}
+
+                  {!isEmailEvent && (
+                    <div className="mt-2">
+                      <Textarea
+                        name="comment"
+                        placeholder="Reason for action (optional)"
+                        className="block w-full mb-3"
+                      />
+                    </div>
+                  )}
+
+                  {isCommentEvent && (
+                    <Checkbox
+                      value="true"
+                      id="sticky"
+                      name="sticky"
+                      className="mb-3 flex items-center"
+                      label="Update the subject's persistent note with this comment"
+                    />
+                  )}
+
+                  {/* Only show this when moderator tries to apply labels to a DID subject */}
+                  {isLabelEvent && isSubjectDid && (
+                    <p className="mb-3 text-xs">
+                      NOTE: Applying labels to an account overall is a strong
+                      intervention. You may want to apply the labels to the
+                      user&apos;s profile record instead.{' '}
+                      <a
+                        href="#"
+                        className="underline"
+                        onClick={() => setSubject(getProfileUriForDid(subject))}
+                      >
+                        Click here to switch the subject from account to profile
+                        record.
+                      </a>
+                    </p>
+                  )}
+
+                  {isLabelEvent && !isReviewClosed && (
+                    <Checkbox
+                      value="true"
+                      defaultChecked
+                      id="additionalAcknowledgeEvent"
+                      name="additionalAcknowledgeEvent"
+                      className="mb-3 flex items-center leading-3"
+                      label={
+                        <span className="leading-4">
+                          {isEscalated
+                            ? `De-escalate the subject and acknowledge all open reports after labeling`
+                            : `Acknowledge all open reports after labeling`}
+                        </span>
+                      }
+                    />
+                  )}
+
+                  {isTakedownEvent && isSubjectDid && (
+                    <Checkbox
+                      value="true"
+                      id="acknowledgeAccountSubjects"
+                      name="acknowledgeAccountSubjects"
+                      className="mb-3 flex items-center leading-3"
+                      label={
+                        <span className="leading-4">
+                          Acknowledge all open/escalated/appealed reports on
+                          subjects created by this user
+                        </span>
+                      }
+                    />
+                  )}
+
+                  {submission.error && (
+                    <div className="my-2">
+                      <ActionError error={submission.error} />
+                    </div>
+                  )}
+
+                  {!isEmailEvent && (
+                    <div className="mt-auto flex flex-row justify-between">
+                      <div>
+                        <input
+                          ref={moveToNextSubjectRef}
+                          type="hidden"
+                          name="moveToNextSubject"
+                          value="0"
+                        />
+                        <ButtonSecondary
+                          className="px-2 sm:px-4 sm:mr-2"
+                          disabled={submission.isSubmitting}
+                          onClick={onCancel}
+                        >
+                          <span className="text-sm sm:text-base">(C)ancel</span>
+                        </ButtonSecondary>
+                      </div>
+                      <div>
+                        <ButtonPrimary
+                          ref={submitButton}
+                          type="submit"
+                          disabled={submission.isSubmitting}
+                          className="mx-1 px-2 sm:px-4"
+                        >
+                          <span className="text-sm sm:text-base">(S)ubmit</span>
+                        </ButtonPrimary>
+                        <ButtonPrimary
+                          type="button"
+                          disabled={submission.isSubmitting}
+                          onClick={submitAndGoNext}
+                          className="px-2 sm:px-4"
+                        >
+                          <span className="text-sm sm:text-base">
+                            Submit & (N)ext
+                          </span>
+                        </ButtonPrimary>
+                      </div>
+                    </div>
+                  )}
                 </div>
-              </div>
-            )}
-          </div>
-        </form>
+              )}
+            </div>
+          </form>
+
+          {/* IMPORTANT: This component has a form so we can't nest it inside the above form */}
+          {isEmailEvent && isSubjectDid && (
+            <div className="ml-2 mt-2">
+              <EmailComposer did={subject} handleSubmit={handleEmailSubmit} />
+            </div>
+          )}
+        </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
             <ModEventList subject={subject} />

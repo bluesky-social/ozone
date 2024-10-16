@@ -34,7 +34,7 @@ export function useEmitEvent() {
               const eventType = data?.event.$type as string
               const actionTypeString = eventType && eventTexts[eventType]
 
-              const title = `${isRecord ? 'Record' : 'Repo'} was ${
+              const title = `${isRecord ? 'Record' : 'Account'} was ${
                 actionTypeString ?? 'actioned'
               }`
 
@@ -192,4 +192,7 @@ const eventTexts = {
   [MOD_EVENTS.LABEL]: 'labeled',
   [MOD_EVENTS.MUTE]: 'muted',
   [MOD_EVENTS.UNMUTE]: 'unmuted',
+  [MOD_EVENTS.APPEAL]: 'appealed',
+  [MOD_EVENTS.RESOLVE_APPEAL]: 'appealed',
+  [MOD_EVENTS.EMAIL]: 'emailed',
 }
