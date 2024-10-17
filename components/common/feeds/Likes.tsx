@@ -4,7 +4,7 @@ import { LoadMoreButton } from '../LoadMoreButton'
 import { usePdsAgent } from '@/shell/AuthContext'
 import { ActionButton } from '../buttons'
 import { ConfirmationModal } from '../modals/confirmation'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
 import { Agent } from '@atproto/api'
@@ -27,6 +27,7 @@ const useLikes = (pdsAgent: Agent, uri: string, cid?: string) => {
 }
 
 export const Likes = ({ uri, cid }: { uri: string; cid?: string }) => {
+  const abortController = useRef<AbortController | null>(null)
   const pdsAgent = usePdsAgent()
   const { data, fetchNextPage, hasNextPage, error } = useLikes(
     pdsAgent,
@@ -47,27 +48,42 @@ export const Likes = ({ uri, cid }: { uri: string; cid?: string }) => {
       return
     }
     setIsAdding(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
 
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
-        const nextLikes = await pdsAgent.app.bsky.feed.getLikes({
-          uri,
-          cid,
-          cursor,
-          limit: 50,
-        })
+        const nextLikes = await pdsAgent.app.bsky.feed.getLikes(
+          {
+            uri,
+            cid,
+            cursor,
+            limit: 50,
+          },
+          { signal: abortController.current?.signal },
+        )
         const dids = nextLikes.data?.likes.map((l) => l.actor.did) || []
         if (dids.length) await addItemsToWorkspace(dids)
         cursor = nextLikes.data.cursor
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
-      toast.error(`Something went wrong: ${(e as Error).message}`)
+      if (abortController.current?.signal.reason === 'user-cancelled') {
+        toast.info('Stopped adding users to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
+      }
     }
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
+
+  useEffect(() => {
+    if (!isConfirmationOpen) {
+      abortController.current?.abort('user-cancelled')
+    }
+  }, [isConfirmationOpen])
 
   return (
     <>
