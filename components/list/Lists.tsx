@@ -7,10 +7,11 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 export function Lists({ actor }: { actor: string }) {
+  const abortController = useRef<AbortController | null>(null)
   const labelerAgent = useLabelerAgent()
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -40,25 +41,40 @@ export function Lists({ actor }: { actor: string }) {
       return
     }
     setIsAdding(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
 
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
-        const nextLists = await labelerAgent.app.bsky.graph.getLists({
-          actor,
-          limit: 25,
-          cursor,
-        })
+        const nextLists = await labelerAgent.app.bsky.graph.getLists(
+          {
+            actor,
+            limit: 25,
+            cursor,
+          },
+          { signal: abortController.current?.signal },
+        )
         await addItemsToWorkspace(nextLists.data.lists.map((f) => f.uri))
         cursor = nextLists.data.cursor
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
-      toast.error(`Something went wrong: ${(e as Error).message}`)
+      if (abortController.current?.signal.reason === 'user-cancelled') {
+        toast.info('Stopped adding lists to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
+      }
     }
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
+
+  useEffect(() => {
+    if (!isConfirmationOpen) {
+      abortController.current?.abort('user-cancelled')
+    }
+  }, [isConfirmationOpen])
 
   if (isLoading) {
     return (
@@ -100,7 +116,9 @@ export function Lists({ actor }: { actor: string }) {
                 confirmAddToWorkspace()
               }}
               isOpen={isConfirmationOpen}
-              setIsOpen={setIsConfirmationOpen}
+              setIsOpen={(val) => {
+                setIsConfirmationOpen(val)
+              }}
               confirmButtonText={isAdding ? 'Stop adding' : 'Yes, add all'}
               title={`Add lists to workspace?`}
               description={

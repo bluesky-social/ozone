@@ -7,7 +7,7 @@ import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { WorkspacePanel } from '@/workspace/Panel'
@@ -18,21 +18,27 @@ const isEmailSearch = (q: string) =>
 
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
-  async ({
-    pageParam,
-    excludeRepo,
-  }: {
-    pageParam?: string
-    excludeRepo?: boolean
-  }) => {
+  async (
+    {
+      pageParam,
+      excludeRepo,
+    }: {
+      pageParam?: string
+      excludeRepo?: boolean
+    },
+    options: { signal?: AbortSignal } = {},
+  ) => {
     const limit = 25
 
     if (!isEmailSearch(q)) {
-      const { data } = await labelerAgent.tools.ozone.moderation.searchRepos({
-        q,
-        limit,
-        cursor: pageParam,
-      })
+      const { data } = await labelerAgent.tools.ozone.moderation.searchRepos(
+        {
+          q,
+          limit,
+          cursor: pageParam,
+        },
+        options,
+      )
 
       return data
     }
@@ -47,11 +53,14 @@ const getRepos =
       return { repos: [], cursor: undefined }
     }
 
-    const { data } = await labelerAgent.com.atproto.admin.searchAccounts({
-      email,
-      limit,
-      cursor: pageParam,
-    })
+    const { data } = await labelerAgent.com.atproto.admin.searchAccounts(
+      {
+        email,
+        limit,
+        cursor: pageParam,
+      },
+      options,
+    )
 
     if (!data.accounts.length) {
       return { repos: [], cursor: data.cursor }
@@ -72,9 +81,12 @@ const getRepos =
     if (!excludeRepo) {
       await Promise.allSettled(
         data.accounts.map(async (account) => {
-          const { data } = await labelerAgent.tools.ozone.moderation.getRepo({
-            did: account.did,
-          })
+          const { data } = await labelerAgent.tools.ozone.moderation.getRepo(
+            {
+              did: account.did,
+            },
+            options,
+          )
           repos[account.did] = { ...repos[account.did], ...data }
         }),
       )
@@ -84,6 +96,7 @@ const getRepos =
   }
 
 function useSearchResultsQuery(q: string) {
+  const abortController = useRef<AbortController | null>(null)
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
@@ -106,26 +119,41 @@ function useSearchResultsQuery(q: string) {
       return
     }
     setIsAdding(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
 
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
         // When we just want the dids of the users, no need to do an extra fetch to include repos
-        const nextPage = await getRepoPage({
-          pageParam: cursor,
-          excludeRepo: true,
-        })
+        const nextPage = await getRepoPage(
+          {
+            pageParam: cursor,
+            excludeRepo: true,
+          },
+          { signal: abortController.current?.signal },
+        )
         const dids = nextPage.repos.map((f) => f.did)
         if (dids.length) await addToWorkspace(dids)
         cursor = nextPage.cursor
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
-      toast.error(`Something went wrong: ${(e as Error).message}`)
+      if (abortController.current?.signal.reason === 'user-cancelled') {
+        toast.info('Stopped adding users to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
+      }
     }
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
+
+  useEffect(() => {
+    if (!isConfirmationOpen) {
+      abortController.current?.abort('user-cancelled')
+    }
+  }, [isConfirmationOpen])
 
   return {
     repos,

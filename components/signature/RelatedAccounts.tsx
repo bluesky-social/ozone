@@ -7,10 +7,11 @@ import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { ToolsOzoneSignatureFindRelatedAccounts } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 export function RelatedAccounts({ id }: { id: string }) {
+  const abortController = useRef<AbortController | null>(null)
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const labelerAgent = useLabelerAgent()
   const [isAdding, setIsAdding] = useState(false)
@@ -39,15 +40,20 @@ export function RelatedAccounts({ id }: { id: string }) {
       return
     }
     setIsAdding(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
 
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
         const nextAccounts =
-          await labelerAgent.tools.ozone.signature.findRelatedAccounts({
-            did: id,
-            cursor,
-          })
+          await labelerAgent.tools.ozone.signature.findRelatedAccounts(
+            {
+              did: id,
+              cursor,
+            },
+            { signal: abortController.current?.signal },
+          )
         await addItemsToWorkspace(
           nextAccounts.data.accounts.map((a) => a.account.did),
         )
@@ -55,11 +61,21 @@ export function RelatedAccounts({ id }: { id: string }) {
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
-      toast.error(`Something went wrong: ${(e as Error).message}`)
+      if (abortController.current?.signal.reason === 'user-cancelled') {
+        toast.info('Stopped adding followers to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
+      }
     }
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
+
+  useEffect(() => {
+    if (!isConfirmationOpen) {
+      abortController.current?.abort('user-cancelled')
+    }
+  }, [isConfirmationOpen])
 
   return (
     <div>
