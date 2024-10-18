@@ -5,10 +5,11 @@ import { AccountsGrid } from '@/repositories/AccountView'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 export function Followers({ id, count }: { id: string; count?: number }) {
+  const abortController = useRef<AbortController | null>(null)
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const labelerAgent = useLabelerAgent()
   const [isAdding, setIsAdding] = useState(false)
@@ -36,15 +37,19 @@ export function Followers({ id, count }: { id: string; count?: number }) {
       return
     }
     setIsAdding(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
 
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
-        const nextFollowers =
-          await labelerAgent.api.app.bsky.graph.getFollowers({
+        const nextFollowers = await labelerAgent.app.bsky.graph.getFollowers(
+          {
             actor: id,
             cursor,
-          })
+          },
+          { signal: abortController.current?.signal },
+        )
         await addItemsToWorkspace(
           nextFollowers.data.followers.map((f) => f.did),
         )
@@ -52,11 +57,21 @@ export function Followers({ id, count }: { id: string; count?: number }) {
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
-      toast.error(`Something went wrong: ${(e as Error).message}`)
+      if (abortController.current?.signal.reason === 'user-cancelled') {
+        toast.info('Stopped adding followers to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
+      }
     }
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
+
+  useEffect(() => {
+    if (!isConfirmationOpen) {
+      abortController.current?.abort('user-cancelled')
+    }
+  }, [isConfirmationOpen])
 
   return (
     <div>
