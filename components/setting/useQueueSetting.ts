@@ -1,0 +1,86 @@
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { QUEUE_CONFIG } from '@/lib/constants'
+import { toast } from 'react-toastify'
+
+type QueueConfig = Record<string, { name: string }>
+
+const getQueueConfig = () => {
+  const config = QUEUE_CONFIG
+  try {
+    return JSON.parse(config) as QueueConfig
+  } catch (err) {
+    return {}
+  }
+}
+
+export const useQueueSetting = () => {
+  const queryClient = useQueryClient()
+  const labelerAgent = useLabelerAgent()
+  const setting = useQuery({
+    queryKey: ['queue-setting'],
+    queryFn: async () => {
+      const { data } = await labelerAgent.tools.ozone.setting.listOptions({
+        scope: 'instance',
+        keys: [
+          'tools.ozone.setting.client.queue.list',
+          'tools.ozone.setting.client.queue.seed',
+        ],
+      })
+
+      let queueList: QueueConfig = getQueueConfig()
+      let queueSeed = ''
+
+      data.options.forEach((option) => {
+        if (option.key === 'tools.ozone.setting.client.queue.list') {
+          queueList = option.value as QueueConfig
+        }
+        if (option.key === 'tools.ozone.setting.client.queue.seed') {
+          queueSeed = option.value?.['val']
+        }
+      })
+
+      return { queueList, queueNames: Object.keys(queueList), queueSeed }
+    },
+  })
+
+  const upsert = useMutation({
+    mutationKey: ['queue-setting', 'upsert'],
+    mutationFn: async (payload: {
+      queueList?: QueueConfig
+      queueSeed: string
+    }) => {
+      const actions = [
+        payload.queueList
+          ? labelerAgent.tools.ozone.setting.upsertOption({
+              value: payload.queueList,
+              scope: 'instance',
+              managerRole: 'moderator',
+              key: 'tools.ozone.setting.client.queue.list',
+            })
+          : Promise.resolve(),
+        payload.queueSeed
+          ? labelerAgent.tools.ozone.setting.upsertOption({
+              value: { val: payload.queueSeed },
+              scope: 'instance',
+              managerRole: 'moderator',
+              key: 'tools.ozone.setting.client.queue.seed',
+            })
+          : Promise.resolve(),
+      ]
+
+      await Promise.all(actions)
+    },
+
+    onSuccess: () => {
+      queryClient.invalidateQueries(['queue-setting'])
+      toast.success('Queue setting saved')
+    },
+
+    onError: (error) => {
+      toast.error(`Failed to save queue setting: ${error?.['message']}`)
+    },
+  })
+
+  return { setting, upsert }
+}
