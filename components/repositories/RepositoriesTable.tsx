@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { UserGroupIcon } from '@heroicons/react/20/solid'
 import { formatDistanceToNow } from 'date-fns'
-import { AppBskyActorProfile, ComAtprotoAdminDefs } from '@atproto/api'
+import { AppBskyActorProfile } from '@atproto/api'
 import { Repo } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'

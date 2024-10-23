@@ -7,7 +7,7 @@ import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { Checkbox, FormLabel, Input, Select } from '@/common/forms'
 import { getDidFromHandle } from '@/lib/identity'
-import { MemberRoleNames } from './Role'
+import { MemberRoleNames } from './helpers'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useQueryClient } from '@tanstack/react-query'
 
