@@ -375,7 +375,12 @@ function useModerationQueueQuery() {
         queryParams,
         queueName,
         0,
-        queueSetting.data,
+        queueSetting.data
+          ? {
+              queueNames: queueSetting.data.queueNames,
+              queueSeed: queueSetting.data.queueSeed.setting,
+            }
+          : undefined,
       )
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
@@ -432,6 +437,5 @@ const getQueueItems = async (
 }
 
 function getQueueIndex(did: string, queueNames: string[], queueSeed: string) {
-  console.log('using seed', queueSeed)
   return simpleHash(did + queueSeed) % queueNames.length
 }

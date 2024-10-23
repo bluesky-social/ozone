@@ -1,4 +1,4 @@
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUEUE_CONFIG } from '@/lib/constants'
 import { toast } from 'react-toastify'
@@ -16,6 +16,7 @@ const getQueueConfig = () => {
 
 export const useQueueSetting = () => {
   const queryClient = useQueryClient()
+  const serverConfig = useServerConfig()
   const labelerAgent = useLabelerAgent()
   const setting = useQuery({
     queryKey: ['queue-setting'],
@@ -28,42 +29,58 @@ export const useQueueSetting = () => {
         ],
       })
 
-      let queueList: QueueConfig = getQueueConfig()
-      let queueSeed = ''
+      let queueList: {
+        managerRole: string | null
+        setting: QueueConfig
+      } = { managerRole: null, setting: getQueueConfig() }
+      let queueSeed: {
+        managerRole: string | null
+        setting: string
+      } = { managerRole: null, setting: '' }
 
       data.options.forEach((option) => {
         if (option.key === 'tools.ozone.setting.client.queue.list') {
-          queueList = option.value as QueueConfig
+          queueList = {
+            managerRole: option.managerRole || null,
+            setting: option.value as QueueConfig,
+          }
         }
         if (option.key === 'tools.ozone.setting.client.queue.seed') {
-          queueSeed = option.value?.['val']
+          queueSeed = {
+            managerRole: option.managerRole || null,
+            setting: option.value?.['val'],
+          }
         }
       })
 
-      return { queueList, queueNames: Object.keys(queueList), queueSeed }
+      return {
+        queueList,
+        queueSeed,
+        queueNames: Object.keys(queueList.setting),
+      }
     },
   })
 
   const upsert = useMutation({
     mutationKey: ['queue-setting', 'upsert'],
     mutationFn: async (payload: {
-      queueList?: QueueConfig
-      queueSeed: string
+      queueList?: { managerRole: string; setting: QueueConfig }
+      queueSeed: { managerRole: string; setting: string }
     }) => {
       const actions = [
         payload.queueList
           ? labelerAgent.tools.ozone.setting.upsertOption({
-              value: payload.queueList,
+              value: payload.queueList.setting,
               scope: 'instance',
-              managerRole: 'moderator',
+              managerRole: payload.queueList.managerRole,
               key: 'tools.ozone.setting.client.queue.list',
             })
           : Promise.resolve(),
         payload.queueSeed
           ? labelerAgent.tools.ozone.setting.upsertOption({
-              value: { val: payload.queueSeed },
+              value: { val: payload.queueSeed.setting },
               scope: 'instance',
-              managerRole: 'moderator',
+              managerRole: payload.queueSeed.managerRole,
               key: 'tools.ozone.setting.client.queue.seed',
             })
           : Promise.resolve(),
