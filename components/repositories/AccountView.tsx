@@ -517,7 +517,9 @@ function Details({
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
-  const ip = typeof repo.ip === 'string' ? repo.ip : undefined
+  const registrationIp = typeof repo.ip === 'string' ? repo.ip : undefined
+  const lastSigninIp =
+    typeof repo.lastSignin === 'string' ? repo.lastSignin : undefined
   const hcapDetail = Array.isArray(repo.hcaptchaDetails)
     ? (repo.hcaptchaDetails as { property: string; value: string }[])
     : undefined
@@ -533,16 +535,34 @@ function Details({
             showCopyButton
           />
         )}
-        {ip && (
-          <DataField value={ip} label="IP" showCopyButton>
-            {obscureIp(ip)}{' '}
-            <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
+        {registrationIp && (
+          <DataField
+            value={registrationIp}
+            label="Registration IP"
+            showCopyButton
+          >
+            {obscureIp(registrationIp)}{' '}
+            <Link
+              href={`/repositories?term=ip:${encodeURIComponent(
+                registrationIp,
+              )}`}
+            >
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+          </DataField>
+        )}
+        {lastSigninIp && (
+          <DataField value={lastSigninIp} label="Last Signin IP" showCopyButton>
+            {obscureIp(lastSigninIp)}{' '}
+            <Link
+              href={`/repositories?term=ip:${encodeURIComponent(lastSigninIp)}`}
+            >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
           </DataField>
         )}
         {hcapDetail && (
-          <DataField value={ip} label="Hcaptcha">
+          <DataField label="Hcaptcha">
             {hcapDetail?.map(({ property, value }) => (
               <Link
                 key={property}
