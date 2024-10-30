@@ -6,6 +6,7 @@ import {
   AppBskyActorGetProfile as GetProfile,
   ToolsOzoneModerationGetRepo as GetRepo,
   AppBskyActorDefs,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import {
   ArrowTopRightOnSquareIcon,
@@ -517,12 +518,10 @@ function Details({
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
-  const registrationIp = typeof repo.ip === 'string' ? repo.ip : undefined
-  const lastSigninIp =
-    typeof repo.lastSignin === 'string' ? repo.lastSignin : undefined
-  const hcapDetail = Array.isArray(repo.hcaptchaDetails)
-    ? (repo.hcaptchaDetails as { property: string; value: string }[])
-    : undefined
+
+  const { registrationIp, lastSigninIp, lastSigninTime, hcapDetail } =
+    parseThreatSigs(repo.threatSignatures)
+
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -559,6 +558,11 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+            {lastSigninTime && (
+              <div className="text-gray-400">
+                {new Date(lastSigninTime).toLocaleString()}
+              </div>
+            )}
           </DataField>
         )}
         {hcapDetail && (
@@ -887,4 +891,23 @@ function obscureIp(ip: string) {
   const parts = ip.split('.')
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
+}
+
+function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
+  const registrationIp = sigs?.find(
+    (sig) => sig.property === 'registrationIp',
+  )?.value
+  const lastSigninIp = sigs?.find(
+    (sig) => sig.property === 'lastSigninIp',
+  )?.value
+  const lastSigninTime = sigs?.find(
+    (sig) => sig.property === 'lastSigninTime',
+  )?.value
+  const hcapDetail = sigs?.filter(
+    (sig) =>
+      !['registrationIp', 'lastSigninIp', 'lastSigninTime'].includes(
+        sig.property,
+      ),
+  )
+  return { registrationIp, lastSigninIp, lastSigninTime, hcapDetail }
 }
