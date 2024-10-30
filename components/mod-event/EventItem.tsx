@@ -96,6 +96,86 @@ const Email = ({
   )
 }
 
+const Record = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.RecordEvent
+  }
+}) => {
+  let operation = ''
+  switch (modEvent.event.op) {
+    case 'create':
+      operation = 'Created'
+      break
+    case 'delete':
+      operation = 'Deleted'
+      break
+    case 'update':
+      operation = 'Updated'
+      break
+    default:
+      operation = modEvent.event.op
+  }
+
+  return (
+    <>
+      <p>
+        {operation} at{' '}
+        {dateFormatter.format(new Date(modEvent.event.timestamp))}
+      </p>
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      {modEvent.event.cid && (
+        <p className="text-gray-500">CID: {modEvent.event.cid}</p>
+      )}
+    </>
+  )
+}
+
+const Account = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.AccountEvent
+  }
+}) => {
+  return (
+    <>
+      <p>
+        {modEvent.event.status && (
+          <span className="capitalize">{modEvent.event.status} </span>
+        )}
+        at {dateFormatter.format(new Date(modEvent.event.timestamp))}
+      </p>
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
+const Identity = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.IdentityEvent
+  }
+}) => {
+  return (
+    <>
+      <p>
+        {modEvent.event.handle && (
+          <span>New Handle: {modEvent.event.handle} </span>
+        )}
+        {modEvent.event.pdsHost && (
+          <span>PDS Host: {modEvent.event.pdsHost} </span>
+        )}
+        {modEvent.event.tombstone && <span>Tombstoned </span>}
+        at {dateFormatter.format(new Date(modEvent.event.timestamp))}
+      </p>
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
 function isMessageSubject(
   subject: ToolsOzoneModerationDefs.ModEventView['subject'],
 ): subject is ChatBskyConvoDefs.MessageRef {
@@ -208,7 +288,7 @@ const EventLabels = ({
 
   if (!labels?.length) return null
   return (
-    <LabelList className='flex-wrap'>
+    <LabelList className="flex-wrap">
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
         if (isTag) {
@@ -346,6 +426,18 @@ export const ModEventItem = ({
   if (ToolsOzoneModerationDefs.isModEventEmail(modEvent.event)) {
     //@ts-ignore
     eventItem = <Email modEvent={modEvent} />
+  }
+  if (ToolsOzoneModerationDefs.isRecordEvent(modEvent.event)) {
+    //@ts-ignore
+    eventItem = <Record modEvent={modEvent} />
+  }
+  if (ToolsOzoneModerationDefs.isAccountEvent(modEvent.event)) {
+    //@ts-ignore
+    eventItem = <Account modEvent={modEvent} />
+  }
+  if (ToolsOzoneModerationDefs.isIdentityEvent(modEvent.event)) {
+    //@ts-ignore
+    eventItem = <Identity modEvent={modEvent} />
   }
   const previewSubject = modEvent.subject.uri || modEvent.subject.did
   return (

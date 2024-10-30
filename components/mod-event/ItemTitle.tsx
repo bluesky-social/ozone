@@ -92,6 +92,15 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }
+  if (ToolsOzoneModerationDefs.isAccountEvent(modEvent.event)) {
+    eventTitle = 'Account event'
+  }
+  if (ToolsOzoneModerationDefs.isRecordEvent(modEvent.event)) {
+    eventTitle = 'Record event'
+  }
+  if (ToolsOzoneModerationDefs.isIdentityEvent(modEvent.event)) {
+    eventTitle = 'Identity event'
+  }
 
   return (
     <div className="text-gray-500 dark:text-gray-50 flex flex-row justify-between">
