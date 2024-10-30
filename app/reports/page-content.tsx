@@ -295,8 +295,13 @@ function useModerationQueueQuery() {
   const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
-    useFluentReportSearchParams()
+  const {
+    lastReviewedBy,
+    subject,
+    reporters,
+    includeAllUserRecords,
+    hostingStatuses,
+  } = useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
@@ -316,6 +321,7 @@ function useModerationQueueQuery() {
         queueName,
         includeMuted,
         onlyMuted,
+        hostingStatuses,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -351,6 +357,10 @@ function useModerationQueueQuery() {
 
       if (tags) {
         queryParams.tags = tags.split(',')
+      }
+
+      if (hostingStatuses) {
+        queryParams.hostingStatuses = hostingStatuses
       }
 
       if (excludeTags) {

@@ -5,6 +5,7 @@ type SearchQueryParams = {
   subject?: string
   lastReviewedBy?: string
   reporters?: string[]
+  hostingStatuses?: string[]
   includeAllUserRecords?: boolean
 }
 
@@ -12,6 +13,7 @@ const ParamPrefixes = {
   subject: 'subject',
   reporters: 'reporters',
   lastReviewedBy: 'lastReviewedBy',
+  hostingStatuses: 'hostingStatuses',
   includeAllUserRecords: 'includeAllUserRecords',
 }
 
@@ -75,6 +77,7 @@ export const useFluentReportSearchParams = (): SearchQueryParams => {
       subject,
       lastReviewedBy: undefined,
       reporters: undefined,
+      hostingStatuses: undefined,
       includeAllUserRecords: undefined,
     }
 
@@ -88,6 +91,9 @@ export const useFluentReportSearchParams = (): SearchQueryParams => {
       searchParams.lastReviewedBy = paramsFromQuery.lastReviewedBy
       searchParams.reporters = paramsFromQuery.reporters
         ? paramsFromQuery.reporters.split(',')
+        : undefined
+      searchParams.hostingStatuses = paramsFromQuery.hostingStatuses
+        ? paramsFromQuery.hostingStatuses.split(',')
         : undefined
     }
 
