@@ -106,13 +106,15 @@ const ResolvedFilters = () => {
   const appealed = params.get('appealed')
 
   const updateParams = useCallback(
-    (key: string, newState: boolean) => {
+    (updates: Record<string, boolean>) => {
       const nextParams = new URLSearchParams(params)
-      if (nextParams.get(key) == `${newState}`) {
-        nextParams.delete(key)
-      } else {
-        nextParams.set(key, `${newState}`)
-      }
+      Object.entries(updates).forEach(([key, newState]) => {
+        if (nextParams.get(key) === `${newState}`) {
+          nextParams.delete(key)
+        } else {
+          nextParams.set(key, `${newState}`)
+        }
+      })
       router.push((pathname ?? '') + '?' + nextParams.toString())
     },
     [params, pathname, router],
@@ -126,20 +128,29 @@ const ResolvedFilters = () => {
         {
           id: 'takendown',
           text: 'Taken Down',
-          onClick: () => updateParams('takendown', true),
+          onClick: () => updateParams({ takendown: true }),
           isActive: takendown === 'true',
         },
         {
-          id: 'includeMuted',
-          text: 'Show Muted',
-          onClick: () => updateParams('includeMuted', true),
-          isActive: includeMuted === 'true',
-        },
-        {
-          id: 'onlyMuted',
-          text: 'Only Muted',
-          onClick: () => updateParams('onlyMuted', true),
-          isActive: onlyMuted === 'true',
+          id: 'mute',
+          text:
+            includeMuted === 'true'
+              ? 'Include Muted'
+              : onlyMuted === 'true'
+              ? 'Only Muted'
+              : 'Mutes',
+          onClick: () => {
+            // setting a param to it's current value toggles it off
+            // so we toggle off includeMuted and toggle on onlyMuted
+            if (includeMuted === 'true') {
+              updateParams({ includeMuted: true, onlyMuted: true })
+            } else if (onlyMuted === 'true') {
+              updateParams({ onlyMuted: true })
+            } else {
+              updateParams({ includeMuted: true })
+            }
+          },
+          isActive: includeMuted === 'true' || onlyMuted === 'true',
         },
         {
           id: 'appealed',
@@ -151,12 +162,12 @@ const ResolvedFilters = () => {
               : 'Appeals',
           onClick: () => {
             if (appealed === 'true') {
-              updateParams('appealed', false)
+              updateParams({ appealed: false })
             } else if (appealed === 'false') {
               // setting the same value toggles the param off
-              updateParams('appealed', false)
+              updateParams({ appealed: false })
             } else {
-              updateParams('appealed', true)
+              updateParams({ appealed: true })
             }
           },
           isActive: appealed === 'true' || appealed === 'false',
