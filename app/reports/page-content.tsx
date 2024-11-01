@@ -30,8 +30,8 @@ import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
-import { EmbedTypePickerForModerationQueue } from '@/common/EmbedTypePicker'
 import { QUEUE_SEED } from '@/lib/constants'
+import QueueFilterPanel from '@/reports/QueueFilter/Panel'
 
 const TABS = [
   {
@@ -248,8 +248,7 @@ export const ReportsPageContent = () => {
       </SectionHeader>
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex flex-row items-center gap-2">
-          <LanguagePicker />
-          <EmbedTypePickerForModerationQueue />
+          <QueueFilterPanel />
         </div>
         <ResolvedFilters />
       </div>
@@ -305,6 +304,8 @@ function useModerationQueueQuery() {
   const tags = params.get('tags')
   const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
+  const subjectType = params.get('subjectType')
+  const collections = params.get('collections')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
     useFluentReportSearchParams()
@@ -327,6 +328,8 @@ function useModerationQueueQuery() {
         queueName,
         includeMuted,
         onlyMuted,
+        subjectType,
+        collections,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -340,6 +343,17 @@ function useModerationQueueQuery() {
 
       if (subject) {
         queryParams.subject = subject
+      } else {
+        if (subjectType) {
+          queryParams.subjectType = subjectType
+        }
+
+        if (subjectType === 'record') {
+          const collectionNames = collections?.split(',')
+          if (collectionNames?.length) {
+            queryParams.collections = collectionNames
+          }
+        }
       }
 
       if (takendown) {

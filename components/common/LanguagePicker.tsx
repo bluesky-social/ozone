@@ -61,58 +61,7 @@ const SelectionTitle = ({
   )
 }
 
-// Tags can be any arbitrary string, and lang tags are prefixed with lang:[code2] so we use this to get the lang code from tag string
-const getLangFromTag = (tag: string) => tag.split(':')[1]
-
 export const LanguagePicker: React.FC = () => {
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  const pathname = usePathname()
-
-  const tagsParam = searchParams.get('tags')
-  const excludeTagsParam = searchParams.get('excludeTags')
-  const tags = tagsParam?.split(',') || []
-  const excludedTags = excludeTagsParam?.split(',') || []
-  const includedLanguages = tags
-    .filter((tag) => tag.startsWith('lang:'))
-    .map(getLangFromTag)
-  const excludedLanguages = excludedTags
-    .filter((tag) => tag.startsWith('lang:'))
-    .map(getLangFromTag)
-
-  const toggleLanguage = (section: 'include' | 'exclude', newLang: string) => {
-    const nextParams = new URLSearchParams(searchParams)
-    const urlQueryKey = section === 'include' ? 'tags' : 'excludeTags'
-    const selectedLanguages =
-      section === 'include' ? includedLanguages : excludedLanguages
-    const selectedLanguageTags = section === 'include' ? tags : excludedTags
-
-    if (selectedLanguages.includes(newLang)) {
-      const newTags = selectedLanguageTags.filter(
-        (tag) => `lang:${newLang}` !== tag,
-      )
-      if (newTags.length) {
-        nextParams.set(urlQueryKey, newTags.join(','))
-      } else {
-        nextParams.delete(urlQueryKey)
-      }
-    } else {
-      nextParams.set(
-        urlQueryKey,
-        [...selectedLanguageTags, `lang:${newLang}`].join(','),
-      )
-    }
-
-    router.push((pathname ?? '') + '?' + nextParams.toString())
-  }
-  const clearLanguages = () => {
-    const nextParams = new URLSearchParams(searchParams)
-
-    nextParams.delete('tags')
-    nextParams.delete('excludeTags')
-    router.push((pathname ?? '') + '?' + nextParams.toString())
-  }
-
   return (
     <Popover>
       {({ open, close }) => (
@@ -134,91 +83,13 @@ export const LanguagePicker: React.FC = () => {
           >
             <Popover.Panel className="absolute left-0 z-10 mt-1 flex w-screen max-w-max -translate-x-1/5 px-4">
               <div className="w-fit-content flex-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
-                <div className="flex flex-row gap-4 text-gray-700 dark:text-gray-100">
-                  <LanguageList
-                    disabled={excludedLanguages}
-                    selected={includedLanguages}
-                    header="Include Languages"
-                    onSelect={(lang) => toggleLanguage('include', lang)}
-                  />
-                  <LanguageList
-                    disabled={includedLanguages}
-                    selected={excludedLanguages}
-                    header="Exclude Languages"
-                    onSelect={(lang) => toggleLanguage('exclude', lang)}
-                  />
-                </div>
 
-                <p className="py-2 block max-w-xs text-gray-500 dark:text-gray-300 text-xs">
-                  Note:{' '}
-                  <i>
-                    When multiple languages are selected, only subjects that are
-                    tagged with <b>all</b> of those languages will be
-                    included/excluded.
-                  </i>
-                </p>
-                {(includedLanguages.length > 0 ||
-                  excludedLanguages.length > 0) && (
-                  <div className="flex flex-row mt-2">
-                    <ActionButton
-                      size="xs"
-                      appearance="outlined"
-                      onClick={() => {
-                        clearLanguages()
-                        close()
-                      }}
-                    >
-                      <span className="text-xs">Clear All</span>
-                    </ActionButton>
-                  </div>
-                )}
               </div>
             </Popover.Panel>
           </Transition>
         </>
       )}
     </Popover>
-  )
-}
-
-const LanguageList = ({
-  header,
-  onSelect,
-  selected = [],
-  disabled = [],
-}: {
-  selected: string[]
-  disabled: string[]
-  header: string
-  onSelect: (lang: string) => void
-}) => {
-  return (
-    <div>
-      <h4 className="text-gray-900 dark:text-gray-200 border-b border-gray-300 mb-2 pb-1">
-        {header}
-      </h4>
-      <div className="flex flex-col items-start">
-        {availableLanguageCodes.map((code2) => {
-          const isDisabled = disabled.includes(code2)
-          return (
-            <button
-              className={`w-full flex flex-row items-center justify-between ${
-                isDisabled
-                  ? 'text-gray-400'
-                  : 'text-gray-700 dark:text-gray-100'
-              }`}
-              onClick={() => !isDisabled && onSelect(code2)}
-              key={code2}
-            >
-              {getLanguageName(code2)}
-              {selected.includes(code2) && (
-                <CheckIcon className="h-4 w-4 text-green-700" />
-              )}
-            </button>
-          )
-        })}
-      </div>
-    </div>
   )
 }
 
