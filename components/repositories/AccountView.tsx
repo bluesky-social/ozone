@@ -542,7 +542,7 @@ function Details({
           >
             {obscureIp(registrationIp)}{' '}
             <Link
-              href={`/repositories?term=ip:${encodeURIComponent(
+              href={`/repositories?term=sig:${encodeURIComponent(
                 registrationIp,
               )}`}
             >
@@ -554,7 +554,9 @@ function Details({
           <DataField value={lastSigninIp} label="Last Signin IP" showCopyButton>
             {obscureIp(lastSigninIp)}{' '}
             <Link
-              href={`/repositories?term=ip:${encodeURIComponent(lastSigninIp)}`}
+              href={`/repositories?term=sig:${encodeURIComponent(
+                lastSigninIp,
+              )}`}
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
@@ -570,7 +572,7 @@ function Details({
             {hcapDetail?.map(({ property, value }) => (
               <Link
                 key={property}
-                href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
+                href={`/repositories?term=sig:${encodeURIComponent(value)}`}
               >
                 <LabelChip>
                   <MagnifyingGlassIcon className="h-3 w-3 inline" />
