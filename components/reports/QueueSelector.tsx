@@ -45,13 +45,13 @@ export const QueueSelector = () => {
           onClick: selectQueue(''),
         },
         ...queueNames.map((q) => ({
-          text: queueList[q].name,
+          text: queueList.setting[q].name,
           onClick: selectQueue(q),
         })),
       ]}
     >
       <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">
-        {queueName ? `${queueList[queueName].name} Queue` : 'Queue'}
+        {queueName ? `${queueList.setting[queueName].name} Queue` : 'Queue'}
         <ChevronDownIcon
           className="text-gray-900 dark:text-gray-200 h-4 w-4"
           aria-hidden="true"
