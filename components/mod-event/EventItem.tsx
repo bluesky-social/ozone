@@ -76,9 +76,7 @@ const Comment = ({
 const Email = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
-    event: ToolsOzoneModerationDefs.ModEventEmail
-  }
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventEmail>
 }) => {
   return (
     <>
@@ -99,9 +97,7 @@ const Email = ({
 const Record = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
-    event: ToolsOzoneModerationDefs.RecordEvent
-  }
+  modEvent: ModEventType<ToolsOzoneModerationDefs.RecordEvent>
 }) => {
   let operation = ''
   switch (modEvent.event.op) {
@@ -135,9 +131,7 @@ const Record = ({
 const Account = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
-    event: ToolsOzoneModerationDefs.AccountEvent
-  }
+  modEvent: ModEventType<ToolsOzoneModerationDefs.AccountEvent>
 }) => {
   return (
     <>
@@ -155,9 +149,7 @@ const Account = ({
 const Identity = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
-    event: ToolsOzoneModerationDefs.IdentityEvent
-  }
+  modEvent: ModEventType<ToolsOzoneModerationDefs.IdentityEvent>
 }) => {
   return (
     <>
@@ -182,12 +174,19 @@ function isMessageSubject(
   return subject.messageId !== undefined
 }
 
+type ModEventType<T> = { event: T } & ToolsOzoneModerationDefs.ModEventView
+
+function isModEventType<T>(
+  e: ToolsOzoneModerationDefs.ModEventView,
+  predicate: (event: unknown) => event is T,
+): e is ModEventType<T> {
+  return predicate(e.event)
+}
+
 const Report = ({
   modEvent,
 }: {
-  modEvent: {
-    event: ToolsOzoneModerationDefs.ModEventReport
-  } & ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventReport>
 }) => {
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
@@ -315,9 +314,7 @@ const EventLabels = ({
 const Label = ({
   modEvent,
 }: {
-  modEvent: {
-    event: ToolsOzoneModerationDefs.ModEventLabel
-  } & ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventLabel>
 }) => {
   return (
     <>
@@ -411,32 +408,25 @@ export const ModEventItem = ({
   ) {
     eventItem = <TakedownOrMute modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventReport(modEvent.event)) {
-    // @ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventReport)) {
     eventItem = <Report modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventLabel(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventLabel)) {
     eventItem = <Label modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventTag(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventTag)) {
     eventItem = <Tag modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventEmail(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventEmail)) {
     eventItem = <Email modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isRecordEvent(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isRecordEvent)) {
     eventItem = <Record modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isAccountEvent(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isAccountEvent)) {
     eventItem = <Account modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isIdentityEvent(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isIdentityEvent)) {
     eventItem = <Identity modEvent={modEvent} />
   }
   const previewSubject = modEvent.subject.uri || modEvent.subject.did
