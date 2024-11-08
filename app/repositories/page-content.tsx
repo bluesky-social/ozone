@@ -221,7 +221,7 @@ export default function RepositoriesListPage() {
 
       <RepositoriesTable
         repos={repos}
-        showEmail={isEmailSearch(q)}
+        showEmail={isEmailSearch(q) || isSignatureSearch(q)}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
         showEmptySearch={!q?.length && !repos.length}
