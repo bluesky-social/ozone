@@ -1,6 +1,13 @@
 import { LabelChip } from '@/common/labels'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 
+export const getLanguageFlag = (langCode: string) => {
+  if (!langCode) return undefined
+
+  const langDetails = LANGUAGES_MAP_CODE2[langCode]
+  return langDetails?.flag
+}
+
 export const SubjectTag = ({ tag }: { tag: string }) => {
   if (tag.startsWith('lang:')) {
     const langCode = tag.split(':')[1]?.toLowerCase()
