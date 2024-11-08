@@ -437,5 +437,5 @@ const getQueueItems = async (
 }
 
 function getQueueIndex(did: string, queueNames: string[], queueSeed: string) {
-  return simpleHash(did + queueSeed) % queueNames.length
+  return simpleHash(`${queueSeed}:${did}`) % queueNames.length
 }
