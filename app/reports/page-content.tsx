@@ -22,14 +22,14 @@ import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 import { ButtonGroup } from '@/common/buttons'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
-import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
+import { QueueSelector } from '@/reports/QueueSelector'
 import { simpleHash, unique } from '@/lib/util'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
-import { QUEUE_SEED } from '@/lib/constants'
+import { useQueueSetting } from 'components/setting/useQueueSetting'
 import QueueFilterPanel from '@/reports/QueueFilter/Panel'
 
 const TABS = [
@@ -294,6 +294,7 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
 function useModerationQueueQuery() {
   const labelerAgent = useLabelerAgent()
   const params = useSearchParams()
+  const { setting: queueSetting } = useQueueSetting()
 
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
@@ -393,7 +394,18 @@ function useModerationQueueQuery() {
         }
       })
 
-      return getQueueItems(labelerAgent, queryParams, queueName)
+      return getQueueItems(
+        labelerAgent,
+        queryParams,
+        queueName,
+        0,
+        queueSetting.data
+          ? {
+              queueNames: queueSetting.data.queueNames,
+              queueSeed: queueSetting.data.queueSeed.setting,
+            }
+          : undefined,
+      )
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
@@ -404,6 +416,7 @@ const getQueueItems = async (
   queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
   queueName: string | null,
   attempt = 0,
+  queueSetting?: { queueNames: string[]; queueSeed: string },
 ) => {
   const pageSize = 100
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
@@ -412,13 +425,19 @@ const getQueueItems = async (
     ...queryParams,
   })
 
-  const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
+  const queueIndex = queueSetting?.queueNames.indexOf(queueName ?? '')
   const statusesInQueue = queueName
     ? data.subjectStatuses.filter((status) => {
         const subjectDid = ComAtprotoAdminDefs.isRepoRef(status.subject)
           ? status.subject.did
           : new AtUri(`${status.subject.uri}`).host
-        return getQueueIndex(subjectDid) === queueIndex
+        return (
+          getQueueIndex(
+            subjectDid,
+            queueSetting?.queueNames || [],
+            queueSetting?.queueSeed || '',
+          ) === queueIndex
+        )
       })
     : data.subjectStatuses
 
@@ -434,12 +453,13 @@ const getQueueItems = async (
       },
       queueName,
       ++attempt,
+      queueSetting,
     )
   }
 
   return { cursor: data.cursor, subjectStatuses: statusesInQueue }
 }
 
-function getQueueIndex(did: string) {
-  return simpleHash(did + QUEUE_SEED) % QUEUE_NAMES.length
+function getQueueIndex(did: string, queueNames: string[], queueSeed: string) {
+  return simpleHash(`${queueSeed}:${did}`) % queueNames.length
 }
