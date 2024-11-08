@@ -3,7 +3,11 @@ import { RepositoriesTable } from '@/repositories/RepositoriesTable'
 import { useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useTitle } from 'react-use'
-import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  Agent,
+  ToolsOzoneModerationDefs,
+  ComAtprotoAdminSearchAccounts,
+} from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
@@ -13,8 +17,8 @@ import { ConfirmationModal } from '@/common/modals/confirmation'
 import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
-const isEmailSearch = (q: string) =>
-  q.startsWith('email:') || q.startsWith('ip:') || q.startsWith('hcap:')
+const isEmailSearch = (q: string) => q.startsWith('email:')
+const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
@@ -27,7 +31,7 @@ const getRepos =
   }) => {
     const limit = 25
 
-    if (!isEmailSearch(q)) {
+    if (!isEmailSearch(q) && !isSignatureSearch(q)) {
       const { data } = await labelerAgent.tools.ozone.moderation.searchRepos({
         q,
         limit,
@@ -37,21 +41,22 @@ const getRepos =
       return data
     }
 
-    const email = q
-      .replace('email:', '')
-      .replace('ip:', '')
-      .replace('hcap:', '')
-      .trim()
-
-    if (!email) {
-      return { repos: [], cursor: undefined }
+    let data: ComAtprotoAdminSearchAccounts.OutputSchema
+    if (isSignatureSearch(q)) {
+      const value = q.replace('sig:', '').trim()
+      const res = await labelerAgent.tools.ozone.signature.searchAccounts({
+        values: [value],
+      })
+      data = res.data
+    } else {
+      const email = q.replace('email:', '').trim()
+      const res = await labelerAgent.com.atproto.admin.searchAccounts({
+        email,
+        limit,
+        cursor: pageParam,
+      })
+      data = res.data
     }
-
-    const { data } = await labelerAgent.com.atproto.admin.searchAccounts({
-      email,
-      limit,
-      cursor: pageParam,
-    })
 
     if (!data.accounts.length) {
       return { repos: [], cursor: data.cursor }
