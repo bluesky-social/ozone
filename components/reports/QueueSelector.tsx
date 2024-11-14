@@ -1,27 +1,14 @@
 import { Dropdown } from '@/common/Dropdown'
-import { QUEUE_CONFIG } from '@/lib/constants'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
+import { useQueueSetting } from 'components/setting/useQueueSetting'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-
-type QueueConfig = Record<string, { name: string }>
-
-const getQueueConfig = () => {
-  const config = QUEUE_CONFIG
-  try {
-    return JSON.parse(config) as QueueConfig
-  } catch (err) {
-    return {}
-  }
-}
-
-export const QUEUES = getQueueConfig()
-export const QUEUE_NAMES = Object.keys(QUEUES)
 
 export const QueueSelector = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
   const queueName = searchParams.get('queueName')
+  const { setting: queueSetting } = useQueueSetting()
 
   const selectQueue = (queue: string) => () => {
     const nextParams = new URLSearchParams(searchParams)
@@ -34,13 +21,19 @@ export const QueueSelector = () => {
   }
 
   // If no queues are configured, just use a static title
-  if (!QUEUE_NAMES.length) {
+  if (
+    queueSetting.isLoading ||
+    !queueSetting.data ||
+    !queueSetting.data?.queueNames.length
+  ) {
     return (
       <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">
         Queue
       </h3>
     )
   }
+
+  const { queueNames, queueList } = queueSetting.data
 
   return (
     <Dropdown
@@ -51,14 +44,14 @@ export const QueueSelector = () => {
           text: 'All',
           onClick: selectQueue(''),
         },
-        ...QUEUE_NAMES.map((q) => ({
-          text: QUEUES[q].name,
+        ...queueNames.map((q) => ({
+          text: queueList.setting[q].name,
           onClick: selectQueue(q),
         })),
       ]}
     >
       <h3 className="flex items-center text-lg font-medium leading-6 text-gray-900 dark:text-gray-200">
-        {queueName ? `${QUEUES[queueName].name} Queue` : 'Queue'}
+        {queueName ? `${queueList.setting[queueName].name} Queue` : 'Queue'}
         <ChevronDownIcon
           className="text-gray-900 dark:text-gray-200 h-4 w-4"
           aria-hidden="true"
