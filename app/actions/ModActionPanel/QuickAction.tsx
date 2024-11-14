@@ -12,7 +12,6 @@ import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
 import { BlobList } from './BlobList'
 import {
-  LabelChip,
   LabelList,
   LabelListEmpty,
   diffLabels,
