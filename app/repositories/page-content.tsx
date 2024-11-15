@@ -52,6 +52,7 @@ const getRepos =
       const value = q.replace('sig:', '').trim()
       const res = await labelerAgent.tools.ozone.signature.searchAccounts({
         values: [value],
+        cursor: pageParam,
       })
       data = res.data
     } else {
