@@ -57,11 +57,14 @@ const getRepos =
       data = res.data
     } else {
       const email = q.replace('email:', '').trim()
-      const res = await labelerAgent.com.atproto.admin.searchAccounts({
-        email,
-        limit,
-        cursor: pageParam,
-      }, options)
+      const res = await labelerAgent.com.atproto.admin.searchAccounts(
+        {
+          email,
+          limit,
+          cursor: pageParam,
+        },
+        options,
+      )
       data = res.data
     }
 
@@ -157,6 +160,11 @@ function useSearchResultsQuery(q: string) {
       abortController.current?.abort('user-cancelled')
     }
   }, [isConfirmationOpen])
+
+  useEffect(() => {
+    // User cancelled by closing this view (navigation, other?)
+    return () => abortController.current?.abort('user-cancelled')
+  }, [])
 
   return {
     repos,

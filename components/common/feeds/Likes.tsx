@@ -85,6 +85,11 @@ export const Likes = ({ uri, cid }: { uri: string; cid?: string }) => {
     }
   }, [isConfirmationOpen])
 
+  useEffect(() => {
+    // User cancelled by closing this view (navigation, other?)
+    return () => abortController.current?.abort('user-cancelled')
+  }, [])
+
   return (
     <>
       {!!likes?.length && (

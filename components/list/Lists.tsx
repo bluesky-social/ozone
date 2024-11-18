@@ -76,6 +76,11 @@ export function Lists({ actor }: { actor: string }) {
     }
   }, [isConfirmationOpen])
 
+  useEffect(() => {
+    // User cancelled by closing this view (navigation, other?)
+    return () => abortController.current?.abort('user-cancelled')
+  }, [])
+
   if (isLoading) {
     return (
       <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">

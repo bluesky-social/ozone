@@ -73,6 +73,11 @@ export function Followers({ id, count }: { id: string; count?: number }) {
     }
   }, [isConfirmationOpen])
 
+  useEffect(() => {
+    // User cancelled by closing this view (navigation, other?)
+    return () => abortController.current?.abort('user-cancelled')
+  }, [])
+
   return (
     <div>
       {!!count && (
