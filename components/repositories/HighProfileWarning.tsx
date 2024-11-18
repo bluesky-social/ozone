@@ -2,6 +2,11 @@ import { Alert } from '@/common/Alert'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { AppBskyActorDefs } from '@atproto/api'
 
+const numberFormatter = new Intl.NumberFormat('en', {
+  notation: 'compact',
+  compactDisplay: 'short',
+})
+
 export const HighProfileWarning = ({
   profile,
 }: {
@@ -17,7 +22,11 @@ export const HighProfileWarning = ({
     <Alert
       type="warning"
       title="High profile account"
-      body={`This user has more than ${HIGH_PROFILE_FOLLOWER_THRESHOLD} followers. Please take caution when moderating this account.`}
+      body={`This user has more than ${numberFormatter.format(
+        HIGH_PROFILE_FOLLOWER_THRESHOLD,
+      )} followers (${numberFormatter.format(
+        followersCount,
+      )} total). Please take caution when moderating this account.`}
     />
   )
 }
