@@ -14,10 +14,8 @@ import {
 import { differenceInDays, formatDistance } from 'date-fns'
 
 const getProfileFromRepo = (repo: ToolsOzoneModerationDefs.RepoView) => {
-  const profile = repo.relatedRecords.find(
-    (r) => r?.['$type'] === CollectionId.Profile,
-  )
-  return profile ? (profile as AppBskyActorProfile.Record) : null
+  const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
+  return profile || null
 }
 
 export const RecordAuthorStatus = ({
