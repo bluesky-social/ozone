@@ -1,26 +1,30 @@
+import { ActionPanel } from '@/common/ActionPanel'
+import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
+import { LabelChip } from '@/common/labels'
+import { PropsOf } from '@/lib/types'
+import { MOD_EVENTS } from '@/mod-event/constants'
+import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   ComAtprotoModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
-import { FormEvent, useRef, useState } from 'react'
-import { ActionPanel } from '@/common/ActionPanel'
-import { PropsOf } from '@/lib/types'
-import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
-import { MOD_EVENTS } from '@/mod-event/constants'
 import { Dialog } from '@headlessui/react'
+import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import { FormEvent, useRef, useState } from 'react'
+import { toast } from 'react-toastify'
+import { WORKSPACE_FORM_ID } from './constants'
 import {
   useWorkspaceEmptyMutation,
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from './hooks'
-import WorkspaceList from './List'
 import WorkspaceItemCreator from './ItemCreator'
-import { useSubjectStatuses } from '@/subject/useSubjectStatus'
-import { WorkspacePanelActions } from './PanelActions'
-import { WORKSPACE_FORM_ID } from './constants'
+import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
-import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
@@ -53,17 +57,75 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     emptyWorkspaceMutation.mutate()
   }
 
-  const [submission, setSubmission] = useState<{
-    isSubmitting: boolean
-    error: string
-  }>({ isSubmitting: false, error: '' })
+  const labelerAgent = useLabelerAgent()
+  const handleFindCorrelation = async () => {
+    const selectedItems = new FormData(formRef.current!)
+      .getAll('workspaceItem')
+      .filter((item): item is string => typeof item === 'string')
+
+    const dids = selectedItems.filter((item) => item.startsWith('did:'))
+
+    if (dids.length <= 1) {
+      toast.warning('Please select at least two accounts to correlate.')
+      return
+    }
+
+    if (dids.length !== selectedItems.length) {
+      toast.info('Only accounts can be correlated (ignoring non-accounts).')
+    }
+
+    const res = await labelerAgent.tools.ozone.signature.findCorrelation({
+      dids,
+    })
+
+    const { details } = res.data
+
+    if (!details.length) {
+      toast.info('No correlation found between the selected accounts.')
+    } else {
+      toast.success(
+        <div>
+          The following correlation were found between the selected accounts:
+          <br />
+          {details.map(({ property, value }) => (
+            <Link
+              key={property}
+              href={`/repositories?term=sig:${encodeURIComponent(value)}`}
+            >
+              <LabelChip>
+                <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                {property}
+              </LabelChip>
+            </Link>
+          ))}
+          {details.length > 1 && (
+            <>
+              <br />
+              <Link
+                key="all"
+                href={`/repositories?term=sig:${encodeURIComponent(
+                  JSON.stringify(details.map((s) => s.value)),
+                )}`}
+                className="text-blue-500 underline"
+              >
+                Click here to show all accounts with the same details.
+              </Link>
+            </>
+          )}
+        </div>,
+        {
+          autoClose: 10_000,
+        },
+      )
+    }
+  }
+
   // on form submit
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
   ) => {
     ev.preventDefault()
     try {
-      setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
       const labels = String(formData.get('labels'))?.split(',')
       const coreEvent: ToolsOzoneModerationEmitEvent.InputSchema['event'] = {
@@ -122,7 +184,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
-      setSubmission({ error: '', isSubmitting: false })
 
       // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
       if (results.failed.length) {
@@ -140,7 +201,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           })
       }
     } catch (err) {
-      setSubmission({ error: (err as Error).message, isSubmitting: false })
+      console.error(err)
     }
   }
 
@@ -195,15 +256,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             {!showItemCreator && (
               <div className="mb-2 flex space-x-2">
                 <WorkspacePanelActions
-                  {...{
-                    handleRemoveSelected,
-                    handleEmptyWorkspace,
-                    setShowActionForm,
-                    setShowItemCreator,
-                    showActionForm,
-                    workspaceList,
-                    listData: workspaceListStatuses || {},
-                  }}
+                  listData={workspaceListStatuses || {}}
+                  handleRemoveSelected={handleRemoveSelected}
+                  handleEmptyWorkspace={handleEmptyWorkspace}
+                  handleFindCorrelation={handleFindCorrelation}
+                  setShowActionForm={setShowActionForm}
+                  setShowItemCreator={setShowItemCreator}
+                  showActionForm={showActionForm}
+                  workspaceList={workspaceList}
                 />
               </div>
             )}

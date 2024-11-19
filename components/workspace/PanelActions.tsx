@@ -1,12 +1,13 @@
 import { ActionButton } from '@/common/buttons'
 import { CopyButton } from '@/common/CopyButton'
-import { PlusIcon, NoSymbolIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { NoSymbolIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { WorkspaceFilterSelector } from './FilterSelector'
 import { WorkspaceListData } from './useWorkspaceListData'
 
 export const WorkspacePanelActions = ({
   handleRemoveSelected,
   handleEmptyWorkspace,
+  handleFindCorrelation,
   setShowActionForm,
   setShowItemCreator,
   showActionForm,
@@ -15,6 +16,7 @@ export const WorkspacePanelActions = ({
 }: {
   handleRemoveSelected: () => void
   handleEmptyWorkspace: () => void
+  handleFindCorrelation: () => void
   setShowActionForm: React.Dispatch<React.SetStateAction<boolean>>
   setShowItemCreator: React.Dispatch<React.SetStateAction<boolean>>
   showActionForm: boolean
@@ -50,6 +52,16 @@ export const WorkspacePanelActions = ({
       >
         {showActionForm ? 'Hide Action Form' : 'Show Action Form'}
       </ActionButton>
+
+      <ActionButton
+        appearance="outlined"
+        size="xs"
+        type="button"
+        onClick={handleFindCorrelation}
+      >
+        {'Find correlation'}
+      </ActionButton>
+
       <ActionButton
         appearance="outlined"
         size="xs"
