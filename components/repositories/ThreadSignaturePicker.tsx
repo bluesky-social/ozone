@@ -95,6 +95,11 @@ export const ThreadSignaturePicker = forwardRef(function ThreadSignaturePicker(
             name={signature.property}
             className="mt-3 flex items-center"
             label={signature.property}
+            checked={internal.some(
+              (s) =>
+                s.property === signature.property &&
+                s.value === signature.value,
+            )}
             onChange={(e) => {
               const filtered = internal.filter(
                 (s) =>
