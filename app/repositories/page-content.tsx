@@ -46,7 +46,7 @@ const getRepos =
             JSON.parse(rawValue)
           : [rawValue.trim()] // slice 'sig:' prefix
       const res = await labelerAgent.tools.ozone.signature.searchAccounts({
-        values: values,
+        values,
         cursor: pageParam,
       })
       data = res.data

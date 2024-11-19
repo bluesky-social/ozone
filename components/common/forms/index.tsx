@@ -88,9 +88,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     { label, required, className, inputClassName, id, ...rest }: CheckboxProps,
     ref,
   ) {
-    const [rnd] = useState(
-      () => `ckbx-${Math.random().toString(36).substring(7)}`,
+    const [fallbackId] = useState(
+      // Make sure this rune only once per component instance
+      () => `__my_checkbox-${Math.random().toString(36).substring(7)}`,
     )
+
     return (
       <div className={className}>
         <input
@@ -100,11 +102,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             'h-4 w-4 rounded border-gray-300 text-indigo-600 dark:text-teal-500 focus:ring-indigo-600 dark:focus:ring-teal-500 mr-1',
             inputClassName,
           )}
-          id={id ?? rnd}
+          id={id ?? fallbackId}
           {...rest}
         />
         <label
-          htmlFor={id ?? rnd}
+          htmlFor={id ?? fallbackId}
           className="ml-1 text-sm leading-6 font-medium text-gray-900 dark:text-gray-200"
         >
           {label}
