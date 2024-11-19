@@ -1,20 +1,9 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { Fragment } from 'react'
-
-import { ActionButton } from '@/common/buttons'
+import { ForwardedRef, forwardRef, Fragment } from 'react'
 import { Alert } from '@/common/Alert'
+import { ActionButton } from '@/common/buttons'
 
-export const ConfirmationModal = ({
-  children,
-  isOpen = false,
-  description,
-  title,
-  error,
-  setIsOpen,
-  onConfirm,
-  confirmButtonDisabled = false,
-  confirmButtonText = 'Confirm',
-}: {
+export type ConfirmationModalProps = {
   isOpen: boolean
   description?: JSX.Element
   title: string
@@ -25,10 +14,26 @@ export const ConfirmationModal = ({
   setIsOpen: (isOpen: boolean) => void
   confirmButtonDisabled?: boolean
   confirmButtonText?: string
-}) => {
+}
+
+export const ConfirmationModal = forwardRef(function ConfirmationModal(
+  {
+    children,
+    isOpen = false,
+    description,
+    title,
+    error,
+    setIsOpen,
+    onConfirm,
+    confirmButtonDisabled = false,
+    confirmButtonText = 'Confirm',
+  }: ConfirmationModalProps,
+  ref: ForwardedRef<HTMLDivElement>,
+) {
   return (
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog
+        ref={ref}
         as="div"
         className="relative z-10"
         onClose={() => setIsOpen(false)}
@@ -103,4 +108,4 @@ export const ConfirmationModal = ({
       </Dialog>
     </Transition>
   )
-}
+})
