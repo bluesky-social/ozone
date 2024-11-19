@@ -49,9 +49,9 @@ const getRepos =
 
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
     if (isSignatureSearch(q)) {
-      const value = q.replace('sig:', '').trim()
+      const values = q.slice(4).trim().split(' ')
       const res = await labelerAgent.tools.ozone.signature.searchAccounts({
-        values: [value],
+        values: values,
         cursor: pageParam,
       })
       data = res.data

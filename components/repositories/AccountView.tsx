@@ -16,6 +16,7 @@ import {
   UserCircleIcon,
   XCircleIcon,
   MagnifyingGlassIcon,
+  MagnifyingGlassPlusIcon,
 } from '@heroicons/react/20/solid'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
@@ -60,6 +61,7 @@ import { Followers } from 'components/graph/Followers'
 import Lightbox from 'yet-another-react-lightbox'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { RelatedAccounts } from 'components/signature/RelatedAccounts'
+import { ThreadSignaturePicker } from './ThreadSignaturePicker'
 
 enum Views {
   Details,
@@ -512,6 +514,7 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
+  const router = useRouter()
   const labels = getLabelsForSubject({ repo })
   const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
@@ -568,7 +571,27 @@ function Details({
           </DataField>
         )}
         {hcapDetail && (
-          <DataField label="Hcaptcha">
+          <DataField
+            label={
+              <>
+                <span>Hcaptcha</span>
+                <ThreadSignaturePicker
+                  threatSignatures={repo.threatSignatures}
+                  title="Find accounts matching the following signatures"
+                  required
+                  onConfirm={(values) => {
+                    if (values.length) {
+                      router.push(
+                        `/repositories?term=sig:${encodeURIComponent(
+                          values.map((v) => v.value).join(' '),
+                        )}`,
+                      )
+                    }
+                  }}
+                />
+              </>
+            }
+          >
             {hcapDetail?.map(({ property, value }) => (
               <Link
                 key={property}

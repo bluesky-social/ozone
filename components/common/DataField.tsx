@@ -3,7 +3,8 @@ import { ReactNode } from 'react'
 import { CopyButton } from './CopyButton'
 
 export type DataFieldProps = {
-  label: string
+  label: ReactNode
+  labelText?: string
   value?: string
   showCopyButton?: boolean
   children?: ReactNode
@@ -12,6 +13,7 @@ export type DataFieldProps = {
 
 export const DataField = ({
   label,
+  labelText,
   value,
   children,
   showCopyButton,
@@ -30,6 +32,7 @@ export const DataField = ({
             text={value}
             className="ml-1"
             label={label}
+            labelText={labelText}
             title={`Copy ${label} to clipboard`}
           />
         )}

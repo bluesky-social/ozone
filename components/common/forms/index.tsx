@@ -1,4 +1,4 @@
-import { ComponentProps, forwardRef } from 'react'
+import { ComponentProps, forwardRef, useState } from 'react'
 import { CopyButton } from '../CopyButton'
 import { classNames } from '@/lib/util'
 
@@ -85,9 +85,12 @@ type CheckboxProps = LabelProps &
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   function CheckboxElement(
-    { label, required, className, inputClassName, ...rest }: CheckboxProps,
+    { label, required, className, inputClassName, id, ...rest }: CheckboxProps,
     ref,
   ) {
+    const [rnd] = useState(
+      () => `ckbx-${Math.random().toString(36).substring(7)}`,
+    )
     return (
       <div className={className}>
         <input
@@ -97,10 +100,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             'h-4 w-4 rounded border-gray-300 text-indigo-600 dark:text-teal-500 focus:ring-indigo-600 dark:focus:ring-teal-500 mr-1',
             inputClassName,
           )}
+          id={id ?? rnd}
           {...rest}
         />
         <label
-          htmlFor={rest.name}
+          htmlFor={id ?? rnd}
           className="ml-1 text-sm leading-6 font-medium text-gray-900 dark:text-gray-200"
         >
           {label}
