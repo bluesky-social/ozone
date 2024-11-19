@@ -1,65 +1,66 @@
 'use client'
-import { ComponentProps, useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { Alert } from '@/common/Alert'
+import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
+import { DataField } from '@/common/DataField'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
+import { EmptyDataset } from '@/common/feeds/EmptyFeed'
+import { CheckboxesModal } from '@/common/modals/checkboxes'
+import { Tabs, TabView } from '@/common/Tabs'
+import { InviteCodesTable } from '@/invites/InviteCodesTable'
+import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
+import { ModEventList } from '@/mod-event/EventList'
+import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
+import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import {
-  AppBskyActorGetProfile as GetProfile,
-  ToolsOzoneModerationGetRepo as GetRepo,
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
+import {
   AppBskyActorDefs,
   ComAtprotoAdminDefs,
+  AppBskyActorGetProfile as GetProfile,
+  ToolsOzoneModerationGetRepo as GetRepo,
 } from '@atproto/api'
 import {
   ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
+  MagnifyingGlassIcon,
+  MagnifyingGlassPlusIcon,
   UserCircleIcon,
   XCircleIcon,
-  MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid'
+import { useQuery } from '@tanstack/react-query'
+import { EmailComposer } from 'components/email/Composer'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import { Followers } from 'components/graph/Followers'
+import { Follows } from 'components/graph/Follows'
+import { Lists } from 'components/list/Lists'
+import { RelatedAccounts } from 'components/signature/RelatedAccounts'
+import { SubjectTag } from 'components/tags/SubjectTag'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { ComponentProps, useCallback, useEffect, useState } from 'react'
+import Lightbox from 'yet-another-react-lightbox'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
-import { ReportPanel } from '../reports/ReportPanel'
-import React from 'react'
 import {
+  getLabelsForSubject,
+  LabelChip,
   LabelList,
   LabelListEmpty,
-  getLabelsForSubject,
   ModerationLabel,
-  LabelChip,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
-import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
-import { InviteCodesTable } from '@/invites/InviteCodesTable'
-import { Dropdown, DropdownItem } from '@/common/Dropdown'
-import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { EmailComposer } from 'components/email/Composer'
-import { DataField } from '@/common/DataField'
-import { ProfileAvatar } from './ProfileAvatar'
-import { DidHistory } from './DidHistory'
-import { ModEventList } from '@/mod-event/EventList'
-import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
-import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { EmptyDataset } from '@/common/feeds/EmptyFeed'
-import { MuteReporting } from './MuteReporting'
-import { Tabs, TabView } from '@/common/Tabs'
-import { Lists } from 'components/list/Lists'
-import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
-import {
-  useWorkspaceAddItemsMutation,
-  useWorkspaceList,
-  useWorkspaceRemoveItemsMutation,
-} from '@/workspace/hooks'
+import { ReportPanel } from '../reports/ReportPanel'
 import { Blocks } from './Blocks'
-import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
-import { Alert } from '@/common/Alert'
-import { Follows } from 'components/graph/Follows'
-import { Followers } from 'components/graph/Followers'
-import Lightbox from 'yet-another-react-lightbox'
-import { SubjectTag } from 'components/tags/SubjectTag'
-import { RelatedAccounts } from 'components/signature/RelatedAccounts'
+import { DidHistory } from './DidHistory'
+import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
+import { MuteReporting } from './MuteReporting'
+import { ProfileAvatar } from './ProfileAvatar'
 
 enum Views {
   Details,
@@ -512,6 +513,7 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
+  const router = useRouter()
   const labels = getLabelsForSubject({ repo })
   const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
@@ -580,6 +582,25 @@ function Details({
                 </LabelChip>
               </Link>
             ))}
+
+            {repo.threatSignatures?.length && (
+              <CheckboxesModal<ComAtprotoAdminDefs.ThreatSignature>
+                title="Find accounts matching the following signatures"
+                items={repo.threatSignatures}
+                itemLabel={(signature) => signature.property}
+                required
+                onConfirm={(values) => {
+                  router.push(
+                    `/repositories?term=sig:${encodeURIComponent(
+                      // "getRepos" supports JSON encoded array of string for "sig:" searches
+                      JSON.stringify(values.map((s) => s.value)),
+                    )}`,
+                  )
+                }}
+              >
+                <MagnifyingGlassPlusIcon className="ml-2 h-3 w-3 inline" />
+              </CheckboxesModal>
+            )}
           </DataField>
         )}
         <DataField

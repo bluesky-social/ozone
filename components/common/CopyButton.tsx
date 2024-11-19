@@ -1,12 +1,17 @@
 import { ClipboardIcon } from '@heroicons/react/20/solid'
+import { ReactNode } from 'react'
 import { toast } from 'react-toastify'
 
 export const CopyButton = ({
   text,
   label,
+  labelText = typeof label === 'string' && label ? `${label} ` : '',
   ...rest
-}: { text: string; label?: string } & JSX.IntrinsicElements['button']) => {
-  const labelText = label ? `${label} ` : ''
+}: {
+  text: string
+  label?: ReactNode
+  labelText?: string
+} & JSX.IntrinsicElements['button']) => {
   const handleCopy = (e) => {
     e.preventDefault()
     toast.promise(navigator.clipboard.writeText(text), {
