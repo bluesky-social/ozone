@@ -583,7 +583,7 @@ function Details({
               </Link>
             ))}
 
-            {repo.threatSignatures && (
+            {repo.threatSignatures?.length && (
               <CheckboxesModal<ComAtprotoAdminDefs.ThreatSignature>
                 title="Find accounts matching the following signatures"
                 items={repo.threatSignatures}
