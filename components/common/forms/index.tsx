@@ -1,4 +1,4 @@
-import { ComponentProps, forwardRef, useState } from 'react'
+import { ComponentProps, forwardRef, ReactNode, useState } from 'react'
 import { CopyButton } from '../CopyButton'
 import { classNames } from '@/lib/util'
 
@@ -39,13 +39,13 @@ export const Textarea = forwardRef<
   )
 })
 
-type LabelProps = { label: string | JSX.Element; required?: boolean }
+type LabelProps = { label: string | ReactNode; required?: boolean }
 type CopyProps = { copyButton?: { text: string; label?: string } }
 
 export function FormLabel(
   props: ComponentProps<'label'> &
     LabelProps &
-    CopyProps & { extraLabel?: JSX.Element },
+    CopyProps & { extraLabel?: ReactNode },
 ) {
   const {
     label,
