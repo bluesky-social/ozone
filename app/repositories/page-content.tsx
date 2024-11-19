@@ -31,32 +31,27 @@ const getRepos =
       excludeRepo?: boolean
     },
     options: { signal?: AbortSignal } = {},
-  ) => {
+  ): Promise<{
+    repos: ToolsOzoneModerationDefs.RepoView[]
+    cursor?: string
+  }> => {
     const limit = 25
-
-    if (!isEmailSearch(q) && !isSignatureSearch(q)) {
-      const { data } = await labelerAgent.tools.ozone.moderation.searchRepos(
-        {
-          q,
-          limit,
-          cursor: pageParam,
-        },
-        options,
-      )
-
-      return data
-    }
 
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
     if (isSignatureSearch(q)) {
-      const values = q.slice(4).trim().split(' ')
+      const rawValue = q.slice(4)
+      const values =
+        rawValue.startsWith('["') && q.endsWith('"]')
+          ? // JSON array of strings
+            JSON.parse(rawValue)
+          : [rawValue.trim()] // slice 'sig:' prefix
       const res = await labelerAgent.tools.ozone.signature.searchAccounts({
         values: values,
         cursor: pageParam,
       })
       data = res.data
-    } else {
-      const email = q.replace('email:', '').trim()
+    } else if (isEmailSearch(q)) {
+      const email = q.slice(6).trim() // slice 'email:' prefix
       const res = await labelerAgent.com.atproto.admin.searchAccounts(
         {
           email,
@@ -66,6 +61,17 @@ const getRepos =
         options,
       )
       data = res.data
+    } else {
+      const res = await labelerAgent.tools.ozone.moderation.searchRepos(
+        {
+          q,
+          limit,
+          cursor: pageParam,
+        },
+        options,
+      )
+
+      return res.data
     }
 
     if (!data.accounts.length) {

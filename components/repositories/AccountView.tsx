@@ -587,13 +587,13 @@ function Details({
               <CheckboxesModal<ComAtprotoAdminDefs.ThreatSignature>
                 title="Find accounts matching the following signatures"
                 items={repo.threatSignatures}
-                itemCmp={(a, b) => a.value === b.value}
                 itemLabel={(signature) => signature.property}
                 required
                 onConfirm={(values) => {
                   router.push(
                     `/repositories?term=sig:${encodeURIComponent(
-                      values.map((v) => v.value).join(' '),
+                      // "getRepos" supports JSON encoded array of string for "sig:" searches
+                      JSON.stringify(values.map((s) => s.value)),
                     )}`,
                   )
                 }}
