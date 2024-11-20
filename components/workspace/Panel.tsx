@@ -6,7 +6,10 @@ import { MOD_EVENTS } from '@/mod-event/constants'
 import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
+  ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
 import { Dialog } from '@headlessui/react'
@@ -26,6 +29,10 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
+
+function isNonNullable<V>(v: V): v is NonNullable<V> {
+  return v != null
+}
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -63,7 +70,37 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       .getAll('workspaceItem')
       .filter((item): item is string => typeof item === 'string')
 
-    const dids = selectedItems.filter((item) => item.startsWith('did:'))
+    // For every selected item, find out which DID it corresponds
+    const dids = selectedItems
+      .map((item) => {
+        if (item.startsWith('did:')) return item
+
+        const status = workspaceListStatuses?.[item]
+
+        if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
+          return status.did
+        }
+
+        if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+          return status.repo.did
+        }
+
+        if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+          const { subject } = status
+          if (ComAtprotoAdminDefs.isRepoRef(subject)) {
+            return subject.did
+          }
+
+          if (ComAtprotoRepoStrongRef.isMain(subject)) {
+            // Don't know
+            return undefined
+          }
+        }
+
+        // Should never happen (future proofing against new item types in workspace)
+        return undefined
+      })
+      .filter(isNonNullable)
 
     if (dids.length <= 1) {
       toast.warning('Please select at least two accounts to correlate.')
