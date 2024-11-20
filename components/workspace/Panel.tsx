@@ -64,6 +64,11 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     emptyWorkspaceMutation.mutate()
   }
 
+  const [submission, setSubmission] = useState<{
+    isSubmitting: boolean
+    error: string
+  }>({ isSubmitting: false, error: '' })
+
   const labelerAgent = useLabelerAgent()
   const handleFindCorrelation = async () => {
     const selectedItems = new FormData(formRef.current!)
@@ -163,6 +168,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   ) => {
     ev.preventDefault()
     try {
+      setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
       const labels = String(formData.get('labels'))?.split(',')
       const coreEvent: ToolsOzoneModerationEmitEvent.InputSchema['event'] = {
@@ -221,6 +227,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
+      setSubmission({ error: '', isSubmitting: false })
 
       // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
       if (results.failed.length) {
@@ -239,6 +246,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
     } catch (err) {
       console.error(err)
+      setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
 
