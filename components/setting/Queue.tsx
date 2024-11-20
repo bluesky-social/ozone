@@ -122,7 +122,7 @@ export const QueueSetting = () => {
                 required
                 id="queueListManagerRole"
                 name="queueListManagerRole"
-                disabled={!canManageQueueSeed || upsertQueueSetting.isLoading}
+                disabled={!canManageQueueList || upsertQueueSetting.isLoading}
               >
                 {Object.entries(MemberRoleNames).map(([role, name]) => (
                   <option

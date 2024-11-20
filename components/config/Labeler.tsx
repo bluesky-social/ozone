@@ -15,6 +15,7 @@ import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { usePdsAgent } from '@/shell/AuthContext'
 import { LocalPreferences } from './LocalPreferences'
 import { QueueSetting } from 'components/setting/Queue'
+import { ProtectedTagEditor } from 'components/setting/protected-tag/Editor'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,

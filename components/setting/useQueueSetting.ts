@@ -16,7 +16,6 @@ const getQueueConfig = () => {
 
 export const useQueueSetting = () => {
   const queryClient = useQueryClient()
-  const serverConfig = useServerConfig()
   const labelerAgent = useLabelerAgent()
   const setting = useQuery({
     queryKey: ['queue-setting'],
