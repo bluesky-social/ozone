@@ -2,6 +2,7 @@ import {
   AtUri,
   ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
+  ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationQueryEvents,
 } from '@atproto/api'
@@ -10,8 +11,9 @@ import { addDays } from 'date-fns'
 import { useEffect, useReducer, useState } from 'react'
 
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { MOD_EVENT_TITLES } from './constants'
+import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
+import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 
 export type WorkspaceConfirmationOptions =
   | 'subjects'
@@ -201,11 +203,6 @@ export const useModEventList = (
         queryParams.removedLabels = removedLabels
       }
 
-      const filterTypes = types.filter(Boolean)
-      if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
-        queryParams.types = filterTypes
-      }
-
       if (oldestFirst) {
         queryParams.sortDirection = 'asc'
       }
@@ -223,6 +220,42 @@ export const useModEventList = (
       }
       if (removedTags?.trim().length) {
         queryParams.addedTags = removedTags.trim().split(',')
+      }
+
+      const filterTypes = types.filter(Boolean)
+      if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
+        queryParams.types = filterTypes.map((type) => {
+          // There is a no appeal type, it's a placeholder and behind the scene
+          // we use type as report and reportTypes as appeal
+          if (type === MOD_EVENTS.APPEAL) {
+            if (!queryParams.reportTypes) {
+              queryParams.reportTypes = []
+            }
+            queryParams.reportTypes.push(ComAtprotoModerationDefs.REASONAPPEAL)
+            return MOD_EVENTS.REPORT
+          }
+
+          // We use custom event type name that translate to either add or remove certain tag
+          const { add, remove } = buildTagFilter(type)
+          if (add.length || remove.length) {
+            if (add.length) {
+              if (queryParams.addedTags) {
+                queryParams.addedTags.push(...add)
+              } else {
+                queryParams.addedTags = add
+              }
+            }
+            if (remove.length) {
+              if (queryParams.removedTags) {
+                queryParams.removedTags.push(...remove)
+              } else {
+                queryParams.removedTags = remove
+              }
+            }
+            return MOD_EVENTS.TAG
+          }
+          return type
+        })
       }
 
       const { data } =
@@ -320,4 +353,40 @@ export const useModEventList = (
     setShowWorkspaceConfirmation,
     addToWorkspace,
   }
+}
+
+const TagBasedTypeFilters = {
+  [MOD_EVENTS.DISABLE_DMS]: { add: DM_DISABLE_TAG, remove: '' },
+  [MOD_EVENTS.ENABLE_DMS]: { remove: DM_DISABLE_TAG, add: '' },
+  [MOD_EVENTS.DISABLE_VIDEO_UPLOAD]: {
+    add: VIDEO_UPLOAD_DISABLE_TAG,
+    remove: '',
+  },
+  [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: {
+    remove: VIDEO_UPLOAD_DISABLE_TAG,
+    add: '',
+  },
+}
+
+const buildTagFilter = (type: string) => {
+  const add: string[] = []
+  const remove: string[] = []
+  const tagTypes = Object.keys(TagBasedTypeFilters)
+
+  if (!tagTypes.includes(type)) {
+    return { add, remove }
+  }
+
+  tagTypes.forEach((key) => {
+    if (type === key) {
+      if (TagBasedTypeFilters[key].add) {
+        add.push(TagBasedTypeFilters[key].add)
+      }
+      if (TagBasedTypeFilters[key].remove) {
+        remove.push(TagBasedTypeFilters[key].remove)
+      }
+    }
+  })
+
+  return { add, remove }
 }

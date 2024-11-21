@@ -50,7 +50,7 @@ export const WorkspacePanelActionForm = ({
           <LabelSelector
             id="labels"
             name="labels"
-            formId={WORKSPACE_FORM_ID}
+            form={WORKSPACE_FORM_ID}
             defaultLabels={[]}
           />
 

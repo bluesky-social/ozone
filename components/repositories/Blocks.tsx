@@ -15,6 +15,21 @@ export function Blocks({ did }: { did: string }) {
         const data = await listRecords(did, 'app.bsky.graph.block', {
           cursor: pageParam,
         })
+        console.log(async (did) => {
+          let cursor: string | undefined
+          let results = []
+          do {
+            const data = await listRecords(did, 'app.bsky.graph.block', {
+              cursor,
+            })
+            if (data.records.length !== 0) {
+              // @ts-ignore
+              results.push(...data.records)
+            }
+            cursor = data.cursor
+          } while (cursor)
+          return results
+        })
         const actors = data.records.map(
           (record) => record.value['subject'] as string,
         )
