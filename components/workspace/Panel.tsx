@@ -6,6 +6,7 @@ import { MOD_EVENTS } from '@/mod-event/constants'
 import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
+  AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
@@ -99,8 +100,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
               }
 
               if (ComAtprotoRepoStrongRef.isMain(subject)) {
-                // Don't know
-                return undefined
+                return new AtUri(subject.uri).host
               }
             }
 
