@@ -257,7 +257,7 @@ export const useModEventList = (
       }
 
       const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryEvents({
+        await labelerAgent.tools.ozone.moderation.queryEvents({
           limit: 25,
           ...queryParams,
         })
