@@ -228,9 +228,7 @@ export const useModEventList = (
           // There is a no appeal type, it's a placeholder and behind the scene
           // we use type as report and reportTypes as appeal
           if (type === MOD_EVENTS.APPEAL) {
-            if (!queryParams.reportTypes) {
-              queryParams.reportTypes = []
-            }
+            queryParams.reportTypes ||= []
             queryParams.reportTypes.push(ComAtprotoModerationDefs.REASONAPPEAL)
             return MOD_EVENTS.REPORT
           }
@@ -373,20 +371,15 @@ const buildTagFilter = (type: string) => {
   const remove: string[] = []
   const tagTypes = Object.keys(TagBasedTypeFilters)
 
-  if (!tagTypes.includes(type)) {
+  if (!(type in tagTypes) || !Object.hasOwn(tagTypes, type)) {
     return { add, remove }
   }
-
-  tagTypes.forEach((key) => {
-    if (type === key) {
-      if (TagBasedTypeFilters[key].add) {
-        add.push(TagBasedTypeFilters[key].add)
-      }
-      if (TagBasedTypeFilters[key].remove) {
-        remove.push(TagBasedTypeFilters[key].remove)
-      }
-    }
-  })
+  if (TagBasedTypeFilters[type].add) {
+    add.push(TagBasedTypeFilters[type].add)
+  }
+  if (TagBasedTypeFilters[type].remove) {
+    remove.push(TagBasedTypeFilters[type].remove)
+  }
 
   return { add, remove }
 }
