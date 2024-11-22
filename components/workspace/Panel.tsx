@@ -4,7 +4,7 @@ import { LabelChip } from '@/common/labels'
 import { PropsOf } from '@/lib/types'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
   ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
@@ -70,97 +70,101 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   }>({ isSubmitting: false, error: '' })
 
   const labelerAgent = useLabelerAgent()
-  const handleFindCorrelation = async () => {
-    const selectedItems = new FormData(formRef.current!)
-      .getAll('workspaceItem')
-      .filter((item): item is string => typeof item === 'string')
+  const supportsCorrelation = useServerConfig().pds != null
+  const handleFindCorrelation = supportsCorrelation
+    ? async () => {
+        const selectedItems = new FormData(formRef.current!)
+          .getAll('workspaceItem')
+          .filter((item): item is string => typeof item === 'string')
 
-    // For every selected item, find out which DID it corresponds
-    const dids = selectedItems
-      .map((item) => {
-        if (item.startsWith('did:')) return item
+        // For every selected item, find out which DID it corresponds
+        const dids = selectedItems
+          .map((item) => {
+            if (item.startsWith('did:')) return item
 
-        const status = workspaceListStatuses?.[item]
+            const status = workspaceListStatuses?.[item]
 
-        if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
-          return status.did
-        }
+            if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
+              return status.did
+            }
 
-        if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
-          return status.repo.did
-        }
+            if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+              return status.repo.did
+            }
 
-        if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
-          const { subject } = status
-          if (ComAtprotoAdminDefs.isRepoRef(subject)) {
-            return subject.did
-          }
+            if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+              const { subject } = status
+              if (ComAtprotoAdminDefs.isRepoRef(subject)) {
+                return subject.did
+              }
 
-          if (ComAtprotoRepoStrongRef.isMain(subject)) {
-            // Don't know
+              if (ComAtprotoRepoStrongRef.isMain(subject)) {
+                // Don't know
+                return undefined
+              }
+            }
+
+            // Should never happen (future proofing against new item types in workspace)
             return undefined
-          }
+          })
+          .filter(isNonNullable)
+
+        if (dids.length <= 1) {
+          toast.warning('Please select at least two accounts to correlate.')
+          return
         }
 
-        // Should never happen (future proofing against new item types in workspace)
-        return undefined
-      })
-      .filter(isNonNullable)
+        if (dids.length !== selectedItems.length) {
+          toast.info('Only accounts can be correlated (ignoring non-accounts).')
+        }
 
-    if (dids.length <= 1) {
-      toast.warning('Please select at least two accounts to correlate.')
-      return
-    }
+        const res = await labelerAgent.tools.ozone.signature.findCorrelation({
+          dids,
+        })
 
-    if (dids.length !== selectedItems.length) {
-      toast.info('Only accounts can be correlated (ignoring non-accounts).')
-    }
+        const { details } = res.data
 
-    const res = await labelerAgent.tools.ozone.signature.findCorrelation({
-      dids,
-    })
-
-    const { details } = res.data
-
-    if (!details.length) {
-      toast.info('No correlation found between the selected accounts.')
-    } else {
-      toast.success(
-        <div>
-          The following correlation were found between the selected accounts:
-          <br />
-          {details.map(({ property, value }) => (
-            <Link
-              key={property}
-              href={`/repositories?term=sig:${encodeURIComponent(value)}`}
-            >
-              <LabelChip>
-                <MagnifyingGlassIcon className="h-3 w-3 inline" />
-                {property}
-              </LabelChip>
-            </Link>
-          ))}
-          {details.length > 1 && (
-            <>
+        if (!details.length) {
+          toast.info('No correlation found between the selected accounts.')
+        } else {
+          toast.success(
+            <div>
+              The following correlation were found between the selected
+              accounts:
               <br />
-              <Link
-                key="all"
-                href={`/repositories?term=sig:${encodeURIComponent(
-                  JSON.stringify(details.map((s) => s.value)),
-                )}`}
-                className="text-blue-500 underline"
-              >
-                Click here to show all accounts with the same details.
-              </Link>
-            </>
-          )}
-        </div>,
-        {
-          autoClose: 10_000,
-        },
-      )
-    }
-  }
+              {details.map(({ property, value }) => (
+                <Link
+                  key={property}
+                  href={`/repositories?term=sig:${encodeURIComponent(value)}`}
+                >
+                  <LabelChip>
+                    <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                    {property}
+                  </LabelChip>
+                </Link>
+              ))}
+              {details.length > 1 && (
+                <>
+                  <br />
+                  <Link
+                    key="all"
+                    href={`/repositories?term=sig:${encodeURIComponent(
+                      JSON.stringify(details.map((s) => s.value)),
+                    )}`}
+                    className="text-blue-500 underline"
+                  >
+                    Click here to show all accounts with the same details.
+                  </Link>
+                </>
+              )}
+            </div>,
+            {
+              autoClose: 10_000,
+            },
+          )
+        }
+      }
+    : undefined
 
   // on form submit
   const onFormSubmit = async (

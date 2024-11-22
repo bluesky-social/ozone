@@ -16,7 +16,7 @@ export const WorkspacePanelActions = ({
 }: {
   handleRemoveSelected: () => void
   handleEmptyWorkspace: () => void
-  handleFindCorrelation: () => void
+  handleFindCorrelation?: () => void
   setShowActionForm: React.Dispatch<React.SetStateAction<boolean>>
   setShowItemCreator: React.Dispatch<React.SetStateAction<boolean>>
   showActionForm: boolean
@@ -53,14 +53,16 @@ export const WorkspacePanelActions = ({
         {showActionForm ? 'Hide Action Form' : 'Show Action Form'}
       </ActionButton>
 
-      <ActionButton
-        appearance="outlined"
-        size="xs"
-        type="button"
-        onClick={handleFindCorrelation}
-      >
-        {'Find correlation'}
-      </ActionButton>
+      {handleFindCorrelation && (
+        <ActionButton
+          appearance="outlined"
+          size="xs"
+          type="button"
+          onClick={handleFindCorrelation}
+        >
+          Find correlation
+        </ActionButton>
+      )}
 
       <ActionButton
         appearance="outlined"
