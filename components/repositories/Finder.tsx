@@ -107,7 +107,9 @@ export function RepoFinder({
     } else {
       setItems(repos?.length ? repos : [DefaultResult])
     }
-  }, [labelerAgent, query])
+    // We only depend on the repo.length here because the repos array is either not passed
+    // or passed as an empty array while loading or the entire list is given
+  }, [labelerAgent, query, repos?.length])
 
   return (
     <Combobox
