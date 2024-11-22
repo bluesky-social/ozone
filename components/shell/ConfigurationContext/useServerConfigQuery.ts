@@ -15,16 +15,19 @@ export function useServerConfigQuery(agent: Agent) {
     retryDelay,
     refetchOnWindowFocus: false,
     // Initialize with data from the legacy key (can be removed in the future)
-    initialData: ((legacyKey: string) => {
-      try {
-        const data = localStorage.getItem(legacyKey)
-        if (data) return JSON.parse(data)
-      } catch {
-        // Ignore
-      } finally {
-        localStorage.removeItem(legacyKey)
-      }
-    })('labeler-server-config'),
+    initialData:
+      typeof window === 'undefined'
+        ? undefined
+        : ((legacyKey: string) => {
+            try {
+              const data = localStorage.getItem(legacyKey)
+              if (data) return JSON.parse(data)
+            } catch {
+              // Ignore
+            } finally {
+              localStorage.removeItem(legacyKey)
+            }
+          })('labeler-server-config'),
   })
 }
 

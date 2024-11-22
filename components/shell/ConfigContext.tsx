@@ -30,16 +30,19 @@ export const ConfigProvider = ({ children }: { children: ReactNode }) => {
     // Refetching will be handled manually
     refetchOnWindowFocus: false,
     // Initialize with data from the legacy key (can be removed in the future)
-    initialData: ((legacyKey: string) => {
-      try {
-        const data = localStorage.getItem(legacyKey)
-        if (data) return JSON.parse(data)
-      } catch {
-        // Ignore
-      } finally {
-        localStorage.removeItem(legacyKey)
-      }
-    })('labeler-config'),
+    initialData:
+      typeof window === 'undefined'
+        ? undefined
+        : ((legacyKey: string) => {
+            try {
+              const data = localStorage.getItem(legacyKey)
+              if (data) return JSON.parse(data)
+            } catch {
+              // Ignore
+            } finally {
+              localStorage.removeItem(legacyKey)
+            }
+          })('labeler-config'),
   })
 
   const value = useMemo<ConfigContextData | null>(
