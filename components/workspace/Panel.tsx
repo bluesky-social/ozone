@@ -1,27 +1,39 @@
+import { ActionPanel } from '@/common/ActionPanel'
+import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
+import { LabelChip } from '@/common/labels'
+import { PropsOf } from '@/lib/types'
+import { MOD_EVENTS } from '@/mod-event/constants'
+import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
+  AtUri,
+  ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
-import { FormEvent, useRef, useState } from 'react'
-import { ActionPanel } from '@/common/ActionPanel'
-import { PropsOf } from '@/lib/types'
-import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
-import { MOD_EVENTS } from '@/mod-event/constants'
 import { Dialog } from '@headlessui/react'
+import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import { FormEvent, useRef, useState } from 'react'
+import { toast } from 'react-toastify'
+import { WORKSPACE_FORM_ID } from './constants'
 import {
   useWorkspaceEmptyMutation,
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from './hooks'
-import WorkspaceList from './List'
 import WorkspaceItemCreator from './ItemCreator'
-import { useSubjectStatuses } from '@/subject/useSubjectStatus'
-import { WorkspacePanelActions } from './PanelActions'
-import { WORKSPACE_FORM_ID } from './constants'
+import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
-import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
+
+function isNonNullable<V>(v: V): v is NonNullable<V> {
+  return v != null
+}
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -57,6 +69,103 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+
+  const labelerAgent = useLabelerAgent()
+  const supportsCorrelation = useServerConfig().pds != null
+  const handleFindCorrelation = supportsCorrelation
+    ? async () => {
+        const selectedItems = new FormData(formRef.current!)
+          .getAll('workspaceItem')
+          .filter((item): item is string => typeof item === 'string')
+
+        // For every selected item, find out which DID it corresponds
+        const dids = selectedItems
+          .map((item) => {
+            if (item.startsWith('did:')) return item
+
+            const status = workspaceListStatuses?.[item]
+
+            if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
+              return status.did
+            }
+
+            if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+              return status.repo.did
+            }
+
+            if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+              const { subject } = status
+              if (ComAtprotoAdminDefs.isRepoRef(subject)) {
+                return subject.did
+              }
+
+              if (ComAtprotoRepoStrongRef.isMain(subject)) {
+                return new AtUri(subject.uri).host
+              }
+            }
+
+            // Should never happen (future proofing against new item types in workspace)
+            return undefined
+          })
+          .filter(isNonNullable)
+
+        if (dids.length <= 1) {
+          toast.warning('Please select at least two accounts to correlate.')
+          return
+        }
+
+        if (dids.length !== selectedItems.length) {
+          toast.info('Only accounts can be correlated (ignoring non-accounts).')
+        }
+
+        const res = await labelerAgent.tools.ozone.signature.findCorrelation({
+          dids,
+        })
+
+        const { details } = res.data
+
+        if (!details.length) {
+          toast.info('No correlation found between the selected accounts.')
+        } else {
+          toast.success(
+            <div>
+              The following correlation were found between the selected
+              accounts:
+              <br />
+              {details.map(({ property, value }) => (
+                <Link
+                  key={property}
+                  href={`/repositories?term=sig:${encodeURIComponent(value)}`}
+                >
+                  <LabelChip>
+                    <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                    {property}
+                  </LabelChip>
+                </Link>
+              ))}
+              {details.length > 1 && (
+                <>
+                  <br />
+                  <Link
+                    key="all"
+                    href={`/repositories?term=sig:${encodeURIComponent(
+                      JSON.stringify(details.map((s) => s.value)),
+                    )}`}
+                    className="text-blue-500 underline"
+                  >
+                    Click here to show all accounts with the same details.
+                  </Link>
+                </>
+              )}
+            </div>,
+            {
+              autoClose: 10_000,
+            },
+          )
+        }
+      }
+    : undefined
+
   // on form submit
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
@@ -140,6 +249,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           })
       }
     } catch (err) {
+      console.error(err)
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
@@ -195,15 +305,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             {!showItemCreator && (
               <div className="mb-2 flex space-x-2">
                 <WorkspacePanelActions
-                  {...{
-                    handleRemoveSelected,
-                    handleEmptyWorkspace,
-                    setShowActionForm,
-                    setShowItemCreator,
-                    showActionForm,
-                    workspaceList,
-                    listData: workspaceListStatuses || {},
-                  }}
+                  listData={workspaceListStatuses || {}}
+                  handleRemoveSelected={handleRemoveSelected}
+                  handleEmptyWorkspace={handleEmptyWorkspace}
+                  handleFindCorrelation={handleFindCorrelation}
+                  setShowActionForm={setShowActionForm}
+                  setShowItemCreator={setShowItemCreator}
+                  showActionForm={showActionForm}
+                  workspaceList={workspaceList}
                 />
               </div>
             )}
