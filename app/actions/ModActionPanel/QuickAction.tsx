@@ -664,7 +664,7 @@ function Form(
                     <LabelSelector
                       id="labels"
                       name="labels"
-                      formId={FORM_ID}
+                      form={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
                         // If there's a label where the source is the current labeler, it's editable
                         const isEditableLabel = allLabels.some((l) => {

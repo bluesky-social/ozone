@@ -5,6 +5,7 @@ export async function listRecords(
   did: string,
   collection: string,
   { cursor, limit = 25 }: { cursor?: string; limit?: number },
+  options?: { signal?: AbortSignal },
 ) {
   const doc = await resolveDidDocData(did)
   if (!doc) {
@@ -21,6 +22,6 @@ export async function listRecords(
   if (cursor) {
     url.searchParams.set('cursor', `${cursor}`)
   }
-  const res = await fetch(url)
+  const res = await fetch(url, options)
   return res.json()
 }
