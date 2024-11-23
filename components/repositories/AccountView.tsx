@@ -802,36 +802,41 @@ export function AccountsGrid({
       )}
       <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {accounts?.map((account) => (
-          <div
-            key={account.handle}
-            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
-          >
-            <div className="flex-shrink-0">
-              <ProfileAvatar
-                className="h-10 w-10 rounded-full"
-                profile={account}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/repositories/${account.did}`}
-                className="focus:outline-none"
-              >
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                  {account.displayName || `@${account.handle}`}
-                </p>
-                <p className="truncate text-sm text-gray-500 dark:text-gray-50">
-                  @{account.handle}
-                </p>
-              </Link>
-            </div>
-          </div>
+          <ProfileCard profile={account} key={account.handle} />
         ))}
       </div>
     </div>
   )
 }
+
+export const ProfileCard = ({
+  profile,
+}: {
+  profile: AppBskyActorDefs.ProfileView | AppBskyActorDefs.ProfileViewBasic
+}) => {
+  return (
+    <div className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700">
+      <div className="flex-shrink-0">
+        <ProfileAvatar className="h-10 w-10 rounded-full" profile={profile} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/repositories/${profile.did}`}
+          className="focus:outline-none"
+        >
+          <span className="absolute inset-0" aria-hidden="true" />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+            {profile.displayName || `@${profile.handle}`}
+          </p>
+          <p className="truncate text-sm text-gray-500 dark:text-gray-50">
+            @{profile.handle}
+          </p>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 enum EventViews {
   ByUser,
   ForUser,
