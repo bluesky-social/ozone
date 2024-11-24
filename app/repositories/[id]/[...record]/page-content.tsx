@@ -83,7 +83,7 @@ export default function RecordViewPageContent({
       const uri = createAtUri({ did, collection, rkey })
       const getRecord = async () => {
         const { data: record } =
-          await labelerAgent.api.tools.ozone.moderation.getRecord({ uri })
+          await labelerAgent.tools.ozone.moderation.getRecord({ uri })
         return record
       }
       const getThread = async () => {
@@ -92,7 +92,7 @@ export default function RecordViewPageContent({
         }
         try {
           const { data: thread } =
-            await labelerAgent.api.app.bsky.feed.getPostThread({ uri })
+            await labelerAgent.app.bsky.feed.getPostThread({ uri })
           return thread
         } catch (err) {
           if (err instanceof GetPostThread.NotFoundError) {
@@ -101,26 +101,14 @@ export default function RecordViewPageContent({
           throw err
         }
       }
-      const getListProfiles = async () => {
-        if (collection !== CollectionId.List) {
-          return undefined
-        }
-        // TODO: We need pagination here, right? how come getPostThread doesn't need it?
-        const { data: listData } =
-          await labelerAgent.api.app.bsky.graph.getList({
-            list: uri,
-          })
-        return listData.items.map(({ subject }) => subject)
-      }
-      const [record, profiles, thread] = await Promise.allSettled([
+
+      const [record, thread] = await Promise.allSettled([
         getRecord(),
-        getListProfiles(),
         getThread(),
       ])
       return {
         record: record.status === 'fulfilled' ? record.value : undefined,
         thread: thread.status === 'fulfilled' ? thread.value : undefined,
-        profiles: profiles.status === 'fulfilled' ? profiles.value : undefined,
       }
     },
   })
@@ -202,7 +190,6 @@ export default function RecordViewPageContent({
         <RecordView
           record={data.record}
           thread={data.thread}
-          profiles={data.profiles}
           onReport={setReportUri}
           onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
         />
