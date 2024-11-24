@@ -101,14 +101,24 @@ export default function RecordViewPageContent({
           throw err
         }
       }
-
-      const [record, thread] = await Promise.allSettled([
+      const getList = async () => {
+        if (collection !== CollectionId.List) {
+          return undefined
+        }
+        const { data } = await labelerAgent.app.bsky.graph.getList({
+          list: uri,
+        })
+        return data
+      }
+      const [record, listData, thread] = await Promise.allSettled([
         getRecord(),
+        getList(),
         getThread(),
       ])
       return {
         record: record.status === 'fulfilled' ? record.value : undefined,
         thread: thread.status === 'fulfilled' ? thread.value : undefined,
+        listData: listData.status === 'fulfilled' ? listData.value : undefined,
       }
     },
   })
@@ -188,6 +198,7 @@ export default function RecordViewPageContent({
       />
       {data?.record && (
         <RecordView
+          list={data.listData?.list}
           record={data.record}
           thread={data.thread}
           onReport={setReportUri}

@@ -8,6 +8,7 @@ import {
   AppBskyActorDefs,
   ToolsOzoneModerationDefs,
   AtUri,
+  AppBskyGraphDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -57,10 +58,12 @@ const TabKeys = {
 
 export function RecordView({
   record,
+  list,
   thread,
   onReport,
   onShowActionPanel,
 }: {
+  list?: AppBskyGraphDefs.ListView
   record: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
   onReport: (uri: string) => void
@@ -87,7 +90,7 @@ export function RecordView({
       views.push({
         view: Views.Profiles,
         label: 'Profiles',
-        sublabel: String(record.value['itemCount'] || ''),
+        sublabel: String(list?.listItemCount || ''),
       })
     }
     if (!!thread) {
