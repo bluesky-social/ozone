@@ -1,9 +1,11 @@
 import {
+  Agent,
   AtUri,
   ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationQueryEvents,
 } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
@@ -14,6 +16,7 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import { chunkArray } from '@/lib/util'
 
 export type WorkspaceConfirmationOptions =
   | 'subjects'
@@ -25,6 +28,11 @@ export type ModEventListQueryOptions = {
   queryOptions?: {
     refetchInterval?: number
   }
+}
+
+export type ModEventViewWithDetails = ToolsOzoneModerationDefs.ModEventView & {
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail
+  record?: ToolsOzoneModerationDefs.RecordViewDetail
 }
 
 type CommentFilter = {
@@ -55,6 +63,70 @@ const initialListState = {
   addedTags: '',
   removedTags: '',
   showContentPreview: false,
+}
+
+const getReposAndRecordsForEvents = async (
+  labelerAgent: Agent,
+  events: ToolsOzoneModerationDefs.ModEventView[],
+) => {
+  const repos = new Map<
+    string,
+    ToolsOzoneModerationDefs.RepoViewDetail | undefined
+  >()
+  const records = new Map<
+    string,
+    ToolsOzoneModerationDefs.RecordViewDetail | undefined
+  >()
+
+  for (const event of events) {
+    if (
+      ComAtprotoAdminDefs.isRepoRef(event.subject) ||
+      ChatBskyConvoDefs.isMessageRef(event.subject)
+    ) {
+      repos.set(event.subject.did, undefined)
+    } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+      records.set(event.subject.uri, undefined)
+    }
+  }
+
+  const fetchers: Array<Promise<void>> = []
+
+  // Right now, we're only loading 25 events at a time so this chunking never really takes effect
+  // But to future proof page size change, we're implementing the chunking anyways
+  if (repos.size) {
+    for (const chunk of chunkArray(Array.from(repos.keys()), 50)) {
+      fetchers.push(
+        labelerAgent.tools.ozone.moderation
+          .getRepos({ dids: chunk })
+          .then(({ data }) => {
+            for (const repo of data.repos) {
+              if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
+                repos.set(repo.did, repo)
+              }
+            }
+          }),
+      )
+    }
+  }
+  if (records.size) {
+    for (const chunk of chunkArray(Array.from(records.keys()), 50)) {
+      fetchers.push(
+        labelerAgent.tools.ozone.moderation
+          .getRecords({ uris: chunk })
+          .then(({ data }) => {
+            for (const record of data.records) {
+              if (ToolsOzoneModerationDefs.isRecordViewDetail(record)) {
+                records.set(record.uri, record)
+              }
+            }
+          }),
+      )
+    }
+  }
+
+  await Promise.all(fetchers)
+
+  return { repos, records }
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
@@ -152,7 +224,10 @@ export const useModEventList = (
     }
   }, [props.createdBy])
 
-  const results = useInfiniteQuery({
+  const results = useInfiniteQuery<{
+    events: ModEventViewWithDetails[]
+    cursor?: string
+  }>({
     queryKey: ['modEventList', { listState }],
     queryFn: async ({ pageParam }) => {
       const {
@@ -256,12 +331,29 @@ export const useModEventList = (
         })
       }
 
-      const { data } =
-        await labelerAgent.tools.ozone.moderation.queryEvents({
-          limit: 25,
-          ...queryParams,
-        })
-      return data
+      const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
+        limit: 25,
+        ...queryParams,
+      })
+      const { repos, records } = await getReposAndRecordsForEvents(
+        labelerAgent,
+        data.events,
+      )
+
+      return {
+        events: data.events.map((e) => {
+          if (
+            ComAtprotoAdminDefs.isRepoRef(e.subject) ||
+            ChatBskyConvoDefs.isMessageRef(e.subject)
+          ) {
+            return { ...e, repo: repos.get(e.subject.did) }
+          } else if (ComAtprotoRepoStrongRef.isMain(e.subject)) {
+            return { ...e, record: records.get(e.subject.uri) }
+          }
+          return { ...e }
+        }),
+        cursor: data.cursor,
+      }
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
     ...(props.queryOptions || {}),
