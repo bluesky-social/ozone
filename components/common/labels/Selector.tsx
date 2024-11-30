@@ -10,7 +10,7 @@ const EMPTY_ARR = []
 export const LabelSelector = (props: LabelsProps) => {
   const {
     id,
-    formId,
+    form,
     name,
     defaultLabels = EMPTY_ARR,
     disabled,
@@ -57,7 +57,7 @@ export const LabelSelector = (props: LabelsProps) => {
       <input
         type="hidden"
         name={name}
-        {...{ id, formId, disabled }}
+        {...{ id, form, disabled }}
         value={Array.isArray(selectedLabels) ? selectedLabels.join(',') : ''}
       />
       <Input
@@ -114,7 +114,7 @@ export const LabelSelector = (props: LabelsProps) => {
 
 type LabelsProps = {
   id: string
-  formId: string
+  form: string
   name: string
   disabled?: boolean
   defaultLabels?: string[]

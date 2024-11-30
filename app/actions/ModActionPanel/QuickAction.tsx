@@ -1,6 +1,7 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  AtUri,
   ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -12,7 +13,6 @@ import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
 import { BlobList } from './BlobList'
 import {
-  LabelChip,
   LabelList,
   LabelListEmpty,
   diffLabels,
@@ -55,6 +55,7 @@ import {
   usePermission,
 } from '@/shell/ConfigurationContext'
 import { SubjectTag } from 'components/tags/SubjectTag'
+import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -168,7 +169,7 @@ function Form(
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
     useSubjectStatusQuery(subject)
 
-  const { data: { record, repo } = {}, refetch: refetchSubject } =
+  const { data: { record, repo, profile } = {}, refetch: refetchSubject } =
     useSubjectQuery(subject)
 
   const isSubjectDid = subject.startsWith('did:')
@@ -621,6 +622,11 @@ function Form(
               <ModEventList subject={subject} />
             ) : (
               <div className="px-1">
+                {profile && (
+                  <div className="mb-2">
+                    <HighProfileWarning profile={profile} />
+                  </div>
+                )}
                 <div className="relative flex flex-row gap-1 items-center">
                   <ModEventSelectorButton
                     subjectStatus={subjectStatus}
@@ -658,7 +664,7 @@ function Form(
                     <LabelSelector
                       id="labels"
                       name="labels"
-                      formId={FORM_ID}
+                      form={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
                         // If there's a label where the source is the current labeler, it's editable
                         const isEditableLabel = allLabels.some((l) => {
@@ -828,22 +834,37 @@ function Form(
 function useSubjectQuery(subject: string) {
   const labelerAgent = useLabelerAgent()
 
+  const getProfile = async (actor: string) => {
+    try {
+      const { data: profile } = await labelerAgent.app.bsky.actor.getProfile({
+        actor,
+      })
+      return profile
+    } catch (e) {
+      return undefined
+    }
+  }
+
   return useQuery({
     // subject of the report
     queryKey: ['modActionSubject', { subject }],
     queryFn: async () => {
       if (subject.startsWith('did:')) {
-        const { data: repo } =
-          await labelerAgent.api.tools.ozone.moderation.getRepo({
+        const [{ data: repo }, profile] = await Promise.all([
+          labelerAgent.tools.ozone.moderation.getRepo({
             did: subject,
-          })
-        return { repo }
+          }),
+          getProfile(subject),
+        ])
+        return { repo, profile }
       } else if (subject.startsWith('at://')) {
-        const { data: record } =
-          await labelerAgent.api.tools.ozone.moderation.getRecord({
+        const [{ data: record }, profile] = await Promise.all([
+          labelerAgent.tools.ozone.moderation.getRecord({
             uri: subject,
-          })
-        return { record }
+          }),
+          getProfile(new AtUri(subject).host),
+        ])
+        return { record, profile }
       } else {
         return {}
       }

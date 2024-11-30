@@ -11,7 +11,7 @@ import {
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { WorkspacePanel } from '@/workspace/Panel'
@@ -22,40 +22,56 @@ const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
-  async ({
-    pageParam,
-    excludeRepo,
-  }: {
-    pageParam?: string
-    excludeRepo?: boolean
-  }) => {
+  async (
+    {
+      pageParam,
+      excludeRepo,
+    }: {
+      pageParam?: string
+      excludeRepo?: boolean
+    },
+    options: { signal?: AbortSignal } = {},
+  ): Promise<{
+    repos: ToolsOzoneModerationDefs.RepoView[]
+    cursor?: string
+  }> => {
     const limit = 25
-
-    if (!isEmailSearch(q) && !isSignatureSearch(q)) {
-      const { data } = await labelerAgent.tools.ozone.moderation.searchRepos({
-        q,
-        limit,
-        cursor: pageParam,
-      })
-
-      return data
-    }
 
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
     if (isSignatureSearch(q)) {
-      const value = q.replace('sig:', '').trim()
+      const rawValue = q.slice(4)
+      const values =
+        rawValue.startsWith('["') && q.endsWith('"]')
+          ? // JSON array of strings
+            JSON.parse(rawValue)
+          : [rawValue.trim()] // slice 'sig:' prefix
       const res = await labelerAgent.tools.ozone.signature.searchAccounts({
-        values: [value],
-      })
-      data = res.data
-    } else {
-      const email = q.replace('email:', '').trim()
-      const res = await labelerAgent.com.atproto.admin.searchAccounts({
-        email,
-        limit,
+        values,
         cursor: pageParam,
       })
       data = res.data
+    } else if (isEmailSearch(q)) {
+      const email = q.slice(6).trim() // slice 'email:' prefix
+      const res = await labelerAgent.com.atproto.admin.searchAccounts(
+        {
+          email,
+          limit,
+          cursor: pageParam,
+        },
+        options,
+      )
+      data = res.data
+    } else {
+      const res = await labelerAgent.tools.ozone.moderation.searchRepos(
+        {
+          q,
+          limit,
+          cursor: pageParam,
+        },
+        options,
+      )
+
+      return res.data
     }
 
     if (!data.accounts.length) {
@@ -77,9 +93,12 @@ const getRepos =
     if (!excludeRepo) {
       await Promise.allSettled(
         data.accounts.map(async (account) => {
-          const { data } = await labelerAgent.tools.ozone.moderation.getRepo({
-            did: account.did,
-          })
+          const { data } = await labelerAgent.tools.ozone.moderation.getRepo(
+            {
+              did: account.did,
+            },
+            options,
+          )
           repos[account.did] = { ...repos[account.did], ...data }
         }),
       )
@@ -89,6 +108,7 @@ const getRepos =
   }
 
 function useSearchResultsQuery(q: string) {
+  const abortController = useRef<AbortController | null>(null)
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
@@ -111,26 +131,46 @@ function useSearchResultsQuery(q: string) {
       return
     }
     setIsAdding(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
 
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
         // When we just want the dids of the users, no need to do an extra fetch to include repos
-        const nextPage = await getRepoPage({
-          pageParam: cursor,
-          excludeRepo: true,
-        })
+        const nextPage = await getRepoPage(
+          {
+            pageParam: cursor,
+            excludeRepo: true,
+          },
+          { signal: abortController.current?.signal },
+        )
         const dids = nextPage.repos.map((f) => f.did)
         if (dids.length) await addToWorkspace(dids)
         cursor = nextPage.cursor
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
-      toast.error(`Something went wrong: ${(e as Error).message}`)
+      if (abortController.current?.signal.reason === 'user-cancelled') {
+        toast.info('Stopped adding users to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
+      }
     }
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
+
+  useEffect(() => {
+    if (!isConfirmationOpen) {
+      abortController.current?.abort('user-cancelled')
+    }
+  }, [isConfirmationOpen])
+
+  useEffect(() => {
+    // User cancelled by closing this view (navigation, other?)
+    return () => abortController.current?.abort('user-cancelled')
+  }, [])
 
   return {
     repos,
@@ -221,7 +261,7 @@ export default function RepositoriesListPage() {
 
       <RepositoriesTable
         repos={repos}
-        showEmail={isEmailSearch(q)}
+        showEmail={isEmailSearch(q) || isSignatureSearch(q)}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
         showEmptySearch={!q?.length && !repos.length}

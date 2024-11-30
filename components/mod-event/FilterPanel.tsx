@@ -288,7 +288,7 @@ export const EventFilterPanel = ({
               <LabelSelector
                 id="addedLabels"
                 name="addedLabels"
-                formId=""
+                form=""
                 defaultLabels={[]}
                 onChange={(value) =>
                   changeListFilter({ field: 'addedLabels', value })
@@ -300,7 +300,7 @@ export const EventFilterPanel = ({
               <LabelSelector
                 id="removedLabels"
                 name="removedLabels"
-                formId=""
+                form=""
                 defaultLabels={[]}
                 onChange={(value) =>
                   changeListFilter({ field: 'removedLabels', value })

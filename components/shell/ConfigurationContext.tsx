@@ -69,14 +69,14 @@ export const ConfigurationProvider = ({
   // Reset "skipRecord" on credential change
   useEffect(() => setSkipRecord(false), [labelerAgent])
 
-  const accountDid = labelerAgent?.did
+  const isServiceAccount = labelerAgent.did === config.did
 
   const state =
     serverConfigError?.['status'] === 401
       ? ConfigurationState.Unauthorized
       : config.needs.key ||
         config.needs.service ||
-        (config.needs.record && config.did === accountDid && !skipRecord)
+        (config.needs.record && isServiceAccount && !skipRecord)
       ? ConfigurationState.Unconfigured
       : !serverConfig
       ? isServerConfigLoading
@@ -100,13 +100,13 @@ export const ConfigurationProvider = ({
       labelerAgent
         ? {
             config,
-            isServiceAccount: accountDid === config.did,
+            isServiceAccount,
             serverConfig,
             labelerAgent,
             reconfigure,
           }
         : null,
-    [state, accountDid, config, serverConfig, labelerAgent, reconfigure],
+    [state, config, isServiceAccount, serverConfig, labelerAgent, reconfigure],
   )
 
   if (!configurationContextData) {
@@ -144,7 +144,7 @@ export const ConfigurationProvider = ({
   )
 }
 
-export const useConfigurationContext = () => {
+export function useConfigurationContext() {
   const value = useContext(ConfigurationContext)
   if (value) return value
 
@@ -166,12 +166,9 @@ export function usePermission(name: PermissionName) {
 }
 
 export function useAppviewAgent() {
-  const { appview } = useConfigurationContext().serverConfig
-
+  const { appview } = useServerConfig()
   return useMemo<Agent | null>(() => {
-    if (appview) {
-      return new Agent(new CredentialSession(new URL(appview)))
-    }
+    if (appview) return new Agent(appview)
     return null
   }, [appview])
 }
