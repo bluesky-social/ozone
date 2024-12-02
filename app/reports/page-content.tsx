@@ -307,8 +307,13 @@ function useModerationQueueQuery() {
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
-    useFluentReportSearchParams()
+  const {
+    lastReviewedBy,
+    subject,
+    reporters,
+    includeAllUserRecords,
+    hostingStatuses,
+  } = useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
@@ -328,6 +333,7 @@ function useModerationQueueQuery() {
         queueName,
         includeMuted,
         onlyMuted,
+        hostingStatuses,
         subjectType,
         collections,
       },
@@ -376,6 +382,10 @@ function useModerationQueueQuery() {
 
       if (tags) {
         queryParams.tags = tags.split(',')
+      }
+
+      if (hostingStatuses) {
+        queryParams.hostingStatuses = hostingStatuses
       }
 
       if (excludeTags) {
