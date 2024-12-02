@@ -4,6 +4,8 @@ import {
   ToolsOzoneModerationDefs,
   ComAtprotoModerationDefs,
 } from '@atproto/api'
+import { ModEventViewWithDetails } from './useModEventList'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -15,7 +17,7 @@ export const ItemTitle = ({
   showContentDetails,
   showContentAuthor,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventViewWithDetails
   showContentDetails: boolean
   showContentAuthor: boolean
 }) => {
@@ -110,13 +112,19 @@ export const ItemTitle = ({
         </i>
       </p>
       {showContentDetails && (
-        <div>
+        <div className="flex flex-row items-center gap-1">
           <SubjectOverview
             withTruncation
             subject={modEvent.subject}
             hideActor={!showContentAuthor}
             subjectRepoHandle={modEvent.subjectHandle}
           />
+          {modEvent.repo?.moderation.subjectStatus && (
+            <ReviewStateIcon
+              size="sm"
+              subjectStatus={modEvent.repo.moderation.subjectStatus}
+            />
+          )}
         </div>
       )}
     </div>

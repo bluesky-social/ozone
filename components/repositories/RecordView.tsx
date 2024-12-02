@@ -7,6 +7,8 @@ import {
   AppBskyFeedDefs,
   AppBskyActorDefs,
   ToolsOzoneModerationDefs,
+  AtUri,
+  AppBskyGraphDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -31,6 +33,8 @@ import { Likes } from '@/common/feeds/Likes'
 import { Reposts } from '@/common/feeds/Reposts'
 import { Thread } from '@/common/feeds/PostThread'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { CollectionId } from '@/reports/helpers/subject'
+import ListAccounts from 'components/list/Accounts'
 
 enum Views {
   Details,
@@ -54,20 +58,22 @@ const TabKeys = {
 
 export function RecordView({
   record,
+  list,
   thread,
-  profiles,
   onReport,
   onShowActionPanel,
 }: {
+  list?: AppBskyGraphDefs.ListView
   record: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
-  profiles?: AppBskyActorDefs.ProfileView[]
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
+  const atUri = new AtUri(record.uri)
+  const isListRecord = atUri.collection === CollectionId.List
 
   const currentView =
     TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
@@ -80,11 +86,11 @@ export function RecordView({
 
   const getTabViews = () => {
     const views: TabView<Views>[] = [{ view: Views.Details, label: 'Details' }]
-    if (!!profiles?.length) {
+    if (isListRecord) {
       views.push({
         view: Views.Profiles,
         label: 'Profiles',
-        sublabel: String(profiles.length),
+        sublabel: String(list?.listItemCount || ''),
       })
     }
     if (!!thread) {
@@ -155,8 +161,8 @@ export function RecordView({
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && <Details record={record} />}
-                  {currentView === Views.Profiles && !!profiles?.length && (
-                    <AccountsGrid error="" accounts={profiles} />
+                  {currentView === Views.Profiles && (
+                    <ListAccounts uri={record.uri} />
                   )}
                   {currentView === Views.Likes &&
                     !!thread &&

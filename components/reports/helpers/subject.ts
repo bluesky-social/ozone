@@ -103,3 +103,25 @@ export const getCollectionName = (collection: string) => {
   }
   return ''
 }
+
+export const EmbedTypes = {
+  Image: 'embed:image',
+  Video: 'embed:video',
+  External: 'embed:external',
+}
+
+export const getEmbedTypeName = (embedType: string) => {
+  if (embedType === EmbedTypes.Image) {
+    return 'Image'
+  }
+  if (embedType === EmbedTypes.Video) {
+    return 'Video'
+  }
+  if (embedType === EmbedTypes.External) {
+    return 'External'
+  }
+  if (embedType === 'noEmbed') {
+    return 'No Embed'
+  }
+  return ''
+}

@@ -1,4 +1,5 @@
 import { DM_DISABLE_TAG } from '@/lib/constants'
+import { classNames } from '@/lib/util'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   CheckCircleIcon,
@@ -111,8 +112,10 @@ export const SubjectReviewStateBadge = ({
 export const ReviewStateIcon = ({
   subjectStatus,
   className,
+  size = 'md',
 }: {
   subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
+  size?: 'md' | 'sm'
   className?: string
 }) => {
   let text =
@@ -134,10 +137,17 @@ export const ReviewStateIcon = ({
     Icon = ScaleIcon
   }
 
+  const sizeClasses = size === 'sm' ? 'h-4 w-4' : 'h-6 w-6'
+
   return (
     <Icon
       title={text}
-      className={`h-6 w-6 inline-block align-text-bottom ${color} ${className}`}
+      className={classNames(
+        sizeClasses,
+        color,
+        className,
+        `inline-block align-text-bottom`,
+      )}
     />
   )
 }

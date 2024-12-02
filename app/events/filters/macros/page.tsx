@@ -10,7 +10,6 @@ import { ActionButton, LinkButton } from '@/common/buttons'
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useState } from 'react'
-import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -18,12 +17,12 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
 })
 
 export default function EventFiltersMacrosListPage() {
-  const [isOpen, setIsOpen] = useState(false)
+  const [removingMacro, setRemovingMacro] = useState('')
   const { data: macroList, isFetching, error } = useFilterMacroList()
   const {
     mutateAsync: removeMacro,
     error: removeMacroError,
-    isLoading: isRemovingMacro,
+    isLoading: removingMacroMacro,
   } = useFilterMacroRemoveMutation()
 
   useTitle('Moderation Filter Macros')
@@ -36,7 +35,7 @@ export default function EventFiltersMacrosListPage() {
     return <Loading />
   }
 
-  const confirmButtonText = isRemovingMacro ? 'Removing...' : 'Yes, Remove'
+  const confirmButtonText = removingMacroMacro ? 'Removing...' : 'Yes, Remove'
   const listItems = Object.entries(macroList)
 
   return (
@@ -65,25 +64,26 @@ export default function EventFiltersMacrosListPage() {
                   appearance="outlined"
                   size="sm"
                   type="button"
-                  onClick={() => setIsOpen(true)}
+                  onClick={() => setRemovingMacro(name)}
                 >
                   <TrashIcon className="h-3 w-3" />
                 </ActionButton>
 
                 <ConfirmationModal
                   onConfirm={() => {
-                    removeMacro(name).then(() => setIsOpen(false))
+                    removeMacro(removingMacro).then(() => setRemovingMacro(''))
                   }}
-                  isOpen={isOpen}
-                  setIsOpen={setIsOpen}
+                  isOpen={removingMacro === name}
+                  setIsOpen={(val) => setRemovingMacro(val ? name : '')}
                   confirmButtonText={confirmButtonText}
-                  confirmButtonDisabled={isRemovingMacro}
+                  confirmButtonDisabled={removingMacroMacro}
                   error={removeMacroError?.['message']}
                   title={`Remove Filter Macro?`}
                   description={
                     <>
-                      You can always recreate your macro from the event filter
-                      panel
+                      You{"'"}re about to remove the filter macro{' '}
+                      {`"${removingMacro}"`}. You can always recreate your macro
+                      from the event filter panel.
                     </>
                   }
                 />

@@ -1,4 +1,4 @@
-import { ComponentProps, forwardRef } from 'react'
+import { ComponentProps, forwardRef, ReactNode, useState } from 'react'
 import { CopyButton } from '../CopyButton'
 import { classNames } from '@/lib/util'
 
@@ -39,72 +39,13 @@ export const Textarea = forwardRef<
   )
 })
 
-export function RadioGroup(props: ComponentProps<'ul'>) {
-  const { className = '', ...others } = props
-  return (
-    <ul
-      className={`items-center w-full text-sm font-medium text-gray-900 bg-white border border-gray-200 rounded-lg sm:flex ${className}`}
-      {...others}
-    />
-  )
-}
-
-export function RadioGroupOption(
-  props: ComponentProps<'input'> & {
-    name: string
-    value: string
-    last?: boolean
-    labelClassName?: string
-  },
-) {
-  const {
-    className = '',
-    value,
-    name,
-    required,
-    disabled,
-    last,
-    children,
-    labelClassName = '',
-    ...others
-  } = props
-  return (
-    <li
-      className={`w-full border-b border-gray-200 sm:border-b-0 ${
-        last ? '' : 'sm:border-r'
-      } ${className}`}
-    >
-      <div className="flex items-center pl-3">
-        <input
-          id={`radio-group--${name}--${value}`}
-          type="radio"
-          value={value}
-          name={name}
-          required={required}
-          disabled={disabled}
-          className="w-4 h-4 text-indigo-600 dark:text-teal-600 bg-gray-100 dark:bg-slate-500 border-gray-300 focus:ring-indigo-500 dark:focus:ring-teal-500 focus:ring-2"
-          {...others}
-        />
-        <label
-          htmlFor={`radio-group--${name}--${value}`}
-          className={`w-full py-3 ml-2 text-sm font-medium ${
-            labelClassName || 'text-gray-900'
-          }`}
-        >
-          {children}
-        </label>
-      </div>
-    </li>
-  )
-}
-
-type LabelProps = { label: string | JSX.Element; required?: boolean }
+type LabelProps = { label: string | ReactNode; required?: boolean }
 type CopyProps = { copyButton?: { text: string; label?: string } }
 
 export function FormLabel(
   props: ComponentProps<'label'> &
     LabelProps &
-    CopyProps & { extraLabel?: JSX.Element },
+    CopyProps & { extraLabel?: ReactNode },
 ) {
   const {
     label,
@@ -144,9 +85,14 @@ type CheckboxProps = LabelProps &
 
 export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
   function CheckboxElement(
-    { label, required, className, inputClassName, ...rest }: CheckboxProps,
+    { label, required, className, inputClassName, id, ...rest }: CheckboxProps,
     ref,
   ) {
+    const [fallbackId] = useState(
+      // Make sure this rune only once per component instance
+      () => `__my_checkbox-${Math.random().toString(36).substring(7)}`,
+    )
+
     return (
       <div className={className}>
         <input
@@ -156,10 +102,11 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
             'h-4 w-4 rounded border-gray-300 text-indigo-600 dark:text-teal-500 focus:ring-indigo-600 dark:focus:ring-teal-500 mr-1',
             inputClassName,
           )}
+          id={id ?? fallbackId}
           {...rest}
         />
         <label
-          htmlFor={rest.name}
+          htmlFor={id ?? fallbackId}
           className="ml-1 text-sm leading-6 font-medium text-gray-900 dark:text-gray-200"
         >
           {label}
