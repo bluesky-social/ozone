@@ -11,6 +11,7 @@ import { ReasonBadge } from '@/reports/ReasonBadge'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
+import { ModEventViewWithDetails } from './useModEventList'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -33,7 +34,7 @@ const LinkToAuthor = ({
 const Comment = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+  modEvent: ModEventViewWithDetails & {
     event:
       | ToolsOzoneModerationDefs.ModEventEscalate
       | ToolsOzoneModerationDefs.ModEventAcknowledge
@@ -102,12 +103,19 @@ function isMessageSubject(
   return subject.messageId !== undefined
 }
 
+type ModEventType<T> = { event: T } & ToolsOzoneModerationDefs.ModEventView
+
+function isModEventType<T>(
+  e: ToolsOzoneModerationDefs.ModEventView,
+  predicate: (event: unknown) => event is T,
+): e is ModEventType<T> {
+  return predicate(e.event)
+}
+
 const Report = ({
   modEvent,
 }: {
-  modEvent: {
-    event: ToolsOzoneModerationDefs.ModEventReport
-  } & ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventReport>
 }) => {
   const isAppeal =
     modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
@@ -208,7 +216,7 @@ const EventLabels = ({
 
   if (!labels?.length) return null
   return (
-    <LabelList className='flex-wrap'>
+    <LabelList className="flex-wrap">
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
       {labels.map((label) => {
         if (isTag) {
@@ -235,9 +243,7 @@ const EventLabels = ({
 const Label = ({
   modEvent,
 }: {
-  modEvent: {
-    event: ToolsOzoneModerationDefs.ModEventLabel
-  } & ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventLabel>
 }) => {
   return (
     <>
@@ -306,7 +312,7 @@ export const ModEventItem = ({
   showContentAuthor,
   showContentPreview,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventViewWithDetails
   showContentDetails: boolean
   showContentAuthor: boolean
   showContentPreview: boolean
@@ -331,20 +337,16 @@ export const ModEventItem = ({
   ) {
     eventItem = <TakedownOrMute modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventReport(modEvent.event)) {
-    // @ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventReport)) {
     eventItem = <Report modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventLabel(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventLabel)) {
     eventItem = <Label modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventTag(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventTag)) {
     eventItem = <Tag modEvent={modEvent} />
   }
-  if (ToolsOzoneModerationDefs.isModEventEmail(modEvent.event)) {
-    //@ts-ignore
+  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventEmail)) {
     eventItem = <Email modEvent={modEvent} />
   }
   const previewSubject = modEvent.subject.uri || modEvent.subject.did
