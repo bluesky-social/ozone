@@ -109,7 +109,11 @@ export const ModEventSelectorButton = ({
       // Don't show reverse takedown action if subject is not takendown
       if (
         key === MOD_EVENTS.REVERSE_TAKEDOWN &&
-        (!subjectStatus?.takendown || !canTakedown)
+        // show reverse action even when subjectStatus is not takendown if we want to force display it
+        // however, if the user doesn't have permission for takedowns, don't show it
+        ((!subjectStatus?.takendown &&
+          !forceDisplayActions.includes(MOD_EVENTS.RESOLVE_APPEAL)) ||
+          !canTakedown)
       ) {
         return false
       }
