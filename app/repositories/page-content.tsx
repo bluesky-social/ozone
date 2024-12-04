@@ -1,12 +1,13 @@
 import { SectionHeader } from '../../components/SectionHeader'
 import { RepositoriesTable } from '@/repositories/RepositoriesTable'
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useTitle } from 'react-use'
 import {
   Agent,
   ToolsOzoneModerationDefs,
   ComAtprotoAdminSearchAccounts,
+  ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
@@ -16,6 +17,9 @@ import { toast } from 'react-toastify'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { chunkArray } from '@/lib/util'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 
 const isEmailSearch = (q: string) => q.startsWith('email:')
 const isSignatureSearch = (q: string) => q.startsWith('sig:')
@@ -91,17 +95,17 @@ const getRepos =
     })
 
     if (!excludeRepo) {
-      await Promise.allSettled(
-        data.accounts.map(async (account) => {
-          const { data } = await labelerAgent.tools.ozone.moderation.getRepo(
-            {
-              did: account.did,
-            },
-            options,
-          )
-          repos[account.did] = { ...repos[account.did], ...data }
-        }),
-      )
+      for (const accounts of chunkArray(data.accounts, 100)) {
+        const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
+          { dids: accounts.map(({ did }) => did) },
+          options,
+        )
+        for (const repo of data.repos) {
+          if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
+            repos[repo.did] = { ...repos[repo.did], ...repo }
+          }
+        }
+      }
     }
 
     return { repos: Object.values(repos), cursor: data.cursor }
@@ -115,12 +119,13 @@ function useSearchResultsQuery(q: string) {
   const labelerAgent = useLabelerAgent()
   const getRepoPage = getRepos({ q, labelerAgent })
 
-  const { data, fetchNextPage, hasNextPage } = useInfiniteQuery({
-    queryKey: ['repositories', { q }],
-    queryFn: getRepoPage,
-    refetchOnWindowFocus: false,
-    getNextPageParam: (lastPage) => lastPage.cursor,
-  })
+  const { data, fetchNextPage, hasNextPage, isLoading, refetch } =
+    useInfiniteQuery({
+      queryKey: ['repositories', { q }],
+      queryFn: getRepoPage,
+      refetchOnWindowFocus: false,
+      getNextPageParam: (lastPage) => lastPage.cursor,
+    })
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
 
   const confirmAddToWorkspace = async () => {
@@ -176,6 +181,8 @@ function useSearchResultsQuery(q: string) {
     repos,
     fetchNextPage,
     hasNextPage,
+    isLoading,
+    refetch,
     confirmAddToWorkspace,
     isConfirmationOpen,
     setIsConfirmationOpen,
@@ -185,13 +192,28 @@ function useSearchResultsQuery(q: string) {
 }
 
 export default function RepositoriesListPage() {
+  const emitEvent = useEmitEvent()
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
-  const params = useSearchParams()
-  const q = params.get('term') ?? ''
+  const searchParams = useSearchParams()
+  const q = searchParams.get('term') ?? ''
+  const router = useRouter()
+  const pathname = usePathname()
+  const quickOpenParam = searchParams.get('quickOpen') ?? ''
+  const setQuickActionPanelSubject = (subject: string) => {
+    const newParams = new URLSearchParams(document.location.search)
+    if (!subject) {
+      newParams.delete('quickOpen')
+    } else {
+      newParams.set('quickOpen', subject)
+    }
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
   const {
     repos,
+    refetch,
     fetchNextPage,
     hasNextPage,
+    isLoading,
     setIsConfirmationOpen,
     isAdding,
     setIsAdding,
@@ -264,11 +286,26 @@ export default function RepositoriesListPage() {
         showEmail={isEmailSearch(q) || isSignatureSearch(q)}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
+        isLoading={isLoading}
         showEmptySearch={!q?.length && !repos.length}
       />
       <WorkspacePanel
         open={isWorkspaceOpen}
         onClose={() => toggleWorkspacePanel()}
+      />
+      <ModActionPanelQuick
+        open={!!quickOpenParam}
+        onClose={() => setQuickActionPanelSubject('')}
+        setSubject={setQuickActionPanelSubject}
+        subject={quickOpenParam} // select first subject if there are multiple
+        subjectOptions={
+          repos.length ? repos.map((repo) => repo.did) : [quickOpenParam]
+        }
+        isInitialLoading={isLoading}
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+          await emitEvent(vals)
+          refetch()
+        }}
       />
     </>
   )
