@@ -11,7 +11,7 @@ import { ActionPanel } from '@/common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
-import { BlobList } from './BlobList'
+import { BlobListFormField } from './BlobList'
 import {
   LabelList,
   LabelListEmpty,
@@ -28,9 +28,11 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
-import { takesKeyboardEvt } from '@/lib/util'
+import { pluralize, takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { MOD_EVENTS } from '@/mod-event/constants'
@@ -572,16 +574,11 @@ function Form(
             )}
 
             {record?.blobs && (
-              <FormLabel
-                label="Blobs"
-                className={`mb-3 ${subjectStatus ? 'opacity-75' : ''}`}
-              >
-                <BlobList
-                  blobs={record.blobs}
-                  name="subjectBlobCids"
-                  disabled={false}
-                />
-              </FormLabel>
+              <BlobListFormField
+                blobs={record.blobs}
+                authorDid={record.repo.did}
+                className="mb-3"
+              />
             )}
             {isSubjectDid && canManageChat && (
               <div className="mb-3">

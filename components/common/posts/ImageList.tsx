@@ -22,7 +22,7 @@ export const ImageList = ({
   imageClassName?: string
   images: AppBskyEmbedImages.ViewImage[]
 }) => {
-  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(-1)
 
   const handleKeyDown = (event) => {
     if (event.key === 'Escape') {
@@ -33,15 +33,16 @@ export const ImageList = ({
   return (
     <>
       <Lightbox
-        open={isImageViewerOpen}
+        open={lightboxImageIndex >= 0}
         plugins={[Thumbnails, Captions]}
         carousel={{ finite: true }}
         controller={{ closeOnBackdropClick: true }}
-        close={() => setIsImageViewerOpen(false)}
+        close={() => setLightboxImageIndex(-1)}
         slides={images.map((img) => ({
           src: img.fullsize,
           description: img.alt,
         }))}
+        index={lightboxImageIndex}
         on={{
           // The lightbox may open from other Dialog/modal components
           // in that case, we want to make sure that esc button presses
@@ -56,7 +57,7 @@ export const ImageList = ({
       />
       {images.map((image, i) => (
         <figure key={image.thumb}>
-          <button type="button" onClick={() => setIsImageViewerOpen(true)}>
+          <button type="button" onClick={() => setLightboxImageIndex(i)}>
             <img className={imageClassName} src={image.thumb} alt={image.alt} />
           </button>
           <figcaption>
