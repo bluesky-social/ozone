@@ -15,8 +15,11 @@ import { useFilterMacroUpsertMutation } from './useFilterMacrosList'
 import { MacroList } from './MacroPicker'
 import { useState } from 'react'
 import { RepoFinder } from '@/repositories/Finder'
+import { Dropdown } from '@/common/Dropdown'
+import { ChevronDownIcon } from '@heroicons/react/24/solid'
 
 export const EventFilterPanel = ({
+  limit,
   types,
   reportTypes,
   addedLabels,
@@ -121,6 +124,7 @@ export const EventFilterPanel = ({
               }}
             />
           </div>
+
           <h5 className="text-gray-700 dark:text-gray-100 font-medium">
             Comment/Note
           </h5>
@@ -161,6 +165,24 @@ export const EventFilterPanel = ({
               />
             </FormLabel>
           )}
+
+          <FormLabel label="Page Size" htmlFor="limit" className="flex-1 mt-2">
+            <Dropdown
+              className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
+              items={[25, 50, 75, 100].map((size) => ({
+                id: `${size}`,
+                text: `${size} per page`,
+                onClick: () =>
+                  changeListFilter({ field: 'limit', value: size }),
+              }))}
+            >
+              {limit} per page
+              <ChevronDownIcon
+                className="ml-2 -mr-1 h-5 w-5 text-violet-200 hover:text-violet-100"
+                aria-hidden="true"
+              />
+            </Dropdown>
+          </FormLabel>
 
           <FormLabel
             label="Event Author DID"

@@ -63,6 +63,7 @@ const initialListState = {
   addedTags: '',
   removedTags: '',
   showContentPreview: false,
+  limit: 25,
 }
 
 const getReposAndRecordsForEvents = async (
@@ -156,6 +157,7 @@ type EventListFilterPayload =
   | { field: 'removedLabels'; value: string[] }
   | { field: 'addedTags'; value: string }
   | { field: 'removedTags'; value: string }
+  | { field: 'limit'; value: number }
 
 type EventListAction =
   | {
@@ -244,8 +246,10 @@ export const useModEventList = (
         addedTags,
         removedTags,
         reportTypes,
+        limit,
       } = listState
       const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
+        limit,
         cursor: pageParam,
         includeAllUserRecords,
       }
@@ -332,7 +336,6 @@ export const useModEventList = (
       }
 
       const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
-        limit: 25,
         ...queryParams,
       })
       const { repos, records } = await getReposAndRecordsForEvents(
