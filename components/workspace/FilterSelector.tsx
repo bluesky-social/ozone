@@ -134,17 +134,17 @@ export const WorkspaceFilterSelector = ({
   }
 
   return (
-    <Popover className="relative z-30">
-      {({ open, close }) => (
+    <Popover className="relative z-20">
+      {({ open }) => (
         <>
-          <Popover.Button className="text-sm flex flex-row items-center z-30">
+          <Popover.Button className="text-sm flex flex-row items-center z-20">
             <ActionButton
               appearance="outlined"
               size="xs"
               type="button"
               title="Select/unselect all items"
             >
-              <CheckIcon className="h-3 w-3" />
+              <CheckIcon className="h-4 w-3" />
             </ActionButton>
           </Popover.Button>
 
