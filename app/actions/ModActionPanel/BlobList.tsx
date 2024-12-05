@@ -19,15 +19,15 @@ export function BlobList(props: {
 
   return (
     <fieldset className="space-y-5 min-w-0">
-      {!blobs.length ? (
-        <div className="text-sm text-gray-400">No blobs found</div>
-      ) : (
+      {blobs.length > 0 ? (
         <BlobListLightbox
           blobs={blobs}
           authorDid={props.authorDid}
           slideIndex={lightboxImageIndex}
           onClose={() => setLightboxImageIndex(-1)}
         />
+      ) : (
+        <div className="text-sm text-gray-400">No blobs found</div>
       )}
       {blobs.map((blob, i) => {
         const { subjectStatus } = blob.moderation ?? {}

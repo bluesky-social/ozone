@@ -52,14 +52,6 @@ export const BlobListLightbox = ({
     }
   }
 
-  console.log(
-    blobs.map((blob) => ({
-      src: getBlobUrl({
-        cid: blob.cid,
-      }),
-    })),
-  )
-
   return (
     <Lightbox
       open={slideIndex >= 0}
