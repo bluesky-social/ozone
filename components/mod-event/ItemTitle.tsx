@@ -94,6 +94,11 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }
+  const subjectStatus = modEvent.repo
+    ? modEvent.repo.moderation.subjectStatus
+    : modEvent.record
+    ? modEvent.record.moderation.subjectStatus
+    : undefined
 
   return (
     <div className="text-gray-500 dark:text-gray-50 flex flex-row justify-between">
@@ -119,11 +124,8 @@ export const ItemTitle = ({
             hideActor={!showContentAuthor}
             subjectRepoHandle={modEvent.subjectHandle}
           />
-          {modEvent.repo?.moderation.subjectStatus && (
-            <ReviewStateIcon
-              size="sm"
-              subjectStatus={modEvent.repo.moderation.subjectStatus}
-            />
+          {subjectStatus && (
+            <ReviewStateIcon size="sm" subjectStatus={subjectStatus} />
           )}
         </div>
       )}

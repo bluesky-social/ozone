@@ -194,6 +194,7 @@ function Form(
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
+  const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const shouldShowDurationInHoursField =
     isTakedownEvent || isMuteEvent || isMuteReporterEvent
   const canManageChat = usePermission('canManageChat')
@@ -264,7 +265,7 @@ function Form(
       }
 
       if (
-        modEventType === MOD_EVENTS.TAKEDOWN &&
+        (isTakedownEvent || isAckEvent) &&
         formData.get('acknowledgeAccountSubjects')
       ) {
         coreEvent.acknowledgeAccountSubjects = true
@@ -737,7 +738,7 @@ function Form(
                   />
                 )}
 
-                {isTakedownEvent && isSubjectDid && (
+                {(isTakedownEvent || isAckEvent) && isSubjectDid && (
                   <Checkbox
                     value="true"
                     id="acknowledgeAccountSubjects"

@@ -214,7 +214,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       if (
-        coreEvent.$type === MOD_EVENTS.TAKEDOWN &&
+        (coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
+          coreEvent.$type === MOD_EVENTS.ACKNOWLEDGE) &&
         formData.get('acknowledgeAccountSubjects')
       ) {
         coreEvent.acknowledgeAccountSubjects = true
