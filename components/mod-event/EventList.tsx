@@ -130,6 +130,7 @@ export const ModEventList = (
 ) => {
   const {
     types,
+    limit,
     reportTypes,
     addedLabels,
     removedLabels,
@@ -267,6 +268,7 @@ export const ModEventList = (
       {showFiltersPanel && (
         <EventFilterPanel
           {...{
+            limit,
             types,
             reportTypes,
             addedLabels,
