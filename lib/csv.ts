@@ -3,7 +3,17 @@ export type CsvContent = {
   headerRow: string
   body: string
 }
-
+export const escapeCSVValue = (value: string) => {
+  if (
+    value.includes(',') ||
+    value.includes('"') ||
+    value.includes('\r') ||
+    value.includes('\n')
+  ) {
+    return `"${value.replaceAll('"', '""')}"`
+  }
+  return value
+}
 export function createCSV({
   headers,
   lines,

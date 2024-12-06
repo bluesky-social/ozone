@@ -1,11 +1,23 @@
-import { createCSV, downloadCSV } from '@/lib/csv'
+import { createCSV, downloadCSV, escapeCSVValue } from '@/lib/csv'
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
-import { buildBlueSkyAppUrl, chunkArray, pluralize } from '@/lib/util'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { AppBskyActorProfile, ToolsOzoneModerationDefs } from '@atproto/api'
+import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
+import { useServerConfig } from '@/shell/ConfigurationContext'
+import {
+  AppBskyActorProfile,
+  AtUri,
+  ComAtprotoAdminDefs,
+  ComAtprotoLabelDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneTeamDefs,
+} from '@atproto/api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useRef } from 'react'
+import { useRef, useState } from 'react'
 import { toast } from 'react-toastify'
+import {
+  WorkspaceListData,
+  WorkspaceListItemData,
+} from './useWorkspaceListData'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
@@ -98,75 +110,125 @@ export const useWorkspaceEmptyMutation = () => {
   return mutation
 }
 
-export const useWorkspaceExportMutation = () => {
-  const labelerAgent = useLabelerAgent()
-  return useMutation({
-    mutationFn: async (items: string[]) => {
-      // Items are exported in groups so we can expect all items in the group to be of same type
-      // For now, only support exporting accounts
-      if (!items[0].startsWith('did:')) {
-        toast.error(`Exporting is only enabled for accounts.`)
-        return []
+export const WORKSPACE_EXPORT_FIELDS = [
+  'did',
+  'handle',
+  'email',
+  'ip',
+  'name',
+  'labels',
+  'tags',
+  'bskyUrl',
+]
+export const ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS = ['email', 'ip']
+const filterExportFields = (fields: string[], isAdmin: boolean) => {
+  return isAdmin
+    ? fields
+    : fields.filter(
+        (field) => !ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS.includes(field),
+      )
+}
+
+const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
+  const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(item)
+
+  if (ToolsOzoneModerationDefs.isRepoViewDetail(item) || isRecord) {
+    const repo = isRecord ? item.repo : item
+    const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
+    const baseFields = {
+      did: repo.did,
+      handle: repo.handle,
+      email: repo.email,
+      ip: 'Unknown',
+      labels: 'Unknown',
+      name: profile?.displayName,
+      tags: repo.moderation.subjectStatus?.tags?.join('|'),
+      bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
+    }
+
+    // For record entries, the repo does not include labels
+    if (!isRecord) {
+      return {
+        ...baseFields,
+        ip: item.ip as string,
+        labels: item.labels?.map(({ val }) => val).join('|'),
       }
+    }
+  }
 
-      const data: Record<
-        string,
-        ToolsOzoneModerationDefs.RepoViewDetail | null
-      > = {}
+  if (ToolsOzoneModerationDefs.isSubjectStatusView(item)) {
+    const did = ComAtprotoRepoStrongRef.isMain(item.subject)
+      ? new AtUri(item.subject.uri).host
+      : ComAtprotoAdminDefs.isRepoRef(item.subject)
+      ? item.subject.did
+      : ''
+    return {
+      did,
+      handle: item.subjectRepoHandle,
+      relatedRecords: [] as {}[],
+      email: 'Unknown',
+      ip: 'Unknown',
+      labels: 'None',
+      name: 'Unknown',
+      tags: item.tags?.join('|'),
+      bskyUrl: buildBlueSkyAppUrl({ did }),
+    }
+  }
+  return null
+}
 
-      for (const itemChunk of chunkArray(items, 50)) {
-        await Promise.all(
-          itemChunk.map(async (did) => {
-            try {
-              const { data: repo } =
-                await labelerAgent.tools.ozone.moderation.getRepo({
-                  did,
-                })
-
-              data[did] = repo
-            } catch (error) {
-              // For now we're just swallowing errors and exporting what I can
-              console.error(error)
-              data[did] = null
-            }
-          }),
-        )
-      }
-
-      downloadCSV(
-        createCSV({
-          headers: [
-            'did',
-            'handle',
-            'email',
-            'ip',
-            'name',
-            'labels',
-            'profile',
-          ],
-          lines: Object.values(data).map((repo) => {
-            if (!repo) return ''
-            const profile = AppBskyActorProfile.isRecord(repo.relatedRecords[0])
-              ? (repo.relatedRecords[0] as AppBskyActorProfile.Record)
-              : null
-
-            const line: string[] = [
-              repo.did,
-              repo.handle,
-              repo.email || 'Unknown',
-              `${repo.ip || 'Unknown'}`,
-              `${profile?.displayName || 'Unknown'}`,
-              repo.labels?.map(({ val }) => val).join(', ') || 'None',
-              buildBlueSkyAppUrl({ did: repo.did }),
-            ]
-            return line.join(',')
-          }),
-        }),
+export const useWorkspaceExport = () => {
+  const { role } = useServerConfig()
+  const isAdmin = role === ToolsOzoneTeamDefs.ROLEADMIN
+  const headers = isAdmin
+    ? WORKSPACE_EXPORT_FIELDS
+    : WORKSPACE_EXPORT_FIELDS.filter(
+        (field) => !ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS.includes(field),
       )
 
-      return data
+  const [selectedColumns, setSelectedColumns] = useState(headers)
+  const [filename, setFilename] = useState(`workspace-export`)
+
+  const mutation = useMutation({
+    mutationFn: async (items: WorkspaceListData) => {
+      const exportHeaders = filterExportFields(selectedColumns, isAdmin)
+      downloadCSV(
+        createCSV({
+          filename,
+          headers: exportHeaders,
+          lines: Object.values(items)
+            .map((item) => {
+              if (!item) return ''
+
+              const exportFields = getExportFieldsFromWorkspaceListItem(item)
+              if (!exportFields) return ''
+
+              const line: string[] = [
+                exportFields.did,
+                exportFields.handle,
+                exportHeaders.includes('email') ? exportFields.email : '',
+                exportHeaders.includes('ip') ? exportFields.ip : '',
+                exportFields.name,
+                exportFields.labels,
+                exportFields.tags,
+                exportFields.bskyUrl,
+              ].filter(isNonNullable)
+              return line.map(escapeCSVValue).join(',')
+            })
+            .filter(Boolean),
+        }),
+      )
     },
   })
+
+  return {
+    headers,
+    selectedColumns,
+    setSelectedColumns,
+    filename,
+    setFilename,
+    ...mutation,
+  }
 }
 
 const getList = (): string[] => {

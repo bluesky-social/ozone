@@ -12,6 +12,7 @@ import {
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
+  ToolsOzoneTeamDefs,
 } from '@atproto/api'
 import { Dialog } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
@@ -30,10 +31,7 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
-
-function isNonNullable<V>(v: V): v is NonNullable<V> {
-  return v != null
-}
+import { isNonNullable } from '@/lib/util'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -71,100 +69,103 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   }>({ isSubmitting: false, error: '' })
 
   const labelerAgent = useLabelerAgent()
-  const supportsCorrelation = useServerConfig().pds != null
-  const handleFindCorrelation = supportsCorrelation
-    ? async () => {
-        const selectedItems = new FormData(formRef.current!)
-          .getAll('workspaceItem')
-          .filter((item): item is string => typeof item === 'string')
+  const { pds, role } = useServerConfig()
+  const handleFindCorrelation =
+    pds != null
+      ? async () => {
+          const selectedItems = new FormData(formRef.current!)
+            .getAll('workspaceItem')
+            .filter((item): item is string => typeof item === 'string')
 
-        // For every selected item, find out which DID it corresponds
-        const dids = selectedItems
-          .map((item) => {
-            if (item.startsWith('did:')) return item
+          // For every selected item, find out which DID it corresponds
+          const dids = selectedItems
+            .map((item) => {
+              if (item.startsWith('did:')) return item
 
-            const status = workspaceListStatuses?.[item]
+              const status = workspaceListStatuses?.[item]
 
-            if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
-              return status.did
-            }
-
-            if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
-              return status.repo.did
-            }
-
-            if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
-              const { subject } = status
-              if (ComAtprotoAdminDefs.isRepoRef(subject)) {
-                return subject.did
+              if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
+                return status.did
               }
 
-              if (ComAtprotoRepoStrongRef.isMain(subject)) {
-                return new AtUri(subject.uri).host
+              if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+                return status.repo.did
               }
-            }
 
-            // Should never happen (future proofing against new item types in workspace)
-            return undefined
+              if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+                const { subject } = status
+                if (ComAtprotoAdminDefs.isRepoRef(subject)) {
+                  return subject.did
+                }
+
+                if (ComAtprotoRepoStrongRef.isMain(subject)) {
+                  return new AtUri(subject.uri).host
+                }
+              }
+
+              // Should never happen (future proofing against new item types in workspace)
+              return undefined
+            })
+            .filter(isNonNullable)
+
+          if (dids.length <= 1) {
+            toast.warning('Please select at least two accounts to correlate.')
+            return
+          }
+
+          if (dids.length !== selectedItems.length) {
+            toast.info(
+              'Only accounts can be correlated (ignoring non-accounts).',
+            )
+          }
+
+          const res = await labelerAgent.tools.ozone.signature.findCorrelation({
+            dids,
           })
-          .filter(isNonNullable)
 
-        if (dids.length <= 1) {
-          toast.warning('Please select at least two accounts to correlate.')
-          return
-        }
+          const { details } = res.data
 
-        if (dids.length !== selectedItems.length) {
-          toast.info('Only accounts can be correlated (ignoring non-accounts).')
-        }
-
-        const res = await labelerAgent.tools.ozone.signature.findCorrelation({
-          dids,
-        })
-
-        const { details } = res.data
-
-        if (!details.length) {
-          toast.info('No correlation found between the selected accounts.')
-        } else {
-          toast.success(
-            <div>
-              The following correlation were found between the selected
-              accounts:
-              <br />
-              {details.map(({ property, value }) => (
-                <Link
-                  key={property}
-                  href={`/repositories?term=sig:${encodeURIComponent(value)}`}
-                >
-                  <LabelChip>
-                    <MagnifyingGlassIcon className="h-3 w-3 inline" />
-                    {property}
-                  </LabelChip>
-                </Link>
-              ))}
-              {details.length > 1 && (
-                <>
-                  <br />
+          if (!details.length) {
+            toast.info('No correlation found between the selected accounts.')
+          } else {
+            toast.success(
+              <div>
+                The following correlation were found between the selected
+                accounts:
+                <br />
+                {details.map(({ property, value }) => (
                   <Link
-                    key="all"
-                    href={`/repositories?term=sig:${encodeURIComponent(
-                      JSON.stringify(details.map((s) => s.value)),
-                    )}`}
-                    className="text-blue-500 underline"
+                    key={property}
+                    href={`/repositories?term=sig:${encodeURIComponent(value)}`}
                   >
-                    Click here to show all accounts with the same details.
+                    <LabelChip>
+                      <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                      {property}
+                    </LabelChip>
                   </Link>
-                </>
-              )}
-            </div>,
-            {
-              autoClose: 10_000,
-            },
-          )
+                ))}
+                {details.length > 1 && (
+                  <>
+                    <br />
+                    <Link
+                      key="all"
+                      href={`/repositories?term=sig:${encodeURIComponent(
+                        JSON.stringify(details.map((s) => s.value)),
+                      )}`}
+                      className="text-blue-500 underline"
+                    >
+                      Click here to show all accounts with the same details.
+                    </Link>
+                  </>
+                )}
+              </div>,
+              {
+                autoClose: 10_000,
+              },
+            )
+          }
         }
-      }
-    : undefined
+      : undefined
 
   // on form submit
   const onFormSubmit = async (
@@ -337,6 +338,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             `}</style>
             <div className="scrollable-container overflow-y-auto">
               <WorkspaceList
+                canExport={
+                  !!role &&
+                  [
+                    ToolsOzoneTeamDefs.ROLEADMIN,
+                    ToolsOzoneTeamDefs.ROLEMODERATOR,
+                  ].includes(role)
+                }
                 list={workspaceList}
                 onRemoveItem={handleRemoveItem}
                 listData={workspaceListStatuses || {}}

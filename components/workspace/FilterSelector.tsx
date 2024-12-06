@@ -134,7 +134,7 @@ export const WorkspaceFilterSelector = ({
   }
 
   return (
-    <Popover className="relative z-20">
+    <Popover className="relative z-30">
       {({ open }) => (
         <>
           <Popover.Button className="text-sm flex flex-row items-center z-20">

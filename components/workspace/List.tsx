@@ -18,7 +18,6 @@ import {
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { PreviewCard } from '@/common/PreviewCard'
-import { useWorkspaceExportMutation } from './hooks'
 import {
   WorkspaceListData,
   WorkspaceListItemData,
@@ -26,9 +25,11 @@ import {
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { ModerationLabel } from '@/common/labels'
+import { WorkspaceExportPanel } from './ExportPanel'
 
 interface WorkspaceListProps {
   list: string[]
+  canExport: boolean
   listData: WorkspaceListData
   onRemoveItem: (item: string) => void
 }
@@ -50,9 +51,11 @@ const getLangTagFromRecordValue = (
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
   list,
   listData,
+  canExport,
   onRemoveItem,
 }) => {
   const groupedItems = groupSubjects(list)
+
   return (
     <div>
       <div className="space-y-2">
@@ -64,7 +67,7 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
               items={items}
               listData={listData}
               onRemoveItem={onRemoveItem}
-              canExport={key === 'dids'}
+              canExport={canExport}
               title={
                 GroupTitles[key] ||
                 `${key.charAt(0).toUpperCase()}${key.slice(1)}`
@@ -92,7 +95,6 @@ const ListGroup = ({
   const checkboxesRef = useRef<(HTMLInputElement | null)[]>([])
   const [detailShown, setDetailShown] = useState<string[]>([])
   const areAllDetailShown = items.every((item) => detailShown.includes(item))
-  const exportMutation = useWorkspaceExportMutation()
 
   //   This ensures that when shift+clicking checkboxes, all checkboxes between the last interacted item are toggled
   const handleChange = (
@@ -121,15 +123,7 @@ const ListGroup = ({
         </h5>
         <div className="flex gap-1">
           {canExport && (
-            <ActionButton
-              size="sm"
-              appearance="outlined"
-              onClick={() => exportMutation.mutateAsync(items)}
-            >
-              <span className="text-xs">
-                {exportMutation.isLoading ? 'Exporting...' : 'Export'}
-              </span>
-            </ActionButton>
+            <WorkspaceExportPanel listData={listData} />
           )}
           <ActionButton
             size="sm"
