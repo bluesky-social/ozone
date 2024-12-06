@@ -1,12 +1,11 @@
 'use client'
 
-import { useQuery } from '@tanstack/react-query'
-import { createContext, ReactNode, useContext, useEffect, useMemo } from 'react'
-import { useLocalStorage } from 'react-use'
+import { createContext, ReactNode, useContext, useMemo } from 'react'
 
 import { Loading } from '@/common/Loader'
 import { SetupModal } from '@/common/SetupModal'
 import { getConfig, OzoneConfig } from '@/lib/client-config'
+import { useStoredQuery } from '@/lib/useStoredQuery'
 import { GLOBAL_QUERY_CONTEXT } from './QueryClient'
 
 export type ConfigContextData = {
@@ -18,36 +17,45 @@ export type ConfigContextData = {
 const ConfigContext = createContext<ConfigContextData | null>(null)
 
 export const ConfigProvider = ({ children }: { children: ReactNode }) => {
-  const [cachedConfig, setCachedConfig] =
-    useLocalStorage<OzoneConfig>('labeler-config')
-
-  const { data, error, refetch } = useQuery<OzoneConfig, Error>({
+  const { data, error, refetch } = useStoredQuery({
     // Use the global query client to avoid clearing the cache when the user
     // changes.
     context: GLOBAL_QUERY_CONTEXT,
-    retry: (failureCount: number, error: Error): boolean => {
-      // TODO: change getConfig() to throw a specific error when a network
-      // error occurs, so we can distinguish between network errors and
-      // configuration errors.
-      return false
-    },
+    // TODO: change getConfig() to throw a specific error when a network
+    // error occurs, so we can distinguish between network errors and
+    // configuration errors.
+    retry: false,
     queryKey: ['labeler-config'],
     queryFn: getConfig,
-    initialData: cachedConfig,
     // Refetching will be handled manually
     refetchOnWindowFocus: false,
+    // Initialize with data from the legacy key (can be removed in the future)
+    initialData:
+      typeof window === 'undefined'
+        ? undefined
+        : ((legacyKey: string) => {
+            try {
+              const data = localStorage.getItem(legacyKey)
+              if (data) return JSON.parse(data)
+            } catch {
+              // Ignore
+            } finally {
+              localStorage.removeItem(legacyKey)
+            }
+          })('labeler-config'),
   })
 
-  useEffect(() => {
-    if (data) setCachedConfig(data)
-  }, [data, setCachedConfig])
-
-  const value = useMemo(
+  const value = useMemo<ConfigContextData | null>(
     () =>
       data
         ? {
             config: data,
-            configError: error,
+            configError:
+              error == null
+                ? null
+                : error instanceof Error
+                ? error
+                : new Error('Unknown error', { cause: error }),
             refetchConfig: refetch,
           }
         : null,

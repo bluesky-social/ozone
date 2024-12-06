@@ -1,61 +1,66 @@
 'use client'
-import { ComponentProps, useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { Alert } from '@/common/Alert'
+import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
+import { DataField } from '@/common/DataField'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
+import { EmptyDataset } from '@/common/feeds/EmptyFeed'
+import { CheckboxesModal } from '@/common/modals/checkboxes'
+import { Tabs, TabView } from '@/common/Tabs'
+import { InviteCodesTable } from '@/invites/InviteCodesTable'
+import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
+import { ModEventList } from '@/mod-event/EventList'
+import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
+import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import {
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
+import {
+  AppBskyActorDefs,
+  ComAtprotoAdminDefs,
   AppBskyActorGetProfile as GetProfile,
   ToolsOzoneModerationGetRepo as GetRepo,
-  AppBskyActorDefs,
 } from '@atproto/api'
 import {
   ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
+  MagnifyingGlassIcon,
+  MagnifyingGlassPlusIcon,
   UserCircleIcon,
   XCircleIcon,
-  MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid'
+import { useQuery } from '@tanstack/react-query'
+import { EmailComposer } from 'components/email/Composer'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import { Followers } from 'components/graph/Followers'
+import { Follows } from 'components/graph/Follows'
+import { Lists } from 'components/list/Lists'
+import { RelatedAccounts } from 'components/signature/RelatedAccounts'
+import { SubjectTag } from 'components/tags/SubjectTag'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { ComponentProps, useCallback, useEffect, useState } from 'react'
+import Lightbox from 'yet-another-react-lightbox'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
-import { ReportPanel } from '../reports/ReportPanel'
-import React from 'react'
 import {
+  getLabelsForSubject,
+  LabelChip,
   LabelList,
   LabelListEmpty,
-  getLabelsForSubject,
   ModerationLabel,
-  LabelChip,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
-import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
-import { InviteCodesTable } from '@/invites/InviteCodesTable'
-import { Dropdown, DropdownItem } from '@/common/Dropdown'
-import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { EmailComposer } from 'components/email/Composer'
-import { DataField } from '@/common/DataField'
-import { ProfileAvatar } from './ProfileAvatar'
-import { DidHistory } from './DidHistory'
-import { ModEventList } from '@/mod-event/EventList'
-import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
-import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { EmptyDataset } from '@/common/feeds/EmptyFeed'
-import { MuteReporting } from './MuteReporting'
-import { Tabs, TabView } from '@/common/Tabs'
-import { Lists } from 'components/list/Lists'
-import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
-import {
-  useWorkspaceAddItemsMutation,
-  useWorkspaceList,
-  useWorkspaceRemoveItemsMutation,
-} from '@/workspace/hooks'
+import { ReportPanel } from '../reports/ReportPanel'
 import { Blocks } from './Blocks'
-import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
-import { Alert } from '@/common/Alert'
-import { Follows } from 'components/graph/Follows'
-import { Followers } from 'components/graph/Followers'
+import { DidHistory } from './DidHistory'
+import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
+import { MuteReporting } from './MuteReporting'
+import { ProfileAvatar } from './ProfileAvatar'
 
 enum Views {
   Details,
@@ -67,6 +72,7 @@ enum Views {
   Events,
   Email,
   Lists,
+  RelatedAccounts,
 }
 
 const TabKeys = {
@@ -79,6 +85,7 @@ const TabKeys = {
   blocks: Views.Blocks,
   events: Views.Events,
   email: Views.Email,
+  related: Views.RelatedAccounts,
 }
 
 export function AccountView({
@@ -154,6 +161,10 @@ export function AccountView({
           view: Views.Blocks,
           label: 'Blocks',
         },
+        {
+          view: Views.RelatedAccounts,
+          label: 'Related',
+        },
       )
 
       if (profile.associated?.lists) {
@@ -225,12 +236,15 @@ export function AccountView({
                     <Posts id={id} onReport={setReportUri} />
                   )}
                   {currentView === Views.Follows && (
-                    <Follows count={profile?.followersCount} id={id} />
+                    <Follows count={profile?.followsCount} id={id} />
                   )}
                   {currentView === Views.Followers && (
                     <Followers count={profile?.followersCount} id={id} />
                   )}
                   {currentView === Views.Lists && <Lists actor={id} />}
+                  {currentView === Views.RelatedAccounts && (
+                    <RelatedAccounts id={id} />
+                  )}
                   {currentView === Views.Invites && <Invites repo={repo} />}
                   {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
@@ -255,6 +269,69 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
 })
+
+function ProfileHeaderImage({
+  profile,
+}: {
+  profile?: GetProfile.OutputSchema
+}) {
+  const alt = `Banner image for ${
+    profile?.displayName || profile?.handle || 'user'
+  }`
+  const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+    }
+  }
+  const image = (
+    <img
+      className="h-32 w-full object-cover lg:h-48"
+      src={profile?.banner || '/img/default-banner.jpg'}
+      alt={alt}
+    />
+  )
+
+  if (!profile?.banner) {
+    return <div>{image}</div>
+  }
+
+  return (
+    <div>
+      <Lightbox
+        open={isImageViewerOpen}
+        carousel={{ finite: true }}
+        controller={{ closeOnBackdropClick: true }}
+        close={() => setIsImageViewerOpen(false)}
+        slides={[
+          {
+            src: profile.banner,
+            description: alt,
+          },
+        ]}
+        on={{
+          // The lightbox may open from other Dialog/modal components
+          // in that case, we want to make sure that esc button presses
+          // only close the lightbox and not the parent Dialog/modal underneath
+          entered: () => {
+            document.addEventListener('keydown', handleKeyDown)
+          },
+          exited: () => {
+            document.removeEventListener('keydown', handleKeyDown)
+          },
+        }}
+      />
+      <button
+        type="button"
+        className="w-full active:outline-none"
+        onClick={() => setIsImageViewerOpen(true)}
+      >
+        {image}
+      </button>
+    </div>
+  )
+}
 
 function Header({
   id,
@@ -340,13 +417,7 @@ function Header({
           did={`${repo?.did || profile?.did}`}
         />
       )}
-      <div>
-        <img
-          className="h-32 w-full object-cover lg:h-48"
-          src={profile?.banner || '/img/default-banner.jpg'}
-          alt=""
-        />
-      </div>
+      <ProfileHeaderImage profile={profile} />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
         <div className="-mt-12 sm:-mt-16 sm:flex sm:items-end sm:space-x-5">
           <div className="flex">
@@ -442,13 +513,17 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
+  const router = useRouter()
   const labels = getLabelsForSubject({ repo })
   const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
-  const ip = typeof repo.ip === 'string' ? repo.ip : undefined
+
+  const { registrationIp, lastSigninIp, lastSigninTime, hcapDetail } =
+    parseThreatSigs(repo.threatSignatures)
+
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -461,12 +536,71 @@ function Details({
             showCopyButton
           />
         )}
-        {ip && (
-          <DataField value={ip} label="IP" showCopyButton>
-            {obscureIp(ip)}{' '}
-            <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
+        {registrationIp && (
+          <DataField
+            value={registrationIp}
+            label="Registration IP"
+            showCopyButton
+          >
+            {obscureIp(registrationIp)}{' '}
+            <Link
+              href={`/repositories?term=sig:${encodeURIComponent(
+                registrationIp,
+              )}`}
+            >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+          </DataField>
+        )}
+        {lastSigninIp && (
+          <DataField value={lastSigninIp} label="Last Signin IP" showCopyButton>
+            {obscureIp(lastSigninIp)}{' '}
+            <Link
+              href={`/repositories?term=sig:${encodeURIComponent(
+                lastSigninIp,
+              )}`}
+            >
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+            {lastSigninTime && (
+              <div className="text-gray-400">
+                {new Date(lastSigninTime).toLocaleString()}
+              </div>
+            )}
+          </DataField>
+        )}
+        {hcapDetail && (
+          <DataField label="Hcaptcha">
+            {hcapDetail?.map(({ property, value }) => (
+              <Link
+                key={property}
+                href={`/repositories?term=sig:${encodeURIComponent(value)}`}
+              >
+                <LabelChip>
+                  <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                  {property}
+                </LabelChip>
+              </Link>
+            ))}
+
+            {repo.threatSignatures?.length && (
+              <CheckboxesModal<ComAtprotoAdminDefs.ThreatSignature>
+                title="Find accounts matching the following signatures"
+                items={repo.threatSignatures}
+                itemLabel={(signature) => signature.property}
+                required
+                onConfirm={(values) => {
+                  router.push(
+                    `/repositories?term=sig:${encodeURIComponent(
+                      // "getRepos" supports JSON encoded array of string for "sig:" searches
+                      JSON.stringify(values.map((s) => s.value)),
+                    )}`,
+                  )
+                }}
+              >
+                <MagnifyingGlassPlusIcon className="ml-2 h-3 w-3 inline" />
+              </CheckboxesModal>
+            )}
           </DataField>
         )}
         <DataField
@@ -509,7 +643,7 @@ function Details({
           <LabelList>
             {!tags.length && <LabelListEmpty />}
             {tags.map((tag) => (
-              <LabelChip key={tag}>{tag}</LabelChip>
+              <SubjectTag key={tag} tag={tag} />
             ))}
           </LabelList>
         </DataField>
@@ -668,36 +802,41 @@ export function AccountsGrid({
       )}
       <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {accounts?.map((account) => (
-          <div
-            key={account.handle}
-            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
-          >
-            <div className="flex-shrink-0">
-              <ProfileAvatar
-                className="h-10 w-10 rounded-full"
-                profile={account}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/repositories/${account.did}`}
-                className="focus:outline-none"
-              >
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                  {account.displayName || `@${account.handle}`}
-                </p>
-                <p className="truncate text-sm text-gray-500 dark:text-gray-50">
-                  @{account.handle}
-                </p>
-              </Link>
-            </div>
-          </div>
+          <ProfileCard profile={account} key={account.handle} />
         ))}
       </div>
     </div>
   )
 }
+
+export const ProfileCard = ({
+  profile,
+}: {
+  profile: AppBskyActorDefs.ProfileView | AppBskyActorDefs.ProfileViewBasic
+}) => {
+  return (
+    <div className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700">
+      <div className="flex-shrink-0">
+        <ProfileAvatar className="h-10 w-10 rounded-full" profile={profile} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/repositories/${profile.did}`}
+          className="focus:outline-none"
+        >
+          <span className="absolute inset-0" aria-hidden="true" />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+            {profile.displayName || `@${profile.handle}`}
+          </p>
+          <p className="truncate text-sm text-gray-500 dark:text-gray-50">
+            @{profile.handle}
+          </p>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 enum EventViews {
   ByUser,
   ForUser,
@@ -780,4 +919,23 @@ function obscureIp(ip: string) {
   const parts = ip.split('.')
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
+}
+
+function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
+  const registrationIp = sigs?.find(
+    (sig) => sig.property === 'registrationIp',
+  )?.value
+  const lastSigninIp = sigs?.find(
+    (sig) => sig.property === 'lastSigninIp',
+  )?.value
+  const lastSigninTime = sigs?.find(
+    (sig) => sig.property === 'lastSigninTime',
+  )?.value
+  const hcapDetail = sigs?.filter(
+    (sig) =>
+      !['registrationIp', 'lastSigninIp', 'lastSigninTime'].includes(
+        sig.property,
+      ),
+  )
+  return { registrationIp, lastSigninIp, lastSigninTime, hcapDetail }
 }

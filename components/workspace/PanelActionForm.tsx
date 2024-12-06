@@ -16,12 +16,15 @@ export const WorkspacePanelActionForm = ({
   setModEventType: (action: string) => void
   onCancel: () => void
 }) => {
+  const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
+  const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const shouldShowDurationInHoursField =
     modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
+
   return (
     <div className="mb-4 w-1/2">
       <div className="relative flex flex-row gap-1 items-center">
@@ -29,6 +32,10 @@ export const WorkspacePanelActionForm = ({
           selectedAction={modEventType}
           isSubjectDid={false}
           hasBlobs={false}
+          forceDisplayActions={[
+            MOD_EVENTS.RESOLVE_APPEAL,
+            MOD_EVENTS.REVERSE_TAKEDOWN,
+          ]}
           setSelectedAction={(action) => setModEventType(action)}
         />
         <ModEventDetailsPopover modEventType={modEventType} />
@@ -47,8 +54,16 @@ export const WorkspacePanelActionForm = ({
           <LabelSelector
             id="labels"
             name="labels"
-            formId={WORKSPACE_FORM_ID}
+            form={WORKSPACE_FORM_ID}
             defaultLabels={[]}
+          />
+
+          <Checkbox
+            value="true"
+            id="removeLabels"
+            name="removeLabels"
+            className="my-3 flex items-center"
+            label="Remove selected labels from the subjects"
           />
         </div>
       )}
@@ -62,6 +77,14 @@ export const WorkspacePanelActionForm = ({
             className="block w-full"
             placeholder="Comma separated tags"
             defaultValue=""
+          />
+
+          <Checkbox
+            value="true"
+            id="removeTags"
+            name="removeTags"
+            className="my-3 flex items-center"
+            label="Remove selected tags from the subjects"
           />
         </FormLabel>
       )}
@@ -83,6 +106,23 @@ export const WorkspacePanelActionForm = ({
           label="Update the subject's persistent note with this comment"
         />
       )}
+      {(isTakedownEvent || isAckEvent) && (
+        <Checkbox
+          value="true"
+          id="acknowledgeAccountSubjects"
+          name="acknowledgeAccountSubjects"
+          className="mb-3 flex items-start leading-3"
+          inputClassName="mt-1"
+          label={
+            <span className="leading-4">
+              Acknowledge all open/escalated/appealed reports on subjects
+              created by accounts that you are{' '}
+              {isAckEvent ? 'acknowledging' : 'taking down'}.
+            </span>
+          }
+        />
+      )}
+
       <div className="flex flex-row gap-2">
         <ActionButton appearance="primary" type="submit" size="sm">
           Submit Action

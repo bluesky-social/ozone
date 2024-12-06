@@ -1,23 +1,38 @@
 import { formatDistanceToNow } from 'date-fns'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
-import { ComponentProps } from 'react'
+import { ComponentProps, useState } from 'react'
 import { formatBytes } from '@/lib/util'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
+import { BlobListLightbox } from '@/common/BlobListLightbox'
 
-export function BlobsTable(props: {
+export function BlobsTable({
+  blobs,
+  authorDid,
+}: {
+  authorDid: string
   blobs: ToolsOzoneModerationDefs.BlobView[]
 }) {
-  const { blobs } = props
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(-1)
   return (
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="-mx-4 mt-8 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
+        <BlobListLightbox
+          blobs={blobs}
+          authorDid={authorDid}
+          slideIndex={lightboxImageIndex}
+          onClose={() => setLightboxImageIndex(-1)}
+        />
         <table className="min-w-full divide-y divide-gray-300">
           <thead className="bg-white dark:bg-slate-800">
             <BlobRowHead />
           </thead>
           <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
-            {blobs.map((blob) => (
-              <BlobRow key={blob.cid} blob={blob} />
+            {blobs.map((blob, i) => (
+              <BlobRow
+                onView={() => setLightboxImageIndex(i)}
+                key={blob.cid}
+                blob={blob}
+              />
             ))}
           </tbody>
         </table>
@@ -26,8 +41,11 @@ export function BlobsTable(props: {
   )
 }
 
-function BlobRow(props: { blob: ToolsOzoneModerationDefs.BlobView }) {
-  const { blob, ...others } = props
+function BlobRow(props: {
+  onView: () => void
+  blob: ToolsOzoneModerationDefs.BlobView
+}) {
+  const { blob, onView, ...others } = props
   const createdAt = new Date(blob.createdAt)
   const { subjectStatus } = blob.moderation ?? {}
 
@@ -45,6 +63,9 @@ function BlobRow(props: { blob: ToolsOzoneModerationDefs.BlobView }) {
             {blob.details.height}x{blob.details.width}px
           </Chip>
         )}
+        <button type="button" onClick={onView}>
+          <Chip>View</Chip>
+        </button>
       </td>
       <td className="px-3 py-4 text-sm text-gray-500 dark:text-gray-50">
         <span title={createdAt.toLocaleString()}>

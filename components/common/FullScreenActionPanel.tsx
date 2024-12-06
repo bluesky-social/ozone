@@ -11,9 +11,10 @@ export function FullScreenActionPanel(props: {
   const { open, onClose, title, children } = props
   return (
     <Transition.Root show={open} as={Fragment}>
+      {/* The z-30 value is important because the headerbar uses z-10 and label chips with dropdowns use z-20 and we ant to make sure the full screen panels are never below the header bar and label chip dropdowns */}
       <Dialog
         as="div"
-        className="fixed z-10 inset-0 overflow-y-auto"
+        className="fixed z-30 inset-0 overflow-y-auto"
         onClose={onClose}
       >
         <Transition.Child

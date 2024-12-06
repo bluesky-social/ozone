@@ -3,9 +3,9 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { Posts } from '../posts/Posts'
 import { useState } from 'react'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { AppBskyFeedDefs } from '@atproto/api'
+import { AppBskyFeedDefs, AppBskyFeedGetAuthorFeed } from '@atproto/api'
 import { TypeFilterKey, TypeFiltersByKey } from '../posts/constants'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useAppviewAgent, useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const useAuthorFeedQuery = ({
   id,
@@ -18,13 +18,15 @@ export const useAuthorFeedQuery = ({
 }) => {
   const { data: repoData } = useRepoAndProfile({ id })
   const labelerAgent = useLabelerAgent()
+  const appviewAgent = useAppviewAgent()
 
   return useInfiniteQuery({
     queryKey: ['authorFeed', { id, query, typeFilter }],
     queryFn: async ({ pageParam }) => {
+      let isFromAppview = false
       const searchPosts = query.length && repoData?.repo.handle
       if (searchPosts) {
-        const { data } = await labelerAgent.api.app.bsky.feed.searchPosts({
+        const { data } = await labelerAgent.app.bsky.feed.searchPosts({
           q: `from:${repoData?.repo.handle} ${query}`,
           limit: 30,
           cursor: pageParam,
@@ -40,22 +42,52 @@ export const useAuthorFeedQuery = ({
         TypeFiltersByKey.posts_with_media.key,
       ].includes(typeFilter)
       const isQuoteOrRepostFilter = [
+        TypeFiltersByKey.no_reposts.key,
         TypeFiltersByKey.reposts.key,
         TypeFiltersByKey.quotes.key,
         TypeFiltersByKey.quotes_and_reposts.key,
       ].includes(typeFilter)
 
       while (filteredFeed.length < limit) {
-        const { data } = await labelerAgent.api.app.bsky.feed.getAuthorFeed({
+        const authorFeedParams = {
           limit,
           actor: id,
           cursor,
           ...(isPostFilter ? { filter: typeFilter } : {}),
-        })
+        }
+        let data: AppBskyFeedGetAuthorFeed.OutputSchema
+
+        try {
+          if (isFromAppview && appviewAgent) {
+            const authorFeedThroughAppview =
+              await appviewAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
+            data = authorFeedThroughAppview.data
+          } else {
+            const authorFeedThroughOzone =
+              await labelerAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
+            data = authorFeedThroughOzone.data
+          }
+        } catch (e) {
+          if (
+            e instanceof AppBskyFeedGetAuthorFeed.BlockedByActorError &&
+            appviewAgent
+          ) {
+            const authorFeedThroughAppview =
+              await appviewAgent.app.bsky.feed.getAuthorFeed(authorFeedParams)
+            data = authorFeedThroughAppview.data
+            if (!isFromAppview) isFromAppview = true
+          } else {
+            throw e
+          }
+        }
+
+        if (!data) {
+          break
+        }
 
         // Only repost/quote post filters are applied on the client side
         if (!isQuoteOrRepostFilter) {
-          return data
+          return { ...data, isFromAppview }
         }
 
         const newFilteredItems = data.feed.filter((item) => {
@@ -65,6 +97,9 @@ export const useAuthorFeedQuery = ({
             item.post.embed?.$type === 'app.bsky.embed.record#view'
           if (typeFilter === TypeFiltersByKey.reposts.key) {
             return isRepost
+          }
+          if (typeFilter === TypeFiltersByKey.no_reposts.key) {
+            return !isRepost
           }
           if (typeFilter === TypeFiltersByKey.quotes.key) {
             // When a quoted post is reposted, we don't want to consider that a quote post
@@ -84,7 +119,7 @@ export const useAuthorFeedQuery = ({
       }
 
       // Ensure the feed is exactly 30 items if there are more than 30
-      return { feed: filteredFeed, cursor }
+      return { feed: filteredFeed, cursor, isFromAppview }
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
@@ -106,9 +141,11 @@ export function AuthorFeed({
     typeFilter,
   })
   const items = data?.pages.flatMap((page) => page.feed) ?? []
+  const isFromAppview = data?.pages.some((page) => page.isFromAppview)
 
   return (
     <Posts
+      isFromAppview={isFromAppview}
       items={items}
       searchQuery={query}
       setSearchQuery={setQuery}

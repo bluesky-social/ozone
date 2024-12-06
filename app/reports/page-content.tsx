@@ -8,10 +8,12 @@ import {
 } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
+  Agent,
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneModerationQueryStatuses,
+  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -20,14 +22,15 @@ import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 import { ButtonGroup } from '@/common/buttons'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
-import { LanguagePicker } from '@/common/LanguagePicker'
-import { QueueSelector, QUEUE_NAMES } from '@/reports/QueueSelector'
-import { unique } from '@/lib/util'
+import { QueueSelector } from '@/reports/QueueSelector'
+import { simpleHash, unique } from '@/lib/util'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { useQueueSetting } from 'components/setting/useQueueSetting'
+import QueueFilterPanel from '@/reports/QueueFilter/Panel'
 
 const TABS = [
   {
@@ -102,13 +105,15 @@ const ResolvedFilters = () => {
   const appealed = params.get('appealed')
 
   const updateParams = useCallback(
-    (key: string, newState: boolean) => {
+    (updates: Record<string, boolean>) => {
       const nextParams = new URLSearchParams(params)
-      if (nextParams.get(key) == `${newState}`) {
-        nextParams.delete(key)
-      } else {
-        nextParams.set(key, `${newState}`)
-      }
+      Object.entries(updates).forEach(([key, newState]) => {
+        if (nextParams.get(key) === `${newState}`) {
+          nextParams.delete(key)
+        } else {
+          nextParams.set(key, `${newState}`)
+        }
+      })
       router.push((pathname ?? '') + '?' + nextParams.toString())
     },
     [params, pathname, router],
@@ -122,20 +127,29 @@ const ResolvedFilters = () => {
         {
           id: 'takendown',
           text: 'Taken Down',
-          onClick: () => updateParams('takendown', true),
+          onClick: () => updateParams({ takendown: true }),
           isActive: takendown === 'true',
         },
         {
-          id: 'includeMuted',
-          text: 'Show Muted',
-          onClick: () => updateParams('includeMuted', true),
-          isActive: includeMuted === 'true',
-        },
-        {
-          id: 'onlyMuted',
-          text: 'Only Muted',
-          onClick: () => updateParams('onlyMuted', true),
-          isActive: onlyMuted === 'true',
+          id: 'mute',
+          text:
+            includeMuted === 'true'
+              ? 'Include Muted'
+              : onlyMuted === 'true'
+              ? 'Only Muted'
+              : 'Mutes',
+          onClick: () => {
+            // setting a param to it's current value toggles it off
+            // so we toggle off includeMuted and toggle on onlyMuted
+            if (includeMuted === 'true') {
+              updateParams({ includeMuted: true, onlyMuted: true })
+            } else if (onlyMuted === 'true') {
+              updateParams({ onlyMuted: true })
+            } else {
+              updateParams({ includeMuted: true })
+            }
+          },
+          isActive: includeMuted === 'true' || onlyMuted === 'true',
         },
         {
           id: 'appealed',
@@ -147,12 +161,12 @@ const ResolvedFilters = () => {
               : 'Appeals',
           onClick: () => {
             if (appealed === 'true') {
-              updateParams('appealed', false)
+              updateParams({ appealed: false })
             } else if (appealed === 'false') {
               // setting the same value toggles the param off
-              updateParams('appealed', false)
+              updateParams({ appealed: false })
             } else {
-              updateParams('appealed', true)
+              updateParams({ appealed: true })
             }
           },
           isActive: appealed === 'true' || appealed === 'false',
@@ -232,7 +246,9 @@ export const ReportsPageContent = () => {
         </div>
       </SectionHeader>
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
-        <LanguagePicker />
+        <div className="flex flex-row items-center gap-2">
+          <QueueFilterPanel />
+        </div>
         <ResolvedFilters />
       </div>
       <SubjectTable
@@ -278,6 +294,7 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
 function useModerationQueueQuery() {
   const labelerAgent = useLabelerAgent()
   const params = useSearchParams()
+  const { setting: queueSetting } = useQueueSetting()
 
   const takendown = !!params.get('takendown')
   const includeMuted = !!params.get('includeMuted')
@@ -287,13 +304,17 @@ function useModerationQueueQuery() {
   const tags = params.get('tags')
   const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
+  const subjectType = params.get('subjectType')
+  const collections = params.get('collections')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters } = useFluentReportSearchParams()
+  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
+    useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
       'events',
       {
+        includeAllUserRecords,
         subject,
         sortField,
         sortDirection,
@@ -307,6 +328,8 @@ function useModerationQueueQuery() {
         queueName,
         includeMuted,
         onlyMuted,
+        subjectType,
+        collections,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -314,8 +337,23 @@ function useModerationQueueQuery() {
         cursor: pageParam,
       }
 
+      if (includeAllUserRecords) {
+        queryParams.includeAllUserRecords = includeAllUserRecords
+      }
+
       if (subject) {
         queryParams.subject = subject
+      } else {
+        if (subjectType) {
+          queryParams.subjectType = subjectType
+        }
+
+        if (subjectType === 'record') {
+          const collectionNames = collections?.split(',')
+          if (collectionNames?.length) {
+            queryParams.collections = collectionNames
+          }
+        }
       }
 
       if (takendown) {
@@ -330,10 +368,10 @@ function useModerationQueueQuery() {
         queryParams.onlyMuted = onlyMuted
       }
 
-      if (appealed) {
-        // If not specifically set to true but there is a value, we can default to false
-        // No value will pass undefined which will be ignored
-        queryParams.appealed = appealed === 'true'
+      if (appealed === 'true') {
+        queryParams.appealed = true
+      } else if (appealed === 'false') {
+        queryParams.appealed = false
       }
 
       if (tags) {
@@ -356,29 +394,72 @@ function useModerationQueueQuery() {
         }
       })
 
-      const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryStatuses({
-          limit: 50,
-          includeMuted: true,
-          ...queryParams,
-        })
-
-      const queueDivider = QUEUE_NAMES.length
-      const queueIndex = QUEUE_NAMES.indexOf(queueName ?? '')
-      const statusesInQueue = queueName
-        ? data.subjectStatuses.filter((status) => {
-            const subjectDid =
-              status.subject.$type === 'com.atproto.admin.defs#repoRef'
-                ? status.subject.did
-                : new AtUri(`${status.subject.uri}`).host
-            const queueDeciderCharCode =
-              `${subjectDid}`.split(':').pop()?.charCodeAt(0) || 0
-            return queueDeciderCharCode % queueDivider === queueIndex
-          })
-        : data.subjectStatuses
-
-      return { cursor: data.cursor, subjectStatuses: statusesInQueue }
+      return getQueueItems(
+        labelerAgent,
+        queryParams,
+        queueName,
+        0,
+        queueSetting.data
+          ? {
+              queueNames: queueSetting.data.queueNames,
+              queueSeed: queueSetting.data.queueSeed.setting,
+            }
+          : undefined,
+      )
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
+}
+
+const getQueueItems = async (
+  labelerAgent: Agent,
+  queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
+  queueName: string | null,
+  attempt = 0,
+  queueSetting?: { queueNames: string[]; queueSeed: string },
+) => {
+  const pageSize = 100
+  const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
+    limit: pageSize,
+    includeMuted: true,
+    ...queryParams,
+  })
+
+  const queueIndex = queueSetting?.queueNames.indexOf(queueName ?? '')
+  const statusesInQueue = queueName
+    ? data.subjectStatuses.filter((status) => {
+        const subjectDid = ComAtprotoAdminDefs.isRepoRef(status.subject)
+          ? status.subject.did
+          : new AtUri(`${status.subject.uri}`).host
+        return (
+          getQueueIndex(
+            subjectDid,
+            queueSetting?.queueNames || [],
+            queueSetting?.queueSeed || '',
+          ) === queueIndex
+        )
+      })
+    : data.subjectStatuses
+
+  // This is a recursive call to get items in queue if the current page
+  // gives us less than full page size and there are more items to fetch
+  // also, use a circuit breaker to make sure we never accidentally call this more than 10 times
+  if (statusesInQueue.length === 0 && data.cursor && attempt < 10) {
+    return getQueueItems(
+      labelerAgent,
+      {
+        ...queryParams,
+        cursor: data.cursor,
+      },
+      queueName,
+      ++attempt,
+      queueSetting,
+    )
+  }
+
+  return { cursor: data.cursor, subjectStatuses: statusesInQueue }
+}
+
+function getQueueIndex(did: string, queueNames: string[], queueSeed: string) {
+  return simpleHash(`${queueSeed}:${did}`) % queueNames.length
 }

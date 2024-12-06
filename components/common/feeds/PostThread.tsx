@@ -67,7 +67,6 @@ export function ThreadPost({
           <PostAsCard
             className="bg-transparent px-3 py-2"
             item={thread}
-            controls={false}
             dense
           />
         </ThreadPostWrapper>

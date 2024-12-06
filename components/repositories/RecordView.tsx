@@ -7,6 +7,8 @@ import {
   AppBskyFeedDefs,
   AppBskyActorDefs,
   ToolsOzoneModerationDefs,
+  AtUri,
+  AppBskyGraphDefs,
 } from '@atproto/api'
 import {
   ChevronLeftIcon,
@@ -30,6 +32,9 @@ import { Tabs, TabView } from '@/common/Tabs'
 import { Likes } from '@/common/feeds/Likes'
 import { Reposts } from '@/common/feeds/Reposts'
 import { Thread } from '@/common/feeds/PostThread'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { CollectionId } from '@/reports/helpers/subject'
+import ListAccounts from 'components/list/Accounts'
 
 enum Views {
   Details,
@@ -41,28 +46,51 @@ enum Views {
   Reposts,
 }
 
+const TabKeys = {
+  details: Views.Details,
+  profiles: Views.Profiles,
+  thread: Views.Thread,
+  blobs: Views.Blobs,
+  modevents: Views.ModEvents,
+  likes: Views.Likes,
+  reposts: Views.Reposts,
+}
+
 export function RecordView({
   record,
+  list,
   thread,
-  profiles,
   onReport,
   onShowActionPanel,
 }: {
+  list?: AppBskyGraphDefs.ListView
   record: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
-  profiles?: AppBskyActorDefs.ProfileView[]
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
-  const [currentView, setCurrentView] = useState(Views.Details)
+  const searchParams = useSearchParams()
+  const router = useRouter()
+  const pathname = usePathname()
+  const atUri = new AtUri(record.uri)
+  const isListRecord = atUri.collection === CollectionId.List
+
+  const currentView =
+    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push((pathname ?? '') + '?' + newParams.toString())
+  }
 
   const getTabViews = () => {
     const views: TabView<Views>[] = [{ view: Views.Details, label: 'Details' }]
-    if (!!profiles?.length) {
+    if (isListRecord) {
       views.push({
         view: Views.Profiles,
         label: 'Profiles',
-        sublabel: String(profiles.length),
+        sublabel: String(list?.listItemCount || ''),
       })
     }
     if (!!thread) {
@@ -133,8 +161,8 @@ export function RecordView({
                     onSetCurrentView={setCurrentView}
                   />
                   {currentView === Views.Details && <Details record={record} />}
-                  {currentView === Views.Profiles && !!profiles?.length && (
-                    <AccountsGrid error="" accounts={profiles} />
+                  {currentView === Views.Profiles && (
+                    <ListAccounts uri={record.uri} />
                   )}
                   {currentView === Views.Likes &&
                     !!thread &&
@@ -156,7 +184,10 @@ export function RecordView({
                     <Thread thread={thread.thread} />
                   )}
                   {currentView === Views.Blobs && (
-                    <Blobs blobs={record.blobs} />
+                    <BlobsTable
+                      authorDid={record.repo.did}
+                      blobs={record.blobs}
+                    />
                   )}
                   {currentView === Views.ModEvents && (
                     <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
@@ -293,8 +324,4 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
       <Json className="mb-3" label="Contents" value={record.value} />
     </div>
   )
-}
-
-function Blobs({ blobs }: { blobs: ToolsOzoneModerationDefs.BlobView[] }) {
-  return <BlobsTable blobs={blobs} />
 }

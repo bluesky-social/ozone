@@ -21,10 +21,15 @@ import {
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
 import { isRepost } from '@/lib/types'
-import { buildBlueSkyAppUrl, classNames, parseAtUri } from '@/lib/util'
+import {
+  buildBlueSkyAppUrl,
+  classNames,
+  parseAtUri,
+  pluralize,
+} from '@/lib/util'
 import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
-import { LabelList, doesLabelNeedBlur, ModerationLabel } from '../labels'
+import { LabelList, ModerationLabel } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
@@ -37,6 +42,7 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
+import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -65,17 +71,27 @@ export function PostsFeed({
   )
 }
 
+export type PostControl = 'like' | 'repost' | 'view' | 'report' | 'workspace'
+
+export const PostControlOptions = [
+  'like',
+  'repost',
+  'view',
+  'report',
+  'workspace',
+] as const
+
 export function PostAsCard({
   item,
   dense,
-  controls = true,
   onReport,
   className = '',
   showLabels = true,
+  controls = [...PostControlOptions],
 }: {
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
-  controls?: boolean
+  controls?: PostControl[]
   onReport?: (uri: string) => void
   className?: string
   showLabels?: boolean
@@ -86,7 +102,9 @@ export function PostAsCard({
       <PostContent item={item} dense={dense} />
       <PostEmbeds item={item} />
       {showLabels && <PostLabels item={item} dense={dense} />}
-      {controls && <PostControls item={item} onReport={onReport} />}
+      {!!controls?.length && (
+        <PostControls item={item} onReport={onReport} controls={controls} />
+      )}
     </div>
   )
 }
@@ -220,25 +238,30 @@ const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
 export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+  const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
 
-  const imageRequiresBlur = doesLabelNeedBlur(
-    item.post.labels?.map(({ val }) => val),
-  )
+  const allLabels = item.post.labels?.map(({ val }) => val)
+  const mediaFilters = getMediaFiltersForLabels(allLabels)
   const imageClassName = classNames(
     `border border-gray-200 rounded`,
-    imageRequiresBlur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.blur ? 'blur-sm hover:blur-none' : '',
+    mediaFilters.grayscale ? 'grayscale' : '',
+    mediaFilters.translucent ? 'opacity-40' : '',
   )
 
   if (AppBskyEmbedVideo.isView(embed)) {
+    const captions = item.post.record?.['embed']?.['captions']
     return (
       <div className="flex gap-2 pb-2 pl-4" aria-label={embed.alt}>
         <VideoPlayer
           source={embed.playlist}
           thumbnail={embed.thumbnail}
           alt={embed.alt}
+          mediaFilters={mediaFilters}
+          captions={captions ? (captions as AppBskyEmbedVideo.Caption[]) : []}
         />
       </div>
     )
@@ -483,50 +506,80 @@ export function RecordEmbedView({
 function PostControls({
   item,
   onReport,
+  controls,
 }: {
   item: AppBskyFeedDefs.FeedViewPost
   onReport?: (uri: string) => void
+  controls: PostControl[]
 }) {
   const { data: workspaceList } = useWorkspaceList()
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
   const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
   const isInWorkspace = workspaceList?.includes(item.post.uri)
+  const recordPath = `/repositories/${item.post.uri.replace('at://', '')}`
+
   return (
     <div className="flex gap-3 pl-10">
-      <Link
-        href={`/repositories/${item.post.uri.replace('at://', '')}`}
-        className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
-      >
-        <DocumentMagnifyingGlassIcon className="w-4 h-4" />
-        <span className="text-sm">View</span>
-      </Link>
-      <button
-        type="button"
-        className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
-        onClick={() => onReport?.(item.post.uri)}
-      >
-        <ExclamationCircleIcon className="w-4 h-4" />
-        <span className="text-sm">Report</span>
-      </button>
-      {isInWorkspace ? (
+      {controls.includes('like') && (
+        <Link
+          href={`${recordPath}?tab=likes`}
+          className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+        >
+          <span className="text-sm">
+            {pluralize(item.post.likeCount || 0, 'like')}
+          </span>
+        </Link>
+      )}
+      {controls.includes('repost') && (
+        <Link
+          href={`${recordPath}?tab=reposts`}
+          className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+        >
+          <span className="text-sm">
+            {pluralize(item.post.repostCount || 0, 'repost')}
+          </span>
+        </Link>
+      )}
+      {controls.includes('view') && (
+        <Link
+          href={`${recordPath}`}
+          className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+        >
+          <DocumentMagnifyingGlassIcon className="w-4 h-4" />
+          <span className="text-sm">View</span>
+        </Link>
+      )}
+      {controls.includes('report') && (
         <button
           type="button"
           className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
-          onClick={() => removeFromWorkspace([item.post.uri])}
+          onClick={() => onReport?.(item.post.uri)}
         >
-          <FolderMinusIcon className="w-4 h-4" />
-          <span className="text-sm">Remove from workspace</span>
-        </button>
-      ) : (
-        <button
-          type="button"
-          className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
-          onClick={() => addToWorkspace([item.post.uri])}
-        >
-          <FolderPlusIcon className="w-4 h-4" />
-          <span className="text-sm">Add to workspace</span>
+          <ExclamationCircleIcon className="w-4 h-4" />
+          <span className="text-sm">Report</span>
         </button>
       )}
+
+      {controls.includes('workspace') &&
+        (isInWorkspace ? (
+          <button
+            type="button"
+            className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+            onClick={() => removeFromWorkspace([item.post.uri])}
+          >
+            <FolderMinusIcon className="w-4 h-4" />
+            <span className="text-sm">Remove from workspace</span>
+          </button>
+        ) : (
+          <button
+            type="button"
+            className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+            onClick={() => addToWorkspace([item.post.uri])}
+          >
+            <FolderPlusIcon className="w-4 h-4" />
+            <span className="text-sm">Add to workspace</span>
+          </button>
+        ))}
     </div>
   )
 }
@@ -541,7 +594,7 @@ function PostLabels({
   const { labels, cid } = item.post
   if (!labels?.length) return null
   return (
-    <LabelList className={`pb-2 ${dense ? 'pl-10' : 'pl-14'}`}>
+    <LabelList className={`pb-2 flex-wrap ${dense ? 'pl-10' : 'pl-14'}`}>
       {labels?.map((label, i) => {
         const { val, src } = label
         return (

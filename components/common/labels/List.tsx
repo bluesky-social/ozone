@@ -106,8 +106,8 @@ export const ModerationLabel = ({
   })
 
   return (
-    <Popover className="relative">
-      {({ open }) => (
+    <Popover className="relative z-20">
+      {() => (
         <>
           <Popover.Button className="ring-none">
             <LabelChip

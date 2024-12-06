@@ -1,6 +1,7 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  AtUri,
   ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -10,9 +11,8 @@ import { ActionPanel } from '@/common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
-import { BlobList } from './BlobList'
+import { BlobListFormField } from './BlobList'
 import {
-  LabelChip,
   LabelList,
   LabelListEmpty,
   diffLabels,
@@ -28,9 +28,11 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
-import { takesKeyboardEvt } from '@/lib/util'
+import { pluralize, takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { MOD_EVENTS } from '@/mod-event/constants'
@@ -54,6 +56,8 @@ import {
   useLabelerAgent,
   usePermission,
 } from '@/shell/ConfigurationContext'
+import { SubjectTag } from 'components/tags/SubjectTag'
+import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -167,7 +171,7 @@ function Form(
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
     useSubjectStatusQuery(subject)
 
-  const { data: { record, repo } = {}, refetch: refetchSubject } =
+  const { data: { record, repo, profile } = {}, refetch: refetchSubject } =
     useSubjectQuery(subject)
 
   const isSubjectDid = subject.startsWith('did:')
@@ -189,8 +193,10 @@ function Form(
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
+  const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
+  const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const shouldShowDurationInHoursField =
-    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent || isMuteReporterEvent
+    isTakedownEvent || isMuteEvent || isMuteReporterEvent
   const canManageChat = usePermission('canManageChat')
 
   // navigate to next or prev report
@@ -256,6 +262,13 @@ function Form(
 
       if (formData.get('durationInHours')) {
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
+      }
+
+      if (
+        (isTakedownEvent || isAckEvent) &&
+        formData.get('acknowledgeAccountSubjects')
+      ) {
+        coreEvent.acknowledgeAccountSubjects = true
       }
 
       if (formData.get('comment')) {
@@ -562,16 +575,11 @@ function Form(
             )}
 
             {record?.blobs && (
-              <FormLabel
-                label="Blobs"
-                className={`mb-3 ${subjectStatus ? 'opacity-75' : ''}`}
-              >
-                <BlobList
-                  blobs={record.blobs}
-                  name="subjectBlobCids"
-                  disabled={false}
-                />
-              </FormLabel>
+              <BlobListFormField
+                blobs={record.blobs}
+                authorDid={record.repo.did}
+                className="mb-3"
+              />
             )}
             {isSubjectDid && canManageChat && (
               <div className="mb-3">
@@ -580,7 +588,7 @@ function Form(
             )}
             <div className={`mb-3`}>
               <FormLabel label="Labels">
-                <LabelList className="-ml-1">
+                <LabelList className="-ml-1 flex-wrap">
                   {!currentLabels.length && <LabelListEmpty className="ml-1" />}
                   {allLabels.map((label) => {
                     return (
@@ -597,9 +605,9 @@ function Form(
             {!!subjectStatus?.tags?.length && (
               <div className={`mb-3`}>
                 <FormLabel label="Tags">
-                  <LabelList className="-ml-1">
+                  <LabelList className="-ml-1 flex-wrap">
                     {subjectStatus.tags.map((tag) => {
-                      return <LabelChip key={tag}>{tag}</LabelChip>
+                      return <SubjectTag key={tag} tag={tag} />
                     })}
                   </LabelList>
                 </FormLabel>
@@ -612,6 +620,11 @@ function Form(
               <ModEventList subject={subject} />
             ) : (
               <div className="px-1">
+                {profile && (
+                  <div className="mb-2">
+                    <HighProfileWarning profile={profile} />
+                  </div>
+                )}
                 <div className="relative flex flex-row gap-1 items-center">
                   <ModEventSelectorButton
                     subjectStatus={subjectStatus}
@@ -649,12 +662,13 @@ function Form(
                     <LabelSelector
                       id="labels"
                       name="labels"
-                      formId={FORM_ID}
+                      form={FORM_ID}
                       defaultLabels={currentLabels.filter((label) => {
-                        const isExternalLabel = allLabels.some((l) => {
-                          return l.val === label && l.src !== config.did
+                        // If there's a label where the source is the current labeler, it's editable
+                        const isEditableLabel = allLabels.some((l) => {
+                          return l.val === label && l.src === config.did
                         })
-                        return !isSelfLabel(label) && !isExternalLabel
+                        return !isSelfLabel(label) && isEditableLabel
                       })}
                     />
                   </div>
@@ -719,6 +733,21 @@ function Form(
                         {isEscalated
                           ? `De-escalate the subject and acknowledge all open reports after labeling`
                           : `Acknowledge all open reports after labeling`}
+                      </span>
+                    }
+                  />
+                )}
+
+                {(isTakedownEvent || isAckEvent) && isSubjectDid && (
+                  <Checkbox
+                    value="true"
+                    id="acknowledgeAccountSubjects"
+                    name="acknowledgeAccountSubjects"
+                    className="mb-3 flex items-center leading-3"
+                    label={
+                      <span className="leading-4">
+                        Acknowledge all open/escalated/appealed reports on
+                        subjects created by this user
                       </span>
                     }
                   />
@@ -803,22 +832,37 @@ function Form(
 function useSubjectQuery(subject: string) {
   const labelerAgent = useLabelerAgent()
 
+  const getProfile = async (actor: string) => {
+    try {
+      const { data: profile } = await labelerAgent.app.bsky.actor.getProfile({
+        actor,
+      })
+      return profile
+    } catch (e) {
+      return undefined
+    }
+  }
+
   return useQuery({
     // subject of the report
     queryKey: ['modActionSubject', { subject }],
     queryFn: async () => {
       if (subject.startsWith('did:')) {
-        const { data: repo } =
-          await labelerAgent.api.tools.ozone.moderation.getRepo({
+        const [{ data: repo }, profile] = await Promise.all([
+          labelerAgent.tools.ozone.moderation.getRepo({
             did: subject,
-          })
-        return { repo }
+          }),
+          getProfile(subject),
+        ])
+        return { repo, profile }
       } else if (subject.startsWith('at://')) {
-        const { data: record } =
-          await labelerAgent.api.tools.ozone.moderation.getRecord({
+        const [{ data: record }, profile] = await Promise.all([
+          labelerAgent.tools.ozone.moderation.getRecord({
             uri: subject,
-          })
-        return { record }
+          }),
+          getProfile(new AtUri(subject).host),
+        ])
+        return { record, profile }
       } else {
         return {}
       }

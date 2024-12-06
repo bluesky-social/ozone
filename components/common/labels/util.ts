@@ -64,17 +64,26 @@ export const LabelGroupInfo: Record<string, { color: string }> = {
   },
 }
 
-const labelsRequiringBlur = [
+export const labelsRequiringMediaFilter = [
   LABELS['graphic-media'].identifier,
   LABELS.porn.identifier,
   LABELS.nudity.identifier,
   LABELS.sexual.identifier,
 ]
 
-export const doesLabelNeedBlur = (labels?: string[]): boolean =>
-  !!labels?.find((label) => labelsRequiringBlur.includes(label))
+export type GraphicMediaFilter = 'blur' | 'grayscale' | 'translucent'
+export const GraphicMediaFilterOptions = [
+  'blur',
+  'grayscale',
+  'translucent',
+] as const
 
-export const doesProfileNeedBlur = ({
+export const buildGraphicPreferenceKeyForLabel = (
+  label: string,
+  filter: GraphicMediaFilter,
+) => `graphic-pref-${filter}-${label}`
+
+export const getProfileAndRepoLabels = ({
   profile,
   repo,
 }: {
@@ -88,7 +97,7 @@ export const doesProfileNeedBlur = ({
   if (repo?.labels && Array.isArray(repo?.labels)) {
     labels.push(...repo.labels?.map(({ val }) => val))
   }
-  return doesLabelNeedBlur(labels)
+  return labels
 }
 
 export const getLabelsForSubject = ({

@@ -68,12 +68,14 @@ export const ModEventSelectorButton = ({
   setSelectedAction,
   hasBlobs,
   isSubjectDid,
+  forceDisplayActions = [],
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
   hasBlobs: boolean
   isSubjectDid: boolean
+  forceDisplayActions?: string[]
 }) => {
   const canDivertBlob = usePermission('canDivertBlob')
   const canTakedown = usePermission('canTakedown')
@@ -82,7 +84,11 @@ export const ModEventSelectorButton = ({
   const availableActions = useMemo(() => {
     return actions.filter(({ key }) => {
       // Don't show resolve appeal action if subject is not already in appealed status
-      if (key === MOD_EVENTS.RESOLVE_APPEAL && !subjectStatus?.appealed) {
+      if (
+        key === MOD_EVENTS.RESOLVE_APPEAL &&
+        !subjectStatus?.appealed &&
+        !forceDisplayActions.includes(MOD_EVENTS.RESOLVE_APPEAL)
+      ) {
         return false
       }
       // Don't show appeal action if subject is already in appealed status
@@ -103,7 +109,11 @@ export const ModEventSelectorButton = ({
       // Don't show reverse takedown action if subject is not takendown
       if (
         key === MOD_EVENTS.REVERSE_TAKEDOWN &&
-        (!subjectStatus?.takendown || !canTakedown)
+        // show reverse action even when subjectStatus is not takendown if we want to force display it
+        // however, if the user doesn't have permission for takedowns, don't show it
+        ((!subjectStatus?.takendown &&
+          !forceDisplayActions.includes(MOD_EVENTS.RESOLVE_APPEAL)) ||
+          !canTakedown)
       ) {
         return false
       }
@@ -187,6 +197,7 @@ export const ModEventSelectorButton = ({
     canManageChat,
     canTakedown,
     canDivertBlob,
+    forceDisplayActions,
   ])
 
   return (

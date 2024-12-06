@@ -1,26 +1,39 @@
+import { ActionPanel } from '@/common/ActionPanel'
+import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
+import { LabelChip } from '@/common/labels'
+import { PropsOf } from '@/lib/types'
+import { MOD_EVENTS } from '@/mod-event/constants'
+import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
+  AtUri,
+  ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
-import { FormEvent, useRef, useState } from 'react'
-import { ActionPanel } from '@/common/ActionPanel'
-import { PropsOf } from '@/lib/types'
-import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
-import { MOD_EVENTS } from '@/mod-event/constants'
 import { Dialog } from '@headlessui/react'
+import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import { FormEvent, useRef, useState } from 'react'
+import { toast } from 'react-toastify'
+import { WORKSPACE_FORM_ID } from './constants'
 import {
   useWorkspaceEmptyMutation,
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from './hooks'
-import WorkspaceList from './List'
 import WorkspaceItemCreator from './ItemCreator'
-import { useSubjectStatuses } from '@/subject/useSubjectStatus'
-import { WorkspacePanelActions } from './PanelActions'
-import { WORKSPACE_FORM_ID } from './constants'
+import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
-import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { WorkspacePanelActions } from './PanelActions'
+import { useWorkspaceListData } from './useWorkspaceListData'
+
+function isNonNullable<V>(v: V): v is NonNullable<V> {
+  return v != null
+}
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -35,23 +48,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const [showItemCreator, setShowItemCreator] = useState(false)
   const actionSubjects = useActionSubjects()
 
-  const handleSelectAll = () => {
-    const checkboxes = formRef.current?.querySelectorAll<HTMLInputElement>(
-      'input[type="checkbox"][name="workspaceItem"]',
-    )
-    const allSelected = Array.from(checkboxes || []).every(
-      (checkbox) => checkbox.checked,
-    )
-    checkboxes?.forEach((checkbox) => (checkbox.checked = !allSelected))
-  }
-
   const handleRemoveSelected = () => {
     const selectedItems = Array.from(
       formRef.current?.querySelectorAll<HTMLInputElement>(
         'input[type="checkbox"][name="workspaceItem"]:checked',
       ) || [],
     ).map((checkbox) => checkbox.value)
-    removeItemsMutation.mutate(selectedItems)
+    removeItemsMutation.mutate(selectedItems as string[])
   }
 
   const handleRemoveItem = (item: string) => {
@@ -66,6 +69,103 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+
+  const labelerAgent = useLabelerAgent()
+  const supportsCorrelation = useServerConfig().pds != null
+  const handleFindCorrelation = supportsCorrelation
+    ? async () => {
+        const selectedItems = new FormData(formRef.current!)
+          .getAll('workspaceItem')
+          .filter((item): item is string => typeof item === 'string')
+
+        // For every selected item, find out which DID it corresponds
+        const dids = selectedItems
+          .map((item) => {
+            if (item.startsWith('did:')) return item
+
+            const status = workspaceListStatuses?.[item]
+
+            if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
+              return status.did
+            }
+
+            if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+              return status.repo.did
+            }
+
+            if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+              const { subject } = status
+              if (ComAtprotoAdminDefs.isRepoRef(subject)) {
+                return subject.did
+              }
+
+              if (ComAtprotoRepoStrongRef.isMain(subject)) {
+                return new AtUri(subject.uri).host
+              }
+            }
+
+            // Should never happen (future proofing against new item types in workspace)
+            return undefined
+          })
+          .filter(isNonNullable)
+
+        if (dids.length <= 1) {
+          toast.warning('Please select at least two accounts to correlate.')
+          return
+        }
+
+        if (dids.length !== selectedItems.length) {
+          toast.info('Only accounts can be correlated (ignoring non-accounts).')
+        }
+
+        const res = await labelerAgent.tools.ozone.signature.findCorrelation({
+          dids,
+        })
+
+        const { details } = res.data
+
+        if (!details.length) {
+          toast.info('No correlation found between the selected accounts.')
+        } else {
+          toast.success(
+            <div>
+              The following correlation were found between the selected
+              accounts:
+              <br />
+              {details.map(({ property, value }) => (
+                <Link
+                  key={property}
+                  href={`/repositories?term=sig:${encodeURIComponent(value)}`}
+                >
+                  <LabelChip>
+                    <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                    {property}
+                  </LabelChip>
+                </Link>
+              ))}
+              {details.length > 1 && (
+                <>
+                  <br />
+                  <Link
+                    key="all"
+                    href={`/repositories?term=sig:${encodeURIComponent(
+                      JSON.stringify(details.map((s) => s.value)),
+                    )}`}
+                    className="text-blue-500 underline"
+                  >
+                    Click here to show all accounts with the same details.
+                  </Link>
+                </>
+              )}
+            </div>,
+            {
+              autoClose: 10_000,
+            },
+          )
+        }
+      }
+    : undefined
+
   // on form submit
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
@@ -93,22 +193,32 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
       if (formData.get('tags')) {
+        const isRemovingTags = formData.get('removeTags')
         const tags = String(formData.get('tags'))
           .split(',')
           .map((tag) => tag.trim())
-        coreEvent.add = tags
-        coreEvent.remove = []
+        coreEvent.add = isRemovingTags ? [] : tags
+        coreEvent.remove = isRemovingTags ? tags : []
       }
 
       if (labels?.length) {
-        coreEvent.createLabelVals = labels
-        coreEvent.negateLabelVals = []
+        const isRemovingLabels = formData.get('removeLabels')
+        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
+        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
       }
 
       // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
       if (coreEvent.$type === MOD_EVENTS.APPEAL) {
         coreEvent.$type = MOD_EVENTS.REPORT
         coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
+      }
+
+      if (
+        (coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
+          coreEvent.$type === MOD_EVENTS.ACKNOWLEDGE) &&
+        formData.get('acknowledgeAccountSubjects')
+      ) {
+        coreEvent.acknowledgeAccountSubjects = true
       }
 
       // No need to break if one of the requests fail, continue on with others
@@ -140,12 +250,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           })
       }
     } catch (err) {
+      console.error(err)
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
 
   const { data: workspaceList } = useWorkspaceList()
-  const { data: workspaceListStatuses } = useSubjectStatuses({
+  const { data: workspaceListStatuses } = useWorkspaceListData({
     subjects: workspaceList || [],
     // Make sure we aren't constantly refreshing the data unless the panel is open
     enabled: props.open,
@@ -195,15 +306,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             {!showItemCreator && (
               <div className="mb-2 flex space-x-2">
                 <WorkspacePanelActions
-                  {...{
-                    handleSelectAll,
-                    handleRemoveSelected,
-                    handleEmptyWorkspace,
-                    setShowActionForm,
-                    setShowItemCreator,
-                    showActionForm,
-                    workspaceList,
-                  }}
+                  listData={workspaceListStatuses || {}}
+                  handleRemoveSelected={handleRemoveSelected}
+                  handleEmptyWorkspace={handleEmptyWorkspace}
+                  handleFindCorrelation={handleFindCorrelation}
+                  setShowActionForm={setShowActionForm}
+                  setShowItemCreator={setShowItemCreator}
+                  showActionForm={showActionForm}
+                  workspaceList={workspaceList}
                 />
               </div>
             )}
@@ -229,7 +339,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
               <WorkspaceList
                 list={workspaceList}
                 onRemoveItem={handleRemoveItem}
-                subjectStatuses={workspaceListStatuses || {}}
+                listData={workspaceListStatuses || {}}
               />
             </div>
           </form>

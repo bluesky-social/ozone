@@ -60,18 +60,19 @@
   resolved "https://registry.yarnpkg.com/@atproto-labs/simple-store/-/simple-store-0.1.1.tgz#e743a2722b5d8732166f0a72aca8bd10e9bff106"
   integrity sha512-WKILW2b3QbAYKh+w5U2x6p5FqqLl0nAeLwGeDY+KjX01K4Dq3vQTR9b/qNp0jZm48CabPQVrqCv0PPU9LgRRRg==
 
-"@atproto/api@^0.13.6":
-  version "0.13.6"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.6.tgz#2500e9d7143e6718089632300c42ce50149f8cd5"
-  integrity sha512-58emFFZhqY8nVWD3xFWK0yYqAmJ2un+NaTtZxBbRo00mGq1rz9VXTpVmfoHFcuXL1hoDQN3WyJfsub8r6xGOgg==
+"@atproto/api@^0.13.19":
+  version "0.13.19"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.19.tgz#a3b47847bfe00d3f83da2bd3f6dc5566f43887b0"
+  integrity sha512-rLWQBZaOIk3ds1Fx9CwrdyX3X2GbdSEvVJ9mdSPNX40joiEaE1ljGMOcziFipbvZacXynozE4E0Sb1CgOhzfmA==
   dependencies:
-    "@atproto/common-web" "^0.3.0"
-    "@atproto/lexicon" "^0.4.1"
-    "@atproto/syntax" "^0.3.0"
-    "@atproto/xrpc" "^0.6.1"
+    "@atproto/common-web" "^0.3.1"
+    "@atproto/lexicon" "^0.4.3"
+    "@atproto/syntax" "^0.3.1"
+    "@atproto/xrpc" "^0.6.4"
     await-lock "^2.2.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
+    zod "^3.23.8"
 
 "@atproto/common-web@^0.3.0":
   version "0.3.0"
@@ -82,6 +83,16 @@
     multiformats "^9.9.0"
     uint8arrays "3.0.0"
     zod "^3.21.4"
+
+"@atproto/common-web@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.3.1.tgz#86f8efb10a4b9073839cee914c6c08a664917cc4"
+  integrity sha512-N7wiTnus5vAr+lT//0y8m/FaHHLJ9LpGuEwkwDAeV3LCiPif4m/FS8x/QOYrx1PdZQwKso95RAPzCGWQBH5j6Q==
+  dependencies:
+    graphemer "^1.4.0"
+    multiformats "^9.9.0"
+    uint8arrays "3.0.0"
+    zod "^3.23.8"
 
 "@atproto/did@0.1.1":
   version "0.1.1"
@@ -121,6 +132,17 @@
   dependencies:
     "@atproto/common-web" "^0.3.0"
     "@atproto/syntax" "^0.3.0"
+    iso-datestring-validator "^2.2.2"
+    multiformats "^9.9.0"
+    zod "^3.23.8"
+
+"@atproto/lexicon@^0.4.3":
+  version "0.4.3"
+  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.4.3.tgz#d69f6bb363a6326df7766c48132bfa30e22622d9"
+  integrity sha512-lFVZXe1S1pJP0dcxvJuHP3r/a+EAIBwwU7jUK+r8iLhIja+ml6NmYv8KeFHmIJATh03spEQ9s02duDmFVdCoXg==
+  dependencies:
+    "@atproto/common-web" "^0.3.1"
+    "@atproto/syntax" "^0.3.1"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     zod "^3.23.8"
@@ -170,12 +192,25 @@
   resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.0.tgz#fafa2dbea9add37253005cb663e7373e05e618b3"
   integrity sha512-Weq0ZBxffGHDXHl9U7BQc2BFJi/e23AL+k+i5+D9hUq/bzT4yjGsrCejkjq0xt82xXDjmhhvQSZ0LqxyZ5woxA==
 
+"@atproto/syntax@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.1.tgz#4346418728f9643d783d2ffcf7c77e132e1f53d4"
+  integrity sha512-fzW0Mg1QUOVCWUD3RgEsDt6d1OZ6DdFmbKcDdbzUfh0t4rhtRAC05KbZYmxuMPWDAiJ4BbbQ5dkAc/mNypMXkw==
+
 "@atproto/xrpc@0.6.1", "@atproto/xrpc@^0.6.1":
   version "0.6.1"
   resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.6.1.tgz#dcd1315c8c60eef5af2db7fa4e35a38ebc6d79d5"
   integrity sha512-Zy5ydXEdk6sY7FDUZcEVfCL1jvbL4tXu5CcdPqbEaW6LQtk9GLds/DK1bCX9kswTGaBC88EMuqQMfkxOhp2t4A==
   dependencies:
     "@atproto/lexicon" "^0.4.1"
+    zod "^3.23.8"
+
+"@atproto/xrpc@^0.6.4":
+  version "0.6.4"
+  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.6.4.tgz#4cf59774f7c72e5bc821bc5f1d57f0a6ae2014db"
+  integrity sha512-9ZAJ8nsXTqC4XFyS0E1Wlg7bAvonhXQNQ3Ocs1L1LIwFLXvsw/4fNpIHXxvXvqTCVeyHLbImOnE9UiO1c/qIYA==
+  dependencies:
+    "@atproto/lexicon" "^0.4.3"
     zod "^3.23.8"
 
 "@babel/runtime@^7.1.2":
@@ -5344,9 +5379,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tlds@^1.234.0:
-  version "1.252.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.252.0.tgz#71d9617f4ef4cc7347843bee72428e71b8b0f419"
-  integrity sha512-GA16+8HXvqtfEnw/DTcwB0UU354QE1n3+wh08oFjr6Znl7ZLAeUgYzCcK+/CCrOyE0vnHR8/pu3XXG3vDijXpQ==
+  version "1.255.0"
+  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.255.0.tgz#53c2571766c10da95928c716c48dfcf141341e3f"
+  integrity sha512-tcwMRIioTcF/FcxLev8MJWxCp+GUALRhFEqbDoZrnowmKSGqPrl5pqS+Sut2m8BgJ6S4FExCSSpGffZ0Tks6Aw==
 
 tmp@~0.2.1:
   version "0.2.1"

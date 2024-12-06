@@ -14,6 +14,8 @@ export const PLC_DIRECTORY_URL =
 
 export const QUEUE_CONFIG = process.env.NEXT_PUBLIC_QUEUE_CONFIG || '{}'
 
+export const QUEUE_SEED = process.env.NEXT_PUBLIC_QUEUE_SEED || ''
+
 export const SOCIAL_APP_URL =
   process.env.NEXT_PUBLIC_SOCIAL_APP_URL ||
   (process.env.NODE_ENV === 'development'
@@ -44,3 +46,8 @@ export const YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS = process.env
 export const DOMAINS_ALLOWING_EMAIL_COMMUNICATION = (
   process.env.NEXT_PUBLIC_DOMAINS_ALLOWING_EMAIL_COMMUNICATION || ''
 ).split(',')
+
+export const HIGH_PROFILE_FOLLOWER_THRESHOLD = process.env
+  .NEXT_PUBLIC_HIGH_PROFILE_FOLLOWER_THRESHOLD
+  ? parseInt(process.env.NEXT_PUBLIC_HIGH_PROFILE_FOLLOWER_THRESHOLD)
+  : Infinity
