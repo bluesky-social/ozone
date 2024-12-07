@@ -52,8 +52,8 @@ export const CommandPaletteRoot = ({
   return (
     <KBarProvider actions={staticActions}>
       <KBarPortal>
-        {/* z-40 value is important because we want the cmd palette to be able above all panels and currently, the highest z-index we use is z-40 */}
-        <KBarPositioner className="p-2 bg-gray-900/80 flex items-center pb-4 z-40">
+        {/* z-50 value is important because we want the cmd palette to be able above all panels and currently, the highest z-index we use is z-50 */}
+        <KBarPositioner className="p-2 bg-gray-900/80 flex items-center pb-4 z-50">
           <KBarAnimator className="w-full md:w-2/3 lg:w-1/2 w-max-[600px] overflow-hidden p-2 bg-white dark:bg-slate-800 rounded-xl">
             <KBarSearch
               defaultPlaceholder="Search by DID, bsky url or handle"

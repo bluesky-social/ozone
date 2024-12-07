@@ -181,3 +181,6 @@ export function simpleHash(str: string) {
   }
   return hash
 }
+export function isNonNullable<V>(v: V): v is NonNullable<V> {
+  return v != null
+}
