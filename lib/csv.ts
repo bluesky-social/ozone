@@ -48,7 +48,9 @@ export function downloadCSV(csv: CsvContent) {
   document.body.removeChild(link)
 }
 
-export const processFileForWorkspaceImport = (file: File): Promise<string[]> => {
+export const processFileForWorkspaceImport = (
+  file: File,
+): Promise<string[]> => {
   return new Promise((resolve, reject) => {
     const fileType = file.type
     const fileName = file.name.toLowerCase()
@@ -97,7 +99,13 @@ export const extractFromCSV = (data: string): string[] => {
 
   if (!header) return []
 
-  const headers = header.split(',').map((col) => col.trim())
+  // In case header names are quoted, we want to exclude those quotes before check
+  const headers = header.split(',').map((col) => {
+    const trimmed = col.trim()
+    return trimmed.startsWith('"') && trimmed.endsWith('"')
+      ? trimmed.slice(1, -1)
+      : trimmed
+  })
   const didIndex = headers.indexOf('did')
   const uriIndex = headers.indexOf('uri')
 
@@ -105,7 +113,12 @@ export const extractFromCSV = (data: string): string[] => {
 
   return content
     .map((row) => {
-      const columns = row.split(',').map((col) => col.trim())
+      const columns = row.split(',').map((col) => {
+        const trimmed = col.trim()
+        return trimmed.startsWith('"') && trimmed.endsWith('"')
+          ? trimmed.slice(1, -1)
+          : trimmed
+      })
       return columns[didIndex] || columns[uriIndex]
     })
     .filter(Boolean)
