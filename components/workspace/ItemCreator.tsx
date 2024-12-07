@@ -6,14 +6,16 @@ import { PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { toast } from 'react-toastify'
 import { buildItemsSummary, groupSubjects } from './utils'
 import { getDidFromHandleInBatch } from '@/lib/identity'
-import { ArrowPathIcon } from '@heroicons/react/24/solid'
+import { ArrowPathIcon, PaperClipIcon } from '@heroicons/react/24/solid'
 
 interface WorkspaceItemCreatorProps {
+  onFileUploadClick: () => void
   onCancel?: () => void
   size?: 'sm' | 'lg'
 }
 
 const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
+  onFileUploadClick,
   onCancel,
   size = 'lg',
 }) => {
@@ -30,6 +32,12 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
     try {
       const formData = new FormData(event.currentTarget)
       const items = formData.get('items') as string
+
+      if (!items) {
+        setIsAdding(false)
+        return false
+      }
+
       const isDid = (item) => item.startsWith('did:')
       const isAtUri = (item) => item.startsWith('at://')
       // if it's not did or at-uri but contains .s it's possibly a handle
@@ -113,6 +121,20 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
           <ArrowPathIcon className={size === 'lg' ? 'h-5 w-5' : 'h-3 w-3'} />
         ) : (
           <PlusIcon className={size === 'lg' ? 'h-5 w-5' : 'h-3 w-3'} />
+        )}
+      </ActionButton>
+      <ActionButton
+        type="button"
+        appearance="outlined"
+        size={size}
+        onClick={onFileUploadClick}
+        disabled={isAdding}
+        title="Import from csv/json file with DIDs/AT-URIs"
+      >
+        {isAdding ? (
+          <ArrowPathIcon className={size === 'lg' ? 'h-5 w-5' : 'h-3 w-3'} />
+        ) : (
+          <PaperClipIcon className={size === 'lg' ? 'h-5 w-5' : 'h-3 w-3'} />
         )}
       </ActionButton>
       {!!onCancel && (

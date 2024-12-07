@@ -1,4 +1,9 @@
-import { createCSV, downloadCSV, escapeCSVValue } from '@/lib/csv'
+import {
+  createCSV,
+  downloadCSV,
+  escapeCSVValue,
+  processFileForWorkspaceImport,
+} from '@/lib/csv'
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
 import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
 import { useServerConfig } from '@/shell/ConfigurationContext'
@@ -6,7 +11,6 @@ import {
   AppBskyActorProfile,
   AtUri,
   ComAtprotoAdminDefs,
-  ComAtprotoLabelDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
   ToolsOzoneTeamDefs,
@@ -229,6 +233,28 @@ export const useWorkspaceExport = () => {
     setFilename,
     ...mutation,
   }
+}
+
+export const useWorkspaceImport = () => {
+  const { mutateAsync: addToWorkspace } = useWorkspaceAddItemsMutation()
+
+  const importFromFiles = async (acceptedFiles: File[]) => {
+    console.log(acceptedFiles)
+    if (acceptedFiles.length === 0) return
+    try {
+      const results = await Promise.all(
+        acceptedFiles.map((file) => processFileForWorkspaceImport(file)),
+      )
+      const items = results.flat()
+      addToWorkspace(items)
+    } catch (error) {
+      toast.error(
+        `Failed to import items to workspace. ${(error as Error).message}`,
+      )
+    }
+  }
+
+  return { importFromFiles }
 }
 
 const getList = (): string[] => {
