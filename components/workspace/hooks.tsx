@@ -239,7 +239,6 @@ export const useWorkspaceImport = () => {
   const { mutateAsync: addToWorkspace } = useWorkspaceAddItemsMutation()
 
   const importFromFiles = async (acceptedFiles: File[]) => {
-    console.log(acceptedFiles)
     if (acceptedFiles.length === 0) return
     try {
       const results = await Promise.all(

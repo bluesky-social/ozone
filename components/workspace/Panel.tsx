@@ -255,7 +255,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           })
       }
     } catch (err) {
-      console.error(err)
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }

@@ -85,7 +85,6 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
       setIsAdding(false)
       return false
     } catch (error) {
-      console.error(error)
       setIsAdding(false)
       toast.error(
         `Failed to add items to workspace. ${(error as Error).message}`,
