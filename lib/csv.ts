@@ -24,7 +24,7 @@ export function createCSV({
   headers: string[]
   filename?: string
   lineDelimiter?: string
-}) {
+}): CsvContent {
   return {
     filename: (filename || Date.now().toString()) + '.csv',
     headerRow: headers.join(',') + lineDelimiter, // make your own csv head
@@ -54,43 +54,40 @@ export const processFileForWorkspaceImport = (
   return new Promise((resolve, reject) => {
     const fileType = file.type
     const fileName = file.name.toLowerCase()
+    const reader = new FileReader()
+    reader.onload = () => {
+      try {
+        const content = reader.result as string
+        let values: string[] = []
 
-    if (fileType === 'application/json' || fileName.endsWith('.json')) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        try {
-          const jsonData = JSON.parse(reader.result as string)
-          const values = extractFromJSON(jsonData)
-          if (values.length === 0) {
-            reject(new Error(`No 'did' or 'uri' found in ${file.name}`))
-          }
-          resolve(values)
-        } catch (error) {
-          reject(new Error(`Invalid JSON file: ${file.name}`))
+        if (fileType === 'application/json' || fileName.endsWith('.json')) {
+          const jsonData = JSON.parse(content)
+          values = extractFromJSON(jsonData)
+        } else if (fileType === 'text/csv' || fileName.endsWith('.csv')) {
+          values = extractFromCSV(content)
+        } else {
+          return reject(new Error(`Unsupported file type: ${file.name}`))
         }
-      }
-      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
-      reader.readAsText(file)
-    } else if (fileType === 'text/csv' || fileName.endsWith('.csv')) {
-      const reader = new FileReader()
-      reader.onload = () => {
-        try {
-          const csvData = reader.result as string
-          const values = extractFromCSV(csvData)
-          if (values.length === 0) {
-            reject(new Error(`No 'did' or 'uri' found in ${file.name}`))
-          }
-          resolve(values)
-        } catch (error) {
-          reject(new Error(`Invalid CSV file: ${file.name}`))
+
+        if (values.length === 0) {
+          return reject(new Error(`No 'did' or 'uri' found in ${file.name}`))
         }
+
+        resolve(values)
+      } catch (error) {
+        reject(new Error(`Error parsing file content: ${file.name}`))
       }
-      reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
-      reader.readAsText(file)
-    } else {
-      reject(new Error(`Unsupported file type: ${file.name}`))
     }
+    reader.onerror = () => reject(new Error(`Failed to read ${file.name}`))
+    reader.readAsText(file)
   })
+}
+
+const cleanCSVColumn = (col: string) => {
+  const trimmed = col.trim()
+  return trimmed.startsWith('"') && trimmed.endsWith('"')
+    ? trimmed.slice(1, -1)
+    : trimmed
 }
 
 export const extractFromCSV = (data: string): string[] => {
@@ -100,12 +97,7 @@ export const extractFromCSV = (data: string): string[] => {
   if (!header) return []
 
   // In case header names are quoted, we want to exclude those quotes before check
-  const headers = header.split(',').map((col) => {
-    const trimmed = col.trim()
-    return trimmed.startsWith('"') && trimmed.endsWith('"')
-      ? trimmed.slice(1, -1)
-      : trimmed
-  })
+  const headers = header.split(',').map(cleanCSVColumn)
   const didIndex = headers.indexOf('did')
   const uriIndex = headers.indexOf('uri')
 
@@ -113,12 +105,7 @@ export const extractFromCSV = (data: string): string[] => {
 
   return content
     .map((row) => {
-      const columns = row.split(',').map((col) => {
-        const trimmed = col.trim()
-        return trimmed.startsWith('"') && trimmed.endsWith('"')
-          ? trimmed.slice(1, -1)
-          : trimmed
-      })
+      const columns = row.split(',').map(cleanCSVColumn)
       return columns[didIndex] || columns[uriIndex]
     })
     .filter(Boolean)
