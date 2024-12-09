@@ -24,12 +24,18 @@ import {
 } from './useWorkspaceListData'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { SubjectTag } from 'components/tags/SubjectTag'
-import { LabelChip, ModerationLabel } from '@/common/labels'
+import { ModerationLabel } from '@/common/labels'
+import { WorkspaceExportPanel } from './ExportPanel'
 
 interface WorkspaceListProps {
   list: string[]
+  canExport: boolean
   listData: WorkspaceListData
   onRemoveItem: (item: string) => void
+}
+
+const GroupTitles = {
+  dids: 'Accounts',
 }
 
 const getLangTagFromRecordValue = (
@@ -45,9 +51,11 @@ const getLangTagFromRecordValue = (
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
   list,
   listData,
+  canExport,
   onRemoveItem,
 }) => {
   const groupedItems = groupSubjects(list)
+
   return (
     <div>
       <div className="space-y-2">
@@ -59,7 +67,11 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
               items={items}
               listData={listData}
               onRemoveItem={onRemoveItem}
-              title={`${key.charAt(0).toUpperCase()}${key.slice(1)}`}
+              canExport={canExport}
+              title={
+                GroupTitles[key] ||
+                `${key.charAt(0).toUpperCase()}${key.slice(1)}`
+              }
             />
           )
         })}
@@ -73,9 +85,11 @@ const ListGroup = ({
   title,
   listData,
   onRemoveItem,
+  canExport,
 }: {
   items: string[]
   title: string
+  canExport?: boolean
 } & Omit<WorkspaceListProps, 'list'>) => {
   const [lastCheckedIndex, setLastCheckedIndex] = useState<number | null>(null)
   const checkboxesRef = useRef<(HTMLInputElement | null)[]>([])
@@ -102,12 +116,15 @@ const ListGroup = ({
   }
 
   return (
-    <div className="pb-2">
+    <div className="py-2">
       <div className="flex justify-between mb-1 mr-2">
         <h5 className="text-base font-semibold">
           {title}({items.length})
         </h5>
-        <div>
+        <div className="flex gap-1">
+          {canExport && (
+            <WorkspaceExportPanel listData={listData} />
+          )}
           <ActionButton
             size="sm"
             appearance="outlined"
