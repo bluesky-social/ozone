@@ -1,8 +1,11 @@
 import {
+  Agent,
   AtUri,
   ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
+  ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationQueryEvents,
 } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
@@ -10,8 +13,10 @@ import { addDays } from 'date-fns'
 import { useEffect, useReducer, useState } from 'react'
 
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { MOD_EVENT_TITLES } from './constants'
+import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
+import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import { chunkArray } from '@/lib/util'
 
 export type WorkspaceConfirmationOptions =
   | 'subjects'
@@ -23,6 +28,11 @@ export type ModEventListQueryOptions = {
   queryOptions?: {
     refetchInterval?: number
   }
+}
+
+export type ModEventViewWithDetails = ToolsOzoneModerationDefs.ModEventView & {
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail
+  record?: ToolsOzoneModerationDefs.RecordViewDetail
 }
 
 type CommentFilter = {
@@ -53,6 +63,71 @@ const initialListState = {
   addedTags: '',
   removedTags: '',
   showContentPreview: false,
+  limit: 25,
+}
+
+const getReposAndRecordsForEvents = async (
+  labelerAgent: Agent,
+  events: ToolsOzoneModerationDefs.ModEventView[],
+) => {
+  const repos = new Map<
+    string,
+    ToolsOzoneModerationDefs.RepoViewDetail | undefined
+  >()
+  const records = new Map<
+    string,
+    ToolsOzoneModerationDefs.RecordViewDetail | undefined
+  >()
+
+  for (const event of events) {
+    if (
+      ComAtprotoAdminDefs.isRepoRef(event.subject) ||
+      ChatBskyConvoDefs.isMessageRef(event.subject)
+    ) {
+      repos.set(event.subject.did, undefined)
+    } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+      records.set(event.subject.uri, undefined)
+    }
+  }
+
+  const fetchers: Array<Promise<void>> = []
+
+  // Right now, we're only loading 25 events at a time so this chunking never really takes effect
+  // But to future proof page size change, we're implementing the chunking anyways
+  if (repos.size) {
+    for (const chunk of chunkArray(Array.from(repos.keys()), 50)) {
+      fetchers.push(
+        labelerAgent.tools.ozone.moderation
+          .getRepos({ dids: chunk })
+          .then(({ data }) => {
+            for (const repo of data.repos) {
+              if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
+                repos.set(repo.did, repo)
+              }
+            }
+          }),
+      )
+    }
+  }
+  if (records.size) {
+    for (const chunk of chunkArray(Array.from(records.keys()), 50)) {
+      fetchers.push(
+        labelerAgent.tools.ozone.moderation
+          .getRecords({ uris: chunk })
+          .then(({ data }) => {
+            for (const record of data.records) {
+              if (ToolsOzoneModerationDefs.isRecordViewDetail(record)) {
+                records.set(record.uri, record)
+              }
+            }
+          }),
+      )
+    }
+  }
+
+  await Promise.all(fetchers)
+
+  return { repos, records }
 }
 
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
@@ -82,6 +157,7 @@ type EventListFilterPayload =
   | { field: 'removedLabels'; value: string[] }
   | { field: 'addedTags'; value: string }
   | { field: 'removedTags'; value: string }
+  | { field: 'limit'; value: number }
 
 type EventListAction =
   | {
@@ -150,7 +226,10 @@ export const useModEventList = (
     }
   }, [props.createdBy])
 
-  const results = useInfiniteQuery({
+  const results = useInfiniteQuery<{
+    events: ModEventViewWithDetails[]
+    cursor?: string
+  }>({
     queryKey: ['modEventList', { listState }],
     queryFn: async ({ pageParam }) => {
       const {
@@ -167,8 +246,10 @@ export const useModEventList = (
         addedTags,
         removedTags,
         reportTypes,
+        limit,
       } = listState
       const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
+        limit,
         cursor: pageParam,
         includeAllUserRecords,
       }
@@ -201,11 +282,6 @@ export const useModEventList = (
         queryParams.removedLabels = removedLabels
       }
 
-      const filterTypes = types.filter(Boolean)
-      if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
-        queryParams.types = filterTypes
-      }
-
       if (oldestFirst) {
         queryParams.sortDirection = 'asc'
       }
@@ -225,12 +301,62 @@ export const useModEventList = (
         queryParams.addedTags = removedTags.trim().split(',')
       }
 
-      const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryEvents({
-          limit: 25,
-          ...queryParams,
+      const filterTypes = types.filter(Boolean)
+      if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
+        queryParams.types = filterTypes.map((type) => {
+          // There is a no appeal type, it's a placeholder and behind the scene
+          // we use type as report and reportTypes as appeal
+          if (type === MOD_EVENTS.APPEAL) {
+            queryParams.reportTypes ||= []
+            queryParams.reportTypes.push(ComAtprotoModerationDefs.REASONAPPEAL)
+            return MOD_EVENTS.REPORT
+          }
+
+          // We use custom event type name that translate to either add or remove certain tag
+          const { add, remove } = buildTagFilter(type)
+          if (add.length || remove.length) {
+            if (add.length) {
+              if (queryParams.addedTags) {
+                queryParams.addedTags.push(...add)
+              } else {
+                queryParams.addedTags = add
+              }
+            }
+            if (remove.length) {
+              if (queryParams.removedTags) {
+                queryParams.removedTags.push(...remove)
+              } else {
+                queryParams.removedTags = remove
+              }
+            }
+            return MOD_EVENTS.TAG
+          }
+          return type
         })
-      return data
+      }
+
+      const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
+        ...queryParams,
+      })
+      const { repos, records } = await getReposAndRecordsForEvents(
+        labelerAgent,
+        data.events,
+      )
+
+      return {
+        events: data.events.map((e) => {
+          if (
+            ComAtprotoAdminDefs.isRepoRef(e.subject) ||
+            ChatBskyConvoDefs.isMessageRef(e.subject)
+          ) {
+            return { ...e, repo: repos.get(e.subject.did) }
+          } else if (ComAtprotoRepoStrongRef.isMain(e.subject)) {
+            return { ...e, record: records.get(e.subject.uri) }
+          }
+          return { ...e }
+        }),
+        cursor: data.cursor,
+      }
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
     ...(props.queryOptions || {}),
@@ -320,4 +446,35 @@ export const useModEventList = (
     setShowWorkspaceConfirmation,
     addToWorkspace,
   }
+}
+
+const TagBasedTypeFilters = {
+  [MOD_EVENTS.DISABLE_DMS]: { add: DM_DISABLE_TAG, remove: '' },
+  [MOD_EVENTS.ENABLE_DMS]: { remove: DM_DISABLE_TAG, add: '' },
+  [MOD_EVENTS.DISABLE_VIDEO_UPLOAD]: {
+    add: VIDEO_UPLOAD_DISABLE_TAG,
+    remove: '',
+  },
+  [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: {
+    remove: VIDEO_UPLOAD_DISABLE_TAG,
+    add: '',
+  },
+}
+
+const buildTagFilter = (type: string) => {
+  const add: string[] = []
+  const remove: string[] = []
+  const tagTypes = Object.keys(TagBasedTypeFilters)
+
+  if (!(type in tagTypes) || !Object.hasOwn(tagTypes, type)) {
+    return { add, remove }
+  }
+  if (TagBasedTypeFilters[type].add) {
+    add.push(TagBasedTypeFilters[type].add)
+  }
+  if (TagBasedTypeFilters[type].remove) {
+    remove.push(TagBasedTypeFilters[type].remove)
+  }
+
+  return { add, remove }
 }

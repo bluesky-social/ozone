@@ -43,10 +43,11 @@ export const Dropdown = ({
           leaveFrom="transform opacity-100 scale-100"
           leaveTo="transform opacity-0 scale-95"
         >
+          {/* z-50 value is important because we want all dropdowns to draw over other elements in the page and besides mobile menu, z-40 is the highest z-index we use in this codebase */}
           <Menu.Items
             className={classNames(
               rightAligned ? 'right-0' : '',
-              'absolute z-10 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-slate-800 py-1 shadow-lg dark:shadow-slate-900 ring-1 ring-black ring-opacity-5 focus:outline-none',
+              'absolute z-50 mt-2 w-48 origin-top-right rounded-md bg-white dark:bg-slate-800 py-1 shadow-lg dark:shadow-slate-900 ring-1 ring-black ring-opacity-5 focus:outline-none',
             )}
           >
             {items.map((item) => (

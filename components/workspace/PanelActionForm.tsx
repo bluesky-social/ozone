@@ -16,6 +16,7 @@ export const WorkspacePanelActionForm = ({
   setModEventType: (action: string) => void
   onCancel: () => void
 }) => {
+  const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
@@ -31,7 +32,10 @@ export const WorkspacePanelActionForm = ({
           selectedAction={modEventType}
           isSubjectDid={false}
           hasBlobs={false}
-          forceDisplayActions={[MOD_EVENTS.RESOLVE_APPEAL]}
+          forceDisplayActions={[
+            MOD_EVENTS.RESOLVE_APPEAL,
+            MOD_EVENTS.REVERSE_TAKEDOWN,
+          ]}
           setSelectedAction={(action) => setModEventType(action)}
         />
         <ModEventDetailsPopover modEventType={modEventType} />
@@ -50,7 +54,7 @@ export const WorkspacePanelActionForm = ({
           <LabelSelector
             id="labels"
             name="labels"
-            formId={WORKSPACE_FORM_ID}
+            form={WORKSPACE_FORM_ID}
             defaultLabels={[]}
           />
 
@@ -102,7 +106,7 @@ export const WorkspacePanelActionForm = ({
           label="Update the subject's persistent note with this comment"
         />
       )}
-      {isTakedownEvent && (
+      {(isTakedownEvent || isAckEvent) && (
         <Checkbox
           value="true"
           id="acknowledgeAccountSubjects"
@@ -112,7 +116,8 @@ export const WorkspacePanelActionForm = ({
           label={
             <span className="leading-4">
               Acknowledge all open/escalated/appealed reports on subjects
-              created by accounts that you are taking down.
+              created by accounts that you are{' '}
+              {isAckEvent ? 'acknowledging' : 'taking down'}.
             </span>
           }
         />

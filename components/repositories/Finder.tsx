@@ -15,7 +15,9 @@ type TypeaheadResult = {
 type RepoFinderProps = {
   selectionType?: 'did' | 'handle'
   onChange: (value: string) => void
+  clearOnSelect?: boolean
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>
+  repos?: TypeaheadResult[]
 }
 
 const DefaultResult = {
@@ -66,16 +68,31 @@ const getProfilesForQuery = async (
 export function RepoFinder({
   selectionType = 'did',
   onChange,
+  clearOnSelect = false,
   inputProps = {},
+  repos,
 }: RepoFinderProps) {
   const [query, setQuery] = useState('')
   const [selectedItem, setSelectedItem] = useState<string>('')
-  const [items, setItems] = useState<TypeaheadResult[]>([DefaultResult])
+  const [items, setItems] = useState<TypeaheadResult[]>(
+    repos?.length ? repos : [DefaultResult],
+  )
   const [loading, setLoading] = useState(false)
   const labelerAgent = useLabelerAgent()
 
   useEffect(() => {
     if (query.length > 0) {
+      if (repos?.length) {
+        setItems(
+          repos.filter((repo) => {
+            return (
+              repo.handle.toLowerCase().includes(query.toLowerCase()) ||
+              repo.displayName?.toLowerCase().includes(query.toLowerCase())
+            )
+          }),
+        )
+        return
+      }
       setLoading(true)
       getProfilesForQuery(labelerAgent, query)
         .then((profiles) => {
@@ -88,15 +105,17 @@ export function RepoFinder({
           setItems([ErrorResult])
         })
     } else {
-      setItems([DefaultResult])
+      setItems(repos?.length ? repos : [DefaultResult])
     }
-  }, [labelerAgent, query])
+    // We only depend on the repo.length here because the repos array is either not passed
+    // or passed as an empty array while loading or the entire list is given
+  }, [labelerAgent, query, repos?.length])
 
   return (
     <Combobox
       value={selectedItem}
       onChange={(item) => {
-        setSelectedItem(item)
+        setSelectedItem(clearOnSelect ? '' : item)
         onChange(item)
       }}
     >

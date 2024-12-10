@@ -43,7 +43,6 @@ import {
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
-import { HandThumbUpIcon } from '@heroicons/react/24/solid'
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })

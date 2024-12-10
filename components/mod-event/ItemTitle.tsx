@@ -4,6 +4,8 @@ import {
   ToolsOzoneModerationDefs,
   ComAtprotoModerationDefs,
 } from '@atproto/api'
+import { ModEventViewWithDetails } from './useModEventList'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -15,7 +17,7 @@ export const ItemTitle = ({
   showContentDetails,
   showContentAuthor,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventViewWithDetails
   showContentDetails: boolean
   showContentAuthor: boolean
 }) => {
@@ -92,6 +94,11 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }
+  const subjectStatus = modEvent.repo
+    ? modEvent.repo.moderation.subjectStatus
+    : modEvent.record
+    ? modEvent.record.moderation.subjectStatus
+    : undefined
 
   return (
     <div className="text-gray-500 dark:text-gray-50 flex flex-row justify-between">
@@ -110,13 +117,16 @@ export const ItemTitle = ({
         </i>
       </p>
       {showContentDetails && (
-        <div>
+        <div className="flex flex-row items-center gap-1">
           <SubjectOverview
             withTruncation
             subject={modEvent.subject}
             hideActor={!showContentAuthor}
             subjectRepoHandle={modEvent.subjectHandle}
           />
+          {subjectStatus && (
+            <ReviewStateIcon size="sm" subjectStatus={subjectStatus} />
+          )}
         </div>
       )}
     </div>

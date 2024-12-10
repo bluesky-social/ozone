@@ -1,64 +1,66 @@
 'use client'
-import { ComponentProps, useCallback, useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useQuery } from '@tanstack/react-query'
+import { Alert } from '@/common/Alert'
+import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
+import { DataField } from '@/common/DataField'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
+import { EmptyDataset } from '@/common/feeds/EmptyFeed'
+import { CheckboxesModal } from '@/common/modals/checkboxes'
+import { Tabs, TabView } from '@/common/Tabs'
+import { InviteCodesTable } from '@/invites/InviteCodesTable'
+import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
+import { ModEventList } from '@/mod-event/EventList'
+import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
+import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import {
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
+import {
+  AppBskyActorDefs,
+  ComAtprotoAdminDefs,
   AppBskyActorGetProfile as GetProfile,
   ToolsOzoneModerationGetRepo as GetRepo,
-  AppBskyActorDefs,
 } from '@atproto/api'
 import {
   ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
+  MagnifyingGlassIcon,
+  MagnifyingGlassPlusIcon,
   UserCircleIcon,
   XCircleIcon,
-  MagnifyingGlassIcon,
 } from '@heroicons/react/20/solid'
+import { useQuery } from '@tanstack/react-query'
+import { EmailComposer } from 'components/email/Composer'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import { Followers } from 'components/graph/Followers'
+import { Follows } from 'components/graph/Follows'
+import { Lists } from 'components/list/Lists'
+import { RelatedAccounts } from 'components/signature/RelatedAccounts'
+import { SubjectTag } from 'components/tags/SubjectTag'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { ComponentProps, useCallback, useEffect, useState } from 'react'
+import Lightbox from 'yet-another-react-lightbox'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
-import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
-import { ReportPanel } from '../reports/ReportPanel'
-import React from 'react'
 import {
+  getLabelsForSubject,
+  LabelChip,
   LabelList,
   LabelListEmpty,
-  getLabelsForSubject,
   ModerationLabel,
-  LabelChip,
 } from '../common/labels'
 import { Loading, LoadingFailed } from '../common/Loader'
-import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
-import { InviteCodesTable } from '@/invites/InviteCodesTable'
-import { Dropdown, DropdownItem } from '@/common/Dropdown'
-import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { EmailComposer } from 'components/email/Composer'
-import { DataField } from '@/common/DataField'
-import { ProfileAvatar } from './ProfileAvatar'
-import { DidHistory } from './DidHistory'
-import { ModEventList } from '@/mod-event/EventList'
-import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
-import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { EmptyDataset } from '@/common/feeds/EmptyFeed'
-import { MuteReporting } from './MuteReporting'
-import { Tabs, TabView } from '@/common/Tabs'
-import { Lists } from 'components/list/Lists'
-import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
-import {
-  useWorkspaceAddItemsMutation,
-  useWorkspaceList,
-  useWorkspaceRemoveItemsMutation,
-} from '@/workspace/hooks'
+import { ReportPanel } from '../reports/ReportPanel'
 import { Blocks } from './Blocks'
-import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
-import { Alert } from '@/common/Alert'
-import { Follows } from 'components/graph/Follows'
-import { Followers } from 'components/graph/Followers'
-import Lightbox from 'yet-another-react-lightbox'
-import { SubjectTag } from 'components/tags/SubjectTag'
-import { RelatedAccounts } from 'components/signature/RelatedAccounts'
+import { DidHistory } from './DidHistory'
+import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
+import { MuteReporting } from './MuteReporting'
+import { ProfileAvatar } from './ProfileAvatar'
 
 enum Views {
   Details,
@@ -234,7 +236,7 @@ export function AccountView({
                     <Posts id={id} onReport={setReportUri} />
                   )}
                   {currentView === Views.Follows && (
-                    <Follows count={profile?.followersCount} id={id} />
+                    <Follows count={profile?.followsCount} id={id} />
                   )}
                   {currentView === Views.Followers && (
                     <Followers count={profile?.followersCount} id={id} />
@@ -511,16 +513,17 @@ function Details({
   repo: GetRepo.OutputSchema
   id: string
 }) {
+  const router = useRouter()
   const labels = getLabelsForSubject({ repo })
   const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
-  const ip = typeof repo.ip === 'string' ? repo.ip : undefined
-  const hcapDetail = Array.isArray(repo.hcaptchaDetails)
-    ? (repo.hcaptchaDetails as { property: string; value: string }[])
-    : undefined
+
+  const { registrationIp, lastSigninIp, lastSigninTime, hcapDetail } =
+    parseThreatSigs(repo.threatSignatures)
+
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
@@ -533,20 +536,45 @@ function Details({
             showCopyButton
           />
         )}
-        {ip && (
-          <DataField value={ip} label="IP" showCopyButton>
-            {obscureIp(ip)}{' '}
-            <Link href={`/repositories?term=ip:${encodeURIComponent(ip)}`}>
+        {registrationIp && (
+          <DataField
+            value={registrationIp}
+            label="Registration IP"
+            showCopyButton
+          >
+            {obscureIp(registrationIp)}{' '}
+            <Link
+              href={`/repositories?term=sig:${encodeURIComponent(
+                registrationIp,
+              )}`}
+            >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
           </DataField>
         )}
+        {lastSigninIp && (
+          <DataField value={lastSigninIp} label="Last Signin IP" showCopyButton>
+            {obscureIp(lastSigninIp)}{' '}
+            <Link
+              href={`/repositories?term=sig:${encodeURIComponent(
+                lastSigninIp,
+              )}`}
+            >
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+            {lastSigninTime && (
+              <div className="text-gray-400">
+                {new Date(lastSigninTime).toLocaleString()}
+              </div>
+            )}
+          </DataField>
+        )}
         {hcapDetail && (
-          <DataField value={ip} label="Hcaptcha">
+          <DataField label="Hcaptcha">
             {hcapDetail?.map(({ property, value }) => (
               <Link
                 key={property}
-                href={`/repositories?term=hcap:${encodeURIComponent(value)}`}
+                href={`/repositories?term=sig:${encodeURIComponent(value)}`}
               >
                 <LabelChip>
                   <MagnifyingGlassIcon className="h-3 w-3 inline" />
@@ -554,6 +582,25 @@ function Details({
                 </LabelChip>
               </Link>
             ))}
+
+            {repo.threatSignatures?.length && (
+              <CheckboxesModal<ComAtprotoAdminDefs.ThreatSignature>
+                title="Find accounts matching the following signatures"
+                items={repo.threatSignatures}
+                itemLabel={(signature) => signature.property}
+                required
+                onConfirm={(values) => {
+                  router.push(
+                    `/repositories?term=sig:${encodeURIComponent(
+                      // "getRepos" supports JSON encoded array of string for "sig:" searches
+                      JSON.stringify(values.map((s) => s.value)),
+                    )}`,
+                  )
+                }}
+              >
+                <MagnifyingGlassPlusIcon className="ml-2 h-3 w-3 inline" />
+              </CheckboxesModal>
+            )}
           </DataField>
         )}
         <DataField
@@ -755,36 +802,41 @@ export function AccountsGrid({
       )}
       <div className="mt-1 grid grid-cols-1 gap-4 sm:grid-cols-2">
         {accounts?.map((account) => (
-          <div
-            key={account.handle}
-            className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700"
-          >
-            <div className="flex-shrink-0">
-              <ProfileAvatar
-                className="h-10 w-10 rounded-full"
-                profile={account}
-              />
-            </div>
-            <div className="min-w-0 flex-1">
-              <Link
-                href={`/repositories/${account.did}`}
-                className="focus:outline-none"
-              >
-                <span className="absolute inset-0" aria-hidden="true" />
-                <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
-                  {account.displayName || `@${account.handle}`}
-                </p>
-                <p className="truncate text-sm text-gray-500 dark:text-gray-50">
-                  @{account.handle}
-                </p>
-              </Link>
-            </div>
-          </div>
+          <ProfileCard profile={account} key={account.handle} />
         ))}
       </div>
     </div>
   )
 }
+
+export const ProfileCard = ({
+  profile,
+}: {
+  profile: AppBskyActorDefs.ProfileView | AppBskyActorDefs.ProfileViewBasic
+}) => {
+  return (
+    <div className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700">
+      <div className="flex-shrink-0">
+        <ProfileAvatar className="h-10 w-10 rounded-full" profile={profile} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <Link
+          href={`/repositories/${profile.did}`}
+          className="focus:outline-none"
+        >
+          <span className="absolute inset-0" aria-hidden="true" />
+          <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
+            {profile.displayName || `@${profile.handle}`}
+          </p>
+          <p className="truncate text-sm text-gray-500 dark:text-gray-50">
+            @{profile.handle}
+          </p>
+        </Link>
+      </div>
+    </div>
+  )
+}
+
 enum EventViews {
   ByUser,
   ForUser,
@@ -867,4 +919,23 @@ function obscureIp(ip: string) {
   const parts = ip.split('.')
   if (parts.length !== 4) return '***.***.***.***'
   return `${parts[0]}.${parts[1]}.***.***`
+}
+
+function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
+  const registrationIp = sigs?.find(
+    (sig) => sig.property === 'registrationIp',
+  )?.value
+  const lastSigninIp = sigs?.find(
+    (sig) => sig.property === 'lastSigninIp',
+  )?.value
+  const lastSigninTime = sigs?.find(
+    (sig) => sig.property === 'lastSigninTime',
+  )?.value
+  const hcapDetail = sigs?.filter(
+    (sig) =>
+      !['registrationIp', 'lastSigninIp', 'lastSigninTime'].includes(
+        sig.property,
+      ),
+  )
+  return { registrationIp, lastSigninIp, lastSigninTime, hcapDetail }
 }

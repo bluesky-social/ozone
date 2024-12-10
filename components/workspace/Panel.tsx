@@ -1,27 +1,39 @@
-import {
-  ComAtprotoModerationDefs,
-  ToolsOzoneModerationEmitEvent,
-} from '@atproto/api'
-import { FormEvent, useRef, useState } from 'react'
+import Dropzone, { DropzoneRef } from 'react-dropzone'
 import { ActionPanel } from '@/common/ActionPanel'
-import { PropsOf } from '@/lib/types'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import { LabelChip } from '@/common/labels'
+import { PropsOf } from '@/lib/types'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
+import {
+  AtUri,
+  ComAtprotoAdminDefs,
+  ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+  ToolsOzoneTeamDefs,
+} from '@atproto/api'
 import { Dialog } from '@headlessui/react'
+import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
+import Link from 'next/link'
+import { createRef, FormEvent, useRef, useState } from 'react'
+import { toast } from 'react-toastify'
+import { WORKSPACE_FORM_ID } from './constants'
 import {
   useWorkspaceEmptyMutation,
+  useWorkspaceImport,
   useWorkspaceList,
   useWorkspaceRemoveItemsMutation,
 } from './hooks'
-import WorkspaceList from './List'
 import WorkspaceItemCreator from './ItemCreator'
-import { useSubjectStatuses } from '@/subject/useSubjectStatus'
-import { WorkspacePanelActions } from './PanelActions'
-import { WORKSPACE_FORM_ID } from './constants'
+import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
-import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
+import { isNonNullable } from '@/lib/util'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -30,11 +42,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const [showActionForm, setShowActionForm] = useState(false)
   const removeItemsMutation = useWorkspaceRemoveItemsMutation()
   const emptyWorkspaceMutation = useWorkspaceEmptyMutation()
+  const { importFromFiles } = useWorkspaceImport()
   const [modEventType, setModEventType] = useState<string>(
     MOD_EVENTS.ACKNOWLEDGE,
   )
   const [showItemCreator, setShowItemCreator] = useState(false)
   const actionSubjects = useActionSubjects()
+  const dropzoneRef = createRef<DropzoneRef>()
 
   const handleRemoveSelected = () => {
     const selectedItems = Array.from(
@@ -57,6 +71,106 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+
+  const labelerAgent = useLabelerAgent()
+  const { pds, role } = useServerConfig()
+  const handleFindCorrelation =
+    pds != null
+      ? async () => {
+          const selectedItems = new FormData(formRef.current!)
+            .getAll('workspaceItem')
+            .filter((item): item is string => typeof item === 'string')
+
+          // For every selected item, find out which DID it corresponds
+          const dids = selectedItems
+            .map((item) => {
+              if (item.startsWith('did:')) return item
+
+              const status = workspaceListStatuses?.[item]
+
+              if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
+                return status.did
+              }
+
+              if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+                return status.repo.did
+              }
+
+              if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+                const { subject } = status
+                if (ComAtprotoAdminDefs.isRepoRef(subject)) {
+                  return subject.did
+                }
+
+                if (ComAtprotoRepoStrongRef.isMain(subject)) {
+                  return new AtUri(subject.uri).host
+                }
+              }
+
+              // Should never happen (future proofing against new item types in workspace)
+              return undefined
+            })
+            .filter(isNonNullable)
+
+          if (dids.length <= 1) {
+            toast.warning('Please select at least two accounts to correlate.')
+            return
+          }
+
+          if (dids.length !== selectedItems.length) {
+            toast.info(
+              'Only accounts can be correlated (ignoring non-accounts).',
+            )
+          }
+
+          const res = await labelerAgent.tools.ozone.signature.findCorrelation({
+            dids,
+          })
+
+          const { details } = res.data
+
+          if (!details.length) {
+            toast.info('No correlation found between the selected accounts.')
+          } else {
+            toast.success(
+              <div>
+                The following correlation were found between the selected
+                accounts:
+                <br />
+                {details.map(({ property, value }) => (
+                  <Link
+                    key={property}
+                    href={`/repositories?term=sig:${encodeURIComponent(value)}`}
+                  >
+                    <LabelChip>
+                      <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                      {property}
+                    </LabelChip>
+                  </Link>
+                ))}
+                {details.length > 1 && (
+                  <>
+                    <br />
+                    <Link
+                      key="all"
+                      href={`/repositories?term=sig:${encodeURIComponent(
+                        JSON.stringify(details.map((s) => s.value)),
+                      )}`}
+                      className="text-blue-500 underline"
+                    >
+                      Click here to show all accounts with the same details.
+                    </Link>
+                  </>
+                )}
+              </div>,
+              {
+                autoClose: 10_000,
+              },
+            )
+          }
+        }
+      : undefined
+
   // on form submit
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
@@ -105,7 +219,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       if (
-        coreEvent.$type === MOD_EVENTS.TAKEDOWN &&
+        (coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
+          coreEvent.$type === MOD_EVENTS.ACKNOWLEDGE) &&
         formData.get('acknowledgeAccountSubjects')
       ) {
         coreEvent.acknowledgeAccountSubjects = true
@@ -161,80 +276,126 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       onClose={onClose}
       {...others}
     >
-      {!workspaceList?.length ? (
-        <div className="flex flex-col flex-1 h-full item-center justify-center">
-          <>
-            <CheckCircleIcon
-              title="Empty workspace"
-              className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
-            />
-            <p className="pb-4 text-center text-gray-400 dark:text-gray-50">
-              Workspace is empty.
-            </p>
-            <WorkspaceItemCreator />
-          </>
-        </div>
-      ) : (
-        <>
-          {showItemCreator && (
-            <WorkspaceItemCreator
-              size="sm"
-              onCancel={() => setShowItemCreator(false)}
-            />
-          )}
-          <form ref={formRef} id={WORKSPACE_FORM_ID} onSubmit={onFormSubmit}>
-            {showActionForm && (
-              <WorkspacePanelActionForm
-                {...{
-                  modEventType,
-                  setModEventType,
-                  onCancel: () => setShowActionForm((current) => !current),
-                }}
-              />
+      <Dropzone
+        accept={{ 'application/json': ['.json'], 'text/csv': ['.csv'] }}
+        onDrop={importFromFiles}
+        ref={dropzoneRef}
+        onDropRejected={(rejections) => {
+          toast.error(
+            rejections
+              .map((r) => r.errors.map((e) => e.message).join(' | '))
+              .flat()
+              .join(' | '),
+          )
+        }}
+        noKeyboard
+        noClick
+      >
+        {({ getRootProps, getInputProps }) => (
+          <div
+            {...getRootProps()}
+            className={
+              !workspaceList?.length
+                ? 'flex flex-col flex-1 h-full item-center justify-center'
+                : ''
+            }
+          >
+            <input {...getInputProps()} />
+            {!workspaceList?.length ? (
+              <>
+                <>
+                  <CheckCircleIcon
+                    title="Empty workspace"
+                    className="h-10 w-10 text-green-300 align-text-bottom mx-auto mb-4"
+                  />
+                  <p className="pb-4 text-center text-gray-400 dark:text-gray-50">
+                    Workspace is empty.
+                  </p>
+                  <WorkspaceItemCreator
+                    onFileUploadClick={() => {
+                      dropzoneRef.current?.open()
+                    }}
+                  />
+                </>
+              </>
+            ) : (
+              <>
+                {showItemCreator && (
+                  <WorkspaceItemCreator
+                    size="sm"
+                    onFileUploadClick={() => {
+                      dropzoneRef.current?.open()
+                    }}
+                    onCancel={() => setShowItemCreator(false)}
+                  />
+                )}
+                <form
+                  ref={formRef}
+                  id={WORKSPACE_FORM_ID}
+                  onSubmit={onFormSubmit}
+                >
+                  {showActionForm && (
+                    <WorkspacePanelActionForm
+                      {...{
+                        modEventType,
+                        setModEventType,
+                        onCancel: () =>
+                          setShowActionForm((current) => !current),
+                      }}
+                    />
+                  )}
+                  {!showItemCreator && (
+                    <div className="mb-2 flex space-x-2">
+                      <WorkspacePanelActions
+                        listData={workspaceListStatuses || {}}
+                        handleRemoveSelected={handleRemoveSelected}
+                        handleEmptyWorkspace={handleEmptyWorkspace}
+                        handleFindCorrelation={handleFindCorrelation}
+                        setShowActionForm={setShowActionForm}
+                        setShowItemCreator={setShowItemCreator}
+                        showActionForm={showActionForm}
+                        workspaceList={workspaceList}
+                      />
+                    </div>
+                  )}
+                  {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
+                  {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
+                  {/* @ts-ignore */}
+                  <style jsx>{`
+                    .scrollable-container {
+                      height: calc(100vh - 100px);
+                    }
+                    @supports (-webkit-touch-callout: none) {
+                      .scrollable-container {
+                        height: calc(100svh - 100px);
+                      }
+                    }
+                    @media (min-width: 640px) {
+                      .scrollable-container {
+                        height: calc(100vh - 180px);
+                      }
+                    }
+                  `}</style>
+                  <div className="scrollable-container overflow-y-auto">
+                    <WorkspaceList
+                      canExport={
+                        !!role &&
+                        [
+                          ToolsOzoneTeamDefs.ROLEADMIN,
+                          ToolsOzoneTeamDefs.ROLEMODERATOR,
+                        ].includes(role)
+                      }
+                      list={workspaceList}
+                      onRemoveItem={handleRemoveItem}
+                      listData={workspaceListStatuses || {}}
+                    />
+                  </div>
+                </form>
+              </>
             )}
-            {!showItemCreator && (
-              <div className="mb-2 flex space-x-2">
-                <WorkspacePanelActions
-                  {...{
-                    handleRemoveSelected,
-                    handleEmptyWorkspace,
-                    setShowActionForm,
-                    setShowItemCreator,
-                    showActionForm,
-                    workspaceList,
-                    listData: workspaceListStatuses || {},
-                  }}
-                />
-              </div>
-            )}
-            {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
-            {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
-            {/* @ts-ignore */}
-            <style jsx>{`
-              .scrollable-container {
-                height: calc(100vh - 100px);
-              }
-              @supports (-webkit-touch-callout: none) {
-                .scrollable-container {
-                  height: calc(100svh - 100px);
-                }
-              }
-              @media (min-width: 640px) {
-                .scrollable-container {
-                  height: calc(100vh - 180px);
-                }
-              }
-            `}</style>
-            <div className="scrollable-container overflow-y-auto">
-              <WorkspaceList
-                list={workspaceList}
-                onRemoveItem={handleRemoveItem}
-                listData={workspaceListStatuses || {}}
-              />
-            </div>
-          </form>
-        </>
-      )}
+          </div>
+        )}
+      </Dropzone>
     </FullScreenActionPanel>
   )
 }

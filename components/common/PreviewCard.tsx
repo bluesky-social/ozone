@@ -49,7 +49,7 @@ export function PreviewCard({
   if (subject.startsWith('did:')) {
     return (
       <div className={classNames(`rounded p-2 pb-1 mb-3`, className)}>
-        <p className="text-sm font-medium text-gray-500 mb-3">
+        <p className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
           {title ? title : 'Reported user'}
         </p>
         <RepoCard did={subject} />
