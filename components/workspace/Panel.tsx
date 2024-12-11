@@ -288,14 +288,15 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         workspaceListStatuses || {},
       )
 
+      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
+      if (results.failed.length) {
+        // If there are failed items, don't reset the form
+        return selectFailedIems(results.failed)
+      }
+
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ error: '', isSubmitting: false })
-
-      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
-      if (results.failed.length) {
-        selectFailedIems(results.failed)
-      }
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }

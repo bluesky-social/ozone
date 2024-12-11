@@ -57,3 +57,12 @@ Cypress.Commands.add(
     cy.get("button[type='submit']").click()
   },
 )
+
+Cypress.Commands.add('openCommandPalette', (input?: string) => {
+  const comboKey = Cypress.platform === 'darwin' ? '{cmd}k' : '{ctrl}k'
+  cy.get('body').type(comboKey)
+  if (input) {
+    cy.get('[aria-controls="kbar-listbox"]').clear().type(input)
+    cy.wait(300)
+  }
+})

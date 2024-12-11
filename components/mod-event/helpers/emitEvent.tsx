@@ -102,7 +102,12 @@ const eventForSubject = (
     throw new Error('Email content is required for email events')
   }
 
-  if (eventData.event.content.includes('{{handle}}') && !subjectData) {
+  const hasPlaceholder = eventData.event.content.includes('{{handle}}')
+  if (!hasPlaceholder) {
+    return eventData
+  }
+
+  if (!subjectData) {
     throw new Error(
       'Email content has template placeholder but no handle account data found',
     )
@@ -139,7 +144,6 @@ const emitEventsInBulk = async ({
       failed: [],
     }
 
-    console.log(eventData, 'eventData')
     const actions = Promise.allSettled(
       subjects.map(async (sub) => {
         try {
