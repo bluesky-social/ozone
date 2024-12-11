@@ -443,8 +443,12 @@ function Form(
       ev.target.reset()
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       // If previous event was takedown and not immediately moving to next subject, moderators are most like to send a follow up email so default to email event
+      const eventMayNeedEmail =
+        coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
+        coreEvent.$type === MOD_EVENTS.REVERSE_TAKEDOWN ||
+        coreEvent.$type === MOD_EVENTS.LABEL
       setModEventType(
-        coreEvent.$type === MOD_EVENTS.TAKEDOWN && !shouldMoveToNextSubject
+        eventMayNeedEmail && !shouldMoveToNextSubject
           ? MOD_EVENTS.EMAIL
           : MOD_EVENTS.ACKNOWLEDGE,
       )
