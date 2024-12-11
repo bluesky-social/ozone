@@ -101,7 +101,12 @@ export const ModEventSelectorButton = ({
         return false
       }
       // Don't show email if user does not have permission to send email
-      if (key === MOD_EVENTS.EMAIL && (!canSendEmail || !isSubjectDid)) {
+      // or if the subject is not a DID but override that if it is set to be force displayed
+      if (
+        key === MOD_EVENTS.EMAIL &&
+        (!canSendEmail ||
+          (!isSubjectDid && !forceDisplayActions.includes(MOD_EVENTS.EMAIL)))
+      ) {
         return false
       }
       // Don't show takedown action if subject is already takendown

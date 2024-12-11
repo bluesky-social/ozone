@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { toast } from 'react-toastify'
-import { Agent, ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import {
+  Agent,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+} from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
@@ -11,6 +15,11 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useCallback } from 'react'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { chunkArray } from '@/lib/util'
+import {
+  WorkspaceListData,
+  WorkspaceListItemData,
+} from '@/workspace/useWorkspaceListData'
+import { compileTemplateContent } from 'components/email/helpers'
 
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
@@ -79,16 +88,49 @@ type BulkActionResults = {
   failed: string[]
 }
 
+const eventForSubject = (
+  eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
+  subjectData: WorkspaceListItemData,
+): Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'> => {
+  // only need to adjust event data for each subject for email events
+  // for the rest, same event data is used for all subjects
+  if (!ToolsOzoneModerationDefs.isModEventEmail(eventData.event)) {
+    return eventData
+  }
+
+  if (!eventData.event.content) {
+    throw new Error('Email content is required for email events')
+  }
+
+  if (eventData.event.content.includes('{{handle}}') && !subjectData) {
+    throw new Error(
+      'Email content has template placeholder but no handle account data found',
+    )
+  }
+
+  return {
+    ...eventData,
+    event: {
+      ...eventData.event,
+      content: compileTemplateContent(eventData.event.content, {
+        handle: subjectData.handle,
+      }),
+    },
+  }
+}
+
 const emitEventsInBulk = async ({
   labelerAgent,
   createSubjectFromId,
   subjects,
   eventData,
+  subjectData,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
   subjects: string[]
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>
+  subjectData: WorkspaceListData
 }) => {
   const toastId = 'workspace-bulk-action'
   try {
@@ -97,17 +139,19 @@ const emitEventsInBulk = async ({
       failed: [],
     }
 
+    console.log(eventData, 'eventData')
     const actions = Promise.allSettled(
       subjects.map(async (sub) => {
         try {
           const { subject } = await createSubjectFromId(sub)
-          await labelerAgent.api.tools.ozone.moderation.emitEvent({
+          await labelerAgent.tools.ozone.moderation.emitEvent({
+            ...eventForSubject(eventData, subjectData[sub]),
             subject,
             createdBy: labelerAgent.assertDid,
-            ...eventData,
           })
           results.succeeded.push(sub)
         } catch (err) {
+          console.error(err)
           results.failed.push(sub)
         }
       }),
@@ -149,6 +193,7 @@ export const useActionSubjects = () => {
     async (
       eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
       subjects: string[],
+      subjectData: WorkspaceListData,
     ) => {
       if (!subjects.length) {
         toast.error(`No subject to action`)
@@ -166,6 +211,7 @@ export const useActionSubjects = () => {
           createSubjectFromId,
           subjects: chunk,
           eventData,
+          subjectData,
         })
 
         results.succeeded.push(...succeeded)

@@ -1,3 +1,4 @@
+import { MOD_EVENTS } from '@/mod-event/constants'
 import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 
 export const getTemplate = (
@@ -20,4 +21,11 @@ export const compileTemplateContent = (
   )
 
   return content
+}
+
+export type EmailComposerData = {
+  $type: typeof MOD_EVENTS.EMAIL
+  comment?: string
+  subjectLine?: string
+  content: string
 }

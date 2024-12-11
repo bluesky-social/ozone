@@ -10,7 +10,11 @@ import { useColorScheme } from '@/common/useColorScheme'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { compileTemplateContent, getTemplate } from './helpers'
+import {
+  compileTemplateContent,
+  EmailComposerData,
+  getTemplate,
+} from './helpers'
 import { TemplateSelector } from './template-selector'
 import { availableLanguageCodes } from '@/common/LanguagePicker'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
@@ -58,12 +62,7 @@ export const EmailComposer = ({
 }: {
   did?: string
   replacePlaceholders?: boolean
-  handleSubmit?: (emailData: {
-    $type: typeof MOD_EVENTS.EMAIL
-    comment?: string
-    subjectLine?: string
-    content: string
-  }) => Promise<void>
+  handleSubmit?: (emailData: EmailComposerData) => Promise<void>
 }) => {
   const labelerAgent = useLabelerAgent()
   const {
