@@ -56,7 +56,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       formRef.current?.querySelectorAll<HTMLInputElement>(
         'input[type="checkbox"][name="workspaceItem"]:checked',
       ) || [],
-    ).map((checkbox) => checkbox.value)
+      (checkbox) => checkbox.value,
+    )
   }
 
   const handleRemoveSelected = () => {

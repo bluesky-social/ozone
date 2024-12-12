@@ -155,7 +155,6 @@ const emitEventsInBulk = async ({
           })
           results.succeeded.push(sub)
         } catch (err) {
-          console.error(err)
           results.failed.push(sub)
         }
       }),
@@ -209,7 +208,13 @@ export const useActionSubjects = () => {
         failed: [],
       }
 
-      for (const chunk of chunkArray(subjects, 50)) {
+      // Emails have a lower limit per second so we want to make sure we are well below that
+      const chunkSize = ToolsOzoneModerationDefs.isModEventEmail(
+        eventData.event,
+      )
+        ? 25
+        : 50
+      for (const chunk of chunkArray(subjects, chunkSize)) {
         const { succeeded, failed } = await emitEventsInBulk({
           labelerAgent,
           createSubjectFromId,
