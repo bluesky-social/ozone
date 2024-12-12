@@ -37,6 +37,10 @@ const actions = [
     key: MOD_EVENTS.RESOLVE_APPEAL,
   },
   {
+    text: 'Send Email',
+    key: MOD_EVENTS.EMAIL,
+  },
+  {
     text: 'Divert',
     key: MOD_EVENTS.DIVERT,
   },
@@ -80,6 +84,7 @@ export const ModEventSelectorButton = ({
   const canDivertBlob = usePermission('canDivertBlob')
   const canTakedown = usePermission('canTakedown')
   const canManageChat = usePermission('canManageChat')
+  const canSendEmail = usePermission('canSendEmail')
 
   const availableActions = useMemo(() => {
     return actions.filter(({ key }) => {
@@ -93,6 +98,15 @@ export const ModEventSelectorButton = ({
       }
       // Don't show appeal action if subject is already in appealed status
       if (key === MOD_EVENTS.APPEAL && subjectStatus?.appealed) {
+        return false
+      }
+      // Don't show email if user does not have permission to send email
+      // or if the subject is not a DID but override that if it is set to be force displayed
+      if (
+        key === MOD_EVENTS.EMAIL &&
+        (!canSendEmail ||
+          (!isSubjectDid && !forceDisplayActions.includes(MOD_EVENTS.EMAIL)))
+      ) {
         return false
       }
       // Don't show takedown action if subject is already takendown

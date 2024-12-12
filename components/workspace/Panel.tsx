@@ -33,7 +33,8 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
-import { isNonNullable } from '@/lib/util'
+import { isNonNullable, isValidDid } from '@/lib/util'
+import { EmailComposerData } from 'components/email/helpers'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -50,13 +51,17 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const actionSubjects = useActionSubjects()
   const dropzoneRef = createRef<DropzoneRef>()
 
-  const handleRemoveSelected = () => {
-    const selectedItems = Array.from(
+  const getSelectedItems = () => {
+    return Array.from(
       formRef.current?.querySelectorAll<HTMLInputElement>(
         'input[type="checkbox"][name="workspaceItem"]:checked',
       ) || [],
-    ).map((checkbox) => checkbox.value)
-    removeItemsMutation.mutate(selectedItems as string[])
+      (checkbox) => checkbox.value,
+    )
+  }
+
+  const handleRemoveSelected = () => {
+    removeItemsMutation.mutate(getSelectedItems())
   }
 
   const handleRemoveItem = (item: string) => {
@@ -65,6 +70,21 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
   const handleEmptyWorkspace = () => {
     emptyWorkspaceMutation.mutate()
+  }
+
+  const selectFailedIems = (failedItems: string[]) => {
+    document
+      .querySelectorAll<HTMLInputElement>(
+        'input[type="checkbox"][name="workspaceItem"]',
+      )
+      .forEach((checkbox) => {
+        if (failedItems.includes(checkbox.value)) {
+          checkbox.checked = true
+          // There's an event handler on the checkbox for mousedown event that syncs with a react state
+          // for last checked index. We need to trigger that event to keep the state in sync
+          checkbox.dispatchEvent(new Event('mousedown'))
+        }
+      })
   }
 
   const [submission, setSubmission] = useState<{
@@ -171,6 +191,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         }
       : undefined
 
+  const { data: workspaceList } = useWorkspaceList()
+  const { data: workspaceListStatuses } = useWorkspaceListData({
+    subjects: workspaceList || [],
+    // Make sure we aren't constantly refreshing the data unless the panel is open
+    enabled: props.open,
+  })
+
   // on form submit
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
@@ -230,6 +257,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       const results = await actionSubjects(
         { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
+        workspaceListStatuses || {},
       )
 
       // After successful submission, reset the form state to clear inputs for previous submission
@@ -241,31 +269,39 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
       if (results.failed.length) {
-        document
-          .querySelectorAll<HTMLInputElement>(
-            'input[type="checkbox"][name="workspaceItem"]',
-          )
-          .forEach((checkbox) => {
-            if (results.failed.includes(checkbox.value)) {
-              checkbox.checked = true
-              // There's an event handler on the checkbox for mousedown event that syncs with a react state
-              // for last checked index. We need to trigger that event to keep the state in sync
-              checkbox.dispatchEvent(new Event('mousedown'))
-            }
-          })
+        selectFailedIems(results.failed)
       }
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
 
-  const { data: workspaceList } = useWorkspaceList()
-  const { data: workspaceListStatuses } = useWorkspaceListData({
-    subjects: workspaceList || [],
-    // Make sure we aren't constantly refreshing the data unless the panel is open
-    enabled: props.open,
-  })
+  const handleEmailSubmit = async (emailEvent: EmailComposerData) => {
+    setSubmission({ isSubmitting: true, error: '' })
+    try {
+      setSubmission({ isSubmitting: true, error: '' })
 
+      // No need to break if one of the requests fail, continue on with others
+      const results = await actionSubjects(
+        { event: emailEvent },
+        // Emails can only be sent to DID subjects so filter out anything that's not a did
+        getSelectedItems().filter(isValidDid),
+        workspaceListStatuses || {},
+      )
+
+      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
+      if (results.failed.length) {
+        // If there are failed items, don't reset the form
+        return selectFailedIems(results.failed)
+      }
+
+      // This state is not kept in the form and driven by state so we need to reset it manually after submission
+      setModEventType(MOD_EVENTS.ACKNOWLEDGE)
+      setSubmission({ error: '', isSubmitting: false })
+    } catch (err) {
+      setSubmission({ error: (err as Error).message, isSubmitting: false })
+    }
+  }
   return (
     <FullScreenActionPanel
       title={
@@ -329,21 +365,21 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                     onCancel={() => setShowItemCreator(false)}
                   />
                 )}
+                {showActionForm && (
+                  <WorkspacePanelActionForm
+                    modEventType={modEventType}
+                    setModEventType={setModEventType}
+                    handleEmailSubmit={handleEmailSubmit}
+                    onCancel={() => setShowActionForm((current) => !current)}
+                  />
+                )}
+                {/* The form component can't wrap the panel action form above because we may render the email composer */}
+                {/* inside the panel action form which is it's own form so we use form ids to avoid nesting forms */}
                 <form
                   ref={formRef}
                   id={WORKSPACE_FORM_ID}
                   onSubmit={onFormSubmit}
                 >
-                  {showActionForm && (
-                    <WorkspacePanelActionForm
-                      {...{
-                        modEventType,
-                        setModEventType,
-                        onCancel: () =>
-                          setShowActionForm((current) => !current),
-                      }}
-                    />
-                  )}
                   {!showItemCreator && (
                     <div className="mb-2 flex space-x-2">
                       <WorkspacePanelActions

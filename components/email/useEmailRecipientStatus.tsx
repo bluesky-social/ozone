@@ -3,11 +3,13 @@ import { resolveDidDocData } from '@/lib/identity'
 import { useQuery } from '@tanstack/react-query'
 
 export const useEmailRecipientStatus = (
-  did: string,
+  did?: string,
 ): { isLoading: boolean; error: any; cantReceive: boolean } => {
   const { data, isLoading, error } = useQuery({
     queryKey: ['email-capability-check', did],
     queryFn: async () => {
+      // If no did is provided, we can't check if the recipient can receive emails
+      if (!did) return true
       const response = await resolveDidDocData(did)
       if (!response?.services) {
         return false

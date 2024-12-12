@@ -1,6 +1,7 @@
 import { CollectionId } from '@/reports/helpers/subject'
 import { WorkspaceListItemData } from './useWorkspaceListData'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { pluralize } from '@/lib/util'
 
 export type GroupedSubjects = {
   dids: string[]
@@ -41,12 +42,18 @@ export const groupSubjects = (items: string[]): GroupedSubjects => {
 
 export const buildItemsSummary = (groupedItems: GroupedSubjects): string => {
   return [
-    groupedItems.dids.length > 0 && `${groupedItems.dids.length} Accounts`,
-    groupedItems.posts.length > 0 && `${groupedItems.posts.length} Posts`,
-    groupedItems.lists.length > 0 && `${groupedItems.lists.length} Lists`,
+    groupedItems.dids.length > 0 &&
+      pluralize(groupedItems.dids.length, 'Account', { includeCount: true }),
+    groupedItems.posts.length > 0 &&
+      pluralize(groupedItems.posts.length, 'Post', { includeCount: true }),
+    groupedItems.lists.length > 0 &&
+      pluralize(groupedItems.lists.length, 'List', { includeCount: true }),
     groupedItems.profiles.length > 0 &&
-      `${groupedItems.profiles.length} Profiles`,
-    groupedItems.others.length > 0 && `${groupedItems.others.length} Others`,
+      pluralize(groupedItems.profiles.length, 'Profile', {
+        includeCount: true,
+      }),
+    groupedItems.others.length > 0 &&
+      pluralize(groupedItems.others.length, 'Other', { includeCount: true }),
   ]
     .filter(Boolean)
     .join(', ')
