@@ -13,6 +13,7 @@ import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventViewWithDetails } from './useModEventList'
 import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import Link from 'next/link'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -195,7 +196,14 @@ const TakedownOrMute = ({
         <p className="pb-1 flex flex-row items-center">
           <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
           <i>
-            Under <u>{`${modEvent.event.policy}`}</u> policy
+            Under{' '}
+            <Link
+              prefetch={false}
+              href={`/configure?tab=policies&search=${modEvent.event.policy}`}
+            >
+              <u>{`${modEvent.event.policy}`}</u>
+            </Link>{' '}
+            policy
           </i>
         </p>
       ) : null}

@@ -1,4 +1,4 @@
-import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUEUE_CONFIG } from '@/lib/constants'
 import { toast } from 'react-toastify'

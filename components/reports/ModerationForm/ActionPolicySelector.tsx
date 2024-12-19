@@ -1,45 +1,24 @@
-import { Dropdown } from '@/common/Dropdown'
+import { usePolicyListSetting } from '@/setting/policy/usePolicyList'
 import { Combobox, Transition } from '@headlessui/react'
-import {
-  CheckIcon,
-  ChevronDownIcon,
-  ChevronUpDownIcon,
-} from '@heroicons/react/24/solid'
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/solid'
 import { Fragment, useState } from 'react'
-
-const availablePolicies = {
-  trolling: {
-    name: 'Trolling',
-    description: 'Content that is intended to provoke or upset others',
-  },
-  spam: {
-    name: 'Spam',
-    description: 'Content that is irrelevant or repetitive',
-  },
-  hate: {
-    name: 'Hate Speech',
-    description: 'Content that promotes hate or violence against a group',
-  },
-}
-const policyList = Object.values(availablePolicies)
 
 export const ActionPolicySelector = ({
   defaultPolicy,
   onSelect,
-  name,
+  name = 'policy',
 }: {
   name?: string
   defaultPolicy?: string
   onSelect?: (name: string) => void
 }) => {
-  const [selected, setSelected] = useState('')
+  const { data, isLoading } = usePolicyListSetting()
+  const [selected, setSelected] = useState(defaultPolicy)
   const [query, setQuery] = useState('')
-  const [selectedPolicy, setSelectedPolicy] = useState<string | undefined>(
-    defaultPolicy,
-  )
+  const policyList = Object.values(data?.value || {})
   const matchingPolicies = policyList
     ?.filter((tpl) => {
-      if (selectedPolicy && tpl.name !== selectedPolicy) {
+      if (selected && tpl.name !== selected) {
         return false
       }
 
@@ -55,11 +34,12 @@ export const ActionPolicySelector = ({
     <>
       <Combobox
         value={selected}
+        disabled={isLoading}
         onChange={(selectedPolicy) => {
           setSelected(selectedPolicy)
           onSelect?.(selectedPolicy)
         }}
-        name="policy"
+        name={name}
       >
         <div className="relative mt-1 w-full">
           <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
@@ -84,7 +64,7 @@ export const ActionPolicySelector = ({
           >
             <Combobox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
               {!matchingPolicies?.length ? (
-                <NoPolicyOption {...{ selectedPolicy, query }} />
+                <NoPolicyOption query={query} />
               ) : (
                 matchingPolicies?.map((tpl) => (
                   <Combobox.Option
@@ -133,7 +113,6 @@ export const ActionPolicySelector = ({
           </Transition>
         </div>
       </Combobox>
-      {name && <input type="hidden" name={name} value={selected} />}
     </>
   )
 }
