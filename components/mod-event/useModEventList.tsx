@@ -62,6 +62,7 @@ const initialListState = {
   removedLabels: [],
   addedTags: '',
   removedTags: '',
+  policy: '',
   showContentPreview: false,
   limit: 25,
 }
@@ -157,6 +158,7 @@ type EventListFilterPayload =
   | { field: 'removedLabels'; value: string[] }
   | { field: 'addedTags'; value: string }
   | { field: 'removedTags'; value: string }
+  | { field: 'policy'; value: string }
   | { field: 'limit'; value: number }
 
 type EventListAction =
@@ -246,6 +248,7 @@ export const useModEventList = (
         addedTags,
         removedTags,
         reportTypes,
+        policy,
         limit,
       } = listState
       const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
@@ -335,6 +338,10 @@ export const useModEventList = (
         })
       }
 
+      if (filterTypes.includes(MOD_EVENTS.TAKEDOWN) && policy) {
+        queryParams.policy = policy
+      }
+
       const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
         ...queryParams,
       })
@@ -372,6 +379,7 @@ export const useModEventList = (
     listState.createdBy ||
     listState.subject ||
     listState.oldestFirst ||
+    listState.policy ||
     listState.reportTypes.length > 0 ||
     listState.addedLabels.length > 0 ||
     listState.removedLabels.length > 0 ||

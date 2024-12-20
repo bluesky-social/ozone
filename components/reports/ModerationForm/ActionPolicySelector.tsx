@@ -18,10 +18,6 @@ export const ActionPolicySelector = ({
   const policyList = Object.values(data?.value || {})
   const matchingPolicies = policyList
     ?.filter((tpl) => {
-      if (selected && tpl.name !== selected) {
-        return false
-      }
-
       if (query.length) {
         return tpl.name.toLowerCase().includes(query.toLowerCase())
       }

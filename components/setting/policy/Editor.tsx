@@ -24,12 +24,16 @@ export const PolicyEditor = ({
           id="name"
           name="name"
           required
-          placeholder="Name of the policy. Only alphabets are allowed."
+          placeholder="Name of the policy. Only alphabetic characters are allowed."
           className="block w-full"
           pattern="[A-Za-z ]+"
         />
       </FormLabel>
-      <FormLabel label="Name" htmlFor="name" className="flex-1 mb-3">
+      <FormLabel
+        label="Description"
+        htmlFor="description"
+        className="flex-1 mb-3"
+      >
         <Textarea
           required
           id="description"
