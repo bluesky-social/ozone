@@ -59,6 +59,7 @@ import {
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
+import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -264,6 +265,10 @@ function Form(
 
       if (formData.get('durationInHours')) {
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
+      }
+
+      if (formData.get('policy')) {
+        coreEvent.policy = String(formData.get('policy'))
       }
 
       if (
@@ -666,16 +671,35 @@ function Form(
                     <ModEventDetailsPopover modEventType={modEventType} />
                   </div>
                   {shouldShowDurationInHoursField && (
-                    <FormLabel
-                      label=""
-                      htmlFor="durationInHours"
-                      className={`mb-3 mt-2`}
-                    >
-                      <ActionDurationSelector
-                        action={modEventType}
-                        labelText={isMuteEvent ? 'Mute duration' : ''}
-                      />
-                    </FormLabel>
+                    <div className="flex flex-row gap-2">
+                      <FormLabel
+                        label=""
+                        htmlFor="durationInHours"
+                        className={`mb-3 mt-2`}
+                      >
+                        <ActionDurationSelector
+                          action={modEventType}
+                          onChange={(e) => {
+                            if (e.target.value === '0') {
+                              // When permanent takedown is selected, auto check ack all checkbox
+                              const ackAllCheckbox =
+                                document.querySelector<HTMLInputElement>(
+                                  'input[name="acknowledgeAccountSubjects"]',
+                                )
+                              if (ackAllCheckbox && !ackAllCheckbox.checked) {
+                                ackAllCheckbox.checked = true
+                              }
+                            }
+                          }}
+                          labelText={isMuteEvent ? 'Mute duration' : ''}
+                        />
+                      </FormLabel>
+                      {isTakedownEvent && (
+                        <div className="mt-2 w-full">
+                          <ActionPolicySelector name="policy" />
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {isMuteReporterEvent && (
