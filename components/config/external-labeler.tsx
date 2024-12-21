@@ -46,7 +46,9 @@ export const ExternalLabelerConfig = () => {
             subscriptions there.
           </p>
           <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">
-            You can unsubscribe from any external labeler at any time.
+            You can unsubscribe from any external labeler at any time. This is
+            your personal configuration and won't be shared with other
+            moderators.
           </p>
 
           <div className="flex flex-row justify-end items-end my-3 gap-2">
