@@ -41,8 +41,8 @@ export function LabelerConfig() {
       )}
 
       <ServerConfig />
-      <LocalPreferences />
       <QueueSetting />
+      <LocalPreferences />
       <ExternalLabelerConfig />
     </div>
   )
