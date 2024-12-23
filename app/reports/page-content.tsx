@@ -419,10 +419,14 @@ const getQueueItems = async (
   const pageSize = 100
 
   if (queueName && queueSetting?.queueNames.length) {
-    queryParams.queueCount = queueSetting.queueNames.length
-    queryParams.queueIndex = queueSetting.queueNames.indexOf(queueName)
-    if (queueSetting.queueSeed) {
-      queryParams.queueSeed = queueSetting.queueSeed
+    const queueIndex = queueSetting.queueNames.indexOf(queueName)
+    // Only apply queue filters if the user is looking at a queue that exists in the list of queues
+    if (queueIndex >= 0) {
+      queryParams.queueIndex = queueIndex
+      queryParams.queueCount = queueSetting.queueNames.length
+      if (queueSetting.queueSeed) {
+        queryParams.queueSeed = queueSetting.queueSeed
+      }
     }
   }
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
