@@ -65,6 +65,9 @@ export const LocalPreferences = () => {
         <p className="text-sm mb-2">
           You can choose to make media content (video and image) with the
           following labels appear on your screen with your preferred filter.
+          <br />
+          This is your personal configuration and won{"'"}t be shared with other
+          moderators.
         </p>
 
         <form onSubmit={handleSubmit}>

@@ -398,7 +398,6 @@ function useModerationQueueQuery() {
         labelerAgent,
         queryParams,
         queueName,
-        0,
         queueSetting.data
           ? {
               queueNames: queueSetting.data.queueNames,
@@ -415,51 +414,26 @@ const getQueueItems = async (
   labelerAgent: Agent,
   queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
   queueName: string | null,
-  attempt = 0,
   queueSetting?: { queueNames: string[]; queueSeed: string },
 ) => {
   const pageSize = 100
+
+  if (queueName && queueSetting?.queueNames.length) {
+    const queueIndex = queueSetting.queueNames.indexOf(queueName)
+    // Only apply queue filters if the user is looking at a queue that exists in the list of queues
+    if (queueIndex >= 0) {
+      queryParams.queueIndex = queueIndex
+      queryParams.queueCount = queueSetting.queueNames.length
+      if (queueSetting.queueSeed) {
+        queryParams.queueSeed = queueSetting.queueSeed
+      }
+    }
+  }
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
     limit: pageSize,
     includeMuted: true,
     ...queryParams,
   })
 
-  const queueIndex = queueSetting?.queueNames.indexOf(queueName ?? '')
-  const statusesInQueue = queueName
-    ? data.subjectStatuses.filter((status) => {
-        const subjectDid = ComAtprotoAdminDefs.isRepoRef(status.subject)
-          ? status.subject.did
-          : new AtUri(`${status.subject.uri}`).host
-        return (
-          getQueueIndex(
-            subjectDid,
-            queueSetting?.queueNames || [],
-            queueSetting?.queueSeed || '',
-          ) === queueIndex
-        )
-      })
-    : data.subjectStatuses
-
-  // This is a recursive call to get items in queue if the current page
-  // gives us less than full page size and there are more items to fetch
-  // also, use a circuit breaker to make sure we never accidentally call this more than 10 times
-  if (statusesInQueue.length === 0 && data.cursor && attempt < 10) {
-    return getQueueItems(
-      labelerAgent,
-      {
-        ...queryParams,
-        cursor: data.cursor,
-      },
-      queueName,
-      ++attempt,
-      queueSetting,
-    )
-  }
-
-  return { cursor: data.cursor, subjectStatuses: statusesInQueue }
-}
-
-function getQueueIndex(did: string, queueNames: string[], queueSeed: string) {
-  return simpleHash(`${queueSeed}:${did}`) % queueNames.length
+  return data
 }
