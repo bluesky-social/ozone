@@ -248,6 +248,7 @@ export const ReportsPageContent = () => {
       <div className="md:flex mt-2 mb-2 flex-row justify-between px-4 sm:px-6 lg:px-8">
         <div className="flex flex-row items-center gap-2">
           <QueueFilterPanel />
+          <button onClick={() => refetch()}>refetch</button>
         </div>
         <ResolvedFilters />
       </div>
@@ -311,6 +312,8 @@ function useModerationQueueQuery() {
     useFluentReportSearchParams()
 
   return useInfiniteQuery({
+    // lighten load on the server
+    refetchOnWindowFocus: false,
     queryKey: [
       'events',
       {
