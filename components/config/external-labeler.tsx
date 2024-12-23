@@ -47,7 +47,7 @@ export const ExternalLabelerConfig = () => {
           </p>
           <p className="mt-1 text-sm text-gray-900 dark:text-gray-200">
             You can unsubscribe from any external labeler at any time. This is
-            your personal configuration and won't be shared with other
+            your personal configuration and won{"'"}t be shared with other
             moderators.
           </p>
 
