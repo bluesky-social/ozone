@@ -35,6 +35,7 @@
       "@/dms/*": ["components/dms/*"],
       "@/workspace/*": ["components/workspace/*"],
       "@/sets/*": ["components/sets/*"],
+      "@/setting/*": ["components/setting/*"],
     }
   },
   "include": [
