@@ -636,7 +636,7 @@ function Form(
                 <div className={`mb-3`}>
                   <FormLabel label="Tags">
                     <LabelList className="-ml-1 flex-wrap">
-                      {subjectStatus.tags.map((tag) => {
+                      {subjectStatus.tags.sort().map((tag) => {
                         return <SubjectTag key={tag} tag={tag} />
                       })}
                     </LabelList>

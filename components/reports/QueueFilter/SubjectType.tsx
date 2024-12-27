@@ -63,44 +63,23 @@ export const QueueFilterSubjectType = () => {
               Record Collection
             </h3>
 
-            {Object.values(CollectionId).map((collectionId) => {
-              const isSelected = selectedCollections.includes(collectionId)
-              return (
-                <Checkbox
-                  label={getCollectionName(collectionId)}
-                  value={collectionId}
-                  key={collectionId}
-                  checked={isSelected}
-                  onChange={() => {
-                    toggleCollection(collectionId)
-                  }}
-                />
-              )
-            })}
-          </div>
-          <div>
-            <h3 className="text-gray-900 dark:text-gray-200 my-2 border-b border-gray-400 pb-1">
-              Record Embed
-            </h3>
-            {[...allEmbedTypes, 'noEmbed'].map((embedType) => {
-              const isNoEmbed = embedType === 'noEmbed'
-              const isSelected = isNoEmbed
-                ? allEmbedTypes.every((et) =>
-                    selectedExcludeEmbedTypes.includes(et),
-                  )
-                : selectedIncludeEmbedTypes.includes(embedType)
-              return (
-                <Checkbox
-                  label={getEmbedTypeName(embedType)}
-                  value={embedType}
-                  key={embedType}
-                  checked={isSelected}
-                  onChange={() => {
-                    toggleEmbedType(embedType)
-                  }}
-                />
-              )
-            })}
+            <div className="flex flex-row gap-x-3 gap-y-1 flex-wrap">
+              {Object.values(CollectionId).map((collectionId) => {
+                const isSelected = selectedCollections.includes(collectionId)
+                return (
+                  <Checkbox
+                    className="flex items-center"
+                    label={getCollectionName(collectionId)}
+                    value={collectionId}
+                    key={collectionId}
+                    checked={isSelected}
+                    onChange={() => {
+                      toggleCollection(collectionId)
+                    }}
+                  />
+                )
+              })}
+            </div>
           </div>
         </div>
       )}

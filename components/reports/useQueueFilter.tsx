@@ -153,6 +153,13 @@ export const useQueueFilter = () => {
     })
   }
 
+  const addTags = (index: number, tags: string[]) => {
+    console.log({ index, tags })
+    const newTags = queueFilters.tags ?? []
+    newTags[index] = tags.filter(Boolean).join('&&')
+    updateFilters({ tags: newTags })
+  }
+
   const clearLanguages = () => {
     const newTags = queueFilters.tags?.filter((tag) => !tag.startsWith('lang:'))
     const newExcludeTags = queueFilters.excludeTags?.filter(
@@ -174,5 +181,6 @@ export const useQueueFilter = () => {
     toggleEmbedType,
     clearLanguages,
     toggleLanguage,
+    addTags,
   }
 }

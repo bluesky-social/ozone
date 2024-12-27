@@ -8,6 +8,7 @@ import { ToolsOzoneModerationQueryStatuses } from '@atproto/api'
 import { getLanguageFlag } from 'components/tags/SubjectTag'
 import { getCollectionName } from '../helpers/subject'
 import { classNames } from '@/lib/util'
+import { QueueFilterTag, QueueFilterTags } from './Tag'
 
 // Takes all the queue filters manageable in the panel and displays a summary of selections made
 const FilterSummary = ({
@@ -117,12 +118,13 @@ export const QueueFilterPanel = () => {
             leaveFrom="transform scale-100 opacity-100"
             leaveTo="transform scale-95 opacity-0"
           >
-            <Popover.Panel className="absolute left-0 z-10 mt-1 flex w-screen max-w-max -translate-x-1/5 px-4">
-              <div className="w-fit-content flex-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
+            <Popover.Panel className="absolute left-0 z-10 mt-1 flex max-w-max -translate-x-1/5 px-4">
+              <div className="flex-auto w-96 rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
                 <div className="flex flex-row px-2 gap-6">
-                  <QueueFilterLanguage />
                   <QueueFilterSubjectType />
                 </div>
+
+                <QueueFilterTags />
               </div>
             </Popover.Panel>
           </Transition>
