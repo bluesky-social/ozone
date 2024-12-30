@@ -6,3 +6,60 @@
       --color-canvas-default: theme(colors.slate.800) !important;
       --color-border-default: theme(colors.teal.500) !important;
 }
+
+.game-block {
+      @apply m-0 p-0 w-6 h-6 border border-gray-300;
+}
+.piece-i {
+      @apply bg-pink-400;
+}
+.piece-j {
+      @apply bg-orange-300;
+}
+.piece-l {
+      @apply bg-yellow-200;
+}
+.piece-o {
+      @apply bg-yellow-500;
+}
+.piece-s {
+      @apply bg-gray-700;
+}
+.piece-t {
+      @apply bg-purple-400;
+}
+.piece-z {
+      @apply bg-red-400;
+}
+.piece-preview {
+      @apply bg-gray-200;
+}
+
+
+.dark .game-block {
+      @apply border-gray-600;
+}
+.dark .piece-i {
+      @apply bg-pink-700;
+}
+.dark .piece-j {
+      @apply bg-orange-500;
+}
+.dark .piece-l {
+      @apply bg-yellow-400;
+}
+.dark .piece-o {
+      @apply bg-yellow-700;
+}
+.dark .piece-s {
+      @apply bg-gray-800;
+}
+.dark .piece-t {
+      @apply bg-purple-600;
+}
+.dark .piece-z {
+      @apply bg-red-600;
+}
+.dark .piece-preview {
+      @apply bg-gray-700;
+}
