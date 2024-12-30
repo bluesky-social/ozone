@@ -640,7 +640,7 @@ function Details({
           </LabelList>
         </DataField>
         <DataField label="Tags">
-          <LabelList>
+          <LabelList className='flex-wrap gap-1'>
             {!tags.length && <LabelListEmpty />}
             {tags.map((tag) => (
               <SubjectTag key={tag} tag={tag} />

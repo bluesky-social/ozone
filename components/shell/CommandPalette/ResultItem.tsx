@@ -28,7 +28,7 @@ const ResultItem = (
         active
           ? 'bg-blue-400  rounded-lg text-gray-100 '
           : 'transparent text-gray-500'
-      } 'rounded-lg px-4 py-2 flex items-center cursor-pointer justify-between `}
+      } rounded-lg px-4 py-3 flex items-center cursor-pointer justify-between `}
     >
       <div className="flex items-center gap-2 text-base">
         {action.icon && action.icon}
