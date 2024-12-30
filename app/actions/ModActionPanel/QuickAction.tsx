@@ -32,7 +32,7 @@ import {
   ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
-import { pluralize, takesKeyboardEvt } from '@/lib/util'
+import { takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { MOD_EVENTS } from '@/mod-event/constants'
@@ -200,6 +200,7 @@ function Form(
   const shouldShowDurationInHoursField =
     isTakedownEvent || isMuteEvent || isMuteReporterEvent
   const canManageChat = usePermission('canManageChat')
+  const canTakedown = usePermission('canTakedown')
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -491,7 +492,13 @@ function Form(
     submitForm()
   }
   useKeyPressEvent('c', safeKeyHandler(onCancel))
-  useKeyPressEvent('s', safeKeyHandler(submitForm))
+  useKeyPressEvent(
+    's',
+    safeKeyHandler((e) => {
+      e.stopImmediatePropagation()
+      submitForm()
+    }),
+  )
   useKeyPressEvent('n', safeKeyHandler(submitAndGoNext))
   useKeyPressEvent(
     'a',
@@ -513,9 +520,11 @@ function Form(
   )
   useKeyPressEvent(
     't',
-    safeKeyHandler(() => {
-      setModEventType(MOD_EVENTS.TAKEDOWN)
-    }),
+    canTakedown
+      ? safeKeyHandler(() => {
+          setModEventType(MOD_EVENTS.TAKEDOWN)
+        })
+      : undefined,
   )
 
   return (
