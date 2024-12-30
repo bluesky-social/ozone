@@ -27,12 +27,12 @@ export function SetupModal({
               className="mx-auto h-20 w-auto"
               title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
               src="/img/logo-colorful.png"
-              alt="Ozone - Bluesky Admin"
+              alt="Ozone - ATProto Moderation Service"
               width={200}
               height={200}
             />
             <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900 dark:text-gray-200">
-              Bluesky Admin Tools
+              Ozone Moderation Service
             </h2>
             {title && (
               <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-100">
