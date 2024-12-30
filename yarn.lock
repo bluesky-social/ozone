@@ -4497,6 +4497,11 @@ react-markdown@~8.0.0:
     unist-util-visit "^4.0.0"
     vfile "^5.0.0"
 
+react-tailwindcss-select@^1.8.5:
+  version "1.8.5"
+  resolved "https://registry.yarnpkg.com/react-tailwindcss-select/-/react-tailwindcss-select-1.8.5.tgz#adf752c7e54889c38fd76bd1aa5cf8cf6d2b9788"
+  integrity sha512-x29IrLiqBT5FnkC9oFQReOr05tEOZHtDtZdha84nlSWcj3qD67yonKFHXIf69yc8ElFlKUxCEv0zCllN8jHBFA==
+
 react-tetris@^0.3.0:
   version "0.3.0"
   resolved "https://registry.yarnpkg.com/react-tetris/-/react-tetris-0.3.0.tgz#b846e1dff9af37880a54877783aedddc2258bed5"

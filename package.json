@@ -40,6 +40,7 @@
     "react-dom": "18.2.0",
     "react-dropzone": "^14.3.5",
     "react-json-view": "1.21.3",
+    "react-tailwindcss-select": "^1.8.5",
     "react-tetris": "^0.3.0",
     "react-toastify": "^9.1.1",
     "react-use": "^17.4.0",

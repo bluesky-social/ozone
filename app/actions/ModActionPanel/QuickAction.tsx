@@ -644,7 +644,7 @@ function Form(
               {!!subjectStatus?.tags?.length && (
                 <div className={`mb-3`}>
                   <FormLabel label="Tags">
-                    <LabelList className="-ml-1 flex-wrap">
+                    <LabelList className="-ml-1 flex-wrap gap-1">
                       {subjectStatus.tags.sort().map((tag) => {
                         return <SubjectTag key={tag} tag={tag} />
                       })}

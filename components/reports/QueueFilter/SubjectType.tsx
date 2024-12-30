@@ -1,32 +1,40 @@
+import { XCircleIcon } from '@heroicons/react/24/solid'
 import { ButtonGroup } from '@/common/buttons'
-import {
-  CollectionId,
-  EmbedTypes,
-  getCollectionName,
-  getEmbedTypeName,
-} from '../helpers/subject'
+import { CollectionId, getCollectionName } from '../helpers/subject'
 import { Checkbox } from '@/common/forms'
 import { useQueueFilter } from '../useQueueFilter'
 
 export const QueueFilterSubjectType = () => {
-  const { queueFilters, toggleCollection, toggleSubjectType, toggleEmbedType } =
-    useQueueFilter()
-  const allEmbedTypes = Object.values(EmbedTypes)
+  const {
+    queueFilters,
+    toggleCollection,
+    toggleSubjectType,
+    clearSubjectType,
+  } = useQueueFilter()
 
   const selectedCollections = queueFilters.collections || []
+  const hasSubjectTypeFilter =
+    !!queueFilters.subjectType || !!selectedCollections.length
   const selectedIncludeEmbedTypes: string[] =
     queueFilters.tags?.filter((tag) => {
-      return tag.startsWith('embed:')
-    }) || []
-  const selectedExcludeEmbedTypes: string[] =
-    queueFilters.excludeTags?.filter((tag) => {
       return tag.startsWith('embed:')
     }) || []
 
   return (
     <div>
       <h3 className="text-gray-900 dark:text-gray-200 mb-2">
-        Subject Type Filters
+        <button
+          type="button"
+          className="flex flex-row items-center"
+          onClick={() => {
+            if (hasSubjectTypeFilter) {
+              clearSubjectType()
+            }
+          }}
+        >
+          Subject Type Filters
+          {hasSubjectTypeFilter && <XCircleIcon className="h-4 w-4 ml-1" />}
+        </button>
       </h3>
 
       <ButtonGroup

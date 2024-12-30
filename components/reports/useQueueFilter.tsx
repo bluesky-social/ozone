@@ -86,6 +86,13 @@ export const useQueueFilter = () => {
     updateFilters(newParams)
   }
 
+  const clearSubjectType = () => {
+    updateFilters({
+      subjectType: undefined,
+      collections: undefined,
+    })
+  }
+
   const toggleEmbedType = (embedType: string) => {
     const allEmbedTypes = Object.values(EmbedTypes)
 
@@ -136,28 +143,24 @@ export const useQueueFilter = () => {
     })
   }
 
-  const toggleLanguage = (section: 'include' | 'exclude', newLang: string) => {
-    const filterKey = section === 'include' ? 'tags' : 'excludeTags'
-    const currentTags =
-      section === 'include' ? queueFilters.tags : queueFilters.excludeTags
+  const addTags = (index: number, tags: string[]) => {
+    const newTags = queueFilters.tags ?? []
 
-    const newTags = new Set(currentTags ?? [])
-    if (newTags.has(`lang:${newLang}`)) {
-      newTags.delete(`lang:${newLang}`)
-    } else {
-      newTags.add(`lang:${newLang}`)
+    if (!tags.length) {
+      newTags.splice(index, 1)
+      return updateFilters({ tags: newTags })
     }
 
-    updateFilters({
-      [filterKey]: newTags.size > 0 ? Array.from(newTags) : undefined,
-    })
+    newTags[index] = tags.join('&&')
+    updateFilters({ tags: newTags })
   }
 
-  const addTags = (index: number, tags: string[]) => {
-    console.log({ index, tags })
-    const newTags = queueFilters.tags ?? []
-    newTags[index] = tags.filter(Boolean).join('&&')
-    updateFilters({ tags: newTags })
+  const updateTagExclusions = (excludeTags: string[]) => {
+    updateFilters({ excludeTags: excludeTags.length ? excludeTags : undefined })
+  }
+
+  const clearTags = () => {
+    updateFilters({ tags: [] })
   }
 
   const clearLanguages = () => {
@@ -177,10 +180,12 @@ export const useQueueFilter = () => {
     updateFilters,
     toggleCollection,
     resetFilters,
+    clearSubjectType,
     toggleSubjectType,
     toggleEmbedType,
     clearLanguages,
-    toggleLanguage,
+    clearTags,
+    updateTagExclusions,
     addTags,
   }
 }

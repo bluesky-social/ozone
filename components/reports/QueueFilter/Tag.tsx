@@ -1,18 +1,26 @@
-import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/solid'
-import { Combobox, Transition } from '@headlessui/react'
-import { Fragment, useState } from 'react'
-import { isNonNullable } from '@/lib/util'
+import { XCircleIcon } from '@heroicons/react/24/solid'
+import { classNames } from '@/lib/util'
 import { useQueueFilter } from '../useQueueFilter'
-import { LabelChip } from '@/common/labels'
 import { ActionButton } from '@/common/buttons'
+import Select from 'react-tailwindcss-select'
 
 const availableTagOptions = {
   report: {
-    text: 'Report',
+    text: 'Report Type',
     options: [
       { text: 'Spam', value: 'report:spam' },
+      { text: 'Rude', value: 'report:rude' },
+      { text: 'Other', value: 'report:other' },
       { text: 'Violation', value: 'report:violation' },
       { text: 'Misleading', value: 'report:misleading' },
+    ],
+  },
+  embed: {
+    text: 'Embedded Content',
+    options: [
+      { text: 'Image', value: 'embed:image' },
+      { text: 'Video', value: 'embed:video' },
+      { text: 'Link/External', value: 'embed:external' },
     ],
   },
   lang: {
@@ -22,172 +30,191 @@ const availableTagOptions = {
       { text: 'Portuguese', value: 'lang:pt' },
       { text: 'Spanish', value: 'lang:es' },
       { text: 'French', value: 'lang:fr' },
-    ],
-  },
-  embed: {
-    text: 'Embed',
-    options: [
-      { text: 'Image', value: 'embed:image' },
-      { text: 'Video', value: 'embed:video' },
-      { text: 'Link/External', value: 'embed:external' },
+      { text: 'Japanese', value: 'lang:ja' },
+      { text: 'German', value: 'lang:de' },
+      { text: 'Italian', value: 'lang:it' },
+      { text: 'Korean', value: 'lang:ko' },
+      { text: 'Russian', value: 'lang:ru' },
+      { text: 'Chinese', value: 'lang:zh' },
+      { text: 'Arabic', value: 'lang:ar' },
+      { text: 'Unknown', value: 'lang:und' },
     ],
   },
 }
 
+const getTagOptions = (subjectType?: string) => {
+  const { embed, ...rest } = availableTagOptions
+  return Object.values(subjectType === 'account' ? rest : availableTagOptions)
+}
+
+const selectClassNames = {
+  tagItemIconContainer:
+    'flex items-center px-1 cursor-pointer rounded-r-sm hover:bg-red-200 hover:text-red-600 dark:text-slate-900',
+  menuButton: ({ isDisabled }: { isDisabled?: boolean } = {}) =>
+    classNames(
+      isDisabled ? 'bg-gray-200' : 'bg-white hover:border-gray-400 focus:ring',
+      'flex text-sm text-gray-500 border border-gray-300 rounded shadow-sm transition-all duration-300 focus:outline-none dark:bg-slate-700 dark:text-gray-100',
+    ),
+  menu: 'absolute z-10 w-full bg-white shadow-lg border rounded py-1 mt-1.5 text-sm text-gray-700 dark:bg-slate-700 dark:text-gray-100',
+  searchBox:
+    'w-full py-2 pl-8 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded focus:border-gray-200 focus:ring-0 focus:outline-none dark:bg-slate-800 dark:text-gray-100',
+  listGroupLabel:
+    'pr-2 py-2 cursor-default select-none truncate text-gray-700 dark:text-gray-100',
+  listItem: ({ isSelected }: { isSelected?: boolean } = {}) => {
+    const baseClass =
+      'block transition duration-200 px-2 py-2 cursor-pointer select-none truncate rounded dark:hover:bg-slate-800 dark:hover:text-gray-200'
+    const selectedClass = isSelected
+      ? `text-white`
+      : `text-gray-500 dark:text-gray-300`
+
+    return classNames(baseClass, selectedClass)
+  },
+  tagItemText: `text-gray-600 text-xs truncate cursor-default select-none`,
+}
+
 export const QueueFilterTags = () => {
-  const { addTags, queueFilters } = useQueueFilter()
-  // @TODO: This should move to dynamic indexing
+  const { addTags, updateTagExclusions, clearTags, queueFilters } =
+    useQueueFilter()
   const currentTags = queueFilters.tags ?? ['']
-  console.log(queueFilters.tags)
+  const hasTagFilters = currentTags.filter(Boolean).length > 0
+  const lastFragmentHasTags = !!currentTags[currentTags.length - 1].length
+  const allExcludedTags = queueFilters.excludeTags?.join()
+  const allTagFilters = currentTags.join()
+
+  const allTagOptions = getTagOptions(queueFilters.subjectType)
+  // If a tag is already set to be excluded, don't let that tag be set as a filter
+  const tagOptions = allExcludedTags?.length
+    ? allTagOptions.map((group) => {
+        return {
+          ...group,
+          options: group.options.filter(
+            (option) => !allExcludedTags.includes(option.value),
+          ),
+        }
+      })
+    : allTagOptions
+
+  // If a tag is already set in the filters, don't let that tag be set as an exclusion
+  const exclusionTagOptions = allTagFilters.length
+    ? allTagOptions.map((group) => {
+        return {
+          ...group,
+          options: group.options.filter(
+            (option) => !allTagFilters.includes(option.value),
+          ),
+        }
+      })
+    : allTagOptions
+
+  const currentTagExclusions = queueFilters.excludeTags ?? []
+  const hasTagExclusions = currentTagExclusions.length > 0
 
   return (
-    <div className="px-2 mt-2">
-      <h3 className="text-gray-900 dark:text-gray-200 my-2">Tag Filters</h3>
+    <div className="px-2 mt-4">
+      <h3 className="text-gray-900 dark:text-gray-200 my-2">
+        <button
+          type="button"
+          className="flex flex-row items-center"
+          onClick={() => {
+            if (hasTagFilters) {
+              clearTags()
+            }
+          }}
+        >
+          Subject With Tags
+          {hasTagFilters && <XCircleIcon className="h-4 w-4 ml-1" />}
+        </button>
+      </h3>
       {currentTags.map((tags, i) => {
         const fragments = tags.split('&&').filter(Boolean)
         return (
           <>
-            {i > 0 && <div className="dark:text-gray-200">OR</div>}
-            <div className="mb-1">
-              {fragments.map((tag, i) => {
-                return (
-                  <>
-                    <LabelChip key={tag}>{tag}</LabelChip>
-                    {i + 1 < fragments.length && (
-                      <span className="text-gray-200">AND</span>
-                    )}
-                  </>
-                )
-              })}
-              {i + 1 === currentTags.length && fragments.length > 0 && (
+            {i > 0 && (
+              <div className="dark:text-gray-200">
                 <button
-                  onClick={() => addTags(currentTags.length, [''])}
-                  className="text-gray-200"
+                  type="button"
+                  className="flex flex-row items-center"
+                  onClick={() => addTags(i, [])}
                 >
-                  AND
+                  OR <XCircleIcon className="ml-1 w-3 h-3" />
                 </button>
-              )}
-            </div>
+              </div>
+            )}
+            <Select
+              primaryColor="indigo"
+              isMultiple
+              isSearchable
+              // These classes are massive because we are basically
+              classNames={selectClassNames}
+              value={fragments.map((tag) => ({ label: tag, value: tag }))}
+              onChange={(selections) =>
+                addTags(
+                  i,
+                  Array.isArray(selections)
+                    ? selections.map((s) => s.value)
+                    : [],
+                )
+              }
+              options={tagOptions.map((group) => ({
+                label: group.text,
+                options: group.options.map((option) => ({
+                  label: option.text,
+                  value: option.value,
+                  isSelected: fragments.includes(option.value),
+                })),
+              }))}
+            />
           </>
         )
       })}
-      <QueueFilterTag
-        selected={currentTags[currentTags.length - 1]}
-        onSelect={(selections) => addTags(currentTags.length - 1, selections)}
+      {lastFragmentHasTags && (
+        <ActionButton
+          appearance="outlined"
+          size="xs"
+          className="mt-2"
+          onClick={() => {
+            addTags(currentTags.length, [''])
+          }}
+        >
+          Add OR Filter
+        </ActionButton>
+      )}
+      <h3 className="text-gray-900 dark:text-gray-200 my-2">
+        <button
+          type="button"
+          className="flex flex-row items-center"
+          onClick={() => {
+            if (hasTagExclusions) {
+              updateTagExclusions([])
+            }
+          }}
+        >
+          Subject Without Tags
+          {hasTagExclusions && <XCircleIcon className="h-4 w-4 ml-1" />}
+        </button>
+      </h3>
+
+      <Select
+        primaryColor="indigo"
+        isMultiple
+        isSearchable
+        // These classes are massive because we are basically
+        classNames={selectClassNames}
+        value={currentTagExclusions.map((tag) => ({ label: tag, value: tag }))}
+        onChange={(selections) =>
+          updateTagExclusions(
+            Array.isArray(selections) ? selections.map((s) => s.value) : [],
+          )
+        }
+        options={exclusionTagOptions.map((group) => ({
+          label: group.text,
+          options: group.options.map((option) => ({
+            label: option.text,
+            value: option.value,
+            isSelected: currentTagExclusions.includes(option.value),
+          })),
+        }))}
       />
     </div>
-  )
-}
-
-export const QueueFilterTag = ({
-  selected,
-  onSelect,
-}: {
-  selected: string
-  onSelect: (tags: string[]) => void
-}) => {
-  const [query, setQuery] = useState('')
-  const filteredTagOptions = Object.values(availableTagOptions)
-    .map((group) => {
-      const options = group.options.filter((option) =>
-        option.text.toLowerCase().includes(query.toLowerCase()),
-      )
-
-      if (options.length) {
-        return { ...group, options }
-      }
-
-      return null
-    })
-    .filter(isNonNullable)
-
-  return (
-    <Combobox
-      multiple
-      value={selected?.split('&&')}
-      onChange={(selections) => {
-        onSelect(selections)
-      }}
-      name="template"
-    >
-      <div className="relative mt-1">
-        <div className="relative cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-          <Combobox.Input
-            className="w-full flex-1 rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100"
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Type keyword or click the arrows on the right to see all templates"
-          />
-          <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <ChevronUpDownIcon
-              className="h-5 w-5 text-gray-400"
-              aria-hidden="true"
-            />
-          </Combobox.Button>
-        </div>
-        <Transition
-          as={Fragment}
-          leave="transition ease-in duration-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-          afterLeave={() => setQuery('')}
-        >
-          <Combobox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-            {!filteredTagOptions.length && (
-              <p className="px-3 py-2 dark:text-gray-100">
-                No result for {`"${query}"`}
-              </p>
-            )}
-            {filteredTagOptions.map((group) => {
-              return (
-                <div key={group.text}>
-                  <p className="dark:text-gray-100 ml-3 my-1">{group.text}</p>
-                  {group.options.map((option) => {
-                    return (
-                      <Combobox.Option
-                        key={option.text}
-                        className={({ active }) =>
-                          `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                            active
-                              ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
-                              : 'text-gray-900 dark:text-gray-200'
-                          }`
-                        }
-                        value={option.value}
-                      >
-                        {({ selected, active }) => (
-                          <>
-                            {selected ? (
-                              <span
-                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                  active ? 'text-indigo-900' : 'text-indigo-600'
-                                }`}
-                              >
-                                <CheckIcon
-                                  className="h-5 w-5 dark:text-gray-50"
-                                  aria-hidden="true"
-                                />
-                              </span>
-                            ) : null}
-                            <div className="flex flex-row">
-                              <span
-                                className={`block truncate ${
-                                  selected ? 'font-medium' : 'font-normal'
-                                }`}
-                              >
-                                {option.text}
-                              </span>
-                            </div>
-                          </>
-                        )}
-                      </Combobox.Option>
-                    )
-                  })}
-                </div>
-              )
-            })}
-          </Combobox.Options>
-        </Transition>
-      </div>
-    </Combobox>
   )
 }

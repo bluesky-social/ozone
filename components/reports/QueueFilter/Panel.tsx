@@ -8,7 +8,7 @@ import { ToolsOzoneModerationQueryStatuses } from '@atproto/api'
 import { getLanguageFlag } from 'components/tags/SubjectTag'
 import { getCollectionName } from '../helpers/subject'
 import { classNames } from '@/lib/util'
-import { QueueFilterTag, QueueFilterTags } from './Tag'
+import { QueueFilterTags } from './Tag'
 
 // Takes all the queue filters manageable in the panel and displays a summary of selections made
 const FilterSummary = ({
@@ -18,7 +18,7 @@ const FilterSummary = ({
 }) => {
   const { tags, excludeTags, collections, subjectType } = queueFilters
   if (
-    !tags?.length &&
+    !tags?.filter(Boolean).length &&
     !excludeTags?.length &&
     !collections?.length &&
     !subjectType
