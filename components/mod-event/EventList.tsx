@@ -143,6 +143,7 @@ export const ModEventList = (
     isInitialLoadingModEvents,
     hasFilter,
     commentFilter,
+    policies,
     toggleCommentFilter,
     setCommentFilterKeyword,
     createdBy,
@@ -285,6 +286,7 @@ export const ModEventList = (
             removedTags,
             applyFilterMacro,
             changeListFilter,
+            policies,
           }}
         />
       )}

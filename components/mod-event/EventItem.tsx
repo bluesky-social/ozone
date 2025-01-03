@@ -12,6 +12,9 @@ import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventViewWithDetails } from './useModEventList'
+import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import Link from 'next/link'
+import { pluralize } from '@/lib/util'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -219,8 +222,34 @@ const TakedownOrMute = ({
         </div>
       </div>
       {expiresAt && (
-        <p className="mt-1">Until {dateFormatter.format(expiresAt)}</p>
+        <p className="mt-1 flex flex-row items-center">
+          <ClockIcon className="h-3 w-3 inline-block mr-1" />
+          Until {dateFormatter.format(expiresAt)}
+        </p>
       )}
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) &&
+      modEvent.event.policies?.length ? (
+        <p className="pb-1 flex flex-row items-center">
+          <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
+          <i>
+            Under{' '}
+            {modEvent.event.policies.map((policy) => {
+              return (
+                <Link
+                  key={policy}
+                  prefetch={false}
+                  href={`/configure?tab=policies&search=${policy}`}
+                >
+                  <u>{`${policy}`}</u>{' '}
+                </Link>
+              )
+            })}
+            {pluralize(modEvent.event.policies.length, 'policy', {
+              plural: 'policies',
+            })}
+          </i>
+        </p>
+      ) : null}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}

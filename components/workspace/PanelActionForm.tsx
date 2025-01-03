@@ -8,6 +8,7 @@ import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { WORKSPACE_FORM_ID } from './constants'
 import { EmailComposer } from 'components/email/Composer'
 import { EmailComposerData } from 'components/email/helpers'
+import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 
 export const WorkspacePanelActionForm = ({
   handleEmailSubmit,
@@ -27,8 +28,7 @@ export const WorkspacePanelActionForm = ({
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
-  const shouldShowDurationInHoursField =
-    modEventType === MOD_EVENTS.TAKEDOWN || isMuteEvent
+  const shouldShowDurationInHoursField = isTakedownEvent || isMuteEvent
 
   return (
     <div className="mb-4 w-1/2">
@@ -57,17 +57,25 @@ export const WorkspacePanelActionForm = ({
       ) : (
         <div>
           {shouldShowDurationInHoursField && (
-            <FormLabel
-              label=""
-              htmlFor="durationInHours"
-              className={`mb-3 mt-2`}
-            >
-              <ActionDurationSelector
-                action={modEventType}
-                form={WORKSPACE_FORM_ID}
-                labelText={isMuteEvent ? 'Mute duration' : ''}
-              />
-            </FormLabel>
+            <div className="flex flex-row gap-2">
+              <FormLabel
+                label=""
+                htmlFor="durationInHours"
+                className={`mb-3 mt-2`}
+              >
+                <ActionDurationSelector
+                  action={modEventType}
+                  form={WORKSPACE_FORM_ID}
+                  labelText={isMuteEvent ? 'Mute duration' : ''}
+                />
+              </FormLabel>
+
+              {isTakedownEvent && (
+                <div className="mt-2 w-full">
+                  <ActionPolicySelector name="policies" />
+                </div>
+              )}
+            </div>
           )}
 
           {isLabelEvent && (
