@@ -27,7 +27,7 @@ export default function TetrisGame () {
         state,
         controller,
       }) => (
-        <div className="flex flex-row gap-x-4 items-start pt-4 mx-auto">
+        <div className="flex flex-row gap-x-4 items-start pt-4 mx-auto dark:text-gray-200">
           <HeldPiece />
           <div>
             <p>Points: {points}</p>

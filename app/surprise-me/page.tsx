@@ -29,7 +29,7 @@ const Timer = () => {
   }, 1000)
 
   return (
-    <div className="flex flex-row justify-center py-4">
+    <div className="flex flex-row justify-center py-4 dark:text-gray-200">
       <p className="font-bold text-xl">{getDuration(seconds)}</p>
     </div>
   )
@@ -44,41 +44,7 @@ export default function SurpriseMePage() {
     <>
       {/* This is valid jsx but because of a known bug, typescript is confused */}
       {/* @ts-ignore:next-line */}
-      <style global jsx>
-        {`
-          .game-block {
-            margin: 0;
-            padding: 0;
-            width: 1.5em;
-            height: 1.5em;
-            border: 1px solid #ddd;
-          }
-          .piece-i {
-            background-color: #ec858b;
-          }
-          .piece-j {
-            background-color: #f1b598;
-          }
-          .piece-l {
-            background-color: #f8efae;
-          }
-          .piece-o {
-            background-color: #b5a677;
-          }
-          .piece-s {
-            background-color: #816e56;
-          }
-          .piece-t {
-            background-color: #b77c72;
-          }
-          .piece-z {
-            background-color: #e3be58;
-          }
-          .piece-preview {
-            background-color: #eee;
-          }
-        `}
-      </style>
+
       <Timer />
       <ClientOnlyTetris />
     </>

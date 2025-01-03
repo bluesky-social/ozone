@@ -4,7 +4,6 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'quick-action-modal',
     name: 'Open Quick Action Panel',
-    shortcut: ['q'],
     keywords: 'quick,action,panel',
     perform: () => {
       router.push('/reports?quickOpen=true')
@@ -13,7 +12,6 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'workspace-modal',
     name: 'Open Workspace',
-    shortcut: ['w'],
     keywords: 'workspace,panel',
     perform: () => {
       const pathname = window.location.pathname
@@ -25,7 +23,6 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'unresolved-queue',
     name: 'Open Unresolved Queue',
-    shortcut: ['u'],
     keywords: 'unresolved,queue',
     perform: () =>
       router.push(
@@ -35,7 +32,6 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'resolved-queue',
     name: 'Open Resolved Queue',
-    shortcut: ['r'],
     keywords: 'resolved,queue',
     perform: () =>
       router.push(
@@ -45,7 +41,6 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'escalated-queue',
     name: 'Open Escalated Queue',
-    shortcut: ['e'],
     keywords: 'escalated,queue',
     perform: () =>
       router.push(
@@ -55,14 +50,12 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'all-queue',
     name: 'Open Moderation Queue',
-    shortcut: ['a'],
     keywords: 'all,queue',
     perform: () => router.push('/reports'),
   },
   {
     id: 'appeal-queue',
     name: 'Open Appeal Queue',
-    shortcut: ['e'],
     keywords: 'appealed,queue',
     perform: () =>
       router.push(
@@ -72,14 +65,12 @@ export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'filter-macros',
     name: 'Manage Filter Macros',
-    shortcut: ['f'],
     keywords: 'filter,macros',
     perform: () => router.push('/events/filters/macros'),
   },
   {
     id: 'view-sets',
     name: 'See All Sets',
-    shortcut: ['s'],
     keywords: 'sets,settings',
     perform: () => {
       router.push('/configure?tab=sets')

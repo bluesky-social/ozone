@@ -28,7 +28,7 @@ export function Shell({ children }: React.PropsWithChildren) {
                 height={100}
                 className="h-8 w-auto"
                 src="/img/logo-white.png"
-                alt="Ozone - Bluesky Admin"
+                alt="Ozone - ATProto Moderation Service"
                 title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
               />
             </div>
