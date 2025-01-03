@@ -101,7 +101,7 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
               ? values.join(' OR ')
               : values || ''
           }}
-          placeholder="Type or click arrows to see all policies"
+          placeholder="Select policy. Type or click arrows to see all policies"
         />
         <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
           <ChevronUpDownIcon
