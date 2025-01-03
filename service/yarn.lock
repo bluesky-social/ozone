@@ -2,10 +2,10 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.13.24":
-  version "0.13.24"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.24.tgz#3fff2421a9d1db0e416155e378022a328d477b62"
-  integrity sha512-q9GHjaypnEyeag4plsWzP2eWaUfJWy9PHviBsJu5GauwMrGSU/4ijIqWwbFYzyXeWg85ErQxx6FqIne7HDbaVQ==
+"@atproto/api@^0.13.25":
+  version "0.13.25"
+  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.25.tgz#917d6ae75e0c176166f67b7c340944c84a7c6413"
+  integrity sha512-5tz2NvYO7W9+0PV7x4k4KIAIazQI6Km+q4/+O6VUoNSqHsF3ry9/9mjcZKBoJLdmcVtZdcKSlPUTtxthan6iKw==
   dependencies:
     "@atproto/common-web" "^0.3.1"
     "@atproto/lexicon" "^0.4.4"
@@ -88,12 +88,12 @@
     multiformats "^9.9.0"
     zod "^3.23.8"
 
-"@atproto/ozone@0.1.63":
-  version "0.1.63"
-  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.1.63.tgz#0952519a310fd2071879ea72b5a67b5c891bc881"
-  integrity sha512-/YTunTH5Z8r5nNHCg10je6l0FI3hGxSmsmEfZ+gRdiNt9eU8Wtm8CVVB37PhRYRzJ9FyTRvLhA/WXlokcgOw+Q==
+"@atproto/ozone@0.1.64":
+  version "0.1.64"
+  resolved "https://registry.yarnpkg.com/@atproto/ozone/-/ozone-0.1.64.tgz#babd67fdfaef1a21423e49033a02c82a54ec09e3"
+  integrity sha512-1eJFx29eG+HW0jFGCsQM/DYI5Yy3PxDuCJk7nDj+s35IcgadV3Hv0d6QzsnL+IRygJetzfS7PewyZTbnh41x4Q==
   dependencies:
-    "@atproto/api" "^0.13.24"
+    "@atproto/api" "^0.13.25"
     "@atproto/common" "^0.4.5"
     "@atproto/crypto" "^0.4.2"
     "@atproto/identity" "^0.4.3"

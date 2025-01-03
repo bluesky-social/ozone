@@ -267,8 +267,8 @@ function Form(
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
       }
 
-      if (formData.get('policy')) {
-        coreEvent.policy = String(formData.get('policy'))
+      if (isTakedownEvent && formData.get('policies')) {
+        coreEvent.policies = [String(formData.get('policies'))]
       }
 
       if (
@@ -336,6 +336,10 @@ function Form(
 
       if (isDivertEvent && !subjectBlobCids.length) {
         throw new Error('blob-selection-required')
+      }
+
+      if (isTakedownEvent && !coreEvent.policies) {
+        throw new Error('policy-selection-required')
       }
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
@@ -696,7 +700,7 @@ function Form(
                       </FormLabel>
                       {isTakedownEvent && (
                         <div className="mt-2 w-full">
-                          <ActionPolicySelector name="policy" />
+                          <ActionPolicySelector name="policies" />
                         </div>
                       )}
                     </div>

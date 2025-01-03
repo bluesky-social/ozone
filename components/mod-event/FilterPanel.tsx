@@ -17,7 +17,10 @@ import { useState } from 'react'
 import { RepoFinder } from '@/repositories/Finder'
 import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
-import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import {
+  ActionPoliciesSelector,
+  ActionPolicySelector,
+} from '@/reports/ModerationForm/ActionPolicySelector'
 
 export const EventFilterPanel = ({
   limit,
@@ -275,9 +278,9 @@ export const EventFilterPanel = ({
       {types.includes(MOD_EVENTS.TAKEDOWN) && (
         <div className="flex flex-row gap-2 mt-2">
           <FormLabel label="Policy" className="flex-1">
-            <ActionPolicySelector
-              onSelect={(policy) => {
-                changeListFilter({ field: 'policy', value: policy })
+            <ActionPoliciesSelector
+              onSelect={(policies) => {
+                changeListFilter({ field: 'policies', value: policies })
               }}
             />
           </FormLabel>

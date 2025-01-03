@@ -14,6 +14,7 @@ import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventViewWithDetails } from './useModEventList'
 import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
+import { pluralize } from '@/lib/util'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -226,18 +227,26 @@ const TakedownOrMute = ({
           Until {dateFormatter.format(expiresAt)}
         </p>
       )}
-      {modEvent.event.policy ? (
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) &&
+      modEvent.event.policies?.length ? (
         <p className="pb-1 flex flex-row items-center">
           <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
           <i>
             Under{' '}
-            <Link
-              prefetch={false}
-              href={`/configure?tab=policies&search=${modEvent.event.policy}`}
-            >
-              <u>{`${modEvent.event.policy}`}</u>
-            </Link>{' '}
-            policy
+            {modEvent.event.policies.map((policy) => {
+              return (
+                <Link
+                  key={policy}
+                  prefetch={false}
+                  href={`/configure?tab=policies&search=${policy}`}
+                >
+                  <u>{`${policy}`}</u>{' '}
+                </Link>
+              )
+            })}
+            {pluralize(modEvent.event.policies.length, 'policy', {
+              plural: 'policies',
+            })}
           </i>
         </p>
       ) : null}
