@@ -7,7 +7,7 @@ import {
   CheckIcon,
   ChevronUpDownIcon,
 } from '@heroicons/react/24/solid'
-import { Fragment, useRef, useState } from 'react'
+import { Fragment, useState } from 'react'
 
 export const ActionPolicySelector = ({
   defaultPolicy,
