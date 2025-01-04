@@ -225,8 +225,15 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       if (coreEvent.$type === MOD_EVENTS.TAKEDOWN) {
-        if (formData.get('policies')) {
-          coreEvent.policies = [String(formData.get('policies'))]
+        // The Combobox component from headless ui does not support passing a `form` attribute to the hidden input
+        // and since the input field is rendered outside of the main workspace form, we need to manually reach out
+        // to the input field to get the selected value
+        const policies =
+          ev.currentTarget.parentNode?.querySelector<HTMLInputElement>(
+            'input[name="policies"]',
+          )?.value
+        if (policies) {
+          coreEvent.policies = [String(policies)]
         } else {
           setSubmission({
             isSubmitting: false,
