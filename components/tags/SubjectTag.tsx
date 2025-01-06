@@ -25,5 +25,6 @@ export const SubjectTag = ({
       )
     }
   }
+  
   return <LabelChip {...rest}>{tag}</LabelChip>
 }

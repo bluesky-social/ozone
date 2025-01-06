@@ -9,6 +9,31 @@ import { getCollectionName } from '../helpers/subject'
 import { classNames } from '@/lib/util'
 import { QueueFilterTags } from './Tag'
 
+const buildTagFilterSummary = (tags: string[]) => {
+  if (!tags.filter(Boolean).length) {
+    return ''
+  }
+
+  const list = tags.map((tag) => {
+    return tag
+      .split('&&')
+      .map((t) => {
+        if (t.startsWith('lang:')) {
+          const langCode = t.split(':')[1]
+          return getLanguageFlag(langCode) || langCode
+        }
+        return t
+      })
+      .join(' && ')
+  })
+
+  if (list.length === 1) {
+    return list[0]
+  }
+
+  return `(${list.join(') OR (')})`
+}
+
 // Takes all the queue filters manageable in the panel and displays a summary of selections made
 const FilterSummary = ({
   queueFilters,
@@ -36,16 +61,9 @@ const FilterSummary = ({
     inclusions.push('Only Records')
   }
 
-  tags?.forEach((tag) => {
-    if (tag.startsWith('lang:')) {
-      const langCode = tag.split(':')[1]
-      inclusions.push(getLanguageFlag(langCode) || langCode)
-    }
-
-    if (tag.startsWith('embed:')) {
-      inclusions.push(tag.split(':')[1])
-    }
-  })
+  if (tags?.length) {
+    inclusions.push(buildTagFilterSummary(tags))
+  }
 
   excludeTags?.forEach((tag) => {
     if (tag.startsWith('lang:')) {
@@ -57,6 +75,7 @@ const FilterSummary = ({
       exclusions.push(tag.split(':')[1])
     }
   })
+
   return (
     <>
       {!!inclusions.length && inclusions.join(' ')}
