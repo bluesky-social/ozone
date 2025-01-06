@@ -12,12 +12,14 @@ import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { SetsConfig } from '@/config/Sets'
 import { ProtectedTagsConfig } from '@/config/ProtectedTags'
+import { PoliciesConfig } from '@/config/Policies'
 
 enum Views {
   Configure,
   Members,
   Sets,
   ProtectedTags,
+  Policies,
 }
 
 const TabKeys = {
@@ -25,6 +27,7 @@ const TabKeys = {
   members: Views.Members,
   sets: Views.Sets,
   protectedTags: Views.ProtectedTags,
+  policies: Views.Policies,
 }
 
 export default function ConfigurePageContent() {
@@ -74,6 +77,10 @@ export default function ConfigurePageContent() {
       label: 'Sets',
     },
     {
+      view: Views.Policies,
+      label: 'Policies',
+    },
+    {
       view: Views.ProtectedTags,
       label: 'Protected Tags',
     },
@@ -90,8 +97,8 @@ export default function ConfigurePageContent() {
       {currentView === Views.Configure && <LabelerConfig />}
       {currentView === Views.Members && <MemberConfig />}
       {currentView === Views.Sets && <SetsConfig />}
-      {currentView === Views.Sets && <SetsConfig />}
       {currentView === Views.ProtectedTags && <ProtectedTagsConfig />}
+      {currentView === Views.Policies && <PoliciesConfig />}
 
       <ModActionPanelQuick
         open={!!quickOpenParam}

@@ -35,6 +35,7 @@ import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
 import { isNonNullable, isValidDid } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
+import { Alert } from '@/common/Alert'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -223,6 +224,25 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         coreEvent.sticky = true
       }
 
+      if (coreEvent.$type === MOD_EVENTS.TAKEDOWN) {
+        // The Combobox component from headless ui does not support passing a `form` attribute to the hidden input
+        // and since the input field is rendered outside of the main workspace form, we need to manually reach out
+        // to the input field to get the selected value
+        const policies =
+          ev.currentTarget.parentNode?.querySelector<HTMLInputElement>(
+            'input[name="policies"]',
+          )?.value
+        if (policies) {
+          coreEvent.policies = [String(policies)]
+        } else {
+          setSubmission({
+            isSubmitting: false,
+            error: 'Please select a policy for the takedown.',
+          })
+          return
+        }
+      }
+
       // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
       if (formData.get('tags')) {
         const isRemovingTags = formData.get('removeTags')
@@ -302,6 +322,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
+
   return (
     <FullScreenActionPanel
       title={
@@ -366,12 +387,23 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                   />
                 )}
                 {showActionForm && (
-                  <WorkspacePanelActionForm
-                    modEventType={modEventType}
-                    setModEventType={setModEventType}
-                    handleEmailSubmit={handleEmailSubmit}
-                    onCancel={() => setShowActionForm((current) => !current)}
-                  />
+                  <>
+                    <WorkspacePanelActionForm
+                      modEventType={modEventType}
+                      setModEventType={setModEventType}
+                      handleEmailSubmit={handleEmailSubmit}
+                      onCancel={() => setShowActionForm((current) => !current)}
+                    />
+                    {submission.error && (
+                      <div className="mb-3">
+                        <Alert
+                          type="error"
+                          body={submission.error}
+                          title="Error submitting bulk action"
+                        />
+                      </div>
+                    )}
+                  </>
                 )}
                 {/* The form component can't wrap the panel action form above because we may render the email composer */}
                 {/* inside the panel action form which is it's own form so we use form ids to avoid nesting forms */}

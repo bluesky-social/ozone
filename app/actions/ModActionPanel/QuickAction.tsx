@@ -59,6 +59,7 @@ import {
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
+import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -267,6 +268,10 @@ function Form(
         coreEvent.durationInHours = Number(formData.get('durationInHours'))
       }
 
+      if (isTakedownEvent && formData.get('policies')) {
+        coreEvent.policies = [String(formData.get('policies'))]
+      }
+
       if (
         (isTakedownEvent || isAckEvent) &&
         formData.get('acknowledgeAccountSubjects')
@@ -332,6 +337,10 @@ function Form(
 
       if (isDivertEvent && !subjectBlobCids.length) {
         throw new Error('blob-selection-required')
+      }
+
+      if (isTakedownEvent && !coreEvent.policies) {
+        throw new Error('policy-selection-required')
       }
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
@@ -675,16 +684,35 @@ function Form(
                     <ModEventDetailsPopover modEventType={modEventType} />
                   </div>
                   {shouldShowDurationInHoursField && (
-                    <FormLabel
-                      label=""
-                      htmlFor="durationInHours"
-                      className={`mb-3 mt-2`}
-                    >
-                      <ActionDurationSelector
-                        action={modEventType}
-                        labelText={isMuteEvent ? 'Mute duration' : ''}
-                      />
-                    </FormLabel>
+                    <div className="flex flex-row gap-2">
+                      <FormLabel
+                        label=""
+                        htmlFor="durationInHours"
+                        className={`mb-3 mt-2`}
+                      >
+                        <ActionDurationSelector
+                          action={modEventType}
+                          onChange={(e) => {
+                            if (e.target.value === '0') {
+                              // When permanent takedown is selected, auto check ack all checkbox
+                              const ackAllCheckbox =
+                                document.querySelector<HTMLInputElement>(
+                                  'input[name="acknowledgeAccountSubjects"]',
+                                )
+                              if (ackAllCheckbox && !ackAllCheckbox.checked) {
+                                ackAllCheckbox.checked = true
+                              }
+                            }
+                          }}
+                          labelText={isMuteEvent ? 'Mute duration' : ''}
+                        />
+                      </FormLabel>
+                      {isTakedownEvent && (
+                        <div className="mt-2 w-full">
+                          <ActionPolicySelector name="policies" />
+                        </div>
+                      )}
+                    </div>
                   )}
 
                   {isMuteReporterEvent && (

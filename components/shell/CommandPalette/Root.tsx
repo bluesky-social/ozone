@@ -46,9 +46,7 @@ export const CommandPaletteRoot = ({
   children: React.ReactNode
 }) => {
   const router = useRouter()
-  const pathname = usePathname()
-  const searchParams = useSearchParams()
-  const staticActions = getStaticActions({ router, pathname, searchParams })
+  const staticActions = getStaticActions({ router })
   return (
     <KBarProvider actions={staticActions}>
       <KBarPortal>
