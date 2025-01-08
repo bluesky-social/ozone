@@ -10,21 +10,23 @@ import { classNames } from '@/lib/util'
 import { QueueFilterTags } from './Tag'
 
 const buildTagFilterSummary = (tags: string[]) => {
-  if (!tags.filter(Boolean).length) {
+  const filtered = tags.filter(Boolean)
+  if (!filtered.length) {
     return ''
   }
 
-  const list = tags.map((tag) => {
+  const list = filtered.map((tag) => {
     return tag
       .split('&&')
       .map((t) => {
+        t = t.trim()
         if (t.startsWith('lang:')) {
           const langCode = t.split(':')[1]
-          return getLanguageFlag(langCode) || langCode
+          return getLanguageFlag(langCode) || t
         }
         return t
       })
-      .join(' && ')
+      .join(' AND ')
   })
 
   if (list.length === 1) {
@@ -69,16 +71,31 @@ const FilterSummary = ({
     if (tag.startsWith('lang:')) {
       const langCode = tag.split(':')[1]
       exclusions.push(getLanguageFlag(langCode) || langCode)
+      return
     }
 
     if (tag.startsWith('embed:')) {
       exclusions.push(tag.split(':')[1])
+      return
     }
+
+    exclusions.push(tag)
   })
 
   return (
     <>
       {!!inclusions.length && inclusions.join(' ')}
+      {!!collections?.length && (
+        <span
+          className={classNames(
+            inclusions.length
+              ? 'border-l border-gray-400 ml-1 pl-1'
+              : undefined,
+          )}
+        >
+          Collections: {collections.map(getCollectionName).join(', ')}
+        </span>
+      )}
       {!!exclusions.length && (
         <span
           className={classNames(
@@ -89,17 +106,6 @@ const FilterSummary = ({
           )}
         >
           {exclusions.join(' ')}
-        </span>
-      )}
-      {!!collections?.length && (
-        <span
-          className={classNames(
-            inclusions.length
-              ? 'border-l border-gray-400 ml-1 pl-1'
-              : undefined,
-          )}
-        >
-          Collections: {collections.map(getCollectionName).join(', ')}
         </span>
       )}
     </>

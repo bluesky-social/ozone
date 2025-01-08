@@ -3,6 +3,7 @@ import { classNames } from '@/lib/util'
 import { useQueueFilter } from '../useQueueFilter'
 import { ActionButton } from '@/common/buttons'
 import Select from 'react-tailwindcss-select'
+import { useState } from 'react'
 
 const availableTagOptions = {
   report: {
@@ -73,6 +74,8 @@ const selectClassNames = {
 }
 
 export const QueueFilterTags = () => {
+  const [tagSearchInput, setTagSearchInput] = useState('')
+  const [exclusionTagSearchInput, setExclusionTagSearchInput] = useState('')
   const { addTags, updateTagExclusions, clearTags, queueFilters } =
     useQueueFilter()
   const currentTags = queueFilters.tags ?? ['']
@@ -94,6 +97,18 @@ export const QueueFilterTags = () => {
       })
     : allTagOptions
 
+  if (tagSearchInput) {
+    tagOptions.push({
+      text: 'Custom Tag',
+      options: [
+        {
+          text: tagSearchInput,
+          value: tagSearchInput,
+        },
+      ],
+    })
+  }
+
   // If a tag is already set in the filters, don't let that tag be set as an exclusion
   const exclusionTagOptions = allTagFilters.length
     ? allTagOptions.map((group) => {
@@ -105,6 +120,18 @@ export const QueueFilterTags = () => {
         }
       })
     : allTagOptions
+
+  if (exclusionTagSearchInput) {
+    exclusionTagOptions.push({
+      text: 'Custom Tag',
+      options: [
+        {
+          text: exclusionTagSearchInput,
+          value: exclusionTagSearchInput,
+        },
+      ],
+    })
+  }
 
   const currentTagExclusions = queueFilters.excludeTags ?? []
   const hasTagExclusions = currentTagExclusions.length > 0
@@ -144,9 +171,11 @@ export const QueueFilterTags = () => {
               primaryColor="indigo"
               isMultiple
               isSearchable
+              isClearable
               // These classes are massive because we are basically
               classNames={selectClassNames}
               value={fragments.map((tag) => ({ label: tag, value: tag }))}
+              onSearchInputChange={(e) => setTagSearchInput(e.target.value)}
               onChange={(selections) =>
                 addTags(
                   i,
@@ -198,9 +227,11 @@ export const QueueFilterTags = () => {
         primaryColor="indigo"
         isMultiple
         isSearchable
+        isClearable
         // These classes are massive because we are basically
         classNames={selectClassNames}
         value={currentTagExclusions.map((tag) => ({ label: tag, value: tag }))}
+        onSearchInputChange={(e) => setExclusionTagSearchInput(e.target.value)}
         onChange={(selections) =>
           updateTagExclusions(
             Array.isArray(selections) ? selections.map((s) => s.value) : [],
