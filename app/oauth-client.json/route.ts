@@ -22,7 +22,7 @@ export async function GET(request: Request) {
       client_uri: new URL('/', requestUrl).href,
       redirect_uris: [new URL('/', requestUrl).href],
       response_types: ['code'],
-      grant_types: ['authorization_code'],
+      grant_types: ['authorization_code', 'refresh_token'],
       token_endpoint_auth_method: 'none',
       scope: OAUTH_SCOPE,
       dpop_bound_access_tokens: true,
