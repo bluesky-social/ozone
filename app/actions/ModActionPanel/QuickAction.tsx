@@ -596,7 +596,10 @@ function Form(
               <div className="max-w-xl">
                 <PreviewCard
                   subject={subject}
-                  isAuthorDeactivated={!!record?.repo?.deactivatedAt}
+                  isAuthorDeactivated={!!record?.repo.deactivatedAt}
+                  isAuthorTakendown={
+                    !!record?.repo.moderation.subjectStatus?.takendown
+                  }
                   className="border-2 border-dashed border-gray-300"
                 >
                   {!isSubjectDid && record?.repo && (

@@ -89,11 +89,13 @@ export function PostAsCard({
   className = '',
   showLabels = true,
   isAuthorDeactivated,
+  isAuthorTakendown,
   controls = [...PostControlOptions],
 }: {
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
   isAuthorDeactivated?: boolean
+  isAuthorTakendown?: boolean
   controls?: PostControl[]
   onReport?: (uri: string) => void
   className?: string
@@ -103,7 +105,11 @@ export function PostAsCard({
     <div className={`bg-white dark:bg-slate-800 ${className}`}>
       <PostHeader item={item} dense={dense} />
       <PostContent item={item} dense={dense} />
-      <PostEmbeds item={item} isAuthorDeactivated={isAuthorDeactivated} />
+      <PostEmbeds
+        item={item}
+        isAuthorTakendown={isAuthorTakendown}
+        isAuthorDeactivated={isAuthorDeactivated}
+      />
       {showLabels && <PostLabels item={item} dense={dense} />}
       {!!controls?.length && (
         <PostControls item={item} onReport={onReport} controls={controls} />
@@ -242,8 +248,10 @@ const getImageSizeClass = (imageCount: number) =>
 
 export function PostEmbeds({
   item,
+  isAuthorTakendown,
   isAuthorDeactivated,
 }: {
+  isAuthorTakendown?: boolean
   isAuthorDeactivated?: boolean
   item: AppBskyFeedDefs.FeedViewPost
 }) {
@@ -265,10 +273,12 @@ export function PostEmbeds({
     const captions = item.post.record?.['embed']?.['captions']
     const sourceUrl = getVideoUrlWithFallback(embed.playlist, {
       isAuthorDeactivated,
+      isAuthorTakendown,
     })
     const thumbnailUrl = embed.thumbnail
       ? getVideoUrlWithFallback(embed.thumbnail, {
           isAuthorDeactivated,
+          isAuthorTakendown,
         })
       : undefined
     return (

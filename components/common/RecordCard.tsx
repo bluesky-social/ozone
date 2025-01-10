@@ -21,8 +21,14 @@ export function RecordCard(props: {
   uri: string
   showLabels?: boolean
   isAuthorDeactivated?: boolean
+  isAuthorTakendown?: boolean
 }) {
-  const { uri, showLabels = false, isAuthorDeactivated } = props
+  const {
+    uri,
+    showLabels = false,
+    isAuthorDeactivated,
+    isAuthorTakendown,
+  } = props
   const parsed = parseAtUri(uri)
   if (!parsed) {
     return null
@@ -32,6 +38,7 @@ export function RecordCard(props: {
       <PostCard
         uri={uri}
         showLabels={showLabels}
+        isAuthorTakendown={isAuthorTakendown}
         isAuthorDeactivated={isAuthorDeactivated}
       />
     )
@@ -66,10 +73,12 @@ export function RecordCard(props: {
 function PostCard({
   uri,
   showLabels,
+  isAuthorTakendown,
   isAuthorDeactivated,
 }: {
   uri: string
   showLabels?: boolean
+  isAuthorTakendown?: boolean
   isAuthorDeactivated?: boolean
 }) {
   const labelerAgent = useLabelerAgent()
@@ -136,6 +145,7 @@ function PostCard({
       dense
       showLabels={showLabels}
       item={{ post: data.thread.post }}
+      isAuthorTakendown={isAuthorTakendown}
       isAuthorDeactivated={isAuthorDeactivated}
       controls={['like', 'repost', 'workspace']}
     />

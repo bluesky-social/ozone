@@ -29,9 +29,11 @@ export function PreviewCard({
   children,
   className,
   isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   subject: string
   isAuthorDeactivated?: boolean
+  isAuthorTakendown?: boolean
   title?: string | ReactNode
   children?: ReactNode
   className?: string
@@ -43,7 +45,11 @@ export function PreviewCard({
         <p className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
           {displayTitle}
         </p>
-        <RecordCard uri={subject} isAuthorDeactivated={isAuthorDeactivated} />
+        <RecordCard
+          uri={subject}
+          isAuthorDeactivated={isAuthorDeactivated}
+          isAuthorTakendown={isAuthorTakendown}
+        />
         {children}
       </div>
     )
