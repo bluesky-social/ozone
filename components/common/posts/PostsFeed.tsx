@@ -52,10 +52,14 @@ export function PostsFeed({
   items,
   onReport,
   onLoadMore,
+  isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
   onLoadMore?: () => void
+  isAuthorDeactivated?: boolean
+  isAuthorTakendown?: boolean
 }) {
   return (
     <div className="border border-gray-200 dark:border-slate-700 border-b-0">
@@ -64,7 +68,13 @@ export function PostsFeed({
           key={`post-${i}`}
           className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 pt-6 pb-4 px-4"
         >
-          <PostAsCard item={item} onReport={onReport} dense />
+          <PostAsCard
+            item={item}
+            onReport={onReport}
+            dense
+            isAuthorDeactivated={isAuthorDeactivated}
+            isAuthorTakendown={isAuthorTakendown}
+          />
         </div>
       ))}
       {onLoadMore && <LoadMore onLoadMore={onLoadMore} />}
