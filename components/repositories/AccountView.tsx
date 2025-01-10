@@ -233,7 +233,14 @@ export function AccountView({
                     <Details profile={profile} repo={repo} id={id} />
                   )}
                   {currentView === Views.Posts && (
-                    <Posts id={id} onReport={setReportUri} />
+                    <Posts
+                      id={id}
+                      onReport={setReportUri}
+                      isAuthorTakendown={
+                        !!repo.moderation?.subjectStatus?.takendown
+                      }
+                      isAuthorDeactivated={!!repo.deactivatedAt}
+                    />
                   )}
                   {currentView === Views.Follows && (
                     <Follows count={profile?.followsCount} id={id} />
@@ -640,7 +647,7 @@ function Details({
           </LabelList>
         </DataField>
         <DataField label="Tags">
-          <LabelList className='flex-wrap gap-1'>
+          <LabelList className="flex-wrap gap-1">
             {!tags.length && <LabelListEmpty />}
             {tags.map((tag) => (
               <SubjectTag key={tag} tag={tag} />
@@ -692,11 +699,22 @@ function Details({
 function Posts({
   id,
   onReport,
+  isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   id: string
   onReport: (uri: string) => void
+  isAuthorDeactivated: boolean
+  isAuthorTakendown: boolean
 }) {
-  return <AuthorFeed id={id} onReport={onReport} />
+  return (
+    <AuthorFeed
+      id={id}
+      onReport={onReport}
+      isAuthorTakendown={isAuthorTakendown}
+      isAuthorDeactivated={isAuthorDeactivated}
+    />
+  )
 }
 
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {

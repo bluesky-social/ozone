@@ -128,8 +128,12 @@ export const useAuthorFeedQuery = ({
 export function AuthorFeed({
   id,
   onReport,
+  isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   id: string
+  isAuthorDeactivated: boolean
+  isAuthorTakendown: boolean
   onReport: (uri: string) => void
 }) {
   const [query, setQuery] = useState('')
@@ -154,6 +158,8 @@ export function AuthorFeed({
       onLoadMore={hasNextPage ? () => fetchNextPage() : undefined}
       typeFilter={typeFilter}
       setTypeFilter={setTypeFilter}
+      isAuthorDeactivated={isAuthorDeactivated}
+      isAuthorTakendown={isAuthorTakendown}
     />
   )
 }
