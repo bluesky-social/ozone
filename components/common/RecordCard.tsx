@@ -17,14 +17,24 @@ import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-export function RecordCard(props: { uri: string; showLabels?: boolean }) {
-  const { uri, showLabels = false } = props
+export function RecordCard(props: {
+  uri: string
+  showLabels?: boolean
+  isAuthorDeactivated?: boolean
+}) {
+  const { uri, showLabels = false, isAuthorDeactivated } = props
   const parsed = parseAtUri(uri)
   if (!parsed) {
     return null
   }
   if (parsed.collection === CollectionId.Post) {
-    return <PostCard uri={uri} showLabels={showLabels} />
+    return (
+      <PostCard
+        uri={uri}
+        showLabels={showLabels}
+        isAuthorDeactivated={isAuthorDeactivated}
+      />
+    )
   }
   if (parsed.collection === CollectionId.FeedGenerator) {
     return <FeedGeneratorRecordCard uri={uri} />
@@ -53,7 +63,15 @@ export function RecordCard(props: { uri: string; showLabels?: boolean }) {
   )
 }
 
-function PostCard({ uri, showLabels }: { uri: string; showLabels?: boolean }) {
+function PostCard({
+  uri,
+  showLabels,
+  isAuthorDeactivated,
+}: {
+  uri: string
+  showLabels?: boolean
+  isAuthorDeactivated?: boolean
+}) {
   const labelerAgent = useLabelerAgent()
 
   const { error, data } = useQuery({
@@ -118,6 +136,7 @@ function PostCard({ uri, showLabels }: { uri: string; showLabels?: boolean }) {
       dense
       showLabels={showLabels}
       item={{ post: data.thread.post }}
+      isAuthorDeactivated={isAuthorDeactivated}
       controls={['like', 'repost', 'workspace']}
     />
   )

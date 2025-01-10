@@ -51,3 +51,7 @@ export const HIGH_PROFILE_FOLLOWER_THRESHOLD = process.env
   .NEXT_PUBLIC_HIGH_PROFILE_FOLLOWER_THRESHOLD
   ? parseInt(process.env.NEXT_PUBLIC_HIGH_PROFILE_FOLLOWER_THRESHOLD)
   : Infinity
+
+export const FALLBACK_VIDEO_URL = (
+  process.env.NEXT_PUBLIC_FALLBACK_VIDEO_URL || ''
+).split(':')
