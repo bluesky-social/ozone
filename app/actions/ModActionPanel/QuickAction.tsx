@@ -202,6 +202,7 @@ function Form(
     isTakedownEvent || isMuteEvent || isMuteReporterEvent
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
+  const canSendEmail = usePermission('canSendEmail')
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -458,7 +459,7 @@ function Form(
         coreEvent.$type === MOD_EVENTS.REVERSE_TAKEDOWN ||
         coreEvent.$type === MOD_EVENTS.LABEL
       setModEventType(
-        eventMayNeedEmail && !shouldMoveToNextSubject
+        eventMayNeedEmail && !shouldMoveToNextSubject && canSendEmail
           ? MOD_EVENTS.EMAIL
           : MOD_EVENTS.ACKNOWLEDGE,
       )
