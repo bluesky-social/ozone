@@ -60,6 +60,7 @@ import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { SubjectSummary } from '@/subject/Summary'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -670,7 +671,15 @@ function Form(
               {/* This is only meant to be switched on in mobile/small screen view */}
               {/* The parent component ensures to toggle this based on the screen size */}
               {replaceFormWithEvents ? (
-                <ModEventList subject={subject} />
+                <>
+                  <ModEventList
+                    subject={subject}
+                    stats={{
+                      accountStats: subjectStatus?.accountStats,
+                      recordsStats: subjectStatus?.recordsStats,
+                    }}
+                  />
+                </>
               ) : (
                 <div className="px-1">
                   {profile && (
@@ -886,7 +895,13 @@ function Form(
         </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
-            <ModEventList subject={subject} />
+            <ModEventList
+              stats={{
+                accountStats: subjectStatus?.accountStats,
+                recordsStats: subjectStatus?.recordsStats,
+              }}
+              subject={subject}
+            />
           </div>
         )}
       </div>

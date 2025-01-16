@@ -21,6 +21,9 @@ import {
 } from '@heroicons/react/24/solid'
 import { EventFilterPanel } from './FilterPanel'
 import { ConfirmationModal } from '@/common/modals/confirmation'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { SubjectSummary } from '@/subject/Summary'
+import { MOD_EVENTS } from './constants'
 
 const getConfirmWorkspaceTitle = (
   showWorkspaceConfirmation: WorkspaceConfirmationOptions,
@@ -126,7 +129,14 @@ const Header = ({
 }
 
 export const ModEventList = (
-  props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
+  props: {
+    subject?: string
+    createdBy?: string
+    stats?: {
+      accountStats: ToolsOzoneModerationDefs.AccountStats
+      recordsStats: ToolsOzoneModerationDefs.RecordsStats
+    }
+  } & ModEventListQueryOptions,
 ) => {
   const {
     types,
@@ -203,6 +213,14 @@ export const ModEventList = (
 
   return (
     <div className="mr-1">
+      {!!props.stats && (
+        <SubjectSummary
+          onAccountTakedownClick={() => {
+            changeListFilter({ field: 'types', value: [MOD_EVENTS.TAKEDOWN] })
+          }}
+          stats={props.stats}
+        />
+      )}
       <div className="flex flex-row justify-between items-center">
         {!isEntireHistoryView ? (
           <Header
