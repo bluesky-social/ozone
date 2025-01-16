@@ -89,6 +89,11 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
             />
           )}
         </div>
+        {subjectStatus?.comment && (
+          <p className="text-xs dark:text-gray-300 text-gray-700 max-w-xs">
+            <b>Note:</b> {subjectStatus.comment}
+          </p>
+        )}
         <dl className="font-normal lg:hidden">
           <dt className="sr-only">Name</dt>
           <dd className="mt-1 truncate text-gray-700 dark:text-gray-100">

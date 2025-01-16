@@ -252,7 +252,7 @@ export const SubjectSummary = ({
 }) => {
   const [showAll, setShowAll] = useState(false)
   if (!stats) return null
-  
+
   return (
     <div className="flex flex-row gap-1 items-center flex-wrap">
       {stats.accountStats && (
@@ -266,9 +266,13 @@ export const SubjectSummary = ({
       {stats.recordsStats && (
         <RecordsStats showAll={showAll} stats={stats.recordsStats} />
       )}
-      <button type="button" onClick={() => setShowAll((current) => !current)}>
-        <span className="text-xs">{showAll ? 'Show Summary' : 'Show All'}</span>
-      </button>
+      {stats.recordsStats && stats.accountStats && (
+        <button type="button" onClick={() => setShowAll((current) => !current)}>
+          <span className="text-xs">
+            {showAll ? 'Show Summary' : 'Show All'}
+          </span>
+        </button>
+      )}
     </div>
   )
 }
