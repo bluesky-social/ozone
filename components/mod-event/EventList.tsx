@@ -194,6 +194,13 @@ export const ModEventList = (
     },
   ]
 
+  if (hasFilter) {
+    eventActions.push({
+      text: 'Clear filters',
+      onClick: () => resetListFilters(),
+    })
+  }
+
   if (!noEvents) {
     eventActions.push(
       {
