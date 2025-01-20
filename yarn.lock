@@ -60,15 +60,15 @@
   resolved "https://registry.yarnpkg.com/@atproto-labs/simple-store/-/simple-store-0.1.1.tgz#e743a2722b5d8732166f0a72aca8bd10e9bff106"
   integrity sha512-WKILW2b3QbAYKh+w5U2x6p5FqqLl0nAeLwGeDY+KjX01K4Dq3vQTR9b/qNp0jZm48CabPQVrqCv0PPU9LgRRRg==
 
-"@atproto/api@^0.13.25":
-  version "0.13.25"
-  resolved "https://registry.yarnpkg.com/@atproto/api/-/api-0.13.25.tgz#917d6ae75e0c176166f67b7c340944c84a7c6413"
-  integrity sha512-5tz2NvYO7W9+0PV7x4k4KIAIazQI6Km+q4/+O6VUoNSqHsF3ry9/9mjcZKBoJLdmcVtZdcKSlPUTtxthan6iKw==
+"@atproto/api@^0.13.29":
+  version "0.13.29"
+  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.13.29.tgz#34b8e8f68df95f9d44de243ff33dc92b6b421e71"
+  integrity sha512-j+2mZikK7dibAll4TrQBVFMUVlZ9UZKTlTuFMMJ/x/JrngdYSvPoCcujbPHSj3XuKuG+MCNps5e7wK4mXXQsSA==
   dependencies:
-    "@atproto/common-web" "^0.3.1"
-    "@atproto/lexicon" "^0.4.4"
+    "@atproto/common-web" "^0.3.2"
+    "@atproto/lexicon" "^0.4.5"
     "@atproto/syntax" "^0.3.1"
-    "@atproto/xrpc" "^0.6.5"
+    "@atproto/xrpc" "^0.6.6"
     await-lock "^2.2.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
@@ -84,10 +84,10 @@
     uint8arrays "3.0.0"
     zod "^3.21.4"
 
-"@atproto/common-web@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@atproto/common-web/-/common-web-0.3.1.tgz#86f8efb10a4b9073839cee914c6c08a664917cc4"
-  integrity sha512-N7wiTnus5vAr+lT//0y8m/FaHHLJ9LpGuEwkwDAeV3LCiPif4m/FS8x/QOYrx1PdZQwKso95RAPzCGWQBH5j6Q==
+"@atproto/common-web@^0.3.2":
+  version "0.3.2"
+  resolved "https://registry.npmjs.org/@atproto/common-web/-/common-web-0.3.2.tgz#4cf78ad4d24fed801882f3d35afc39bceccdff51"
+  integrity sha512-Vx0JtL1/CssJbFAb0UOdvTrkbUautsDfHNOXNTcX2vyPIxH9xOameSqLLunM1hZnOQbJwyjmQCt6TV+bhnanDg==
   dependencies:
     graphemer "^1.4.0"
     multiformats "^9.9.0"
@@ -136,12 +136,12 @@
     multiformats "^9.9.0"
     zod "^3.23.8"
 
-"@atproto/lexicon@^0.4.4":
-  version "0.4.4"
-  resolved "https://registry.yarnpkg.com/@atproto/lexicon/-/lexicon-0.4.4.tgz#0d97314bb57b693b76f2495fa5e02872469dd93a"
-  integrity sha512-QFEmr3rpj/RoAmfX9ALU/asBG/rsVtQZnw+9nOB1/AuIwoxXd+ZyndR6lVUc2+DL4GEjl6W2yvBru5xbQIZWyA==
+"@atproto/lexicon@^0.4.5":
+  version "0.4.5"
+  resolved "https://registry.npmjs.org/@atproto/lexicon/-/lexicon-0.4.5.tgz#4fcf3731193c674286e9e8d677bbab5dd530b817"
+  integrity sha512-fljWqMGKn+XWtTprBcS3F1hGBREnQYh6qYHv2sjENucc7REms1gtmZXSerB9N6pVeHVNOnXiILdukeAcic5OEw==
   dependencies:
-    "@atproto/common-web" "^0.3.1"
+    "@atproto/common-web" "^0.3.2"
     "@atproto/syntax" "^0.3.1"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
@@ -194,7 +194,7 @@
 
 "@atproto/syntax@^0.3.1":
   version "0.3.1"
-  resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.1.tgz#4346418728f9643d783d2ffcf7c77e132e1f53d4"
+  resolved "https://registry.npmjs.org/@atproto/syntax/-/syntax-0.3.1.tgz#4346418728f9643d783d2ffcf7c77e132e1f53d4"
   integrity sha512-fzW0Mg1QUOVCWUD3RgEsDt6d1OZ6DdFmbKcDdbzUfh0t4rhtRAC05KbZYmxuMPWDAiJ4BbbQ5dkAc/mNypMXkw==
 
 "@atproto/xrpc@0.6.1", "@atproto/xrpc@^0.6.1":
@@ -205,12 +205,12 @@
     "@atproto/lexicon" "^0.4.1"
     zod "^3.23.8"
 
-"@atproto/xrpc@^0.6.5":
-  version "0.6.5"
-  resolved "https://registry.yarnpkg.com/@atproto/xrpc/-/xrpc-0.6.5.tgz#8b180fc5f6b8374fd00c41b9e4cd7b24ead48e6b"
-  integrity sha512-t6u8iPEVbWge5RhzKZDahSzNDYIAxUtop6Q/X/apAZY1rgreVU0/1sSvvRoRFH19d3UIKjYdLuwFqMi9w8nY3Q==
+"@atproto/xrpc@^0.6.6":
+  version "0.6.6"
+  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.6.tgz#28f58270ef4a8056f7f718bd52512e74bcd3702f"
+  integrity sha512-umXEYVMo9/pyIBoKmIAIi64RXDW9tSXY+wqztlQ6I2GZtjLfNZqmAWU+wADk3SxUe54mvjxxGyA4TtyGtDMfhA==
   dependencies:
-    "@atproto/lexicon" "^0.4.4"
+    "@atproto/lexicon" "^0.4.5"
     zod "^3.23.8"
 
 "@babel/runtime@^7.1.2":
@@ -987,7 +987,7 @@ available-typed-arrays@^1.0.7:
 
 await-lock@^2.2.2:
   version "2.2.2"
-  resolved "https://registry.yarnpkg.com/await-lock/-/await-lock-2.2.2.tgz#a95a9b269bfd2f69d22b17a321686f551152bcef"
+  resolved "https://registry.npmjs.org/await-lock/-/await-lock-2.2.2.tgz#a95a9b269bfd2f69d22b17a321686f551152bcef"
   integrity sha512-aDczADvlvTGajTDjcjpJMqRkOF6Qdz3YbPZm/PyW6tKPkx2hlYBzxMhEywM/tU72HrVZjgl5VCdRuMlA7pZ8Gw==
 
 aws-sign2@~0.7.0:
@@ -5376,7 +5376,7 @@ tiny-invariant@^1.2.0:
 
 tlds@^1.234.0:
   version "1.255.0"
-  resolved "https://registry.yarnpkg.com/tlds/-/tlds-1.255.0.tgz#53c2571766c10da95928c716c48dfcf141341e3f"
+  resolved "https://registry.npmjs.org/tlds/-/tlds-1.255.0.tgz#53c2571766c10da95928c716c48dfcf141341e3f"
   integrity sha512-tcwMRIioTcF/FcxLev8MJWxCp+GUALRhFEqbDoZrnowmKSGqPrl5pqS+Sut2m8BgJ6S4FExCSSpGffZ0Tks6Aw==
 
 tldts-core@^6.1.66:

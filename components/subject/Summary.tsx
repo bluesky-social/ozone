@@ -74,7 +74,7 @@ export const AccountStats = ({
   return (
     <>
       {hasStats && <UserCircleIcon className="w-4 h-4 dark:text-gray-200" />}
-      {suspendCount && (
+      {!!suspendCount && (
         <StatView
           appearance="danger"
           count={suspendCount}
@@ -91,7 +91,7 @@ export const AccountStats = ({
           )}`}
         />
       )}
-      {takedownCount && (
+      {!!takedownCount && (
         <StatView
           appearance="danger"
           count={takedownCount}
@@ -108,7 +108,7 @@ export const AccountStats = ({
           )}`}
         />
       )}
-      {shouldShowAppeal && (
+      {!!shouldShowAppeal && (
         <StatView
           appearance="warning"
           count={appealCount}
@@ -122,7 +122,7 @@ export const AccountStats = ({
           title={`This account appealed ${pluralize(appealCount, 'decision')}`}
         />
       )}
-      {shouldShowReport && (
+      {!!shouldShowReport && (
         <StatView
           appearance="info"
           count={reportCount}
@@ -168,7 +168,7 @@ export const RecordsStats = ({
   return (
     <>
       {hasStats && <PencilSquareIcon className="w-4 h-4 dark:text-gray-200" />}
-      {takedownCount && (
+      {!!takedownCount && (
         <StatView
           appearance="danger"
           count={takedownCount}
@@ -184,7 +184,7 @@ export const RecordsStats = ({
           )} authored by this account has been taken down`}
         />
       )}
-      {escalatedCount && (
+      {!!escalatedCount && (
         <StatView
           appearance="warning"
           count={escalatedCount}
@@ -200,7 +200,7 @@ export const RecordsStats = ({
           )} authored by this user were escalated`}
         />
       )}
-      {reportedCount && (
+      {!!reportedCount && (
         <StatView
           appearance="info"
           count={reportedCount}
@@ -209,10 +209,13 @@ export const RecordsStats = ({
           title={`${pluralize(
             reportedCount,
             'record',
-          )} authored by this user reported ${pluralize(totalReports, 'time')}`}
+          )} authored by this user reported ${pluralize(
+            totalReports || 0,
+            'time',
+          )}`}
         />
       )}
-      {showAll && pendingCount && (
+      {showAll && !!pendingCount && (
         <StatView
           appearance="warning"
           count={pendingCount}
@@ -224,7 +227,7 @@ export const RecordsStats = ({
           )} authored by this user are pending review`}
         />
       )}
-      {showAll && processedCount && (
+      {showAll && !!processedCount && (
         <StatView
           appearance="success"
           count={processedCount}
