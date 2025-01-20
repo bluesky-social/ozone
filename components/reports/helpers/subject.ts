@@ -70,6 +70,7 @@ export enum CollectionId {
   FeedGenerator = 'app.bsky.feed.generator',
   Profile = 'app.bsky.actor.profile',
   List = 'app.bsky.graph.list',
+  Like = 'app.bsky.feed.like',
   Post = 'app.bsky.feed.post',
   LabelerService = 'app.bsky.labeler.service',
   StarterPack = 'app.bsky.graph.starterpack',
@@ -86,6 +87,9 @@ export const getCollectionName = (collection: string) => {
   }
   if (collection === CollectionId.List) {
     return 'List'
+  }
+  if (collection === CollectionId.Like) {
+    return 'Like'
   }
   if (collection === CollectionId.FeedGenerator) {
     return 'Feed'
