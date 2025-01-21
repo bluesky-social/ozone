@@ -184,7 +184,14 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
     sortDirection = 'desc'
   }
 
-  if (!['lastReportedAt', 'lastReviewedAt'].includes(sortField ?? '')) {
+  if (
+    ![
+      'lastReportedAt',
+      'lastReviewedAt',
+      'reportedRecordsCount',
+      'takendownRecordsCount',
+    ].includes(sortField ?? '')
+  ) {
     sortField = 'lastReportedAt'
   }
 

@@ -142,8 +142,10 @@ export const AccountStats = ({
 export const RecordsStats = ({
   stats,
   showAll,
+  onlyNumbers,
 }: {
   showAll: boolean
+  onlyNumbers?: boolean
   stats: ToolsOzoneModerationDefs.RecordsStats
 }) => {
   const {
@@ -153,7 +155,7 @@ export const RecordsStats = ({
     appealedCount,
     pendingCount,
     processedCount,
-    takedownCount,
+    takendownCount,
   } = stats
 
   const hasStats =
@@ -163,23 +165,23 @@ export const RecordsStats = ({
     appealedCount ||
     pendingCount ||
     processedCount ||
-    takedownCount
+    takendownCount
 
   return (
     <>
       {hasStats && <PencilSquareIcon className="w-4 h-4 dark:text-gray-200" />}
-      {!!takedownCount && (
+      {!!takendownCount && (
         <StatView
           appearance="danger"
-          count={takedownCount}
+          count={takendownCount}
           Icon={ShieldExclamationIcon}
           text={
             showAll
-              ? pluralize(takedownCount, 'Takedown', { includeCount: false })
+              ? pluralize(takendownCount, 'Takedown', { includeCount: false })
               : ''
           }
           title={`${pluralize(
-            takedownCount,
+            takendownCount,
             'record',
           )} authored by this account has been taken down`}
         />
@@ -245,9 +247,11 @@ export const RecordsStats = ({
 
 export const SubjectSummary = ({
   stats,
+  allowExpansion = true,
   onAccountTakedownClick,
 }: {
   onAccountTakedownClick?: () => void
+  allowExpansion: boolean
   stats: {
     accountStats?: ToolsOzoneModerationDefs.AccountStats
     recordsStats?: ToolsOzoneModerationDefs.RecordsStats
@@ -269,7 +273,7 @@ export const SubjectSummary = ({
       {stats.recordsStats && (
         <RecordsStats showAll={showAll} stats={stats.recordsStats} />
       )}
-      {stats.recordsStats && stats.accountStats && (
+      {stats.recordsStats && stats.accountStats && allowExpansion && (
         <button type="button" onClick={() => setShowAll((current) => !current)}>
           <span className="text-xs">
             {showAll ? 'Show Summary' : 'Show All'}
