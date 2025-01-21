@@ -133,8 +133,8 @@ export const ModEventList = (
     subject?: string
     createdBy?: string
     stats?: {
-      accountStats: ToolsOzoneModerationDefs.AccountStats
-      recordsStats: ToolsOzoneModerationDefs.RecordsStats
+      accountStats?: ToolsOzoneModerationDefs.AccountStats
+      recordsStats?: ToolsOzoneModerationDefs.RecordsStats
     }
   } & ModEventListQueryOptions,
 ) => {

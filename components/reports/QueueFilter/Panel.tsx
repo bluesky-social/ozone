@@ -148,10 +148,8 @@ export const QueueFilterPanel = () => {
                 <div className="flex flex-row px-2 gap-6">
                   <QueueFilterSubjectType />
                 </div>
-
-                <QueueFilterStats />
-
                 <QueueFilterTags />
+                <QueueFilterStats />
               </div>
             </Popover.Panel>
           </Transition>

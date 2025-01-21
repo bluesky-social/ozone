@@ -247,11 +247,9 @@ export const RecordsStats = ({
 
 export const SubjectSummary = ({
   stats,
-  allowExpansion = true,
   onAccountTakedownClick,
 }: {
   onAccountTakedownClick?: () => void
-  allowExpansion: boolean
   stats: {
     accountStats?: ToolsOzoneModerationDefs.AccountStats
     recordsStats?: ToolsOzoneModerationDefs.RecordsStats
@@ -273,7 +271,7 @@ export const SubjectSummary = ({
       {stats.recordsStats && (
         <RecordsStats showAll={showAll} stats={stats.recordsStats} />
       )}
-      {stats.recordsStats && stats.accountStats && allowExpansion && (
+      {stats.recordsStats && stats.accountStats && (
         <button type="button" onClick={() => setShowAll((current) => !current)}>
           <span className="text-xs">
             {showAll ? 'Show Summary' : 'Show All'}

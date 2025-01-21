@@ -24,7 +24,7 @@ export const QueueFilterStats = () => {
     <div className="flex flex-row gap-6">
       <div className="px-2 mt-4">
         <div className="flex flex-row gap-2">
-          <FormLabel label="Suspension count" className="mb-2">
+          <FormLabel label="Min. Suspension count" className="mb-2">
             <Input
               type="number"
               className="block w-full"
@@ -34,7 +34,7 @@ export const QueueFilterStats = () => {
               onChange={handleInputChange(setMinAccountSuspendCount)}
             />
           </FormLabel>
-          <FormLabel label="Reported records">
+          <FormLabel label="Min. Reported records">
             <Input
               type="number"
               className="block w-full"
@@ -45,7 +45,7 @@ export const QueueFilterStats = () => {
             />
           </FormLabel>
         </div>
-        <FormLabel label="Takendown records">
+        <FormLabel label="Min. Takendown records">
           <Input
             type="number"
             className="block w-full"
