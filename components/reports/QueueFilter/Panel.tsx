@@ -8,6 +8,7 @@ import { getLanguageFlag } from 'components/tags/SubjectTag'
 import { getCollectionName } from '../helpers/subject'
 import { classNames } from '@/lib/util'
 import { QueueFilterTags } from './Tag'
+import { QueueFilterStats } from './Stats'
 
 const buildTagFilterSummary = (tags: string[]) => {
   const filtered = tags.filter(Boolean)
@@ -147,6 +148,8 @@ export const QueueFilterPanel = () => {
                 <div className="flex flex-row px-2 gap-6">
                   <QueueFilterSubjectType />
                 </div>
+
+                <QueueFilterStats />
 
                 <QueueFilterTags />
               </div>
