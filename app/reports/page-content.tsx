@@ -184,7 +184,14 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
     sortDirection = 'desc'
   }
 
-  if (!['lastReportedAt', 'lastReviewedAt'].includes(sortField ?? '')) {
+  if (
+    ![
+      'lastReportedAt',
+      'lastReviewedAt',
+      'reportedRecordsCount',
+      'takendownRecordsCount',
+    ].includes(sortField ?? '')
+  ) {
     sortField = 'lastReportedAt'
   }
 
@@ -306,6 +313,9 @@ function useModerationQueueQuery() {
   const queueName = params.get('queueName')
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
+  const minAccountSuspendCount = params.get('minAccountSuspendCount')
+  const minReportedRecordsCount = params.get('minReportedRecordsCount')
+  const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
     useFluentReportSearchParams()
@@ -330,6 +340,8 @@ function useModerationQueueQuery() {
         onlyMuted,
         subjectType,
         collections,
+        minAccountSuspendCount,
+        minReportedRecordsCount,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -380,6 +392,18 @@ function useModerationQueueQuery() {
 
       if (excludeTags) {
         queryParams.excludeTags = excludeTags.split(',')
+      }
+
+      if (minAccountSuspendCount) {
+        queryParams.minAccountSuspendCount = Number(minAccountSuspendCount)
+      }
+
+      if (minReportedRecordsCount) {
+        queryParams.minReportedRecordsCount = Number(minReportedRecordsCount)
+      }
+
+      if (minTakendownRecordsCount) {
+        queryParams.minTakendownRecordsCount = Number(minTakendownRecordsCount)
       }
 
       // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in

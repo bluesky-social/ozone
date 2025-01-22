@@ -200,7 +200,11 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
 }
 
 export const useModEventList = (
-  props: { subject?: string; createdBy?: string } & ModEventListQueryOptions,
+  props: {
+    subject?: string
+    createdBy?: string
+    eventType?: string
+  } & ModEventListQueryOptions,
 ) => {
   const [showWorkspaceConfirmation, setShowWorkspaceConfirmation] =
     useState<WorkspaceConfirmationOptions>(null)
@@ -227,6 +231,15 @@ export const useModEventList = (
       })
     }
   }, [props.createdBy])
+
+  useEffect(() => {
+    if (props.eventType) {
+      dispatch({
+        type: 'SET_FILTER',
+        payload: { field: 'types', value: [props.eventType] },
+      })
+    }
+  }, [props.eventType])
 
   const results = useInfiniteQuery<{
     events: ModEventViewWithDetails[]

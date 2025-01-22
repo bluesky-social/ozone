@@ -670,7 +670,15 @@ function Form(
               {/* This is only meant to be switched on in mobile/small screen view */}
               {/* The parent component ensures to toggle this based on the screen size */}
               {replaceFormWithEvents ? (
-                <ModEventList subject={subject} />
+                <>
+                  <ModEventList
+                    subject={subject}
+                    stats={{
+                      accountStats: subjectStatus?.accountStats,
+                      recordsStats: subjectStatus?.recordsStats,
+                    }}
+                  />
+                </>
               ) : (
                 <div className="px-1">
                   {profile && (
@@ -886,7 +894,13 @@ function Form(
         </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
-            <ModEventList subject={subject} />
+            <ModEventList
+              stats={{
+                accountStats: subjectStatus?.accountStats,
+                recordsStats: subjectStatus?.recordsStats,
+              }}
+              subject={subject}
+            />
           </div>
         )}
       </div>
