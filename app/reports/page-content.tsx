@@ -342,6 +342,7 @@ function useModerationQueueQuery() {
         collections,
         minAccountSuspendCount,
         minReportedRecordsCount,
+        minTakendownRecordsCount,
       },
     ],
     queryFn: async ({ pageParam }) => {

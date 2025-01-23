@@ -137,7 +137,6 @@ export const useQueueFilter = () => {
 
   return {
     queueFilters,
-    updateFilters,
     updateTagExclusions,
     addTags,
     toggleCollection,
