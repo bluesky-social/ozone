@@ -91,7 +91,7 @@ export function SubjectTable(
   )
 }
 
-const SubjectSummaryColumn = ({
+export const SubjectSummaryColumn = ({
   recordStats,
   accountStats,
 }: {

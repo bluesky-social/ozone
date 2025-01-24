@@ -61,6 +61,7 @@ import { DidHistory } from './DidHistory'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { MuteReporting } from './MuteReporting'
 import { ProfileAvatar } from './ProfileAvatar'
+import { obscureIp, parseThreatSigs } from './helpers'
 
 enum Views {
   Details,
@@ -528,8 +529,14 @@ function Details({
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
 
-  const { registrationIp, lastSigninIp, lastSigninTime, hcapDetail } =
-    parseThreatSigs(repo.threatSignatures)
+  const {
+    registrationIp,
+    lastSigninIp,
+    lastSigninTime,
+    hcapDetail,
+    ipCountry,
+    lastSigninCountry,
+  } = parseThreatSigs(repo.threatSignatures)
 
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -557,6 +564,13 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+            {ipCountry && (
+              <Link
+                href={`/repositories?term=sig:${encodeURIComponent(ipCountry)}`}
+              >
+                <LabelChip>{ipCountry}</LabelChip>
+              </Link>
+            )}
           </DataField>
         )}
         {lastSigninIp && (
@@ -569,6 +583,15 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+            {lastSigninCountry && (
+              <Link
+                href={`/repositories?term=sig:${encodeURIComponent(
+                  lastSigninCountry,
+                )}`}
+              >
+                <LabelChip>{lastSigninCountry}</LabelChip>
+              </Link>
+            )}
             {lastSigninTime && (
               <div className="text-gray-400">
                 {new Date(lastSigninTime).toLocaleString()}
@@ -931,29 +954,4 @@ const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
       <EmailComposer {...props} />
     </div>
   )
-}
-
-function obscureIp(ip: string) {
-  const parts = ip.split('.')
-  if (parts.length !== 4) return '***.***.***.***'
-  return `${parts[0]}.${parts[1]}.***.***`
-}
-
-function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
-  const registrationIp = sigs?.find(
-    (sig) => sig.property === 'registrationIp',
-  )?.value
-  const lastSigninIp = sigs?.find(
-    (sig) => sig.property === 'lastSigninIp',
-  )?.value
-  const lastSigninTime = sigs?.find(
-    (sig) => sig.property === 'lastSigninTime',
-  )?.value
-  const hcapDetail = sigs?.filter(
-    (sig) =>
-      !['registrationIp', 'lastSigninIp', 'lastSigninTime'].includes(
-        sig.property,
-      ),
-  )
-  return { registrationIp, lastSigninIp, lastSigninTime, hcapDetail }
 }

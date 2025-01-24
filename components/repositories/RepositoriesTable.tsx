@@ -6,6 +6,11 @@ import { LoadMoreButton } from '../common/LoadMoreButton'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { Loading } from '@/common/Loader'
+import { obscureIp, parseThreatSigs } from './helpers'
+import Link from 'next/link'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
+import { LabelChip } from '@/common/labels'
+import { SubjectSummaryColumn } from '@/subject/table'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -71,6 +76,9 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
   const { repo, showEmail, ...others } = props
   const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
   const displayName = profile?.displayName
+
+  const { registrationIp, lastSigninIp, ipCountry, lastSigninCountry } =
+    parseThreatSigs(repo.threatSignatures)
   const indexedAt = new Date(repo.indexedAt)
   const { subjectStatus } = repo.moderation
   return (
@@ -89,6 +97,29 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
             />
           )}
         </div>
+        {lastSigninCountry && (
+          <div>
+            Last:
+            <Link
+              prefetch={false}
+              href={`/repositories?term=sig:${encodeURIComponent(
+                lastSigninIp,
+              )}`}
+            >
+              {obscureIp(lastSigninIp)}{' '}
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+            {lastSigninCountry && (
+              <Link
+                href={`/repositories?term=sig:${encodeURIComponent(
+                  lastSigninCountry,
+                )}`}
+              >
+                <LabelChip>{lastSigninCountry}</LabelChip>
+              </Link>
+            )}
+          </div>
+        )}
         {subjectStatus?.comment && (
           <p className="text-xs dark:text-gray-300 text-gray-700 max-w-xs">
             <b>Note:</b> {subjectStatus.comment}
@@ -99,7 +130,6 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
           <dd className="mt-1 truncate text-gray-700 dark:text-gray-100">
             {displayName}
           </dd>
-          <dt className="sr-only sm:hidden">Type</dt>
         </dl>
       </td>
       {showEmail && (
@@ -108,12 +138,37 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
         </td>
       )}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
-        {displayName}
+        {displayName}{' '}
+        {registrationIp && (
+          <div>
+            Reg:
+            <Link
+              prefetch={false}
+              href={`/repositories?term=sig:${encodeURIComponent(
+                registrationIp,
+              )}`}
+            >
+              {obscureIp(registrationIp)}{' '}
+              <MagnifyingGlassIcon className="h-3 w-3 inline" />
+            </Link>
+            {ipCountry && (
+              <Link
+                href={`/repositories?term=sig:${encodeURIComponent(ipCountry)}`}
+              >
+                <LabelChip>{ipCountry}</LabelChip>
+              </Link>
+            )}
+          </div>
+        )}
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
         <span title={indexedAt.toLocaleString()}>
           {formatDistanceToNow(indexedAt, { addSuffix: true })}
         </span>
+        <SubjectSummaryColumn
+          accountStats={subjectStatus?.accountStats}
+          recordStats={subjectStatus?.recordsStats}
+        />
       </td>
     </tr>
   )
@@ -140,7 +195,7 @@ function RepoRowHead({ showEmail = false }) {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 lg:table-cell"
       >
-        Name
+        Name/Details
       </th>
       <th
         scope="col"
