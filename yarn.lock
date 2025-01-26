@@ -281,10 +281,10 @@
     "@tanstack/react-virtual" "^3.0.0-beta.60"
     client-only "^0.0.1"
 
-"@heroicons/react@^2.0.13":
-  version "2.2.0"
-  resolved "https://registry.npmjs.org/@heroicons/react/-/react-2.2.0.tgz#0c05124af50434a800773abec8d3af6a297d904b"
-  integrity sha512-LMcepvRaS9LYHJGsF0zzmgKCUim/X3N/DQKc4jepAXJ7l8QxJ1PmxJzqplF2Z3FE4PqBAIGyJAQ/w4B5dsqbtQ==
+"@heroicons/react@2.0.13":
+  version "2.0.13"
+  resolved "https://registry.npmjs.org/@heroicons/react/-/react-2.0.13.tgz#9b1cc54ff77d6625c9565efdce0054a4bcd9074c"
+  integrity sha512-iSN5XwmagrnirWlYEWNPdCDj9aRYVD/lnK3JlsC9/+fqGF80k8C7rl+1HCvBX0dBoagKqOFBs6fMhJJ1hOg1EQ==
 
 "@humanwhocodes/config-array@^0.13.0":
   version "0.13.0"

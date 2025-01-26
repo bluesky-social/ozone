@@ -17,10 +17,7 @@ import { useState } from 'react'
 import { RepoFinder } from '@/repositories/Finder'
 import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
-import {
-  ActionPoliciesSelector,
-  ActionPolicySelector,
-} from '@/reports/ModerationForm/ActionPolicySelector'
+import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
 
 export const EventFilterPanel = ({
   limit,
