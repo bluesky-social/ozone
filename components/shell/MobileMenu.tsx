@@ -109,7 +109,7 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                     title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
                     className="h-8 w-auto"
                     src="/img/logo-white.png"
-                    alt="Ozone - Bluesky Admin"
+                    alt="Ozone - ATProto Moderation Service"
                   />
                 </div>
                 <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">

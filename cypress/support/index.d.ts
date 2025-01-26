@@ -15,5 +15,11 @@ declare namespace Cypress {
       ozoneDidDataResponse: any
       ozoneServerConfigResponse: any
     }): Chainable<any>
+    /**
+     * Open command palette in app
+     * @example
+     * cy.openCommandPalette()
+     */
+    openCommandPalette(input?: string): Chainable<any>
   }
 }

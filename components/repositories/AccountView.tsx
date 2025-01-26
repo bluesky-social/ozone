@@ -61,6 +61,7 @@ import { DidHistory } from './DidHistory'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { MuteReporting } from './MuteReporting'
 import { ProfileAvatar } from './ProfileAvatar'
+import { obscureIp, parseThreatSigs } from './helpers'
 
 enum Views {
   Details,
@@ -233,7 +234,14 @@ export function AccountView({
                     <Details profile={profile} repo={repo} id={id} />
                   )}
                   {currentView === Views.Posts && (
-                    <Posts id={id} onReport={setReportUri} />
+                    <Posts
+                      id={id}
+                      onReport={setReportUri}
+                      isAuthorTakendown={
+                        !!repo.moderation?.subjectStatus?.takendown
+                      }
+                      isAuthorDeactivated={!!repo.deactivatedAt}
+                    />
                   )}
                   {currentView === Views.Follows && (
                     <Follows count={profile?.followsCount} id={id} />
@@ -521,8 +529,14 @@ function Details({
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
 
-  const { registrationIp, lastSigninIp, lastSigninTime, hcapDetail } =
-    parseThreatSigs(repo.threatSignatures)
+  const {
+    registrationIp,
+    lastSigninIp,
+    lastSigninTime,
+    hcapDetail,
+    ipCountry,
+    lastSigninCountry,
+  } = parseThreatSigs(repo.threatSignatures)
 
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -550,6 +564,13 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+            {ipCountry && (
+              <Link
+                href={`/repositories?term=sig:${encodeURIComponent(ipCountry)}`}
+              >
+                <LabelChip>{ipCountry}</LabelChip>
+              </Link>
+            )}
           </DataField>
         )}
         {lastSigninIp && (
@@ -562,6 +583,15 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
+            {lastSigninCountry && (
+              <Link
+                href={`/repositories?term=sig:${encodeURIComponent(
+                  lastSigninCountry,
+                )}`}
+              >
+                <LabelChip>{lastSigninCountry}</LabelChip>
+              </Link>
+            )}
             {lastSigninTime && (
               <div className="text-gray-400">
                 {new Date(lastSigninTime).toLocaleString()}
@@ -640,7 +670,7 @@ function Details({
           </LabelList>
         </DataField>
         <DataField label="Tags">
-          <LabelList>
+          <LabelList className="flex-wrap gap-1">
             {!tags.length && <LabelListEmpty />}
             {tags.map((tag) => (
               <SubjectTag key={tag} tag={tag} />
@@ -692,11 +722,22 @@ function Details({
 function Posts({
   id,
   onReport,
+  isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   id: string
   onReport: (uri: string) => void
+  isAuthorDeactivated: boolean
+  isAuthorTakendown: boolean
 }) {
-  return <AuthorFeed id={id} onReport={onReport} />
+  return (
+    <AuthorFeed
+      id={id}
+      onReport={onReport}
+      isAuthorTakendown={isAuthorTakendown}
+      isAuthorDeactivated={isAuthorDeactivated}
+    />
+  )
 }
 
 function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
@@ -913,29 +954,4 @@ const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
       <EmailComposer {...props} />
     </div>
   )
-}
-
-function obscureIp(ip: string) {
-  const parts = ip.split('.')
-  if (parts.length !== 4) return '***.***.***.***'
-  return `${parts[0]}.${parts[1]}.***.***`
-}
-
-function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
-  const registrationIp = sigs?.find(
-    (sig) => sig.property === 'registrationIp',
-  )?.value
-  const lastSigninIp = sigs?.find(
-    (sig) => sig.property === 'lastSigninIp',
-  )?.value
-  const lastSigninTime = sigs?.find(
-    (sig) => sig.property === 'lastSigninTime',
-  )?.value
-  const hcapDetail = sigs?.filter(
-    (sig) =>
-      !['registrationIp', 'lastSigninIp', 'lastSigninTime'].includes(
-        sig.property,
-      ),
-  )
-  return { registrationIp, lastSigninIp, lastSigninTime, hcapDetail }
 }

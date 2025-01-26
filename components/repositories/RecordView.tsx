@@ -184,7 +184,10 @@ export function RecordView({
                     <Thread thread={thread.thread} />
                   )}
                   {currentView === Views.Blobs && (
-                    <Blobs blobs={record.blobs} />
+                    <BlobsTable
+                      authorDid={record.repo.did}
+                      blobs={record.blobs}
+                    />
                   )}
                   {currentView === Views.ModEvents && (
                     <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
@@ -321,8 +324,4 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
       <Json className="mb-3" label="Contents" value={record.value} />
     </div>
   )
-}
-
-function Blobs({ blobs }: { blobs: ToolsOzoneModerationDefs.BlobView[] }) {
-  return <BlobsTable blobs={blobs} />
 }

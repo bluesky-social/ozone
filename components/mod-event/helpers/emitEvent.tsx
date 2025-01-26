@@ -1,6 +1,10 @@
 import Link from 'next/link'
 import { toast } from 'react-toastify'
-import { Agent, ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import {
+  Agent,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+} from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
 import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
@@ -11,6 +15,11 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useCallback } from 'react'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { chunkArray } from '@/lib/util'
+import {
+  WorkspaceListData,
+  WorkspaceListItemData,
+} from '@/workspace/useWorkspaceListData'
+import { compileTemplateContent } from 'components/email/helpers'
 
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
@@ -34,7 +43,7 @@ export function useEmitEvent() {
               const eventType = data?.event.$type as string
               const actionTypeString = eventType && eventTexts[eventType]
 
-              const title = `${isRecord ? 'Record' : 'Repo'} was ${
+              const title = `${isRecord ? 'Record' : 'Account'} was ${
                 actionTypeString ?? 'actioned'
               }`
 
@@ -79,16 +88,54 @@ type BulkActionResults = {
   failed: string[]
 }
 
+const eventForSubject = (
+  eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
+  subjectData: WorkspaceListItemData,
+): Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'> => {
+  // only need to adjust event data for each subject for email events
+  // for the rest, same event data is used for all subjects
+  if (!ToolsOzoneModerationDefs.isModEventEmail(eventData.event)) {
+    return eventData
+  }
+
+  if (!eventData.event.content) {
+    throw new Error('Email content is required for email events')
+  }
+
+  const hasPlaceholder = eventData.event.content.includes('{{handle}}')
+  if (!hasPlaceholder) {
+    return eventData
+  }
+
+  if (!subjectData) {
+    throw new Error(
+      'Email content has template placeholder but no handle account data found',
+    )
+  }
+
+  return {
+    ...eventData,
+    event: {
+      ...eventData.event,
+      content: compileTemplateContent(eventData.event.content, {
+        handle: subjectData.handle,
+      }),
+    },
+  }
+}
+
 const emitEventsInBulk = async ({
   labelerAgent,
   createSubjectFromId,
   subjects,
   eventData,
+  subjectData,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
   subjects: string[]
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>
+  subjectData: WorkspaceListData
 }) => {
   const toastId = 'workspace-bulk-action'
   try {
@@ -101,10 +148,10 @@ const emitEventsInBulk = async ({
       subjects.map(async (sub) => {
         try {
           const { subject } = await createSubjectFromId(sub)
-          await labelerAgent.api.tools.ozone.moderation.emitEvent({
+          await labelerAgent.tools.ozone.moderation.emitEvent({
+            ...eventForSubject(eventData, subjectData[sub]),
             subject,
             createdBy: labelerAgent.assertDid,
-            ...eventData,
           })
           results.succeeded.push(sub)
         } catch (err) {
@@ -149,6 +196,7 @@ export const useActionSubjects = () => {
     async (
       eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
       subjects: string[],
+      subjectData: WorkspaceListData,
     ) => {
       if (!subjects.length) {
         toast.error(`No subject to action`)
@@ -160,12 +208,19 @@ export const useActionSubjects = () => {
         failed: [],
       }
 
-      for (const chunk of chunkArray(subjects, 50)) {
+      // Emails have a lower limit per second so we want to make sure we are well below that
+      const chunkSize = ToolsOzoneModerationDefs.isModEventEmail(
+        eventData.event,
+      )
+        ? 25
+        : 50
+      for (const chunk of chunkArray(subjects, chunkSize)) {
         const { succeeded, failed } = await emitEventsInBulk({
           labelerAgent,
           createSubjectFromId,
           subjects: chunk,
           eventData,
+          subjectData,
         })
 
         results.succeeded.push(...succeeded)
@@ -192,4 +247,7 @@ const eventTexts = {
   [MOD_EVENTS.LABEL]: 'labeled',
   [MOD_EVENTS.MUTE]: 'muted',
   [MOD_EVENTS.UNMUTE]: 'unmuted',
+  [MOD_EVENTS.APPEAL]: 'appealed',
+  [MOD_EVENTS.RESOLVE_APPEAL]: 'appealed',
+  [MOD_EVENTS.EMAIL]: 'emailed',
 }

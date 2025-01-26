@@ -11,6 +11,10 @@ import { ReasonBadge } from '@/reports/ReasonBadge'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
+import { ModEventViewWithDetails } from './useModEventList'
+import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import Link from 'next/link'
+import { pluralize } from '@/lib/util'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -30,10 +34,42 @@ const LinkToAuthor = ({
   )
 }
 
+// Utility function to detect and replace links with <a> tags
+const wrapLinksInText = (text: string): JSX.Element[] => {
+  // Regular expression to match URLs
+  const urlRegex = /(https?:\/\/[^\s]+)/g
+
+  // Split text into parts, with URLs as matches
+  const parts = text.split(urlRegex)
+
+  return parts.map((part, index) => {
+    if (urlRegex.test(part)) {
+      // If part matches a URL, return it as a link
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="break-all underline"
+        >
+          {part}
+        </a>
+      )
+    }
+    // Otherwise, return it as plain text
+    return <span key={index}>{part}</span>
+  })
+}
+
+const TextWithLinks: React.FC<{ text: string }> = ({ text }) => {
+  return <p className="whitespace-pre-wrap">{wrapLinksInText(text)}</p>
+}
+
 const Comment = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+  modEvent: ModEventViewWithDetails & {
     event:
       | ToolsOzoneModerationDefs.ModEventEscalate
       | ToolsOzoneModerationDefs.ModEventAcknowledge
@@ -59,7 +95,9 @@ const Comment = ({
           )}
         </div>
       </div>
-      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
@@ -212,7 +250,7 @@ const Report = ({
         </div>
       </div>
       {modEvent.event.comment && (
-        <p className="mt-1">{modEvent.event.comment}</p>
+        <TextWithLinks text={modEvent.event.comment} />
       )}
 
       {isMessageSubject(modEvent.subject) && (
@@ -256,8 +294,34 @@ const TakedownOrMute = ({
         </div>
       </div>
       {expiresAt && (
-        <p className="mt-1">Until {dateFormatter.format(expiresAt)}</p>
+        <p className="mt-1 flex flex-row items-center">
+          <ClockIcon className="h-3 w-3 inline-block mr-1" />
+          Until {dateFormatter.format(expiresAt)}
+        </p>
       )}
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) &&
+      modEvent.event.policies?.length ? (
+        <p className="pb-1 flex flex-row items-center">
+          <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
+          <i>
+            Under{' '}
+            {modEvent.event.policies.map((policy) => {
+              return (
+                <Link
+                  key={policy}
+                  prefetch={false}
+                  href={`/configure?tab=policies&search=${policy}`}
+                >
+                  <u>{`${policy}`}</u>{' '}
+                </Link>
+              )
+            })}
+            {pluralize(modEvent.event.policies.length, 'policy', {
+              plural: 'policies',
+            })}
+          </i>
+        </p>
+      ) : null}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
@@ -383,7 +447,7 @@ export const ModEventItem = ({
   showContentAuthor,
   showContentPreview,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventViewWithDetails
   showContentDetails: boolean
   showContentAuthor: boolean
   showContentPreview: boolean

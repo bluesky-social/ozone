@@ -60,7 +60,7 @@ const CollectionLink = ({
 
   return (
     <>
-      <Link href={`/repositories/${repoUrl}`} target="_blank">
+      <Link href={`/repositories/${repoUrl}`} target="_blank" prefetch={false}>
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
       <Link

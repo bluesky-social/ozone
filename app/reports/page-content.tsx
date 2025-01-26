@@ -184,7 +184,14 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
     sortDirection = 'desc'
   }
 
-  if (!['lastReportedAt', 'lastReviewedAt'].includes(sortField ?? '')) {
+  if (
+    ![
+      'lastReportedAt',
+      'lastReviewedAt',
+      'reportedRecordsCount',
+      'takendownRecordsCount',
+    ].includes(sortField ?? '')
+  ) {
     sortField = 'lastReportedAt'
   }
 
@@ -306,6 +313,9 @@ function useModerationQueueQuery() {
   const queueName = params.get('queueName')
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
+  const minAccountSuspendCount = params.get('minAccountSuspendCount')
+  const minReportedRecordsCount = params.get('minReportedRecordsCount')
+  const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
   const { sortField, sortDirection } = getSortParams(params)
   const {
     lastReviewedBy,
@@ -336,6 +346,9 @@ function useModerationQueueQuery() {
         hostingStatuses,
         subjectType,
         collections,
+        minAccountSuspendCount,
+        minReportedRecordsCount,
+        minTakendownRecordsCount,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -392,6 +405,18 @@ function useModerationQueueQuery() {
         queryParams.excludeTags = excludeTags.split(',')
       }
 
+      if (minAccountSuspendCount) {
+        queryParams.minAccountSuspendCount = Number(minAccountSuspendCount)
+      }
+
+      if (minReportedRecordsCount) {
+        queryParams.minReportedRecordsCount = Number(minReportedRecordsCount)
+      }
+
+      if (minTakendownRecordsCount) {
+        queryParams.minTakendownRecordsCount = Number(minTakendownRecordsCount)
+      }
+
       // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
       Object.entries({
         sortField,
@@ -408,7 +433,6 @@ function useModerationQueueQuery() {
         labelerAgent,
         queryParams,
         queueName,
-        0,
         queueSetting.data
           ? {
               queueNames: queueSetting.data.queueNames,
@@ -425,51 +449,26 @@ const getQueueItems = async (
   labelerAgent: Agent,
   queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
   queueName: string | null,
-  attempt = 0,
   queueSetting?: { queueNames: string[]; queueSeed: string },
 ) => {
   const pageSize = 100
+
+  if (queueName && queueSetting?.queueNames.length) {
+    const queueIndex = queueSetting.queueNames.indexOf(queueName)
+    // Only apply queue filters if the user is looking at a queue that exists in the list of queues
+    if (queueIndex >= 0) {
+      queryParams.queueIndex = queueIndex
+      queryParams.queueCount = queueSetting.queueNames.length
+      if (queueSetting.queueSeed) {
+        queryParams.queueSeed = queueSetting.queueSeed
+      }
+    }
+  }
   const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
     limit: pageSize,
     includeMuted: true,
     ...queryParams,
   })
 
-  const queueIndex = queueSetting?.queueNames.indexOf(queueName ?? '')
-  const statusesInQueue = queueName
-    ? data.subjectStatuses.filter((status) => {
-        const subjectDid = ComAtprotoAdminDefs.isRepoRef(status.subject)
-          ? status.subject.did
-          : new AtUri(`${status.subject.uri}`).host
-        return (
-          getQueueIndex(
-            subjectDid,
-            queueSetting?.queueNames || [],
-            queueSetting?.queueSeed || '',
-          ) === queueIndex
-        )
-      })
-    : data.subjectStatuses
-
-  // This is a recursive call to get items in queue if the current page
-  // gives us less than full page size and there are more items to fetch
-  // also, use a circuit breaker to make sure we never accidentally call this more than 10 times
-  if (statusesInQueue.length === 0 && data.cursor && attempt < 10) {
-    return getQueueItems(
-      labelerAgent,
-      {
-        ...queryParams,
-        cursor: data.cursor,
-      },
-      queueName,
-      ++attempt,
-      queueSetting,
-    )
-  }
-
-  return { cursor: data.cursor, subjectStatuses: statusesInQueue }
-}
-
-function getQueueIndex(did: string, queueNames: string[], queueSeed: string) {
-  return simpleHash(`${queueSeed}:${did}`) % queueNames.length
+  return data
 }

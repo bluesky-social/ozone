@@ -69,6 +69,7 @@ export const labelsRequiringMediaFilter = [
   LABELS.porn.identifier,
   LABELS.nudity.identifier,
   LABELS.sexual.identifier,
+  'self-harm',
 ]
 
 export type GraphicMediaFilter = 'blur' | 'grayscale' | 'translucent'

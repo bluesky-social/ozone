@@ -10,7 +10,11 @@ import { useColorScheme } from '@/common/useColorScheme'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { compileTemplateContent, getTemplate } from './helpers'
+import {
+  compileTemplateContent,
+  EmailComposerData,
+  getTemplate,
+} from './helpers'
 import { TemplateSelector } from './template-selector'
 import { availableLanguageCodes } from '@/common/LanguagePicker'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
@@ -51,7 +55,15 @@ const getRecipientsLanguages = (
   }
 }
 
-export const EmailComposer = ({ did }: { did: string }) => {
+export const EmailComposer = ({
+  did,
+  replacePlaceholders = true,
+  handleSubmit,
+}: {
+  did?: string
+  replacePlaceholders?: boolean
+  handleSubmit?: (emailData: EmailComposerData) => Promise<void>
+}) => {
   const labelerAgent = useLabelerAgent()
   const {
     isSending,
@@ -93,31 +105,37 @@ export const EmailComposer = ({ did }: { did: string }) => {
         .processSync(content)
         .toString()
 
-      await toast.promise(
-        labelerAgent.api.tools.ozone.moderation.emitEvent({
-          event: {
-            $type: MOD_EVENTS.EMAIL,
-            comment,
-            subjectLine: subject,
-            content: htmlContent,
-          },
-          subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-          createdBy: labelerAgent.assertDid,
-        }),
-        {
-          pending: 'Sending email...',
-          success: {
-            render() {
-              return 'Email sent to user'
+      const event = {
+        $type: MOD_EVENTS.EMAIL,
+        comment,
+        subjectLine: subject,
+        content: htmlContent,
+      }
+      if (handleSubmit) {
+        await handleSubmit(event)
+      } else {
+        await toast.promise(
+          labelerAgent.tools.ozone.moderation.emitEvent({
+            event,
+            createdBy: labelerAgent.assertDid,
+            subject: { $type: 'com.atproto.admin.defs#repoRef', did },
+          }),
+          {
+            pending: 'Sending email...',
+            success: {
+              render() {
+                return 'Email sent to user'
+              },
+            },
+            error: {
+              render() {
+                return 'Error sending email'
+              },
             },
           },
-          error: {
-            render() {
-              return 'Error sending email'
-            },
-          },
-        },
-      )
+        )
+      }
+
       // Reset the form if email is sent successfully
       e.target.reset()
       reset()
@@ -137,9 +155,17 @@ export const EmailComposer = ({ did }: { did: string }) => {
       return
     }
     const subject = template.subject || ''
-    const content = compileTemplateContent(template.contentMarkdown, {
-      handle: repo?.handle,
-    })
+    // When email is sent to one recipient at a time, we know how to replace the placeholders
+    // based on the individual recipient's data on hand. However, when sending it to bulk recipients
+    // we only know those details at send time so replacing them in the editor doesn't really work
+    const content = compileTemplateContent(
+      template.contentMarkdown,
+      replacePlaceholders
+        ? {
+            handle: repo?.handle,
+          }
+        : {},
+    )
     setContent(content)
     if (subjectField.current) subjectField.current.value = subject
     if (commentField.current)

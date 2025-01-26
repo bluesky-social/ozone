@@ -96,7 +96,6 @@ const buttonSpaceMap = {
 }
 
 export const ButtonGroup = ({
-  appearance,
   size = 'sm',
   items,
   leftAligned = false,

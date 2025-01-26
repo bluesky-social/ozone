@@ -1,32 +1,40 @@
+import { XCircleIcon } from '@heroicons/react/24/solid'
 import { ButtonGroup } from '@/common/buttons'
-import {
-  CollectionId,
-  EmbedTypes,
-  getCollectionName,
-  getEmbedTypeName,
-} from '../helpers/subject'
+import { CollectionId, getCollectionName } from '../helpers/subject'
 import { Checkbox } from '@/common/forms'
 import { useQueueFilter } from '../useQueueFilter'
 
 export const QueueFilterSubjectType = () => {
-  const { queueFilters, toggleCollection, toggleSubjectType, toggleEmbedType } =
-    useQueueFilter()
-  const allEmbedTypes = Object.values(EmbedTypes)
+  const {
+    queueFilters,
+    toggleCollection,
+    toggleSubjectType,
+    clearSubjectType,
+  } = useQueueFilter()
 
   const selectedCollections = queueFilters.collections || []
+  const hasSubjectTypeFilter =
+    !!queueFilters.subjectType || !!selectedCollections.length
   const selectedIncludeEmbedTypes: string[] =
     queueFilters.tags?.filter((tag) => {
-      return tag.startsWith('embed:')
-    }) || []
-  const selectedExcludeEmbedTypes: string[] =
-    queueFilters.excludeTags?.filter((tag) => {
       return tag.startsWith('embed:')
     }) || []
 
   return (
     <div>
       <h3 className="text-gray-900 dark:text-gray-200 mb-2">
-        Subject Type Filters
+        <button
+          type="button"
+          className="flex flex-row items-center"
+          onClick={() => {
+            if (hasSubjectTypeFilter) {
+              clearSubjectType()
+            }
+          }}
+        >
+          Subject Type Filters
+          {hasSubjectTypeFilter && <XCircleIcon className="h-4 w-4 ml-1" />}
+        </button>
       </h3>
 
       <ButtonGroup
@@ -63,44 +71,23 @@ export const QueueFilterSubjectType = () => {
               Record Collection
             </h3>
 
-            {Object.values(CollectionId).map((collectionId) => {
-              const isSelected = selectedCollections.includes(collectionId)
-              return (
-                <Checkbox
-                  label={getCollectionName(collectionId)}
-                  value={collectionId}
-                  key={collectionId}
-                  checked={isSelected}
-                  onChange={() => {
-                    toggleCollection(collectionId)
-                  }}
-                />
-              )
-            })}
-          </div>
-          <div>
-            <h3 className="text-gray-900 dark:text-gray-200 my-2 border-b border-gray-400 pb-1">
-              Record Embed
-            </h3>
-            {[...allEmbedTypes, 'noEmbed'].map((embedType) => {
-              const isNoEmbed = embedType === 'noEmbed'
-              const isSelected = isNoEmbed
-                ? allEmbedTypes.every((et) =>
-                    selectedExcludeEmbedTypes.includes(et),
-                  )
-                : selectedIncludeEmbedTypes.includes(embedType)
-              return (
-                <Checkbox
-                  label={getEmbedTypeName(embedType)}
-                  value={embedType}
-                  key={embedType}
-                  checked={isSelected}
-                  onChange={() => {
-                    toggleEmbedType(embedType)
-                  }}
-                />
-              )
-            })}
+            <div className="flex flex-row gap-x-3 gap-y-1 flex-wrap">
+              {Object.values(CollectionId).map((collectionId) => {
+                const isSelected = selectedCollections.includes(collectionId)
+                return (
+                  <Checkbox
+                    className="flex items-center"
+                    label={getCollectionName(collectionId)}
+                    value={collectionId}
+                    key={collectionId}
+                    checked={isSelected}
+                    onChange={() => {
+                      toggleCollection(collectionId)
+                    }}
+                  />
+                )
+              })}
+            </div>
           </div>
         </div>
       )}

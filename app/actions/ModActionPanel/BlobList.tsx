@@ -1,25 +1,36 @@
-import { ComponentProps } from 'react'
+import { ComponentProps, useState } from 'react'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ShieldExclamationIcon } from '@heroicons/react/20/solid'
-import { formatBytes } from '@/lib/util'
+import { formatBytes, pluralize } from '@/lib/util'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
+import { FormLabel } from '@/common/forms'
+import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
+import { BlobListLightbox } from '@/common/BlobListLightbox'
+import { PropsOf } from '@/lib/types'
 
 export function BlobList(props: {
   name: string
   disabled?: boolean
+  authorDid: string
   blobs: ToolsOzoneModerationDefs.BlobView[]
 }) {
   const { name, disabled, blobs } = props
+  const [lightboxImageIndex, setLightboxImageIndex] = useState(-1)
+
   return (
     <fieldset className="space-y-5 min-w-0">
-      {!blobs.length && <div className="text-sm text-gray-400">None found</div>}
-      {blobs.map((blob) => {
+      {blobs.length > 0 ? (
+        <BlobListLightbox
+          blobs={blobs}
+          authorDid={props.authorDid}
+          slideIndex={lightboxImageIndex}
+          onClose={() => setLightboxImageIndex(-1)}
+        />
+      ) : (
+        <div className="text-sm text-gray-400">No blobs found</div>
+      )}
+      {blobs.map((blob, i) => {
         const { subjectStatus } = blob.moderation ?? {}
-        const actionColorClasses = !!subjectStatus?.takendown
-          ? 'text-rose-600 hover:text-rose-700'
-          : 'text-indigo-600 hover:text-indigo-900'
-        // TODO: May be add better display text here? this only goes into title so not that big of a deal
-        const displayActionType = subjectStatus?.takendown ? 'Taken down' : ''
         return (
           <div key={blob.cid} className="relative flex items-start">
             <div className="flex h-5 items-center ml-1">
@@ -58,12 +69,57 @@ export function BlobList(props: {
                     {blob.details.height}x{blob.details.width}px
                   </Chip>
                 )}
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    setLightboxImageIndex(i)
+                  }}
+                >
+                  <Chip>View</Chip>
+                </button>
               </p>
             </div>
           </div>
         )
       })}
     </fieldset>
+  )
+}
+
+export const BlobListFormField = ({
+  blobs,
+  authorDid,
+  ...rest
+}: {
+  authorDid: string
+  blobs: ToolsOzoneModerationDefs.BlobView[]
+} & Omit<PropsOf<typeof FormLabel>, 'label'>) => {
+  const [showBlobList, setShowBlobList] = useState(false)
+
+  return (
+    <FormLabel
+      {...rest}
+      label={
+        <button
+          type="button"
+          className="flex flex-row items-center"
+          onClick={() => setShowBlobList(!showBlobList)}
+        >
+          {pluralize(blobs.length, 'Blob', {
+            includeCount: false,
+          })}
+          {!showBlobList ? (
+            <ChevronDownIcon className="w-4 h-4 ml-1 text-white" />
+          ) : (
+            <ChevronUpIcon className="w-4 h-4 ml-1 text-white" />
+          )}
+        </button>
+      }
+    >
+      {showBlobList && (
+        <BlobList blobs={blobs} authorDid={authorDid} name="subjectBlobCids" />
+      )}
+    </FormLabel>
   )
 }
 

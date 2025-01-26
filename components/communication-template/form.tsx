@@ -9,6 +9,7 @@ import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { useCommunicationTemplateEditor } from './hooks'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
+import { useColorScheme } from '@/common/useColorScheme'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -27,6 +28,7 @@ export const CommunicationTemplateForm = ({
     isSaving,
   } = useCommunicationTemplateEditor(templateId)
   const [lang, setLang] = useState<string | undefined>()
+  const { theme } = useColorScheme()
 
   return (
     <form onSubmit={onSubmit}>
@@ -66,7 +68,7 @@ export const CommunicationTemplateForm = ({
           value={contentMarkdown}
           onChange={(c) => setContentMarkdown(c || '')}
           fullscreen={false}
-          data-color-mode="light"
+          data-color-mode={theme}
           commands={[
             commands.bold,
             commands.divider,

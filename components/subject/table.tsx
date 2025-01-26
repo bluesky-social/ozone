@@ -4,15 +4,21 @@ import {
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronUpIcon,
+  Bars3BottomLeftIcon,
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { classNames } from '@/lib/util'
+import { classNames, pluralize } from '@/lib/util'
 import { SubjectOverview } from '../reports/SubjectOverview'
 import { Loading } from '../common/Loader'
-import { useSearchParams, usePathname } from 'next/navigation'
-import { HTMLAttributes } from 'react'
+import { useSearchParams, usePathname, useRouter } from 'next/navigation'
+import { Fragment, HTMLAttributes } from 'react'
 import { ReviewStateIcon } from './ReviewStateMarker'
+import { Popover, Transition } from '@headlessui/react'
+import { ButtonGroup } from '@/common/buttons'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { StatView } from './Summary'
+import { FlagIcon, ShieldExclamationIcon } from '@heroicons/react/24/solid'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
@@ -23,9 +29,13 @@ const useSortOrder = () => {
   const sortDirection = searchParams.get(directionKey)
   const sortField = searchParams.get(fieldKey)
 
-  function getToggleReverseOrderLink(field: string) {
+  function getToggleReverseOrderLink(field: string, newDirection?: string) {
     const params = new URLSearchParams(searchParams)
-    params.set(directionKey, sortDirection === 'asc' ? 'desc' : 'asc')
+    // If the caller wants a specific direction, use that
+    params.set(
+      directionKey,
+      newDirection || (sortDirection === 'asc' ? 'desc' : 'asc'),
+    )
     params.set(fieldKey, field)
     return `${pathname}?${params}`
   }
@@ -76,6 +86,55 @@ export function SubjectTable(
         <div className="flex justify-center py-6">
           <LoadMoreButton onClick={onLoadMore} />
         </div>
+      )}
+    </div>
+  )
+}
+
+export const SubjectSummaryColumn = ({
+  recordStats,
+  accountStats,
+}: {
+  recordStats?: ToolsOzoneModerationDefs.RecordsStats
+  accountStats?: ToolsOzoneModerationDefs.AccountStats
+}) => {
+  const { takendownCount, reportedCount, totalReports } = recordStats || {}
+  const { suspendCount } = accountStats || {}
+
+  return (
+    <div className="flex flex-row gap-1 items-center">
+      {!!suspendCount && (
+        <StatView
+          appearance="danger"
+          count={suspendCount}
+          Icon={ShieldExclamationIcon}
+          title={`account suspended ${pluralize(suspendCount, 'time')}`}
+        />
+      )}
+      {!!reportedCount && (
+        <StatView
+          appearance="info"
+          count={reportedCount}
+          Icon={FlagIcon}
+          title={`${pluralize(
+            reportedCount,
+            'record',
+          )} authored by this user reported ${pluralize(
+            totalReports || 0,
+            'time',
+          )}`}
+        />
+      )}
+      {!!takendownCount && (
+        <StatView
+          appearance="danger"
+          count={takendownCount}
+          Icon={ShieldExclamationIcon}
+          title={`${pluralize(
+            takendownCount,
+            'record',
+          )} authored by this account has been taken down`}
+        />
       )}
     </div>
   )
@@ -142,6 +201,12 @@ function SubjectRow({
           subjectRepoHandle={subjectStatus.subjectRepoHandle}
         />
       </td>
+      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
+        <SubjectSummaryColumn
+          recordStats={subjectStatus.recordsStats}
+          accountStats={subjectStatus.accountStats}
+        />
+      </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-sm">
         {lastReviewedAt && (
           <span title={lastReviewedAt.toLocaleString()}>
@@ -163,6 +228,129 @@ function SubjectRow({
         )}
       </td>
     </tr>
+  )
+}
+
+const SummaryColumnHeader = () => {
+  const router = useRouter()
+  const { sortDirection, sortField, getToggleReverseOrderLink } = useSortOrder()
+  const hasSort =
+    sortField &&
+    ['reportedRecordsCount', 'takendownRecordsCount'].includes(sortField)
+
+  return (
+    <Popover className="relative">
+      <Popover.Button
+        className=" flex flex-row items-center gap-1"
+        type="button"
+      >
+        Summary
+        {hasSort ? (
+          sortDirection === 'asc' ? (
+            <ChevronUpIcon className="h-4 w-4" />
+          ) : (
+            <ChevronDownIcon className="h-4 w-4" />
+          )
+        ) : (
+          <Bars3BottomLeftIcon className="h-4 w-4" />
+        )}
+      </Popover.Button>
+
+      <Transition
+        as={Fragment}
+        enter="transition ease-out duration-200"
+        enterFrom="opacity-0 translate-y-1"
+        enterTo="opacity-100 translate-y-0"
+        leave="transition ease-in duration-150"
+        leaveFrom="opacity-100 translate-y-0"
+        leaveTo="opacity-0 translate-y-1"
+      >
+        <Popover.Panel className="absolute z-10 rounded p-4">
+          <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
+            <div className="pb-2">
+              <p>Reported record count</p>
+              <ButtonGroup
+                size="xs"
+                leftAligned
+                appearance="primary"
+                items={[
+                  {
+                    id: 'asc',
+                    text: 'Ascending',
+                    onClick: () => {
+                      router.push(
+                        getToggleReverseOrderLink(
+                          'reportedRecordsCount',
+                          'asc',
+                        ),
+                      )
+                    },
+                    isActive:
+                      sortField === 'reportedRecordsCount' &&
+                      sortDirection === 'asc',
+                  },
+                  {
+                    id: 'desc',
+                    text: 'Descending',
+                    onClick: () => {
+                      router.push(
+                        getToggleReverseOrderLink(
+                          'reportedRecordsCount',
+                          'desc',
+                        ),
+                      )
+                    },
+                    isActive:
+                      sortField === 'reportedRecordsCount' &&
+                      sortDirection === 'desc',
+                  },
+                ]}
+              />
+            </div>
+            <div className="pb-2">
+              <p>Takendown records count</p>
+              <ButtonGroup
+                size="xs"
+                leftAligned
+                appearance="primary"
+                items={[
+                  {
+                    id: 'asc',
+                    text: 'Ascending',
+                    onClick: () => {
+                      router.push(
+                        getToggleReverseOrderLink(
+                          'takendownRecordsCount',
+                          'asc',
+                        ),
+                      )
+                    },
+                    isActive:
+                      sortField === 'takendownRecordsCount' &&
+                      sortDirection === 'asc',
+                  },
+                  {
+                    id: 'desc',
+                    text: 'Descending',
+                    onClick: () => {
+                      router.push(
+                        getToggleReverseOrderLink(
+                          'takendownRecordsCount',
+                          'desc',
+                        ),
+                      )
+                    },
+                    isActive:
+                      sortField === 'takendownRecordsCount' &&
+                      sortDirection === 'desc',
+                  },
+                ]}
+              />
+            </div>
+          </div>
+        </Popover.Panel>
+      </Transition>
+    </Popover>
   )
 }
 
@@ -188,6 +376,12 @@ function SubjectRowHead() {
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Subject
+      </th>
+      <th
+        scope="col"
+        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
+      >
+        <SummaryColumnHeader />
       </th>
       <th
         scope="col"
@@ -236,7 +430,7 @@ function EmptyRows({
 }) {
   return (
     <tr>
-      <td colSpan={5} className="text-center">
+      <td colSpan={6} className="text-center">
         {isInitialLoading ? (
           <>
             <Loading />

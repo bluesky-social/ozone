@@ -17,7 +17,7 @@
     "e2e:run": "$(yarn bin)/cypress run --browser chrome"
   },
   "dependencies": {
-    "@atproto/api": "^0.13.16",
+    "@atproto/api": "^0.13.29",
     "@atproto/oauth-client-browser": "^0.2.0",
     "@atproto/oauth-types": "^0.1.4",
     "@atproto/xrpc": "^0.6.1",
@@ -38,7 +38,9 @@
     "next": "14.2.5",
     "react": "18.2.0",
     "react-dom": "18.2.0",
+    "react-dropzone": "^14.3.5",
     "react-json-view": "1.21.3",
+    "react-tailwindcss-select": "^1.8.5",
     "react-tetris": "^0.3.0",
     "react-toastify": "^9.1.1",
     "react-use": "^17.4.0",
@@ -51,7 +53,7 @@
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.8",
     "autoprefixer": "^10.4.13",
-    "cypress": "^12.14.0",
+    "cypress": "^13.16.1",
     "postcss": "^8.4.20",
     "tailwindcss": "^3.2.4"
   },

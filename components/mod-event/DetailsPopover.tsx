@@ -316,6 +316,16 @@ const ModEventDetails = ({ modEventType }: { modEventType: string }) => {
     )
   }
 
+  if (modEventType === MOD_EVENTS.EMAIL) {
+    return (
+      <p>
+        This event sends email to users. Sending the email depends on PDS
+        implementation and your labeler configuration. Not all labelers can send
+        emails to all users on the network.
+      </p>
+    )
+  }
+
   return (
     <p>
       Sorry, this event is not well defined and probably will not have any

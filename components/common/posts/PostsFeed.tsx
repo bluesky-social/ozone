@@ -43,7 +43,7 @@ import {
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
-import { HandThumbUpIcon } from '@heroicons/react/24/solid'
+import { getVideoUrlWithFallback } from '../video/helpers'
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -52,10 +52,14 @@ export function PostsFeed({
   items,
   onReport,
   onLoadMore,
+  isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   items: AppBskyFeedDefs.FeedViewPost[]
   onReport: (uri: string) => void
   onLoadMore?: () => void
+  isAuthorDeactivated?: boolean
+  isAuthorTakendown?: boolean
 }) {
   return (
     <div className="border border-gray-200 dark:border-slate-700 border-b-0">
@@ -64,7 +68,13 @@ export function PostsFeed({
           key={`post-${i}`}
           className="bg-white dark:bg-slate-800 border-b border-gray-200 dark:border-slate-700 pt-6 pb-4 px-4"
         >
-          <PostAsCard item={item} onReport={onReport} dense />
+          <PostAsCard
+            item={item}
+            onReport={onReport}
+            dense
+            isAuthorDeactivated={isAuthorDeactivated}
+            isAuthorTakendown={isAuthorTakendown}
+          />
         </div>
       ))}
       {onLoadMore && <LoadMore onLoadMore={onLoadMore} />}
@@ -88,10 +98,14 @@ export function PostAsCard({
   onReport,
   className = '',
   showLabels = true,
+  isAuthorDeactivated,
+  isAuthorTakendown,
   controls = [...PostControlOptions],
 }: {
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
+  isAuthorDeactivated?: boolean
+  isAuthorTakendown?: boolean
   controls?: PostControl[]
   onReport?: (uri: string) => void
   className?: string
@@ -101,7 +115,11 @@ export function PostAsCard({
     <div className={`bg-white dark:bg-slate-800 ${className}`}>
       <PostHeader item={item} dense={dense} />
       <PostContent item={item} dense={dense} />
-      <PostEmbeds item={item} />
+      <PostEmbeds
+        item={item}
+        isAuthorTakendown={isAuthorTakendown}
+        isAuthorDeactivated={isAuthorDeactivated}
+      />
       {showLabels && <PostLabels item={item} dense={dense} />}
       {!!controls?.length && (
         <PostControls item={item} onReport={onReport} controls={controls} />
@@ -238,7 +256,15 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
-export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
+export function PostEmbeds({
+  item,
+  isAuthorTakendown,
+  isAuthorDeactivated,
+}: {
+  isAuthorTakendown?: boolean
+  isAuthorDeactivated?: boolean
+  item: AppBskyFeedDefs.FeedViewPost
+}) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
   const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
     ? item.post.embed.media
@@ -255,11 +281,21 @@ export function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
 
   if (AppBskyEmbedVideo.isView(embed)) {
     const captions = item.post.record?.['embed']?.['captions']
+    const sourceUrl = getVideoUrlWithFallback(embed.playlist, {
+      isAuthorDeactivated,
+      isAuthorTakendown,
+    })
+    const thumbnailUrl = embed.thumbnail
+      ? getVideoUrlWithFallback(embed.thumbnail, {
+          isAuthorDeactivated,
+          isAuthorTakendown,
+        })
+      : undefined
     return (
       <div className="flex gap-2 pb-2 pl-4" aria-label={embed.alt}>
         <VideoPlayer
-          source={embed.playlist}
-          thumbnail={embed.thumbnail}
+          source={sourceUrl}
+          thumbnail={thumbnailUrl}
           alt={embed.alt}
           mediaFilters={mediaFilters}
           captions={captions ? (captions as AppBskyEmbedVideo.Caption[]) : []}

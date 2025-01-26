@@ -1,10 +1,14 @@
 import { Popover, Transition } from '@headlessui/react'
 import { ActionButton } from '@/common/buttons'
 import { CheckIcon } from '@heroicons/react/24/outline'
-import { Checkbox } from '@/common/forms'
+import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { useState } from 'react'
 import { WorkspaceListData } from './useWorkspaceListData'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  AppBskyActorDefs,
+  AppBskyActorProfile,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import { getSubjectStatusFromItemData } from './utils'
 
 const toggleItemCheck = (item: string, select: boolean = true) => {
@@ -47,6 +51,14 @@ const ContentFilterOptions = {
   contentWithVideoEmbed: { label: 'Content with video embed' },
 }
 
+const matchKeyword = (keyword?: string, subject?: string) => {
+  if (!keyword || !subject) return false
+  const keywords = keyword.split('||')
+  return keywords.some((k) =>
+    subject.toLowerCase().includes(k.trim().toLowerCase()),
+  )
+}
+
 export const WorkspaceFilterSelector = ({
   listData,
 }: {
@@ -66,6 +78,7 @@ export const WorkspaceFilterSelector = ({
     contentAuthorDeactivated: false,
     contentWithImageEmbed: false,
     contentWithVideoEmbed: false,
+    keyword: '',
   })
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -83,6 +96,13 @@ export const WorkspaceFilterSelector = ({
     if (!listData) return
     Object.keys(listData).forEach((uri) => {
       toggleItemCheck(uri)
+    })
+  }
+
+  const unselectAll = () => {
+    if (!listData) return
+    Object.keys(listData).forEach((uri) => {
+      toggleItemCheck(uri, false)
     })
   }
 
@@ -104,7 +124,14 @@ export const WorkspaceFilterSelector = ({
           (filters.accountEmailUnConfirmed &&
             isRepo &&
             !item.emailConfirmedAt) ||
-          (filters.accountDeactivated && isRepo && item.deactivatedAt)
+          (filters.accountDeactivated && isRepo && item.deactivatedAt) ||
+          (filters.keyword &&
+            isRepo &&
+            matchKeyword(
+              filters.keyword,
+              item.relatedRecords?.find(AppBskyActorProfile.isRecord)
+                ?.description,
+            ))
         ) {
           toggleItemCheck(uri, select)
         }
@@ -125,7 +152,10 @@ export const WorkspaceFilterSelector = ({
           (filters.contentWithImageEmbed &&
             subjectStatus?.tags?.includes('embed:image')) ||
           (filters.contentWithVideoEmbed &&
-            subjectStatus?.tags?.includes('embed:video'))
+            subjectStatus?.tags?.includes('embed:video')) ||
+          (filters.keyword &&
+            isRecord &&
+            matchKeyword(filters.keyword, item.value?.['text']))
         ) {
           toggleItemCheck(uri, select)
         }
@@ -135,16 +165,16 @@ export const WorkspaceFilterSelector = ({
 
   return (
     <Popover className="relative z-30">
-      {({ open, close }) => (
+      {({ open }) => (
         <>
-          <Popover.Button className="text-sm flex flex-row items-center z-30">
+          <Popover.Button className="text-sm flex flex-row items-center z-20">
             <ActionButton
               appearance="outlined"
               size="xs"
               type="button"
               title="Select/unselect all items"
             >
-              <CheckIcon className="h-3 w-3" />
+              <CheckIcon className="h-4 w-3" />
             </ActionButton>
           </Popover.Button>
 
@@ -204,16 +234,39 @@ export const WorkspaceFilterSelector = ({
                     )}
                   </div>
                 </div>
+                <div className="mb-2">
+                  <FormLabel
+                    label="Keyword"
+                    htmlFor="keyword"
+                    className="flex-1"
+                  >
+                    <Input
+                      type="text"
+                      id="keyword"
+                      name="keyword"
+                      required
+                      list="subject-suggestions"
+                      placeholder="Keyword"
+                      className="block w-full"
+                      value={filters.keyword}
+                      onChange={(ev) =>
+                        setFilters({ ...filters, keyword: ev.target.value })
+                      }
+                      autoComplete="off"
+                    />
+                  </FormLabel>
+                </div>
                 <p className="py-2 block max-w-lg text-gray-500 dark:text-gray-300 text-xs">
-                  Note:{' '}
-                  <i>
-                    You can select or unselect all items that matches the above
-                    configured filters. The configured filters work with OR
-                    operator. <br />
-                    So, if you select {'"Deactivated accounts"'} and
-                    {'"Accounts in appealed state"'}, all accounts that are
-                    either deactivated OR in appealed state will be selected
-                  </i>
+                  You can select or unselect all items that matches the above
+                  configured filters. The configured filters work with OR
+                  operator. <br />
+                  So, if you select {'"Deactivated accounts"'} and
+                  {'"Accounts in appealed state"'}, all accounts that are either
+                  deactivated OR in appealed state will be selected. <br />
+                  <br />
+                  You can use {'||'} separator in the keyword filter to look for
+                  multiple keywords in either {"user's"} profile bio or record
+                  content
                 </p>
                 <div className="flex flex-row mt-2 gap-2">
                   <ActionButton
@@ -221,7 +274,6 @@ export const WorkspaceFilterSelector = ({
                     appearance="outlined"
                     onClick={() => {
                       toggleFilteredItems()
-                      //     close()
                     }}
                   >
                     <span className="text-xs">Select Filtered</span>
@@ -234,6 +286,15 @@ export const WorkspaceFilterSelector = ({
                     }}
                   >
                     <span className="text-xs">Unselect Filtered</span>
+                  </ActionButton>
+                  <ActionButton
+                    size="xs"
+                    appearance="outlined"
+                    onClick={() => {
+                      unselectAll()
+                    }}
+                  >
+                    <span className="text-xs">Unselect All</span>
                   </ActionButton>
                   <ActionButton
                     size="xs"

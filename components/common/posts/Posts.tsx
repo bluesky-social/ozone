@@ -26,6 +26,8 @@ export function Posts({
   setSearchQuery,
   typeFilter,
   setTypeFilter,
+  isAuthorDeactivated,
+  isAuthorTakendown,
 }: {
   isFromAppview?: boolean
   items: AppBskyFeedDefs.FeedViewPost[]
@@ -36,6 +38,8 @@ export function Posts({
   setSearchQuery: (query: string) => void
   typeFilter: TypeFilterKey
   setTypeFilter: (type: TypeFilterKey) => void
+  isAuthorDeactivated: boolean
+  isAuthorTakendown: boolean
 }) {
   const [mode, setMode] = useState<Mode>(Mode.Feed)
 
@@ -103,6 +107,8 @@ export function Posts({
           {mode === Mode.Feed ? (
             <div className="mx-auto max-w-3xl w-full py-2 sm:py-4 sm:px-6 lg:px-8">
               <PostsFeed
+                isAuthorDeactivated={isAuthorDeactivated}
+                isAuthorTakendown={isAuthorTakendown}
                 items={items}
                 onReport={onReport}
                 onLoadMore={onLoadMore}

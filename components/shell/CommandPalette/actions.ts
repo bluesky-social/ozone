@@ -1,19 +1,9 @@
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
-import { ReadonlyURLSearchParams } from 'next/navigation'
 
-export const getStaticActions = ({
-  router,
-  pathname,
-  searchParams,
-}: {
-  router: AppRouterInstance
-  pathname: string
-  searchParams: ReadonlyURLSearchParams
-}) => [
+export const getStaticActions = ({ router }: { router: AppRouterInstance }) => [
   {
     id: 'quick-action-modal',
     name: 'Open Quick Action Panel',
-    shortcut: ['q'],
     keywords: 'quick,action,panel',
     perform: () => {
       router.push('/reports?quickOpen=true')
@@ -22,18 +12,17 @@ export const getStaticActions = ({
   {
     id: 'workspace-modal',
     name: 'Open Workspace',
-    shortcut: ['w'],
     keywords: 'workspace,panel',
     perform: () => {
-      const newParams = new URLSearchParams(searchParams)
+      const pathname = window.location.pathname
+      const newParams = new URLSearchParams(window.location.search)
       newParams.set('workspaceOpen', 'true')
-      router.push((pathname ?? '') + '?' + newParams.toString())
+      router.push(`${pathname}?${newParams.toString()}`)
     },
   },
   {
     id: 'unresolved-queue',
     name: 'Open Unresolved Queue',
-    shortcut: ['u'],
     keywords: 'unresolved,queue',
     perform: () =>
       router.push(
@@ -43,7 +32,6 @@ export const getStaticActions = ({
   {
     id: 'resolved-queue',
     name: 'Open Resolved Queue',
-    shortcut: ['r'],
     keywords: 'resolved,queue',
     perform: () =>
       router.push(
@@ -53,7 +41,6 @@ export const getStaticActions = ({
   {
     id: 'escalated-queue',
     name: 'Open Escalated Queue',
-    shortcut: ['e'],
     keywords: 'escalated,queue',
     perform: () =>
       router.push(
@@ -63,14 +50,12 @@ export const getStaticActions = ({
   {
     id: 'all-queue',
     name: 'Open Moderation Queue',
-    shortcut: ['a'],
     keywords: 'all,queue',
     perform: () => router.push('/reports'),
   },
   {
     id: 'appeal-queue',
     name: 'Open Appeal Queue',
-    shortcut: ['e'],
     keywords: 'appealed,queue',
     perform: () =>
       router.push(
@@ -80,14 +65,12 @@ export const getStaticActions = ({
   {
     id: 'filter-macros',
     name: 'Manage Filter Macros',
-    shortcut: ['f'],
     keywords: 'filter,macros',
     perform: () => router.push('/events/filters/macros'),
   },
   {
     id: 'view-sets',
     name: 'See All Sets',
-    shortcut: ['s'],
     keywords: 'sets,settings',
     perform: () => {
       router.push('/configure?tab=sets')

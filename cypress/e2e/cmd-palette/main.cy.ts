@@ -19,15 +19,6 @@ describe('Command Palette', () => {
       response,
     )
 
-  const openCommandPalette = (input?: string) => {
-    const comboKey = Cypress.platform === 'darwin' ? '{cmd}k' : '{ctrl}k'
-    cy.get('body').type(comboKey)
-    if (input) {
-      cy.get('[aria-controls="kbar-listbox"]').clear().type(input)
-      cy.wait(300)
-    }
-  }
-
   let authFixture
   const bskyPostUrlWithHandle =
     'https://bsky.app/profile/alice.test/post/3kozf56ocx32a'
@@ -50,7 +41,7 @@ describe('Command Palette', () => {
 
   it('Shows post options from bsky app post url', () => {
     cy.wait(500)
-    openCommandPalette(bskyPostUrlWithHandle)
+    cy.openCommandPalette(bskyPostUrlWithHandle)
     cy.get('#kbar-listbox-item-1').contains('Take action on Post').click()
     cy.wait(500)
     cy.location('href').then((href) => {
@@ -62,7 +53,7 @@ describe('Command Palette', () => {
 
   it('Shows user options from bsky app post url', () => {
     cy.wait(500)
-    openCommandPalette(bskyPostUrlWithHandle)
+    cy.openCommandPalette(bskyPostUrlWithHandle)
     cy.get('#kbar-listbox-item-2').contains('Take action on alice.test').click()
     cy.wait(500)
     cy.location('href').then((href) => {
