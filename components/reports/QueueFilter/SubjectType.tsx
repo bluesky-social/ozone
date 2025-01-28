@@ -21,6 +21,40 @@ export const QueueFilterSubjectType = () => {
     }) || []
 
   return (
+    <SubjectTypeFilter
+      hasSubjectTypeFilter={hasSubjectTypeFilter}
+      isSubjectTypeAccount={queueFilters.subjectType === 'account'}
+      selectedCollections={selectedCollections}
+      isSubjectTypeRecord={
+        queueFilters.subjectType === 'record' ||
+        !!selectedCollections.length ||
+        !!selectedIncludeEmbedTypes.length
+      }
+      toggleCollection={toggleCollection}
+      toggleSubjectType={toggleSubjectType}
+      clearSubjectType={clearSubjectType}
+    />
+  )
+}
+
+export const SubjectTypeFilter = ({
+  hasSubjectTypeFilter,
+  isSubjectTypeRecord,
+  isSubjectTypeAccount,
+  selectedCollections,
+  toggleSubjectType,
+  clearSubjectType,
+  toggleCollection,
+}: {
+  hasSubjectTypeFilter: boolean
+  isSubjectTypeRecord: boolean
+  isSubjectTypeAccount: boolean
+  selectedCollections: string[]
+  toggleSubjectType: (subjectType: 'account' | 'record') => void
+  clearSubjectType: () => void
+  toggleCollection: (collectionId: string) => void
+}) => {
+  return (
     <div>
       <h3 className="text-gray-900 dark:text-gray-200 mb-2">
         <button
@@ -48,7 +82,7 @@ export const QueueFilterSubjectType = () => {
             onClick: () => {
               toggleSubjectType('account')
             },
-            isActive: queueFilters.subjectType === 'account',
+            isActive: isSubjectTypeAccount,
           },
           {
             id: 'subjectTypeRecord',
@@ -56,15 +90,12 @@ export const QueueFilterSubjectType = () => {
             onClick: () => {
               toggleSubjectType('record')
             },
-            isActive:
-              queueFilters.subjectType === 'record' ||
-              !!selectedCollections.length ||
-              !!selectedIncludeEmbedTypes.length,
+            isActive: isSubjectTypeRecord,
           },
         ]}
       />
 
-      {queueFilters.subjectType === 'record' && (
+      {isSubjectTypeRecord && (
         <div className="flex flex-row gap-4">
           <div>
             <h3 className="text-gray-900 dark:text-gray-200 my-2 border-b border-gray-400 pb-1">
