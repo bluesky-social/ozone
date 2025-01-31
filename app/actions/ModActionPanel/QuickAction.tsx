@@ -199,7 +199,7 @@ function Form(
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const shouldShowDurationInHoursField =
-    isTakedownEvent || isMuteEvent || isMuteReporterEvent
+    isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
@@ -717,7 +717,13 @@ function Form(
                               }
                             }
                           }}
-                          labelText={isMuteEvent ? 'Mute duration' : ''}
+                          labelText={
+                            isMuteEvent
+                              ? 'Mute duration'
+                              : isLabelEvent
+                              ? 'Label duration'
+                              : ''
+                          }
                         />
                       </FormLabel>
                       {isTakedownEvent && (
