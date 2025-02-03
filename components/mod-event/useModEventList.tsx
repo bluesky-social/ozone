@@ -394,7 +394,7 @@ export const useModEventList = (
 
   useEffect(() => {
     if (!showWorkspaceConfirmation) {
-      abortController.current?.abort('user-cancelled')
+      abortController.current?.abort()
     }
   }, [showWorkspaceConfirmation])
 
@@ -487,7 +487,7 @@ export const useModEventList = (
         //   if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && showWorkspaceConfirmation)
     } catch (e) {
-      if (abortController.current?.signal.reason === 'user-cancelled') {
+      if (abortController.current?.signal.aborted) {
         toast.info('Stopped adding to workspace')
       } else {
         toast.error(`Something went wrong: ${(e as Error).message}`)
