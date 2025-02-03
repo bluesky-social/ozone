@@ -2,15 +2,15 @@
 # yarn lockfile v1
 
 
-"@atproto/api@^0.13.29":
-  version "0.13.29"
-  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.13.29.tgz#34b8e8f68df95f9d44de243ff33dc92b6b421e71"
-  integrity sha512-j+2mZikK7dibAll4TrQBVFMUVlZ9UZKTlTuFMMJ/x/JrngdYSvPoCcujbPHSj3XuKuG+MCNps5e7wK4mXXQsSA==
+"@atproto/api@^0.13.32":
+  version "0.13.32"
+  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.13.32.tgz#cf8c31d35a7ee8352b121ab5f7be3f0189eae1d1"
+  integrity sha512-xAKSsZgaugAK/Mog+JbQCd5d2Y+FpE5OwKAKgftvs51dPRuqVZt/MSVRREaFEtgV90nrfSRGIx4EP54Ju4ypBw==
   dependencies:
     "@atproto/common-web" "^0.3.2"
     "@atproto/lexicon" "^0.4.5"
     "@atproto/syntax" "^0.3.1"
-    "@atproto/xrpc" "^0.6.6"
+    "@atproto/xrpc" "^0.6.7"
     await-lock "^2.2.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
@@ -36,10 +36,10 @@
     pino "^8.6.1"
     zod "^3.14.2"
 
-"@atproto/common@^0.4.6":
-  version "0.4.6"
-  resolved "https://registry.npmjs.org/@atproto/common/-/common-0.4.6.tgz#9a246244cb8f59615b2090ba4d99a2d5537e44b0"
-  integrity sha512-X33ZubLPrHLNur2Ln4tRP5TY0G0u/t9DyAeA5dgtTNGIXE3iJIlfiUSR0PW5s1iAvBbrrJK4BwaA2Pqsdl+RNw==
+"@atproto/common@^0.4.7":
+  version "0.4.7"
+  resolved "https://registry.npmjs.org/@atproto/common/-/common-0.4.7.tgz#3994b71b2b4d6ea6b9053557a71c10a476d9a10b"
+  integrity sha512-C844ILV66sqHjQCJDb8tN/yZB2MBaLpZ1qptDT8zWRMx0uw7j/B6/EuN9R9a57Nj99Hhi93QkvQxOujURqpPeA==
   dependencies:
     "@atproto/common-web" "^0.3.2"
     "@ipld/dag-cbor" "^7.0.3"
@@ -87,19 +87,19 @@
     multiformats "^9.9.0"
     zod "^3.23.8"
 
-"@atproto/ozone@0.1.70":
-  version "0.1.70"
-  resolved "https://registry.npmjs.org/@atproto/ozone/-/ozone-0.1.70.tgz#8d5cf2e2fdde816027f246e25043bb01cbe45f07"
-  integrity sha512-0XWj6/dL53r+ww4moSiua30JYgB5xmJJ+ZIg2kuaCmsNNJh4iu8fNOUZpbkzKmOsCT18WJXkbWdaUHfN92nyGg==
+"@atproto/ozone@0.1.74":
+  version "0.1.74"
+  resolved "https://registry.npmjs.org/@atproto/ozone/-/ozone-0.1.74.tgz#0c5502e8de1631d517d1b69c0b120c53f5bfd594"
+  integrity sha512-I+ZmPMqkNfgbeh+trlw6yq9lTwHYyZsoFFVl/mWv5CX780fis4QYRqEw0dhL+8qtBgnX/cHcfs23lHM6TUvCEg==
   dependencies:
-    "@atproto/api" "^0.13.29"
-    "@atproto/common" "^0.4.6"
+    "@atproto/api" "^0.13.32"
+    "@atproto/common" "^0.4.7"
     "@atproto/crypto" "^0.4.3"
     "@atproto/identity" "^0.4.5"
     "@atproto/lexicon" "^0.4.5"
     "@atproto/syntax" "^0.3.1"
-    "@atproto/xrpc" "^0.6.6"
-    "@atproto/xrpc-server" "^0.7.7"
+    "@atproto/xrpc" "^0.6.7"
+    "@atproto/xrpc-server" "^0.7.9"
     "@did-plc/lib" "^0.0.1"
     compression "^1.7.4"
     cors "^2.8.5"
@@ -121,15 +121,15 @@
   resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.1.tgz#4346418728f9643d783d2ffcf7c77e132e1f53d4"
   integrity sha512-fzW0Mg1QUOVCWUD3RgEsDt6d1OZ6DdFmbKcDdbzUfh0t4rhtRAC05KbZYmxuMPWDAiJ4BbbQ5dkAc/mNypMXkw==
 
-"@atproto/xrpc-server@^0.7.7":
-  version "0.7.7"
-  resolved "https://registry.npmjs.org/@atproto/xrpc-server/-/xrpc-server-0.7.7.tgz#0904df2a1da639fdacd7f25593c4b0bc483f32a2"
-  integrity sha512-hfA0OoGhWYPfrk+D6fumeRz+Jfcspan9JF0F50ok9brDjLySl5c8WAwpX47VTVzrvoInSgm4DEZ/STXWNcFxJg==
+"@atproto/xrpc-server@^0.7.9":
+  version "0.7.9"
+  resolved "https://registry.npmjs.org/@atproto/xrpc-server/-/xrpc-server-0.7.9.tgz#ba14257fd03fcf890c5e1cb08e633da6a512e535"
+  integrity sha512-x6CqV6KycIUyZs+J4V+wujc3R98QIkVRU4KmbUgAJ9AtJuTDnOOEbUFrNVVes45UfjJw4ztg021R0M2y0aI3fQ==
   dependencies:
-    "@atproto/common" "^0.4.6"
+    "@atproto/common" "^0.4.7"
     "@atproto/crypto" "^0.4.3"
     "@atproto/lexicon" "^0.4.5"
-    "@atproto/xrpc" "^0.6.6"
+    "@atproto/xrpc" "^0.6.7"
     cbor-x "^1.5.1"
     express "^4.17.2"
     http-errors "^2.0.0"
@@ -139,10 +139,10 @@
     ws "^8.12.0"
     zod "^3.23.8"
 
-"@atproto/xrpc@^0.6.6":
-  version "0.6.6"
-  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.6.tgz#28f58270ef4a8056f7f718bd52512e74bcd3702f"
-  integrity sha512-umXEYVMo9/pyIBoKmIAIi64RXDW9tSXY+wqztlQ6I2GZtjLfNZqmAWU+wADk3SxUe54mvjxxGyA4TtyGtDMfhA==
+"@atproto/xrpc@^0.6.7":
+  version "0.6.7"
+  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.7.tgz#e72ac2009390ecf80cb075004d6160c92f38d33c"
+  integrity sha512-pbzZIONIskyGKxxG3s2wB7rQ2W1xu3ycfeYhKwk/E/ippeJFVxcof64iSC7f22+7JSKUJcxBeZ1piBB82vLj7g==
   dependencies:
     "@atproto/lexicon" "^0.4.5"
     zod "^3.23.8"
