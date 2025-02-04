@@ -17,10 +17,8 @@ import { useState } from 'react'
 import { RepoFinder } from '@/repositories/Finder'
 import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
-import {
-  ActionPoliciesSelector,
-  ActionPolicySelector,
-} from '@/reports/ModerationForm/ActionPolicySelector'
+import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { SubjectTypeFilter } from '@/reports/QueueFilter/SubjectType'
 
 export const EventFilterPanel = ({
   limit,
@@ -38,6 +36,8 @@ export const EventFilterPanel = ({
   toggleCommentFilter,
   setCommentFilterKeyword,
   changeListFilter,
+  subjectType,
+  selectedCollections,
 }: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> &
   Pick<
     ReturnType<typeof useModEventList>,
@@ -169,6 +169,40 @@ export const EventFilterPanel = ({
               />
             </FormLabel>
           )}
+
+          <div className="pt-2">
+            <SubjectTypeFilter
+              hasSubjectTypeFilter={!!subjectType}
+              isSubjectTypeAccount={subjectType === 'account'}
+              selectedCollections={selectedCollections}
+              isSubjectTypeRecord={subjectType === 'record'}
+              toggleCollection={(collectionId) => {
+                const newCollections = new Set(selectedCollections)
+                if (newCollections.has(collectionId)) {
+                  newCollections.delete(collectionId)
+                } else {
+                  newCollections.add(collectionId)
+                }
+                changeListFilter({
+                  field: 'selectedCollections',
+                  value: Array.from(newCollections),
+                })
+              }}
+              toggleSubjectType={(newSubjectType) => {
+                changeListFilter({
+                  field: 'subjectType',
+                  value:
+                    newSubjectType === subjectType ? undefined : newSubjectType,
+                })
+              }}
+              clearSubjectType={() => {
+                changeListFilter({
+                  field: 'subjectType',
+                  value: undefined,
+                })
+              }}
+            />
+          </div>
 
           <FormLabel label="Page Size" htmlFor="limit" className="flex-1 mt-2">
             <Dropdown

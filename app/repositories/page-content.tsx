@@ -168,13 +168,13 @@ function useSearchResultsQuery(q: string) {
 
   useEffect(() => {
     if (!isConfirmationOpen) {
-      abortController.current?.abort('user-cancelled')
+      abortController.current?.abort()
     }
   }, [isConfirmationOpen])
 
   useEffect(() => {
     // User cancelled by closing this view (navigation, other?)
-    return () => abortController.current?.abort('user-cancelled')
+    return () => abortController.current?.abort()
   }, [])
 
   return {
