@@ -705,8 +705,9 @@ function Form(
                       >
                         <ActionDurationSelector
                           action={modEventType}
+                          required={isLabelEvent ? false : true}
                           onChange={(e) => {
-                            if (e.target.value === '0') {
+                            if (e.target.value === '0' && isTakedownEvent) {
                               // When permanent takedown is selected, auto check ack all checkbox
                               const ackAllCheckbox =
                                 document.querySelector<HTMLInputElement>(
