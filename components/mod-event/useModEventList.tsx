@@ -66,6 +66,8 @@ const initialListState = {
   policies: [],
   showContentPreview: false,
   limit: 25,
+  subjectType: undefined,
+  selectedCollections: [],
 }
 
 const getReposAndRecordsForEvents = async (
@@ -143,6 +145,8 @@ export type EventListState = Omit<
   addedLabels: string[]
   removedLabels: string[]
   showContentPreview: boolean
+  subjectType?: 'account' | 'record'
+  selectedCollections: string[]
 }
 
 type EventListFilterPayload =
@@ -161,6 +165,8 @@ type EventListFilterPayload =
   | { field: 'removedTags'; value: string }
   | { field: 'policies'; value: string[] }
   | { field: 'limit'; value: number }
+  | { field: 'subjectType'; value?: 'account' | 'record' }
+  | { field: 'selectedCollections'; value: string[] }
 
 type EventListAction =
   | {
@@ -229,6 +235,8 @@ const getModEvents =
       reportTypes,
       policies,
       limit,
+      subjectType,
+      selectedCollections,
     } = listState
     const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
       limit,
@@ -274,6 +282,10 @@ const getModEvents =
       if (commentFilter.keyword) {
         queryParams.comment = commentFilter.keyword
       }
+    }
+
+    if (selectedCollections.length && subjectType === 'record') {
+      queryParams.collections = selectedCollections
     }
 
     if (addedTags?.trim().length) {
@@ -455,7 +467,9 @@ export const useModEventList = (
     listState.addedLabels.length > 0 ||
     listState.removedLabels.length > 0 ||
     listState.addedTags.length > 0 ||
-    listState.removedTags.length > 0
+    listState.removedTags.length > 0 ||
+    listState.subjectType ||
+    listState.selectedCollections.length > 0
 
   const addToWorkspace = async () => {
     if (!showWorkspaceConfirmation) {

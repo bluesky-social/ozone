@@ -154,6 +154,8 @@ export const ModEventList = (
     hasFilter,
     commentFilter,
     policies,
+    subjectType,
+    selectedCollections,
     toggleCommentFilter,
     setCommentFilterKeyword,
     createdBy,
@@ -319,6 +321,8 @@ export const ModEventList = (
             applyFilterMacro,
             changeListFilter,
             policies,
+            subjectType,
+            selectedCollections,
           }}
         />
       )}
