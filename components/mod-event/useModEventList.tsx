@@ -10,13 +10,14 @@ import {
 } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { addDays } from 'date-fns'
-import { useEffect, useReducer, useState } from 'react'
+import { useEffect, useReducer, useRef, useState } from 'react'
 
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { chunkArray } from '@/lib/util'
+import { toast } from 'react-toastify'
 
 export type WorkspaceConfirmationOptions =
   | 'subjects'
@@ -205,6 +206,160 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
   }
 }
 
+const getModEvents =
+  (labelerAgent: Agent, listState: EventListState) =>
+  async (
+    {
+      pageParam,
+    }: {
+      pageParam?: string
+    },
+    options: { signal?: AbortSignal } = {},
+  ): Promise<{
+    events: ToolsOzoneModerationDefs.ModEventView[]
+    cursor?: string
+  }> => {
+    const {
+      types,
+      includeAllUserRecords,
+      commentFilter,
+      createdBy,
+      subject,
+      oldestFirst,
+      createdBefore,
+      createdAfter,
+      addedLabels,
+      removedLabels,
+      addedTags,
+      removedTags,
+      reportTypes,
+      policies,
+      limit,
+      subjectType,
+      selectedCollections,
+    } = listState
+    const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
+      limit,
+      cursor: pageParam,
+      includeAllUserRecords,
+    }
+
+    if (subject?.trim()) {
+      queryParams.subject = subject.trim()
+    }
+
+    if (createdBy?.trim()) {
+      queryParams.createdBy = createdBy
+    }
+
+    if (createdAfter) {
+      queryParams.createdAfter = new Date(createdAfter).toISOString()
+    }
+
+    if (createdBefore) {
+      queryParams.createdBefore = new Date(createdBefore).toISOString()
+    }
+
+    if (reportTypes.length) {
+      queryParams.reportTypes = reportTypes
+    }
+
+    if (addedLabels.length) {
+      queryParams.addedLabels = addedLabels
+    }
+
+    if (removedLabels.length) {
+      queryParams.removedLabels = removedLabels
+    }
+
+    if (oldestFirst) {
+      queryParams.sortDirection = 'asc'
+    }
+
+    if (commentFilter.enabled) {
+      queryParams.hasComment = true
+
+      if (commentFilter.keyword) {
+        queryParams.comment = commentFilter.keyword
+      }
+    }
+
+    if (selectedCollections.length && subjectType === 'record') {
+      queryParams.collections = selectedCollections
+    }
+
+    if (addedTags?.trim().length) {
+      queryParams.addedTags = addedTags.trim().split(',')
+    }
+    if (removedTags?.trim().length) {
+      queryParams.addedTags = removedTags.trim().split(',')
+    }
+
+    const filterTypes = types.filter(Boolean)
+    if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
+      queryParams.types = filterTypes.map((type) => {
+        // There is a no appeal type, it's a placeholder and behind the scene
+        // we use type as report and reportTypes as appeal
+        if (type === MOD_EVENTS.APPEAL) {
+          queryParams.reportTypes ||= []
+          queryParams.reportTypes.push(ComAtprotoModerationDefs.REASONAPPEAL)
+          return MOD_EVENTS.REPORT
+        }
+
+        // We use custom event type name that translate to either add or remove certain tag
+        const { add, remove } = buildTagFilter(type)
+        if (add.length || remove.length) {
+          if (add.length) {
+            if (queryParams.addedTags) {
+              queryParams.addedTags.push(...add)
+            } else {
+              queryParams.addedTags = add
+            }
+          }
+          if (remove.length) {
+            if (queryParams.removedTags) {
+              queryParams.removedTags.push(...remove)
+            } else {
+              queryParams.removedTags = remove
+            }
+          }
+          return MOD_EVENTS.TAG
+        }
+        return type
+      })
+    }
+
+    if (filterTypes.includes(MOD_EVENTS.TAKEDOWN) && policies) {
+      queryParams.policies = policies
+    }
+
+    const { data } = await labelerAgent.tools.ozone.moderation.queryEvents(
+      {
+        ...queryParams,
+      },
+      options,
+    )
+    const { repos, records } = await getReposAndRecordsForEvents(
+      labelerAgent,
+      data.events,
+    )
+
+    return {
+      events: data.events.map((e) => {
+        if (
+          ComAtprotoAdminDefs.isRepoRef(e.subject) ||
+          ChatBskyConvoDefs.isMessageRef(e.subject)
+        ) {
+          return { ...e, repo: repos.get(e.subject.did) }
+        } else if (ComAtprotoRepoStrongRef.isMain(e.subject)) {
+          return { ...e, record: records.get(e.subject.uri) }
+        }
+        return { ...e }
+      }),
+      cursor: data.cursor,
+    }
+  }
+
 export const useModEventList = (
   props: {
     subject?: string
@@ -217,6 +372,8 @@ export const useModEventList = (
   const { mutateAsync: addItemsToWorkspace } = useWorkspaceAddItemsMutation()
   const labelerAgent = useLabelerAgent()
   const [listState, dispatch] = useReducer(eventListReducer, initialListState)
+  const abortController = useRef<AbortController | null>(null)
+  const [isAddingToWorkspace, setIsAddingToWorkspace] = useState(false)
 
   const setCommentFilter = (value: CommentFilter) => {
     dispatch({ type: 'SET_FILTER', payload: { field: 'commentFilter', value } })
@@ -247,150 +404,50 @@ export const useModEventList = (
     }
   }, [props.eventType])
 
+  useEffect(() => {
+    if (!showWorkspaceConfirmation) {
+      abortController.current?.abort()
+    }
+  }, [showWorkspaceConfirmation])
+
+  const modEventsGetter = getModEvents(labelerAgent, listState)
+  const addFromEventsToWorkspace = async (
+    eventList: ToolsOzoneModerationDefs.ModEventView[],
+  ) => {
+    const items = new Set<string>()
+
+    eventList.forEach((event) => {
+      if (showWorkspaceConfirmation === 'subjects') {
+        if (ComAtprotoAdminDefs.isRepoRef(event.subject)) {
+          items.add(event.subject.did)
+        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+          items.add(event.subject.uri)
+        } else if (ChatBskyConvoDefs.isMessageRef(event.subject)) {
+          items.add(event.subject.did)
+        }
+      } else if (showWorkspaceConfirmation === 'creators') {
+        items.add(event.createdBy)
+      } else if (showWorkspaceConfirmation === 'subject-authors') {
+        if (
+          ComAtprotoAdminDefs.isRepoRef(event.subject) ||
+          ChatBskyConvoDefs.isMessageRef(event.subject)
+        ) {
+          items.add(event.subject.did)
+        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
+          items.add(new AtUri(event.subject.uri).host)
+        }
+      }
+    })
+
+    return addItemsToWorkspace([...items])
+  }
+
   const results = useInfiniteQuery<{
     events: ModEventViewWithDetails[]
     cursor?: string
   }>({
     queryKey: ['modEventList', { listState }],
-    queryFn: async ({ pageParam }) => {
-      const {
-        types,
-        includeAllUserRecords,
-        commentFilter,
-        createdBy,
-        subject,
-        oldestFirst,
-        createdBefore,
-        createdAfter,
-        addedLabels,
-        removedLabels,
-        addedTags,
-        removedTags,
-        reportTypes,
-        policies,
-        limit,
-        subjectType,
-        selectedCollections,
-      } = listState
-      const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
-        limit,
-        subjectType,
-        cursor: pageParam,
-        includeAllUserRecords,
-      }
-
-      if (subject?.trim()) {
-        queryParams.subject = subject.trim()
-      }
-
-      if (createdBy?.trim()) {
-        queryParams.createdBy = createdBy
-      }
-
-      if (createdAfter) {
-        queryParams.createdAfter = new Date(createdAfter).toISOString()
-      }
-
-      if (createdBefore) {
-        queryParams.createdBefore = new Date(createdBefore).toISOString()
-      }
-
-      if (reportTypes.length) {
-        queryParams.reportTypes = reportTypes
-      }
-
-      if (addedLabels.length) {
-        queryParams.addedLabels = addedLabels
-      }
-
-      if (removedLabels.length) {
-        queryParams.removedLabels = removedLabels
-      }
-
-      if (oldestFirst) {
-        queryParams.sortDirection = 'asc'
-      }
-
-      if (commentFilter.enabled) {
-        queryParams.hasComment = true
-
-        if (commentFilter.keyword) {
-          queryParams.comment = commentFilter.keyword
-        }
-      }
-
-      if (selectedCollections.length && subjectType === 'record') {
-        queryParams.collections = selectedCollections
-      }
-
-      if (addedTags?.trim().length) {
-        queryParams.addedTags = addedTags.trim().split(',')
-      }
-      if (removedTags?.trim().length) {
-        queryParams.addedTags = removedTags.trim().split(',')
-      }
-
-      const filterTypes = types.filter(Boolean)
-      if (filterTypes.length < allTypes.length && filterTypes.length > 0) {
-        queryParams.types = filterTypes.map((type) => {
-          // There is a no appeal type, it's a placeholder and behind the scene
-          // we use type as report and reportTypes as appeal
-          if (type === MOD_EVENTS.APPEAL) {
-            queryParams.reportTypes ||= []
-            queryParams.reportTypes.push(ComAtprotoModerationDefs.REASONAPPEAL)
-            return MOD_EVENTS.REPORT
-          }
-
-          // We use custom event type name that translate to either add or remove certain tag
-          const { add, remove } = buildTagFilter(type)
-          if (add.length || remove.length) {
-            if (add.length) {
-              if (queryParams.addedTags) {
-                queryParams.addedTags.push(...add)
-              } else {
-                queryParams.addedTags = add
-              }
-            }
-            if (remove.length) {
-              if (queryParams.removedTags) {
-                queryParams.removedTags.push(...remove)
-              } else {
-                queryParams.removedTags = remove
-              }
-            }
-            return MOD_EVENTS.TAG
-          }
-          return type
-        })
-      }
-
-      if (filterTypes.includes(MOD_EVENTS.TAKEDOWN) && policies) {
-        queryParams.policies = policies
-      }
-
-      const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
-        ...queryParams,
-      })
-      const { repos, records } = await getReposAndRecordsForEvents(
-        labelerAgent,
-        data.events,
-      )
-
-      return {
-        events: data.events.map((e) => {
-          if (
-            ComAtprotoAdminDefs.isRepoRef(e.subject) ||
-            ChatBskyConvoDefs.isMessageRef(e.subject)
-          ) {
-            return { ...e, repo: repos.get(e.subject.did) }
-          } else if (ComAtprotoRepoStrongRef.isMain(e.subject)) {
-            return { ...e, record: records.get(e.subject.uri) }
-          }
-          return { ...e }
-        }),
-        cursor: data.cursor,
-      }
-    },
+    queryFn: modEventsGetter,
     getNextPageParam: (lastPage) => lastPage.cursor,
     ...(props.queryOptions || {}),
   })
@@ -419,32 +476,39 @@ export const useModEventList = (
       return
     }
 
-    const items = new Set<string>()
+    if (!results.data?.pageParams) {
+      addFromEventsToWorkspace(modEvents)
+      setShowWorkspaceConfirmation(null)
+      return
+    }
 
-    modEvents.forEach((event) => {
-      if (showWorkspaceConfirmation === 'subjects') {
-        if (ComAtprotoAdminDefs.isRepoRef(event.subject)) {
-          items.add(event.subject.did)
-        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
-          items.add(event.subject.uri)
-        } else if (ChatBskyConvoDefs.isMessageRef(event.subject)) {
-          items.add(event.subject.did)
-        }
-      } else if (showWorkspaceConfirmation === 'creators') {
-        items.add(event.createdBy)
-      } else if (showWorkspaceConfirmation === 'subject-authors') {
-        if (
-          ComAtprotoAdminDefs.isRepoRef(event.subject) ||
-          ChatBskyConvoDefs.isMessageRef(event.subject)
-        ) {
-          items.add(event.subject.did)
-        } else if (ComAtprotoRepoStrongRef.isMain(event.subject)) {
-          items.add(new AtUri(event.subject.uri).host)
-        }
+    setIsAddingToWorkspace(true)
+    const newAbortController = new AbortController()
+    abortController.current = newAbortController
+
+    try {
+      let cursor = results?.data.pageParams[0] as string | undefined
+      do {
+        // When we just want the dids of the users, no need to do an extra fetch to include repos
+        const nextPage = await modEventsGetter(
+          {
+            pageParam: cursor,
+          },
+          { signal: abortController.current?.signal },
+        )
+        await addFromEventsToWorkspace(nextPage.events)
+        cursor = nextPage.cursor
+        //   if the modal is closed, that means the user decided not to add any more user to workspace
+      } while (cursor && showWorkspaceConfirmation)
+    } catch (e) {
+      if (abortController.current?.signal.aborted) {
+        toast.info('Stopped adding to workspace')
+      } else {
+        toast.error(`Something went wrong: ${(e as Error).message}`)
       }
-    })
-
-    return addItemsToWorkspace([...items])
+    }
+    setIsAddingToWorkspace(false)
+    setShowWorkspaceConfirmation(null)
   }
 
   return {
@@ -481,6 +545,7 @@ export const useModEventList = (
     showWorkspaceConfirmation,
     setShowWorkspaceConfirmation,
     addToWorkspace,
+    isAddingToWorkspace,
   }
 }
 

@@ -171,6 +171,7 @@ export const ModEventList = (
     showWorkspaceConfirmation,
     setShowWorkspaceConfirmation,
     addToWorkspace,
+    isAddingToWorkspace,
   } = useModEventList(props)
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
@@ -268,11 +269,17 @@ export const ModEventList = (
 
           <ConfirmationModal
             onConfirm={() => {
-              addToWorkspace().then(() => setShowWorkspaceConfirmation(null))
+              if (!isAddingToWorkspace) {
+                addToWorkspace().then(() => setShowWorkspaceConfirmation(null))
+              } else {
+                setShowWorkspaceConfirmation(null)
+              }
             }}
             isOpen={!!showWorkspaceConfirmation}
             setIsOpen={() => setShowWorkspaceConfirmation(null)}
-            confirmButtonText={'Add to workspace'}
+            confirmButtonText={
+              isAddingToWorkspace ? 'Stop adding' : 'Add to workspace'
+            }
             title={getConfirmWorkspaceTitle(showWorkspaceConfirmation)}
             description={
               <WorkspaceConfirmationDescription
