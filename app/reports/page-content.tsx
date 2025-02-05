@@ -190,6 +190,7 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
       'lastReviewedAt',
       'reportedRecordsCount',
       'takendownRecordsCount',
+      'priorityScore',
     ].includes(sortField ?? '')
   ) {
     sortField = 'lastReportedAt'
