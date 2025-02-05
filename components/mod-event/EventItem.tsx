@@ -134,6 +134,36 @@ const Email = ({
   )
 }
 
+const PriorityScore = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.ModEventPriorityScore
+  }
+}) => {
+  const expiresAt = getExpiresAtFromEvent(modEvent)
+
+  return (
+    <>
+      <p>
+        Set to <b>{modEvent.event.score}</b> By{' '}
+        <LinkToAuthor
+          createdBy={modEvent.createdBy}
+          creatorHandle={modEvent.creatorHandle}
+        />
+      </p>
+
+      {expiresAt && (
+        <p className="flex flex-row items-center">
+          <ClockIcon className="h-3 w-3 inline-block mr-1" />
+          Until {dateFormatter.format(expiresAt)}
+        </p>
+      )}
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
 function isMessageSubject(
   subject: ToolsOzoneModerationDefs.ModEventView['subject'],
 ): subject is ChatBskyConvoDefs.MessageRef {
@@ -422,6 +452,11 @@ export const ModEventItem = ({
   }
   if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventEmail)) {
     eventItem = <Email modEvent={modEvent} />
+  }
+  if (
+    isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventPriorityScore)
+  ) {
+    eventItem = <PriorityScore modEvent={modEvent} />
   }
   const previewSubject = modEvent.subject.uri || modEvent.subject.did
   return (

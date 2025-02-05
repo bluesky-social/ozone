@@ -20,6 +20,7 @@ import {
   toLabelVal,
   isSelfLabel,
   ModerationLabel,
+  LabelChip,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -60,6 +61,7 @@ import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { HandRaisedIcon } from '@heroicons/react/24/solid'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -195,11 +197,16 @@ function Form(
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
+  const isPriorityScoreEvent = modEventType === MOD_EVENTS.SET_PRIORITY
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const shouldShowDurationInHoursField =
-    isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
+    isTakedownEvent ||
+    isMuteEvent ||
+    isMuteReporterEvent ||
+    isLabelEvent ||
+    isPriorityScoreEvent
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
@@ -286,6 +293,10 @@ function Form(
 
       if (formData.get('sticky')) {
         coreEvent.sticky = true
+      }
+
+      if (isPriorityScoreEvent) {
+        coreEvent.score = Number(formData.get('priorityScore'))
       }
 
       if (formData.get('tags')) {
@@ -613,7 +624,16 @@ function Form(
 
               {!!subjectStatus && (
                 <div className="pb-4">
-                  <p>
+                  <p className="flex flex-row items-center">
+                    {!!subjectStatus?.priorityScore && (
+                      <LabelChip
+                        className="flex flex-row gap-1 items-center bg-orange-300 text-orange-800"
+                        title={`This subject's priority score is set to ${subjectStatus.priorityScore} out of 100. Subjects with higher score should be reviewed more urgently.`}
+                      >
+                        <HandRaisedIcon className="h-3 w-3" />
+                        {subjectStatus.priorityScore}
+                      </LabelChip>
+                    )}
                     <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                     <LastReviewedTimestamp subjectStatus={subjectStatus} />
                   </p>
@@ -698,6 +718,26 @@ function Form(
                   </div>
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
+                      {isPriorityScoreEvent && (
+                        <FormLabel
+                          label=""
+                          className="mt-2 w-1/2"
+                          htmlFor="priorityScore"
+                        >
+                          <Input
+                            type="number"
+                            id="priorityScore"
+                            name="priorityScore"
+                            className="block w-full"
+                            placeholder="Score between 0-100"
+                            autoFocus
+                            min={0}
+                            max={100}
+                            step={1}
+                            required
+                          />
+                        </FormLabel>
+                      )}
                       <FormLabel
                         label=""
                         htmlFor="durationInHours"
@@ -705,7 +745,9 @@ function Form(
                       >
                         <ActionDurationSelector
                           action={modEventType}
-                          required={isLabelEvent ? false : true}
+                          required={
+                            isLabelEvent || isPriorityScoreEvent ? false : true
+                          }
                           onChange={(e) => {
                             if (e.target.value === '0' && isTakedownEvent) {
                               // When permanent takedown is selected, auto check ack all checkbox
@@ -723,6 +765,8 @@ function Form(
                               ? 'Mute duration'
                               : isLabelEvent
                               ? 'Label duration'
+                              : isPriorityScoreEvent
+                              ? 'Score duration'
                               : ''
                           }
                         />
