@@ -19,6 +19,7 @@ import { ButtonGroup } from '@/common/buttons'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { StatView } from './Summary'
 import { FlagIcon, ShieldExclamationIcon } from '@heroicons/react/24/solid'
+import { PriorityScore } from './PriorityScore'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
@@ -94,7 +95,9 @@ export function SubjectTable(
 export const SubjectSummaryColumn = ({
   recordStats,
   accountStats,
+  priorityScore,
 }: {
+  priorityScore: number
   recordStats?: ToolsOzoneModerationDefs.RecordsStats
   accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
@@ -103,6 +106,7 @@ export const SubjectSummaryColumn = ({
 
   return (
     <div className="flex flex-row gap-1 items-center">
+      <PriorityScore size="sm" priorityScore={priorityScore} />
       {!!suspendCount && (
         <StatView
           appearance="danger"
@@ -203,6 +207,7 @@ function SubjectRow({
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <SubjectSummaryColumn
+          priorityScore={subjectStatus.priorityScore}
           recordStats={subjectStatus.recordsStats}
           accountStats={subjectStatus.accountStats}
         />

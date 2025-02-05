@@ -141,8 +141,6 @@ const PriorityScore = ({
     event: ToolsOzoneModerationDefs.ModEventPriorityScore
   }
 }) => {
-  const expiresAt = getExpiresAtFromEvent(modEvent)
-
   return (
     <>
       <p>
@@ -153,12 +151,6 @@ const PriorityScore = ({
         />
       </p>
 
-      {expiresAt && (
-        <p className="flex flex-row items-center">
-          <ClockIcon className="h-3 w-3 inline-block mr-1" />
-          Until {dateFormatter.format(expiresAt)}
-        </p>
-      )}
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
     </>
   )

@@ -62,6 +62,7 @@ import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { HandRaisedIcon } from '@heroicons/react/24/solid'
+import { PriorityScore } from '@/subject/PriorityScore'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -202,11 +203,7 @@ function Form(
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const shouldShowDurationInHoursField =
-    isTakedownEvent ||
-    isMuteEvent ||
-    isMuteReporterEvent ||
-    isLabelEvent ||
-    isPriorityScoreEvent
+    isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
@@ -626,13 +623,9 @@ function Form(
                 <div className="pb-4">
                   <p className="flex flex-row items-center">
                     {!!subjectStatus?.priorityScore && (
-                      <LabelChip
-                        className="flex flex-row gap-1 items-center bg-orange-300 text-orange-800"
-                        title={`This subject's priority score is set to ${subjectStatus.priorityScore} out of 100. Subjects with higher score should be reviewed more urgently.`}
-                      >
-                        <HandRaisedIcon className="h-3 w-3" />
-                        {subjectStatus.priorityScore}
-                      </LabelChip>
+                      <PriorityScore
+                        priorityScore={subjectStatus.priorityScore}
+                      />
                     )}
                     <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                     <LastReviewedTimestamp subjectStatus={subjectStatus} />
@@ -745,9 +738,7 @@ function Form(
                       >
                         <ActionDurationSelector
                           action={modEventType}
-                          required={
-                            isLabelEvent || isPriorityScoreEvent ? false : true
-                          }
+                          required={isLabelEvent ? false : true}
                           onChange={(e) => {
                             if (e.target.value === '0' && isTakedownEvent) {
                               // When permanent takedown is selected, auto check ack all checkbox
