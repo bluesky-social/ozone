@@ -278,6 +278,7 @@ const EventLabels = ({
   const { config } = useConfigurationContext()
 
   if (!labels?.length) return null
+
   return (
     <LabelList className="flex-wrap">
       <span className="text-gray-500 dark:text-gray-50">{header}</span>
@@ -308,6 +309,8 @@ const Label = ({
 }: {
   modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventLabel>
 }) => {
+  const expiresAt = getExpiresAtFromEvent(modEvent)
+
   return (
     <>
       <p>
@@ -321,7 +324,15 @@ const Label = ({
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
-      <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
+      <div className="flex flex-row items-center">
+        <EventLabels header="Added: " labels={modEvent.event.createLabelVals} />
+        {expiresAt && (
+          <p className="flex flex-row items-center">
+            <ClockIcon className="h-3 w-3 inline-block mr-1" />
+            Until {dateFormatter.format(expiresAt)}
+          </p>
+        )}
+      </div>
       <EventLabels header="Removed: " labels={modEvent.event.negateLabelVals} />
     </>
   )
