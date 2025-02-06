@@ -97,7 +97,7 @@ export const SubjectSummaryColumn = ({
   accountStats,
   priorityScore,
 }: {
-  priorityScore: number
+  priorityScore?: number
   recordStats?: ToolsOzoneModerationDefs.RecordsStats
   accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
@@ -106,7 +106,7 @@ export const SubjectSummaryColumn = ({
 
   return (
     <div className="flex flex-row gap-1 items-center">
-      <PriorityScore size="sm" priorityScore={priorityScore} />
+      <PriorityScore size="sm" priorityScore={priorityScore || 0} />
       {!!suspendCount && (
         <StatView
           appearance="danger"
