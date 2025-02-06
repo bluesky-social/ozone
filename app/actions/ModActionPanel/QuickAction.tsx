@@ -199,7 +199,7 @@ function Form(
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const shouldShowDurationInHoursField =
-    isTakedownEvent || isMuteEvent || isMuteReporterEvent
+    isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
@@ -705,8 +705,9 @@ function Form(
                       >
                         <ActionDurationSelector
                           action={modEventType}
+                          required={isLabelEvent ? false : true}
                           onChange={(e) => {
-                            if (e.target.value === '0') {
+                            if (e.target.value === '0' && isTakedownEvent) {
                               // When permanent takedown is selected, auto check ack all checkbox
                               const ackAllCheckbox =
                                 document.querySelector<HTMLInputElement>(
@@ -717,7 +718,13 @@ function Form(
                               }
                             }
                           }}
-                          labelText={isMuteEvent ? 'Mute duration' : ''}
+                          labelText={
+                            isMuteEvent
+                              ? 'Mute duration'
+                              : isLabelEvent
+                              ? 'Label duration'
+                              : ''
+                          }
                         />
                       </FormLabel>
                       {isTakedownEvent && (

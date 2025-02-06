@@ -5,30 +5,34 @@ on:
   push:
     branches:
       - main
+
 env:
   NEXT_PUBLIC_OZONE_SERVICE_DID: did:plc:ar7c4by46qjdydhdevvrndac
   NEXT_PUBLIC_PLC_DIRECTORY_URL: https://plc.directory
   NEXT_PUBLIC_HANDLE_RESOLVER_URL: https://api.bsky.app
+
 jobs:
   cypress-run:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
           build: yarn build
           start: yarn start
           browser: chrome
+
       - name: Setup Screenshot Artifacts
         if: failure()
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: cypress/screenshots
-        
