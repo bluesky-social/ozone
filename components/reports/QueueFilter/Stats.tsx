@@ -66,6 +66,7 @@ export const QueueFilterStats = () => {
               min={0}
               max={100}
               step={1}
+              placeholder="0-100"
               value={queueFilters.minPriorityScore || ''}
               onChange={handleInputChange(setMinPriorityScore)}
             />
