@@ -39,7 +39,7 @@ export function LabelChip(props: ComponentProps<'span'>) {
   const { className = '', ...others } = props
   return (
     <span
-      className={`${className} inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold`}
+      className={`inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold ${className}`}
       {...others}
     />
   )

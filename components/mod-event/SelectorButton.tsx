@@ -60,6 +60,10 @@ const actions = [
     text: 'Enable Video Upload',
     key: MOD_EVENTS.ENABLE_VIDEO_UPLOAD,
   },
+  {
+    text: 'Set Priority Score',
+    key: MOD_EVENTS.SET_PRIORITY,
+  },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
   acc[action.key] = action.text

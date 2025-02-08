@@ -190,6 +190,7 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
       'lastReviewedAt',
       'reportedRecordsCount',
       'takendownRecordsCount',
+      'priorityScore',
     ].includes(sortField ?? '')
   ) {
     sortField = 'lastReportedAt'
@@ -316,6 +317,7 @@ function useModerationQueueQuery() {
   const minAccountSuspendCount = params.get('minAccountSuspendCount')
   const minReportedRecordsCount = params.get('minReportedRecordsCount')
   const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
+  const minPriorityScore = params.get('minPriorityScore')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
     useFluentReportSearchParams()
@@ -343,6 +345,7 @@ function useModerationQueueQuery() {
         minAccountSuspendCount,
         minReportedRecordsCount,
         minTakendownRecordsCount,
+        minPriorityScore,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -405,6 +408,10 @@ function useModerationQueueQuery() {
 
       if (minTakendownRecordsCount) {
         queryParams.minTakendownRecordsCount = Number(minTakendownRecordsCount)
+      }
+
+      if (minPriorityScore) {
+        queryParams.minPriorityScore = Number(minPriorityScore)
       }
 
       // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in

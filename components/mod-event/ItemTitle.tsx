@@ -94,6 +94,10 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }
+  if (ToolsOzoneModerationDefs.isModEventPriorityScore(modEvent.event)) {
+    eventColor = 'text-blue-400'
+    eventTitle = 'Updated priority score'
+  }
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus
     : modEvent.record

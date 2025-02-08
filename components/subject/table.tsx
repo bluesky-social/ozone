@@ -19,6 +19,7 @@ import { ButtonGroup } from '@/common/buttons'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { StatView } from './Summary'
 import { FlagIcon, ShieldExclamationIcon } from '@heroicons/react/24/solid'
+import { PriorityScore } from './PriorityScore'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
@@ -94,7 +95,9 @@ export function SubjectTable(
 export const SubjectSummaryColumn = ({
   recordStats,
   accountStats,
+  priorityScore,
 }: {
+  priorityScore?: number
   recordStats?: ToolsOzoneModerationDefs.RecordsStats
   accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
@@ -103,6 +106,7 @@ export const SubjectSummaryColumn = ({
 
   return (
     <div className="flex flex-row gap-1 items-center">
+      <PriorityScore size="sm" priorityScore={priorityScore || 0} />
       {!!suspendCount && (
         <StatView
           appearance="danger"
@@ -203,6 +207,7 @@ function SubjectRow({
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <SubjectSummaryColumn
+          priorityScore={subjectStatus.priorityScore}
           recordStats={subjectStatus.recordsStats}
           accountStats={subjectStatus.accountStats}
         />
@@ -231,12 +236,59 @@ function SubjectRow({
   )
 }
 
-const SummaryColumnHeader = () => {
+const ToggleSortButtonGroup = ({
+  currentSortDirection,
+  currentSortField,
+  sortField,
+  title,
+}: {
+  currentSortDirection: string | null
+  currentSortField: string | null
+  sortField: string
+  title: string
+}) => {
   const router = useRouter()
-  const { sortDirection, sortField, getToggleReverseOrderLink } = useSortOrder()
+  const { getToggleReverseOrderLink } = useSortOrder()
+
+  return (
+    <div className="pb-2">
+      <p>{title}</p>
+      <ButtonGroup
+        size="xs"
+        leftAligned
+        appearance="primary"
+        items={[
+          {
+            id: 'asc',
+            text: 'Ascending',
+            onClick: () => {
+              router.push(getToggleReverseOrderLink(sortField, 'asc'))
+            },
+            isActive:
+              currentSortField === sortField && currentSortDirection === 'asc',
+          },
+          {
+            id: 'desc',
+            text: 'Descending',
+            onClick: () => {
+              router.push(getToggleReverseOrderLink(sortField, 'desc'))
+            },
+            isActive:
+              currentSortField === sortField && currentSortDirection === 'desc',
+          },
+        ]}
+      />
+    </div>
+  )
+}
+
+const SummaryColumnHeader = () => {
+  const { sortDirection, sortField } = useSortOrder()
   const hasSort =
     sortField &&
-    ['reportedRecordsCount', 'takendownRecordsCount'].includes(sortField)
+    ['reportedRecordsCount', 'takendownRecordsCount', 'priorityScore'].includes(
+      sortField,
+    )
 
   return (
     <Popover className="relative">
@@ -267,86 +319,24 @@ const SummaryColumnHeader = () => {
       >
         <Popover.Panel className="absolute z-10 rounded p-4">
           <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
-            <div className="pb-2">
-              <p>Reported record count</p>
-              <ButtonGroup
-                size="xs"
-                leftAligned
-                appearance="primary"
-                items={[
-                  {
-                    id: 'asc',
-                    text: 'Ascending',
-                    onClick: () => {
-                      router.push(
-                        getToggleReverseOrderLink(
-                          'reportedRecordsCount',
-                          'asc',
-                        ),
-                      )
-                    },
-                    isActive:
-                      sortField === 'reportedRecordsCount' &&
-                      sortDirection === 'asc',
-                  },
-                  {
-                    id: 'desc',
-                    text: 'Descending',
-                    onClick: () => {
-                      router.push(
-                        getToggleReverseOrderLink(
-                          'reportedRecordsCount',
-                          'desc',
-                        ),
-                      )
-                    },
-                    isActive:
-                      sortField === 'reportedRecordsCount' &&
-                      sortDirection === 'desc',
-                  },
-                ]}
-              />
-            </div>
-            <div className="pb-2">
-              <p>Takendown records count</p>
-              <ButtonGroup
-                size="xs"
-                leftAligned
-                appearance="primary"
-                items={[
-                  {
-                    id: 'asc',
-                    text: 'Ascending',
-                    onClick: () => {
-                      router.push(
-                        getToggleReverseOrderLink(
-                          'takendownRecordsCount',
-                          'asc',
-                        ),
-                      )
-                    },
-                    isActive:
-                      sortField === 'takendownRecordsCount' &&
-                      sortDirection === 'asc',
-                  },
-                  {
-                    id: 'desc',
-                    text: 'Descending',
-                    onClick: () => {
-                      router.push(
-                        getToggleReverseOrderLink(
-                          'takendownRecordsCount',
-                          'desc',
-                        ),
-                      )
-                    },
-                    isActive:
-                      sortField === 'takendownRecordsCount' &&
-                      sortDirection === 'desc',
-                  },
-                ]}
-              />
-            </div>
+            <ToggleSortButtonGroup
+              title="Reported records count"
+              currentSortDirection={sortDirection}
+              sortField="reportedRecordsCount"
+              currentSortField={sortField}
+            />
+            <ToggleSortButtonGroup
+              title="Takendown records count"
+              currentSortDirection={sortDirection}
+              sortField="takendownRecordsCount"
+              currentSortField={sortField}
+            />
+            <ToggleSortButtonGroup
+              currentSortDirection={sortDirection}
+              currentSortField={sortField}
+              sortField="priorityScore"
+              title="Priority score"
+            />
           </div>
         </Popover.Panel>
       </Transition>

@@ -134,6 +134,28 @@ const Email = ({
   )
 }
 
+const PriorityScore = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.ModEventPriorityScore
+  }
+}) => {
+  return (
+    <>
+      <p>
+        Set to <b>{modEvent.event.score}</b> By{' '}
+        <LinkToAuthor
+          createdBy={modEvent.createdBy}
+          creatorHandle={modEvent.creatorHandle}
+        />
+      </p>
+
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
 function isMessageSubject(
   subject: ToolsOzoneModerationDefs.ModEventView['subject'],
 ): subject is ChatBskyConvoDefs.MessageRef {
@@ -422,6 +444,11 @@ export const ModEventItem = ({
   }
   if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventEmail)) {
     eventItem = <Email modEvent={modEvent} />
+  }
+  if (
+    isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventPriorityScore)
+  ) {
+    eventItem = <PriorityScore modEvent={modEvent} />
   }
   const previewSubject = modEvent.subject.uri || modEvent.subject.did
   return (
