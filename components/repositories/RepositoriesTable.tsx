@@ -97,18 +97,22 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
             />
           )}
         </div>
-        {lastSigninCountry && (
+        {(lastSigninCountry || lastSigninIp) && (
           <div>
-            Last:
-            <Link
-              prefetch={false}
-              href={`/repositories?term=sig:${encodeURIComponent(
-                lastSigninIp,
-              )}`}
-            >
-              {obscureIp(lastSigninIp)}{' '}
-              <MagnifyingGlassIcon className="h-3 w-3 inline" />
-            </Link>
+            {lastSigninIp && (
+              <>
+                Last:
+                <Link
+                  prefetch={false}
+                  href={`/repositories?term=sig:${encodeURIComponent(
+                    lastSigninIp,
+                  )}`}
+                >
+                  {obscureIp(lastSigninIp)}{' '}
+                  <MagnifyingGlassIcon className="h-3 w-3 inline" />
+                </Link>
+              </>
+            )}
             {lastSigninCountry && (
               <Link
                 href={`/repositories?term=sig:${encodeURIComponent(
