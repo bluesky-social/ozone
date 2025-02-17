@@ -41,7 +41,7 @@ export const useContentSearch = ({
 
         const { data } = await appviewAgent.app.bsky.actor.searchActors({
           q: term,
-          limit: 30,
+          limit: 100,
           cursor: pageParam,
         })
 
@@ -50,7 +50,7 @@ export const useContentSearch = ({
 
       const { data } = await labelerAgent.app.bsky.feed.searchPosts({
         q: term,
-        limit: 30,
+        limit: 100,
         sort: section,
         cursor: pageParam,
       })
