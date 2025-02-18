@@ -72,7 +72,7 @@ export const SubjectToWorkspaceAction = ({
 
   if (!initialSubjects?.length) return null
   return (
-    <div className="flex flex-row justify-end pt-2 mx-auto mt-2 max-w-5xl px-4 sm:px-6 lg:px-8">
+    <>
       <ActionButton
         appearance="primary"
         size="sm"
@@ -101,6 +101,6 @@ export const SubjectToWorkspaceAction = ({
         title={`Add ${subjectType} to workspace?`}
         description={description}
       />
-    </div>
+    </>
   )
 }

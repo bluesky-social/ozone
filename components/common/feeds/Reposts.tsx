@@ -38,19 +38,21 @@ export const Reposts = ({ uri, cid }: { uri: string; cid?: string }) => {
   }
   return (
     <>
-      <SubjectToWorkspaceAction
-        hasNextPage={hasNextPage}
-        initialSubjects={repostedByDids}
-        getSubjectsNextPage={getSubjectsNextPage}
-        description={
-          <>
-            Once confirmed, all the users who reposted the post will be added to
-            the workspace. For posts with a lot of reposts, this may take quite
-            some time but you can always stop the process and already added
-            users will remain in the workspace.
-          </>
-        }
-      />
+      <div className="flex flex-row justify-end pt-2 mx-auto mt-2 max-w-5xl px-4 sm:px-6 lg:px-8">
+        <SubjectToWorkspaceAction
+          hasNextPage={hasNextPage}
+          initialSubjects={repostedByDids}
+          getSubjectsNextPage={getSubjectsNextPage}
+          description={
+            <>
+              Once confirmed, all the users who reposted the post will be added
+              to the workspace. For posts with a lot of reposts, this may take
+              quite some time but you can always stop the process and already
+              added users will remain in the workspace.
+            </>
+          }
+        />
+      </div>
       <AccountsGrid error="" accounts={accounts} />
       {hasNextPage && (
         <div className="flex justify-center">
