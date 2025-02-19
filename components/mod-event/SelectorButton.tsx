@@ -80,7 +80,9 @@ export const ModEventSelectorButton = ({
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
-  setSelectedAction: (action: string) => void
+  setSelectedAction: (
+    action: (typeof MOD_EVENTS)[keyof typeof MOD_EVENTS],
+  ) => void
   hasBlobs: boolean
   isSubjectDid: boolean
   forceDisplayActions?: string[]

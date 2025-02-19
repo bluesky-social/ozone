@@ -17,10 +17,10 @@
     "e2e:run": "$(yarn bin)/cypress run --browser chrome"
   },
   "dependencies": {
-    "@atproto/api": "^0.13.35",
-    "@atproto/oauth-client-browser": "^0.2.0",
-    "@atproto/oauth-types": "^0.1.4",
-    "@atproto/xrpc": "^0.6.1",
+    "@atproto/api": "^0.14.2",
+    "@atproto/oauth-client-browser": "^0.3.10",
+    "@atproto/oauth-types": "^0.2.3",
+    "@atproto/xrpc": "^0.6.9",
     "@headlessui/react": "^1.7.7",
     "@heroicons/react": "^2.0.13",
     "@tanstack/react-query": "^4.22.0",
@@ -62,5 +62,6 @@
   },
   "volta": {
     "node": "20.9.0"
-  }
+  },
+  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
 }

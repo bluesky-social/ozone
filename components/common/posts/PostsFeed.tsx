@@ -197,10 +197,10 @@ function PostContent({
   item,
   dense,
 }: {
-  item: AppBskyFeedDefs.FeedViewPost
+  item: AppBskyFeedDefs.FeedViewPost & { post: { takedownId?: string } }
   dense?: boolean
 }) {
-  const { takedownId, uri } = item.post
+  const { uri, takedownId } = item.post
   const [needsTranslation, setNeedsTranslation] = useState(false)
   const primaryLanguage = 'en'
   const translatorUrl = getTranslatorLink(
