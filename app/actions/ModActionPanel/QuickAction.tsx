@@ -20,7 +20,6 @@ import {
   toLabelVal,
   isSelfLabel,
   ModerationLabel,
-  LabelChip,
 } from '@/common/labels'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -29,8 +28,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
@@ -61,7 +58,6 @@ import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
-import { HandRaisedIcon } from '@heroicons/react/24/solid'
 import { PriorityScore } from '@/subject/PriorityScore'
 
 const FORM_ID = 'mod-action-panel'
@@ -189,9 +185,9 @@ function Form(
   const currentLabels = allLabels.map((label) =>
     toLabelVal(label, repo?.did ?? record?.repo.did),
   )
-  const [modEventType, setModEventType] = useState<string>(
-    MOD_EVENTS.ACKNOWLEDGE,
-  )
+  const [modEventType, setModEventType] = useState<
+    (typeof MOD_EVENTS)[keyof typeof MOD_EVENTS]
+  >(MOD_EVENTS.ACKNOWLEDGE)
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
@@ -263,94 +259,195 @@ function Form(
     try {
       setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
-      const nextLabels = String(formData.get('labels'))!.split(',')
-      const coreEvent: Parameters<typeof onSubmit>[0]['event'] = {
-        $type: modEventType,
+      const formString = (field: string): string | undefined => {
+        const value = formData.get(field)
+        if (typeof value === 'string') return value
+        return undefined
       }
-      const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
-
-      if (formData.get('durationInHours')) {
-        coreEvent.durationInHours = Number(formData.get('durationInHours'))
+      const formNumber = (field: string): number | undefined => {
+        const value = formString(field)
+        if (value !== undefined) return Number(value)
+        return undefined
       }
-
-      if (isTakedownEvent && formData.get('policies')) {
-        coreEvent.policies = [String(formData.get('policies'))]
-      }
-
-      if (
-        (isTakedownEvent || isAckEvent) &&
-        formData.get('acknowledgeAccountSubjects')
-      ) {
-        coreEvent.acknowledgeAccountSubjects = true
-      }
-
-      if (formData.get('comment')) {
-        coreEvent.comment = formData.get('comment')
-      }
-
-      if (formData.get('sticky')) {
-        coreEvent.sticky = true
-      }
-
-      if (isPriorityScoreEvent) {
-        coreEvent.score = Number(formData.get('priorityScore'))
-      }
-
-      if (formData.get('tags')) {
-        const tags = String(formData.get('tags'))
-          .split(',')
-          .map((tag) => tag.trim())
-        const { add, remove } = diffTags(subjectStatus?.tags || [], tags)
-        coreEvent.add = add
-        coreEvent.remove = remove
-      }
-
-      // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
-      if (coreEvent.$type === MOD_EVENTS.APPEAL) {
-        coreEvent.$type = MOD_EVENTS.REPORT
-        coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
-      }
-
-      // Enable and disable dm/video-upload actions are just tag operations behind the scenes
-      // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
-      if (
-        MOD_EVENTS.DISABLE_DMS === coreEvent.$type ||
-        MOD_EVENTS.ENABLE_DMS === coreEvent.$type ||
-        MOD_EVENTS.DISABLE_VIDEO_UPLOAD === coreEvent.$type ||
-        MOD_EVENTS.ENABLE_VIDEO_UPLOAD === coreEvent.$type
-      ) {
-        if (coreEvent.$type === MOD_EVENTS.DISABLE_DMS) {
-          coreEvent.add = [DM_DISABLE_TAG]
-          coreEvent.remove = []
-        }
-        if (coreEvent.$type === MOD_EVENTS.ENABLE_DMS) {
-          coreEvent.add = []
-          coreEvent.remove = [DM_DISABLE_TAG]
-        }
-        if (coreEvent.$type === MOD_EVENTS.DISABLE_VIDEO_UPLOAD) {
-          coreEvent.add = [VIDEO_UPLOAD_DISABLE_TAG]
-          coreEvent.remove = []
-        }
-        if (coreEvent.$type === MOD_EVENTS.ENABLE_VIDEO_UPLOAD) {
-          coreEvent.add = []
-          coreEvent.remove = [VIDEO_UPLOAD_DISABLE_TAG]
-        }
-        coreEvent.$type = MOD_EVENTS.TAG
-      }
-      const { subject: subjectInfo, record: recordInfo } =
-        await createSubjectFromId(subject)
+      const formTrue = (field: string): true | undefined =>
+        formData.get(field) ? true : undefined
 
       const subjectBlobCids = formData
         .getAll('subjectBlobCids')
-        .map((cid) => String(cid))
+        .filter((cid) => typeof cid === 'string')
 
-      if (isDivertEvent && !subjectBlobCids.length) {
-        throw new Error('blob-selection-required')
+      type ExtractKnown$TypedObject<V extends { $type?: string }> = V extends {
+        $type?: infer T extends string
       }
+        ? string extends T
+          ? never
+          : V
+        : never
 
-      if (isTakedownEvent && !coreEvent.policies) {
-        throw new Error('policy-selection-required')
-      }
+      const coreEvent = (():
+        | ExtractKnown$TypedObject<Parameters<typeof onSubmit>[0]['event']>
+        | {
+            $type: 'tools.ozone.moderation.defs#modEventDivert'
+            comment?: string
+          } => {
+        switch (modEventType) {
+          case MOD_EVENTS.TAKEDOWN:
+            const policy = formString('policies')
+            if (!policy) throw new Error('policy-selection-required')
+            return {
+              $type: MOD_EVENTS.TAKEDOWN,
+              comment: formString('comment'),
+              durationInHours: formNumber('durationInHours'),
+              policies: [policy],
+              acknowledgeAccountSubjects: formTrue(
+                'acknowledgeAccountSubjects',
+              ),
+            }
+          case MOD_EVENTS.REVERSE_TAKEDOWN:
+            return {
+              $type: MOD_EVENTS.REVERSE_TAKEDOWN,
+              comment: formString('comment'),
+            }
+          case MOD_EVENTS.ACKNOWLEDGE:
+            return {
+              $type: MOD_EVENTS.ACKNOWLEDGE,
+              comment: formString('comment'),
+              acknowledgeAccountSubjects: formTrue(
+                'acknowledgeAccountSubjects',
+              ),
+            }
+          case MOD_EVENTS.ESCALATE:
+            return {
+              $type: MOD_EVENTS.ESCALATE,
+              comment: formString('comment'),
+            }
+          case MOD_EVENTS.LABEL:
+            const nextLabels = formString('labels')?.split(',')
+            if (!nextLabels) throw new Error('labels-required')
+            const labels = diffLabels(
+              // Make sure we don't try to negate self labels
+              currentLabels.filter((label) => !isSelfLabel(label)),
+              nextLabels,
+            )
+            return {
+              $type: MOD_EVENTS.LABEL,
+              comment: formString('comment'),
+              createLabelVals: labels.createLabelVals,
+              negateLabelVals: labels.negateLabelVals,
+              durationInHours: formNumber('durationInHours'),
+            }
+          case MOD_EVENTS.MUTE:
+            return {
+              $type: MOD_EVENTS.MUTE,
+              comment: formString('comment'),
+              durationInHours: formNumber('durationInHours')!,
+            }
+          case MOD_EVENTS.MUTE_REPORTER:
+            return {
+              $type: MOD_EVENTS.MUTE_REPORTER,
+              comment: formString('comment'),
+              durationInHours: formNumber('durationInHours'),
+            }
+          case MOD_EVENTS.SET_PRIORITY:
+            return {
+              $type: MOD_EVENTS.SET_PRIORITY,
+              comment: formString('comment'),
+              score: formNumber('priorityScore')!,
+            }
+          case MOD_EVENTS.COMMENT:
+            return {
+              $type: MOD_EVENTS.COMMENT,
+              comment: formString('comment')!,
+              sticky: formTrue('sticky'),
+            }
+          case MOD_EVENTS.APPEAL:
+            // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
+            return {
+              $type: MOD_EVENTS.REPORT,
+              comment: formString('comment'),
+              reportType: ComAtprotoModerationDefs.REASONAPPEAL,
+            }
+          case MOD_EVENTS.TAG:
+            const tags = String(formData.get('tags'))
+              .split(',')
+              .map((tag) => tag.trim())
+            const { add, remove } = diffTags(subjectStatus?.tags || [], tags)
+            return {
+              $type: MOD_EVENTS.TAG,
+              comment: formString('comment'),
+              add,
+              remove,
+            }
+          case MOD_EVENTS.DIVERT:
+            if (!subjectBlobCids.length)
+              throw new Error('blob-selection-required')
+            return {
+              $type: MOD_EVENTS.DIVERT,
+              comment: formString('comment'),
+            }
+
+          // Enable and disable dm/video-upload actions are just tag operations behind the scenes
+          // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
+          case MOD_EVENTS.DISABLE_DMS:
+            return {
+              $type: MOD_EVENTS.TAG,
+              add: [DM_DISABLE_TAG],
+              remove: [],
+            }
+          case MOD_EVENTS.ENABLE_DMS:
+            return {
+              $type: MOD_EVENTS.TAG,
+              add: [],
+              remove: [DM_DISABLE_TAG],
+            }
+          case MOD_EVENTS.DISABLE_VIDEO_UPLOAD:
+            return {
+              $type: MOD_EVENTS.TAG,
+              add: [VIDEO_UPLOAD_DISABLE_TAG],
+              remove: [],
+            }
+          case MOD_EVENTS.ENABLE_VIDEO_UPLOAD:
+            return {
+              $type: MOD_EVENTS.TAG,
+              add: [],
+              remove: [VIDEO_UPLOAD_DISABLE_TAG],
+            }
+          case MOD_EVENTS.RESOLVE_APPEAL:
+            return {
+              $type: MOD_EVENTS.RESOLVE_APPEAL,
+              comment: formString('comment'),
+            }
+          case MOD_EVENTS.UNMUTE:
+            return {
+              $type: MOD_EVENTS.UNMUTE,
+              comment: formString('comment'),
+            }
+          case MOD_EVENTS.REPORT:
+            // @TODO: CHeck this case
+            throw new Error('Not sure which report type to apply here')
+            return {
+              $type: MOD_EVENTS.REPORT,
+              comment: formString('comment'),
+              reportType: ComAtprotoModerationDefs.REASONOTHER,
+            }
+          case MOD_EVENTS.UNMUTE_REPORTER:
+            return {
+              $type: MOD_EVENTS.UNMUTE_REPORTER,
+              comment: formString('comment'),
+            }
+          case MOD_EVENTS.EMAIL:
+            throw new Error(
+              'email event should be handled through handleEmailSubmit',
+            )
+          default:
+            throw new Error(`Unknown event type: ${modEventType}`)
+        }
+      })()
+
+      const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
+
+      const { subject: subjectInfo, record: recordInfo } =
+        await createSubjectFromId(subject)
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
       // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
@@ -358,19 +455,11 @@ function Form(
       // To work around that, this block checks if any label is being reverted and if so, it checks if the event's CID is different than the CID
       // associated with the label that's being negated. If yes, it emits separate events for each such label and after that, if there are more labels
       // left to be created/negated for the current CID, it emits the original event separate event for that.
-      if (isLabelEvent) {
-        const labels = diffLabels(
-          // Make sure we don't try to negate self labels
-          currentLabels.filter((label) => !isSelfLabel(label)),
-          nextLabels,
-        )
-        coreEvent.createLabelVals = labels.createLabelVals
-        coreEvent.negateLabelVals = labels.negateLabelVals
+      if (coreEvent.$type === MOD_EVENTS.LABEL) {
         const negatingLabelsByCid: Record<string, string[]> = {}
-
         if (recordInfo?.labels?.length && 'cid' in subjectInfo) {
           // go through each label we intended to remove
-          labels.negateLabelVals.forEach((label) => {
+          coreEvent.negateLabelVals.forEach((label) => {
             // go through each label on the record and check if the same label is being removed from multiple CIDs
             recordInfo.labels?.forEach(({ val: originalLabel, cid, src }) => {
               if (
@@ -388,7 +477,7 @@ function Form(
                 negatingLabelsByCid[cid].push(label)
               }
               // Since the label being negated is going to be removed from a different CID, let's remove it from the coreEvent
-              coreEvent.negateLabelVals = labels.negateLabelVals.filter(
+              coreEvent.negateLabelVals = coreEvent.negateLabelVals.filter(
                 (l) => l !== label,
               )
             })
@@ -400,11 +489,13 @@ function Form(
         Object.keys(negatingLabelsByCid).forEach((labelCid) => {
           labelSubmissions.push(
             onSubmit({
-              subject: { ...subjectInfo, cid: labelCid },
+              subject: {
+                ...subjectInfo,
+                // @ts-expect-error ComAtprotoAdminDefs.RepoRef does not have a "cid"
+                cid: labelCid,
+              },
               createdBy: accountDid,
-              subjectBlobCids: formData
-                .getAll('subjectBlobCids')
-                .map((cid) => String(cid)),
+              subjectBlobCids,
               event: {
                 ...coreEvent,
                 // Here we'd never want to create labels associated with different CID than the current one
@@ -424,9 +515,7 @@ function Form(
             onSubmit({
               subject: subjectInfo,
               createdBy: accountDid,
-              subjectBlobCids: formData
-                .getAll('subjectBlobCids')
-                .map((cid) => String(cid)),
+              subjectBlobCids,
               event: coreEvent,
             }),
           )
@@ -446,9 +535,7 @@ function Form(
         await onSubmit({
           subject: subjectInfo,
           createdBy: accountDid,
-          subjectBlobCids: formData
-            .getAll('subjectBlobCids')
-            .map((cid) => String(cid)),
+          subjectBlobCids,
           // We want the comment from label and other params like label val etc. to NOT be associated with the ack event
           event: { $type: MOD_EVENTS.ACKNOWLEDGE },
         })
