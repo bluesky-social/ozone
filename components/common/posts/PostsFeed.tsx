@@ -10,6 +10,7 @@ import {
   AppBskyFeedPost,
   AppBskyEmbedRecord,
   AppBskyGraphDefs,
+  asPredicate,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -238,6 +239,19 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
+const isEmbedVideoView = asPredicate(AppBskyEmbedVideo.validateView)
+const isEmbedImagesView = asPredicate(AppBskyEmbedImages.validateView)
+const isEmbedExternalView = asPredicate(AppBskyEmbedExternal.validateView)
+const isEmbedRecordView = asPredicate(AppBskyEmbedRecord.validateView)
+const isPostRecord = asPredicate(AppBskyFeedPost.validateRecord)
+const isListView = asPredicate(AppBskyGraphDefs.validateListView)
+const isEmbedRecordViewNotFound = asPredicate(
+  AppBskyEmbedRecord.validateViewNotFound,
+)
+const isEmbedRecordViewBlocked = asPredicate(
+  AppBskyEmbedRecord.validateViewBlocked,
+)
+
 export function PostEmbeds({
   item,
   isAuthorTakendown,
@@ -261,8 +275,8 @@ export function PostEmbeds({
     mediaFilters.translucent ? 'opacity-40' : '',
   )
 
-  if (AppBskyEmbedVideo.isView(embed)) {
-    const { playlist, thumbnail, alt } = embed as AppBskyEmbedVideo.View
+  if (isEmbedVideoView(embed)) {
+    const { playlist, thumbnail, alt } = embed
     const captions = item.post.record?.['embed']?.['captions']
     const sourceUrl = getVideoUrlWithFallback(playlist, {
       isAuthorDeactivated,
@@ -288,41 +302,42 @@ export function PostEmbeds({
   }
 
   // render image embeds
-  if (AppBskyEmbedImages.isView(embed)) {
-    const { images } = embed as AppBskyEmbedImages.View
+  if (isEmbedImagesView(embed)) {
     const embeddedImageClassName = classNames(
       imageClassName,
-      getImageSizeClass(images?.length || 0),
+      getImageSizeClass(embed.images?.length || 0),
     )
     return (
       <div className="flex gap-2 pb-2 pl-14">
-        <ImageList images={images} imageClassName={embeddedImageClassName} />
+        <ImageList
+          images={embed.images}
+          imageClassName={embeddedImageClassName}
+        />
       </div>
     )
   }
   // render external link embeds
-  if (AppBskyEmbedExternal.isView(embed)) {
-    const { external } = embed as AppBskyEmbedExternal.View
+  if (isEmbedExternalView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
-        {external.thumb ? (
+        {embed.external.thumb ? (
           <img
             className={classNames(imageClassName, getImageSizeClass(1))}
-            src={external.thumb}
+            src={embed.external.thumb}
           />
         ) : undefined}
         <div className="dark:text-gray-300">
-          <div>{external.title}</div>
-          <div>{external.description}</div>
+          <div>{embed.external.title}</div>
+          <div>{embed.external.description}</div>
           <div>
             {/* We don't want links to get out the container since the container usually is dashed bordered */}
             <a
               className="text-gray-500 dark:text-gray-50 break-all"
-              href={external.uri}
+              href={embed.external.uri}
               target="_blank"
               rel="noreferrer"
             >
-              {external.uri}
+              {embed.external.uri}
             </a>
           </div>
         </div>
@@ -330,7 +345,7 @@ export function PostEmbeds({
     )
   }
   // render quote posts embeds
-  if (AppBskyEmbedRecord.isView(embed)) {
+  if (isEmbedRecordView(embed)) {
     const recordView = <RecordEmbedView embed={embed} />
     if (recordView) {
       return recordView
@@ -350,8 +365,7 @@ export function RecordEmbedView({
   if (
     AppBskyEmbedRecord.isViewRecord(embed.record) &&
     'value' in embed.record &&
-    AppBskyFeedPost.isRecord(embed.record.value) &&
-    AppBskyFeedPost.validateRecord(embed.record.value).success
+    isPostRecord(embed.record.value)
   ) {
     const { author, uri, indexedAt, value } =
       embed.record as AppBskyEmbedRecord.ViewRecord
@@ -395,9 +409,8 @@ export function RecordEmbedView({
         </div>
       </div>
     )
-  } else if (AppBskyGraphDefs.isListView(embed.record)) {
-    const { uri, avatar, creator, name, description, purpose } =
-      embed.record as AppBskyGraphDefs.ListView
+  } else if (isListView(embed.record)) {
+    const { uri, avatar, creator, name, description, purpose } = embed.record
     const { did, rkey } = parseAtUri(uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,
@@ -452,9 +465,8 @@ export function RecordEmbedView({
         </div>
       </div>
     )
-  } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
-    const { uri } = embed.record as AppBskyEmbedRecord.ViewBlocked
-    const { did, collection, rkey } = parseAtUri(uri) || {}
+  } else if (isEmbedRecordViewBlocked(embed.record)) {
+    const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,
       rkey: `${rkey}`,
@@ -484,9 +496,8 @@ export function RecordEmbedView({
         </p>
       </div>
     )
-  } else if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
-    const { uri } = embed.record as AppBskyEmbedRecord.ViewNotFound
-    const { did, collection, rkey } = parseAtUri(uri) || {}
+  } else if (isEmbedRecordViewNotFound(embed.record)) {
+    const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,
       rkey: `${rkey}`,

@@ -159,7 +159,7 @@ function getValuesFromThread(
     AppBskyFeedDefs.isThreadViewPost(currentThread.parent)
   ) {
     currentThread = currentThread.parent
-    if (AppBskyFeedDefs.isThreadViewPost(currentThread)) {
+    if ('post' in currentThread) {
       values.push(currentThread.post.uri)
     }
   }
