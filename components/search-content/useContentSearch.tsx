@@ -61,12 +61,12 @@ export const useContentSearch = ({
 
   const data =
     (section === 'people'
-      ? (searchInfo.data?.pages.flatMap(
-          (page) => page.actors,
-        ) as ActorResult['actors'])
-      : (searchInfo.data?.pages.flatMap(
-          (page) => page.posts,
-        ) as PostResult['posts'])) || []
+      ? searchInfo.data?.pages.flatMap((page) =>
+          'actors' in page ? page.actors : [],
+        )
+      : searchInfo.data?.pages.flatMap((page) =>
+          'posts' in page ? page.posts : [],
+        )) || []
 
   return {
     ...searchInfo,

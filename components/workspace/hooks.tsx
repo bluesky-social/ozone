@@ -145,7 +145,7 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
       email: repo.email,
       ip: 'Unknown',
       labels: 'Unknown',
-      name: profile?.displayName,
+      name: profile?.displayName ? `${profile.displayName}` : '',
       tags: repo.moderation.subjectStatus?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
     }
@@ -154,7 +154,8 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
     if (!isRecord) {
       return {
         ...baseFields,
-        ip: item.ip as string,
+        // PDS implementations can pass through unknown fields to the schema
+        ip: 'ip' in item ? (item.ip as string) : 'Unknown',
         labels: item.labels?.map(({ val }) => val).join('|'),
       }
     }
@@ -213,9 +214,9 @@ export const useWorkspaceExport = () => {
                 exportHeaders.includes('email') ? exportFields.email : '',
                 exportHeaders.includes('ip') ? exportFields.ip : '',
                 exportFields.name,
-                exportFields.labels,
-                exportFields.tags,
-                exportFields.bskyUrl,
+                // exportFields.labels,
+                // exportFields.tags,
+                // exportFields.bskyUrl,
               ].filter(isNonNullable)
               return line.map(escapeCSVValue).join(',')
             })

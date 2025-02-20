@@ -66,7 +66,7 @@ export function ThreadPost({
         <ThreadPostWrapper depth={depth} highlight={highlight}>
           <PostAsCard
             className="bg-transparent px-3 py-2"
-            item={thread}
+            item={{ post: thread.post }}
             dense
           />
         </ThreadPostWrapper>
@@ -111,7 +111,10 @@ export function ThreadPostWrapper({
 
 export function getThreadDepth(thread: GetPostThread.OutputSchema['thread']) {
   let depth = 0
-  while (AppBskyFeedDefs.isThreadViewPost(thread.parent)) {
+  while (
+    'parent' in thread &&
+    AppBskyFeedDefs.isThreadViewPost(thread.parent)
+  ) {
     thread = thread.parent
     depth++
   }
@@ -151,9 +154,14 @@ function getValuesFromThread(
 
   // Traverse up the parent chain to get all parent post items
   let currentThread = thread
-  while (AppBskyFeedDefs.isThreadViewPost(currentThread.parent)) {
+  while (
+    AppBskyFeedDefs.isThreadViewPost(currentThread) &&
+    AppBskyFeedDefs.isThreadViewPost(currentThread.parent)
+  ) {
     currentThread = currentThread.parent
-    values.push(currentThread.post.uri)
+    if (AppBskyFeedDefs.isThreadViewPost(currentThread)) {
+      values.push(currentThread.post.uri)
+    }
   }
 
   // Start collecting values from the original thread and its replies

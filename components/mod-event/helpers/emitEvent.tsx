@@ -2,6 +2,8 @@ import Link from 'next/link'
 import { toast } from 'react-toastify'
 import {
   Agent,
+  ComAtprotoAdminDefs,
+  ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -20,6 +22,8 @@ import {
   WorkspaceListItemData,
 } from '@/workspace/useWorkspaceListData'
 import { compileTemplateContent } from 'components/email/helpers'
+import { diffTags } from 'components/tags/utils'
+import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
@@ -61,7 +65,7 @@ export function useEmitEvent() {
             },
           },
         })
-        if (!isRecord) {
+        if (ComAtprotoAdminDefs.isRepoRef(vals?.subject)) {
           // This may not be all encompassing because in the accountView query, the id may be a did or a handle
           queryClient.invalidateQueries([
             'accountView',
@@ -113,12 +117,20 @@ const eventForSubject = (
     )
   }
 
+  const handle = ToolsOzoneModerationDefs.isRepoViewDetail(subjectData)
+    ? subjectData.handle
+    : ToolsOzoneModerationDefs.isRecordViewDetail(subjectData)
+    ? subjectData.repo.handle
+    : ToolsOzoneModerationDefs.isSubjectStatusView(subjectData)
+    ? subjectData.subjectRepoHandle
+    : undefined
+
   return {
     ...eventData,
     event: {
       ...eventData.event,
       content: compileTemplateContent(eventData.event.content, {
-        handle: subjectData.handle,
+        handle,
       }),
     },
   }
@@ -250,4 +262,145 @@ const eventTexts = {
   [MOD_EVENTS.APPEAL]: 'appealed',
   [MOD_EVENTS.RESOLVE_APPEAL]: 'appealed',
   [MOD_EVENTS.EMAIL]: 'emailed',
+}
+
+export const getEventFromFormData = (
+  $type: string,
+  formData: FormData,
+  subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView,
+): ToolsOzoneModerationEmitEvent.InputSchema['event'] => {
+  const comment = String(formData.get('comment'))
+  const sticky = !!formData.get('sticky')
+  const durationInHours = Number(formData.get('durationInHours'))
+  const policies = formData.get('policies')
+  const acknowledgeAccountSubjects = !!formData.get(
+    'acknowledgeAccountSubjects',
+  )
+  const score = Number(formData.get('priorityScore'))
+  const tags = formData.get('tags')
+
+  if ($type === MOD_EVENTS.ACKNOWLEDGE) {
+    return { $type, comment, acknowledgeAccountSubjects }
+  }
+
+  if ($type === MOD_EVENTS.ESCALATE) {
+    return { $type, comment }
+  }
+
+  // The actual create/negate labels are expected to be filled in afterwards
+  // since the source of the labels are usually not stored in the formData
+  if ($type === MOD_EVENTS.LABEL) {
+    return {
+      $type,
+      comment,
+      createLabelVals: [],
+      negateLabelVals: [],
+      durationInHours,
+    }
+  }
+
+  if ($type === MOD_EVENTS.MUTE) {
+    return { $type, comment, durationInHours }
+  }
+
+  if ($type === MOD_EVENTS.MUTE_REPORTER) {
+    return { $type, comment, durationInHours }
+  }
+
+  if ($type === MOD_EVENTS.TAKEDOWN) {
+    return {
+      $type,
+      durationInHours,
+      acknowledgeAccountSubjects,
+      policies: [String(policies)],
+      comment: comment ? String(comment) : undefined,
+    }
+  }
+
+  if ($type === MOD_EVENTS.COMMENT) {
+    return { $type, comment, sticky }
+  }
+
+  if ($type === MOD_EVENTS.REVERSE_TAKEDOWN) {
+    return { $type, comment }
+  }
+
+  if ($type === MOD_EVENTS.UNMUTE) {
+    return { $type, comment }
+  }
+
+  if ($type === MOD_EVENTS.UNMUTE_REPORTER) {
+    return { $type, comment }
+  }
+
+  if ($type === MOD_EVENTS.UNMUTE_REPORTER) {
+    return { $type, comment }
+  }
+
+  if ($type === MOD_EVENTS.RESOLVE_APPEAL) {
+    return { $type, comment }
+  }
+
+  if ($type === MOD_EVENTS.TAG) {
+    const { add, remove } = diffTags(
+      subjectStatus?.tags || [],
+      String(tags)
+        .split(',')
+        .map((tag) => tag.trim()),
+    )
+    return { $type, add, remove, comment }
+  }
+
+  // @TODO: Uncomment this when we have the divert event is added to emitEvent
+  // if ($type === MOD_EVENTS.DIVERT) {
+  //   return { $type, comment }
+  // }
+
+  if ($type === MOD_EVENTS.SET_PRIORITY) {
+    return { $type, comment, score }
+  }
+
+  if ($type === MOD_EVENTS.APPEAL) {
+    return {
+      comment,
+      $type: MOD_EVENTS.REPORT,
+      reportType: ComAtprotoModerationDefs.REASONAPPEAL,
+    }
+  }
+
+  // Enable and disable dm/video-upload actions are just tag operations behind the scenes
+  // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
+  if (
+    MOD_EVENTS.DISABLE_DMS === $type ||
+    MOD_EVENTS.ENABLE_DMS === $type ||
+    MOD_EVENTS.DISABLE_VIDEO_UPLOAD === $type ||
+    MOD_EVENTS.ENABLE_VIDEO_UPLOAD === $type
+  ) {
+    let add,
+      remove: string[] = []
+    if ($type === MOD_EVENTS.DISABLE_DMS) {
+      add = [DM_DISABLE_TAG]
+      remove = []
+    }
+    if ($type === MOD_EVENTS.ENABLE_DMS) {
+      add = []
+      remove = [DM_DISABLE_TAG]
+    }
+    if ($type === MOD_EVENTS.DISABLE_VIDEO_UPLOAD) {
+      add = [VIDEO_UPLOAD_DISABLE_TAG]
+      remove = []
+    }
+    if ($type === MOD_EVENTS.ENABLE_VIDEO_UPLOAD) {
+      add = []
+      remove = [VIDEO_UPLOAD_DISABLE_TAG]
+    }
+    return {
+      add,
+      remove,
+      comment,
+      $type: MOD_EVENTS.TAG,
+    }
+  }
+
+  return { $type }
 }

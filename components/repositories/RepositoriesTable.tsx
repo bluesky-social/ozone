@@ -75,7 +75,7 @@ export function RepositoriesTable(props: {
 function RepoRow(props: { repo: Repo; showEmail: boolean }) {
   const { repo, showEmail, ...others } = props
   const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
-  const displayName = profile?.displayName
+  const displayName = profile?.displayName ? `${profile.displayName}` : ''
 
   const { registrationIp, lastSigninIp, ipCountry, lastSigninCountry } =
     parseThreatSigs(repo.threatSignatures)

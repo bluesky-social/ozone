@@ -1,7 +1,5 @@
-import { AppBskyActorDefs, AppBskyFeedDefs } from '@atproto/api'
+import { AppBskyFeedDefs } from '@atproto/api'
 import Link from 'next/link'
-import { usePathname, useSearchParams } from 'next/navigation'
-import { useCallback } from 'react'
 import { useActionPanelLink } from '../useActionPanelLink'
 
 export const ReplyParent = ({
@@ -11,18 +9,18 @@ export const ReplyParent = ({
   reply: AppBskyFeedDefs.ReplyRef
   inline?: boolean
 }) => {
-  const parent = reply.parent
+  const { parent } = reply
   const Wrapper = inline ? 'span' : 'p'
   const createLinkToActionPanel = useActionPanelLink()
+
+  if (!('uri' in parent)) return null
   const linkToParentPost = (text: string = 'Reply') => (
     <Link className="underline" href={createLinkToActionPanel(`${parent.uri}`)}>
       {text}
     </Link>
   )
 
-  if (!parent) return null
-
-  if (parent.notFound) {
+  if (AppBskyFeedDefs.isNotFoundPost(parent)) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
         {linkToParentPost()} to a deleted post
@@ -30,10 +28,8 @@ export const ReplyParent = ({
     )
   }
 
-  const parentAuthor = parent.author as AppBskyActorDefs.ProfileViewBasic
-
-  if (!parentAuthor) {
-    const userText = parent.blocked
+  if (!parent.author) {
+    const userText = AppBskyFeedDefs.isBlockedPost(parent)
       ? 'a user who blocked the author'
       : 'an anonymous user'
     return (
@@ -43,14 +39,15 @@ export const ReplyParent = ({
     )
   }
 
-  const userText = parent.blocked
+  const userText = AppBskyFeedDefs.isBlockedPost(parent)
     ? 'a user who blocked the author'
-    : `@${parentAuthor.handle}`
+    : `@${parent.author.handle}`
+
   return (
     <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
       {linkToParentPost()} to{' '}
       <Link
-        href={createLinkToActionPanel(parentAuthor.did)}
+        href={createLinkToActionPanel(parent.author.did)}
         className="underline"
       >
         {userText}

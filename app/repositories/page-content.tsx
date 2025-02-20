@@ -36,7 +36,10 @@ const getRepos =
     },
     options: { signal?: AbortSignal } = {},
   ): Promise<{
-    repos: ToolsOzoneModerationDefs.RepoView[]
+    repos: (
+      | ToolsOzoneModerationDefs.RepoViewDetail
+      | ToolsOzoneModerationDefs.RepoView
+    )[]
     cursor?: string
   }> => {
     const limit = 25
@@ -82,10 +85,11 @@ const getRepos =
       return { repos: [], cursor: data.cursor }
     }
 
-    const repos: Record<string, ToolsOzoneModerationDefs.RepoView> = {}
+    const repos: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
     data.accounts.forEach((account) => {
       repos[account.did] = {
         ...account,
+        $type: 'tools.ozone.moderation.defs#repoViewDetail',
         // Set placeholder properties that will be later filled in with data from ozone
         relatedRecords: [],
         indexedAt: account.indexedAt,

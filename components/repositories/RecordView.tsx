@@ -1,12 +1,9 @@
 'use client'
-import { useState } from 'react'
 import Link from 'next/link'
 import {
   ToolsOzoneModerationGetRecord as GetRecord,
   AppBskyFeedGetPostThread as GetPostThread,
   AppBskyFeedDefs,
-  AppBskyActorDefs,
-  ToolsOzoneModerationDefs,
   AtUri,
   AppBskyGraphDefs,
 } from '@atproto/api'
@@ -24,7 +21,6 @@ import {
   ModerationLabel,
 } from '@/common/labels'
 import { DataField } from '@/common/DataField'
-import { AccountsGrid } from './AccountView'
 import { ModEventList } from '@/mod-event/EventList'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'
 import { Dropdown } from '@/common/Dropdown'
@@ -269,16 +265,16 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        {record.value?.['displayName'] && (
+        {!!record.value?.['displayName'] && (
           <DataField
             label="Display Name"
             value={`${record.value['displayName']}`}
           />
         )}
-        {record.value?.['name'] && (
+        {!!record.value?.['name'] && (
           <DataField label="Name" value={`${record.value['name']}`} />
         )}
-        {record.value?.['description'] && (
+        {!!record.value?.['description'] && (
           <DataField
             label="Description"
             value={`${record.value['description']}`}

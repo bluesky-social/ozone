@@ -4,11 +4,9 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
   AppBskyEmbedRecordWithMedia,
-  AppBskyActorDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '@/lib/types'
 import { classNames } from '@/lib/util'
 import { ReplyParent } from './ReplyParent'
 import { ImageList } from './ImageList'
@@ -72,7 +70,7 @@ export function PostAsRow({
   return (
     <tr className="align-top">
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6">
-        {isRepost(item.reason) ? (
+        {AppBskyFeedDefs.isReasonRepost(item.reason) ? (
           <span className="block text-gray-500 dark:text-gray-50">
             Reposted by{' '}
             <Link href={`/repositories/${item.reason.by.did}`}>
@@ -140,9 +138,10 @@ const getImageSizeClass = (imageCount: number) =>
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
 
-  const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
-    ? item.post.embed.media
-    : item.post.embed
+  const embed: AppBskyFeedDefs.PostView['embed'] =
+    AppBskyEmbedRecordWithMedia.isView(item.post.embed)
+      ? item.post.embed.media
+      : item.post.embed
   const mediaFilters = getMediaFiltersForLabels(
     item.post.labels?.map(({ val }) => val),
   )
@@ -154,36 +153,35 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   )
 
   if (AppBskyEmbedImages.isView(embed)) {
+    const { images } = embed as AppBskyEmbedImages.View
     const embeddedImageClassName = classNames(
       imageClassName,
-      getImageSizeClass(embed.images?.length || 0),
+      getImageSizeClass(images?.length || 0),
     )
     return (
       <span className="flex gap-2 pt-2">
-        <ImageList
-          images={embed.images}
-          imageClassName={embeddedImageClassName}
-        />
+        <ImageList images={images} imageClassName={embeddedImageClassName} />
       </span>
     )
   }
   if (AppBskyEmbedExternal.isView(embed)) {
+    const { external } = embed as AppBskyEmbedExternal.View
     return (
       <span className="flex gap-2 pt-2">
-        {embed.external.thumb ? (
-          <img className={imageClassName} src={embed.external.thumb} />
+        {external.thumb ? (
+          <img className={imageClassName} src={external.thumb} />
         ) : undefined}
         <span className="block">
-          <span className="block">{embed.external.title}</span>
-          <span className="block">{embed.external.description}</span>
+          <span className="block">{external.title}</span>
+          <span className="block">{external.description}</span>
           <span className="block">
             <a
               className="text-gray-500"
-              href={embed.external.uri}
+              href={external.uri}
               target="_blank"
               rel="noreferrer"
             >
-              {embed.external.uri}
+              {external.uri}
             </a>
           </span>
         </span>
