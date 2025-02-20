@@ -1,5 +1,10 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  $Typed,
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import { useCallback } from 'react'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
@@ -11,16 +16,15 @@ export const useCreateSubjectFromId = () => {
     async (
       id: string,
     ): Promise<{
-      subject: { $type: string } & (
-        | { uri: string; cid: string }
-        | { did: string }
-      )
+      subject:
+        | $Typed<ComAtprotoAdminDefs.RepoRef>
+        | $Typed<ComAtprotoRepoStrongRef.Main>
       record: ToolsOzoneModerationDefs.RecordViewDetail | null
     }> => {
       if (isIdRecord(id)) {
         try {
           const { data: record } =
-            await labelerAgent.api.tools.ozone.moderation.getRecord({ uri: id })
+            await labelerAgent.tools.ozone.moderation.getRecord({ uri: id })
           return {
             record,
             subject: {
@@ -34,23 +38,26 @@ export const useCreateSubjectFromId = () => {
             // @TODO this is a roundabout way to get a record cid if the record was deleted.
             // It should work pretty well in this context, since createSubjectFromId() is generally used while resolving reports.
             const { data: eventData } =
-              await labelerAgent.api.tools.ozone.moderation.queryEvents({
+              await labelerAgent.tools.ozone.moderation.queryEvents({
                 subject: id,
                 limit: 1,
               })
             const event = eventData.events.at(0)
-            if (!event || event.subject.uri !== id || !event.subject.cid) {
-              throw err
-            }
-            return {
-              record: null,
-              subject: {
-                $type: 'com.atproto.repo.strongRef',
-                uri: event.subject.uri,
-                cid: `${event.subject.cid}`,
-              },
+            if (
+              ComAtprotoRepoStrongRef.isMain(event?.subject) &&
+              event.subject.uri === id
+            ) {
+              return {
+                record: null,
+                subject: {
+                  $type: 'com.atproto.repo.strongRef',
+                  uri: event.subject.uri,
+                  cid: `${event.subject.cid}`,
+                },
+              }
             }
           }
+
           throw err
         }
       }
