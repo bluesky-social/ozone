@@ -5,6 +5,7 @@ import {
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
   AppBskyActorProfile,
+  asPredicate,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
 import { PostAsCard } from './posts/PostsFeed'
@@ -72,6 +73,8 @@ export function RecordCard(props: {
   )
 }
 
+const isSelfLabels = asPredicate(ComAtprotoLabelDefs.validateSelfLabels)
+
 function PostCard({
   uri,
   showLabels,
@@ -114,11 +117,9 @@ function PostCard({
         uri={uri}
         renderRecord={(record) => {
           const author = getProfileFromRepo(record.repo.relatedRecords)
-          const selfLabels =
-            ComAtprotoLabelDefs.isSelfLabels(record.value.labels) &&
-            'values' in record.value.labels
-              ? (record.value.labels.values as ComAtprotoLabelDefs.SelfLabel[])
-              : []
+          const selfLabels = isSelfLabels(record.value.labels)
+            ? record.value.labels.values
+            : []
           const labels = selfLabels.map(({ val }) => ({
             val,
             uri: record.uri,

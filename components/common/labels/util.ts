@@ -100,11 +100,8 @@ export const getProfileAndRepoLabels = ({
   if (profile?.labels) {
     labels.push(...profile.labels?.map(({ val }) => val))
   }
-  if (
-    ToolsOzoneModerationDefs.isRepoViewDetail(repo) &&
-    Array.isArray(repo?.labels)
-  ) {
-    labels.push(...repo.labels?.map(({ val }) => val))
+  if (ToolsOzoneModerationDefs.isRepoViewDetail(repo) && repo.labels) {
+    labels.push(...repo.labels.map(({ val }) => val))
   }
   return labels
 }

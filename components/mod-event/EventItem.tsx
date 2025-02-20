@@ -1,5 +1,6 @@
 import {
   $Typed,
+  asPredicate,
   ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
@@ -171,13 +172,6 @@ function isMessageSubject(
 
 type ModEventType<T> = Omit<ToolsOzoneModerationDefs.ModEventView, 'event'> & {
   event: $Typed<T>
-}
-
-function isModEventType<T>(
-  e: ToolsOzoneModerationDefs.ModEventView,
-  predicate: (event: unknown) => boolean,
-): e is ModEventType<T> {
-  return predicate(e.event)
 }
 
 const Report = ({
@@ -436,96 +430,74 @@ export const ModEventItem = ({
     </p>
   )
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventAcknowledge>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventAcknowledge,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventAcknowledge)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventEscalate>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventEscalate,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventEscalate)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventComment>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventComment,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventComment)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventUnmute>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventUnmute,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventUnmute)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventUnmuteReporter>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventUnmuteReporter,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventUnmuteReporter)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventResolveAppeal>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventResolveAppeal,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventReverseTakedown>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventReverseTakedown,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventReverseTakedown)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventDivert>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventDivert,
-    )
+    asPredicate(ToolsOzoneModerationDefs.validateModEventDivert)(modEvent.event)
   ) {
-    eventItem = <Comment modEvent={modEvent} />
+    eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventTakedown>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventTakedown,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventTakedown)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventMute>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventMute,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventMute)(
+      modEvent.event,
     ) ||
-    isModEventType<ToolsOzoneModerationDefs.ModEventMuteReporter>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventMuteReporter,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventMuteReporter)(
+      modEvent.event,
     )
   ) {
-    eventItem = <TakedownOrMute modEvent={modEvent} />
+    eventItem = (
+      <TakedownOrMute modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
   }
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventReport>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventReport,
-    )
+    asPredicate(ToolsOzoneModerationDefs.validateModEventReport)(modEvent.event)
   ) {
-    eventItem = <Report modEvent={modEvent} />
+    eventItem = <Report modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventLabel>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventLabel,
-    )
+    asPredicate(ToolsOzoneModerationDefs.validateModEventLabel)(modEvent.event)
   ) {
-    eventItem = <Label modEvent={modEvent} />
+    eventItem = <Label modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventTag>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventTag,
-    )
+    asPredicate(ToolsOzoneModerationDefs.validateModEventTag)(modEvent.event)
   ) {
-    eventItem = <Tag modEvent={modEvent} />
+    eventItem = <Tag modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventEmail>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventEmail,
-    )
+    asPredicate(ToolsOzoneModerationDefs.validateModEventEmail)(modEvent.event)
   ) {
-    eventItem = <Email modEvent={modEvent} />
+    eventItem = <Email modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
-    isModEventType<ToolsOzoneModerationDefs.ModEventPriorityScore>(
-      modEvent,
-      ToolsOzoneModerationDefs.isModEventPriorityScore,
+    asPredicate(ToolsOzoneModerationDefs.validateModEventPriorityScore)(
+      modEvent.event,
     )
   ) {
-    eventItem = <PriorityScore modEvent={modEvent} />
+    eventItem = (
+      <PriorityScore modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
   }
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)
     ? modEvent.subject.uri

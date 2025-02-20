@@ -3,14 +3,9 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import {
   AppBskyFeedDefs,
-  AppBskyEmbedImages,
-  AppBskyEmbedExternal,
-  AppBskyEmbedRecordWithMedia,
   AppBskyEmbedVideo,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
-  AppBskyGraphDefs,
-  asPredicate,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -42,6 +37,17 @@ import {
 import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 import { getVideoUrlWithFallback } from '../video/helpers'
+import {
+  isEmbedVideoView,
+  isEmbedImagesView,
+  isEmbedExternalView,
+  isEmbedRecordView,
+  isPostRecord,
+  isListView,
+  isEmbedRecordViewNotFound,
+  isEmbedRecordViewBlocked,
+  isEmbedRecordWithMediaView,
+} from './helpers'
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -239,19 +245,6 @@ function PostContent({
 const getImageSizeClass = (imageCount: number) =>
   imageCount < 3 ? 'w-32 h-32' : 'w-20 h-20'
 
-const isEmbedVideoView = asPredicate(AppBskyEmbedVideo.validateView)
-const isEmbedImagesView = asPredicate(AppBskyEmbedImages.validateView)
-const isEmbedExternalView = asPredicate(AppBskyEmbedExternal.validateView)
-const isEmbedRecordView = asPredicate(AppBskyEmbedRecord.validateView)
-const isPostRecord = asPredicate(AppBskyFeedPost.validateRecord)
-const isListView = asPredicate(AppBskyGraphDefs.validateListView)
-const isEmbedRecordViewNotFound = asPredicate(
-  AppBskyEmbedRecord.validateViewNotFound,
-)
-const isEmbedRecordViewBlocked = asPredicate(
-  AppBskyEmbedRecord.validateViewBlocked,
-)
-
 export function PostEmbeds({
   item,
   isAuthorTakendown,
@@ -262,7 +255,7 @@ export function PostEmbeds({
   item: AppBskyFeedDefs.FeedViewPost
 }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
-  const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
+  const embed = isEmbedRecordWithMediaView(item.post.embed)
     ? item.post.embed.media
     : item.post.embed
 
