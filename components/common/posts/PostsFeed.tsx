@@ -276,24 +276,23 @@ export function PostEmbeds({
   )
 
   if (isEmbedVideoView(embed)) {
-    const { playlist, thumbnail, alt } = embed
     const captions = item.post.record?.['embed']?.['captions']
-    const sourceUrl = getVideoUrlWithFallback(playlist, {
+    const sourceUrl = getVideoUrlWithFallback(embed.playlist, {
       isAuthorDeactivated,
       isAuthorTakendown,
     })
-    const thumbnailUrl = thumbnail
-      ? getVideoUrlWithFallback(thumbnail, {
+    const thumbnailUrl = embed.thumbnail
+      ? getVideoUrlWithFallback(embed.thumbnail, {
           isAuthorDeactivated,
           isAuthorTakendown,
         })
       : undefined
     return (
-      <div className="flex gap-2 pb-2 pl-4" aria-label={alt}>
+      <div className="flex gap-2 pb-2 pl-4" aria-label={embed.alt}>
         <VideoPlayer
           source={sourceUrl}
           thumbnail={thumbnailUrl}
-          alt={alt}
+          alt={embed.alt}
           mediaFilters={mediaFilters}
           captions={captions ? (captions as AppBskyEmbedVideo.Caption[]) : []}
         />
@@ -410,8 +409,7 @@ export function RecordEmbedView({
       </div>
     )
   } else if (isListView(embed.record)) {
-    const { uri, avatar, creator, name, description, purpose } = embed.record
-    const { did, rkey } = parseAtUri(uri) || {}
+    const { did, rkey } = parseAtUri(embed.record.uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,
       rkey: `${rkey}`,
@@ -425,21 +423,23 @@ export function RecordEmbedView({
         <div className="flex flex-row gap-1">
           <ProfileAvatar
             profile={{
-              avatar: avatar,
-              did: creator.did,
-              handle: name,
+              avatar: embed.record.avatar,
+              did: embed.record.creator.did,
+              handle: embed.record.name,
             }}
             className="w-6 h-6 rounded-full"
           />
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200 pl-2">
             <Link
-              href={`/repositories/${uri.replace('at://', '')}`}
+              href={`/repositories/${embed.record.uri.replace('at://', '')}`}
               className="hover:underline"
             >
-              {name ? (
-                <span className="font-bold">{name}</span>
+              {embed.record.name ? (
+                <span className="font-bold">{embed.record.name}</span>
               ) : (
-                <span className="font-bold">@{creator.handle}</span>
+                <span className="font-bold">
+                  @{embed.record.creator.handle}
+                </span>
               )}
             </Link>
             &nbsp;&middot;&nbsp;
@@ -457,10 +457,12 @@ export function RecordEmbedView({
             leftAligned ? 'pl-6' : 'pl-10'
           } pb-2 dark:text-gray-100`}
         >
-          <p className="mb-0">{description} </p>
+          <p className="mb-0">{embed.record.description} </p>
           <p className="mt-0 text-gray-900 dark:text-gray-200">
-            {purpose.split('#')[1]} by @
-            <Link href={`/repositories/${creator.did}`}>{creator.handle}</Link>
+            {embed.record.purpose.split('#')[1]} by @
+            <Link href={`/repositories/${embed.record.creator.did}`}>
+              {embed.record.creator.handle}
+            </Link>
           </p>
         </div>
       </div>
