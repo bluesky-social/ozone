@@ -7,6 +7,7 @@ import { WorkspaceListData } from './useWorkspaceListData'
 import { AppBskyActorProfile, ToolsOzoneModerationDefs } from '@atproto/api'
 import { getSubjectStatusFromItemData } from './utils'
 import { ProfileViewBasic } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 const toggleItemCheck = (item: string, select: boolean = true) => {
   const checkbox = document?.querySelector<HTMLInputElement>(
@@ -109,9 +110,9 @@ export const WorkspaceFilterSelector = ({
       const subjectStatus = getSubjectStatusFromItemData(item)
       if (uri.startsWith('did:')) {
         const isRepo = ToolsOzoneModerationDefs.isRepoViewDetail(item)
-        const profile: Partial<AppBskyActorProfile.Record> | undefined = isRepo
-          ? item.relatedRecords?.find(AppBskyActorProfile.isRecord)
-          : {}
+        const profile = isRepo
+          ? getProfileFromRepo(item.relatedRecords)
+          : undefined
         if (
           (filters.accountReviewOpen &&
             subjectStatus?.reviewState ===

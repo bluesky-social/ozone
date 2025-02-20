@@ -22,6 +22,7 @@ import {
   WorkspaceListData,
   WorkspaceListItemData,
 } from './useWorkspaceListData'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
@@ -138,14 +139,14 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
 
   if (ToolsOzoneModerationDefs.isRepoViewDetail(item) || isRecord) {
     const repo = isRecord ? item.repo : item
-    const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
+    const profile = getProfileFromRepo(repo.relatedRecords)
     const baseFields = {
       did: repo.did,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
       labels: 'Unknown',
-      name: profile?.displayName ? `${profile.displayName}` : '',
+      name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
     }
@@ -214,9 +215,9 @@ export const useWorkspaceExport = () => {
                 exportHeaders.includes('email') ? exportFields.email : '',
                 exportHeaders.includes('ip') ? exportFields.ip : '',
                 exportFields.name,
-                // exportFields.labels,
-                // exportFields.tags,
-                // exportFields.bskyUrl,
+                exportFields.labels,
+                exportFields.tags,
+                exportFields.bskyUrl,
               ].filter(isNonNullable)
               return line.map(escapeCSVValue).join(',')
             })

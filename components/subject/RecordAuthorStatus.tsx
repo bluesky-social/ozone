@@ -3,6 +3,7 @@ import {
   NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,
   YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,
 } from '@/lib/constants'
+import { getProfileFromRepo } from '@/repositories/helpers'
 import { AppBskyActorProfile, ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   LockClosedIcon,
@@ -15,11 +16,8 @@ import { differenceInDays, formatDistance } from 'date-fns'
 const getProfileCreatedAtFromRepo = (
   repo: ToolsOzoneModerationDefs.RepoView,
 ) => {
-  const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
-  if (profile?.createdAt) {
-    return `${profile.createdAt}`
-  }
-  return repo.indexedAt
+  const profile = getProfileFromRepo(repo.relatedRecords)
+  return profile?.createdAt || repo.indexedAt
 }
 
 export const RecordAuthorStatus = ({

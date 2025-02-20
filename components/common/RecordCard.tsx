@@ -17,6 +17,7 @@ import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 export function RecordCard(props: {
   uri: string
@@ -112,8 +113,7 @@ function PostCard({
       <BaseRecordCard
         uri={uri}
         renderRecord={(record) => {
-          const author =
-            record.repo.relatedRecords.find(AppBskyActorProfile.isRecord) || {}
+          const author = getProfileFromRepo(record.repo.relatedRecords)
           const selfLabels =
             ComAtprotoLabelDefs.isSelfLabels(record.value.labels) &&
             'values' in record.value.labels
@@ -135,6 +135,8 @@ function PostCard({
                     did: record.repo.did,
                     handle: record.repo.handle,
                     ...author,
+                    avatar: undefined,
+                    labels: [],
                     $type: 'app.bsky.actor.defs#profileViewBasic',
                   },
                   labels,
