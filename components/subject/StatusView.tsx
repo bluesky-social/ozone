@@ -3,7 +3,13 @@ import { Json } from '@/common/Json'
 import { RecordCard, RepoCard } from '@/common/RecordCard'
 import { Tabs } from '@/common/Tabs'
 import { ModEventList } from '@/mod-event/EventList'
-import { AtUri, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  AtUri,
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import { ChevronLeftIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { useState } from 'react'
@@ -20,16 +26,15 @@ export const SubjectStatusView = ({
   subjectStatus: ToolsOzoneModerationDefs.SubjectStatusView
 }) => {
   const [currentView, setCurrentView] = useState(Views.Details)
-  const isRecord = subjectStatus.subject.$type === 'com.atproto.repo.strongRef'
   const headerTitle = `Moderation Status #${subjectStatus.id ?? ''}`
 
-  const shortType = isRecord
+  const shortType = ComAtprotoRepoStrongRef.isMain(subjectStatus.subject)
     ? new AtUri(`${subjectStatus.subject.uri}`).collection.replace(
         'app.bsky.feed.',
         '',
       )
     : null
-  const subHeaderTitle = isRecord
+  const subHeaderTitle = shortType
     ? `${shortType} record of @${subjectStatus.subjectRepoHandle}`
     : `repo of @${subjectStatus.subjectRepoHandle}`
 
@@ -81,9 +86,13 @@ export const SubjectStatusView = ({
                     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
                       <ModEventList
                         subject={
-                          isRecord
-                            ? `${subjectStatus.subject.uri}`
-                            : `${subjectStatus.subject.did}`
+                          ComAtprotoRepoStrongRef.isMain(subjectStatus.subject)
+                            ? subjectStatus.subject.uri
+                            : ComAtprotoAdminDefs.isRepoRef(
+                                subjectStatus.subject,
+                              )
+                            ? subjectStatus.subject.did
+                            : undefined
                         }
                       />
                     </div>
@@ -109,7 +118,6 @@ function Details({
 }) {
   const {
     updatedAt,
-    subject,
     comment,
     muteUntil,
     lastReviewedAt,
@@ -118,8 +126,6 @@ function Details({
     lastAppealedAt,
     suspendUntil,
   } = subjectStatus
-  const isRecord = subject.$type === 'com.atproto.repo.strongRef'
-
   const labels: (DataFieldProps | null)[] = [
     {
       label: 'Last Update',
@@ -181,13 +187,14 @@ function Details({
           .map((label, index) => label && <DataField key={index} {...label} />)}
       </dl>
       <dt className="text-sm font-medium text-gray-500 mb-3">Subject:</dt>
-      {isRecord ? (
+      {ComAtprotoRepoStrongRef.isMain(subjectStatus.subject) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-0 mb-3">
-          <RecordCard uri={`${subject.uri}`} />
+          <RecordCard uri={`${subjectStatus.subject.uri}`} />
         </div>
-      ) : (
+      )}
+      {ComAtprotoAdminDefs.isRepoRef(subjectStatus.subject) && (
         <div className="rounded border-2 border-dashed border-gray-300 p-2 pb-1 mb-3">
-          <RepoCard did={`${subject.did}`} />
+          <RepoCard did={`${subjectStatus.subject.did}`} />
         </div>
       )}
       <Json className="mt-6" label="Contents" value={subjectStatus} />

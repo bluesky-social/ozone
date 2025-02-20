@@ -47,7 +47,7 @@ export const useQueueSetting = () => {
         if (option.key === 'tools.ozone.setting.client.queue.seed') {
           queueSeed = {
             managerRole: option.managerRole || null,
-            setting: option.value?.['val'],
+            setting: option.value?.['val'] ? `${option.value['val']}` : '',
           }
         }
       })

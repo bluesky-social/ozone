@@ -3,12 +3,10 @@ import { useState } from 'react'
 import Link from 'next/link'
 import {
   ToolsOzoneModerationGetEvent as GetEvent,
-  AppBskyFeedGetPostThread as GetPostThread,
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 import { ChevronLeftIcon } from '@heroicons/react/20/solid'
 import { Json } from '@/common/Json'
-import { classNames } from '@/lib/util'
 import { RecordCard, RepoCard } from '@/common/RecordCard'
 import { getType } from '@/reports/helpers/getType'
 import { DataField, DataFieldProps } from '@/common/DataField'
@@ -35,7 +33,9 @@ export function EventView({ event }: { event: GetEvent.OutputSchema }) {
   const shortType = getType(eventSubjectValue).replace('app.bsky.feed.', '')
   const subHeaderTitle = ToolsOzoneModerationDefs.isRecordView(event.subject)
     ? `${shortType} record of @${event.subject.repo.handle}`
-    : `repo of @${event.subject.handle}`
+    : ToolsOzoneModerationDefs.isRepoView(event.subject)
+    ? `repo of @${event.subject.handle}`
+    : ''
 
   const titleIcon =
     (ToolsOzoneModerationDefs.isRecordView(event.subject) ||
@@ -126,7 +126,7 @@ function Details({ event }: { event: GetEvent.OutputSchema }) {
         {labels.map((label, index) => (
           <DataField key={index} {...label} />
         ))}
-        {!!commentComponent && (
+        {ToolsOzoneModerationDefs.isModEventReport(event.event) && (
           <DataField label="Reason" value={`${event.event.comment || ''}`}>
             {commentComponent}
           </DataField>

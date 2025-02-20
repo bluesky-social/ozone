@@ -4,6 +4,8 @@ import {
   ToolsOzoneModerationDefs,
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
+  AppBskyActorProfile,
+  asPredicate,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
 import { PostAsCard } from './posts/PostsFeed'
@@ -16,6 +18,7 @@ import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { ShieldCheckIcon } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 export function RecordCard(props: {
   uri: string
@@ -70,6 +73,8 @@ export function RecordCard(props: {
   )
 }
 
+const isSelfLabels = asPredicate(ComAtprotoLabelDefs.validateSelfLabels)
+
 function PostCard({
   uri,
   showLabels,
@@ -106,33 +111,45 @@ function PostCard({
 
   // When the author of the post blocks the viewer, getPostThread won't return the necessary properties
   // to build the post view so we manually build the post view from the raw record data
-  if (data?.thread?.blocked) {
+  if (AppBskyFeedDefs.isBlockedPost(data?.thread)) {
     return (
       <BaseRecordCard
         uri={uri}
-        renderRecord={(record) => (
-          <PostAsCard
-            dense
-            controls={[]}
-            item={{
-              post: {
-                uri: record.uri,
-                cid: record.cid,
-                author: record.repo,
-                record: record.value,
-                labels: ComAtprotoLabelDefs.isSelfLabels(record.value['labels'])
-                  ? record.value['labels'].values.map(({ val }) => ({
-                      val,
-                      uri: record.uri,
-                      src: record.repo.did,
-                      cts: new Date(0).toISOString(),
-                    }))
-                  : [],
-                indexedAt: new Date(0).toISOString(),
-              },
-            }}
-          />
-        )}
+        renderRecord={(record) => {
+          const author = getProfileFromRepo(record.repo.relatedRecords)
+          const selfLabels = isSelfLabels(record.value.labels)
+            ? record.value.labels.values
+            : []
+          const labels = selfLabels.map(({ val }) => ({
+            val,
+            uri: record.uri,
+            src: record.repo.did,
+            cts: new Date(0).toISOString(),
+          }))
+          return (
+            <PostAsCard
+              dense
+              controls={[]}
+              item={{
+                post: {
+                  author: {
+                    did: record.repo.did,
+                    handle: record.repo.handle,
+                    ...author,
+                    avatar: undefined,
+                    labels: [],
+                    $type: 'app.bsky.actor.defs#profileViewBasic',
+                  },
+                  labels,
+                  uri: record.uri,
+                  cid: record.cid,
+                  record: record.value,
+                  indexedAt: new Date(0).toISOString(),
+                },
+              }}
+            />
+          )
+        }}
       />
     )
   }

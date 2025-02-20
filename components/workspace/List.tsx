@@ -42,9 +42,10 @@ const getLangTagFromRecordValue = (
   record: ToolsOzoneModerationDefs.RecordViewDetail,
 ): string[] => {
   if (record?.moderation.subjectStatus?.tags?.length) return []
-  const langTags = record.value?.['langs']?.map(
-    (lang: string) => `lang:${lang}`,
-  )
+  const recordLangs = record.value?.['langs']
+    ? (record.value?.['langs'] as string[])
+    : []
+  const langTags = recordLangs.map((lang: string) => `lang:${lang}`)
   return langTags || []
 }
 
@@ -122,9 +123,7 @@ const ListGroup = ({
           {title}({items.length})
         </h5>
         <div className="flex gap-1">
-          {canExport && (
-            <WorkspaceExportPanel listData={listData} />
-          )}
+          {canExport && <WorkspaceExportPanel listData={listData} />}
           <ActionButton
             size="sm"
             appearance="outlined"

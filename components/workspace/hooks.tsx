@@ -22,6 +22,7 @@ import {
   WorkspaceListData,
   WorkspaceListItemData,
 } from './useWorkspaceListData'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
@@ -138,14 +139,14 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
 
   if (ToolsOzoneModerationDefs.isRepoViewDetail(item) || isRecord) {
     const repo = isRecord ? item.repo : item
-    const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
+    const profile = getProfileFromRepo(repo.relatedRecords)
     const baseFields = {
       did: repo.did,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
       labels: 'Unknown',
-      name: profile?.displayName,
+      name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
     }
@@ -154,7 +155,8 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
     if (!isRecord) {
       return {
         ...baseFields,
-        ip: item.ip as string,
+        // PDS implementations can pass through unknown fields to the schema
+        ip: 'ip' in item ? (item.ip as string) : 'Unknown',
         labels: item.labels?.map(({ val }) => val).join('|'),
       }
     }

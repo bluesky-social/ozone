@@ -3,17 +3,12 @@ import {
   ToolsOzoneModerationDefs,
   ComAtprotoServerDefs,
   ComAtprotoAdminDefs,
-  AppBskyFeedDefs,
 } from '@atproto/api'
 import { ReactNode } from 'react'
 
-type Reason = AppBskyFeedDefs.FeedViewPost['reason']
-
-export function isRepost(v: Reason): v is AppBskyFeedDefs.ReasonRepost {
-  return AppBskyFeedDefs.isReasonRepost(v)
-}
-
-export type Repo = ToolsOzoneModerationDefs.RepoView
+export type Repo =
+  | ToolsOzoneModerationDefs.RepoView
+  | ToolsOzoneModerationDefs.RepoViewDetail
 
 export type SubjectStatus = ToolsOzoneModerationDefs.SubjectStatusView
 

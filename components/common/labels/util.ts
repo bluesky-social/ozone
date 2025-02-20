@@ -88,15 +88,20 @@ export const getProfileAndRepoLabels = ({
   profile,
   repo,
 }: {
-  profile?: AppBskyActorDefs.ProfileViewBasic
-  repo?: ToolsOzoneModerationDefs.RepoView
+  profile?:
+    | AppBskyActorDefs.ProfileView
+    | AppBskyActorDefs.ProfileViewBasic
+    | AppBskyActorDefs.ProfileViewDetailed
+  repo?:
+    | ToolsOzoneModerationDefs.RepoView
+    | ToolsOzoneModerationDefs.RepoViewDetail
 }) => {
   const labels: string[] = []
   if (profile?.labels) {
     labels.push(...profile.labels?.map(({ val }) => val))
   }
-  if (repo?.labels && Array.isArray(repo?.labels)) {
-    labels.push(...repo.labels?.map(({ val }) => val))
+  if (ToolsOzoneModerationDefs.isRepoViewDetail(repo) && repo.labels) {
+    labels.push(...repo.labels.map(({ val }) => val))
   }
   return labels
 }

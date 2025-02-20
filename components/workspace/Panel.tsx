@@ -4,15 +4,16 @@ import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { LabelChip } from '@/common/labels'
 import { PropsOf } from '@/lib/types'
 import { MOD_EVENTS } from '@/mod-event/constants'
-import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import {
+  getEventFromFormData,
+  useActionSubjects,
+} from '@/mod-event/helpers/emitEvent'
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
   AtUri,
   ComAtprotoAdminDefs,
-  ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
-  ToolsOzoneModerationEmitEvent,
   ToolsOzoneTeamDefs,
 } from '@atproto/api'
 import { Dialog } from '@headlessui/react'
@@ -208,23 +209,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
       const labels = String(formData.get('labels'))?.split(',')
-      const coreEvent: ToolsOzoneModerationEmitEvent.InputSchema['event'] = {
-        $type: modEventType,
-      }
+      const coreEvent = getEventFromFormData(modEventType, formData)
 
-      if (formData.get('durationInHours')) {
-        coreEvent.durationInHours = Number(formData.get('durationInHours'))
-      }
-
-      if (formData.get('comment')) {
-        coreEvent.comment = formData.get('comment')
-      }
-
-      if (formData.get('sticky')) {
-        coreEvent.sticky = true
-      }
-
-      if (coreEvent.$type === MOD_EVENTS.TAKEDOWN) {
+      if (ToolsOzoneModerationDefs.isModEventTakedown(coreEvent)) {
         // The Combobox component from headless ui does not support passing a `form` attribute to the hidden input
         // and since the input field is rendered outside of the main workspace form, we need to manually reach out
         // to the input field to get the selected value
@@ -232,6 +219,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           ev.currentTarget.parentNode?.querySelector<HTMLInputElement>(
             'input[name="policies"]',
           )?.value
+
         if (policies) {
           coreEvent.policies = [String(policies)]
         } else {
@@ -244,33 +232,22 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
-      if (formData.get('tags')) {
-        const isRemovingTags = formData.get('removeTags')
-        const tags = String(formData.get('tags'))
-          .split(',')
-          .map((tag) => tag.trim())
-        coreEvent.add = isRemovingTags ? [] : tags
-        coreEvent.remove = isRemovingTags ? tags : []
-      }
-
-      if (labels?.length) {
-        const isRemovingLabels = formData.get('removeLabels')
-        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
-        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
-      }
-
-      // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
-      if (coreEvent.$type === MOD_EVENTS.APPEAL) {
-        coreEvent.$type = MOD_EVENTS.REPORT
-        coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
+      if (ToolsOzoneModerationDefs.isModEventTag(coreEvent)) {
+        // By default, when there are no reference subject stats, the event builder returns all selected tags to be added
+        // If the user wants to remove tags, we need to swap the add and remove properties
+        if (formData.get('removeTags')) {
+          coreEvent.add = []
+          coreEvent.remove = coreEvent.add
+        }
       }
 
       if (
-        (coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
-          coreEvent.$type === MOD_EVENTS.ACKNOWLEDGE) &&
-        formData.get('acknowledgeAccountSubjects')
+        ToolsOzoneModerationDefs.isModEventLabel(coreEvent) &&
+        labels?.length
       ) {
-        coreEvent.acknowledgeAccountSubjects = true
+        const isRemovingLabels = formData.get('removeLabels')
+        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
+        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
       }
 
       // No need to break if one of the requests fail, continue on with others

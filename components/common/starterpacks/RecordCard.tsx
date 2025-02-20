@@ -42,7 +42,7 @@ export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
       record,
     },
   } = data
-  const displayName = record['name'] || 'Untitled'
+  const displayName = record['name'] ? `${record['name']}` : 'Untitled'
   const rkey = uri.split('/').pop()
 
   const meta: string[] = [
