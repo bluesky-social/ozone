@@ -36,6 +36,7 @@
       "@/workspace/*": ["components/workspace/*"],
       "@/sets/*": ["components/sets/*"],
       "@/setting/*": ["components/setting/*"],
+      "@/team/*": ["components/team/*"],
     }
   },
   "include": [

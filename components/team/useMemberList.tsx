@@ -1,20 +1,35 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
+import { useState } from 'react'
+import { MemberRoleNames } from './helpers'
 
 export const useMemberList = () => {
   const labelerAgent = useLabelerAgent()
-  return useInfiniteQuery({
-    queryKey: ['memberList'],
+  const [roles, setRoles] = useState<string[]>(Object.keys(MemberRoleNames))
+  const [disabled, setDisabled] = useState<boolean | undefined>(false)
+
+  const results = useInfiniteQuery({
+    queryKey: ['memberList', { disabled, roles }],
     queryFn: async ({ pageParam }) => {
       const { data } = await labelerAgent.tools.ozone.team.listMembers({
-        limit: 25,
+        roles,
+        disabled,
+        limit: 50,
         cursor: pageParam,
       })
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
+
+  return {
+    ...results,
+    disabled,
+    setDisabled,
+    roles,
+    setRoles,
+  }
 }
 
 export const useFullMemberList = () => {
