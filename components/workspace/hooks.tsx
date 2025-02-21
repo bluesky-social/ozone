@@ -22,6 +22,7 @@ import {
   WorkspaceListData,
   WorkspaceListItemData,
 } from './useWorkspaceListData'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
@@ -133,19 +134,22 @@ const filterExportFields = (fields: string[], isAdmin: boolean) => {
       )
 }
 
+const ifString = (val: unknown): string | undefined =>
+  typeof val === 'string' ? val : undefined
+
 const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
   const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(item)
 
   if (ToolsOzoneModerationDefs.isRepoViewDetail(item) || isRecord) {
     const repo = isRecord ? item.repo : item
-    const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
+    const profile = getProfileFromRepo(repo.relatedRecords)
     const baseFields = {
       did: repo.did,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
       labels: 'Unknown',
-      name: profile?.displayName,
+      name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
     }
@@ -154,7 +158,8 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
     if (!isRecord) {
       return {
         ...baseFields,
-        ip: item.ip as string,
+        // @ts-expect-error - Un-spec'd field returned by PDS
+        ip: ifString(item.ip) ?? 'Unknown',
         labels: item.labels?.map(({ val }) => val).join('|'),
       }
     }

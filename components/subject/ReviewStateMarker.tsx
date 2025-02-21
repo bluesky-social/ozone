@@ -1,6 +1,11 @@
 import { DM_DISABLE_TAG } from '@/lib/constants'
 import { classNames } from '@/lib/util'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -162,9 +167,9 @@ export const ReviewStateIconLink = ({
   children?: React.ReactNode
 }) => {
   let urlParam = ''
-  if (subjectStatus.subject.$type === 'com.atproto.repo.strongRef') {
+  if (ComAtprotoRepoStrongRef.isMain(subjectStatus.subject)) {
     urlParam = `uri=${subjectStatus.subject.uri}`
-  } else {
+  } else if (ComAtprotoAdminDefs.isRepoRef(subjectStatus.subject)) {
     urlParam = `did=${subjectStatus.subject.did}`
   }
   return (

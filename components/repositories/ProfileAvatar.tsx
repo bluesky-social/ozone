@@ -27,11 +27,16 @@ export const ProfileAvatar = ({
   className,
   ...rest
 }: {
-  profile?: AppBskyActorDefs.ProfileViewBasic
-  repo?: ToolsOzoneModerationDefs.RepoView
+  profile?:
+    | AppBskyActorDefs.ProfileView
+    | AppBskyActorDefs.ProfileViewBasic
+    | AppBskyActorDefs.ProfileViewDetailed
+  repo?:
+    | ToolsOzoneModerationDefs.RepoView
+    | ToolsOzoneModerationDefs.RepoViewDetail
 } & ComponentProps<'img'>) => {
   const avatarUrl = profile?.avatar
-  const alt = `Avatar of ${profile?.displayname || profile?.handle || 'user'}`
+  const alt = `Avatar of ${profile?.displayName || profile?.handle || 'user'}`
   const [isImageViewerOpen, setIsImageViewerOpen] = useState(false)
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
   const allLabels = getProfileAndRepoLabels({ profile, repo })

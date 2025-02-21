@@ -1,6 +1,10 @@
 import {
+  $Typed,
+  asPredicate,
   ChatBskyConvoDefs,
+  ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 
@@ -69,13 +73,16 @@ const TextWithLinks: React.FC<{ text: string }> = ({ text }) => {
 const Comment = ({
   modEvent,
 }: {
-  modEvent: ModEventViewWithDetails & {
+  modEvent: Omit<ModEventViewWithDetails, 'event'> & {
     event:
-      | ToolsOzoneModerationDefs.ModEventEscalate
-      | ToolsOzoneModerationDefs.ModEventAcknowledge
-      | ToolsOzoneModerationDefs.ModEventComment
-      | ToolsOzoneModerationDefs.ModEventUnmute
-      | ToolsOzoneModerationDefs.ModEventUnmuteReporter
+      | $Typed<ToolsOzoneModerationDefs.ModEventAcknowledge>
+      | $Typed<ToolsOzoneModerationDefs.ModEventEscalate>
+      | $Typed<ToolsOzoneModerationDefs.ModEventComment>
+      | $Typed<ToolsOzoneModerationDefs.ModEventUnmute>
+      | $Typed<ToolsOzoneModerationDefs.ModEventUnmuteReporter>
+      | $Typed<ToolsOzoneModerationDefs.ModEventResolveAppeal>
+      | $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
+      | $Typed<ToolsOzoneModerationDefs.ModEventDivert>
   }
 }) => {
   return (
@@ -88,24 +95,26 @@ const Comment = ({
             : modEvent.createdBy}
         </span>
         <div>
-          {!!modEvent.event.sticky && (
-            <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-              Sticky
-            </span>
-          )}
+          {ToolsOzoneModerationDefs.isModEventComment(modEvent.event) &&
+            !!modEvent.event.sticky && (
+              <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
+                Sticky
+              </span>
+            )}
         </div>
       </div>
       {modEvent.event.comment && (
         <TextWithLinks text={modEvent.event.comment} />
       )}
-      {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
-        labels={modEvent.event.createLabelVals as string[] | undefined}
+        // @ts-expect-error - legacy support for data that is more than a yr old
+        labels={modEvent.event.createLabelVals}
       />
       <EventLabels
         header="Removed: "
-        labels={modEvent.event.negateLabelVals as string[] | undefined}
+        // @ts-expect-error - legacy support for data that is more than a yr old
+        labels={modEvent.event.negateLabelVals}
       />
     </>
   )
@@ -114,9 +123,7 @@ const Comment = ({
 const Email = ({
   modEvent,
 }: {
-  modEvent: ToolsOzoneModerationDefs.ModEventView & {
-    event: ToolsOzoneModerationDefs.ModEventEmail
-  }
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventEmail>
 }) => {
   return (
     <>
@@ -156,19 +163,8 @@ const PriorityScore = ({
   )
 }
 
-function isMessageSubject(
-  subject: ToolsOzoneModerationDefs.ModEventView['subject'],
-): subject is ChatBskyConvoDefs.MessageRef {
-  return subject.messageId !== undefined
-}
-
-type ModEventType<T> = { event: T } & ToolsOzoneModerationDefs.ModEventView
-
-function isModEventType<T>(
-  e: ToolsOzoneModerationDefs.ModEventView,
-  predicate: (event: unknown) => event is T,
-): e is ModEventType<T> {
-  return predicate(e.event)
+type ModEventType<T> = Omit<ToolsOzoneModerationDefs.ModEventView, 'event'> & {
+  event: $Typed<T>
 }
 
 const Report = ({
@@ -203,7 +199,7 @@ const Report = ({
         <TextWithLinks text={modEvent.event.comment} />
       )}
 
-      {isMessageSubject(modEvent.subject) && (
+      {ChatBskyConvoDefs.isMessageRef(modEvent.subject) && (
         <MessageContext className="mt-3" subject={modEvent.subject} />
       )}
     </>
@@ -215,9 +211,9 @@ const TakedownOrMute = ({
 }: {
   modEvent: {
     event:
-      | ToolsOzoneModerationDefs.ModEventTakedown
-      | ToolsOzoneModerationDefs.ModEventMute
-      | ToolsOzoneModerationDefs.ModEventMuteReporter
+      | $Typed<ToolsOzoneModerationDefs.ModEventTakedown>
+      | $Typed<ToolsOzoneModerationDefs.ModEventMute>
+      | $Typed<ToolsOzoneModerationDefs.ModEventMuteReporter>
   } & ToolsOzoneModerationDefs.ModEventView
 }) => {
   const expiresAt = getExpiresAtFromEvent(modEvent)
@@ -278,10 +274,12 @@ const TakedownOrMute = ({
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
+        // @ts-ignore
         labels={modEvent.event.createLabelVals as string[] | undefined}
       />
       <EventLabels
         header="Removed: "
+        // @ts-ignore
         labels={modEvent.event.negateLabelVals as string[] | undefined}
       />
     </>
@@ -363,9 +361,7 @@ const Label = ({
 const Tag = ({
   modEvent,
 }: {
-  modEvent: {
-    event: ToolsOzoneModerationDefs.ModEventTag
-  } & ToolsOzoneModerationDefs.ModEventView
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventTag>
 }) => {
   return (
     <>
@@ -391,9 +387,14 @@ const dateFormatter = new Intl.DateTimeFormat('en-US', {
   timeStyle: 'short',
 })
 
-const getExpiresAtFromEvent = (
-  modEvent: ToolsOzoneModerationDefs.ModEventView,
-) => {
+const getExpiresAtFromEvent = (modEvent: {
+  event:
+    | $Typed<ToolsOzoneModerationDefs.ModEventTakedown>
+    | $Typed<ToolsOzoneModerationDefs.ModEventMute>
+    | $Typed<ToolsOzoneModerationDefs.ModEventMuteReporter>
+    | $Typed<ToolsOzoneModerationDefs.ModEventLabel>
+  createdAt: string
+}) => {
   if (!modEvent.event.durationInHours) return null
   const createdAt = new Date(modEvent.createdAt)
   createdAt.setHours(
@@ -413,44 +414,91 @@ export const ModEventItem = ({
   showContentAuthor: boolean
   showContentPreview: boolean
 }) => {
-  let eventItem: JSX.Element = <p>{modEvent.event.$type as string}</p>
+  let eventItem: JSX.Element = (
+    <p>
+      {(modEvent.event.$type as string).replace(
+        'tools.ozone.moderation.defs',
+        '',
+      )}
+    </p>
+  )
   if (
-    ToolsOzoneModerationDefs.isModEventAcknowledge(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventEscalate(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventComment(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventUnmute(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventUnmuteReporter(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventDivert(modEvent.event)
+    asPredicate(ToolsOzoneModerationDefs.validateModEventAcknowledge)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventEscalate)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventComment)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventUnmute)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventUnmuteReporter)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventReverseTakedown)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventDivert)(modEvent.event)
   ) {
-    eventItem = <Comment modEvent={modEvent} />
+    eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
-    ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventMute(modEvent.event) ||
-    ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event)
+    asPredicate(ToolsOzoneModerationDefs.validateModEventTakedown)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventMute)(
+      modEvent.event,
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventMuteReporter)(
+      modEvent.event,
+    )
   ) {
-    eventItem = <TakedownOrMute modEvent={modEvent} />
-  }
-  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventReport)) {
-    eventItem = <Report modEvent={modEvent} />
-  }
-  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventLabel)) {
-    eventItem = <Label modEvent={modEvent} />
-  }
-  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventTag)) {
-    eventItem = <Tag modEvent={modEvent} />
-  }
-  if (isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventEmail)) {
-    eventItem = <Email modEvent={modEvent} />
+    eventItem = (
+      <TakedownOrMute modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
   }
   if (
-    isModEventType(modEvent, ToolsOzoneModerationDefs.isModEventPriorityScore)
+    asPredicate(ToolsOzoneModerationDefs.validateModEventReport)(modEvent.event)
   ) {
-    eventItem = <PriorityScore modEvent={modEvent} />
+    eventItem = <Report modEvent={{ ...modEvent, event: modEvent.event }} />
   }
-  const previewSubject = modEvent.subject.uri || modEvent.subject.did
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateModEventLabel)(modEvent.event)
+  ) {
+    eventItem = <Label modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateModEventTag)(modEvent.event)
+  ) {
+    eventItem = <Tag modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateModEventEmail)(modEvent.event)
+  ) {
+    eventItem = <Email modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateModEventPriorityScore)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <PriorityScore modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)
+    ? modEvent.subject.uri
+    : ComAtprotoAdminDefs.isRepoRef(modEvent.subject) ||
+      ChatBskyConvoDefs.isMessageRef(modEvent.subject)
+    ? modEvent.subject.did
+    : undefined
+
   return (
     <div className="mt-4">
       <ItemTitle {...{ modEvent, showContentDetails, showContentAuthor }} />
