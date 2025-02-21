@@ -163,12 +163,6 @@ const PriorityScore = ({
   )
 }
 
-function isMessageSubject(
-  subject: ToolsOzoneModerationDefs.ModEventView['subject'],
-): subject is $Typed<ChatBskyConvoDefs.MessageRef> {
-  return 'messageId' in subject && subject.messageId !== undefined
-}
-
 type ModEventType<T> = Omit<ToolsOzoneModerationDefs.ModEventView, 'event'> & {
   event: $Typed<T>
 }
@@ -205,7 +199,7 @@ const Report = ({
         <TextWithLinks text={modEvent.event.comment} />
       )}
 
-      {isMessageSubject(modEvent.subject) && (
+      {ChatBskyConvoDefs.isMessageRef(modEvent.subject) && (
         <MessageContext className="mt-3" subject={modEvent.subject} />
       )}
     </>
