@@ -92,10 +92,10 @@ function PostCard({
     retry: false,
     queryKey: ['postCard', { uri }],
     queryFn: async () => {
-      // @TODO when unifying admin auth, ensure admin can see taken-down posts
-      const { data: post } = await labelerAgent.api.app.bsky.feed.getPostThread(
-        { uri, depth: 0 },
-      )
+      const { data: post } = await labelerAgent.app.bsky.feed.getPostThread({
+        uri,
+        depth: 0,
+      })
       return post
     },
   })
@@ -230,10 +230,9 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
     retry: false,
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
-      // @TODO when unifying admin auth, ensure admin can see taken-down profiles
       const getRepo = async () => {
         const { data: repo } =
-          await labelerAgent.api.tools.ozone.moderation.getRepo({
+          await labelerAgent.tools.ozone.moderation.getRepo({
             did,
           })
         return repo
@@ -241,7 +240,7 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
       const getProfile = async () => {
         try {
           const { data: profile } =
-            await labelerAgent.api.app.bsky.actor.getProfile({
+            await labelerAgent.app.bsky.actor.getProfile({
               actor: did,
             })
           return profile

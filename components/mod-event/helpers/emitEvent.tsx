@@ -351,10 +351,9 @@ export const getEventFromFormData = (
     return { $type, add, remove, comment }
   }
 
-  // @TODO: Uncomment this when we have the divert event is added to emitEvent
-  // if ($type === MOD_EVENTS.DIVERT) {
-  //   return { $type, comment }
-  // }
+  if ($type === MOD_EVENTS.DIVERT) {
+    return { $type, comment }
+  }
 
   if ($type === MOD_EVENTS.SET_PRIORITY) {
     return { $type, comment, score }

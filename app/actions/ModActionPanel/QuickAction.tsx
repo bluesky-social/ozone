@@ -1,9 +1,7 @@
 // TODO: This is badly named so that we can rebuild this component without breaking the old one
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  $Typed,
   AtUri,
-  ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -42,10 +40,8 @@ import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
-import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
-import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
