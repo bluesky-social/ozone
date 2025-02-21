@@ -350,8 +350,7 @@ export function RecordEmbedView({
     AppBskyEmbedRecord.isViewRecord(embed.record) &&
     isValidPostRecord(embed.record.value)
   ) {
-    const { author, uri, indexedAt, value } =
-      embed.record as AppBskyEmbedRecord.ViewRecord
+    const { author, uri, indexedAt, value } = embed.record
     return (
       <div
         className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
@@ -388,7 +387,7 @@ export function RecordEmbedView({
             leftAligned ? 'pl-6' : 'pl-10'
           } pb-2 dark:text-gray-100`}
         >
-          <RichText post={value as AppBskyFeedPost.Record} />
+          <RichText post={value} />
         </div>
       </div>
     )
