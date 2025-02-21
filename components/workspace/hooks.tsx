@@ -134,6 +134,9 @@ const filterExportFields = (fields: string[], isAdmin: boolean) => {
       )
 }
 
+const ifString = (val: unknown): string | undefined =>
+  typeof val === 'string' ? val : undefined
+
 const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
   const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(item)
 
@@ -155,8 +158,8 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
     if (!isRecord) {
       return {
         ...baseFields,
-        // PDS implementations can pass through unknown fields to the schema
-        ip: 'ip' in item ? (item.ip as string) : 'Unknown',
+        // @ts-expect-error - Un-spec'd field returned by PDS
+        ip: ifString(item.ip) ?? 'Unknown',
         labels: item.labels?.map(({ val }) => val).join('|'),
       }
     }
