@@ -1,5 +1,6 @@
 import { AppBskyFeedDefs } from '@atproto/api'
 import Link from 'next/link'
+import { ReactNode } from 'react'
 import { useActionPanelLink } from '../useActionPanelLink'
 
 export const ReplyParent = ({
@@ -11,47 +12,85 @@ export const ReplyParent = ({
 }) => {
   const { parent } = reply
   const Wrapper = inline ? 'span' : 'p'
-  const createLinkToActionPanel = useActionPanelLink()
-
-  if (!('uri' in parent)) return null
-  const linkToParentPost = (text: string = 'Reply') => (
-    <Link className="underline" href={createLinkToActionPanel(`${parent.uri}`)}>
-      {text}
-    </Link>
-  )
 
   if (AppBskyFeedDefs.isNotFoundPost(parent)) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-        {linkToParentPost()} to a deleted post
+        <LinkToPost post={parent} /> to a deleted post
       </Wrapper>
     )
   }
 
-  if (!parent.author) {
-    const userText = AppBskyFeedDefs.isBlockedPost(parent)
-      ? 'a user who blocked the author'
-      : 'an anonymous user'
+  if (AppBskyFeedDefs.isBlockedPost(parent)) {
     return (
       <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-        {linkToParentPost()} to {userText}
+        {parent.author ? (
+          <>
+            <LinkToPost post={parent} /> to{' '}
+            <LinkToPostAuthor post={parent}>
+              a user who blocked the author
+            </LinkToPostAuthor>
+          </>
+        ) : (
+          <>
+            <LinkToPost post={parent} /> to a user who blocked the author
+          </>
+        )}
       </Wrapper>
     )
   }
 
-  const userText = AppBskyFeedDefs.isBlockedPost(parent)
-    ? 'a user who blocked the author'
-    : `@${parent.author.handle}`
+  if (AppBskyFeedDefs.isPostView(parent)) {
+    return (
+      <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
+        {parent.author ? (
+          <>
+            <LinkToPost post={parent} /> to{' '}
+            <LinkToPostAuthor post={parent}>
+              @{parent.author.handle}
+            </LinkToPostAuthor>
+          </>
+        ) : (
+          <>
+            <LinkToPost post={parent} /> to an anonymous user
+          </>
+        )}
+      </Wrapper>
+    )
+  }
 
+  return null
+}
+
+const LinkToPost = ({
+  children,
+  post,
+}: {
+  children?: ReactNode
+  post:
+    | AppBskyFeedDefs.BlockedPost
+    | AppBskyFeedDefs.NotFoundPost
+    | AppBskyFeedDefs.PostView
+}) => {
+  const createLinkToActionPanel = useActionPanelLink()
   return (
-    <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
-      {linkToParentPost()} to{' '}
-      <Link
-        href={createLinkToActionPanel(parent.author.did)}
-        className="underline"
-      >
-        {userText}
-      </Link>
-    </Wrapper>
+    <Link className="underline" href={createLinkToActionPanel(`${post.uri}`)}>
+      {children ?? 'Reply'}
+    </Link>
+  )
+}
+
+const LinkToPostAuthor = ({
+  children,
+  post,
+}: {
+  children?: ReactNode
+  post: AppBskyFeedDefs.BlockedPost | AppBskyFeedDefs.PostView
+}) => {
+  const createLinkToActionPanel = useActionPanelLink()
+  return (
+    <Link href={createLinkToActionPanel(post.author.did)} className="underline">
+      {children}
+    </Link>
   )
 }
