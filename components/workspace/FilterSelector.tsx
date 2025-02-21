@@ -4,12 +4,9 @@ import { CheckIcon } from '@heroicons/react/24/outline'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { useState } from 'react'
 import { WorkspaceListData } from './useWorkspaceListData'
-import {
-  AppBskyActorDefs,
-  AppBskyActorProfile,
-  ToolsOzoneModerationDefs,
-} from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { getSubjectStatusFromItemData } from './utils'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 const toggleItemCheck = (item: string, select: boolean = true) => {
   const checkbox = document?.querySelector<HTMLInputElement>(
@@ -112,6 +109,9 @@ export const WorkspaceFilterSelector = ({
       const subjectStatus = getSubjectStatusFromItemData(item)
       if (uri.startsWith('did:')) {
         const isRepo = ToolsOzoneModerationDefs.isRepoViewDetail(item)
+        const profile = isRepo
+          ? getProfileFromRepo(item.relatedRecords)
+          : undefined
         if (
           (filters.accountReviewOpen &&
             subjectStatus?.reviewState ===
@@ -127,11 +127,7 @@ export const WorkspaceFilterSelector = ({
           (filters.accountDeactivated && isRepo && item.deactivatedAt) ||
           (filters.keyword &&
             isRepo &&
-            matchKeyword(
-              filters.keyword,
-              item.relatedRecords?.find(AppBskyActorProfile.isRecord)
-                ?.description,
-            ))
+            matchKeyword(filters.keyword, profile?.description))
         ) {
           toggleItemCheck(uri, select)
         }
@@ -155,7 +151,10 @@ export const WorkspaceFilterSelector = ({
             subjectStatus?.tags?.includes('embed:video')) ||
           (filters.keyword &&
             isRecord &&
-            matchKeyword(filters.keyword, item.value?.['text']))
+            matchKeyword(
+              filters.keyword,
+              item.value?.['text'] ? `${item.value?.['text']}` : undefined,
+            ))
         ) {
           toggleItemCheck(uri, select)
         }

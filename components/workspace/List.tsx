@@ -38,14 +38,16 @@ const GroupTitles = {
   dids: 'Accounts',
 }
 
+const isString = (value: unknown): value is string => typeof value === 'string'
+const ifStringArray = (value: unknown): undefined | string[] =>
+  Array.isArray(value) && value.every(isString) ? value : undefined
+
 const getLangTagFromRecordValue = (
   record: ToolsOzoneModerationDefs.RecordViewDetail,
 ): string[] => {
   if (record?.moderation.subjectStatus?.tags?.length) return []
-  const langTags = record.value?.['langs']?.map(
-    (lang: string) => `lang:${lang}`,
-  )
-  return langTags || []
+  const langs = ifStringArray(record.value?.['langs'])
+  return langs?.map((lang: string) => `lang:${lang}`) ?? []
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({
@@ -122,9 +124,7 @@ const ListGroup = ({
           {title}({items.length})
         </h5>
         <div className="flex gap-1">
-          {canExport && (
-            <WorkspaceExportPanel listData={listData} />
-          )}
+          {canExport && <WorkspaceExportPanel listData={listData} />}
           <ActionButton
             size="sm"
             appearance="outlined"

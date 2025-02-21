@@ -24,11 +24,13 @@ export const WorkspacePanelActionForm = ({
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
+  const isPriorityScoreEvent = modEventType === MOD_EVENTS.SET_PRIORITY
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
-  const shouldShowDurationInHoursField = isTakedownEvent || isMuteEvent
+  const shouldShowDurationInHoursField =
+    isTakedownEvent || isMuteEvent || isLabelEvent
 
   return (
     <div className="mb-4 w-1/2">
@@ -56,6 +58,23 @@ export const WorkspacePanelActionForm = ({
         </div>
       ) : (
         <div>
+          {isPriorityScoreEvent && (
+            <FormLabel label="" className="mt-2 w-1/2" htmlFor="priorityScore">
+              <Input
+                type="number"
+                form={WORKSPACE_FORM_ID}
+                id="priorityScore"
+                name="priorityScore"
+                className="block w-full"
+                placeholder="Score between 0-100"
+                autoFocus
+                min={0}
+                max={100}
+                step={1}
+                required
+              />
+            </FormLabel>
+          )}
           {shouldShowDurationInHoursField && (
             <div className="flex flex-row gap-2">
               <FormLabel
@@ -66,7 +85,13 @@ export const WorkspacePanelActionForm = ({
                 <ActionDurationSelector
                   action={modEventType}
                   form={WORKSPACE_FORM_ID}
-                  labelText={isMuteEvent ? 'Mute duration' : ''}
+                  labelText={
+                    isMuteEvent
+                      ? 'Mute duration'
+                      : isLabelEvent
+                      ? 'Label duration'
+                      : ''
+                  }
                 />
               </FormLabel>
 

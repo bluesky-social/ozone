@@ -1,4 +1,4 @@
-import { ChatBskyConvoDefs } from '@atproto/api'
+import { AppBskyEmbedRecord, ChatBskyConvoDefs } from '@atproto/api'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { useQuery } from '@tanstack/react-query'
 import { ComponentProps, useState } from 'react'
@@ -89,7 +89,7 @@ export const MessageContext = ({
               message.text,
               message.id === subject.messageId ? '(Reported message)' : '',
             ]
-            if (message.embed) {
+            if (AppBskyEmbedRecord.isView(message.embed)) {
               embedView = <RecordEmbedView embed={message.embed} />
               texts.push('(Embed)')
             }

@@ -6,7 +6,7 @@ import { LoadMoreButton } from '../common/LoadMoreButton'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { Loading } from '@/common/Loader'
-import { obscureIp, parseThreatSigs } from './helpers'
+import { getProfileFromRepo, obscureIp, parseThreatSigs } from './helpers'
 import Link from 'next/link'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { LabelChip } from '@/common/labels'
@@ -74,7 +74,7 @@ export function RepositoriesTable(props: {
 
 function RepoRow(props: { repo: Repo; showEmail: boolean }) {
   const { repo, showEmail, ...others } = props
-  const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
+  const profile = getProfileFromRepo(repo.relatedRecords)
   const displayName = profile?.displayName
 
   const { registrationIp, lastSigninIp, ipCountry, lastSigninCountry } =

@@ -3,7 +3,11 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { Posts } from '../posts/Posts'
 import { useState } from 'react'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import { AppBskyFeedDefs, AppBskyFeedGetAuthorFeed } from '@atproto/api'
+import {
+  AppBskyEmbedRecord,
+  AppBskyFeedDefs,
+  AppBskyFeedGetAuthorFeed,
+} from '@atproto/api'
 import { TypeFilterKey, TypeFiltersByKey } from '../posts/constants'
 import { useAppviewAgent, useLabelerAgent } from '@/shell/ConfigurationContext'
 
@@ -91,21 +95,23 @@ export const useAuthorFeedQuery = ({
         }
 
         const newFilteredItems = data.feed.filter((item) => {
-          const isRepost =
-            item.reason?.$type === 'app.bsky.feed.defs#reasonRepost'
-          const isQuotePost =
-            item.post.embed?.$type === 'app.bsky.embed.record#view'
           if (typeFilter === TypeFiltersByKey.reposts.key) {
-            return isRepost
+            return AppBskyFeedDefs.isReasonRepost(item.reason)
           }
           if (typeFilter === TypeFiltersByKey.no_reposts.key) {
-            return !isRepost
+            return !AppBskyFeedDefs.isReasonRepost(item.reason)
           }
           if (typeFilter === TypeFiltersByKey.quotes.key) {
             // When a quoted post is reposted, we don't want to consider that a quote post
-            return isQuotePost && !isRepost
+            return (
+              AppBskyEmbedRecord.isView(item.post.embed) &&
+              !AppBskyFeedDefs.isReasonRepost(item.reason)
+            )
           }
-          return isRepost || isQuotePost
+          return (
+            AppBskyFeedDefs.isReasonRepost(item.reason) ||
+            AppBskyEmbedRecord.isView(item.post.embed)
+          )
         })
 
         filteredFeed = [...filteredFeed, ...newFilteredItems]

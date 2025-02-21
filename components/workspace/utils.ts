@@ -62,7 +62,7 @@ export const buildItemsSummary = (groupedItems: GroupedSubjects): string => {
 export const isItemDataSubjectStatusView = (
   itemData: WorkspaceListItemData,
 ): itemData is ToolsOzoneModerationDefs.SubjectStatusView => {
-  return !!itemData?.reviewState
+  return ToolsOzoneModerationDefs.isSubjectStatusView(itemData)
 }
 
 export const getRepoHandleFromItemData = (itemData: WorkspaceListItemData) => {
