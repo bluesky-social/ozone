@@ -38,15 +38,16 @@ const GroupTitles = {
   dids: 'Accounts',
 }
 
+const isString = (value: unknown): value is string => typeof value === 'string'
+const ifStringArray = (value: unknown): undefined | string[] =>
+  Array.isArray(value) && value.every(isString) ? value : undefined
+
 const getLangTagFromRecordValue = (
   record: ToolsOzoneModerationDefs.RecordViewDetail,
 ): string[] => {
   if (record?.moderation.subjectStatus?.tags?.length) return []
-  const recordLangs = record.value?.['langs']
-    ? (record.value?.['langs'] as string[])
-    : []
-  const langTags = recordLangs.map((lang: string) => `lang:${lang}`)
-  return langTags || []
+  const langs = ifStringArray(record.value?.['langs'])
+  return langs?.map((lang: string) => `lang:${lang}`) ?? []
 }
 
 const WorkspaceList: React.FC<WorkspaceListProps> = ({

@@ -73,7 +73,7 @@ export function RecordCard(props: {
   )
 }
 
-const isSelfLabels = asPredicate(ComAtprotoLabelDefs.validateSelfLabels)
+const isValidSelfLabels = asPredicate(ComAtprotoLabelDefs.validateSelfLabels)
 
 function PostCard({
   uri,
@@ -117,7 +117,7 @@ function PostCard({
         uri={uri}
         renderRecord={(record) => {
           const author = getProfileFromRepo(record.repo.relatedRecords)
-          const selfLabels = isSelfLabels(record.value.labels)
+          const selfLabels = isValidSelfLabels(record.value?.labels)
             ? record.value.labels.values
             : []
           const labels = selfLabels.map(({ val }) => ({

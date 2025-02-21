@@ -1,16 +1,16 @@
 'use client'
-import { AppBskyFeedDefs } from '@atproto/api'
+import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import { classNames } from '@/lib/util'
+import {
+  AppBskyEmbedExternal,
+  AppBskyEmbedImages,
+  AppBskyFeedDefs,
+} from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
-import { classNames } from '@/lib/util'
-import { ReplyParent } from './ReplyParent'
+import { extractEmbed } from './helpers'
 import { ImageList } from './ImageList'
-import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
-import {
-  isEmbedExternalView,
-  isEmbedImagesView,
-  isEmbedRecordWithMediaView,
-} from './helpers'
+import { ReplyParent } from './ReplyParent'
 
 export function PostsTable({
   items,
@@ -138,11 +138,8 @@ const getImageSizeClass = (imageCount: number) =>
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
 
-  const embed: AppBskyFeedDefs.PostView['embed'] = isEmbedRecordWithMediaView(
-    item.post.embed,
-  )
-    ? item.post.embed.media
-    : item.post.embed
+  const embed = extractEmbed(item.post)
+
   const mediaFilters = getMediaFiltersForLabels(
     item.post.labels?.map(({ val }) => val),
   )
@@ -153,7 +150,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     mediaFilters.translucent ? 'opacity-50 ' : '',
   )
 
-  if (isEmbedImagesView(embed)) {
+  if (AppBskyEmbedImages.isView(embed)) {
     const embeddedImageClassName = classNames(
       imageClassName,
       getImageSizeClass(embed.images?.length || 0),
@@ -167,7 +164,7 @@ function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
       </span>
     )
   }
-  if (isEmbedExternalView(embed)) {
+  if (AppBskyEmbedExternal.isView(embed)) {
     return (
       <span className="flex gap-2 pt-2">
         {embed.external.thumb ? (

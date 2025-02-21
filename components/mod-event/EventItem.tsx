@@ -106,16 +106,15 @@ const Comment = ({
       {modEvent.event.comment && (
         <TextWithLinks text={modEvent.event.comment} />
       )}
-      {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
-        // @ts-ignore
-        labels={modEvent.event.createLabelVals as string[] | undefined}
+        // @ts-expect-error - legacy support for data that is more than a yr old
+        labels={modEvent.event.createLabelVals}
       />
       <EventLabels
         header="Removed: "
-        // @ts-ignore
-        labels={modEvent.event.negateLabelVals as string[] | undefined}
+        // @ts-expect-error - legacy support for data that is more than a yr old
+        labels={modEvent.event.negateLabelVals}
       />
     </>
   )

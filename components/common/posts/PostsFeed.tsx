@@ -6,6 +6,9 @@ import {
   AppBskyEmbedVideo,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
+  AppBskyEmbedImages,
+  AppBskyEmbedExternal,
+  AppBskyGraphDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -37,17 +40,8 @@ import {
 import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 import { getVideoUrlWithFallback } from '../video/helpers'
-import {
-  isEmbedVideoView,
-  isEmbedImagesView,
-  isEmbedExternalView,
-  isEmbedRecordView,
-  isPostRecord,
-  isListView,
-  isEmbedRecordViewNotFound,
-  isEmbedRecordViewBlocked,
-  isEmbedRecordWithMediaView,
-} from './helpers'
+import { isValidPostRecord, extractEmbed } from './helpers'
+
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -255,9 +249,7 @@ export function PostEmbeds({
   item: AppBskyFeedDefs.FeedViewPost
 }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
-  const embed = isEmbedRecordWithMediaView(item.post.embed)
-    ? item.post.embed.media
-    : item.post.embed
+  const embed = extractEmbed(item.post)
 
   const allLabels = item.post.labels?.map(({ val }) => val)
   const mediaFilters = getMediaFiltersForLabels(allLabels)
@@ -268,7 +260,7 @@ export function PostEmbeds({
     mediaFilters.translucent ? 'opacity-40' : '',
   )
 
-  if (isEmbedVideoView(embed)) {
+  if (AppBskyEmbedVideo.isView(embed)) {
     const captions = item.post.record?.['embed']?.['captions']
     const sourceUrl = getVideoUrlWithFallback(embed.playlist, {
       isAuthorDeactivated,
@@ -294,7 +286,7 @@ export function PostEmbeds({
   }
 
   // render image embeds
-  if (isEmbedImagesView(embed)) {
+  if (AppBskyEmbedImages.isView(embed)) {
     const embeddedImageClassName = classNames(
       imageClassName,
       getImageSizeClass(embed.images?.length || 0),
@@ -309,7 +301,7 @@ export function PostEmbeds({
     )
   }
   // render external link embeds
-  if (isEmbedExternalView(embed)) {
+  if (AppBskyEmbedExternal.isView(embed)) {
     return (
       <div className="flex gap-2 pb-2 pl-14">
         {embed.external.thumb ? (
@@ -337,7 +329,7 @@ export function PostEmbeds({
     )
   }
   // render quote posts embeds
-  if (isEmbedRecordView(embed)) {
+  if (AppBskyEmbedRecord.isView(embed)) {
     const recordView = <RecordEmbedView embed={embed} />
     if (recordView) {
       return recordView
@@ -350,14 +342,13 @@ export function RecordEmbedView({
   embed,
   leftAligned = true,
 }: {
-  embed: AppBskyEmbedRecord.View | { $type: string; [k: string]: unknown }
+  embed: AppBskyEmbedRecord.View
   leftAligned?: boolean
 }) {
   const leftPadding = !leftAligned ? 'pl-14' : 'pl-2'
   if (
     AppBskyEmbedRecord.isViewRecord(embed.record) &&
-    'value' in embed.record &&
-    isPostRecord(embed.record.value)
+    isValidPostRecord(embed.record.value)
   ) {
     const { author, uri, indexedAt, value } =
       embed.record as AppBskyEmbedRecord.ViewRecord
@@ -401,7 +392,7 @@ export function RecordEmbedView({
         </div>
       </div>
     )
-  } else if (isListView(embed.record)) {
+  } else if (AppBskyGraphDefs.isListView(embed.record)) {
     const { did, rkey } = parseAtUri(embed.record.uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,
@@ -460,7 +451,7 @@ export function RecordEmbedView({
         </div>
       </div>
     )
-  } else if (isEmbedRecordViewBlocked(embed.record)) {
+  } else if (AppBskyEmbedRecord.isViewBlocked(embed.record)) {
     const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,
@@ -491,7 +482,7 @@ export function RecordEmbedView({
         </p>
       </div>
     )
-  } else if (isEmbedRecordViewNotFound(embed.record)) {
+  } else if (AppBskyEmbedRecord.isViewNotFound(embed.record)) {
     const { did, collection, rkey } = parseAtUri(embed.record.uri) || {}
     const peekLink = buildBlueSkyAppUrl({
       did: `${did}`,

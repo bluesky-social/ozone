@@ -53,9 +53,9 @@ export function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
   }
 }
 
-const isProfileRecord = asPredicate(AppBskyActorProfile.validateRecord)
+const isValidProfileRecord = asPredicate(AppBskyActorProfile.validateRecord)
 export const getProfileFromRepo = (
   relatedRecords: ToolsOzoneModerationDefs.RepoView['relatedRecords'],
 ) => {
-  return relatedRecords.find(isProfileRecord)
+  return relatedRecords.find(isValidProfileRecord)
 }

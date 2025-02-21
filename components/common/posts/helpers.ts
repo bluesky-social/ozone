@@ -1,28 +1,27 @@
 import {
+  $Typed,
   AppBskyEmbedExternal,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
   AppBskyEmbedRecordWithMedia,
   AppBskyEmbedVideo,
+  AppBskyFeedDefs,
   AppBskyFeedPost,
-  AppBskyGraphDefs,
   asPredicate,
 } from '@atproto/api'
 
-export const isEmbedVideoView = asPredicate(AppBskyEmbedVideo.validateView)
-export const isEmbedImagesView = asPredicate(AppBskyEmbedImages.validateView)
-export const isEmbedExternalView = asPredicate(
-  AppBskyEmbedExternal.validateView,
-)
-export const isEmbedRecordWithMediaView = asPredicate(
-  AppBskyEmbedRecordWithMedia.validateView,
-)
-export const isEmbedRecordView = asPredicate(AppBskyEmbedRecord.validateView)
-export const isPostRecord = asPredicate(AppBskyFeedPost.validateRecord)
-export const isListView = asPredicate(AppBskyGraphDefs.validateListView)
-export const isEmbedRecordViewNotFound = asPredicate(
-  AppBskyEmbedRecord.validateViewNotFound,
-)
-export const isEmbedRecordViewBlocked = asPredicate(
-  AppBskyEmbedRecord.validateViewBlocked,
-)
+export const isValidPostRecord = asPredicate(AppBskyFeedPost.validateRecord)
+
+export type KnownEmbedView =
+  | $Typed<AppBskyEmbedExternal.View>
+  | $Typed<AppBskyEmbedImages.View>
+  | $Typed<AppBskyEmbedRecord.View>
+  | $Typed<AppBskyEmbedVideo.View>
+
+export function extractEmbed(
+  post: AppBskyFeedDefs.PostView,
+): KnownEmbedView | { $type: string } | undefined {
+  return AppBskyEmbedRecordWithMedia.isView(post.embed)
+    ? post.embed.media
+    : post.embed
+}

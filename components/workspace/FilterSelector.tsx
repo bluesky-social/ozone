@@ -4,9 +4,8 @@ import { CheckIcon } from '@heroicons/react/24/outline'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { useState } from 'react'
 import { WorkspaceListData } from './useWorkspaceListData'
-import { AppBskyActorProfile, ToolsOzoneModerationDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { getSubjectStatusFromItemData } from './utils'
-import { ProfileViewBasic } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 import { getProfileFromRepo } from '@/repositories/helpers'
 
 const toggleItemCheck = (item: string, select: boolean = true) => {
