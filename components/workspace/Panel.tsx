@@ -37,6 +37,7 @@ import { useWorkspaceListData } from './useWorkspaceListData'
 import { isNonNullable, isValidDid } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
+import { isSubjectStatusView } from './utils'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -118,7 +119,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                 return status.repo.did
               }
 
-              if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
+              if (status && isSubjectStatusView(status)) {
                 const { subject } = status
                 if (ComAtprotoAdminDefs.isRepoRef(subject)) {
                   return subject.did

@@ -23,6 +23,7 @@ import {
   WorkspaceListItemData,
 } from './useWorkspaceListData'
 import { getProfileFromRepo } from '@/repositories/helpers'
+import { isSubjectStatusView } from './utils'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
@@ -165,7 +166,7 @@ const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
     }
   }
 
-  if (ToolsOzoneModerationDefs.isSubjectStatusView(item)) {
+  if (isSubjectStatusView(item)) {
     const did = ComAtprotoRepoStrongRef.isMain(item.subject)
       ? new AtUri(item.subject.uri).host
       : ComAtprotoAdminDefs.isRepoRef(item.subject)
