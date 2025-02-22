@@ -9,7 +9,11 @@ import {
 } from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
-import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
+import {
+  buildItemsSummary,
+  groupSubjects,
+  isSubjectStatusView,
+} from '@/workspace/utils'
 
 import { displayError } from '../../common/Loader'
 import { MOD_EVENTS } from '@/mod-event/constants'
@@ -121,7 +125,7 @@ const eventForSubject = (
     ? subjectData.handle
     : ToolsOzoneModerationDefs.isRecordViewDetail(subjectData)
     ? subjectData.repo.handle
-    : ToolsOzoneModerationDefs.isSubjectStatusView(subjectData)
+    : isSubjectStatusView(subjectData)
     ? subjectData.subjectRepoHandle
     : undefined
 

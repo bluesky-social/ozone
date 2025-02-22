@@ -59,10 +59,13 @@ export const buildItemsSummary = (groupedItems: GroupedSubjects): string => {
     .join(', ')
 }
 
-export const isItemDataSubjectStatusView = (
+export const isSubjectStatusView = (
   itemData: WorkspaceListItemData,
 ): itemData is ToolsOzoneModerationDefs.SubjectStatusView => {
-  return ToolsOzoneModerationDefs.isSubjectStatusView(itemData)
+  return (
+    ToolsOzoneModerationDefs.isSubjectStatusView(itemData) ||
+    (itemData && 'subject' in itemData)
+  )
 }
 
 export const getRepoHandleFromItemData = (itemData: WorkspaceListItemData) => {
@@ -74,7 +77,7 @@ export const getRepoHandleFromItemData = (itemData: WorkspaceListItemData) => {
     return itemData.repo.handle
   }
 
-  if (isItemDataSubjectStatusView(itemData)) {
+  if (isSubjectStatusView(itemData)) {
     return itemData.subjectRepoHandle
   }
 
@@ -100,7 +103,7 @@ export const getSubjectStatusFromItemData = (
 ) => {
   if (!itemData) return undefined
 
-  if (isItemDataSubjectStatusView(itemData)) {
+  if (isSubjectStatusView(itemData)) {
     return itemData
   }
 
