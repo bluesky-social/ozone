@@ -62,6 +62,7 @@ import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { MuteReporting } from './MuteReporting'
 import { ProfileAvatar } from './ProfileAvatar'
 import { obscureIp, parseThreatSigs } from './helpers'
+import { useCopyAccountDetails } from './useCopyAccountDetails'
 
 enum Views {
   Details,
@@ -357,6 +358,8 @@ function Header({
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
   const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
   const { data: workspaceList } = useWorkspaceList()
+  const copyAccountDetails = useCopyAccountDetails({ repo, profile })
+  const canTakedown = usePermission('canTakedown')
   const { subjectStatus } = repo?.moderation ?? {}
   const displayActorName = repo
     ? profile?.displayName
@@ -398,6 +401,13 @@ function Header({
       reportOptions.push({
         text: 'Remove from workspace',
         onClick: () => removeFromWorkspace([repo.did]),
+      })
+    }
+
+    if (canTakedown) {
+      reportOptions.push({
+        text: 'Copy Account Info',
+        onClick: () => copyAccountDetails(),
       })
     }
   }
