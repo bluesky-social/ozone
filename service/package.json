@@ -3,7 +3,7 @@
   "description": "Ozone service entrypoint",
   "main": "index.js",
   "dependencies": {
-    "@atproto/ozone": "0.1.83",
+    "@atproto/ozone": "0.1.84",
     "next": "14.2.5"
   }
 }
