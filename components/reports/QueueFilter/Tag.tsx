@@ -14,6 +14,7 @@ const availableTagOptions = {
       { text: 'Other', value: 'report:other' },
       { text: 'Violation', value: 'report:violation' },
       { text: 'Misleading', value: 'report:misleading' },
+      { text: 'Sexual', value: 'report:sexual' },
     ],
   },
   embed: {
