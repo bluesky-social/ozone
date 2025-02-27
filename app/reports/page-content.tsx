@@ -13,7 +13,6 @@ import {
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneModerationQueryStatuses,
-  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -23,7 +22,7 @@ import { ButtonGroup } from '@/common/buttons'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { QueueSelector } from '@/reports/QueueSelector'
-import { simpleHash, unique } from '@/lib/util'
+import { unique } from '@/lib/util'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
@@ -31,6 +30,7 @@ import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useQueueSetting } from 'components/setting/useQueueSetting'
 import QueueFilterPanel from '@/reports/QueueFilter/Panel'
+import { REVIEWESCALATED } from '@atproto/api/dist/client/types/tools/ozone/moderation/defs'
 
 const TABS = [
   {
@@ -426,17 +426,25 @@ function useModerationQueueQuery() {
         }
       })
 
-      return getQueueItems(
-        labelerAgent,
-        queryParams,
-        queueName,
-        queueSetting.data
-          ? {
-              queueNames: queueSetting.data.queueNames,
-              queueSeed: queueSetting.data.queueSeed.setting,
-            }
-          : undefined,
-      )
+      const queueParams = queueSetting.data
+        ? {
+            queueNames: queueSetting.data.queueNames,
+            queueSeed: queueSetting.data.queueSeed.setting,
+          }
+        : undefined
+
+      // When viewing escalated items, use the escalation queue names
+      // so that the modulus can be applied against the right number of queues
+      // when escalation queue count and triage queue counts are different
+      if (
+        queueParams?.queueNames &&
+        queryParams.reviewState === REVIEWESCALATED &&
+        queueSetting.data?.escalationQueueNames
+      ) {
+        queueParams.queueNames = queueSetting.data.escalationQueueNames
+      }
+
+      return getQueueItems(labelerAgent, queryParams, queueName, queueParams)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })

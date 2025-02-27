@@ -3,7 +3,10 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { QUEUE_CONFIG } from '@/lib/constants'
 import { toast } from 'react-toastify'
 
-type QueueConfig = Record<string, { name: string }>
+type QueueConfig = Record<
+  string,
+  { name: string; includesEscalation?: boolean }
+>
 
 const getQueueConfig = () => {
   const config = QUEUE_CONFIG
@@ -52,10 +55,16 @@ export const useQueueSetting = () => {
         }
       })
 
+      const queueNames = Object.keys(queueList.setting)
+      const escalationQueueNames = queueNames.filter(
+        (name) => queueList.setting[name].includesEscalation,
+      )
+
       return {
         queueList,
         queueSeed,
-        queueNames: Object.keys(queueList.setting),
+        queueNames,
+        escalationQueueNames,
       }
     },
   })
