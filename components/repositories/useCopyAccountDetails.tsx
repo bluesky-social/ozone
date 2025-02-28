@@ -10,6 +10,12 @@ export const useCopyAccountDetails = ({
 }) => {
   return () => {
     let data = ``
+    if (repo?.handle) {
+      data += `Username: ${repo.handle}`
+    }
+    if (profile?.displayName) {
+      data += `Display name: ${profile.displayName}\n`
+    }
     if (repo?.did) {
       data += `DID: ${repo.did}\n`
     }
@@ -17,21 +23,18 @@ export const useCopyAccountDetails = ({
       data += `Registration date/time: ${profile?.createdAt}\n`
     }
     if (repo?.threatSignatures?.length) {
-      const ip = (
-        repo.threatSignatures.find(
-          ({ property }) => property === 'registrationIp',
-        ) ||
-        repo.threatSignatures.find(
-          ({ property }) => property === 'lastSigninIp',
-        )
+      const registrationIp = repo.threatSignatures.find(
+        ({ property }) => property === 'registrationIp',
       )?.value
-      if (ip) data += `IP address: ${ip}\n`
-    }
-    if (profile?.displayName) {
-      data += `Display name: ${profile.displayName}\n`
-    }
-    if (repo?.deactivatedAt) {
-      data += `Account status: Deactivated on ${repo?.deactivatedAt}\n`
+      const lastSigninIp = repo.threatSignatures.find(
+        ({ property }) => property === 'lastSigninIp',
+      )?.value
+      const lastSigninTime = repo.threatSignatures.find(
+        ({ property }) => property === 'lastSigninTime',
+      )?.value
+      if (registrationIp) data += `Registration IP: ${registrationIp}\n`
+      if (lastSigninIp) data += `Last signin IP: ${lastSigninIp}\n`
+      if (lastSigninTime) data += `Last signed in: ${lastSigninTime}\n`
     }
     if (repo?.email) {
       data += `Email: ${repo.email}\n`
@@ -39,9 +42,12 @@ export const useCopyAccountDetails = ({
     if (repo?.emailConfirmedAt) {
       data += `Email confirmed: ${repo.emailConfirmedAt}\n`
     }
-    if (repo?.handle) {
-      data += `Username: ${repo.handle}`
-    }
+    const status = repo?.deactivatedAt
+      ? 'Deactivated'
+      : repo?.moderation.subjectStatus?.takendown
+      ? 'Taken down'
+      : 'Active'
+    data += `Account status: Deactivated on ${status}\n`
     copyToClipboard(data, 'account details ')
   }
 }
