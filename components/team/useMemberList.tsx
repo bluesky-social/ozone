@@ -4,15 +4,16 @@ import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { MemberRoleNames } from './helpers'
 
-export const useMemberList = () => {
+export const useMemberList = (q?: string) => {
   const labelerAgent = useLabelerAgent()
   const [roles, setRoles] = useState<string[]>(Object.keys(MemberRoleNames))
   const [disabled, setDisabled] = useState<boolean | undefined>(false)
 
   const results = useInfiniteQuery({
-    queryKey: ['memberList', { disabled, roles }],
+    queryKey: ['memberList', { disabled, roles, q }],
     queryFn: async ({ pageParam }) => {
       const { data } = await labelerAgent.tools.ozone.team.listMembers({
+        q,
         roles,
         disabled,
         limit: 50,

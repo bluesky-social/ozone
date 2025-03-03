@@ -1,5 +1,4 @@
 import React, { FormEvent } from 'react'
-import { useProtectedTagEditor } from './useProtectedTag'
 import { Card } from '@/common/Card'
 import { FormLabel, Input } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
