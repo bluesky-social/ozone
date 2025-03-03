@@ -45,7 +45,7 @@ export const useCopyAccountDetails = ({
     const status = repo?.deactivatedAt
       ? `Deactivated on ${repo.deactivatedAt}`
       : repo?.moderation.subjectStatus?.takendown
-      ? 'Taken down'
+      ? `Taken down on ${repo.moderation.subjectStatus.lastReviewedAt}`
       : 'Active'
     data += `Account status: ${status}\n`
     copyToClipboard(data, 'account details ')
