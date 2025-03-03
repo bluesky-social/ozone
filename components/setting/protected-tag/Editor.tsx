@@ -6,22 +6,20 @@ import { TrashIcon } from '@heroicons/react/24/outline'
 import { LabelChip } from '@/common/labels'
 import { MemberRoleNames } from 'components/team/helpers'
 import { RepoFinder } from '@/repositories/Finder'
-import { ToolsOzoneTeamDefs } from '@atproto/api'
+import { AppBskyActorDefs, ToolsOzoneTeamDefs } from '@atproto/api'
 import { ProtectedTagSetting } from './types'
+import { getMembersList } from '@/team/useMemberList'
 
 export const ProtectedTagEditor = ({
   editorData,
-  memberList,
+  assignedMods,
   handleRemoveKey,
   handleAddKey,
   handleUpdateField,
   canManageTags,
 }: {
   editorData: ProtectedTagSetting
-  memberList: {
-    isLoading: boolean
-    data: Map<string, ToolsOzoneTeamDefs.Member> | undefined
-  }
+  assignedMods: Record<string, AppBskyActorDefs.ProfileViewDetailed>
   handleRemoveKey: (key: string) => void
   handleAddKey: (key: string) => void
   handleUpdateField: (
@@ -120,20 +118,19 @@ export const ProtectedTagEditor = ({
 
                 <RepoFinder
                   clearOnSelect
-                  repos={
-                    memberList.isLoading
-                      ? []
-                      : Array.from(memberList.data?.values() || [])
-                          ?.filter((member) => !member.disabled)
-                          .map((member) => {
-                            return {
-                              did: member.did,
-                              avatar: member.profile?.avatar,
-                              handle: member.profile?.handle || '',
-                              displayName: member.profile?.displayName,
-                            }
-                          }) || []
-                  }
+                  getProfiles={async (agent, q) => {
+                    const { members } = await getMembersList(agent, {
+                      q,
+                      disabled: false,
+                    })
+
+                    return members.map((m) => ({
+                      did: m.did,
+                      avatar: m.profile?.avatar,
+                      handle: m.profile?.handle || '',
+                      displayName: m.profile?.displayName,
+                    }))
+                  }}
                   onChange={(did) => {
                     if (canManageTags) {
                       handleUpdateField(key, 'moderators', [
@@ -156,10 +153,7 @@ export const ProtectedTagEditor = ({
                     key={index}
                     className="flex gap-2 items-center justify-between mt-2 border-t border-gray-300 dark:border-gray-700"
                   >
-                    <ModeratorItem
-                      did={mod}
-                      member={memberList.data?.get(mod)}
-                    />
+                    <ModeratorItem did={mod} member={assignedMods[mod]} />
                     <ActionButton
                       appearance="outlined"
                       disabled={!canManageTags}
@@ -221,26 +215,26 @@ export const ProtectedTagEditor = ({
 
 const ModeratorItem = ({
   did,
-  member,
+  profile,
 }: {
   did: string
-  member: ToolsOzoneTeamDefs.Member | undefined
+  profile: AppBskyActorDefs.ProfileViewDetailed | undefined
 }) => {
-  if (!member) {
+  if (!profile) {
     return <span className="flex-grow">{did}</span>
   }
 
   return (
     <div className={`p-2 flex items-center space-x-3`}>
       <img
-        alt={member.profile?.displayName || member.profile?.handle}
+        alt={profile?.displayName || profile?.handle}
         className="h-7 w-7 rounded-full"
-        src={member.profile?.avatar || '/img/default-avatar.jpg'}
+        src={profile?.avatar || '/img/default-avatar.jpg'}
       />
       <div>
-        <div className="font-semibold text-sm">@{member.profile?.handle}</div>
+        <div className="font-semibold text-sm">@{profile?.handle}</div>
         <div className="text-sm">
-          {member.profile?.displayName || 'No display name'}
+          {profile?.displayName || 'No display name'}
         </div>
       </div>
     </div>

@@ -63,6 +63,7 @@ import { MuteReporting } from './MuteReporting'
 import { ProfileAvatar } from './ProfileAvatar'
 import { obscureIp, parseThreatSigs } from './helpers'
 import { useCopyAccountDetails } from './useCopyAccountDetails'
+import { getProfiles } from './api'
 
 enum Views {
   Details,
@@ -770,10 +771,8 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       if (actors.length === 0) {
         return { profiles: [] }
       }
-      const { data } = await labelerAgent.api.app.bsky.actor.getProfiles({
-        actors,
-      })
-      return data
+      const profiles = await getProfiles(labelerAgent, actors)
+      return Array.from(profiles.values())
     },
   })
 
