@@ -18,6 +18,7 @@ export function MemberList({
   hasNextPage,
   onEdit,
   canEdit = false,
+  searchQuery,
 }: {
   canEdit: boolean
   isInitialLoading: boolean
@@ -25,6 +26,7 @@ export function MemberList({
   fetchNextPage: () => void
   hasNextPage?: boolean
   onEdit: (member: ToolsOzoneTeamDefs.Member) => void
+  searchQuery?: string
 }) {
   const createActionPanelLink = useActionPanelLink()
   const authDid = useAuthDid()
@@ -35,7 +37,12 @@ export function MemberList({
           <p>Hang tight, we{"'"}re loading all members...</p>
         ) : (
           <div>
-            {!members?.length && <p>No members found.</p>}
+            {!members?.length && (
+              <p>
+                No members found
+                {!!searchQuery && ` matching your query "${searchQuery}"`}.
+              </p>
+            )}
             {members?.map((member, i) => {
               const isCurrentMember = authDid === member.did
               const lastItem = i === members.length - 1
@@ -121,7 +128,7 @@ export function MemberList({
         )}
       </Card>
 
-      {members?.length && hasNextPage && (
+      {!!members?.length && hasNextPage && (
         <div className="flex justify-center pb-2">
           <LoadMoreButton onClick={fetchNextPage} />
         </div>

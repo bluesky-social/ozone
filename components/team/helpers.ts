@@ -37,3 +37,13 @@ export const isRoleSuperiorOrSame = (manager: string, target: string) => {
 
   return false
 }
+
+export const createTeamPageLink = (queryParams: Record<string, string>) => {
+  const url = new URL(window.location.href.replace(window.location.search, ''))
+
+  Object.entries({ tab: 'members', ...queryParams }).forEach(([key, value]) => {
+    url.searchParams.set(key, value)
+  })
+
+  return url.toString()
+}

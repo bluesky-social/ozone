@@ -1,5 +1,7 @@
 import { getServiceUrlFromDoc } from '@/lib/client-config'
 import { resolveDidDocData } from '@/lib/identity'
+import { chunkArray } from '@/lib/util'
+import { Agent, AppBskyActorDefs } from '@atproto/api'
 
 export async function listRecords(
   did: string,
@@ -24,4 +26,29 @@ export async function listRecords(
   }
   const res = await fetch(url, options)
   return res.json()
+}
+
+export const getProfiles = async (agent: Agent, dids?: string[]) => {
+  const profiles = new Map<string, AppBskyActorDefs.ProfileViewDetailed>()
+
+  if (!dids || dids.length === 0) {
+    return profiles
+  }
+
+  for (const chunk of chunkArray(dids, 25)) {
+    try {
+      const { data } = await agent.app.bsky.actor.getProfiles({
+        actors: chunk,
+      })
+
+      data.profiles.forEach((profile) => {
+        profiles.set(profile.did, profile)
+      })
+      // If one of many chunks fail, don't let that stop the rest of the chunks
+    } catch (err) {
+      console.error('Error fetching profiles', err)
+    }
+  }
+
+  return profiles
 }
