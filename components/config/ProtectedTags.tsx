@@ -5,9 +5,9 @@ import { useProtectedTagEditor } from 'components/setting/protected-tag/useProte
 export const ProtectedTagsConfig = () => {
   const {
     editorData,
+    assignedMods,
     setEditorData,
     handleSave,
-    memberList,
     handleRemoveKey,
     handleAddKey,
     handleUpdateField,
@@ -32,9 +32,9 @@ export const ProtectedTagsConfig = () => {
       </div>
       <ProtectedTagEditor
         {...{
+          assignedMods,
           editorData,
           setEditorData,
-          memberList,
           handleRemoveKey,
           handleAddKey,
           handleUpdateField,
