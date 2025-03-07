@@ -64,7 +64,7 @@ function ConfigureDetails() {
         <p className="mt-2">
           The existence of a service record makes your service account <b></b>{' '}
           available in the Bluesky application, allowing users to choose to use
-          your labeling service. It contains a labeling policy with two parts:
+          your labeling service. It contains a labeling policy consisting of a few parts:
         </p>
         <ul className="list-disc list-inside mt-2 pl-4">
           <li>
@@ -81,6 +81,30 @@ function ConfigureDetails() {
             </b>
             : details about how each custom label should be respected by the
             Bluesky application and presented to users.
+          </li>
+          <li>
+            A list of{' '}
+            <b>
+              <code>subjectTypes</code>
+            </b>
+            : which can include `account` and/or `record`, specifying the
+            subject types that users can submit reports for
+          </li>
+          <li>
+            An array of{' '}
+            <b>
+              <code>subjectCollections</code>
+            </b>
+            : such as `app.bsky.feed.post`, specifying the types of records
+            that can be reported by users.
+          </li>
+          <li>
+            An array of{' '}
+            <b>
+              <code>reasonTypes</code>
+            </b>
+            : such as `com.atproto.moderation.defs#reasonOther`, specifying the
+            report "reason types" that can be reported by users.
           </li>
         </ul>
         {config.labeler ? (
@@ -108,6 +132,18 @@ function RecordInitStep({ repo }: { repo: string }) {
         record: {
           createdAt: new Date().toISOString(),
           policies: { labelValues: [] },
+          subjectTypes: ['account', 'record'],
+          subjectCollections: [
+            'app.bsky.feed.post',
+            'app.bsky.actor.profile',
+          ],
+          reasonTypes: [
+            'com.atproto.moderation.defs#reasonSpam',
+            'com.atproto.moderation.defs#reasonMisleading',
+            'com.atproto.moderation.defs#reasonSexual',
+            'com.atproto.moderation.defs#reasonRude',
+            'com.atproto.moderation.defs#reasonOther',
+          ],
         },
       })
       await reconfigure()
