@@ -15,7 +15,7 @@ export const PriorityScore = ({
   return (
     <LabelChip
       className={classNames(
-        'flex flex-row gap-1 items-center bg-orange-300 text-orange-800',
+        'flex flex-row gap-1 items-center bg-orange-200 text-orange-800',
         size === 'sm' ? 'text-xs px-1 py-0' : '',
       )}
       title={`This subject's priority score is set to ${priorityScore} out of 100. Subjects with higher score should be reviewed more urgently.`}
