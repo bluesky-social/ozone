@@ -7,6 +7,9 @@ import { WorkspaceListData } from './useWorkspaceListData'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { getSubjectStatusFromItemData } from './utils'
 import { getProfileFromRepo } from '@/repositories/helpers'
+import { Dropdown } from '@/common/Dropdown'
+import { ChevronDownIcon } from '@heroicons/react/24/solid'
+import { differenceInDays, differenceInHours } from 'date-fns'
 
 const toggleItemCheck = (item: string, select: boolean = true) => {
   const checkbox = document?.querySelector<HTMLInputElement>(
@@ -15,6 +18,22 @@ const toggleItemCheck = (item: string, select: boolean = true) => {
   if (checkbox) {
     checkbox.checked = select
   }
+}
+
+const matchMinimumAccountAge = (
+  minAccountAgeUnit: string,
+  profileCreatedAt?: string,
+  minAccountAge?: number,
+) => {
+  if (!profileCreatedAt || !minAccountAge) return false
+  const createdAt = new Date(profileCreatedAt)
+  const now = new Date()
+  const diff =
+    minAccountAgeUnit === 'days'
+      ? differenceInDays(now, createdAt)
+      : differenceInHours(now, createdAt)
+
+  return diff >= minAccountAge
 }
 
 const AccountFilterOptions = {
@@ -76,6 +95,8 @@ export const WorkspaceFilterSelector = ({
     contentWithImageEmbed: false,
     contentWithVideoEmbed: false,
     keyword: '',
+    minAccountAge: '',
+    minAccountAgeUnit: 'days',
   })
 
   const handleFilterChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +148,12 @@ export const WorkspaceFilterSelector = ({
           (filters.accountDeactivated && isRepo && item.deactivatedAt) ||
           (filters.keyword &&
             isRepo &&
-            matchKeyword(filters.keyword, profile?.description))
+            matchKeyword(filters.keyword, profile?.description)) ||
+          matchMinimumAccountAge(
+            filters.minAccountAgeUnit,
+            profile?.createdAt,
+            filters.minAccountAge ? Number(filters.minAccountAge) : 0,
+          )
         ) {
           toggleItemCheck(uri, select)
         }
@@ -256,16 +282,74 @@ export const WorkspaceFilterSelector = ({
                   </FormLabel>
                 </div>
                 <p className="py-2 block max-w-lg text-gray-500 dark:text-gray-300 text-xs">
+                  You can use {'||'} separator in the keyword filter to look for
+                  multiple keywords in either {"user's"} profile bio or record
+                  content
+                </p>
+                <div className="mb-2">
+                  <FormLabel
+                    label="Min. account age"
+                    htmlFor="minAccountAge"
+                    className="flex-1"
+                  >
+                    <div className="flex flex-row gap-2">
+                      <Input
+                        type="number"
+                        id="minAccountAge"
+                        name="minAccountAge"
+                        className="block"
+                        value={filters.minAccountAge}
+                        onChange={(ev) =>
+                          setFilters({
+                            ...filters,
+                            minAccountAge: ev.target.value,
+                          })
+                        }
+                        autoComplete="off"
+                      />
+                      <Dropdown
+                        className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
+                        items={[
+                          {
+                            id: 'days',
+                            text: 'days',
+                            onClick: () =>
+                              setFilters({
+                                ...filters,
+                                minAccountAgeUnit: 'days',
+                              }),
+                          },
+                          {
+                            id: 'hours',
+                            text: 'hours',
+                            onClick: () =>
+                              setFilters({
+                                ...filters,
+                                minAccountAgeUnit: 'hours',
+                              }),
+                          },
+                        ]}
+                      >
+                        {filters.minAccountAgeUnit}
+                        <ChevronDownIcon
+                          className="ml-2 -mr-1 h-5 w-5 text-violet-200 hover:text-violet-100"
+                          aria-hidden="true"
+                        />
+                      </Dropdown>
+                    </div>
+                  </FormLabel>
+                </div>
+                <p className="py-2 block max-w-lg text-gray-500 dark:text-gray-300 text-xs">
+                  Account age is computed using profile creation date. Some bots
+                  and accounts may not have this set.
+                </p>
+                <p className="py-2 block max-w-lg text-gray-500 dark:text-gray-300 text-xs border-t border-gray-700">
                   You can select or unselect all items that matches the above
                   configured filters. The configured filters work with OR
                   operator. <br />
                   So, if you select {'"Deactivated accounts"'} and
                   {'"Accounts in appealed state"'}, all accounts that are either
                   deactivated OR in appealed state will be selected. <br />
-                  <br />
-                  You can use {'||'} separator in the keyword filter to look for
-                  multiple keywords in either {"user's"} profile bio or record
-                  content
                 </p>
                 <div className="flex flex-row mt-2 gap-2">
                   <ActionButton
