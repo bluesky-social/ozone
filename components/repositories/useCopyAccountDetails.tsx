@@ -11,7 +11,7 @@ export const useCopyAccountDetails = ({
   return () => {
     let data = ``
     if (repo?.handle) {
-      data += `Username: ${repo.handle}`
+      data += `Username: ${repo.handle}\n`
     }
     if (profile?.displayName) {
       data += `Display name: ${profile.displayName}\n`
@@ -43,11 +43,11 @@ export const useCopyAccountDetails = ({
       data += `Email confirmed: ${repo.emailConfirmedAt}\n`
     }
     const status = repo?.deactivatedAt
-      ? 'Deactivated'
+      ? `Deactivated on ${repo.deactivatedAt}`
       : repo?.moderation.subjectStatus?.takendown
-      ? 'Taken down'
+      ? `Taken down on ${repo.moderation.subjectStatus.lastReviewedAt}`
       : 'Active'
-    data += `Account status: Deactivated on ${status}\n`
+    data += `Account status: ${status}\n`
     copyToClipboard(data, 'account details ')
   }
 }

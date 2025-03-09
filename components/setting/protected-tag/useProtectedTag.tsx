@@ -1,10 +1,10 @@
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { ProtectedTagSetting } from './types'
-import { ToolsOzoneTeamDefs } from '@atproto/api'
+import { AppBskyActorDefs, ToolsOzoneTeamDefs } from '@atproto/api'
 import { toast } from 'react-toastify'
 import { useEffect, useState } from 'react'
-import { useFullMemberList } from 'components/team/useMemberList'
+import { getProfiles } from '@/repositories/api'
 
 const ProtectedTagSettingKey = 'tools.ozone.setting.protectedTags'
 
@@ -38,7 +38,9 @@ export const useProtectedTagEditor = () => {
   const { data: initialSetting } = useProtectedTagList()
   const [editorData, setEditorData] = useState<ProtectedTagSetting>({})
   const { role } = useServerConfig()
-  const memberList = useFullMemberList()
+  const [assignedMods, setAssignedMods] = useState<
+    Record<string, AppBskyActorDefs.ProfileViewDetailed>
+  >({})
 
   // Initialize editor data when the initial setting is loaded
   useEffect(() => {
@@ -46,6 +48,31 @@ export const useProtectedTagEditor = () => {
       setEditorData(initialSetting.value)
     }
   }, [initialSetting])
+
+  // Whenever a moderator is assigned to a protected tag
+  // load the profile of the moderator if it already hasn't been loaded
+  useEffect(() => {
+    const moderatorDids = new Set<string>()
+    Object.values(editorData).forEach(({ moderators }) => {
+      if (moderators?.length) {
+        moderators.forEach((did) => moderatorDids.add(did))
+      }
+    })
+
+    const newMods = Array.from(moderatorDids).filter(
+      (did) => !assignedMods[did],
+    )
+    if (newMods.length) {
+      getProfiles(labelerAgent, newMods).then((profiles) => {
+        if (!profiles.size) return
+        const newModProfiles = { ...assignedMods }
+        for (const [did, profile] of profiles.entries()) {
+          newModProfiles[did] = profile
+        }
+        setAssignedMods(newModProfiles)
+      })
+    }
+  }, [editorData, assignedMods, labelerAgent])
 
   const mutation = useMutation({
     mutationKey: ['protected-tag-setting', 'upsert'],
@@ -100,9 +127,9 @@ export const useProtectedTagEditor = () => {
   }
 
   return {
-    memberList,
     mutation,
     editorData,
+    assignedMods,
     setEditorData,
     handleSave,
     handleRemoveKey,
