@@ -772,7 +772,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
         return { profiles: [] }
       }
       const profiles = await getProfiles(labelerAgent, actors)
-      return Array.from(profiles.values())
+      return { profiles: Array.from(profiles.values()) }
     },
   })
 
@@ -801,7 +801,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
           Invited users
         </h3>
       </div>
-      {!invitedUsers?.profiles.length ? (
+      {!invitedUsers?.profiles?.length ? (
         <EmptyDataset message="No invited users found" />
       ) : (
         <AccountsGrid

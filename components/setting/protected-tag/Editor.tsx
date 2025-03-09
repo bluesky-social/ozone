@@ -6,7 +6,7 @@ import { TrashIcon } from '@heroicons/react/24/outline'
 import { LabelChip } from '@/common/labels'
 import { MemberRoleNames } from 'components/team/helpers'
 import { RepoFinder } from '@/repositories/Finder'
-import { AppBskyActorDefs, ToolsOzoneTeamDefs } from '@atproto/api'
+import { AppBskyActorDefs } from '@atproto/api'
 import { ProtectedTagSetting } from './types'
 import { getMembersList } from '@/team/useMemberList'
 
@@ -153,7 +153,7 @@ export const ProtectedTagEditor = ({
                     key={index}
                     className="flex gap-2 items-center justify-between mt-2 border-t border-gray-300 dark:border-gray-700"
                   >
-                    <ModeratorItem did={mod} member={assignedMods[mod]} />
+                    <ModeratorItem did={mod} profile={assignedMods[mod]} />
                     <ActionButton
                       appearance="outlined"
                       disabled={!canManageTags}
