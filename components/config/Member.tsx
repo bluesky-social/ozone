@@ -39,7 +39,7 @@ const MemberSearchInput = () => {
         type="text"
         autoFocus
         className="w-2/3 py-1"
-        placeholder="Search sets..."
+        placeholder="Search team members..."
         value={inputValue}
         onChange={(e) => setInputValue(e.target.value)}
       />{' '}
