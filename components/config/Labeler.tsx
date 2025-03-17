@@ -15,6 +15,12 @@ import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { usePdsAgent } from '@/shell/AuthContext'
 import { LocalPreferences } from './LocalPreferences'
 import { QueueSetting } from 'components/setting/Queue'
+import { toast } from 'react-toastify'
+import { Dropdown } from '@/common/Dropdown'
+import { ChevronDownIcon } from '@heroicons/react/24/solid'
+import { LabelerRecordEditor } from 'components/labeler/RecordEditor'
+import { defaultLabelValueDefinition } from 'components/labeler/helpers'
+import { LabelerRecordView } from 'components/labeler/RecordView'
 
 const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
   ssr: false,
@@ -64,7 +70,8 @@ function ConfigureDetails() {
         <p className="mt-2">
           The existence of a service record makes your service account <b></b>{' '}
           available in the Bluesky application, allowing users to choose to use
-          your labeling service. It contains a labeling policy consisting of a few parts:
+          your labeling service. It contains a labeling policy consisting of a
+          few parts:
         </p>
         <ul className="list-disc list-inside mt-2 pl-4">
           <li>
@@ -95,8 +102,8 @@ function ConfigureDetails() {
             <b>
               <code>subjectCollections</code>
             </b>
-            : such as `app.bsky.feed.post`, specifying the types of records
-            that can be reported by users.
+            : such as `app.bsky.feed.post`, specifying the types of records that
+            can be reported by users.
           </li>
           <li>
             An array of{' '}
@@ -117,6 +124,22 @@ function ConfigureDetails() {
   )
 }
 
+const getEditableLabelerFields = (record: AppBskyLabelerService.Record) => {
+  const editableRecord: Partial<AppBskyLabelerService.Record> = {
+    policies: record.policies,
+  }
+  if (record.reasonTypes) {
+    editableRecord.reasonTypes = record.reasonTypes
+  }
+  if (record.subjectTypes) {
+    editableRecord.subjectTypes = record.subjectTypes
+  }
+  if (record.subjectCollections) {
+    editableRecord.subjectCollections = record.subjectCollections
+  }
+  return editableRecord
+}
+
 function RecordInitStep({ repo }: { repo: string }) {
   const [checked, setChecked] = useState(false)
   const pdsAgent = usePdsAgent()
@@ -133,15 +156,13 @@ function RecordInitStep({ repo }: { repo: string }) {
           createdAt: new Date().toISOString(),
           policies: { labelValues: [] },
           subjectTypes: ['account', 'record'],
-          subjectCollections: [
-            'app.bsky.feed.post',
-            'app.bsky.actor.profile',
-          ],
+          subjectCollections: ['app.bsky.feed.post', 'app.bsky.actor.profile'],
           reasonTypes: [
             'com.atproto.moderation.defs#reasonSpam',
             'com.atproto.moderation.defs#reasonMisleading',
             'com.atproto.moderation.defs#reasonSexual',
             'com.atproto.moderation.defs#reasonRude',
+            'com.atproto.moderation.defs#reasonAppeal',
             'com.atproto.moderation.defs#reasonOther',
           ],
         },
@@ -199,11 +220,11 @@ function RecordEditStep({
 
   const { reconfigure } = useConfigurationContext()
 
-  const [editorMode, setEditorMode] = useState<'json' | 'plain'>('json')
+  const [editorMode, setEditorMode] = useState<'json' | 'ui'>('ui')
   const darkMode = isDarkModeEnabled()
   const [recordVal, setRecordVal] = useSyncedState(record)
   const [plainTextRecord, setPlainTextRecord] = useSyncedState(
-    JSON.stringify(record.policies, null, 2),
+    JSON.stringify(getEditableLabelerFields(record), null, 2),
   )
   const [isPlainTextInvalid, setIsPlainTextInvalid] = useState<boolean>(false)
   const invalid = useMemo(() => {
@@ -219,52 +240,17 @@ function RecordEditStep({
         rkey: 'self',
         record: recordVal,
       })
+      toast.success('Service record updated')
       await reconfigure()
     },
   })
-  const addLabelValue = () => {
-    setRecordVal({
-      ...recordVal,
-      policies: {
-        ...recordVal.policies,
-        labelValues: ['label-name', ...recordVal.policies.labelValues],
-      },
-    })
-  }
-  const addLabelDefinition = () => {
-    setRecordVal({
-      ...recordVal,
-      policies: {
-        ...recordVal.policies,
-        labelValueDefinitions: [
-          {
-            identifier: 'label-name',
-            severity: 'inform|alert|none',
-            blurs: 'content|media|none',
-            defaultSetting: 'ignore|warn|hide',
-            adultOnly: false,
-            locales: [
-              {
-                lang: 'en',
-                name: 'Label Display Name',
-                description: 'Label description.',
-              },
-            ],
-          },
-          ...(recordVal.policies.labelValueDefinitions ?? []),
-        ],
-      },
-    })
-  }
   return (
     <div>
       <div className="flex justify-evenly mt-4 mb-4">
-        <ButtonSecondary onClick={addLabelValue} className="mx-1">
-          Add label value
-        </ButtonSecondary>
-        <ButtonSecondary onClick={addLabelDefinition} className="mx-1">
-          Add label definition
-        </ButtonSecondary>
+        <RecordUpdateDropdown
+          recordVal={recordVal}
+          setRecordVal={setRecordVal}
+        />
         <div className="flex-grow text-right">
           <ButtonPrimary
             onClick={() => updateRecord.mutate()}
@@ -283,16 +269,16 @@ function RecordEditStep({
           appearance="primary"
           items={[
             {
-              id: 'JSON',
+              id: 'ui',
+              text: 'UI Editor',
+              isActive: editorMode === 'ui',
+              onClick: () => setEditorMode('ui'),
+            },
+            {
+              id: 'json',
               text: 'JSON Editor',
               isActive: editorMode === 'json',
               onClick: () => setEditorMode('json'),
-            },
-            {
-              id: 'plain',
-              text: 'Plain Editor',
-              isActive: editorMode === 'plain',
-              onClick: () => setEditorMode('plain'),
             },
           ]}
         />
@@ -301,12 +287,12 @@ function RecordEditStep({
         <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
       )}
       {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
-      {isPlainTextInvalid && editorMode === 'plain' && (
+      {isPlainTextInvalid && editorMode === 'json' && (
         <ErrorInfo type="warn" className="mb-2">
           Invalid JSON input. Your changes can not be saved.
         </ErrorInfo>
       )}
-      {editorMode === 'plain' ? (
+      {editorMode === 'json' ? (
         <div>
           <Textarea
             value={plainTextRecord}
@@ -327,38 +313,96 @@ function RecordEditStep({
           />
         </div>
       ) : (
-        <BrowserReactJsonView
-          src={recordVal.policies}
-          theme={darkMode ? 'harmonic' : 'rjv-default'}
-          name={null}
-          quotesOnKeys={false}
-          displayObjectSize={false}
-          displayDataTypes={false}
-          enableClipboard={false}
-          validationMessage="Cannot delete property"
-          onEdit={(edit) => {
-            const newRecord = {
-              ...recordVal,
-              policies: edit.updated_src as any,
-            }
-            setRecordVal(newRecord)
-            setPlainTextRecord(JSON.stringify(newRecord.policies, null, 2))
-          }}
-          onDelete={(del) => {
-            const [key, ...others] = del.namespace
-            if (
-              others.length ||
-              (key !== 'labelValues' && key !== 'labelValueDefinitions')
-            ) {
-              // can only delete items directly out of labelValues and labelValueDefinitions
-              return false
-            }
-            const newRecord = { ...recordVal, policies: del.updated_src as any }
-            setRecordVal(newRecord)
-            setPlainTextRecord(JSON.stringify(newRecord.policies, null, 2))
-          }}
-        />
+        <LabelerRecordView originalRecord={record} />
       )}
     </div>
+  )
+}
+
+const RecordUpdateDropdown = ({
+  recordVal,
+  setRecordVal,
+}: {
+  recordVal: AppBskyLabelerService.Record
+  setRecordVal: (record: AppBskyLabelerService.Record) => void
+}) => {
+  const addLabelValue = () => {
+    setRecordVal({
+      ...recordVal,
+      policies: {
+        ...recordVal.policies,
+        labelValues: ['label-name', ...recordVal.policies.labelValues],
+      },
+    })
+  }
+  const addLabelDefinition = () => {
+    setRecordVal({
+      ...recordVal,
+      policies: {
+        ...recordVal.policies,
+        labelValueDefinitions: [
+          defaultLabelValueDefinition,
+          ...(recordVal.policies.labelValueDefinitions ?? []),
+        ],
+      },
+    })
+  }
+  const hasSubjectTypes = !!recordVal.subjectTypes
+  const hasSubjectCollections = !!recordVal.subjectCollections
+  const hasReasonTypes = !!recordVal.reasonTypes
+
+  const options = [
+    {
+      text: 'Add label value',
+      id: 'add-label-value',
+      onClick: addLabelValue,
+    },
+    {
+      text: 'All label definition',
+      id: 'add-label-definition',
+      onClick: addLabelDefinition,
+    },
+  ]
+
+  if (!hasSubjectTypes) {
+    options.push({
+      text: 'Add subject types',
+      id: 'add-subject-types',
+      onClick: () => {
+        setRecordVal({
+          ...recordVal,
+          subjectTypes: ['account', 'record'],
+        })
+      },
+    })
+  }
+
+  if (
+    !hasSubjectCollections &&
+    (!hasSubjectTypes || recordVal.subjectTypes?.includes('record'))
+  ) {
+    options.push({
+      text: 'Add subject collections',
+      id: 'add-subject-collections',
+      onClick: () => {
+        setRecordVal({
+          ...recordVal,
+          subjectCollections: ['app.bsky.feed.post'],
+        })
+      },
+    })
+  }
+
+  return (
+    <Dropdown
+      className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
+      items={options}
+    >
+      Update record
+      <ChevronDownIcon
+        className="ml-2 -mr-1 h-5 w-5 text-violet-200 hover:text-violet-100"
+        aria-hidden="true"
+      />
+    </Dropdown>
   )
 }
