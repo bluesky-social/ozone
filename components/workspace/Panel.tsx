@@ -111,16 +111,12 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
               const status = workspaceListStatuses?.[item]
 
-              if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
-                return status.did
-              }
-
-              if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
+              if (status?.repo?.did) {
                 return status.repo.did
               }
 
-              if (status && isSubjectStatusView(status)) {
-                const { subject } = status
+              if (status?.subjectStatus) {
+                const { subject } = status.subjectStatus
                 if (ComAtprotoAdminDefs.isRepoRef(subject)) {
                   return subject.did
                 }

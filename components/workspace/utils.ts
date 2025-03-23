@@ -1,7 +1,7 @@
-import { CollectionId } from '@/reports/helpers/subject'
-import { WorkspaceListItemData } from './useWorkspaceListData'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { CollectionId, EmbedTypes } from '@/reports/helpers/subject'
 import { pluralize } from '@/lib/util'
+import { WorkspaceFilterItem } from './types'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 
 export type GroupedSubjects = {
   dids: string[]
@@ -59,53 +59,60 @@ export const buildItemsSummary = (groupedItems: GroupedSubjects): string => {
     .join(', ')
 }
 
-export const isSubjectStatusView = (
-  itemData: WorkspaceListItemData,
-): itemData is ToolsOzoneModerationDefs.SubjectStatusView => {
-  return (
-    ToolsOzoneModerationDefs.isSubjectStatusView(itemData) ||
-    (itemData && 'subject' in itemData)
-  )
+const matchText = (needle: string, haystack?: string) => {
+  if (!haystack) return false
+  return haystack.toLowerCase().includes(needle.toLowerCase())
 }
 
-export const getRepoHandleFromItemData = (itemData: WorkspaceListItemData) => {
-  if (ToolsOzoneModerationDefs.isRepoViewDetail(itemData)) {
-    return itemData.handle
-  }
-
-  if (ToolsOzoneModerationDefs.isRecordViewDetail(itemData)) {
-    return itemData.repo.handle
-  }
-
-  if (isSubjectStatusView(itemData)) {
-    return itemData.subjectRepoHandle
-  }
-
-  return ''
+const isBefore = (left: string, right?: string) => {
+  if (!right) return false
+  return new Date(left) < new Date(right)
 }
 
-export const getAccountDeactivatedAtFromItemData = (
-  itemData: WorkspaceListItemData,
-) => {
-  if (ToolsOzoneModerationDefs.isRepoViewDetail(itemData)) {
-    return itemData.deactivatedAt
+export const checkFilterMatchForWorkspaceItem = (
+  filter: WorkspaceFilterItem,
+  data: ToolsOzoneModerationDefs.SubjectView,
+): boolean => {
+  switch (filter.field) {
+    case 'emailConfirmed':
+      const confirmedAt = data.repo?.emailConfirmedAt
+      return filter.value ? !!confirmedAt : !confirmedAt
+    case 'displayName':
+      return matchText(filter.value, data.profile?.displayName)
+    case 'description':
+      return matchText(filter.value, data.profile?.description)
+    case 'accountCreated':
+      const isCreatedAfterFilter = isBefore(
+        filter.value,
+        data.profile?.createdAt,
+      )
+      return filter.operator === 'gte'
+        ? isCreatedAfterFilter
+        : !isCreatedAfterFilter
+    case 'recordCreated':
+      const isRecordCreatedAfterFilter = isBefore(
+        filter.value,
+        data.record?.value.createdAt
+          ? `${data.record?.value.createdAt}`
+          : undefined,
+      )
+      return filter.operator === 'gte'
+        ? isRecordCreatedAfterFilter
+        : !isRecordCreatedAfterFilter
+    case 'imageEmbed':
+      return !!data.status?.tags?.includes(EmbedTypes.Image)
+    case 'videoEmbed':
+      return !!data.status?.tags?.includes(EmbedTypes.Video)
+    case 'content':
+      return matchText(
+        filter.value,
+        data.record?.value?.text ? `${data.record?.value?.text}` : undefined,
+      )
+    case 'reviewState':
+      return data.status?.reviewState === filter.value
+    case 'takendown':
+      return !!data.status?.takendown
+    default:
+      return false
   }
-
-  if (ToolsOzoneModerationDefs.isRecordViewDetail(itemData)) {
-    return itemData.repo.deactivatedAt
-  }
-
-  return ''
-}
-
-export const getSubjectStatusFromItemData = (
-  itemData: WorkspaceListItemData | undefined,
-) => {
-  if (!itemData) return undefined
-
-  if (isSubjectStatusView(itemData)) {
-    return itemData
-  }
-
-  return itemData.moderation.subjectStatus
 }

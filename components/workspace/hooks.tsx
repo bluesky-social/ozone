@@ -8,7 +8,6 @@ import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
 import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
-  AppBskyActorProfile,
   AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
@@ -18,12 +17,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import {
-  WorkspaceListData,
-  WorkspaceListItemData,
-} from './useWorkspaceListData'
+import { WorkspaceListData } from './useWorkspaceListData'
 import { getProfileFromRepo } from '@/repositories/helpers'
-import { isSubjectStatusView } from './utils'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','

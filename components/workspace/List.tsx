@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { Checkbox } from '@/common/forms'
-import { ActionButton } from '@/common/buttons'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -8,21 +7,15 @@ import {
   LockClosedIcon,
   TrashIcon,
 } from '@heroicons/react/24/solid'
+
+import { Checkbox } from '@/common/forms'
+import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
-import {
-  getAccountDeactivatedAtFromItemData,
-  getRepoHandleFromItemData,
-  getSubjectStatusFromItemData,
-  groupSubjects,
-} from './utils'
+import { groupSubjects } from './utils'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { PreviewCard } from '@/common/PreviewCard'
-import {
-  WorkspaceListData,
-  WorkspaceListItemData,
-} from './useWorkspaceListData'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { WorkspaceListData } from './useWorkspaceListData'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { ModerationLabel } from '@/common/labels'
 import { WorkspaceExportPanel } from './ExportPanel'
@@ -181,21 +174,24 @@ const ListItem = <ItemType extends string>({
   isDetailShown: boolean
   toggleDetail: () => void
   item: ItemType
-  itemData: WorkspaceListItemData
+  itemData?: ToolsOzoneModerationDefs.SubjectView
   onRemoveItem: () => void
   onChange: (event: React.MouseEvent<HTMLInputElement>) => void
   onRef: (instance: HTMLInputElement | null) => void
 }) => {
-  const isRepo = ToolsOzoneModerationDefs.isRepoViewDetail(itemData)
-  const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(itemData)
   // Derive language tag from record value if there isn't any tag in moderation.subjectStatus
   // which happens when a post has not been in the moderation system yet so we never tagged its language
-  const langTagsFromRecord =
-    isRecord && itemData ? getLangTagFromRecordValue(itemData) : []
+  const langTagsFromRecord = itemData?.record
+    ? getLangTagFromRecordValue(itemData.record)
+    : []
 
-  const subjectStatus = getSubjectStatusFromItemData(itemData)
-  let repoHandle = getRepoHandleFromItemData(itemData)
-  let deactivatedAt = getAccountDeactivatedAtFromItemData(itemData)
+  const isSubjectRecord = item.startsWith('at://')
+  const displayTags = isSubjectRecord
+    ? itemData?.record?.moderation.subjectStatus?.tags
+    : itemData?.repo?.moderation.subjectStatus?.tags
+  const displayLabels = isSubjectRecord
+    ? itemData?.record?.labels
+    : itemData?.repo?.labels
 
   return (
     <Card key={item}>
@@ -220,29 +216,28 @@ const ListItem = <ItemType extends string>({
                 // to open both quick action panel and workspace which would cause overlapping issues.
                 // This ensures that we only open the quick action panel when the link is clicked.
                 omitQueryParamsInLinks={['workspaceOpen']}
-                subjectRepoHandle={repoHandle}
+                subjectRepoHandle={itemData.repo?.handle}
               />
-              {subjectStatus && (
+              {itemData.status && (
                 <ReviewStateIcon
-                  subjectStatus={subjectStatus}
+                  subjectStatus={itemData.status}
                   className="ml-1"
                 />
               )}
-              {!!deactivatedAt && (
+              {!!itemData.repo?.deactivatedAt && (
                 <LockClosedIcon
                   className="w-4 h-4 ml-1 text-orange-700"
-                  title={`User account was deactivated at ${deactivatedAt}`}
+                  title={`User account was deactivated at ${itemData.repo.deactivatedAt}`}
                 />
               )}
-              {/* emailConfirmedAt is only available on repoViewDetail on record.repo we get repoView */}
-              {isRepo && !itemData.emailConfirmedAt && (
+              {!itemData.repo?.emailConfirmedAt && (
                 <EnvelopeIcon
                   className="w-4 h-4 ml-1 text-red-600"
                   title={`User has not confirmed their email`}
                 />
               )}
-              {/* if item data is neither repo or record, it means we failed to find the repo/record so only fetched subject status */}
-              {!isRepo && !isRecord && (
+              {((isSubjectRecord && !itemData.record) ||
+                (!isSubjectRecord && !itemData.repo)) && (
                 <TrashIcon
                   className="w-4 h-4 ml-1 text-red-600"
                   title={
@@ -257,9 +252,9 @@ const ListItem = <ItemType extends string>({
                   }
                 />
               )}
-              {(isRepo || isRecord) && !!itemData.labels?.length && (
+              {!!displayLabels?.length && (
                 <div className="flex ml-1">
-                  {itemData.labels.map((label) => (
+                  {displayLabels.map((label) => (
                     <ModerationLabel
                       key={`${label.src}_${label.val}`}
                       label={label}
@@ -274,9 +269,9 @@ const ListItem = <ItemType extends string>({
                   ))}
                 </div>
               )}
-              {!!subjectStatus?.tags?.length && (
+              {!!displayTags?.length && (
                 <div className="flex ml-1">
-                  {subjectStatus?.tags.map((tag) => (
+                  {displayTags.map((tag) => (
                     <SubjectTag key={tag} tag={tag} />
                   ))}
                 </div>
@@ -286,7 +281,6 @@ const ListItem = <ItemType extends string>({
             <SubjectOverview
               subject={item.startsWith('did:') ? { did: item } : { uri: item }}
               omitQueryParamsInLinks={['workspaceOpen']}
-              subjectRepoHandle={repoHandle}
             />
           )}
         </div>
