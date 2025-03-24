@@ -24,6 +24,16 @@ export const SubjectTag = ({
           {langDetails.flag}
         </span>
       )
+    } else if (tag.endsWith('und')) {
+      return (
+        <LabelChip
+          {...rest}
+          title="Could not reliably determine primary language"
+          aria-label="Could not reliably determine primary language"
+        >
+          lang?
+        </LabelChip>
+      )
     }
   }
 

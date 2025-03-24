@@ -5,6 +5,7 @@ import {
   ChevronUpIcon,
   EnvelopeIcon,
   LockClosedIcon,
+  StarIcon,
   TrashIcon,
 } from '@heroicons/react/24/solid'
 
@@ -19,6 +20,7 @@ import { WorkspaceListData } from './useWorkspaceListData'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { ModerationLabel } from '@/common/labels'
 import { WorkspaceExportPanel } from './ExportPanel'
+import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 
 interface WorkspaceListProps {
   list: string[]
@@ -218,10 +220,18 @@ const ListItem = <ItemType extends string>({
                 omitQueryParamsInLinks={['workspaceOpen']}
                 subjectRepoHandle={itemData.repo?.handle}
               />
+              {itemData.profile?.followersCount &&
+                itemData.profile.followersCount > 1 && (
+                  <StarIcon
+                    className="w-4 h-4 ml-1 text-orange-300"
+                    title={`High profile user with ${itemData.profile.followersCount} followers`}
+                  />
+                )}
               {itemData.status && (
                 <ReviewStateIcon
                   subjectStatus={itemData.status}
                   className="ml-1"
+                  size="sm"
                 />
               )}
               {!!itemData.repo?.deactivatedAt && (
