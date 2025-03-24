@@ -221,7 +221,8 @@ const ListItem = <ItemType extends string>({
                 subjectRepoHandle={itemData.repo?.handle}
               />
               {itemData.profile?.followersCount &&
-                itemData.profile.followersCount > 1 && (
+                itemData.profile.followersCount >
+                  HIGH_PROFILE_FOLLOWER_THRESHOLD && (
                   <StarIcon
                     className="w-4 h-4 ml-1 text-orange-300"
                     title={`High profile user with ${itemData.profile.followersCount} followers`}
