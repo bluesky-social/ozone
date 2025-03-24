@@ -1,5 +1,6 @@
 import { LabelChip } from '@/common/labels'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
+import { FlagIcon } from '@heroicons/react/24/solid'
 import { ComponentProps } from 'react'
 
 export const getLanguageFlag = (langCode: string) => {
@@ -25,6 +26,19 @@ export const SubjectTag = ({
       )
     }
   }
-  
+
+  if (tag.startsWith('report:')) {
+    const reportType = tag.split(':')[1]?.toLowerCase()
+    return (
+      <LabelChip
+        {...rest}
+        title={`Reported with reason ${reportType}`}
+        aria-label={`Reported with reason ${reportType}`}
+      >
+        <FlagIcon className="h-3 w-3" /> {reportType}
+      </LabelChip>
+    )
+  }
+
   return <LabelChip {...rest}>{tag}</LabelChip>
 }

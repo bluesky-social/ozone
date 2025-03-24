@@ -136,8 +136,6 @@ const ifString = (val: unknown): string | undefined =>
 const getExportFieldsFromWorkspaceListItem = (
   item: ToolsOzoneModerationDefs.SubjectView,
 ) => {
-  const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(item)
-
   if (item.repo) {
     const { repo } = item
     const profile = getProfileFromRepo(repo.relatedRecords)

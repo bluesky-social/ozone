@@ -2,6 +2,7 @@ import { createContext, useContext, useState } from 'react'
 import { FilterGroup, WorkspaceFilterItem } from './types'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { checkFilterMatchForWorkspaceItem } from './utils'
+import { toast } from 'react-toastify'
 
 type FilterContextType = {
   filterGroup: FilterGroup[]
@@ -82,8 +83,12 @@ export const FilterProvider = ({
       }
     }
 
-    for (const filteredItem of filteredItems) {
-      toggleItemCheck(filteredItem, select)
+    if (filteredItems.length === 0) {
+      toast.error('No items match your filters')
+    } else {
+      for (const filteredItem of filteredItems) {
+        toggleItemCheck(filteredItem, select)
+      }
     }
   }
 
