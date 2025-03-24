@@ -133,49 +133,41 @@ const filterExportFields = (fields: string[], isAdmin: boolean) => {
 const ifString = (val: unknown): string | undefined =>
   typeof val === 'string' ? val : undefined
 
-const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
+const getExportFieldsFromWorkspaceListItem = (
+  item: ToolsOzoneModerationDefs.SubjectView,
+) => {
   const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(item)
 
-  if (ToolsOzoneModerationDefs.isRepoViewDetail(item) || isRecord) {
-    const repo = isRecord ? item.repo : item
+  if (item.repo) {
+    const { repo } = item
     const profile = getProfileFromRepo(repo.relatedRecords)
-    const baseFields = {
+    return {
       did: repo.did,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
-      labels: 'Unknown',
       name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
+      // @ts-expect-error - Un-spec'd field returned by PDS
+      ip: ifString(repo.ip) ?? 'Unknown',
+      labels: repo.labels?.map(({ val }) => val).join('|') || 'Unknown',
     }
-
-    // For record entries, the repo does not include labels
-    if (!isRecord) {
-      return {
-        ...baseFields,
-        // @ts-expect-error - Un-spec'd field returned by PDS
-        ip: ifString(item.ip) ?? 'Unknown',
-        labels: item.labels?.map(({ val }) => val).join('|'),
-      }
-    }
-  }
-
-  if (isSubjectStatusView(item)) {
-    const did = ComAtprotoRepoStrongRef.isMain(item.subject)
-      ? new AtUri(item.subject.uri).host
-      : ComAtprotoAdminDefs.isRepoRef(item.subject)
-      ? item.subject.did
+  } else if (item.status) {
+    const did = ComAtprotoRepoStrongRef.isMain(item.status.subject)
+      ? new AtUri(item.status.subject.uri).host
+      : ComAtprotoAdminDefs.isRepoRef(item.status.subject)
+      ? item.status.subject.did
       : ''
     return {
       did,
-      handle: item.subjectRepoHandle,
+      handle: item.status.subjectRepoHandle,
       relatedRecords: [] as {}[],
       email: 'Unknown',
       ip: 'Unknown',
       labels: 'None',
       name: 'Unknown',
-      tags: item.tags?.join('|'),
+      tags: item.status.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did }),
     }
   }

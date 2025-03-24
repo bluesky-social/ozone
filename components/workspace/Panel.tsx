@@ -37,7 +37,7 @@ import { useWorkspaceListData } from './useWorkspaceListData'
 import { isNonNullable, isValidDid } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
-import { findHighProfileCountInWorkspace, isSubjectStatusView } from './utils'
+import { findHighProfileCountInWorkspace } from './utils'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { numberFormatter } from '@/repositories/HighProfileWarning'
 
@@ -111,14 +111,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             .map((item) => {
               if (item.startsWith('did:')) return item
 
-              const status = workspaceListStatuses?.[item]
+              const itemData = workspaceListStatuses?.[item]
 
-              if (status?.repo?.did) {
-                return status.repo.did
+              if (itemData?.repo?.did) {
+                return itemData.repo.did
               }
 
-              if (status?.subjectStatus) {
-                const { subject } = status.subjectStatus
+              if (itemData?.status) {
+                const { subject } = itemData.status
                 if (ComAtprotoAdminDefs.isRepoRef(subject)) {
                   return subject.did
                 }
