@@ -1,18 +1,20 @@
+export type DurationUnit = 'days' | 'weeks' | 'months' | 'years'
+
 export type WorkspaceFilterItem =
   | {
-      field: 'followerCount'
+      field: 'followersCount'
       operator: 'gte' | 'lte'
       value: number
     }
   | {
-      field: 'followCount'
+      field: 'followsCount'
       operator: 'gte' | 'lte'
       value: number
     }
   | {
       field: 'accountAge'
       operator: 'gte' | 'lte'
-      unit: 'days' | 'weeks' | 'months' | 'years'
+      unit: DurationUnit
       value: number
     }
   | {
@@ -41,14 +43,10 @@ export type WorkspaceFilterItem =
       value: string
     }
   | {
-      field: 'accountCreated'
-      operator: 'gte' | 'lte'
-      value: string
-    }
-  | {
       field: 'recordCreated'
       operator: 'gte' | 'lte'
-      value: string
+      unit: DurationUnit
+      value: number
     }
   | {
       field: 'imageEmbed'

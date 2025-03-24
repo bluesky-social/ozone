@@ -1,7 +1,10 @@
 import { CollectionId, EmbedTypes } from '@/reports/helpers/subject'
 import { pluralize } from '@/lib/util'
-import { WorkspaceFilterItem } from './types'
+import { DurationUnit, WorkspaceFilterItem } from './types'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { addDays, addMonths, addWeeks, addYears } from 'date-fns'
+import { WorkspaceListData } from './useWorkspaceListData'
+import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 
 export type GroupedSubjects = {
   dids: string[]
@@ -64,9 +67,20 @@ const matchText = (needle: string, haystack?: string) => {
   return haystack.toLowerCase().includes(needle.toLowerCase())
 }
 
-const isBefore = (left: string, right?: string) => {
-  if (!right) return false
-  return new Date(left) < new Date(right)
+const isMinAge = (value: number, unit: DurationUnit, dob?: string) => {
+  if (!dob) return false
+  let ref = new Date(dob)
+  if (unit === 'days') {
+    ref = addDays(ref, value)
+  } else if (unit === 'weeks') {
+    ref = addWeeks(ref, value)
+  } else if (unit === 'months') {
+    ref = addMonths(ref, value)
+  } else if (unit === 'years') {
+    ref = addYears(ref, value)
+  }
+
+  return ref <= new Date()
 }
 
 export const checkFilterMatchForWorkspaceItem = (
@@ -76,22 +90,36 @@ export const checkFilterMatchForWorkspaceItem = (
   switch (filter.field) {
     case 'emailConfirmed':
       const confirmedAt = data.repo?.emailConfirmedAt
-      return filter.value ? !!confirmedAt : !confirmedAt
+      return !!filter.value ? !!confirmedAt : !confirmedAt
+    case 'followersCount':
+      const { followersCount } = data.profile || {}
+      if (!followersCount) return false
+      return filter.operator === 'gte'
+        ? followersCount >= filter.value
+        : followersCount <= filter.value
+    case 'followsCount':
+      const { followsCount } = data.profile || {}
+      if (!followsCount) return false
+      return filter.operator === 'gte'
+        ? followsCount >= filter.value
+        : followsCount <= filter.value
     case 'displayName':
       return matchText(filter.value, data.profile?.displayName)
     case 'description':
       return matchText(filter.value, data.profile?.description)
-    case 'accountCreated':
-      const isCreatedAfterFilter = isBefore(
+    case 'accountAge':
+      const isCreatedAfterFilter = isMinAge(
         filter.value,
+        filter.unit,
         data.profile?.createdAt,
       )
       return filter.operator === 'gte'
         ? isCreatedAfterFilter
         : !isCreatedAfterFilter
     case 'recordCreated':
-      const isRecordCreatedAfterFilter = isBefore(
+      const isRecordCreatedAfterFilter = isMinAge(
         filter.value,
+        filter.unit,
         data.record?.value.createdAt
           ? `${data.record?.value.createdAt}`
           : undefined,
@@ -115,4 +143,19 @@ export const checkFilterMatchForWorkspaceItem = (
     default:
       return false
   }
+}
+
+export const findHighProfileCountInWorkspace = (list: WorkspaceListData) => {
+  let total = 0
+  
+  for (const item of Object.values(list)) {
+    if (
+      item.profile?.followersCount &&
+      item.profile.followersCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD
+    ) {
+      total++
+    }
+  }
+
+  return total
 }

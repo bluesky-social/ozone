@@ -7,9 +7,10 @@ import { useState } from 'react'
 import { FilterProvider, useFilter } from './FilterContext'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { differenceInDays, differenceInHours } from 'date-fns'
-import { WorkspaceFilterItem } from './types'
+import { DurationUnit, WorkspaceFilterItem } from './types'
 import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { FilterView } from './FilterView'
 
 const matchMinimumAccountAge = (
   minAccountAgeUnit: string,
@@ -27,16 +28,14 @@ const matchMinimumAccountAge = (
   return diff >= minAccountAge
 }
 
-type DurationUnit = 'days' | 'weeks' | 'months' | 'years'
-
 const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   Partial<{ unit: DurationUnit }> & {
     text: string
   })[] = [
-  { field: 'followerCount', operator: 'gte', text: 'Min. Follower Count' },
-  { field: 'followerCount', operator: 'lte', text: 'Max. Follower Count' },
-  { field: 'followCount', operator: 'gte', text: 'Min. Follow Count' },
-  { field: 'followCount', operator: 'lte', text: 'Max. Follow Count' },
+  { field: 'followersCount', operator: 'gte', text: 'Min. Follower Count' },
+  { field: 'followersCount', operator: 'lte', text: 'Max. Follower Count' },
+  { field: 'followsCount', operator: 'gte', text: 'Min. Follow Count' },
+  { field: 'followsCount', operator: 'lte', text: 'Max. Follow Count' },
   {
     field: 'accountAge',
     operator: 'gte',
@@ -59,6 +58,15 @@ const booleanFields = ['emailConfirmed', 'accountDeactivated', 'takendown']
 const isBooleanFilter = (field: string) => booleanFields.includes(field)
 const durationFields = ['accountAge']
 const isDurationFilter = (field: string) => durationFields.includes(field)
+const getAvailableOptions = (existingFilters: WorkspaceFilterItem[]) => {
+  return availableFilters.filter(
+    (f) =>
+      !existingFilters.some(
+        (existing) =>
+          existing.operator === f.operator && existing.field === f.field,
+      ),
+  )
+}
 
 export function FilterSelector({ groupId }: { groupId: number }) {
   const { addFilter, filterGroup } = useFilter()
@@ -92,17 +100,13 @@ export function FilterSelector({ groupId }: { groupId: number }) {
     }
 
     addFilter(groupId, newFilter)
+    const availableOptions = getAvailableOptions([...group.filters, newFilter])
+    setSelected(availableOptions[0])
     setValue('')
   }
 
   const group = filterGroup[groupId]
-  const availableOptions = availableFilters.filter(
-    (f) =>
-      !group?.filters.some(
-        (existing) =>
-          existing.operator === f.operator && existing.field === f.field,
-      ),
-  )
+  const availableOptions = getAvailableOptions(group.filters)
 
   return (
     <div className="flex gap-2 py-1">
@@ -115,6 +119,11 @@ export function FilterSelector({ groupId }: { groupId: number }) {
             setSelected(f)
             if (isDurationFilter(f.field)) {
               setUnit(f.unit || 'days')
+            }
+            // For boolean filters, we have individual filters for now that come pre-selected with true value
+            // so based on eq/neq filter, we can automatically set the true/false value
+            if (isBooleanFilter(f.field)) {
+              setValue(f.operator === 'eq')
             }
           },
         }))}
@@ -193,9 +202,9 @@ export function FilterGroupComponent() {
             {group.filters.map((filter) => (
               <div
                 key={`${filter.field}-${filter.operator}`}
-                className="flex items-center gap-2 py-0.5"
+                className="flex items-start gap-2 py-0.5"
               >
-                {filter.field} {filter.operator} {filter.value}
+                <FilterView filter={filter} />
                 <button
                   onClick={() =>
                     removeFilter(groupId, filter.field, filter.operator)
@@ -210,27 +219,15 @@ export function FilterGroupComponent() {
 
             <FilterSelector groupId={groupId} />
           </div>
-          <ButtonGroup
-            size="xs"
-            appearance="primary"
-            leftAligned
-            items={[
-              {
-                id: 'and',
-                text: 'AND Group',
-                isActive: false,
-                onClick: () => addGroup('AND'),
-              },
-              {
-                id: 'or',
-                text: 'OR Group',
-                isActive: false,
-                onClick: () => addGroup('OR'),
-              },
-            ]}
-          />
         </div>
       ))}
+      <ActionButton
+        size="xs"
+        appearance="outlined"
+        onClick={() => addGroup('OR')}
+      >
+        Add OR Group
+      </ActionButton>
     </div>
   )
 }

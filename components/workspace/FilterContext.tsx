@@ -66,7 +66,9 @@ export const FilterProvider = ({
           }
         }
 
-        if (group.operator === 'AND' && !groupMatches) {
+        if (!group.operator) {
+          matchesFilters = groupMatches
+        } else if (group.operator === 'AND' && !groupMatches) {
           matchesFilters = false
           break
         } else if (group.operator === 'OR' && groupMatches) {
@@ -79,12 +81,20 @@ export const FilterProvider = ({
         }
       }
     }
+
+    for (const filteredItem of filteredItems) {
+      toggleItemCheck(filteredItem, select)
+    }
   }
 
   const addFilter = (groupId: number, filter: WorkspaceFilterItem) => {
     setFilterGroup((prev) => {
       const newGroup = [...prev]
-      if (!newGroup[groupId]?.filters.some((f) => f.field === filter.field)) {
+      if (
+        !newGroup[groupId]?.filters.some(
+          (f) => f.field === filter.field && filter.operator === f.operator,
+        )
+      ) {
         newGroup[groupId].filters.push(filter)
       }
       return newGroup
