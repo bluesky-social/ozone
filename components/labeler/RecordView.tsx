@@ -1,8 +1,11 @@
-import { Card } from '@/common/Card'
-import { FormLabel, Input } from '@/common/forms'
 import { LabelChip } from '@/common/labels'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
-import { AppBskyLabelerService, ComAtprotoLabelDefs } from '@atproto/api'
+import {
+  AppBskyLabelerService,
+  ComAtprotoLabelDefs,
+  ComAtprotoModerationDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import {
   ExclamationCircleIcon,
   EyeSlashIcon,
@@ -10,13 +13,29 @@ import {
 } from '@heroicons/react/24/solid'
 import { useEffect, useState } from 'react'
 import { LabelerRecordEditor } from './RecordEditor'
+import { Checkbox } from '@/common/forms'
+import { reasonTypeOptions } from '@/reports/helpers/getType'
+
+const reasonTypes = [
+  ComAtprotoModerationDefs.REASONSPAM,
+  ComAtprotoModerationDefs.REASONMISLEADING,
+  ComAtprotoModerationDefs.REASONRUDE,
+  ComAtprotoModerationDefs.REASONSEXUAL,
+  ComAtprotoModerationDefs.REASONVIOLATION,
+  ComAtprotoModerationDefs.REASONOTHER,
+  ComAtprotoModerationDefs.REASONAPPEAL,
+]
+
+const subjectTypes = ['account', 'record', 'chat']
 
 const LabelDefinitionView = ({
   label,
   definition,
+  onUpdate,
 }: {
   label: ComAtprotoLabelDefs.LabelValue
   definition?: ComAtprotoLabelDefs.LabelValueDefinition
+  onUpdate: (updatedDef: ComAtprotoLabelDefs.LabelValueDefinition) => void
 }) => {
   const [isEditing, setIsEditing] = useState(false)
 
@@ -26,9 +45,8 @@ const LabelDefinitionView = ({
         onCancel={() => setIsEditing(false)}
         definition={definition}
         onUpdate={(updatedDef) => {
+          onUpdate(updatedDef)
           setIsEditing(false)
-          // Update the definition
-          console.log(updatedDef)
         }}
       />
     )
@@ -36,7 +54,7 @@ const LabelDefinitionView = ({
 
   if (!definition) {
     return (
-      <div className="mb-1 border-b border-gray-700 pb-2">
+      <div className="mb-1 border-b border-gray-300 dark:border-gray-700 pb-2">
         <LabelChip className="ml-0">{label}</LabelChip>
         <button
           onClick={() => setIsEditing(true)}
@@ -120,7 +138,86 @@ export const LabelerRecordView = (props: {
 
   return (
     <div>
-      <h3>Labels</h3>
+      <div className="flex flex-row gap-2">
+        <div>
+          <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
+            Subject Types
+          </h3>
+          {subjectTypes.map((subjectType) => {
+            return (
+              <div key={subjectType}>
+                <Checkbox
+                  value={subjectType}
+                  defaultChecked
+                  name={`subjectType-${subjectType}`}
+                  className="mb-3 flex items-center leading-3"
+                  onChange={(e) => {
+                    let newSubjectTypes = [...(record.subjectTypes || [])]
+                    if (e.target.checked) {
+                      newSubjectTypes.push(subjectType)
+                    } else {
+                      newSubjectTypes = newSubjectTypes.filter(
+                        (type) => type !== subjectType,
+                      )
+                    }
+
+                    if (newSubjectTypes.length === 0) {
+                      setRecord({ ...record, subjectTypes: undefined })
+                    } else {
+                      setRecord({ ...record, subjectTypes: newSubjectTypes })
+                    }
+                  }}
+                  label={<span className="capitalize">{subjectType}</span>}
+                />
+              </div>
+            )
+          })}
+        </div>
+        {(!record.subjectTypes || record.subjectTypes?.includes('record')) && (
+          <div>
+            <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
+              Report Types
+            </h3>
+            {reasonTypes.map((reasonType) => {
+              return (
+                <div key={reasonType}>
+                  <Checkbox
+                    value={reasonType}
+                    defaultChecked
+                    name={`reasonType-${reasonType}`}
+                    className="mb-3 flex items-center leading-3"
+                    onChange={(e) => {
+                      let newReasonTypes = [...(record.reasonTypes || [])]
+                      if (e.target.checked) {
+                        newReasonTypes.push(reasonType)
+                      } else {
+                        newReasonTypes = newReasonTypes.filter(
+                          (type) => type !== reasonType,
+                        )
+                      }
+
+                      if (newReasonTypes.length === 0) {
+                        setRecord({ ...record, reasonTypes: undefined })
+                      } else {
+                        setRecord({ ...record, reasonTypes: newReasonTypes })
+                      }
+                    }}
+                    label={
+                      <span className="capitalize">
+                        {reasonTypeOptions[reasonType]}
+                      </span>
+                    }
+                  />
+                </div>
+              )
+            })}
+          </div>
+        )}
+      </div>
+
+      <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
+        Labels
+      </h3>
       {record.policies.labelValues.map((label) => (
         <div key={label} className="pb-2">
           <LabelDefinitionView
@@ -128,6 +225,18 @@ export const LabelerRecordView = (props: {
             definition={record.policies.labelValueDefinitions?.find(
               (def) => def.identifier === label,
             )}
+            onUpdate={(updatedDef) => {
+              setRecord({
+                ...record,
+                policies: {
+                  ...record.policies,
+                  labelValueDefinitions:
+                    record.policies.labelValueDefinitions?.map((def) =>
+                      def.identifier === label ? updatedDef : def,
+                    ),
+                },
+              })
+            }}
           />
         </div>
       ))}

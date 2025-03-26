@@ -120,7 +120,7 @@ export const LabelerRecordEditor: React.FC<{
                 })
               }
             >
-              <span className='text-xs'>Add Locale</span>
+              <span className="text-xs">Add Locale</span>
             </ActionButton>
           </div>
         </div>
@@ -163,7 +163,7 @@ export const LabelerRecordEditor: React.FC<{
       </div>
 
       <div className="flex justify-end space-x-2">
-        <ActionButton appearance="outlined" type="button">
+        <ActionButton appearance="outlined" type="button" onClick={onCancel}>
           Cancel
         </ActionButton>
         <ActionButton appearance="primary" type="submit">
