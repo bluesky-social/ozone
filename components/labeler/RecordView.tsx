@@ -138,7 +138,7 @@ export const LabelerRecordView = (props: {
 
   return (
     <div>
-      <div className="flex flex-row gap-2">
+      <div className="flex flex-row gap-3">
         <div>
           <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
             Subject Types

@@ -246,22 +246,6 @@ function RecordEditStep({
   })
   return (
     <div>
-      <div className="flex justify-evenly mt-4 mb-4">
-        <RecordUpdateDropdown
-          recordVal={recordVal}
-          setRecordVal={setRecordVal}
-        />
-        <div className="flex-grow text-right">
-          <ButtonPrimary
-            onClick={() => updateRecord.mutate()}
-            disabled={!!invalid || updateRecord.isLoading}
-            className="mx-1"
-          >
-            Save
-          </ButtonPrimary>
-        </div>
-      </div>
-
       <div className="my-2 justify-end sm:flex">
         <ButtonGroup
           size="xs"
@@ -316,93 +300,5 @@ function RecordEditStep({
         <LabelerRecordView originalRecord={record} />
       )}
     </div>
-  )
-}
-
-const RecordUpdateDropdown = ({
-  recordVal,
-  setRecordVal,
-}: {
-  recordVal: AppBskyLabelerService.Record
-  setRecordVal: (record: AppBskyLabelerService.Record) => void
-}) => {
-  const addLabelValue = () => {
-    setRecordVal({
-      ...recordVal,
-      policies: {
-        ...recordVal.policies,
-        labelValues: ['label-name', ...recordVal.policies.labelValues],
-      },
-    })
-  }
-  const addLabelDefinition = () => {
-    setRecordVal({
-      ...recordVal,
-      policies: {
-        ...recordVal.policies,
-        labelValueDefinitions: [
-          defaultLabelValueDefinition,
-          ...(recordVal.policies.labelValueDefinitions ?? []),
-        ],
-      },
-    })
-  }
-  const hasSubjectTypes = !!recordVal.subjectTypes
-  const hasSubjectCollections = !!recordVal.subjectCollections
-  const hasReasonTypes = !!recordVal.reasonTypes
-
-  const options = [
-    {
-      text: 'Add label value',
-      id: 'add-label-value',
-      onClick: addLabelValue,
-    },
-    {
-      text: 'All label definition',
-      id: 'add-label-definition',
-      onClick: addLabelDefinition,
-    },
-  ]
-
-  if (!hasSubjectTypes) {
-    options.push({
-      text: 'Add subject types',
-      id: 'add-subject-types',
-      onClick: () => {
-        setRecordVal({
-          ...recordVal,
-          subjectTypes: ['account', 'record'],
-        })
-      },
-    })
-  }
-
-  if (
-    !hasSubjectCollections &&
-    (!hasSubjectTypes || recordVal.subjectTypes?.includes('record'))
-  ) {
-    options.push({
-      text: 'Add subject collections',
-      id: 'add-subject-collections',
-      onClick: () => {
-        setRecordVal({
-          ...recordVal,
-          subjectCollections: ['app.bsky.feed.post'],
-        })
-      },
-    })
-  }
-
-  return (
-    <Dropdown
-      className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
-      items={options}
-    >
-      Update record
-      <ChevronDownIcon
-        className="ml-2 -mr-1 h-5 w-5 text-violet-200 hover:text-violet-100"
-        aria-hidden="true"
-      />
-    </Dropdown>
   )
 }
