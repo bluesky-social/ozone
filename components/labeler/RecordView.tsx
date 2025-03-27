@@ -4,7 +4,6 @@ import {
   AppBskyLabelerService,
   ComAtprotoLabelDefs,
   ComAtprotoModerationDefs,
-  ToolsOzoneModerationDefs,
 } from '@atproto/api'
 import {
   ExclamationCircleIcon,
@@ -13,7 +12,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { useEffect, useState } from 'react'
 import { LabelerRecordEditor } from './RecordEditor'
-import { Checkbox } from '@/common/forms'
+import { Checkbox, Textarea } from '@/common/forms'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
 
 const reasonTypes = [
@@ -141,6 +140,44 @@ export const LabelerRecordView = (props: {
       <div className="flex flex-row gap-3">
         <div>
           <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
+            Report Types
+          </h3>
+          {reasonTypes.map((reasonType) => {
+            return (
+              <div key={reasonType}>
+                <Checkbox
+                  value={reasonType}
+                  defaultChecked
+                  name={`reasonType-${reasonType}`}
+                  className="mb-3 flex items-center leading-3"
+                  onChange={(e) => {
+                    let newReasonTypes = [...(record.reasonTypes || [])]
+                    if (e.target.checked) {
+                      newReasonTypes.push(reasonType)
+                    } else {
+                      newReasonTypes = newReasonTypes.filter(
+                        (type) => type !== reasonType,
+                      )
+                    }
+
+                    if (newReasonTypes.length === 0) {
+                      setRecord({ ...record, reasonTypes: undefined })
+                    } else {
+                      setRecord({ ...record, reasonTypes: newReasonTypes })
+                    }
+                  }}
+                  label={
+                    <span className="capitalize">
+                      {reasonTypeOptions[reasonType]}
+                    </span>
+                  }
+                />
+              </div>
+            )
+          })}
+        </div>
+        <div>
+          <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
             Subject Types
           </h3>
           {subjectTypes.map((subjectType) => {
@@ -152,7 +189,10 @@ export const LabelerRecordView = (props: {
                   name={`subjectType-${subjectType}`}
                   className="mb-3 flex items-center leading-3"
                   onChange={(e) => {
-                    let newSubjectTypes = [...(record.subjectTypes || [])]
+                    let newSubjectTypes =
+                      record.subjectTypes === undefined
+                        ? [...subjectTypes]
+                        : [...record.subjectTypes]
                     if (e.target.checked) {
                       newSubjectTypes.push(subjectType)
                     } else {
@@ -174,43 +214,24 @@ export const LabelerRecordView = (props: {
           })}
         </div>
         {(!record.subjectTypes || record.subjectTypes?.includes('record')) && (
-          <div>
+          <div className="flex-1">
             <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
-              Report Types
+              Subject Collections
             </h3>
-            {reasonTypes.map((reasonType) => {
-              return (
-                <div key={reasonType}>
-                  <Checkbox
-                    value={reasonType}
-                    defaultChecked
-                    name={`reasonType-${reasonType}`}
-                    className="mb-3 flex items-center leading-3"
-                    onChange={(e) => {
-                      let newReasonTypes = [...(record.reasonTypes || [])]
-                      if (e.target.checked) {
-                        newReasonTypes.push(reasonType)
-                      } else {
-                        newReasonTypes = newReasonTypes.filter(
-                          (type) => type !== reasonType,
-                        )
-                      }
-
-                      if (newReasonTypes.length === 0) {
-                        setRecord({ ...record, reasonTypes: undefined })
-                      } else {
-                        setRecord({ ...record, reasonTypes: newReasonTypes })
-                      }
-                    }}
-                    label={
-                      <span className="capitalize">
-                        {reasonTypeOptions[reasonType]}
-                      </span>
-                    }
-                  />
-                </div>
-              )
-            })}
+            <Textarea
+              className="w-full"
+              placeholder="Comma separated list of nsids"
+              onChange={(e) => {
+                setRecord({
+                  ...record,
+                  subjectCollections: e.target.value
+                    .split(',')
+                    .map((s) => s.trim()),
+                })
+              }}
+            >
+              {record.subjectCollections?.join(',')}
+            </Textarea>
           </div>
         )}
       </div>
