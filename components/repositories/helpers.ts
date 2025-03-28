@@ -1,4 +1,5 @@
 import {
+  AppBskyActorDefs,
   AppBskyActorProfile,
   asPredicate,
   ComAtprotoAdminDefs,
@@ -59,3 +60,7 @@ export const getProfileFromRepo = (
 ) => {
   return relatedRecords.find(isValidProfileRecord)
 }
+
+export const isValidProfileViewDetailed = asPredicate(
+  AppBskyActorDefs.validateProfileViewDetailed,
+)

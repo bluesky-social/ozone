@@ -1,32 +1,16 @@
 import { Popover, Transition } from '@headlessui/react'
-import { ActionButton, ButtonGroup } from '@/common/buttons'
+import { ActionButton } from '@/common/buttons'
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { Input } from '@/common/forms'
 import { useState } from 'react'
 
 import { FilterProvider, useFilter } from './FilterContext'
 import { WorkspaceListData } from './useWorkspaceListData'
-import { differenceInDays, differenceInHours } from 'date-fns'
 import { DurationUnit, WorkspaceFilterItem } from './types'
 import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { FilterView } from './FilterView'
-
-const matchMinimumAccountAge = (
-  minAccountAgeUnit: string,
-  profileCreatedAt?: string,
-  minAccountAge?: number,
-) => {
-  if (!profileCreatedAt || !minAccountAge) return false
-  const createdAt = new Date(profileCreatedAt)
-  const now = new Date()
-  const diff =
-    minAccountAgeUnit === 'days'
-      ? differenceInDays(now, createdAt)
-      : differenceInHours(now, createdAt)
-
-  return diff >= minAccountAge
-}
+import { reviewStateToText } from '@/subject/ReviewStateMarker'
 
 const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   Partial<{ unit: DurationUnit }> & {
@@ -53,6 +37,8 @@ const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   { field: 'displayName', operator: 'ilike', text: 'Display Name' },
   { field: 'description', operator: 'ilike', text: 'Profile Description' },
   { field: 'content', operator: 'ilike', text: 'Record Content' },
+  { field: 'reviewState', operator: 'eq', text: 'In Review State' },
+  { field: 'reviewState', operator: 'neq', text: 'Not In Review State' },
 ]
 const booleanFields = ['emailConfirmed', 'accountDeactivated', 'takendown']
 const isBooleanFilter = (field: string) => booleanFields.includes(field)
@@ -134,13 +120,29 @@ export function FilterSelector({ groupId }: { groupId: number }) {
           aria-hidden="true"
         />
       </Dropdown>
-      {!isBooleanFilter(selected.field) && (
+      {!isBooleanFilter(selected.field) && selected.field !== 'reviewState' && (
         <Input
           className="text-xs py-0.5"
           type="text" // Checkbox for boolean fields
           value={`${value}`} // Ensure only string/number go in text input
           onChange={(e) => setValue(e.target.value)}
         />
+      )}
+      {selected.field === 'reviewState' && (
+        <Dropdown
+          className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-2 py-1 text-xs text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
+          items={Object.entries(reviewStateToText).map(([value, text]) => ({
+            text,
+            id: value,
+            onClick: () => setValue(value),
+          }))}
+        >
+          {value ? reviewStateToText[`${value}`] : 'Select Review State'}
+          <ChevronDownIcon
+            className="ml-1 h-4 w-4 text-violet-200 hover:text-violet-100"
+            aria-hidden="true"
+          />
+        </Dropdown>
       )}
       {needsUnitField && (
         <Dropdown

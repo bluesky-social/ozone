@@ -1,3 +1,4 @@
+import { reviewStateToText } from '@/subject/ReviewStateMarker'
 import { WorkspaceFilterItem } from './types'
 
 export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
@@ -5,6 +6,15 @@ export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
     return (
       <div>
         {filter.operator === 'eq' ? 'Email Confirmed' : 'Email Not Confirmed'}
+      </div>
+    )
+  }
+
+  if (filter.field === 'reviewState') {
+    return (
+      <div>
+        {filter.operator === 'eq' ? 'In Review State' : 'Not In Review State'}{' '}
+        <span className="font-semibold">{reviewStateToText[filter.value]}</span>
       </div>
     )
   }

@@ -53,6 +53,7 @@ export const FilterProvider = ({
 
   const toggleFilteredItems = (select: boolean) => {
     if (!listData) return
+    console.log(listData)
     const filteredItems: string[] = []
 
     for (const [subject, data] of Object.entries(listData)) {

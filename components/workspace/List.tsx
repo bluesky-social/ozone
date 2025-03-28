@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   ChevronDownIcon,
   ChevronUpIcon,
@@ -21,6 +21,7 @@ import { SubjectTag } from 'components/tags/SubjectTag'
 import { ModerationLabel } from '@/common/labels'
 import { WorkspaceExportPanel } from './ExportPanel'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
+import { isValidProfileViewDetailed } from '@/repositories/helpers'
 
 interface WorkspaceListProps {
   list: string[]
@@ -188,9 +189,7 @@ const ListItem = <ItemType extends string>({
     : []
 
   const isSubjectRecord = item.startsWith('at://')
-  const displayTags = isSubjectRecord
-    ? itemData?.record?.moderation.subjectStatus?.tags
-    : itemData?.repo?.moderation.subjectStatus?.tags
+  const displayTags = itemData?.status?.tags
   const displayLabels = isSubjectRecord
     ? itemData?.record?.labels
     : itemData?.repo?.labels
@@ -220,8 +219,8 @@ const ListItem = <ItemType extends string>({
                 omitQueryParamsInLinks={['workspaceOpen']}
                 subjectRepoHandle={itemData.repo?.handle}
               />
-              {itemData.profile?.followersCount &&
-                itemData.profile.followersCount >
+              {isValidProfileViewDetailed(itemData.profile) &&
+                (itemData.profile.followersCount || 0) >
                   HIGH_PROFILE_FOLLOWER_THRESHOLD && (
                   <StarIcon
                     className="w-4 h-4 ml-1 text-orange-300"

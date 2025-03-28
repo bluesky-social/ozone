@@ -1,10 +1,11 @@
 import { CollectionId, EmbedTypes } from '@/reports/helpers/subject'
 import { pluralize } from '@/lib/util'
 import { DurationUnit, WorkspaceFilterItem } from './types'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import { addDays, addMonths, addWeeks, addYears } from 'date-fns'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
+import { isValidProfileViewDetailed } from '@/repositories/helpers'
 
 export type GroupedSubjects = {
   dids: string[]
@@ -92,22 +93,28 @@ export const checkFilterMatchForWorkspaceItem = (
       const confirmedAt = data.repo?.emailConfirmedAt
       return !!filter.value ? !!confirmedAt : !confirmedAt
     case 'followersCount':
-      const { followersCount } = data.profile || {}
+      if (!isValidProfileViewDetailed(data.profile)) return false
+      const { followersCount } = data.profile
       if (!followersCount) return false
       return filter.operator === 'gte'
-        ? followersCount >= filter.value
-        : followersCount <= filter.value
+        ? followersCount >= Number(filter.value)
+        : followersCount <= Number(filter.value)
     case 'followsCount':
+      if (!isValidProfileViewDetailed(data.profile)) return false
       const { followsCount } = data.profile || {}
       if (!followsCount) return false
+      console.log(filter, data.profile)
       return filter.operator === 'gte'
-        ? followsCount >= filter.value
-        : followsCount <= filter.value
+        ? followsCount >= Number(filter.value)
+        : followsCount <= Number(filter.value)
     case 'displayName':
+      if (!isValidProfileViewDetailed(data.profile)) return false
       return matchText(filter.value, data.profile?.displayName)
     case 'description':
+      if (!isValidProfileViewDetailed(data.profile)) return false
       return matchText(filter.value, data.profile?.description)
     case 'accountAge':
+      if (!isValidProfileViewDetailed(data.profile)) return false
       const isCreatedAfterFilter = isMinAge(
         filter.value,
         filter.unit,
@@ -137,7 +144,9 @@ export const checkFilterMatchForWorkspaceItem = (
         data.record?.value?.text ? `${data.record?.value?.text}` : undefined,
       )
     case 'reviewState':
-      return data.status?.reviewState === filter.value
+      return filter.operator === 'eq'
+        ? data.status?.reviewState === filter.value
+        : data.status?.reviewState !== filter.value
     case 'takendown':
       return !!data.status?.takendown
     default:
@@ -147,7 +156,7 @@ export const checkFilterMatchForWorkspaceItem = (
 
 export const findHighProfileCountInWorkspace = (list: WorkspaceListData) => {
   let total = 0
-  
+
   for (const item of Object.values(list)) {
     if (
       item.profile?.followersCount &&
