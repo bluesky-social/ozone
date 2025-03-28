@@ -105,7 +105,10 @@ export const FilterProvider = ({
           (f) => f.field === filter.field && filter.operator === f.operator,
         )
       ) {
-        newGroup[groupId].filters.push(filter)
+        newGroup[groupId] = {
+          ...newGroup[groupId],
+          filters: [...newGroup[groupId].filters, filter],
+        }
       }
       return newGroup
     })
@@ -122,9 +125,12 @@ export const FilterProvider = ({
   const removeFilter = (groupId: number, field: string, operator: string) => {
     setFilterGroup((prev) => {
       const newGroup = [...prev]
-      newGroup[groupId].filters = newGroup[groupId].filters.filter(
-        (f) => !(f.field === field && f.operator === operator), // fix: negate the match
-      )
+      newGroup[groupId] = {
+        ...newGroup[groupId],
+        filters: newGroup[groupId].filters.filter(
+          (f) => !(f.field === field && f.operator === operator),
+        ),
+      }
       return newGroup
     })
   }

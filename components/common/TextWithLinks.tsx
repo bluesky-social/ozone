@@ -1,7 +1,7 @@
 // Utility function to detect and replace links with <a> tags
 const wrapLinksInText = (text: string): JSX.Element[] => {
   // Regular expression to match URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g
+  const urlRegex = /(https?:\/\/[^\s]+)/
 
   // Split text into parts, with URLs as matches
   const parts = text.split(urlRegex)

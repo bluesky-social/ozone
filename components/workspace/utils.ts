@@ -141,7 +141,7 @@ export const checkFilterMatchForWorkspaceItem = (
     case 'content':
       return matchText(
         filter.value,
-        data.record?.value?.text ? `${data.record?.value?.text}` : undefined,
+        data.record?.value?.text ? `${data.record.value.text}` : undefined,
       )
     case 'emailContains':
       return matchText(filter.value, data.repo?.email)
