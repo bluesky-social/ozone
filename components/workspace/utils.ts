@@ -143,12 +143,16 @@ export const checkFilterMatchForWorkspaceItem = (
         filter.value,
         data.record?.value?.text ? `${data.record?.value?.text}` : undefined,
       )
+    case 'emailContains':
+      return matchText(filter.value, data.repo?.email)
     case 'reviewState':
       return filter.operator === 'eq'
         ? data.status?.reviewState === filter.value
         : data.status?.reviewState !== filter.value
     case 'takendown':
-      return !!data.status?.takendown
+      return filter.operator === 'eq'
+        ? !!data.status?.takendown
+        : !data.status?.takendown
     default:
       return false
   }
@@ -159,7 +163,8 @@ export const findHighProfileCountInWorkspace = (list: WorkspaceListData) => {
 
   for (const item of Object.values(list)) {
     if (
-      item.profile?.followersCount &&
+      isValidProfileViewDetailed(item.profile) &&
+      item.profile.followersCount &&
       item.profile.followersCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD
     ) {
       total++

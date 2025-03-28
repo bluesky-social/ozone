@@ -33,6 +33,11 @@ export type WorkspaceFilterItem =
       value: boolean
     }
   | {
+      field: 'emailContains'
+      operator: 'ilike'
+      value: string
+    }
+  | {
       field: 'displayName'
       operator: 'ilike'
       value: string

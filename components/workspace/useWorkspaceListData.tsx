@@ -1,5 +1,6 @@
+import { chunkArray } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
@@ -7,6 +8,18 @@ export type WorkspaceListData = Record<
   string,
   ToolsOzoneModerationDefs.SubjectView
 >
+
+const getSubjectsInChunks = async (labelerAgent: Agent, subjects: string[]) => {
+  const results: ToolsOzoneModerationDefs.SubjectView[] = []
+  for (const chunk of chunkArray(subjects, 50)) {
+    const { data } = await labelerAgent.tools.ozone.moderation.getSubjects({
+      subjects: chunk,
+    })
+    results.push(...data.subjects)
+  }
+
+  return results
+}
 
 export const useWorkspaceListData = ({
   subjects,
@@ -29,11 +42,9 @@ export const useWorkspaceListData = ({
         return dataBySubject
       }
 
-      const { data } = await labelerAgent.tools.ozone.moderation.getSubjects({
-        subjects,
-      })
+      const data = await getSubjectsInChunks(labelerAgent, subjects)
 
-      for (const sub of data.subjects) {
+      for (const sub of data) {
         dataBySubject[sub.subject] = sub
       }
 

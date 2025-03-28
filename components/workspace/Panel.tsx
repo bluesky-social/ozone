@@ -34,7 +34,7 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
-import { isNonNullable, isValidDid } from '@/lib/util'
+import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
 import { findHighProfileCountInWorkspace } from './utils'
@@ -392,7 +392,10 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                         <Alert
                           type="warning"
                           title="High profile account in workspace"
-                          body={`There are ${highProfileAccountCount} accounts in your workspace with ${numberFormatter.format(
+                          body={`There are ${pluralize(
+                            highProfileAccountCount,
+                            'account',
+                          )} in your workspace with ${numberFormatter.format(
                             HIGH_PROFILE_FOLLOWER_THRESHOLD,
                           )} followers. Please take caution when including those accounts in bulk action.`}
                         />

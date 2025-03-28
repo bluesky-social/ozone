@@ -53,7 +53,6 @@ export const FilterProvider = ({
 
   const toggleFilteredItems = (select: boolean) => {
     if (!listData) return
-    console.log(listData)
     const filteredItems: string[] = []
 
     for (const [subject, data] of Object.entries(listData)) {
@@ -90,6 +89,11 @@ export const FilterProvider = ({
       for (const filteredItem of filteredItems) {
         toggleItemCheck(filteredItem, select)
       }
+      toast.success(
+        `${filteredItems.length} items have been ${
+          select ? 'selected' : 'unselected'
+        }`,
+      )
     }
   }
 

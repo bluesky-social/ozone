@@ -9,6 +9,16 @@ export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
       </div>
     )
   }
+  if (filter.field === 'emailContains') {
+    return (
+      <div>
+        {filter.operator === 'ilike'
+          ? 'Email Contains'
+          : 'Email Does Not Contain'}{' '}
+        <span className="font-semibold">{filter.value}</span>
+      </div>
+    )
+  }
 
   if (filter.field === 'reviewState') {
     return (
@@ -16,6 +26,12 @@ export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
         {filter.operator === 'eq' ? 'In Review State' : 'Not In Review State'}{' '}
         <span className="font-semibold">{reviewStateToText[filter.value]}</span>
       </div>
+    )
+  }
+
+  if (filter.field === 'takendown') {
+    return (
+      <div>{filter.operator === 'eq' ? 'Is Takendown' : 'Not Takendown'} </div>
     )
   }
 

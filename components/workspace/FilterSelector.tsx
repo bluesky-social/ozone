@@ -34,11 +34,14 @@ const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   },
   { field: 'emailConfirmed', operator: 'eq', text: 'Email Confirmed' },
   { field: 'emailConfirmed', operator: 'neq', text: 'Email Not Confirmed' },
+  { field: 'emailContains', operator: 'ilike', text: 'Email Contains' },
   { field: 'displayName', operator: 'ilike', text: 'Display Name' },
   { field: 'description', operator: 'ilike', text: 'Profile Description' },
   { field: 'content', operator: 'ilike', text: 'Record Content' },
   { field: 'reviewState', operator: 'eq', text: 'In Review State' },
   { field: 'reviewState', operator: 'neq', text: 'Not In Review State' },
+  { field: 'takendown', operator: 'eq', text: 'Is Takendown' },
+  { field: 'takendown', operator: 'neq', text: 'Not Takendown' },
 ]
 const booleanFields = ['emailConfirmed', 'accountDeactivated', 'takendown']
 const isBooleanFilter = (field: string) => booleanFields.includes(field)
