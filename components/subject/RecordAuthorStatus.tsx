@@ -4,7 +4,7 @@ import {
   YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,
 } from '@/lib/constants'
 import { getProfileFromRepo } from '@/repositories/helpers'
-import { AppBskyActorProfile, ToolsOzoneModerationDefs } from '@atproto/api'
+import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   LockClosedIcon,
   MoonIcon,
@@ -22,11 +22,13 @@ const getProfileCreatedAtFromRepo = (
 
 export const RecordAuthorStatus = ({
   repo,
+  profile,
 }: {
   repo: ToolsOzoneModerationDefs.RepoView
+  profile?: AppBskyActorDefs.ProfileViewDetailed
 }) => {
   // If a profile entry doesn't exist, use the repo.indexedAt timestamps as indicative of account creation date
-  const createdAt = getProfileCreatedAtFromRepo(repo)
+  const createdAt = profile?.createdAt || getProfileCreatedAtFromRepo(repo)
   const accountAge = differenceInDays(new Date(), new Date(createdAt))
   const isNew = accountAge < NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
   const isYoung = accountAge < YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS

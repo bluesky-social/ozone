@@ -30,7 +30,6 @@ import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useQueueSetting } from 'components/setting/useQueueSetting'
 import QueueFilterPanel from '@/reports/QueueFilter/Panel'
-import { REVIEWESCALATED } from '@atproto/api/dist/client/types/tools/ozone/moderation/defs'
 
 const TABS = [
   {
@@ -438,7 +437,7 @@ function useModerationQueueQuery() {
       // when escalation queue count and triage queue counts are different
       if (
         queueParams?.queueNames &&
-        queryParams.reviewState === REVIEWESCALATED &&
+        queryParams.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED &&
         queueSetting.data?.escalationQueueNames
       ) {
         queueParams.queueNames = queueSetting.data.escalationQueueNames

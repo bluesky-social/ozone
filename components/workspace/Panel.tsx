@@ -20,7 +20,7 @@ import { Dialog } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import { createRef, FormEvent, useRef, useState } from 'react'
+import { createRef, FormEvent, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { WORKSPACE_FORM_ID } from './constants'
 import {
@@ -34,10 +34,12 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
-import { isNonNullable, isValidDid } from '@/lib/util'
+import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
-import { isSubjectStatusView } from './utils'
+import { findHighProfileCountInWorkspace } from './utils'
+import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
+import { numberFormatter } from '@/repositories/HighProfileWarning'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -109,18 +111,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             .map((item) => {
               if (item.startsWith('did:')) return item
 
-              const status = workspaceListStatuses?.[item]
+              const itemData = workspaceListStatuses?.[item]
 
-              if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
-                return status.did
+              if (itemData?.repo?.did) {
+                return itemData.repo.did
               }
 
-              if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
-                return status.repo.did
-              }
-
-              if (status && isSubjectStatusView(status)) {
-                const { subject } = status
+              if (itemData?.status) {
+                const { subject } = itemData.status
                 if (ComAtprotoAdminDefs.isRepoRef(subject)) {
                   return subject.did
                 }
@@ -301,6 +299,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     }
   }
 
+  const highProfileAccountCount = useMemo(
+    () =>
+      workspaceListStatuses
+        ? findHighProfileCountInWorkspace(workspaceListStatuses)
+        : 0,
+    [workspaceListStatuses],
+  )
+
   return (
     <FullScreenActionPanel
       title={
@@ -378,6 +384,20 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                           type="error"
                           body={submission.error}
                           title="Error submitting bulk action"
+                        />
+                      </div>
+                    )}
+                    {highProfileAccountCount > 0 && (
+                      <div className="mb-3">
+                        <Alert
+                          type="warning"
+                          title="High profile account in workspace"
+                          body={`There are ${pluralize(
+                            highProfileAccountCount,
+                            'account',
+                          )} in your workspace with ${numberFormatter.format(
+                            HIGH_PROFILE_FOLLOWER_THRESHOLD,
+                          )} followers. Please take caution when including those accounts in bulk action.`}
                         />
                       </div>
                     )}

@@ -19,6 +19,7 @@ import { ModEventViewWithDetails } from './useModEventList'
 import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { pluralize } from '@/lib/util'
+import { TextWithLinks } from '@/common/TextWithLinks'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -36,38 +37,6 @@ const LinkToAuthor = ({
       {creatorHandle ? `@${creatorHandle}` : createdBy}
     </a>
   )
-}
-
-// Utility function to detect and replace links with <a> tags
-const wrapLinksInText = (text: string): JSX.Element[] => {
-  // Regular expression to match URLs
-  const urlRegex = /(https?:\/\/[^\s]+)/g
-
-  // Split text into parts, with URLs as matches
-  const parts = text.split(urlRegex)
-
-  return parts.map((part, index) => {
-    if (urlRegex.test(part)) {
-      // If part matches a URL, return it as a link
-      return (
-        <a
-          key={index}
-          href={part}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="break-all underline"
-        >
-          {part}
-        </a>
-      )
-    }
-    // Otherwise, return it as plain text
-    return <span key={index}>{part}</span>
-  })
-}
-
-const TextWithLinks: React.FC<{ text: string }> = ({ text }) => {
-  return <p className="whitespace-pre-wrap">{wrapLinksInText(text)}</p>
 }
 
 const Comment = ({

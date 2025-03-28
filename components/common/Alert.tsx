@@ -21,7 +21,7 @@ export const Alert = ({
       title: 'text-red-600',
     },
     info: {
-      container: 'border-blue-800 bg-blue-200 text-blue-800',
+      container: 'border-blue-800 bg-blue-200 text-blue-500',
       title: 'text-blue-800',
     },
     warning: {

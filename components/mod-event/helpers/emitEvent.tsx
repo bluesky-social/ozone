@@ -9,11 +9,7 @@ import {
 } from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
-import {
-  buildItemsSummary,
-  groupSubjects,
-  isSubjectStatusView,
-} from '@/workspace/utils'
+import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
 
 import { displayError } from '../../common/Loader'
 import { MOD_EVENTS } from '@/mod-event/constants'
@@ -21,10 +17,7 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useCallback } from 'react'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { chunkArray } from '@/lib/util'
-import {
-  WorkspaceListData,
-  WorkspaceListItemData,
-} from '@/workspace/useWorkspaceListData'
+import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
 import { compileTemplateContent } from 'components/email/helpers'
 import { diffTags } from 'components/tags/utils'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
@@ -98,7 +91,7 @@ type BulkActionResults = {
 
 const eventForSubject = (
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
-  subjectData: WorkspaceListItemData,
+  subjectData: ToolsOzoneModerationDefs.SubjectView,
 ): Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'> => {
   // only need to adjust event data for each subject for email events
   // for the rest, same event data is used for all subjects
@@ -121,20 +114,12 @@ const eventForSubject = (
     )
   }
 
-  const handle = ToolsOzoneModerationDefs.isRepoViewDetail(subjectData)
-    ? subjectData.handle
-    : ToolsOzoneModerationDefs.isRecordViewDetail(subjectData)
-    ? subjectData.repo.handle
-    : isSubjectStatusView(subjectData)
-    ? subjectData.subjectRepoHandle
-    : undefined
-
   return {
     ...eventData,
     event: {
       ...eventData.event,
       content: compileTemplateContent(eventData.event.content, {
-        handle,
+        handle: subjectData.repo?.handle,
       }),
     },
   }

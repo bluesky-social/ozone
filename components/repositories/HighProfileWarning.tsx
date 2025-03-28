@@ -2,7 +2,7 @@ import { Alert } from '@/common/Alert'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { AppBskyActorDefs } from '@atproto/api'
 
-const numberFormatter = new Intl.NumberFormat('en', {
+export const numberFormatter = new Intl.NumberFormat('en', {
   notation: 'compact',
   compactDisplay: 'short',
 })
