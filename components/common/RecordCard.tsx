@@ -15,10 +15,19 @@ import { CollectionId } from '@/reports/helpers/subject'
 import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
-import { ShieldCheckIcon } from '@heroicons/react/24/solid'
+import {
+  FolderMinusIcon,
+  FolderPlusIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { getProfileFromRepo } from '@/repositories/helpers'
+import {
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
 
 export function RecordCard(props: {
   uri: string
@@ -325,6 +334,11 @@ const AssociatedProfileIcon = ({
 export function RepoCard(props: { did: string }) {
   const { did } = props
   const { data: { repo, profile } = {}, error } = useRepoAndProfile({ did })
+  const { data: workspaceList } = useWorkspaceList()
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
+  const isInWorkspace = workspaceList?.includes(did)
+
   if (error) {
     return (
       <LoadingFailedDense
@@ -389,7 +403,7 @@ export function RepoCard(props: { did: string }) {
             <div className="flex flex-row items-center gap-2">
               <Link
                 href={`/repositories/${repo.did}?tab=followers`}
-                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
                   {pluralize(profile?.followersCount || 0, 'follower')}
@@ -397,7 +411,7 @@ export function RepoCard(props: { did: string }) {
               </Link>
               <Link
                 href={`/repositories/${repo.did}?tab=follows`}
-                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
                   {pluralize(profile?.followsCount || 0, 'follow')}
@@ -405,12 +419,31 @@ export function RepoCard(props: { did: string }) {
               </Link>
               <Link
                 href={`/repositories/${repo.did}?tab=posts`}
-                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
                   {pluralize(profile?.postsCount || 0, 'post')}
                 </span>
               </Link>
+              {isInWorkspace ? (
+                <button
+                  type="button"
+                  className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+                  onClick={() => removeFromWorkspace([did])}
+                >
+                  <FolderMinusIcon className="w-4 h-4" />
+                  <span className="text-sm">Remove from workspace</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+                  onClick={() => addToWorkspace([did])}
+                >
+                  <FolderPlusIcon className="w-4 h-4" />
+                  <span className="text-sm">Add to workspace</span>
+                </button>
+              )}
             </div>
           )}
           {takendown && (

@@ -2,7 +2,6 @@ import { DM_DISABLE_TAG } from '@/lib/constants'
 import { classNames } from '@/lib/util'
 import {
   ComAtprotoAdminDefs,
-  ComAtprotoRepoDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
@@ -25,7 +24,7 @@ const reviewStateDescription = {
     'This subject received moderation events but no human review is necessary as of now',
 }
 
-const reviewStateToText = {
+export const reviewStateToText = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: 'Requires Review',
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'Escalated',
   [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'Reviewed',

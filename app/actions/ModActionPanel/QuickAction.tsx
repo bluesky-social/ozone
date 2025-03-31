@@ -57,6 +57,8 @@ import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
+import { Alert } from '@/common/Alert'
+import { TextWithLinks } from '@/common/TextWithLinks'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -542,7 +544,10 @@ function Form(
                 >
                   {!isSubjectDid && record?.repo && (
                     <div className="-ml-1 my-2">
-                      <RecordAuthorStatus repo={record.repo} />
+                      <RecordAuthorStatus
+                        repo={record.repo}
+                        profile={profile}
+                      />
                     </div>
                   )}
                 </PreviewCard>
@@ -560,9 +565,13 @@ function Form(
                     <LastReviewedTimestamp subjectStatus={subjectStatus} />
                   </p>
                   {!!subjectStatus.comment && (
-                    <Card hint="important" className="mt-2">
-                      <strong>Note:</strong> {subjectStatus.comment}
-                    </Card>
+                    <div className="mt-2">
+                      <Alert
+                        type="info"
+                        title="Note"
+                        body={<TextWithLinks text={subjectStatus.comment} />}
+                      />
+                    </div>
                   )}
                 </div>
               )}

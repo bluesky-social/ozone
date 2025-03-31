@@ -60,15 +60,15 @@
   resolved "https://registry.yarnpkg.com/@atproto-labs/simple-store/-/simple-store-0.1.1.tgz#e743a2722b5d8732166f0a72aca8bd10e9bff106"
   integrity sha512-WKILW2b3QbAYKh+w5U2x6p5FqqLl0nAeLwGeDY+KjX01K4Dq3vQTR9b/qNp0jZm48CabPQVrqCv0PPU9LgRRRg==
 
-"@atproto/api@^0.14.9":
-  version "0.14.9"
-  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.14.9.tgz#5a49b36348b11376a6b2a82316a90b8cf1784ca8"
-  integrity sha512-9S7Vl6gK8hmy0+Gw5AWriUsQfQYZxwW7yTK5UdPPGlmjvQP49YeSLrsxB1ZkTyrlLSG2tpYrGsN4vco6KOORAQ==
+"@atproto/api@0.14.13":
+  version "0.14.13"
+  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.14.13.tgz#10ceccac0afa585481cf08cb48a93c2bca590847"
+  integrity sha512-bKzbzxvOMeIenGIOiRQ60gTnrTWHsceXvy19Ajmpqwbe/zvFEn+Y/wrayEDPT8Pbk7O8jgtLeRZotjOJF2+Gxg==
   dependencies:
     "@atproto/common-web" "^0.4.0"
-    "@atproto/lexicon" "^0.4.8"
-    "@atproto/syntax" "^0.3.4"
-    "@atproto/xrpc" "^0.6.10"
+    "@atproto/lexicon" "^0.4.9"
+    "@atproto/syntax" "^0.4.0"
+    "@atproto/xrpc" "^0.6.11"
     await-lock "^2.2.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
@@ -136,13 +136,13 @@
     multiformats "^9.9.0"
     zod "^3.23.8"
 
-"@atproto/lexicon@^0.4.8":
-  version "0.4.8"
-  resolved "https://registry.npmjs.org/@atproto/lexicon/-/lexicon-0.4.8.tgz#389d09f14e190b0e607348613ec5ded586a7df47"
-  integrity sha512-NPhu4MNHqft4muvHvcU0BrkWoEpTI+OmbQzvZzzRpw54MW3PfrQ4TPEpAfPOrWugPB9y4mD+l8OMN1c9eOGWMQ==
+"@atproto/lexicon@^0.4.9":
+  version "0.4.9"
+  resolved "https://registry.npmjs.org/@atproto/lexicon/-/lexicon-0.4.9.tgz#612951a85ecc1398366bd837cda6be89440f179d"
+  integrity sha512-/tmEuHQFr51V2V7EAVJzaA40sqJ7ylAZpR962VbOsPtmcdOHvezbjVHYEMXgfb927hS+xqbVyzBTbu5w9v8prA==
   dependencies:
     "@atproto/common-web" "^0.4.0"
-    "@atproto/syntax" "^0.3.4"
+    "@atproto/syntax" "^0.4.0"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     zod "^3.23.8"
@@ -192,10 +192,10 @@
   resolved "https://registry.yarnpkg.com/@atproto/syntax/-/syntax-0.3.0.tgz#fafa2dbea9add37253005cb663e7373e05e618b3"
   integrity sha512-Weq0ZBxffGHDXHl9U7BQc2BFJi/e23AL+k+i5+D9hUq/bzT4yjGsrCejkjq0xt82xXDjmhhvQSZ0LqxyZ5woxA==
 
-"@atproto/syntax@^0.3.4":
-  version "0.3.4"
-  resolved "https://registry.npmjs.org/@atproto/syntax/-/syntax-0.3.4.tgz#28326c73f8dff010399145f5bd4ceeeb1ab206ba"
-  integrity sha512-8CNmi5DipOLaVeSMPggMe7FCksVag0aO6XZy9WflbduTKM4dFZVCs4686UeMLfGRXX+X966XgwECHoLYrovMMg==
+"@atproto/syntax@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.npmjs.org/@atproto/syntax/-/syntax-0.4.0.tgz#bec71552087bb24c208a06ef418c0040b65542f2"
+  integrity sha512-b9y5ceHS8YKOfP3mdKmwAx5yVj9294UN7FG2XzP6V5aKUdFazEYRnR9m5n5ZQFKa3GNvz7de9guZCJ/sUTcOAA==
 
 "@atproto/xrpc@0.6.1", "@atproto/xrpc@^0.6.1":
   version "0.6.1"
@@ -205,12 +205,12 @@
     "@atproto/lexicon" "^0.4.1"
     zod "^3.23.8"
 
-"@atproto/xrpc@^0.6.10":
-  version "0.6.10"
-  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.10.tgz#c3500e452ddbc792c2b6f39a905e25ecb1a049c6"
-  integrity sha512-ClMiO+oAl3KrFe7sdo8Wzw81yV7EpEradZLJnYilPq4s7uF0by1jHGI/LarHBKHnE5RpaFpBC/5XD/ZzgmvAeg==
+"@atproto/xrpc@^0.6.11":
+  version "0.6.11"
+  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.11.tgz#54c527e39a2f5ddd2655b11f7cb99b8f303d8364"
+  integrity sha512-J2cZP8FjoDN0UkyTYBlCvKvxwBbDm4dld47u6FQK30RJy9YpSiUkdxJJ10NYqpi7JVny3M0qWQgpWJDV94+PdA==
   dependencies:
-    "@atproto/lexicon" "^0.4.8"
+    "@atproto/lexicon" "^0.4.9"
     zod "^3.23.8"
 
 "@babel/runtime@^7.1.2":
@@ -5375,9 +5375,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-AD5ih2NlSssTCwsMznbvwMZpJ1cbhkGd2uueNxzv2jDlEeZdU04JQfRnggJQ8DrcVBGjAsCKwFBbDlVNtEMlzw==
 
 tlds@^1.234.0:
-  version "1.255.0"
-  resolved "https://registry.npmjs.org/tlds/-/tlds-1.255.0.tgz#53c2571766c10da95928c716c48dfcf141341e3f"
-  integrity sha512-tcwMRIioTcF/FcxLev8MJWxCp+GUALRhFEqbDoZrnowmKSGqPrl5pqS+Sut2m8BgJ6S4FExCSSpGffZ0Tks6Aw==
+  version "1.256.0"
+  resolved "https://registry.npmjs.org/tlds/-/tlds-1.256.0.tgz#4285b41a7ed4fcc7c5eed8516c3a180e892fad36"
+  integrity sha512-ZmyVB9DAw+FFTmLElGYJgdZFsKLYd/I59Bg9NHkCGPwAbVZNRilFWDMAdX8UG+bHuv7kfursd5XGqo/9wi26lA==
 
 tldts-core@^6.1.66:
   version "6.1.66"
