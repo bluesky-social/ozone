@@ -1,6 +1,5 @@
 import { UserGroupIcon } from '@heroicons/react/20/solid'
 import { formatDistanceToNow } from 'date-fns'
-import { AppBskyActorProfile } from '@atproto/api'
 import { Repo } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
@@ -115,6 +114,7 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
             )}
             {lastSigninCountry && (
               <Link
+                prefetch={false}
                 href={`/repositories?term=sig:${encodeURIComponent(
                   lastSigninCountry,
                 )}`}
@@ -157,6 +157,7 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
             </Link>
             {ipCountry && (
               <Link
+                prefetch={false}
                 href={`/repositories?term=sig:${encodeURIComponent(ipCountry)}`}
               >
                 <LabelChip>{ipCountry}</LabelChip>

@@ -224,7 +224,11 @@ export function SubjectOverview(props: {
 
   return (
     <div className="flex flex-row items-center">
-      <Link href={`/repositories/${summary.did}`} target="_blank">
+      <Link
+        href={`/repositories/${summary.did}`}
+        prefetch={false}
+        target="_blank"
+      >
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
 

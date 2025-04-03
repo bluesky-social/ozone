@@ -168,7 +168,10 @@ function PostHeader({
             </Link>
             &nbsp;&middot;&nbsp;
             <Link
-              href={`/repositories/${item.post.uri.replace('at://', '')}`}
+              href={`/repositories/${item.post.uri.replace(
+                'at://',
+                '',
+              )}?tab=thread`}
               className="text-gray-500 dark:text-gray-50 hover:underline"
             >
               {new Date(item.post.indexedAt).toLocaleString()}
