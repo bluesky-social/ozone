@@ -23,6 +23,12 @@ jobs:
         with:
           node-version: 20
 
+      - name: Enable and use Corepack for Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@berry --activate
+          yarn --version  # This should show your Yarn v2+ version
+
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:

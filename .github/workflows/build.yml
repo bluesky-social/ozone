@@ -15,11 +15,21 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 20
+
+      - name: Enable and use Corepack for Yarn
+        run: |
+          corepack enable
+          corepack prepare yarn@berry --activate
+          yarn --version  # This should show your Yarn v2+ version
+
       - name: Check out Git repository
         uses: actions/checkout@v4
+
       - name: Yarn install
         run: yarn
+
       - name: Typescript Check
         run: yarn type-check
+
       - name: Build
         run: yarn build
