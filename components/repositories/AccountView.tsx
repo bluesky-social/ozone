@@ -62,6 +62,8 @@ import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { MuteReporting } from './MuteReporting'
 import { ProfileAvatar } from './ProfileAvatar'
 import { obscureIp, parseThreatSigs } from './helpers'
+import { useCopyAccountDetails } from './useCopyAccountDetails'
+import { getProfiles } from './api'
 
 enum Views {
   Details,
@@ -357,6 +359,8 @@ function Header({
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
   const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
   const { data: workspaceList } = useWorkspaceList()
+  const copyAccountDetails = useCopyAccountDetails({ repo, profile })
+  const canTakedown = usePermission('canTakedown')
   const { subjectStatus } = repo?.moderation ?? {}
   const displayActorName = repo
     ? profile?.displayName
@@ -398,6 +402,13 @@ function Header({
       reportOptions.push({
         text: 'Remove from workspace',
         onClick: () => removeFromWorkspace([repo.did]),
+      })
+    }
+
+    if (canTakedown) {
+      reportOptions.push({
+        text: 'Copy Account Info',
+        onClick: () => copyAccountDetails(),
       })
     }
   }
@@ -760,10 +771,8 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
       if (actors.length === 0) {
         return { profiles: [] }
       }
-      const { data } = await labelerAgent.api.app.bsky.actor.getProfiles({
-        actors,
-      })
-      return data
+      const profiles = await getProfiles(labelerAgent, actors)
+      return { profiles: Array.from(profiles.values()) }
     },
   })
 
@@ -771,7 +780,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
     if (!confirm('Are you sure you want to revoke their invite codes?')) {
       return
     }
-    await labelerAgent.api.com.atproto.admin.disableInviteCodes({
+    await labelerAgent.com.atproto.admin.disableInviteCodes({
       accounts: [repo.did],
     })
   }, [labelerAgent, repo.did])
@@ -792,7 +801,7 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
           Invited users
         </h3>
       </div>
-      {!invitedUsers?.length ? (
+      {!invitedUsers?.profiles?.length ? (
         <EmptyDataset message="No invited users found" />
       ) : (
         <AccountsGrid
@@ -817,7 +826,9 @@ function Invites({ repo }: { repo: GetRepo.OutputSchema }) {
   )
 }
 
-type FollowOrFollower = AppBskyActorDefs.ProfileView
+type FollowOrFollower =
+  | AppBskyActorDefs.ProfileView
+  | AppBskyActorDefs.ProfileViewDetailed
 export function AccountsGrid({
   error,
   isLoading,
@@ -853,7 +864,10 @@ export function AccountsGrid({
 export const ProfileCard = ({
   profile,
 }: {
-  profile: AppBskyActorDefs.ProfileView | AppBskyActorDefs.ProfileViewBasic
+  profile:
+    | AppBskyActorDefs.ProfileView
+    | AppBskyActorDefs.ProfileViewBasic
+    | AppBskyActorDefs.ProfileViewDetailed
 }) => {
   return (
     <div className="relative flex items-center space-x-3 rounded-lg border border-gray-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-6 py-5 shadow-sm dark:shadow-slate-800 focus-within:ring-2 focus-within:ring-pink-500 focus-within:ring-teal-500 focus-within:ring-offset-2 hover:border-gray-400 dark:hover:border-slate-700">

@@ -103,6 +103,10 @@ export const ItemTitle = ({
   if (ToolsOzoneModerationDefs.isIdentityEvent(modEvent.event)) {
     eventTitle = 'Identity event'
   }
+  if (ToolsOzoneModerationDefs.isModEventPriorityScore(modEvent.event)) {
+    eventColor = 'text-blue-400'
+    eventTitle = 'Updated priority score'
+  }
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus
     : modEvent.record

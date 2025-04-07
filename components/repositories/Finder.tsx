@@ -17,7 +17,7 @@ type RepoFinderProps = {
   onChange: (value: string) => void
   clearOnSelect?: boolean
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>
-  repos?: TypeaheadResult[]
+  getProfiles?: (labelerAgent: Agent, q: string) => Promise<TypeaheadResult[]>
 }
 
 const DefaultResult = {
@@ -55,7 +55,7 @@ const getProfilesForQuery = async (
 
   const {
     data: { actors },
-  } = await agent.api.app.bsky.actor.searchActorsTypeahead({ q })
+  } = await agent.app.bsky.actor.searchActorsTypeahead({ q })
 
   return actors.map((actor) => ({
     displayName: actor.displayName,
@@ -70,31 +70,18 @@ export function RepoFinder({
   onChange,
   clearOnSelect = false,
   inputProps = {},
-  repos,
+  getProfiles = getProfilesForQuery,
 }: RepoFinderProps) {
   const [query, setQuery] = useState('')
   const [selectedItem, setSelectedItem] = useState<string>('')
-  const [items, setItems] = useState<TypeaheadResult[]>(
-    repos?.length ? repos : [DefaultResult],
-  )
+  const [items, setItems] = useState<TypeaheadResult[]>([DefaultResult])
   const [loading, setLoading] = useState(false)
   const labelerAgent = useLabelerAgent()
 
   useEffect(() => {
     if (query.length > 0) {
-      if (repos?.length) {
-        setItems(
-          repos.filter((repo) => {
-            return (
-              repo.handle.toLowerCase().includes(query.toLowerCase()) ||
-              repo.displayName?.toLowerCase().includes(query.toLowerCase())
-            )
-          }),
-        )
-        return
-      }
       setLoading(true)
-      getProfilesForQuery(labelerAgent, query)
+      getProfiles(labelerAgent, query)
         .then((profiles) => {
           setItems(profiles)
           setLoading(false)
@@ -105,11 +92,9 @@ export function RepoFinder({
           setItems([ErrorResult])
         })
     } else {
-      setItems(repos?.length ? repos : [DefaultResult])
+      setItems([DefaultResult])
     }
-    // We only depend on the repo.length here because the repos array is either not passed
-    // or passed as an empty array while loading or the entire list is given
-  }, [labelerAgent, query, repos?.length])
+  }, [labelerAgent, query, getProfiles])
 
   return (
     <Combobox

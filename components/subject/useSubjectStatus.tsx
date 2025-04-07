@@ -11,7 +11,7 @@ export const useSubjectStatus = ({ subject }: { subject: string | null }) => {
     queryFn: async () => {
       if (!subject) return null
       const { data } =
-        await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+        await labelerAgent.tools.ozone.moderation.queryStatuses({
           subject,
           includeMuted: true,
           limit: 1,
@@ -46,7 +46,7 @@ export const useSubjectStatuses = ({
       const statusBySubject: StatusBySubject = {}
       await Promise.allSettled(
         subjects.map((subject) => {
-          return labelerAgent.api.tools.ozone.moderation
+          return labelerAgent.tools.ozone.moderation
             .queryStatuses({ subject, includeMuted: true, limit: 1 })
             .then(({ data }) => {
               if (data?.subjectStatuses[0]) {

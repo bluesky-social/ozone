@@ -2,7 +2,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   AtUri,
-  ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -28,8 +27,6 @@ import {
   ArrowLeftIcon,
   ArrowRightIcon,
   CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
@@ -43,10 +40,8 @@ import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
 import { Dialog } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
-import { diffTags } from 'components/tags/utils'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { Card } from '@/common/Card'
-import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -60,6 +55,10 @@ import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { PriorityScore } from '@/subject/PriorityScore'
+import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
+import { Alert } from '@/common/Alert'
+import { TextWithLinks } from '@/common/TextWithLinks'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -195,6 +194,7 @@ function Form(
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
+  const isPriorityScoreEvent = modEventType === MOD_EVENTS.SET_PRIORITY
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
@@ -260,75 +260,8 @@ function Form(
       setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
       const nextLabels = String(formData.get('labels'))!.split(',')
-      const coreEvent: Parameters<typeof onSubmit>[0]['event'] = {
-        $type: modEventType,
-      }
       const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
 
-      if (formData.get('durationInHours')) {
-        coreEvent.durationInHours = Number(formData.get('durationInHours'))
-      }
-
-      if (isTakedownEvent && formData.get('policies')) {
-        coreEvent.policies = [String(formData.get('policies'))]
-      }
-
-      if (
-        (isTakedownEvent || isAckEvent) &&
-        formData.get('acknowledgeAccountSubjects')
-      ) {
-        coreEvent.acknowledgeAccountSubjects = true
-      }
-
-      if (formData.get('comment')) {
-        coreEvent.comment = formData.get('comment')
-      }
-
-      if (formData.get('sticky')) {
-        coreEvent.sticky = true
-      }
-
-      if (formData.get('tags')) {
-        const tags = String(formData.get('tags'))
-          .split(',')
-          .map((tag) => tag.trim())
-        const { add, remove } = diffTags(subjectStatus?.tags || [], tags)
-        coreEvent.add = add
-        coreEvent.remove = remove
-      }
-
-      // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
-      if (coreEvent.$type === MOD_EVENTS.APPEAL) {
-        coreEvent.$type = MOD_EVENTS.REPORT
-        coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
-      }
-
-      // Enable and disable dm/video-upload actions are just tag operations behind the scenes
-      // so, for those events, we rebuild the coreEvent with the appropriate $type and tags
-      if (
-        MOD_EVENTS.DISABLE_DMS === coreEvent.$type ||
-        MOD_EVENTS.ENABLE_DMS === coreEvent.$type ||
-        MOD_EVENTS.DISABLE_VIDEO_UPLOAD === coreEvent.$type ||
-        MOD_EVENTS.ENABLE_VIDEO_UPLOAD === coreEvent.$type
-      ) {
-        if (coreEvent.$type === MOD_EVENTS.DISABLE_DMS) {
-          coreEvent.add = [DM_DISABLE_TAG]
-          coreEvent.remove = []
-        }
-        if (coreEvent.$type === MOD_EVENTS.ENABLE_DMS) {
-          coreEvent.add = []
-          coreEvent.remove = [DM_DISABLE_TAG]
-        }
-        if (coreEvent.$type === MOD_EVENTS.DISABLE_VIDEO_UPLOAD) {
-          coreEvent.add = [VIDEO_UPLOAD_DISABLE_TAG]
-          coreEvent.remove = []
-        }
-        if (coreEvent.$type === MOD_EVENTS.ENABLE_VIDEO_UPLOAD) {
-          coreEvent.add = []
-          coreEvent.remove = [VIDEO_UPLOAD_DISABLE_TAG]
-        }
-        coreEvent.$type = MOD_EVENTS.TAG
-      }
       const { subject: subjectInfo, record: recordInfo } =
         await createSubjectFromId(subject)
 
@@ -336,11 +269,19 @@ function Form(
         .getAll('subjectBlobCids')
         .map((cid) => String(cid))
 
+      const coreEvent = getEventFromFormData(
+        modEventType,
+        formData,
+        subjectStatus || undefined,
+      )
       if (isDivertEvent && !subjectBlobCids.length) {
         throw new Error('blob-selection-required')
       }
 
-      if (isTakedownEvent && !coreEvent.policies) {
+      if (
+        ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
+        !coreEvent.policies
+      ) {
         throw new Error('policy-selection-required')
       }
 
@@ -350,7 +291,7 @@ function Form(
       // To work around that, this block checks if any label is being reverted and if so, it checks if the event's CID is different than the CID
       // associated with the label that's being negated. If yes, it emits separate events for each such label and after that, if there are more labels
       // left to be created/negated for the current CID, it emits the original event separate event for that.
-      if (isLabelEvent) {
+      if (ToolsOzoneModerationDefs.isModEventLabel(coreEvent)) {
         const labels = diffLabels(
           // Make sure we don't try to negate self labels
           currentLabels.filter((label) => !isSelfLabel(label)),
@@ -390,35 +331,30 @@ function Form(
         const labelSubmissions: Promise<void>[] = []
 
         Object.keys(negatingLabelsByCid).forEach((labelCid) => {
-          labelSubmissions.push(
-            onSubmit({
-              subject: { ...subjectInfo, cid: labelCid },
-              createdBy: accountDid,
-              subjectBlobCids: formData
-                .getAll('subjectBlobCids')
-                .map((cid) => String(cid)),
-              event: {
-                ...coreEvent,
-                // Here we'd never want to create labels associated with different CID than the current one
-                createLabelVals: [],
-                negateLabelVals: negatingLabelsByCid[labelCid],
-              },
-            }),
-          )
+          const negateLabelEvent = {
+            subject: { ...subjectInfo, cid: labelCid },
+            createdBy: accountDid,
+            subjectBlobCids,
+            event: {
+              ...coreEvent,
+              // Here we'd never want to create labels associated with different CID than the current one
+              createLabelVals: [],
+              negateLabelVals: negatingLabelsByCid[labelCid],
+            },
+          }
+
+          labelSubmissions.push(onSubmit(negateLabelEvent))
         })
 
-        // TODO: Typecasting here is not ideal
         if (
-          (coreEvent.negateLabelVals as string[]).length ||
-          (coreEvent.createLabelVals as string[]).length
+          coreEvent.negateLabelVals.length ||
+          coreEvent.createLabelVals.length
         ) {
           labelSubmissions.push(
             onSubmit({
               subject: subjectInfo,
               createdBy: accountDid,
-              subjectBlobCids: formData
-                .getAll('subjectBlobCids')
-                .map((cid) => String(cid)),
+              subjectBlobCids,
               event: coreEvent,
             }),
           )
@@ -438,11 +374,13 @@ function Form(
         await onSubmit({
           subject: subjectInfo,
           createdBy: accountDid,
-          subjectBlobCids: formData
-            .getAll('subjectBlobCids')
-            .map((cid) => String(cid)),
+          subjectBlobCids,
           // We want the comment from label and other params like label val etc. to NOT be associated with the ack event
-          event: { $type: MOD_EVENTS.ACKNOWLEDGE },
+          // But leave a specific keyword to indicate that the previous action was definitive
+          event: {
+            $type: MOD_EVENTS.ACKNOWLEDGE,
+            comment: '[DEFINITIVE_PREVIOUS_ACTION]',
+          },
         })
       }
 
@@ -455,9 +393,10 @@ function Form(
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       // If previous event was takedown and not immediately moving to next subject, moderators are most like to send a follow up email so default to email event
       const eventMayNeedEmail =
-        coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
-        coreEvent.$type === MOD_EVENTS.REVERSE_TAKEDOWN ||
-        coreEvent.$type === MOD_EVENTS.LABEL
+        ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) ||
+        ToolsOzoneModerationDefs.isModEventReverseTakedown(coreEvent) ||
+        ToolsOzoneModerationDefs.isModEventLabel(coreEvent)
+
       setModEventType(
         eventMayNeedEmail && !shouldMoveToNextSubject && canSendEmail
           ? MOD_EVENTS.EMAIL
@@ -605,7 +544,10 @@ function Form(
                 >
                   {!isSubjectDid && record?.repo && (
                     <div className="-ml-1 my-2">
-                      <RecordAuthorStatus repo={record.repo} />
+                      <RecordAuthorStatus
+                        repo={record.repo}
+                        profile={profile}
+                      />
                     </div>
                   )}
                 </PreviewCard>
@@ -613,14 +555,23 @@ function Form(
 
               {!!subjectStatus && (
                 <div className="pb-4">
-                  <p>
+                  <p className="flex flex-row items-center">
+                    {!!subjectStatus?.priorityScore && (
+                      <PriorityScore
+                        priorityScore={subjectStatus.priorityScore}
+                      />
+                    )}
                     <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                     <LastReviewedTimestamp subjectStatus={subjectStatus} />
                   </p>
                   {!!subjectStatus.comment && (
-                    <Card hint="important" className="mt-2">
-                      <strong>Note:</strong> {subjectStatus.comment}
-                    </Card>
+                    <div className="mt-2">
+                      <Alert
+                        type="info"
+                        title="Note"
+                        body={<TextWithLinks text={subjectStatus.comment} />}
+                      />
+                    </div>
                   )}
                 </div>
               )}
@@ -698,6 +649,26 @@ function Form(
                   </div>
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
+                      {isPriorityScoreEvent && (
+                        <FormLabel
+                          label=""
+                          className="mt-2 w-1/2"
+                          htmlFor="priorityScore"
+                        >
+                          <Input
+                            type="number"
+                            id="priorityScore"
+                            name="priorityScore"
+                            className="block w-full"
+                            placeholder="Score between 0-100"
+                            autoFocus
+                            min={0}
+                            max={100}
+                            step={1}
+                            required
+                          />
+                        </FormLabel>
+                      )}
                       <FormLabel
                         label=""
                         htmlFor="durationInHours"
@@ -723,6 +694,8 @@ function Form(
                               ? 'Mute duration'
                               : isLabelEvent
                               ? 'Label duration'
+                              : isPriorityScoreEvent
+                              ? 'Score duration'
                               : ''
                           }
                         />

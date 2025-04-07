@@ -41,7 +41,7 @@ export const useContentSearch = ({
 
         const { data } = await appviewAgent.app.bsky.actor.searchActors({
           q: term,
-          limit: 30,
+          limit: 100,
           cursor: pageParam,
         })
 
@@ -50,7 +50,7 @@ export const useContentSearch = ({
 
       const { data } = await labelerAgent.app.bsky.feed.searchPosts({
         q: term,
-        limit: 30,
+        limit: 100,
         sort: section,
         cursor: pageParam,
       })
@@ -61,12 +61,12 @@ export const useContentSearch = ({
 
   const data =
     (section === 'people'
-      ? (searchInfo.data?.pages.flatMap(
-          (page) => page.actors,
-        ) as ActorResult['actors'])
-      : (searchInfo.data?.pages.flatMap(
-          (page) => page.posts,
-        ) as PostResult['posts'])) || []
+      ? searchInfo.data?.pages.flatMap((page) =>
+          'actors' in page ? page.actors : [],
+        )
+      : searchInfo.data?.pages.flatMap((page) =>
+          'posts' in page ? page.posts : [],
+        )) || []
 
   return {
     ...searchInfo,

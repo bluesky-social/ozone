@@ -3,12 +3,11 @@ import { useEffect, useState } from 'react'
 import dynamic from 'next/dynamic'
 import {
   AppBskyFeedDefs,
-  AppBskyEmbedImages,
-  AppBskyEmbedExternal,
-  AppBskyEmbedRecordWithMedia,
   AppBskyEmbedVideo,
   AppBskyFeedPost,
   AppBskyEmbedRecord,
+  AppBskyEmbedImages,
+  AppBskyEmbedExternal,
   AppBskyGraphDefs,
 } from '@atproto/api'
 import Link from 'next/link'
@@ -20,20 +19,17 @@ import {
   FolderPlusIcon,
 } from '@heroicons/react/24/outline'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '@/lib/types'
 import {
   buildBlueSkyAppUrl,
   classNames,
   parseAtUri,
   pluralize,
 } from '@/lib/util'
-import { getActionClassNames } from '@/reports/ModerationView/ActionHelpers'
 import { RichText } from '../RichText'
 import { LabelList, ModerationLabel } from '../labels'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
-import { MOD_EVENTS } from '@/mod-event/constants'
 import { SOCIAL_APP_URL } from '@/lib/constants'
 import { ReplyParent } from './ReplyParent'
 import {
@@ -44,6 +40,8 @@ import {
 import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 import { getVideoUrlWithFallback } from '../video/helpers'
+import { isValidPostRecord, extractEmbed } from './helpers'
+
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
 })
@@ -145,7 +143,7 @@ function PostHeader({
           />
         </div>
         <div className="min-w-0 flex-1">
-          {isRepost(item.reason) ? (
+          {AppBskyFeedDefs.isReasonRepost(item.reason) ? (
             <p className="block text-gray-500 dark:text-gray-50 text-sm">
               Reposted by @{item.reason.by.handle}
             </p>
@@ -200,14 +198,13 @@ function PostContent({
   item: AppBskyFeedDefs.FeedViewPost
   dense?: boolean
 }) {
-  const { takedownId, uri } = item.post
+  const { uri } = item.post
   const [needsTranslation, setNeedsTranslation] = useState(false)
   const primaryLanguage = 'en'
   const translatorUrl = getTranslatorLink(
     primaryLanguage,
     (item.post.record as undefined | { text?: string })?.text || '',
   )
-  const showActionLine = needsTranslation || !!takedownId
   useEffect(() => {
     isPostInLanguage(item.post, [primaryLanguage]).then((isPostInPrimaryLang) =>
       setNeedsTranslation(!isPostInPrimaryLang),
@@ -220,28 +217,14 @@ function PostContent({
       } pb-2 dark:text-gray-100`}
     >
       <RichText post={item.post.record as AppBskyFeedPost.Record} />
-      {showActionLine && (
+      {needsTranslation && (
         <p className="text-xs mt-0">
-          {!!takedownId && (
-            <Link
-              className={`${getActionClassNames({
-                action: MOD_EVENTS.TAKEDOWN,
-                prop: 'text',
-              })}`}
-              href={`/actions/${takedownId}`}
-            >
-              Taken Down
-            </Link>
-          )}
           {needsTranslation && (
             <a
               href={translatorUrl}
               target="_blank"
               rel="noreferrer"
-              className={classNames(
-                `text-blue-600`,
-                takedownId ? 'pl-1 ml-1 border-gray-400 border-l' : '',
-              )}
+              className={classNames(`text-blue-600`)}
             >
               <LanguageIcon className="w-3 h-3 inline mr-1" />
               Translate
@@ -266,9 +249,7 @@ export function PostEmbeds({
   item: AppBskyFeedDefs.FeedViewPost
 }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
-  const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
-    ? item.post.embed.media
-    : item.post.embed
+  const embed = extractEmbed(item.post)
 
   const allLabels = item.post.labels?.map(({ val }) => val)
   const mediaFilters = getMediaFiltersForLabels(allLabels)
@@ -361,48 +342,43 @@ export function RecordEmbedView({
   embed,
   leftAligned = true,
 }: {
-  embed: AppBskyEmbedRecord.View | { $type: string; [k: string]: unknown }
+  embed: AppBskyEmbedRecord.View
   leftAligned?: boolean
 }) {
   const leftPadding = !leftAligned ? 'pl-14' : 'pl-2'
   if (
     AppBskyEmbedRecord.isViewRecord(embed.record) &&
-    AppBskyFeedPost.isRecord(embed.record.value) &&
-    AppBskyFeedPost.validateRecord(embed.record.value).success
+    isValidPostRecord(embed.record.value)
   ) {
+    const { author, uri, indexedAt, value } = embed.record
     return (
       <div
         className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
       >
         <div className="flex flex-row gap-1">
-          <ProfileAvatar
-            profile={embed.record.author}
-            className="w-6 h-6 rounded-full"
-          />
+          <ProfileAvatar profile={author} className="w-6 h-6 rounded-full" />
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
-              href={`/repositories/${embed.record.author.did}`}
+              href={`/repositories/${author.did}`}
               className="hover:underline"
             >
-              {embed.record.author.displayName ? (
+              {author.displayName ? (
                 <>
-                  <span className="font-bold">
-                    {embed.record.author.displayName}
-                  </span>
+                  <span className="font-bold">{author.displayName}</span>
                   <span className="ml-1 text-gray-500 dark:text-gray-50">
-                    @{embed.record.author.handle}
+                    @{author.handle}
                   </span>
                 </>
               ) : (
-                <span className="font-bold">@{embed.record.author.handle}</span>
+                <span className="font-bold">@{author.handle}</span>
               )}
             </Link>
             &nbsp;&middot;&nbsp;
             <Link
-              href={`/repositories/${embed.record.uri.replace('at://', '')}`}
+              href={`/repositories/${uri.replace('at://', '')}`}
               className="text-gray-500 dark:text-gray-50 hover:underline"
             >
-              {new Date(embed.record.indexedAt).toLocaleString()}
+              {new Date(indexedAt).toLocaleString()}
             </Link>
           </p>
         </div>
@@ -411,7 +387,7 @@ export function RecordEmbedView({
             leftAligned ? 'pl-6' : 'pl-10'
           } pb-2 dark:text-gray-100`}
         >
-          <RichText post={embed.record.value} />
+          <RichText post={value} />
         </div>
       </div>
     )

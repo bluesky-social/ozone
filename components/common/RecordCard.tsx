@@ -4,6 +4,8 @@ import {
   ToolsOzoneModerationDefs,
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
+  AppBskyActorProfile,
+  asPredicate,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
 import { PostAsCard } from './posts/PostsFeed'
@@ -13,9 +15,19 @@ import { CollectionId } from '@/reports/helpers/subject'
 import { ListRecordCard } from 'components/list/RecordCard'
 import { FeedGeneratorRecordCard } from './feeds/RecordCard'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
-import { ShieldCheckIcon } from '@heroicons/react/24/solid'
+import {
+  FolderMinusIcon,
+  FolderPlusIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { getProfileFromRepo } from '@/repositories/helpers'
+import {
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+  useWorkspaceRemoveItemsMutation,
+} from '@/workspace/hooks'
 
 export function RecordCard(props: {
   uri: string
@@ -70,6 +82,8 @@ export function RecordCard(props: {
   )
 }
 
+const isValidSelfLabels = asPredicate(ComAtprotoLabelDefs.validateSelfLabels)
+
 function PostCard({
   uri,
   showLabels,
@@ -87,10 +101,10 @@ function PostCard({
     retry: false,
     queryKey: ['postCard', { uri }],
     queryFn: async () => {
-      // @TODO when unifying admin auth, ensure admin can see taken-down posts
-      const { data: post } = await labelerAgent.api.app.bsky.feed.getPostThread(
-        { uri, depth: 0 },
-      )
+      const { data: post } = await labelerAgent.app.bsky.feed.getPostThread({
+        uri,
+        depth: 0,
+      })
       return post
     },
   })
@@ -106,33 +120,45 @@ function PostCard({
 
   // When the author of the post blocks the viewer, getPostThread won't return the necessary properties
   // to build the post view so we manually build the post view from the raw record data
-  if (data?.thread?.blocked) {
+  if (AppBskyFeedDefs.isBlockedPost(data?.thread)) {
     return (
       <BaseRecordCard
         uri={uri}
-        renderRecord={(record) => (
-          <PostAsCard
-            dense
-            controls={[]}
-            item={{
-              post: {
-                uri: record.uri,
-                cid: record.cid,
-                author: record.repo,
-                record: record.value,
-                labels: ComAtprotoLabelDefs.isSelfLabels(record.value['labels'])
-                  ? record.value['labels'].values.map(({ val }) => ({
-                      val,
-                      uri: record.uri,
-                      src: record.repo.did,
-                      cts: new Date(0).toISOString(),
-                    }))
-                  : [],
-                indexedAt: new Date(0).toISOString(),
-              },
-            }}
-          />
-        )}
+        renderRecord={(record) => {
+          const author = getProfileFromRepo(record.repo.relatedRecords)
+          const selfLabels = isValidSelfLabels(record.value?.labels)
+            ? record.value.labels.values
+            : []
+          const labels = selfLabels.map(({ val }) => ({
+            val,
+            uri: record.uri,
+            src: record.repo.did,
+            cts: new Date(0).toISOString(),
+          }))
+          return (
+            <PostAsCard
+              dense
+              controls={[]}
+              item={{
+                post: {
+                  author: {
+                    did: record.repo.did,
+                    handle: record.repo.handle,
+                    ...author,
+                    avatar: undefined,
+                    labels: [],
+                    $type: 'app.bsky.actor.defs#profileViewBasic',
+                  },
+                  labels,
+                  uri: record.uri,
+                  cid: record.cid,
+                  record: record.value,
+                  indexedAt: new Date(0).toISOString(),
+                },
+              }}
+            />
+          )
+        }}
       />
     )
   }
@@ -213,10 +239,9 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
     retry: false,
     queryKey: ['repoCard', { did }],
     queryFn: async () => {
-      // @TODO when unifying admin auth, ensure admin can see taken-down profiles
       const getRepo = async () => {
         const { data: repo } =
-          await labelerAgent.api.tools.ozone.moderation.getRepo({
+          await labelerAgent.tools.ozone.moderation.getRepo({
             did,
           })
         return repo
@@ -224,7 +249,7 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
       const getProfile = async () => {
         try {
           const { data: profile } =
-            await labelerAgent.api.app.bsky.actor.getProfile({
+            await labelerAgent.app.bsky.actor.getProfile({
               actor: did,
             })
           return profile
@@ -309,6 +334,11 @@ const AssociatedProfileIcon = ({
 export function RepoCard(props: { did: string }) {
   const { did } = props
   const { data: { repo, profile } = {}, error } = useRepoAndProfile({ did })
+  const { data: workspaceList } = useWorkspaceList()
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
+  const isInWorkspace = workspaceList?.includes(did)
+
   if (error) {
     return (
       <LoadingFailedDense
@@ -373,7 +403,7 @@ export function RepoCard(props: { did: string }) {
             <div className="flex flex-row items-center gap-2">
               <Link
                 href={`/repositories/${repo.did}?tab=followers`}
-                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
                   {pluralize(profile?.followersCount || 0, 'follower')}
@@ -381,7 +411,7 @@ export function RepoCard(props: { did: string }) {
               </Link>
               <Link
                 href={`/repositories/${repo.did}?tab=follows`}
-                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
                   {pluralize(profile?.followsCount || 0, 'follow')}
@@ -389,12 +419,31 @@ export function RepoCard(props: { did: string }) {
               </Link>
               <Link
                 href={`/repositories/${repo.did}?tab=posts`}
-                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-400 underline hover:underline cursor-pointer"
+                className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
                   {pluralize(profile?.postsCount || 0, 'post')}
                 </span>
               </Link>
+              {isInWorkspace ? (
+                <button
+                  type="button"
+                  className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+                  onClick={() => removeFromWorkspace([did])}
+                >
+                  <FolderMinusIcon className="w-4 h-4" />
+                  <span className="text-sm">Remove from workspace</span>
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 hover:underline cursor-pointer"
+                  onClick={() => addToWorkspace([did])}
+                >
+                  <FolderPlusIcon className="w-4 h-4" />
+                  <span className="text-sm">Add to workspace</span>
+                </button>
+              )}
             </div>
           )}
           {takendown && (

@@ -4,22 +4,23 @@ import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { LabelChip } from '@/common/labels'
 import { PropsOf } from '@/lib/types'
 import { MOD_EVENTS } from '@/mod-event/constants'
-import { useActionSubjects } from '@/mod-event/helpers/emitEvent'
+import {
+  getEventFromFormData,
+  useActionSubjects,
+} from '@/mod-event/helpers/emitEvent'
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
   AtUri,
   ComAtprotoAdminDefs,
-  ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
-  ToolsOzoneModerationEmitEvent,
   ToolsOzoneTeamDefs,
 } from '@atproto/api'
 import { Dialog } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import { createRef, FormEvent, useRef, useState } from 'react'
+import { createRef, FormEvent, useMemo, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 import { WORKSPACE_FORM_ID } from './constants'
 import {
@@ -33,9 +34,12 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData } from './useWorkspaceListData'
-import { isNonNullable, isValidDid } from '@/lib/util'
+import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
+import { findHighProfileCountInWorkspace } from './utils'
+import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
+import { numberFormatter } from '@/repositories/HighProfileWarning'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -107,18 +111,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
             .map((item) => {
               if (item.startsWith('did:')) return item
 
-              const status = workspaceListStatuses?.[item]
+              const itemData = workspaceListStatuses?.[item]
 
-              if (ToolsOzoneModerationDefs.isRepoViewDetail(status)) {
-                return status.did
+              if (itemData?.repo?.did) {
+                return itemData.repo.did
               }
 
-              if (ToolsOzoneModerationDefs.isRecordViewDetail(status)) {
-                return status.repo.did
-              }
-
-              if (ToolsOzoneModerationDefs.isSubjectStatusView(status)) {
-                const { subject } = status
+              if (itemData?.status) {
+                const { subject } = itemData.status
                 if (ComAtprotoAdminDefs.isRepoRef(subject)) {
                   return subject.did
                 }
@@ -208,23 +208,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
       const labels = String(formData.get('labels'))?.split(',')
-      const coreEvent: ToolsOzoneModerationEmitEvent.InputSchema['event'] = {
-        $type: modEventType,
-      }
+      const coreEvent = getEventFromFormData(modEventType, formData)
 
-      if (formData.get('durationInHours')) {
-        coreEvent.durationInHours = Number(formData.get('durationInHours'))
-      }
-
-      if (formData.get('comment')) {
-        coreEvent.comment = formData.get('comment')
-      }
-
-      if (formData.get('sticky')) {
-        coreEvent.sticky = true
-      }
-
-      if (coreEvent.$type === MOD_EVENTS.TAKEDOWN) {
+      if (ToolsOzoneModerationDefs.isModEventTakedown(coreEvent)) {
         // The Combobox component from headless ui does not support passing a `form` attribute to the hidden input
         // and since the input field is rendered outside of the main workspace form, we need to manually reach out
         // to the input field to get the selected value
@@ -232,6 +218,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           ev.currentTarget.parentNode?.querySelector<HTMLInputElement>(
             'input[name="policies"]',
           )?.value
+
         if (policies) {
           coreEvent.policies = [String(policies)]
         } else {
@@ -244,33 +231,22 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
-      if (formData.get('tags')) {
-        const isRemovingTags = formData.get('removeTags')
-        const tags = String(formData.get('tags'))
-          .split(',')
-          .map((tag) => tag.trim())
-        coreEvent.add = isRemovingTags ? [] : tags
-        coreEvent.remove = isRemovingTags ? tags : []
-      }
-
-      if (labels?.length) {
-        const isRemovingLabels = formData.get('removeLabels')
-        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
-        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
-      }
-
-      // Appeal type doesn't really exist, behind the scenes, it's just a report event with special reason
-      if (coreEvent.$type === MOD_EVENTS.APPEAL) {
-        coreEvent.$type = MOD_EVENTS.REPORT
-        coreEvent.reportType = ComAtprotoModerationDefs.REASONAPPEAL
+      if (ToolsOzoneModerationDefs.isModEventTag(coreEvent)) {
+        // By default, when there are no reference subject stats, the event builder returns all selected tags to be added
+        // If the user wants to remove tags, we need to swap the add and remove properties
+        if (formData.get('removeTags')) {
+          coreEvent.add = []
+          coreEvent.remove = coreEvent.add
+        }
       }
 
       if (
-        (coreEvent.$type === MOD_EVENTS.TAKEDOWN ||
-          coreEvent.$type === MOD_EVENTS.ACKNOWLEDGE) &&
-        formData.get('acknowledgeAccountSubjects')
+        ToolsOzoneModerationDefs.isModEventLabel(coreEvent) &&
+        labels?.length
       ) {
-        coreEvent.acknowledgeAccountSubjects = true
+        const isRemovingLabels = formData.get('removeLabels')
+        coreEvent.negateLabelVals = isRemovingLabels ? labels : []
+        coreEvent.createLabelVals = isRemovingLabels ? [] : labels
       }
 
       // No need to break if one of the requests fail, continue on with others
@@ -322,6 +298,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
+
+  const highProfileAccountCount = useMemo(
+    () =>
+      workspaceListStatuses
+        ? findHighProfileCountInWorkspace(workspaceListStatuses)
+        : 0,
+    [workspaceListStatuses],
+  )
 
   return (
     <FullScreenActionPanel
@@ -400,6 +384,20 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                           type="error"
                           body={submission.error}
                           title="Error submitting bulk action"
+                        />
+                      </div>
+                    )}
+                    {highProfileAccountCount > 0 && (
+                      <div className="mb-3">
+                        <Alert
+                          type="warning"
+                          title="High profile account in workspace"
+                          body={`There are ${pluralize(
+                            highProfileAccountCount,
+                            'account',
+                          )} in your workspace with ${numberFormatter.format(
+                            HIGH_PROFILE_FOLLOWER_THRESHOLD,
+                          )} followers. Please take caution when including those accounts in bulk action.`}
                         />
                       </div>
                     )}

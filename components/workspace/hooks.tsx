@@ -8,7 +8,6 @@ import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
 import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
-  AppBskyActorProfile,
   AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
@@ -18,10 +17,8 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import {
-  WorkspaceListData,
-  WorkspaceListItemData,
-} from './useWorkspaceListData'
+import { WorkspaceListData } from './useWorkspaceListData'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
 const WORKSPACE_LIST_DELIMITER = ','
@@ -133,48 +130,42 @@ const filterExportFields = (fields: string[], isAdmin: boolean) => {
       )
 }
 
-const getExportFieldsFromWorkspaceListItem = (item: WorkspaceListItemData) => {
-  const isRecord = ToolsOzoneModerationDefs.isRecordViewDetail(item)
+const ifString = (val: unknown): string | undefined =>
+  typeof val === 'string' ? val : undefined
 
-  if (ToolsOzoneModerationDefs.isRepoViewDetail(item) || isRecord) {
-    const repo = isRecord ? item.repo : item
-    const profile = repo.relatedRecords.find(AppBskyActorProfile.isRecord)
-    const baseFields = {
+const getExportFieldsFromWorkspaceListItem = (
+  item: ToolsOzoneModerationDefs.SubjectView,
+) => {
+  if (item.repo) {
+    const { repo } = item
+    const profile = getProfileFromRepo(repo.relatedRecords)
+    return {
       did: repo.did,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
-      labels: 'Unknown',
-      name: profile?.displayName,
+      name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
+      // @ts-expect-error - Un-spec'd field returned by PDS
+      ip: ifString(repo.ip) ?? 'Unknown',
+      labels: repo.labels?.map(({ val }) => val).join('|') || 'Unknown',
     }
-
-    // For record entries, the repo does not include labels
-    if (!isRecord) {
-      return {
-        ...baseFields,
-        ip: item.ip as string,
-        labels: item.labels?.map(({ val }) => val).join('|'),
-      }
-    }
-  }
-
-  if (ToolsOzoneModerationDefs.isSubjectStatusView(item)) {
-    const did = ComAtprotoRepoStrongRef.isMain(item.subject)
-      ? new AtUri(item.subject.uri).host
-      : ComAtprotoAdminDefs.isRepoRef(item.subject)
-      ? item.subject.did
+  } else if (item.status) {
+    const did = ComAtprotoRepoStrongRef.isMain(item.status.subject)
+      ? new AtUri(item.status.subject.uri).host
+      : ComAtprotoAdminDefs.isRepoRef(item.status.subject)
+      ? item.status.subject.did
       : ''
     return {
       did,
-      handle: item.subjectRepoHandle,
+      handle: item.status.subjectRepoHandle,
       relatedRecords: [] as {}[],
       email: 'Unknown',
       ip: 'Unknown',
       labels: 'None',
       name: 'Unknown',
-      tags: item.tags?.join('|'),
+      tags: item.status.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did }),
     }
   }

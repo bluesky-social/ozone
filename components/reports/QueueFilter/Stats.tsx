@@ -7,6 +7,7 @@ export const QueueFilterStats = () => {
     setMinAccountSuspendCount,
     setMinReportedRecordsCount,
     setMinTakendownRecordsCount,
+    setMinPriorityScore,
   } = useQueueFilter()
 
   const handleInputChange =
@@ -45,16 +46,32 @@ export const QueueFilterStats = () => {
             />
           </FormLabel>
         </div>
-        <FormLabel label="Min. Takendown records">
-          <Input
-            type="number"
-            className="block w-full"
-            id="minTakendownRecordsCount"
-            name="minTakendownRecordsCount"
-            value={queueFilters.minTakendownRecordsCount || ''}
-            onChange={handleInputChange(setMinTakendownRecordsCount)}
-          />
-        </FormLabel>
+        <div className="flex flex-row gap-2">
+          <FormLabel label="Min. Takendown records">
+            <Input
+              type="number"
+              className="block w-full"
+              id="minTakendownRecordsCount"
+              name="minTakendownRecordsCount"
+              value={queueFilters.minTakendownRecordsCount || ''}
+              onChange={handleInputChange(setMinTakendownRecordsCount)}
+            />
+          </FormLabel>
+          <FormLabel label="Min. Priority score">
+            <Input
+              type="number"
+              id="minPriorityScore"
+              className="block w-full"
+              name="minPriorityScore"
+              min={0}
+              max={100}
+              step={1}
+              placeholder="0-100"
+              value={queueFilters.minPriorityScore || ''}
+              onChange={handleInputChange(setMinPriorityScore)}
+            />
+          </FormLabel>
+        </div>
       </div>
     </div>
   )

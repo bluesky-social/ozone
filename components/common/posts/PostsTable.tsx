@@ -1,18 +1,16 @@
 'use client'
+import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import { classNames } from '@/lib/util'
 import {
-  AppBskyFeedDefs,
-  AppBskyEmbedImages,
   AppBskyEmbedExternal,
-  AppBskyEmbedRecordWithMedia,
-  AppBskyActorDefs,
+  AppBskyEmbedImages,
+  AppBskyFeedDefs,
 } from '@atproto/api'
 import Link from 'next/link'
 import { LoadMore } from '../LoadMore'
-import { isRepost } from '@/lib/types'
-import { classNames } from '@/lib/util'
-import { ReplyParent } from './ReplyParent'
+import { extractEmbed } from './helpers'
 import { ImageList } from './ImageList'
-import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import { ReplyParent } from './ReplyParent'
 
 export function PostsTable({
   items,
@@ -72,7 +70,7 @@ export function PostAsRow({
   return (
     <tr className="align-top">
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6">
-        {isRepost(item.reason) ? (
+        {AppBskyFeedDefs.isReasonRepost(item.reason) ? (
           <span className="block text-gray-500 dark:text-gray-50">
             Reposted by{' '}
             <Link href={`/repositories/${item.reason.by.did}`}>
@@ -126,7 +124,7 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
     <>
       {item.reply ? <ReplyParent reply={item.reply} inline /> : undefined}
       <span className="block dark:text-gray-300">
-        {(item.post.record as any)?.text}
+        {item.post.record.text as string}
       </span>
       <PostEmbeds item={item} />
     </>
@@ -140,9 +138,8 @@ const getImageSizeClass = (imageCount: number) =>
 function PostEmbeds({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
 
-  const embed = AppBskyEmbedRecordWithMedia.isView(item.post.embed)
-    ? item.post.embed.media
-    : item.post.embed
+  const embed = extractEmbed(item.post)
+
   const mediaFilters = getMediaFiltersForLabels(
     item.post.labels?.map(({ val }) => val),
   )

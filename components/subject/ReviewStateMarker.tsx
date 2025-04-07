@@ -1,6 +1,10 @@
 import { DM_DISABLE_TAG } from '@/lib/constants'
 import { classNames } from '@/lib/util'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -20,7 +24,7 @@ const reviewStateDescription = {
     'This subject received moderation events but no human review is necessary as of now',
 }
 
-const reviewStateToText = {
+export const reviewStateToText = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: 'Requires Review',
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'Escalated',
   [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'Reviewed',
@@ -162,9 +166,9 @@ export const ReviewStateIconLink = ({
   children?: React.ReactNode
 }) => {
   let urlParam = ''
-  if (subjectStatus.subject.$type === 'com.atproto.repo.strongRef') {
+  if (ComAtprotoRepoStrongRef.isMain(subjectStatus.subject)) {
     urlParam = `uri=${subjectStatus.subject.uri}`
-  } else {
+  } else if (ComAtprotoAdminDefs.isRepoRef(subjectStatus.subject)) {
     urlParam = `did=${subjectStatus.subject.did}`
   }
   return (

@@ -65,24 +65,24 @@
   resolved "https://registry.npmjs.org/@atproto-labs/simple-store/-/simple-store-0.1.1.tgz#e743a2722b5d8732166f0a72aca8bd10e9bff106"
   integrity sha512-WKILW2b3QbAYKh+w5U2x6p5FqqLl0nAeLwGeDY+KjX01K4Dq3vQTR9b/qNp0jZm48CabPQVrqCv0PPU9LgRRRg==
 
-"@atproto/api@^0.13.32":
-  version "0.13.32"
-  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.13.32.tgz#cf8c31d35a7ee8352b121ab5f7be3f0189eae1d1"
-  integrity sha512-xAKSsZgaugAK/Mog+JbQCd5d2Y+FpE5OwKAKgftvs51dPRuqVZt/MSVRREaFEtgV90nrfSRGIx4EP54Ju4ypBw==
+"@atproto/api@0.14.13":
+  version "0.14.13"
+  resolved "https://registry.npmjs.org/@atproto/api/-/api-0.14.13.tgz#10ceccac0afa585481cf08cb48a93c2bca590847"
+  integrity sha512-bKzbzxvOMeIenGIOiRQ60gTnrTWHsceXvy19Ajmpqwbe/zvFEn+Y/wrayEDPT8Pbk7O8jgtLeRZotjOJF2+Gxg==
   dependencies:
-    "@atproto/common-web" "^0.3.2"
-    "@atproto/lexicon" "^0.4.5"
-    "@atproto/syntax" "^0.3.1"
-    "@atproto/xrpc" "^0.6.7"
+    "@atproto/common-web" "^0.4.0"
+    "@atproto/lexicon" "^0.4.9"
+    "@atproto/syntax" "^0.4.0"
+    "@atproto/xrpc" "^0.6.11"
     await-lock "^2.2.2"
     multiformats "^9.9.0"
     tlds "^1.234.0"
     zod "^3.23.8"
 
-"@atproto/common-web@^0.3.2":
-  version "0.3.2"
-  resolved "https://registry.npmjs.org/@atproto/common-web/-/common-web-0.3.2.tgz#4cf78ad4d24fed801882f3d35afc39bceccdff51"
-  integrity sha512-Vx0JtL1/CssJbFAb0UOdvTrkbUautsDfHNOXNTcX2vyPIxH9xOameSqLLunM1hZnOQbJwyjmQCt6TV+bhnanDg==
+"@atproto/common-web@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.npmjs.org/@atproto/common-web/-/common-web-0.4.0.tgz#b1407ae3f964f0ee23c2c3184f38041bac99d1f4"
+  integrity sha512-ZYL0P9myHybNgwh/hBY0HaBzqiLR1B5/ie5bJpLQAg0whRzNA28t8/nU2vh99tbsWcAF0LOD29M8++LyENJLNQ==
   dependencies:
     graphemer "^1.4.0"
     multiformats "^9.9.0"
@@ -127,6 +127,17 @@
   dependencies:
     "@atproto/common-web" "^0.3.2"
     "@atproto/syntax" "^0.3.1"
+    iso-datestring-validator "^2.2.2"
+    multiformats "^9.9.0"
+    zod "^3.23.8"
+
+"@atproto/lexicon@^0.4.9":
+  version "0.4.9"
+  resolved "https://registry.npmjs.org/@atproto/lexicon/-/lexicon-0.4.9.tgz#612951a85ecc1398366bd837cda6be89440f179d"
+  integrity sha512-/tmEuHQFr51V2V7EAVJzaA40sqJ7ylAZpR962VbOsPtmcdOHvezbjVHYEMXgfb927hS+xqbVyzBTbu5w9v8prA==
+  dependencies:
+    "@atproto/common-web" "^0.4.0"
+    "@atproto/syntax" "^0.4.0"
     iso-datestring-validator "^2.2.2"
     multiformats "^9.9.0"
     zod "^3.23.8"
@@ -176,10 +187,10 @@
   resolved "https://registry.npmjs.org/@atproto/syntax/-/syntax-0.3.0.tgz#fafa2dbea9add37253005cb663e7373e05e618b3"
   integrity sha512-Weq0ZBxffGHDXHl9U7BQc2BFJi/e23AL+k+i5+D9hUq/bzT4yjGsrCejkjq0xt82xXDjmhhvQSZ0LqxyZ5woxA==
 
-"@atproto/syntax@^0.3.1":
-  version "0.3.1"
-  resolved "https://registry.npmjs.org/@atproto/syntax/-/syntax-0.3.1.tgz#4346418728f9643d783d2ffcf7c77e132e1f53d4"
-  integrity sha512-fzW0Mg1QUOVCWUD3RgEsDt6d1OZ6DdFmbKcDdbzUfh0t4rhtRAC05KbZYmxuMPWDAiJ4BbbQ5dkAc/mNypMXkw==
+"@atproto/syntax@^0.4.0":
+  version "0.4.0"
+  resolved "https://registry.npmjs.org/@atproto/syntax/-/syntax-0.4.0.tgz#bec71552087bb24c208a06ef418c0040b65542f2"
+  integrity sha512-b9y5ceHS8YKOfP3mdKmwAx5yVj9294UN7FG2XzP6V5aKUdFazEYRnR9m5n5ZQFKa3GNvz7de9guZCJ/sUTcOAA==
 
 "@atproto/xrpc@0.6.3":
   version "0.6.3"
@@ -197,12 +208,12 @@
     "@atproto/lexicon" "^0.4.5"
     zod "^3.23.8"
 
-"@atproto/xrpc@^0.6.7":
-  version "0.6.7"
-  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.7.tgz#e72ac2009390ecf80cb075004d6160c92f38d33c"
-  integrity sha512-pbzZIONIskyGKxxG3s2wB7rQ2W1xu3ycfeYhKwk/E/ippeJFVxcof64iSC7f22+7JSKUJcxBeZ1piBB82vLj7g==
+"@atproto/xrpc@^0.6.11":
+  version "0.6.11"
+  resolved "https://registry.npmjs.org/@atproto/xrpc/-/xrpc-0.6.11.tgz#54c527e39a2f5ddd2655b11f7cb99b8f303d8364"
+  integrity sha512-J2cZP8FjoDN0UkyTYBlCvKvxwBbDm4dld47u6FQK30RJy9YpSiUkdxJJ10NYqpi7JVny3M0qWQgpWJDV94+PdA==
   dependencies:
-    "@atproto/lexicon" "^0.4.5"
+    "@atproto/lexicon" "^0.4.9"
     zod "^3.23.8"
 
 "@babel/runtime@^7.1.2", "@babel/runtime@^7.14.6", "@babel/runtime@^7.17.2", "@babel/runtime@^7.20.13", "@babel/runtime@^7.21.0":
@@ -5176,9 +5187,9 @@ tiny-invariant@^1.2.0:
   integrity sha512-+FbBPE1o9QAYvviau/qC5SE3caw21q3xkvWKBtja5vgqOWIHHJ3ioaq1VPfn/Szqctz2bU/oYeKd9/z5BL+PVg==
 
 tlds@^1.234.0:
-  version "1.255.0"
-  resolved "https://registry.npmjs.org/tlds/-/tlds-1.255.0.tgz#53c2571766c10da95928c716c48dfcf141341e3f"
-  integrity sha512-tcwMRIioTcF/FcxLev8MJWxCp+GUALRhFEqbDoZrnowmKSGqPrl5pqS+Sut2m8BgJ6S4FExCSSpGffZ0Tks6Aw==
+  version "1.256.0"
+  resolved "https://registry.npmjs.org/tlds/-/tlds-1.256.0.tgz#4285b41a7ed4fcc7c5eed8516c3a180e892fad36"
+  integrity sha512-ZmyVB9DAw+FFTmLElGYJgdZFsKLYd/I59Bg9NHkCGPwAbVZNRilFWDMAdX8UG+bHuv7kfursd5XGqo/9wi26lA==
 
 tldts-core@^6.1.75:
   version "6.1.75"

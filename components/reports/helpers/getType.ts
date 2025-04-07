@@ -12,7 +12,7 @@ export const reasonTypeOptions = {
   [ComAtprotoModerationDefs.REASONVIOLATION]: 'Violation of Terms',
   [ComAtprotoModerationDefs.REASONMISLEADING]: 'Misleading',
   [ComAtprotoModerationDefs.REASONSEXUAL]: 'Sexual',
-  [ComAtprotoModerationDefs.REASONRUDE]: 'Rude or Hassment',
+  [ComAtprotoModerationDefs.REASONRUDE]: 'Rude or Harassment',
   [ComAtprotoModerationDefs.REASONAPPEAL]: 'Appeal',
   [ComAtprotoModerationDefs.REASONOTHER]: 'Other Reason',
 }

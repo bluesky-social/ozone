@@ -1,4 +1,10 @@
-import { ComAtprotoAdminDefs } from '@atproto/api'
+import {
+  AppBskyActorDefs,
+  AppBskyActorProfile,
+  asPredicate,
+  ComAtprotoAdminDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 
 export function obscureIp(ip: string) {
   const parts = ip.split('.')
@@ -47,3 +53,14 @@ export function parseThreatSigs(sigs?: ComAtprotoAdminDefs.ThreatSignature[]) {
     hcapDetail,
   }
 }
+
+const isValidProfileRecord = asPredicate(AppBskyActorProfile.validateRecord)
+export const getProfileFromRepo = (
+  relatedRecords: ToolsOzoneModerationDefs.RepoView['relatedRecords'],
+) => {
+  return relatedRecords.find(isValidProfileRecord)
+}
+
+export const isValidProfileViewDetailed = asPredicate(
+  AppBskyActorDefs.validateProfileViewDetailed,
+)

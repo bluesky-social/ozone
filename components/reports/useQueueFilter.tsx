@@ -135,6 +135,10 @@ export const useQueueFilter = () => {
     updateFilters({ minTakendownRecordsCount })
   }
 
+  const setMinPriorityScore = (minPriorityScore?: number) => {
+    updateFilters({ minPriorityScore })
+  }
+
   return {
     queueFilters,
     updateTagExclusions,
@@ -146,5 +150,6 @@ export const useQueueFilter = () => {
     setMinAccountSuspendCount,
     setMinReportedRecordsCount,
     setMinTakendownRecordsCount,
+    setMinPriorityScore,
   }
 }

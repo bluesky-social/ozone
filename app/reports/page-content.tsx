@@ -13,7 +13,6 @@ import {
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneModerationQueryStatuses,
-  ComAtprotoAdminDefs,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
@@ -23,7 +22,7 @@ import { ButtonGroup } from '@/common/buttons'
 import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { QueueSelector } from '@/reports/QueueSelector'
-import { simpleHash, unique } from '@/lib/util'
+import { unique } from '@/lib/util'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
@@ -190,6 +189,7 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
       'lastReviewedAt',
       'reportedRecordsCount',
       'takendownRecordsCount',
+      'priorityScore',
     ].includes(sortField ?? '')
   ) {
     sortField = 'lastReportedAt'
@@ -316,6 +316,7 @@ function useModerationQueueQuery() {
   const minAccountSuspendCount = params.get('minAccountSuspendCount')
   const minReportedRecordsCount = params.get('minReportedRecordsCount')
   const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
+  const minPriorityScore = params.get('minPriorityScore')
   const { sortField, sortDirection } = getSortParams(params)
   const {
     lastReviewedBy,
@@ -349,6 +350,7 @@ function useModerationQueueQuery() {
         minAccountSuspendCount,
         minReportedRecordsCount,
         minTakendownRecordsCount,
+        minPriorityScore,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -417,6 +419,10 @@ function useModerationQueueQuery() {
         queryParams.minTakendownRecordsCount = Number(minTakendownRecordsCount)
       }
 
+      if (minPriorityScore) {
+        queryParams.minPriorityScore = Number(minPriorityScore)
+      }
+
       // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
       Object.entries({
         sortField,
@@ -429,17 +435,25 @@ function useModerationQueueQuery() {
         }
       })
 
-      return getQueueItems(
-        labelerAgent,
-        queryParams,
-        queueName,
-        queueSetting.data
-          ? {
-              queueNames: queueSetting.data.queueNames,
-              queueSeed: queueSetting.data.queueSeed.setting,
-            }
-          : undefined,
-      )
+      const queueParams = queueSetting.data
+        ? {
+            queueNames: queueSetting.data.queueNames,
+            queueSeed: queueSetting.data.queueSeed.setting,
+          }
+        : undefined
+
+      // When viewing escalated items, use the escalation queue names
+      // so that the modulus can be applied against the right number of queues
+      // when escalation queue count and triage queue counts are different
+      if (
+        queueParams?.queueNames &&
+        queryParams.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED &&
+        queueSetting.data?.escalationQueueNames
+      ) {
+        queueParams.queueNames = queueSetting.data.escalationQueueNames
+      }
+
+      return getQueueItems(labelerAgent, queryParams, queueName, queueParams)
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
