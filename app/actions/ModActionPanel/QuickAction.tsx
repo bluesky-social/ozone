@@ -398,7 +398,10 @@ function Form(
         ToolsOzoneModerationDefs.isModEventLabel(coreEvent)
 
       setModEventType(
-        eventMayNeedEmail && !shouldMoveToNextSubject && canSendEmail
+        eventMayNeedEmail &&
+          !shouldMoveToNextSubject &&
+          canSendEmail &&
+          isSubjectDid
           ? MOD_EVENTS.EMAIL
           : MOD_EVENTS.ACKNOWLEDGE,
       )
