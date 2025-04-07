@@ -1,15 +1,17 @@
-'use client';
-import { use } from "react";
+'use client'
+import { use } from 'react'
 
 import { useTitle } from 'react-use'
 import { CommunicationTemplateForm } from 'components/communication-template/form'
 
-export default function CommunicationTemplateEditPage(props) {
-  const params = use(props.params);
+export default function CommunicationTemplateEditPage(props: {
+  params: Promise<{
+    id: string
+  }>
+}) {
+  const params = use(props.params)
 
-  const {
-    id
-  } = params;
+  const { id } = params
 
   useTitle(`Edit Communication Templates #${id}`)
 

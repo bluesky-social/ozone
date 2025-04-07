@@ -46,8 +46,8 @@ export const TemplateSelector = ({
         <Combobox
           value={selected}
           onChange={(selectedTpl) => {
-            setSelected(selectedTpl)
-            onSelect(selectedTpl)
+            setSelected(selectedTpl || '')
+            onSelect(selectedTpl || '')
           }}
           name="template"
         >
