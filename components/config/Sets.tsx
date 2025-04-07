@@ -1,5 +1,6 @@
 import { LinkButton } from '@/common/buttons'
 import { Input } from '@/common/forms'
+import { useSyncedState } from '@/lib/useSyncedState'
 import { SetEditor } from '@/sets/SetEditor'
 import { SetList } from '@/sets/SetList'
 import { SetView } from '@/sets/SetView'
@@ -44,7 +45,7 @@ const SetsSearchInput = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
-  const [inputValue, setInputValue] = useState(searchQuery)
+  const [inputValue, setInputValue] = useSyncedState(searchQuery)
 
   useDebounce(
     () => {

@@ -14,13 +14,14 @@ import { createTeamPageLink } from '@/team/helpers'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/common/forms'
 import { useDebounce } from 'react-use'
+import { useSyncedState } from '@/lib/useSyncedState'
 
 // Make sure we don't update the url query param on every key stroke
 const MemberSearchInput = () => {
   const router = useRouter()
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search') || ''
-  const [inputValue, setInputValue] = useState(searchQuery)
+  const [inputValue, setInputValue] = useSyncedState(searchQuery)
 
   useDebounce(
     () => {
