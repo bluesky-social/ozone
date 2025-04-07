@@ -318,8 +318,13 @@ function useModerationQueueQuery() {
   const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
   const minPriorityScore = params.get('minPriorityScore')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
-    useFluentReportSearchParams()
+  const {
+    lastReviewedBy,
+    subject,
+    reporters,
+    includeAllUserRecords,
+    hostingStatuses,
+  } = useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
@@ -339,6 +344,7 @@ function useModerationQueueQuery() {
         queueName,
         includeMuted,
         onlyMuted,
+        hostingStatuses,
         subjectType,
         collections,
         minAccountSuspendCount,
@@ -391,6 +397,10 @@ function useModerationQueueQuery() {
 
       if (tags) {
         queryParams.tags = tags.split(',')
+      }
+
+      if (hostingStatuses) {
+        queryParams.hostingStatuses = hostingStatuses
       }
 
       if (excludeTags) {

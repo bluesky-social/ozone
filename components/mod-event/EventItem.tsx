@@ -21,6 +21,10 @@ import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
 
+type ModEventType<T> = Omit<ToolsOzoneModerationDefs.ModEventView, 'event'> & {
+  event: $Typed<T>
+}
+
 const LinkToAuthor = ({
   creatorHandle,
   createdBy,
@@ -132,8 +136,78 @@ const PriorityScore = ({
   )
 }
 
-type ModEventType<T> = Omit<ToolsOzoneModerationDefs.ModEventView, 'event'> & {
-  event: $Typed<T>
+const Record = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.RecordEvent>
+}) => {
+  let operation = ''
+  switch (modEvent.event.op) {
+    case 'create':
+      operation = 'Created'
+      break
+    case 'delete':
+      operation = 'Deleted'
+      break
+    case 'update':
+      operation = 'Updated'
+      break
+    default:
+      operation = modEvent.event.op
+  }
+
+  return (
+    <>
+      <p>
+        {operation} at{' '}
+        {dateFormatter.format(new Date(modEvent.event.timestamp))}
+      </p>
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      {modEvent.event.cid && (
+        <p className="text-gray-500">CID: {modEvent.event.cid}</p>
+      )}
+    </>
+  )
+}
+
+const Account = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.AccountEvent>
+}) => {
+  return (
+    <>
+      <p>
+        {modEvent.event.status && (
+          <span className="capitalize">{modEvent.event.status} </span>
+        )}
+        at {dateFormatter.format(new Date(modEvent.event.timestamp))}
+      </p>
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
+const Identity = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.IdentityEvent>
+}) => {
+  return (
+    <>
+      <p>
+        {modEvent.event.handle && (
+          <span>New Handle: {modEvent.event.handle} </span>
+        )}
+        {modEvent.event.pdsHost && (
+          <span>PDS Host: {modEvent.event.pdsHost} </span>
+        )}
+        {modEvent.event.tombstone && <span>Tombstoned </span>}
+        at {dateFormatter.format(new Date(modEvent.event.timestamp))}
+      </p>
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
 }
 
 const Report = ({
@@ -451,6 +525,21 @@ export const ModEventItem = ({
     asPredicate(ToolsOzoneModerationDefs.validateModEventEmail)(modEvent.event)
   ) {
     eventItem = <Email modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateRecordEvent)(modEvent.event)
+  ) {
+    eventItem = <Record modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateAccountEvent)(modEvent.event)
+  ) {
+    eventItem = <Account modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateIdentityEvent)(modEvent.event)
+  ) {
+    eventItem = <Identity modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventPriorityScore)(

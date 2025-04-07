@@ -94,6 +94,15 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Email sent'
   }
+  if (ToolsOzoneModerationDefs.isAccountEvent(modEvent.event)) {
+    eventTitle = 'Account event'
+  }
+  if (ToolsOzoneModerationDefs.isRecordEvent(modEvent.event)) {
+    eventTitle = 'Record event'
+  }
+  if (ToolsOzoneModerationDefs.isIdentityEvent(modEvent.event)) {
+    eventTitle = 'Identity event'
+  }
   if (ToolsOzoneModerationDefs.isModEventPriorityScore(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Updated priority score'
