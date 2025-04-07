@@ -12,16 +12,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Check out Git repository
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        
       - name: Set up Node.js
-        uses: actions/setup-node@v1
+        uses: actions/setup-node@v4
         with:
           node-version: 20
+          
       - name: Yarn install
         run: yarn
+        
       - name: Lint Reporter
         uses: wearerequired/lint-action@v2.2.0
         with:
           eslint: true
+          
       - name: Typescript & Lint check
         run: yarn lint
