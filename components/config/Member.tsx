@@ -13,9 +13,50 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { createTeamPageLink } from '@/team/helpers'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Input } from '@/common/forms'
+import { useDebounce } from 'react-use'
+import { useSyncedState } from '@/lib/useSyncedState'
+
+// Make sure we don't update the url query param on every key stroke
+const MemberSearchInput = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
+  const [inputValue, setInputValue] = useSyncedState(searchQuery)
+
+  useDebounce(
+    () => {
+      if (inputValue !== searchQuery) {
+        const url = createTeamPageLink({ search: inputValue })
+        router.push(url, { scroll: false })
+      }
+    },
+    300,
+    [inputValue],
+  )
+
+  return (
+    <div className="w-1/2">
+      <Input
+        type="text"
+        autoFocus
+        className="w-2/3 py-1"
+        placeholder="Search team members..."
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+      />{' '}
+      <LinkButton
+        size="sm"
+        className="ml-1"
+        appearance="outlined"
+        href={createTeamPageLink({})}
+      >
+        Cancel
+      </LinkButton>
+    </div>
+  )
+}
 
 export function MemberConfig() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const searchQuery = searchParams.get('search')
   const [editingMember, setEditingMember] =
@@ -44,27 +85,7 @@ export function MemberConfig() {
     <div className="pt-4">
       <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-2">
         {typeof searchQuery === 'string' ? (
-          <div className="w-1/2">
-            <Input
-              type="text"
-              autoFocus
-              className="w-2/3 py-1"
-              placeholder="Search sets..."
-              value={searchQuery}
-              onChange={(e) => {
-                const url = createTeamPageLink({ search: e.target.value })
-                router.push(url)
-              }}
-            />{' '}
-            <LinkButton
-              size="sm"
-              className="ml-1"
-              appearance="outlined"
-              href={createTeamPageLink({})}
-            >
-              Cancel
-            </LinkButton>
-          </div>
+          <MemberSearchInput />
         ) : (
           <h4 className="font-medium text-gray-700 dark:text-gray-100">
             Manage Members
