@@ -27,7 +27,7 @@
     "@types/node": "18.11.17",
     "@types/react": "19.1.0",
     "@types/react-dom": "19.1.1",
-    "@uiw/react-md-editor": "^3.23.5",
+    "@uiw/react-md-editor": "^4.0.5",
     "bcp-47-match": "^2.0.3",
     "date-fns": "^2.29.3",
     "eslint": "^8.57.0",
