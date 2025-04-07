@@ -1,13 +1,14 @@
 'use client'
-import { Suspense } from 'react'
+import { Suspense, use } from 'react';
 import { RepositoryViewPageContent } from './page-content'
 import { RedirectFromHandleToDid } from '@/repositories/RedirectFromhandleToDid'
 
-export default function RepositoryViewPage({
-  params,
-}: {
-  params: { id: string }
-}) {
+export default function RepositoryViewPage(
+  props: {
+    params: Promise<{ id: string }>
+  }
+) {
+  const params = use(props.params);
   const { id: rawId } = params
   const id = decodeURIComponent(rawId)
   return (

@@ -1,3 +1,4 @@
+import type { JSX } from "react";
 // Utility function to detect and replace links with <a> tags
 const wrapLinksInText = (text: string): JSX.Element[] => {
   // Regular expression to match URLs

@@ -8,7 +8,7 @@ import {
   ShieldExclamationIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/solid'
-import { ComponentProps, useState } from 'react'
+import { ComponentProps, useState, type JSX } from 'react';
 
 export const StatView = ({
   count,

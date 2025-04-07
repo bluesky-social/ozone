@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useRef, useState, type JSX } from 'react';
 import { toast } from 'react-toastify'
 
 import { ActionButton } from '@/common/buttons'

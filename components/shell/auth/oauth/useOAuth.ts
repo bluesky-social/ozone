@@ -94,7 +94,7 @@ export function useOAuth(options: UseOAuthOptions) {
   const [isInitializing, setIsInitializing] = useState(true)
   const [isLoginPopup, setIsLoginPopup] = useState(false)
 
-  const clientForInitRef = useRef<typeof clientForInit>()
+  const clientForInitRef = useRef<typeof clientForInit>(undefined)
   useEffect(() => {
     // In strict mode, we don't want to re-init() the client if it's the same
     if (clientForInitRef.current === clientForInit) return
