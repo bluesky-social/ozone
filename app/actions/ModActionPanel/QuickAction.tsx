@@ -38,10 +38,9 @@ import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { Dialog } from '@headlessui/react'
+import { DialogTitle } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
-import { Card } from '@/common/Card'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -90,7 +89,7 @@ export function ModActionPanelQuick(
   return (
     <FullScreenActionPanel
       title={
-        <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
+        <DialogTitle className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
           Take moderation action
           {isMobileView && (
             <button
@@ -104,7 +103,7 @@ export function ModActionPanelQuick(
               Events
             </button>
           )}
-        </Dialog.Title>
+        </DialogTitle>
       }
       onClose={onClose}
       {...others}

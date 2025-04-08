@@ -103,7 +103,6 @@ export const checkFilterMatchForWorkspaceItem = (
       if (!isValidProfileViewDetailed(data.profile)) return false
       const { followsCount } = data.profile || {}
       if (!followsCount) return false
-      console.log(filter, data.profile)
       return filter.operator === 'gte'
         ? followsCount >= Number(filter.value)
         : followsCount <= Number(filter.value)

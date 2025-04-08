@@ -16,7 +16,7 @@ import {
   ToolsOzoneModerationDefs,
   ToolsOzoneTeamDefs,
 } from '@atproto/api'
-import { Dialog } from '@headlessui/react'
+import { DialogTitle } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
@@ -310,9 +310,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   return (
     <FullScreenActionPanel
       title={
-        <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
+        <DialogTitle className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
           Workspace
-        </Dialog.Title>
+        </DialogTitle>
       }
       onClose={onClose}
       {...others}

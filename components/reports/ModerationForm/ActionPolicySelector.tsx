@@ -99,7 +99,6 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
           displayValue={(values: string | string[]) => {
-            console.log(values)
             // When focused from blur, display empty value allowing user to input their search query
             return isFocused
               ? ''
