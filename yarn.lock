@@ -464,7 +464,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headlessui/react@npm:^2.1.0":
+"@headlessui/react@npm:^2.2.1":
   version: 2.2.1
   resolution: "@headlessui/react@npm:2.2.1"
   dependencies:
@@ -7297,7 +7297,7 @@ __metadata:
     "@atproto/oauth-client-browser": "npm:^0.2.0"
     "@atproto/oauth-types": "npm:^0.1.4"
     "@atproto/xrpc": "npm:^0.6.1"
-    "@headlessui/react": "npm:^2.1.0"
+    "@headlessui/react": "npm:^2.2.1"
     "@heroicons/react": "npm:^2.0.13"
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/typography": "npm:^0.5.8"

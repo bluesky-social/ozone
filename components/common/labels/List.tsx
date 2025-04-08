@@ -1,7 +1,12 @@
 import { OZONE_SERVICE_DID } from '@/lib/constants'
 import { buildBlueSkyAppUrl, classNames } from '@/lib/util'
 import { AppBskyActorDefs, ComAtprotoLabelDefs } from '@atproto/api'
-import { Popover, Transition } from '@headlessui/react'
+import {
+  Popover,
+  Transition,
+  PopoverButton,
+  PopoverPanel,
+} from '@headlessui/react'
 import { ExclamationCircleIcon } from '@heroicons/react/20/solid'
 import {
   ArrowTopRightOnSquareIcon,
@@ -109,7 +114,7 @@ export const ModerationLabel = ({
     <Popover className="relative z-20">
       {() => (
         <>
-          <Popover.Button className="ring-none">
+          <PopoverButton className="ring-none">
             <LabelChip
               className={classNames(...[labelClassNames.wrapper, className])}
               {...props}
@@ -137,7 +142,7 @@ export const ModerationLabel = ({
               )}
               {labelVal}
             </LabelChip>
-          </Popover.Button>
+          </PopoverButton>
           <Transition
             as={Fragment}
             enter="transition ease-out duration-200"
@@ -147,7 +152,7 @@ export const ModerationLabel = ({
             leaveFrom="opacity-100 translate-y-0"
             leaveTo="opacity-0 translate-y-1"
           >
-            <Popover.Panel className="absolute left-2 z-20 mt-3 w-72 transform lg:max-w-3xl max-w-sm">
+            <PopoverPanel className="absolute left-2 z-20 mt-3 w-72 transform lg:max-w-3xl max-w-sm">
               <div className="overflow-hidden rounded-lg shadow-lg">
                 <div className="relative bg-white dark:bg-slate-700 text-gray-500 dark:text-gray-50">
                   <LabelDefinition
@@ -159,7 +164,7 @@ export const ModerationLabel = ({
                   />
                 </div>
               </div>
-            </Popover.Panel>
+            </PopoverPanel>
           </Transition>
         </>
       )}

@@ -1,5 +1,10 @@
 import { ActionButton } from '@/common/buttons'
-import { Popover, Transition } from '@headlessui/react'
+import {
+  Popover,
+  Transition,
+  PopoverButton,
+  PopoverPanel,
+} from '@headlessui/react'
 import { useWorkspaceExport } from './hooks'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
@@ -25,7 +30,7 @@ export const WorkspaceExportPanel = ({
     <Popover className="relative z-30">
       {({ open, close }) => (
         <>
-          <Popover.Button className="text-sm flex flex-row items-center z-20">
+          <PopoverButton className="text-sm flex flex-row items-center z-20">
             <ActionButton
               size="sm"
               appearance="outlined"
@@ -35,7 +40,7 @@ export const WorkspaceExportPanel = ({
                 {isLoading ? 'Exporting...' : 'Export'}
               </span>
             </ActionButton>
-          </Popover.Button>
+          </PopoverButton>
 
           {/* Use the `Transition` component. */}
           <Transition
@@ -47,7 +52,7 @@ export const WorkspaceExportPanel = ({
             leaveFrom="transform scale-100 opacity-100"
             leaveTo="transform scale-95 opacity-0"
           >
-            <Popover.Panel className="absolute right-0 z-30 mt-1 flex w-screen max-w-max -translate-x-1/5 px-4">
+            <PopoverPanel className="absolute right-0 z-30 mt-1 flex w-screen max-w-max -translate-x-1/5 px-4">
               <div className="w-fit-content flex-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
                 <div className="">
                   <FormLabel label="Export File Name" className="mb-3" required>
@@ -120,7 +125,7 @@ export const WorkspaceExportPanel = ({
                   </ActionButton>
                 </div>
               </div>
-            </Popover.Panel>
+            </PopoverPanel>
           </Transition>
         </>
       )}

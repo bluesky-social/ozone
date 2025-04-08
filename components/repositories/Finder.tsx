@@ -1,5 +1,10 @@
 import { Agent } from '@atproto/api'
-import { Combobox } from '@headlessui/react'
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+} from '@headlessui/react'
 import { useEffect, useState } from 'react'
 
 import { classNames } from '@/lib/util'
@@ -104,7 +109,7 @@ export function RepoFinder({
         onChange(item || '')
       }}
     >
-      <Combobox.Input
+      <ComboboxInput
         // This is intentionally spread on top so that any of the below props are passed via inputProps, they are ignored
         // This also helps with the classname overwrite
         {...inputProps}
@@ -115,7 +120,7 @@ export function RepoFinder({
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search..."
       />
-      <Combobox.Options className="rounded mt-1 max-h-60 overflow-y-auto bg-gray-100 dark:bg-slate-900 shadow-sm">
+      <ComboboxOptions className="rounded mt-1 max-h-60 overflow-y-auto bg-gray-100 dark:bg-slate-900 shadow-sm">
         {loading ? (
           <div className="p-2">Loading...</div>
         ) : items.length === 0 && query !== '' ? (
@@ -127,12 +132,12 @@ export function RepoFinder({
           </div>
         ) : (
           items.map((item) => (
-            <Combobox.Option
+            <ComboboxOption
               key={item.did}
               value={selectionType === 'did' ? item.did : item.handle}
-              className={({ active }) =>
+              className={({ focus }) =>
                 `cursor-pointer p-2 flex items-center space-x-3 ${
-                  active ? 'bg-gray-400 text-white dark:bg-slate-700' : ''
+                  focus ? 'bg-gray-400 text-white dark:bg-slate-700' : ''
                 }`
               }
             >
@@ -147,10 +152,10 @@ export function RepoFinder({
                   {item.displayName || 'No display name'}
                 </div>
               </div>
-            </Combobox.Option>
+            </ComboboxOption>
           ))
         )}
-      </Combobox.Options>
+      </ComboboxOptions>
     </Combobox>
   )
 }

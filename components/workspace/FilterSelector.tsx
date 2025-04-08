@@ -1,4 +1,9 @@
-import { Popover, Transition } from '@headlessui/react'
+import {
+  Popover,
+  Transition,
+  PopoverButton,
+  PopoverPanel,
+} from '@headlessui/react'
 import { ActionButton } from '@/common/buttons'
 import { CheckIcon } from '@heroicons/react/24/outline'
 import { Input } from '@/common/forms'
@@ -290,7 +295,7 @@ export const WorkspaceFilterSelector = ({
     <Popover className="relative z-30">
       {({ open }) => (
         <>
-          <Popover.Button className="text-sm flex flex-row items-center z-20">
+          <PopoverButton className="text-sm flex flex-row items-center z-20">
             <ActionButton
               appearance="outlined"
               size="xs"
@@ -299,7 +304,7 @@ export const WorkspaceFilterSelector = ({
             >
               <CheckIcon className="h-4 w-3" />
             </ActionButton>
-          </Popover.Button>
+          </PopoverButton>
 
           {/* Use the `Transition` component. */}
           <Transition
@@ -311,7 +316,7 @@ export const WorkspaceFilterSelector = ({
             leaveFrom="transform scale-100 opacity-100"
             leaveTo="transform scale-95 opacity-0"
           >
-            <Popover.Panel className="absolute left-0 z-30 mt-1 flex w-screen max-w-max -translate-x-1/5 px-4">
+            <PopoverPanel className="absolute left-0 z-30 mt-1 flex w-screen max-w-max -translate-x-1/5 px-4">
               <FilterProvider listData={listData}>
                 <div className="w-fit-content flex-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
                   <FilterGroupComponent />
@@ -322,7 +327,7 @@ export const WorkspaceFilterSelector = ({
                   <ActionRow />
                 </div>
               </FilterProvider>
-            </Popover.Panel>
+            </PopoverPanel>
           </Transition>
         </>
       )}

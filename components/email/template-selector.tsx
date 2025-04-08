@@ -1,7 +1,14 @@
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline'
 import { Fragment, useState } from 'react'
 
-import { Combobox, Transition } from '@headlessui/react'
+import {
+  Combobox,
+  Transition,
+  ComboboxInput,
+  ComboboxButton,
+  ComboboxOptions,
+  ComboboxOption,
+} from '@headlessui/react'
 import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 import { LabelChip } from '@/common/labels'
@@ -53,17 +60,17 @@ export const TemplateSelector = ({
         >
           <div className="relative mt-1 w-full">
             <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm">
-              <Combobox.Input
+              <ComboboxInput
                 className="w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100"
                 onChange={(event) => setQuery(event.target.value)}
                 placeholder="Type keyword or click the arrows on the right to see all templates"
               />
-              <Combobox.Button className="absolute inset-y-0 right-0 flex items-center pr-2">
+              <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
                 <ChevronUpDownIcon
                   className="h-5 w-5 text-gray-400"
                   aria-hidden="true"
                 />
-              </Combobox.Button>
+              </ComboboxButton>
             </div>
             <Transition
               as={Fragment}
@@ -72,28 +79,28 @@ export const TemplateSelector = ({
               leaveTo="opacity-0"
               afterLeave={() => setQuery('')}
             >
-              <Combobox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+              <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
                 {!matchingTemplates?.length ? (
                   <NoTemplateOption {...{ selectedLang, query }} />
                 ) : (
                   matchingTemplates?.map((tpl) => (
-                    <Combobox.Option
+                    <ComboboxOption
                       key={tpl.name}
-                      className={({ active }) =>
+                      className={({ focus }) =>
                         `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                          active
+                          focus
                             ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
                             : 'text-gray-900 dark:text-gray-200'
                         }`
                       }
                       value={tpl.name}
                     >
-                      {({ selected, active }) => (
+                      {({ selected, focus }) => (
                         <>
                           {selected ? (
                             <span
                               className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                active ? 'text-indigo-900' : 'text-indigo-600'
+                                focus ? 'text-indigo-900' : 'text-indigo-600'
                               }`}
                             >
                               <CheckIcon
@@ -118,10 +125,10 @@ export const TemplateSelector = ({
                           </div>
                         </>
                       )}
-                    </Combobox.Option>
+                    </ComboboxOption>
                   ))
                 )}
-              </Combobox.Options>
+              </ComboboxOptions>
             </Transition>
           </div>
         </Combobox>
