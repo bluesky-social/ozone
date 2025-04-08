@@ -1,11 +1,5 @@
-import { Fragment, type JSX } from 'react'
-import {
-  Menu,
-  Transition,
-  MenuItems,
-  MenuItem,
-  MenuButton,
-} from '@headlessui/react'
+import { type JSX } from 'react'
+import { Menu, MenuItems, MenuItem, MenuButton } from '@headlessui/react'
 
 import { classNames } from '@/lib/util'
 

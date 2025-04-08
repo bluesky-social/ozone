@@ -45,8 +45,14 @@ export const ActionDurationSelector = (
 ) => {
   const { labelText, action, ...rest } = props
   return (
-    <Select id="durationInHours" name="durationInHours" required {...rest}>
-      <option hidden selected value="">
+    <Select
+      id="durationInHours"
+      name="durationInHours"
+      required
+      {...rest}
+      defaultValue={''}
+    >
+      <option hidden value="">
         {labelText || 'Suspension Period'}
       </option>
       {Object.entries(
