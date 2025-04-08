@@ -49,8 +49,8 @@ export const ActionDurationSelector = (
       id="durationInHours"
       name="durationInHours"
       required
-      {...rest}
       defaultValue={''}
+      {...rest}
     >
       <option hidden value="">
         {labelText || 'Suspension Period'}
