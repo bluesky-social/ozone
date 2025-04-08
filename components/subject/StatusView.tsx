@@ -12,7 +12,7 @@ import {
 } from '@atproto/api'
 import { ChevronLeftIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import { ReviewStateIcon } from './ReviewStateMarker'
 
 enum Views {

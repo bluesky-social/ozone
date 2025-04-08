@@ -1,11 +1,11 @@
-import { ComponentProps, forwardRef, LegacyRef, ReactElement } from 'react'
+import { ComponentProps, forwardRef, Ref, ReactElement } from 'react'
 import Link from 'next/link'
 
 import { classNames } from '../../lib/util'
 
 export const ButtonPrimary = forwardRef(function ButtonPrimary(
   props: ComponentProps<'button'>,
-  ref: LegacyRef<HTMLButtonElement>,
+  ref: Ref<HTMLButtonElement>,
 ) {
   const { className = '', ...others } = props
   return (
@@ -51,7 +51,7 @@ const sizeClassNames = {
 
 export const ActionButton = forwardRef(function ActionButton(
   props: ComponentProps<'button'> & ActionButtonProps,
-  ref: LegacyRef<HTMLButtonElement>,
+  ref: Ref<HTMLButtonElement>,
 ) {
   const { className = '', appearance, size, ...others } = props
   const appearanceClassName =

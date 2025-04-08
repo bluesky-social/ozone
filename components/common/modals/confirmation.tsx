@@ -1,5 +1,5 @@
 import { Dialog, Transition } from '@headlessui/react'
-import { ForwardedRef, forwardRef, Fragment } from 'react'
+import { ForwardedRef, forwardRef, Fragment, type JSX } from 'react'
 import { Alert } from '@/common/Alert'
 import { ActionButton } from '@/common/buttons'
 

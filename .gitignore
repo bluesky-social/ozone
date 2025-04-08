@@ -42,3 +42,7 @@ cypress/screenshots
 
 .env
 .ozone.env
+
+# yarn
+.yarn/*
+service/.yarn/*

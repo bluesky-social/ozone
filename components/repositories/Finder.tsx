@@ -100,8 +100,8 @@ export function RepoFinder({
     <Combobox
       value={selectedItem}
       onChange={(item) => {
-        setSelectedItem(clearOnSelect ? '' : item)
-        onChange(item)
+        setSelectedItem(clearOnSelect ? '' : item || '')
+        onChange(item || '')
       }}
     >
       <Combobox.Input
