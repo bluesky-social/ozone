@@ -21,7 +21,7 @@ import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
 
-import type { JSX } from "react";
+import type { JSX } from 'react'
 
 const LinkToAuthor = ({
   creatorHandle,

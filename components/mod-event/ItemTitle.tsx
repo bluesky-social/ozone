@@ -7,7 +7,7 @@ import {
 import { ModEventViewWithDetails } from './useModEventList'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 
-import type { JSX } from "react";
+import type { JSX } from 'react'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',

@@ -8,7 +8,7 @@ import { ModEventItem } from './EventItem'
 import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
-import { useState, type JSX } from 'react';
+import { useState, type JSX } from 'react'
 import { ActionButton } from '@/common/buttons'
 import {
   FunnelIcon as FunnelEmptyIcon,

@@ -1,7 +1,7 @@
 import { Loading } from '@/common/Loader'
 import { useHandleToDidRedirect } from './useHandleToDidRedirect'
 
-import type { JSX } from "react";
+import type { JSX } from 'react'
 
 export const RedirectFromHandleToDid = ({
   handle,

@@ -29,7 +29,7 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 
-import type { JSX } from "react";
+import type { JSX } from 'react'
 
 export function RecordCard(props: {
   uri: string

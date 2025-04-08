@@ -1,5 +1,5 @@
 import { ClipboardIcon } from '@heroicons/react/20/solid'
-import { ReactNode, type JSX } from 'react';
+import { ReactNode, type JSX } from 'react'
 import { toast } from 'react-toastify'
 
 export const copyToClipboard = (text: string, labelText: string) => {
