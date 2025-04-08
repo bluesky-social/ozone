@@ -16,13 +16,20 @@ export function RichText({ post }: { post: Post.Record }) {
   for (const segment of richtext.segments()) {
     if (segment.isMention()) {
       els.push(
-        <Link href={`/repositories/${segment.mention?.did}`}>
+        <Link
+          key={`/repositories/${segment.mention?.did}`}
+          href={`/repositories/${segment.mention?.did}`}
+        >
           {segment.text}
         </Link>,
       )
     } else if (segment.isLink()) {
       els.push(
-        <a href={String(segment.link?.uri)} title={segment.text}>
+        <a
+          key={segment.text}
+          href={String(segment.link?.uri)}
+          title={segment.text}
+        >
           {toShortUrl(segment.text)}
         </a>,
       )
@@ -30,7 +37,7 @@ export function RichText({ post }: { post: Post.Record }) {
       els.push(segment.text)
     }
   }
-  return <div className='break-words dark:text-gray-300'>{els}</div>
+  return <div className="break-words dark:text-gray-300">{els}</div>
 }
 
 // This function was copy-pasted from social-app's RichText component
