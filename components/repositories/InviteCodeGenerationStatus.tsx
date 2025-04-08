@@ -1,4 +1,11 @@
-import { Dialog, Transition } from '@headlessui/react'
+import {
+  Dialog,
+  Transition,
+  TransitionChild,
+  DialogTitle,
+  Description,
+  DialogPanel,
+} from '@headlessui/react'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Fragment, useState } from 'react'
 
@@ -84,7 +91,7 @@ export const InviteCodeGenerationStatus = ({
           className="relative z-10"
           onClose={() => setIsDialogOpen(false)}
         >
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="ease-out duration-300"
             enterFrom="opacity-0"
@@ -94,11 +101,11 @@ export const InviteCodeGenerationStatus = ({
             leaveTo="opacity-0"
           >
             <div className="fixed inset-0 bg-black bg-opacity-25" />
-          </Transition.Child>
+          </TransitionChild>
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4 text-center">
-              <Transition.Child
+              <TransitionChild
                 as={Fragment}
                 enter="ease-out duration-300"
                 enterFrom="opacity-0 scale-95"
@@ -107,35 +114,35 @@ export const InviteCodeGenerationStatus = ({
                 leaveFrom="opacity-100 scale-100"
                 leaveTo="opacity-0 scale-95"
               >
-                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl dark:shadow-xs dark:shadow-slate-900 transition-all">
-                  <Dialog.Title
+                <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl dark:shadow-xs dark:shadow-slate-900 transition-all">
+                  <DialogTitle
                     as="h3"
                     className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-50"
                   >
                     {invitesDisabled ? 'Enable' : 'Disable'} invite code
                     generation?
-                  </Dialog.Title>
+                  </DialogTitle>
 
-                  <Dialog.Description className="text-gray-600 dark:text-gray-200 mt-4">
+                  <Description className="text-gray-600 dark:text-gray-200 mt-4">
                     This will {invitesDisabled ? 'enable' : 'stop'} invite code
                     generation for this user.
-                    <br />
-                    {invitesDisabled ? (
-                      <p>
-                        Remember, this will not affect already disabled invite
-                        codes.
-                      </p>
-                    ) : (
-                      <p className="pt-2">
-                        Optionally, you can also choose to disable already
-                        generated invite codes by checking the box below. It may
-                        take a bit longer to disable existing invite codes so,
-                        please be patient.
-                      </p>
-                    )}
-                  </Dialog.Description>
+                  </Description>
 
-                  <Dialog.Description>
+                  {invitesDisabled ? (
+                    <Description className="text-gray-600 dark:text-gray-200">
+                      Remember, this will not affect already disabled invite
+                      codes.
+                    </Description>
+                  ) : (
+                    <Description className="text-gray-600 dark:text-gray-200 pt-2">
+                      Optionally, you can also choose to disable already
+                      generated invite codes by checking the box below. It may
+                      take a bit longer to disable existing invite codes so,
+                      please be patient.
+                    </Description>
+                  )}
+
+                  <Description>
                     <Textarea
                       autoFocus
                       name="note"
@@ -167,7 +174,7 @@ export const InviteCodeGenerationStatus = ({
                         body={toggleAccountInvites.error?.['message']}
                       />
                     )}
-                  </Dialog.Description>
+                  </Description>
 
                   <div className="mt-4 flex flex-row justify-end">
                     <ActionButton
@@ -196,8 +203,8 @@ export const InviteCodeGenerationStatus = ({
                       {buttonText}
                     </ActionButton>
                   </div>
-                </Dialog.Panel>
-              </Transition.Child>
+                </DialogPanel>
+              </TransitionChild>
             </div>
           </div>
         </Dialog>

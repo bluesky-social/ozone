@@ -1,4 +1,9 @@
-import { Popover, Transition } from '@headlessui/react'
+import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+  Transition,
+} from '@headlessui/react'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { QueueFilterSubjectType } from './SubjectType'
 import { useSearchParams } from 'next/navigation'
@@ -118,12 +123,12 @@ const FilterButton = () => {
   const queueFilters = useQueueFilterBuilder(searchParams)
 
   return (
-    <Popover.Button className="text-sm flex flex-row items-center">
+    <PopoverButton className="text-sm flex flex-row items-center">
       <span className="text-gray-700 dark:text-gray-100">
         <FilterSummary queueFilters={queueFilters} />
       </span>
       <ChevronDownIcon className="dark:text-gray-50 w-4 h-4" />
-    </Popover.Button>
+    </PopoverButton>
   )
 }
 
@@ -143,7 +148,7 @@ export const QueueFilterPanel = () => {
             leaveFrom="transform scale-100 opacity-100"
             leaveTo="transform scale-95 opacity-0"
           >
-            <Popover.Panel className="absolute left-0 z-10 mt-1 flex max-w-max -translate-x-1/5 px-4">
+            <PopoverPanel className="absolute left-0 z-10 mt-1 flex max-w-max -translate-x-1/5 px-4">
               <div className="flex-auto w-96 rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
                 <div className="flex flex-row px-2 gap-6">
                   <QueueFilterSubjectType />
@@ -151,7 +156,7 @@ export const QueueFilterPanel = () => {
                 <QueueFilterTags />
                 <QueueFilterStats />
               </div>
-            </Popover.Panel>
+            </PopoverPanel>
           </Transition>
         </>
       )}

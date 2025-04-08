@@ -52,6 +52,7 @@ export const useAuthorFeedQuery = ({
         TypeFiltersByKey.quotes_and_reposts.key,
       ].includes(typeFilter)
 
+      console.log(labelerAgent)
       while (filteredFeed.length < limit) {
         const authorFeedParams = {
           limit,
