@@ -1,5 +1,12 @@
-import { Dialog, Transition } from '@headlessui/react'
-import { ForwardedRef, forwardRef, Fragment } from 'react'
+import {
+  Dialog,
+  Transition,
+  DialogTitle,
+  Description,
+  DialogPanel,
+  TransitionChild,
+} from '@headlessui/react'
+import { ForwardedRef, forwardRef, Fragment, type JSX } from 'react'
 import { Alert } from '@/common/Alert'
 import { ActionButton } from '@/common/buttons'
 
@@ -38,7 +45,7 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
         className="relative z-10"
         onClose={() => setIsOpen(false)}
       >
-        <Transition.Child
+        <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
           enterFrom="opacity-0"
@@ -48,11 +55,11 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
           leaveTo="opacity-0"
         >
           <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
+        </TransitionChild>
 
         <div className="fixed inset-0 overflow-y-auto">
           <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="ease-out duration-300"
               enterFrom="opacity-0 scale-95"
@@ -61,20 +68,20 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl dark:shadow-xs dark:shadow-slate-900 transition-all">
-                <Dialog.Title
+              <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl dark:shadow-xs dark:shadow-slate-900 transition-all">
+                <DialogTitle
                   as="h3"
                   className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-50"
                 >
                   {title}
-                </Dialog.Title>
+                </DialogTitle>
 
                 {!!description && (
-                  <Dialog.Description className="text-gray-600 dark:text-gray-200 mt-4">
+                  <Description className="text-gray-600 dark:text-gray-200 mt-4">
                     {description}
-                  </Dialog.Description>
+                  </Description>
                 )}
-                <Dialog.Description>
+                <Description>
                   {children}
                   {!!error && (
                     <Alert
@@ -83,7 +90,7 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
                       title="Something went wrong"
                     />
                   )}
-                </Dialog.Description>
+                </Description>
 
                 <div className="mt-4 flex flex-row justify-end">
                   <ActionButton
@@ -101,8 +108,8 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
                     {confirmButtonText}
                   </ActionButton>
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
           </div>
         </div>
       </Dialog>

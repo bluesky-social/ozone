@@ -1,7 +1,13 @@
 'use client'
 
 import { useState, Fragment } from 'react'
-import { Combobox, Transition } from '@headlessui/react'
+import {
+  Combobox,
+  Transition,
+  ComboboxButton,
+  ComboboxOption,
+  ComboboxOptions,
+} from '@headlessui/react'
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/solid'
 import { getRoleText, MemberRoleNames } from './helpers'
 
@@ -37,7 +43,7 @@ export default function RolePicker({
     >
       <div className="relative w-full">
         {/* Dropdown Button */}
-        <Combobox.Button
+        <ComboboxButton
           className={`relative w-full cursor-pointer rounded bg-white dark:bg-slate-800 dark:hover:bg-slate-700 text-left shadow-sm border border-gray-300 dark:border-teal-500 flex items-center justify-between focus:outline-none focus-visible:ring-2 focus-visible:ring-white/75 focus-visible:ring-offset-2 focus-visible:ring-offset-teal-300 sm:text-sm dark:text-gray-100 ${sizeClasses[size]}`}
         >
           <span className={sizeClasses[size]}>
@@ -49,7 +55,7 @@ export default function RolePicker({
             className="h-5 w-5 text-gray-400"
             aria-hidden="true"
           />
-        </Combobox.Button>
+        </ComboboxButton>
 
         {/* Dropdown Menu */}
         <Transition
@@ -58,19 +64,19 @@ export default function RolePicker({
           leaveFrom="opacity-100"
           leaveTo="opacity-0"
         >
-          <Combobox.Options className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
+          <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
             {roles.length === 0 ? (
               <div className="p-2 text-gray-500 dark:text-gray-300">
                 No roles available
               </div>
             ) : (
               roles.map((role) => (
-                <Combobox.Option
+                <ComboboxOption
                   key={role}
                   value={role}
-                  className={({ active }) =>
+                  className={({ focus }) =>
                     `relative cursor-pointer select-none py-2 pl-10 pr-4 ${
-                      active
+                      focus
                         ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
                         : 'text-gray-900 dark:text-gray-200'
                     }`
@@ -99,10 +105,10 @@ export default function RolePicker({
                       </span>
                     </>
                   )}
-                </Combobox.Option>
+                </ComboboxOption>
               ))
             )}
-          </Combobox.Options>
+          </ComboboxOptions>
         </Transition>
       </div>
     </Combobox>

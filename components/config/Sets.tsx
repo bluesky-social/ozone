@@ -1,5 +1,6 @@
-import { ActionButton, LinkButton } from '@/common/buttons'
+import { LinkButton } from '@/common/buttons'
 import { Input } from '@/common/forms'
+import { useSyncedState } from '@/lib/useSyncedState'
 import { SetEditor } from '@/sets/SetEditor'
 import { SetList } from '@/sets/SetList'
 import { SetView } from '@/sets/SetView'
@@ -11,6 +12,8 @@ import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { useState } from 'react'
+import { useDebounce } from 'react-use'
 
 const Title = ({
   editingSet,
@@ -37,6 +40,46 @@ const Title = ({
   )
 }
 
+// Make sure we don't update the url query param on every key stroke
+const SetsSearchInput = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
+  const [inputValue, setInputValue] = useSyncedState(searchQuery)
+
+  useDebounce(
+    () => {
+      if (inputValue !== searchQuery) {
+        const url = createSetPageLink({ search: inputValue })
+        router.push(url, { scroll: false })
+      }
+    },
+    300,
+    [inputValue],
+  )
+
+  return (
+    <>
+      <Input
+        type="text"
+        autoFocus
+        className="w-3/4"
+        placeholder="Search sets..."
+        value={inputValue}
+        onChange={(e) => setInputValue(e.target.value)}
+      />{' '}
+      <LinkButton
+        size="sm"
+        className="ml-1"
+        appearance="outlined"
+        href={createSetPageLink({})}
+      >
+        Cancel
+      </LinkButton>
+    </>
+  )
+}
+
 export function SetsConfig() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -52,27 +95,7 @@ export function SetsConfig() {
     <div className="pt-4">
       <div className="flex flex-row justify-between mb-4">
         {typeof searchQuery === 'string' ? (
-          <>
-            <Input
-              type="text"
-              autoFocus
-              className="w-3/4"
-              placeholder="Search sets..."
-              value={searchQuery}
-              onChange={(e) => {
-                const url = createSetPageLink({ search: e.target.value })
-                router.push(url)
-              }}
-            />{' '}
-            <LinkButton
-              size="sm"
-              className="ml-1"
-              appearance="outlined"
-              href={createSetPageLink({})}
-            >
-              Cancel
-            </LinkButton>
-          </>
+          <SetsSearchInput />
         ) : (
           <>
             <Title {...{ editingSet, viewSet }} />

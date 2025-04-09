@@ -1,5 +1,10 @@
 import { Agent } from '@atproto/api'
-import { Combobox } from '@headlessui/react'
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxOption,
+  ComboboxOptions,
+} from '@headlessui/react'
 import { useEffect, useState } from 'react'
 
 import { classNames } from '@/lib/util'
@@ -17,7 +22,7 @@ type RepoFinderProps = {
   onChange: (value: string) => void
   clearOnSelect?: boolean
   inputProps?: React.InputHTMLAttributes<HTMLInputElement>
-  repos?: TypeaheadResult[]
+  getProfiles?: (labelerAgent: Agent, q: string) => Promise<TypeaheadResult[]>
 }
 
 const DefaultResult = {
@@ -55,7 +60,7 @@ const getProfilesForQuery = async (
 
   const {
     data: { actors },
-  } = await agent.api.app.bsky.actor.searchActorsTypeahead({ q })
+  } = await agent.app.bsky.actor.searchActorsTypeahead({ q })
 
   return actors.map((actor) => ({
     displayName: actor.displayName,
@@ -70,31 +75,18 @@ export function RepoFinder({
   onChange,
   clearOnSelect = false,
   inputProps = {},
-  repos,
+  getProfiles = getProfilesForQuery,
 }: RepoFinderProps) {
   const [query, setQuery] = useState('')
   const [selectedItem, setSelectedItem] = useState<string>('')
-  const [items, setItems] = useState<TypeaheadResult[]>(
-    repos?.length ? repos : [DefaultResult],
-  )
+  const [items, setItems] = useState<TypeaheadResult[]>([DefaultResult])
   const [loading, setLoading] = useState(false)
   const labelerAgent = useLabelerAgent()
 
   useEffect(() => {
     if (query.length > 0) {
-      if (repos?.length) {
-        setItems(
-          repos.filter((repo) => {
-            return (
-              repo.handle.toLowerCase().includes(query.toLowerCase()) ||
-              repo.displayName?.toLowerCase().includes(query.toLowerCase())
-            )
-          }),
-        )
-        return
-      }
       setLoading(true)
-      getProfilesForQuery(labelerAgent, query)
+      getProfiles(labelerAgent, query)
         .then((profiles) => {
           setItems(profiles)
           setLoading(false)
@@ -105,21 +97,19 @@ export function RepoFinder({
           setItems([ErrorResult])
         })
     } else {
-      setItems(repos?.length ? repos : [DefaultResult])
+      setItems([DefaultResult])
     }
-    // We only depend on the repo.length here because the repos array is either not passed
-    // or passed as an empty array while loading or the entire list is given
-  }, [labelerAgent, query, repos?.length])
+  }, [labelerAgent, query, getProfiles])
 
   return (
     <Combobox
       value={selectedItem}
       onChange={(item) => {
-        setSelectedItem(clearOnSelect ? '' : item)
-        onChange(item)
+        setSelectedItem(clearOnSelect ? '' : item || '')
+        onChange(item || '')
       }}
     >
-      <Combobox.Input
+      <ComboboxInput
         // This is intentionally spread on top so that any of the below props are passed via inputProps, they are ignored
         // This also helps with the classname overwrite
         {...inputProps}
@@ -130,7 +120,7 @@ export function RepoFinder({
         onChange={(e) => setQuery(e.target.value)}
         placeholder="Search..."
       />
-      <Combobox.Options className="rounded mt-1 max-h-60 overflow-y-auto bg-gray-100 dark:bg-slate-900 shadow-sm">
+      <ComboboxOptions className="rounded mt-1 max-h-60 overflow-y-auto bg-gray-100 dark:bg-slate-900 shadow-sm">
         {loading ? (
           <div className="p-2">Loading...</div>
         ) : items.length === 0 && query !== '' ? (
@@ -142,12 +132,12 @@ export function RepoFinder({
           </div>
         ) : (
           items.map((item) => (
-            <Combobox.Option
+            <ComboboxOption
               key={item.did}
               value={selectionType === 'did' ? item.did : item.handle}
-              className={({ active }) =>
+              className={({ focus }) =>
                 `cursor-pointer p-2 flex items-center space-x-3 ${
-                  active ? 'bg-gray-400 text-white dark:bg-slate-700' : ''
+                  focus ? 'bg-gray-400 text-white dark:bg-slate-700' : ''
                 }`
               }
             >
@@ -162,10 +152,10 @@ export function RepoFinder({
                   {item.displayName || 'No display name'}
                 </div>
               </div>
-            </Combobox.Option>
+            </ComboboxOption>
           ))
         )}
-      </Combobox.Options>
+      </ComboboxOptions>
     </Combobox>
   )
 }

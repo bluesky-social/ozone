@@ -38,10 +38,9 @@ import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { Dialog } from '@headlessui/react'
+import { DialogTitle } from '@headlessui/react'
 import { SubjectSwitchButton } from '@/common/SubjectSwitchButton'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
-import { Card } from '@/common/Card'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -57,6 +56,8 @@ import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
+import { Alert } from '@/common/Alert'
+import { TextWithLinks } from '@/common/TextWithLinks'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -88,7 +89,7 @@ export function ModActionPanelQuick(
   return (
     <FullScreenActionPanel
       title={
-        <Dialog.Title className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
+        <DialogTitle className="text-lg leading-6 font-medium text-gray-900 dark:text-gray-200 flex flex-row justify-between pr-8">
           Take moderation action
           {isMobileView && (
             <button
@@ -102,7 +103,7 @@ export function ModActionPanelQuick(
               Events
             </button>
           )}
-        </Dialog.Title>
+        </DialogTitle>
       }
       onClose={onClose}
       {...others}
@@ -396,7 +397,10 @@ function Form(
         ToolsOzoneModerationDefs.isModEventLabel(coreEvent)
 
       setModEventType(
-        eventMayNeedEmail && !shouldMoveToNextSubject && canSendEmail
+        eventMayNeedEmail &&
+          !shouldMoveToNextSubject &&
+          canSendEmail &&
+          isSubjectDid
           ? MOD_EVENTS.EMAIL
           : MOD_EVENTS.ACKNOWLEDGE,
       )
@@ -542,7 +546,10 @@ function Form(
                 >
                   {!isSubjectDid && record?.repo && (
                     <div className="-ml-1 my-2">
-                      <RecordAuthorStatus repo={record.repo} />
+                      <RecordAuthorStatus
+                        repo={record.repo}
+                        profile={profile}
+                      />
                     </div>
                   )}
                 </PreviewCard>
@@ -560,9 +567,13 @@ function Form(
                     <LastReviewedTimestamp subjectStatus={subjectStatus} />
                   </p>
                   {!!subjectStatus.comment && (
-                    <Card hint="important" className="mt-2">
-                      <strong>Note:</strong> {subjectStatus.comment}
-                    </Card>
+                    <div className="mt-2">
+                      <Alert
+                        type="info"
+                        title="Note"
+                        body={<TextWithLinks text={subjectStatus.comment} />}
+                      />
+                    </div>
                   )}
                 </div>
               )}

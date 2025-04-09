@@ -453,7 +453,7 @@ function Button({
   className = '',
   icon,
   ...others
-}: ComponentProps<'button'> & { icon: ReactElement }) {
+}: ComponentProps<'button'> & { icon: ReactElement<any> }) {
   return (
     <button
       type="button"

@@ -2,7 +2,7 @@ import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { AppBskyActorDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { AccountsGrid } from './AccountView'
-import { listRecords } from './api'
+import { getProfiles, listRecords } from './api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useEffect, useRef, useState } from 'react'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
@@ -30,21 +30,10 @@ export function Blocks({ did }: { did: string }) {
         if (!actors.length) {
           return { accounts: [], cursor: null }
         }
-        const { data: profileData } =
-          await labelerAgent.app.bsky.actor.getProfiles({
-            actors,
-          })
-
-        const accounts: AppBskyActorDefs.ProfileViewDetailed[] = []
-        actors.forEach((did) => {
-          const profile = profileData.profiles.find((p) => p.did === did)
-          if (profile) {
-            accounts.push(profile)
-          }
-        })
+        const profiles = await getProfiles(labelerAgent, actors)
 
         return {
-          accounts,
+          accounts: Array.from(profiles.values()),
           cursor: data.cursor,
         }
       },

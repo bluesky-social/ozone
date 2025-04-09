@@ -14,7 +14,12 @@ import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { Fragment, HTMLAttributes } from 'react'
 import { ReviewStateIcon } from './ReviewStateMarker'
-import { Popover, Transition } from '@headlessui/react'
+import {
+  Popover,
+  Transition,
+  PopoverButton,
+  PopoverPanel,
+} from '@headlessui/react'
 import { ButtonGroup } from '@/common/buttons'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { StatView } from './Summary'
@@ -292,7 +297,7 @@ const SummaryColumnHeader = () => {
 
   return (
     <Popover className="relative">
-      <Popover.Button
+      <PopoverButton
         className=" flex flex-row items-center gap-1"
         type="button"
       >
@@ -306,7 +311,7 @@ const SummaryColumnHeader = () => {
         ) : (
           <Bars3BottomLeftIcon className="h-4 w-4" />
         )}
-      </Popover.Button>
+      </PopoverButton>
 
       <Transition
         as={Fragment}
@@ -317,7 +322,7 @@ const SummaryColumnHeader = () => {
         leaveFrom="opacity-100 translate-y-0"
         leaveTo="opacity-0 translate-y-1"
       >
-        <Popover.Panel className="absolute z-10 rounded p-4">
+        <PopoverPanel className="absolute z-10 rounded p-4">
           <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
             <ToggleSortButtonGroup
               title="Reported records count"
@@ -338,7 +343,7 @@ const SummaryColumnHeader = () => {
               title="Priority score"
             />
           </div>
-        </Popover.Panel>
+        </PopoverPanel>
       </Transition>
     </Popover>
   )

@@ -3,7 +3,12 @@
 import { Fragment, createContext, useContext, useState } from 'react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Dialog, Transition } from '@headlessui/react'
+import {
+  Dialog,
+  DialogPanel,
+  Transition,
+  TransitionChild,
+} from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { classNames } from '@/lib/util'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
@@ -50,13 +55,13 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
   return (
     <>
       {/* Mobile menu */}
-      <Transition.Root show={mobileMenuOpen.open} as={Fragment}>
+      <Transition show={mobileMenuOpen.open} as={Fragment}>
         <Dialog
           as="div"
           className="relative z-20 md:hidden"
           onClose={mobileMenuOpen.set}
         >
-          <Transition.Child
+          <TransitionChild
             as={Fragment}
             enter="transition-opacity ease-linear duration-300"
             enterFrom="opacity-0"
@@ -66,10 +71,10 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
             leaveTo="opacity-0"
           >
             <div className="fixed inset-0 bg-gray-600 bg-opacity-75" />
-          </Transition.Child>
+          </TransitionChild>
 
           <div className="fixed inset-0 z-40 flex">
-            <Transition.Child
+            <TransitionChild
               as={Fragment}
               enter="transition ease-in-out duration-300 transform"
               enterFrom="-translate-x-full"
@@ -78,8 +83,8 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
               leaveFrom="translate-x-0"
               leaveTo="-translate-x-full"
             >
-              <Dialog.Panel className="relative flex w-full max-w-xs flex-1 flex-col bg-rose-700 dark:bg-teal-700 pt-5 pb-4">
-                <Transition.Child
+              <DialogPanel className="relative flex w-full max-w-xs flex-1 flex-col bg-rose-700 dark:bg-teal-700 pt-5 pb-4">
+                <TransitionChild
                   as={Fragment}
                   enter="ease-in-out duration-300"
                   enterFrom="opacity-0"
@@ -101,7 +106,7 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                       <span className="sr-only">Close sidebar</span>
                     </button>
                   </div>
-                </Transition.Child>
+                </TransitionChild>
                 <div className="flex flex-shrink-0 items-center px-4">
                   <Image
                     width={200}
@@ -173,14 +178,14 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                     </div>
                   </nav>
                 </div>
-              </Dialog.Panel>
-            </Transition.Child>
+              </DialogPanel>
+            </TransitionChild>
             <div className="w-14 flex-shrink-0" aria-hidden="true">
               {/* Dummy element to force sidebar to shrink to fit close icon */}
             </div>
           </div>
         </Dialog>
-      </Transition.Root>
+      </Transition>
     </>
   )
 }

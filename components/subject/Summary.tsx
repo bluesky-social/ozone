@@ -8,7 +8,7 @@ import {
   ShieldExclamationIcon,
   UserCircleIcon,
 } from '@heroicons/react/24/solid'
-import { ComponentProps, useState } from 'react'
+import { ComponentProps, useState, type JSX } from 'react'
 
 export const StatView = ({
   count,
@@ -26,7 +26,7 @@ export const StatView = ({
   let bgColor = 'bg-gray-400 dark:text-gray-100 text-white'
 
   if (appearance === 'info') {
-    bgColor = 'bg-blue-400 text-blue-800'
+    bgColor = 'bg-blue-200 text-blue-800'
   } else if (appearance === 'danger') {
     bgColor = 'bg-red-200 text-red-800'
   } else if (appearance === 'warning') {

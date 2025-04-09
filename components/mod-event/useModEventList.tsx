@@ -565,9 +565,8 @@ const TagBasedTypeFilters = {
 const buildTagFilter = (type: string) => {
   const add: string[] = []
   const remove: string[] = []
-  const tagTypes = Object.keys(TagBasedTypeFilters)
 
-  if (!(type in tagTypes) || !Object.hasOwn(tagTypes, type)) {
+  if (!Object.hasOwn(TagBasedTypeFilters, type)) {
     return { add, remove }
   }
   if (TagBasedTypeFilters[type].add) {

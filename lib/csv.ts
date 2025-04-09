@@ -33,14 +33,13 @@ export function createCSV({
 }
 
 export function downloadCSV(csv: CsvContent) {
-  var csvContent = csv.headerRow + csv.body
+  let csvContent = csv.headerRow + csv.body
   if (!csvContent.match(/^data:text\/csv/i)) {
-    csvContent = 'data:text/csv;charset=utf-8,' + csvContent // use 'data:text/csv;charset=utf-8,\ufeff', if you consider using the excel
+    csvContent = 'data:text/csv;charset=utf-8,' + encodeURIComponent(csvContent)
   }
-  var data = encodeURI(csvContent)
 
-  var link = document.createElement('a')
-  link.href = data
+  const link = document.createElement('a')
+  link.href = csvContent
   link.download = csv.filename
 
   document.body.appendChild(link)

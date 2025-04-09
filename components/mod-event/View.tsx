@@ -1,5 +1,5 @@
 'use client'
-import { useState } from 'react'
+import { useState, type JSX } from 'react'
 import Link from 'next/link'
 import {
   ToolsOzoneModerationGetEvent as GetEvent,

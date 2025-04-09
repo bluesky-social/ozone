@@ -1,5 +1,7 @@
 import { ChatBubbleLeftIcon } from '@heroicons/react/24/outline'
 
+import type { JSX } from 'react'
+
 export const EmptyFeed = () => {
   return (
     <EmptyDataset message="No posts yet!">

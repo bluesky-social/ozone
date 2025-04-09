@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { usePathname, useSearchParams } from 'next/navigation'
-import { ReactNode } from 'react'
+import { ReactNode, type JSX } from 'react'
 import { classNames } from '@/lib/util'
 
 interface Tab {

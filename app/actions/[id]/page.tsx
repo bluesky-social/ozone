@@ -1,10 +1,12 @@
 'use client'
+import { use } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { EventView } from '@/mod-event/View'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-export default function Action({ params }: { params: { id: string } }) {
+export default function Action(props: { params: Promise<{ id: string }> }) {
+  const params = use(props.params)
   const labelerAgent = useLabelerAgent()
   const id = decodeURIComponent(params.id)
 

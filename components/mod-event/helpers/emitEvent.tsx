@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { toast } from 'react-toastify'
+import { toast, ToastContentProps } from 'react-toastify'
 import {
   Agent,
   ComAtprotoAdminDefs,
@@ -9,74 +9,65 @@ import {
 } from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
-import {
-  buildItemsSummary,
-  groupSubjects,
-  isSubjectStatusView,
-} from '@/workspace/utils'
+import { buildItemsSummary, groupSubjects } from '@/workspace/utils'
 
 import { displayError } from '../../common/Loader'
-import { MOD_EVENTS } from '@/mod-event/constants'
+import { MOD_EVENT_TITLES, MOD_EVENTS } from '@/mod-event/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useCallback } from 'react'
+import { useCallback, useRef } from 'react'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
 import { chunkArray } from '@/lib/util'
-import {
-  WorkspaceListData,
-  WorkspaceListItemData,
-} from '@/workspace/useWorkspaceListData'
+import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
 import { compileTemplateContent } from 'components/email/helpers'
 import { diffTags } from 'components/tags/utils'
 import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 
+const DELAY_DURATION_MS = 10000 // 10 seconds
+
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
+  const pendingTimeoutRef = useRef<number | null>(null)
 
   return useCallback(
     async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+      const isDelayedAction = vals.event.$type === MOD_EVENTS.EMAIL
+      const isRecord = vals?.subject.$type === 'com.atproto.repo.strongRef'
+      const subjectType = isRecord ? 'Record' : 'Account'
+
+      // Define the actual emit event function to reuse
       const emitModerationEventAsync = async () => {
-        const { data } =
-          await labelerAgent.api.tools.ozone.moderation.emitEvent(vals)
+        const { data } = await labelerAgent.tools.ozone.moderation.emitEvent(
+          vals,
+        )
         return data
       }
 
-      try {
-        const isRecord = vals?.subject.$type === 'com.atproto.repo.strongRef'
-        await toast.promise(emitModerationEventAsync, {
-          pending: 'Taking action...',
-          success: {
-            render({ data }) {
-              const eventId = data?.id
-              const eventType = data?.event.$type as string
-              const actionTypeString = eventType && eventTexts[eventType]
+      // Define the success render function to reuse
+      const successRender = (
+        props: ToastContentProps<ToolsOzoneModerationDefs.ModEventView>,
+      ): React.ReactNode => {
+        const { data } = props
+        const eventId = data?.id
+        const eventType = data?.event.$type as string
+        const actionTypeString = eventType && eventTexts[eventType]
+        const title = `${subjectType} was ${actionTypeString ?? 'actioned'}`
 
-              const title = `${isRecord ? 'Record' : 'Account'} was ${
-                actionTypeString ?? 'actioned'
-              }`
+        return (
+          <div>
+            {title} -{' '}
+            <Link
+              href={`/events/${eventId}`}
+              className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
+            >
+              View #{eventId}
+            </Link>
+          </div>
+        )
+      }
 
-              return (
-                <div>
-                  {title} -{' '}
-                  <Link
-                    href={`/events/${eventId}`}
-                    className="text-indigo-600 hover:text-indigo-900 whitespace-nowrap"
-                  >
-                    View #{eventId}
-                  </Link>
-                </div>
-              )
-            },
-          },
-        })
-        if (ComAtprotoAdminDefs.isRepoRef(vals?.subject)) {
-          // This may not be all encompassing because in the accountView query, the id may be a did or a handle
-          queryClient.invalidateQueries([
-            'accountView',
-            { id: vals?.subject.did },
-          ])
-        }
-      } catch (err) {
+      // Define the error handler to reuse
+      const handleError = (err: any) => {
         if (err?.['error'] === 'SubjectHasAction') {
           toast.warn(
             'We found that subject already has a current action. You may proceed by resolving with that action, or replacing it.',
@@ -86,6 +77,104 @@ export function useEmitEvent() {
         }
         throw err
       }
+
+      // Define the query invalidation to reuse
+      const invalidateQueries = () => {
+        if (ComAtprotoAdminDefs.isRepoRef(vals?.subject)) {
+          queryClient.invalidateQueries([
+            'accountView',
+            { id: vals?.subject.did },
+          ])
+        }
+      }
+
+      // If this is not a delayed action, proceed immediately
+      if (!isDelayedAction) {
+        try {
+          const data = await toast.promise(emitModerationEventAsync(), {
+            pending: 'Taking action...',
+            success: { render: successRender },
+          })
+          invalidateQueries()
+          return data
+        } catch (err) {
+          return handleError(err)
+        }
+      }
+
+      // For delayed action, show toast with timer and undo button
+      // Clear any existing timeout
+      if (pendingTimeoutRef.current) {
+        clearTimeout(pendingTimeoutRef.current)
+        pendingTimeoutRef.current = null
+      }
+
+      return new Promise((resolve, reject) => {
+        let toastId: string | number
+        let secondsLeft = DELAY_DURATION_MS / 1000
+        let intervalId: number
+
+        const cancelAction = () => {
+          clearInterval(intervalId)
+          clearTimeout(pendingTimeoutRef.current!)
+          pendingTimeoutRef.current = null
+          toast.dismiss(toastId)
+          toast.info(`Action cancelled`)
+          reject(new Error('You cancelled the action'))
+        }
+
+        const ContentWithTimer = ({
+          remainingTime,
+        }: {
+          remainingTime: number
+        }) => (
+          <div>
+            <div>{`Action will be performed in ${remainingTime}s`}</div>
+            <button type="button" onClick={cancelAction} className="underline">
+              Undo
+            </button>
+          </div>
+        )
+
+        // Show initial toast
+        toastId = toast.info(<ContentWithTimer remainingTime={secondsLeft} />, {
+          autoClose: false,
+          closeButton: false,
+        })
+
+        // Update the countdown every second
+        intervalId = window.setInterval(() => {
+          secondsLeft -= 1
+
+          if (secondsLeft <= 0) {
+            clearInterval(intervalId)
+          } else {
+            // Update the toast content with new timer
+            toast.update(toastId, {
+              render: <ContentWithTimer remainingTime={secondsLeft} />,
+            })
+          }
+        }, 1000)
+
+        // Set timeout for the actual action
+        pendingTimeoutRef.current = window.setTimeout(async () => {
+          toast.dismiss(toastId)
+
+          try {
+            const result = await toast.promise(emitModerationEventAsync(), {
+              pending: `Processing ${
+                MOD_EVENT_TITLES[vals.event.$type] || 'Action'
+              }...`,
+              success: { render: successRender },
+            })
+
+            invalidateQueries()
+            resolve(result)
+          } catch (err) {
+            reject(handleError(err))
+          }
+        }, DELAY_DURATION_MS)
+      })
     },
     [labelerAgent, queryClient],
   )
@@ -98,7 +187,7 @@ type BulkActionResults = {
 
 const eventForSubject = (
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
-  subjectData: WorkspaceListItemData,
+  subjectData: ToolsOzoneModerationDefs.SubjectView,
 ): Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'> => {
   // only need to adjust event data for each subject for email events
   // for the rest, same event data is used for all subjects
@@ -121,20 +210,12 @@ const eventForSubject = (
     )
   }
 
-  const handle = ToolsOzoneModerationDefs.isRepoViewDetail(subjectData)
-    ? subjectData.handle
-    : ToolsOzoneModerationDefs.isRecordViewDetail(subjectData)
-    ? subjectData.repo.handle
-    : isSubjectStatusView(subjectData)
-    ? subjectData.subjectRepoHandle
-    : undefined
-
   return {
     ...eventData,
     event: {
       ...eventData.event,
       content: compileTemplateContent(eventData.event.content, {
-        handle,
+        handle: subjectData.repo?.handle,
       }),
     },
   }

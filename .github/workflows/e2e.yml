@@ -23,12 +23,16 @@ jobs:
         with:
           node-version: 20
 
+      - name: Enable Corepack
+        run: corepack enable
+
       - name: Cypress run
         uses: cypress-io/github-action@v5
         with:
           build: yarn build
           start: yarn start
           browser: chrome
+          install-command: yarn install
 
       - name: Setup Screenshot Artifacts
         if: failure()
