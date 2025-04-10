@@ -327,7 +327,6 @@ function RecordEditStep({
           record={recordVal}
           onUpdate={(updatedRecord) => {
             try {
-              console.log(updatedRecord)
               setRecordVal(updatedRecord)
               setIsPlainTextInvalid(false)
             } catch (e) {
