@@ -4,14 +4,134 @@ import { ComAtprotoLabelDefs } from '@atproto/api'
 import { defaultLabelValueDefinition } from './helpers'
 import { ActionButton } from '@/common/buttons'
 
-export const LabelerRecordEditor: React.FC<{
+export const LabelDefinitionEditor: React.FC<{
+  label: ComAtprotoLabelDefs.LabelValue
+  definition?: ComAtprotoLabelDefs.LabelValueDefinition
+  onUpdate: (
+    label: string,
+    definition?: ComAtprotoLabelDefs.LabelValueDefinition,
+  ) => void
+  onCancel: () => void
+}> = ({ label, definition, onUpdate, onCancel }) => {
+  const [hasDefinition, setHasDefinition] = useState(!!definition)
+
+  // Keep state synced with parent state
+  useEffect(() => {
+    setHasDefinition(!!definition)
+  }, [definition])
+
+  if (hasDefinition) {
+    return (
+      <LabelFullDefinitionEditor
+        label={label}
+        definition={definition}
+        onUpdate={(updatedDef) => {
+          onUpdate(label, updatedDef)
+          setHasDefinition(false)
+        }}
+        onRemoveDefinition={() => {
+          setHasDefinition(false)
+        }}
+        onCancel={() => {
+          setHasDefinition(false)
+          onCancel()
+        }}
+      />
+    )
+  }
+
+  return (
+    <LabelMinimalDefinitionEditor
+      label={label}
+      onUpdate={(newLabel) => {
+        onUpdate(newLabel)
+      }}
+      onAddDefinition={() => {
+        setHasDefinition(true)
+      }}
+      onCancel={() => {
+        onCancel()
+      }}
+    />
+  )
+}
+
+const LabelMinimalDefinitionEditor = ({
+  label,
+  onUpdate,
+  onAddDefinition,
+  onCancel,
+}: {
+  label: ComAtprotoLabelDefs.LabelValue
+  onUpdate: (label: ComAtprotoLabelDefs.LabelValue) => void
+  onAddDefinition: () => void
+  onCancel: () => void
+}) => {
+  const [formState, setFormState] = useState<{ label: string }>({ label })
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    onUpdate(label)
+  }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFormState({ ...formState, [e.target.name]: e.target.value })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="w-full flex flex-row items-center gap-2">
+        <FormLabel className="flex-1" label="Label">
+          <Input
+            required
+            name="label"
+            value={formState.label}
+            onChange={handleChange}
+            className="block w-full p-2"
+          />
+        </FormLabel>
+      </div>
+      <p className="text-sm text-gray-500 dark:text-gray-300">
+        This label does not have a detailed definition
+      </p>
+      <div className="flex flex-row justify-between">
+        <div>
+          <ActionButton
+            appearance="outlined"
+            type="button"
+            size="sm"
+            onClick={onAddDefinition}
+          >
+            Add Definition
+          </ActionButton>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <ActionButton
+            appearance="outlined"
+            type="button"
+            size="sm"
+            onClick={onCancel}
+          >
+            Cancel
+          </ActionButton>
+          <ActionButton appearance="primary" size="sm" type="submit">
+            Save
+          </ActionButton>
+        </div>
+      </div>
+    </form>
+  )
+}
+
+const LabelFullDefinitionEditor: React.FC<{
+  label: ComAtprotoLabelDefs.LabelValue
   definition?: ComAtprotoLabelDefs.LabelValueDefinition
   onUpdate: (updatedDef: ComAtprotoLabelDefs.LabelValueDefinition) => void
+  onRemoveDefinition: () => void
   onCancel: () => void
-}> = ({ definition, onUpdate, onCancel }) => {
+}> = ({ label, definition, onUpdate, onCancel, onRemoveDefinition }) => {
   const [formState, setFormState] =
     useState<ComAtprotoLabelDefs.LabelValueDefinition>(
-      definition || defaultLabelValueDefinition,
+      definition || { ...defaultLabelValueDefinition, identifier: label },
     )
 
   useEffect(() => {
@@ -55,8 +175,10 @@ export const LabelerRecordEditor: React.FC<{
             required
           />
         </FormLabel>
+      </div>
 
-        <FormLabel label="Severity">
+      <div className="w-full flex flex-col sm:flex-row gap-2">
+        <FormLabel label="Severity" className="flex-1">
           <Select
             name="severity"
             value={formState.severity}
@@ -68,7 +190,7 @@ export const LabelerRecordEditor: React.FC<{
           </Select>
         </FormLabel>
 
-        <FormLabel label="Blurs">
+        <FormLabel label="Blurs" className="flex-1">
           <Select name="blurs" value={formState.blurs} onChange={handleChange}>
             <option value="content">Content</option>
             <option value="media">Media</option>
@@ -76,7 +198,7 @@ export const LabelerRecordEditor: React.FC<{
           </Select>
         </FormLabel>
 
-        <FormLabel label="Default Setting">
+        <FormLabel label="Default Setting" className="flex-1">
           <Select
             name="defaultSetting"
             value={formState.defaultSetting}
@@ -87,14 +209,17 @@ export const LabelerRecordEditor: React.FC<{
             <option value="hide">Hide</option>
           </Select>
         </FormLabel>
+
+        <FormLabel label="Adult Only" className="flex-1">
+          <Checkbox
+            label="Yes"
+            checked={formState.adultOnly || false}
+            onChange={(e) =>
+              setFormState({ ...formState, adultOnly: e.target.checked })
+            }
+          />
+        </FormLabel>
       </div>
-      <Checkbox
-        label="Adult Only"
-        checked={formState.adultOnly || false}
-        onChange={(e) =>
-          setFormState({ ...formState, adultOnly: e.target.checked })
-        }
-      />
 
       <div className="mt-4">
         <div className="flex flex-row justify-between mb-1">
@@ -162,13 +287,30 @@ export const LabelerRecordEditor: React.FC<{
         ))}
       </div>
 
-      <div className="flex justify-end space-x-2">
-        <ActionButton appearance="outlined" type="button" onClick={onCancel}>
-          Cancel
-        </ActionButton>
-        <ActionButton appearance="primary" type="submit">
-          Save
-        </ActionButton>
+      <div className="flex flex-row justify-between">
+        <div>
+          <ActionButton
+            appearance="outlined"
+            type="button"
+            size="sm"
+            onClick={onRemoveDefinition}
+          >
+            Remove Definition
+          </ActionButton>
+        </div>
+        <div className="flex justify-end space-x-2">
+          <ActionButton
+            appearance="outlined"
+            type="button"
+            size="sm"
+            onClick={onCancel}
+          >
+            Cancel
+          </ActionButton>
+          <ActionButton appearance="primary" size="sm" type="submit">
+            Save
+          </ActionButton>
+        </div>
       </div>
     </form>
   )

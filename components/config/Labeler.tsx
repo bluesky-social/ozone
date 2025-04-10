@@ -1,13 +1,11 @@
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
-import dynamic from 'next/dynamic'
 import { useMutation } from '@tanstack/react-query'
 import { AppBskyLabelerService } from '@atproto/api'
-import { ButtonGroup, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
+import { ActionButton, ButtonGroup, ButtonPrimary } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { ErrorInfo } from '@/common/ErrorInfo'
 import { useSyncedState } from '@/lib/useSyncedState'
-import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { Checkbox, Textarea } from '@/common/forms'
 import { ExternalLabelerConfig } from './external-labeler'
 import { ServerConfig } from './server-config'
@@ -16,15 +14,7 @@ import { usePdsAgent } from '@/shell/AuthContext'
 import { LocalPreferences } from './LocalPreferences'
 import { QueueSetting } from 'components/setting/Queue'
 import { toast } from 'react-toastify'
-import { Dropdown } from '@/common/Dropdown'
-import { ChevronDownIcon } from '@heroicons/react/24/solid'
-import { LabelerRecordEditor } from 'components/labeler/RecordEditor'
-import { defaultLabelValueDefinition } from 'components/labeler/helpers'
 import { LabelerRecordView } from 'components/labeler/RecordView'
-
-const BrowserReactJsonView = dynamic(() => import('react-json-view'), {
-  ssr: false,
-})
 
 export function LabelerConfig() {
   const { config, isServiceAccount } = useConfigurationContext()
@@ -54,26 +44,18 @@ export function LabelerConfig() {
   )
 }
 
-function ConfigureDetails() {
-  const { config } = useConfigurationContext()
-
-  const record = config.labeler
-  return (
-    <div>
-      <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
-        Labeler Configuration
-      </h3>
-      <Card className="mt-4 p-4 pb-6">
-        <h4 className="font-medium text-gray-700 dark:text-gray-100">
-          Service Record
-        </h4>
-        <p className="mt-2">
+const LabelerConfigDescription = () => {
+  const [isFullView, setIsFullView] = useState(false)
+  if (isFullView) {
+    return (
+      <div className="my-2 text-sm text-gray-500 dark:text-gray-300">
+        <p>
           The existence of a service record makes your service account <b></b>{' '}
           available in the Bluesky application, allowing users to choose to use
           your labeling service. It contains a labeling policy consisting of a
           few parts:
         </p>
-        <ul className="list-disc list-inside mt-2 pl-4">
+        <ul className="list-disc list-inside my-2 pl-4">
           <li>
             A list of{' '}
             <b>
@@ -111,11 +93,82 @@ function ConfigureDetails() {
               <code>reasonTypes</code>
             </b>
             : such as `com.atproto.moderation.defs#reasonOther`, specifying the
-            report "reason types" that can be reported by users.
+            report {'"'}reason types{'"'} that can be reported by users.
           </li>
         </ul>
+        <p>
+          <button
+            type="button"
+            onClick={() => setIsFullView(false)}
+            className="text-blue-500"
+          >
+            Show Less
+          </button>
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="text-sm text-gray-500 dark:text-gray-300">
+      <p className="my-2">
+        The existence of a service record makes your service account available
+        in the Bluesky application, allowing users to choose to use your
+        labeling service.{' '}
+        <button
+          type="button"
+          onClick={() => setIsFullView(true)}
+          className="text-blue-500"
+        >
+          Show More
+        </button>
+      </p>
+    </div>
+  )
+}
+
+function ConfigureDetails() {
+  const { config } = useConfigurationContext()
+  const [editorMode, setEditorMode] = useState<'json' | 'ui'>('ui')
+
+  return (
+    <div>
+      <h3 className="font-medium text-lg text-gray-700 dark:text-gray-100">
+        Labeler Configuration
+      </h3>
+      <Card className="mt-4 p-4 pb-6">
+        <div className="flex flex-row justify-between mb-2">
+          <h4 className="font-medium text-gray-700 dark:text-gray-100">
+            Service Record
+          </h4>
+
+          <ButtonGroup
+            size="xs"
+            className="ml-0"
+            appearance="primary"
+            items={[
+              {
+                id: 'ui',
+                text: 'UI Editor',
+                isActive: editorMode === 'ui',
+                onClick: () => setEditorMode('ui'),
+              },
+              {
+                id: 'json',
+                text: 'JSON Editor',
+                isActive: editorMode === 'json',
+                onClick: () => setEditorMode('json'),
+              },
+            ]}
+          />
+        </div>
+        <LabelerConfigDescription />
         {config.labeler ? (
-          <RecordEditStep repo={config.did} record={config.labeler} />
+          <RecordEditStep
+            editorMode={editorMode}
+            repo={config.did}
+            record={config.labeler}
+          />
         ) : (
           <RecordInitStep repo={config.did} />
         )}
@@ -212,16 +265,14 @@ function RecordInitStep({ repo }: { repo: string }) {
 function RecordEditStep({
   record,
   repo,
+  editorMode,
 }: {
   record: AppBskyLabelerService.Record
   repo: string
+  editorMode: 'json' | 'ui'
 }) {
   const pdsAgent = usePdsAgent()
-
   const { reconfigure } = useConfigurationContext()
-
-  const [editorMode, setEditorMode] = useState<'json' | 'ui'>('ui')
-  const darkMode = isDarkModeEnabled()
   const [recordVal, setRecordVal] = useSyncedState(record)
   const [plainTextRecord, setPlainTextRecord] = useSyncedState(
     JSON.stringify(getEditableLabelerFields(record), null, 2),
@@ -246,31 +297,6 @@ function RecordEditStep({
   })
   return (
     <div>
-      <div className="my-2 justify-end sm:flex">
-        <ButtonGroup
-          size="xs"
-          className="ml-0"
-          appearance="primary"
-          items={[
-            {
-              id: 'ui',
-              text: 'UI Editor',
-              isActive: editorMode === 'ui',
-              onClick: () => setEditorMode('ui'),
-            },
-            {
-              id: 'json',
-              text: 'JSON Editor',
-              isActive: editorMode === 'json',
-              onClick: () => setEditorMode('json'),
-            },
-          ]}
-        />
-      </div>
-      {!!updateRecord.error && (
-        <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
-      )}
-      {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
       {isPlainTextInvalid && editorMode === 'json' && (
         <ErrorInfo type="warn" className="mb-2">
           Invalid JSON input. Your changes can not be saved.
@@ -297,8 +323,42 @@ function RecordEditStep({
           />
         </div>
       ) : (
-        <LabelerRecordView originalRecord={record} />
+        <LabelerRecordView
+          record={recordVal}
+          onUpdate={(updatedRecord) => {
+            try {
+              console.log(updatedRecord)
+              setRecordVal(updatedRecord)
+              setIsPlainTextInvalid(false)
+            } catch (e) {
+              setIsPlainTextInvalid(true)
+            }
+          }}
+        />
       )}
+      {!!updateRecord.error && (
+        <ErrorInfo>{updateRecord.error['message']}</ErrorInfo>
+      )}
+      {invalid && <ErrorInfo type="warn">{invalid}</ErrorInfo>}
+      <div className="flex flex-row justify-end gap-2">
+        <ActionButton
+          appearance="outlined"
+          type="button"
+          size="sm"
+          onClick={() => setRecordVal(record)}
+        >
+          Reset
+        </ActionButton>
+        <ActionButton
+          appearance="primary"
+          size="sm"
+          type="button"
+          onClick={() => updateRecord.mutate()}
+          disabled={!!invalid || updateRecord.isLoading}
+        >
+          Save
+        </ActionButton>
+      </div>
     </div>
   )
 }

@@ -10,8 +10,8 @@ import {
   EyeSlashIcon,
   PencilSquareIcon,
 } from '@heroicons/react/24/solid'
-import { useEffect, useState } from 'react'
-import { LabelerRecordEditor } from './RecordEditor'
+import { useState } from 'react'
+import { LabelDefinitionEditor } from './DefinitionEditor'
 import { Checkbox, Textarea } from '@/common/forms'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
 
@@ -34,17 +34,21 @@ const LabelDefinitionView = ({
 }: {
   label: ComAtprotoLabelDefs.LabelValue
   definition?: ComAtprotoLabelDefs.LabelValueDefinition
-  onUpdate: (updatedDef: ComAtprotoLabelDefs.LabelValueDefinition) => void
+  onUpdate: (
+    label,
+    updatedDef?: ComAtprotoLabelDefs.LabelValueDefinition,
+  ) => void
 }) => {
   const [isEditing, setIsEditing] = useState(false)
 
   if (isEditing) {
     return (
-      <LabelerRecordEditor
+      <LabelDefinitionEditor
         onCancel={() => setIsEditing(false)}
         definition={definition}
-        onUpdate={(updatedDef) => {
-          onUpdate(updatedDef)
+        label={label}
+        onUpdate={(label, updatedDef) => {
+          onUpdate(label, updatedDef)
           setIsEditing(false)
         }}
       />
@@ -65,6 +69,7 @@ const LabelDefinitionView = ({
       </div>
     )
   }
+
   return (
     <div className="mb-1 border-b dark:border-gray-700 border-gray-300 pb-2">
       <div>
@@ -126,17 +131,85 @@ const LabelDefinitionView = ({
   )
 }
 
-export const LabelerRecordView = (props: {
-  originalRecord: AppBskyLabelerService.Record
+export const LabelerRecordView = ({
+  record,
+  onUpdate,
+}: {
+  record: AppBskyLabelerService.Record
+  onUpdate: (record: AppBskyLabelerService.Record) => void
 }) => {
-  const [record, setRecord] = useState(props.originalRecord)
-
-  useEffect(() => {
-    setRecord(props.originalRecord)
-  }, [props.originalRecord])
-
   return (
     <div>
+      <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
+        Labels
+      </h3>
+      {record.policies.labelValues.map((label) => (
+        <div key={label} className="pb-2">
+          <LabelDefinitionView
+            label={label}
+            definition={record.policies.labelValueDefinitions?.find(
+              (def) => def.identifier === label,
+            )}
+            onUpdate={(newLabel, newDefinition) => {
+              const { labelValueDefinitions, labelValues } = record.policies
+
+              // If definition is not set we need to remove existing definition if there is one
+              // and then update the label value if there is an update
+              if (!newDefinition) {
+                const newDefinitions = labelValueDefinitions?.length
+                  ? labelValueDefinitions.filter(
+                      ({ identifier }) => identifier === label,
+                    )
+                  : labelValueDefinitions
+
+                // Replace the label being edited with the updated value
+                const newValues = labelValues.map((l) => {
+                  if (l === newLabel) {
+                    return label
+                  }
+                  return l
+                })
+
+                // Call update with the new label values and definitions
+                return onUpdate({
+                  ...record,
+                  policies: {
+                    ...record.policies,
+                    labelValues: newValues,
+                    labelValueDefinitions: newDefinitions,
+                  },
+                })
+              }
+
+              const newDefinitions = labelValueDefinitions?.length
+                ? labelValueDefinitions.map((def) => {
+                    if (def.identifier === label) {
+                      return newDefinition
+                    }
+                    return def
+                  })
+                : labelValueDefinitions
+
+              // Replace the label value from identifier value of definition
+              const newValues = labelValues.map((l) => {
+                if (l === label) {
+                  return newDefinition.identifier
+                }
+                return l
+              })
+
+              onUpdate({
+                ...record,
+                policies: {
+                  ...record.policies,
+                  labelValues: newValues,
+                  labelValueDefinitions: newDefinitions,
+                },
+              })
+            }}
+          />
+        </div>
+      ))}
       <div className="flex flex-row gap-3">
         <div>
           <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
@@ -147,11 +220,17 @@ export const LabelerRecordView = (props: {
               <div key={reasonType}>
                 <Checkbox
                   value={reasonType}
-                  defaultChecked
+                  defaultChecked={
+                    !record.reasonTypes ||
+                    record.reasonTypes?.includes(reasonType)
+                  }
                   name={`reasonType-${reasonType}`}
                   className="mb-3 flex items-center leading-3"
                   onChange={(e) => {
-                    let newReasonTypes = [...(record.reasonTypes || [])]
+                    let newReasonTypes =
+                      record.reasonTypes === undefined
+                        ? [...reasonTypes]
+                        : [...record.reasonTypes]
                     if (e.target.checked) {
                       newReasonTypes.push(reasonType)
                     } else {
@@ -161,9 +240,9 @@ export const LabelerRecordView = (props: {
                     }
 
                     if (newReasonTypes.length === 0) {
-                      setRecord({ ...record, reasonTypes: undefined })
+                      onUpdate({ ...record, reasonTypes: undefined })
                     } else {
-                      setRecord({ ...record, reasonTypes: newReasonTypes })
+                      onUpdate({ ...record, reasonTypes: newReasonTypes })
                     }
                   }}
                   label={
@@ -185,7 +264,11 @@ export const LabelerRecordView = (props: {
               <div key={subjectType}>
                 <Checkbox
                   value={subjectType}
-                  defaultChecked
+                  // When subjectTypes is falsy, it means the labeler accepts all subject types so we show all items as checked
+                  defaultChecked={
+                    !record.subjectTypes ||
+                    record.subjectTypes?.includes(subjectType)
+                  }
                   name={`subjectType-${subjectType}`}
                   className="mb-3 flex items-center leading-3"
                   onChange={(e) => {
@@ -202,9 +285,9 @@ export const LabelerRecordView = (props: {
                     }
 
                     if (newSubjectTypes.length === 0) {
-                      setRecord({ ...record, subjectTypes: undefined })
+                      onUpdate({ ...record, subjectTypes: undefined })
                     } else {
-                      setRecord({ ...record, subjectTypes: newSubjectTypes })
+                      onUpdate({ ...record, subjectTypes: newSubjectTypes })
                     }
                   }}
                   label={<span className="capitalize">{subjectType}</span>}
@@ -222,7 +305,7 @@ export const LabelerRecordView = (props: {
               className="w-full"
               placeholder="Comma separated list of nsids"
               onChange={(e) => {
-                setRecord({
+                onUpdate({
                   ...record,
                   subjectCollections: e.target.value
                     .split(',')
@@ -235,32 +318,6 @@ export const LabelerRecordView = (props: {
           </div>
         )}
       </div>
-
-      <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
-        Labels
-      </h3>
-      {record.policies.labelValues.map((label) => (
-        <div key={label} className="pb-2">
-          <LabelDefinitionView
-            label={label}
-            definition={record.policies.labelValueDefinitions?.find(
-              (def) => def.identifier === label,
-            )}
-            onUpdate={(updatedDef) => {
-              setRecord({
-                ...record,
-                policies: {
-                  ...record.policies,
-                  labelValueDefinitions:
-                    record.policies.labelValueDefinitions?.map((def) =>
-                      def.identifier === label ? updatedDef : def,
-                    ),
-                },
-              })
-            }}
-          />
-        </div>
-      ))}
     </div>
   )
 }
