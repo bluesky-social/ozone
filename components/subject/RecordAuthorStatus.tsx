@@ -1,4 +1,4 @@
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import {
   NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,
   YOUNG_ACCOUNT_MARKER_THRESHOLD_IN_DAYS,

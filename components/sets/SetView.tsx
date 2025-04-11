@@ -10,7 +10,7 @@ import { TrashIcon } from '@heroicons/react/24/solid'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { Card } from '@/common/Card'
 import { usePermission } from '@/shell/ConfigurationContext'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',

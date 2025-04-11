@@ -9,7 +9,7 @@ import {
 } from '@atproto/api'
 
 import { Card } from '@/common/Card'
-import { LabelChip, LabelList, ModerationLabel } from '@/common/labels'
+import { LabelChip, LabelList, ModerationLabel } from '@/common/labels/List'
 import { MessageContext } from '@/dms/MessageContext'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'

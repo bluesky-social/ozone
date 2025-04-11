@@ -1,6 +1,7 @@
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 import {
+  AppBskyLabelerDefs,
   AppBskyLabelerService,
   ComAtprotoLabelDefs,
   ComAtprotoModerationDefs,
@@ -14,6 +15,7 @@ import { useState } from 'react'
 import { LabelDefinitionEditor } from './DefinitionEditor'
 import { Checkbox, Textarea } from '@/common/forms'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
+import { ActionButton } from '@/common/buttons'
 
 const reasonTypes = [
   ComAtprotoModerationDefs.REASONSPAM,
@@ -140,9 +142,36 @@ export const LabelerRecordView = ({
 }) => {
   return (
     <div>
-      <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
-        Labels
-      </h3>
+      <div className="flex flex-row justify-between">
+        <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
+          Labels
+        </h3>
+        <ActionButton
+          appearance="secondary"
+          size="xs"
+          onClick={() => {
+            const newPolicies: AppBskyLabelerDefs.LabelerPolicies = {
+              labelValues: [...(record.policies.labelValues || []), ''],
+            }
+
+            if (record.policies.labelValueDefinitions) {
+              newPolicies.labelValueDefinitions = [
+                ...record.policies.labelValueDefinitions,
+              ]
+            }
+
+            onUpdate({
+              ...record,
+              policies: newPolicies,
+            })
+          }}
+        >
+          Add Label
+        </ActionButton>
+      </div>
+      {record.policies.labelValues.length === 0 && (
+        <p className="text-red-500">No labels configured.</p>
+      )}
       {record.policies.labelValues.map((label) => (
         <div key={label} className="pb-2">
           <LabelDefinitionView
@@ -164,8 +193,8 @@ export const LabelerRecordView = ({
 
                 // Replace the label being edited with the updated value
                 const newValues = labelValues.map((l) => {
-                  if (l === newLabel) {
-                    return label
+                  if (l === label) {
+                    return newLabel
                   }
                   return l
                 })
@@ -188,7 +217,7 @@ export const LabelerRecordView = ({
                     }
                     return def
                   })
-                : labelValueDefinitions
+                : [newDefinition]
 
               // Replace the label value from identifier value of definition
               const newValues = labelValues.map((l) => {

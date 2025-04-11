@@ -47,13 +47,13 @@ import { ComponentProps, useCallback, useEffect, useState } from 'react'
 import Lightbox from 'yet-another-react-lightbox'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
+import { getLabelsForSubject } from '@/common/labels/util'
 import {
-  getLabelsForSubject,
   LabelChip,
   LabelList,
   LabelListEmpty,
   ModerationLabel,
-} from '../common/labels'
+} from '@/common/labels/List'
 import { Loading, LoadingFailed } from '../common/Loader'
 import { ReportPanel } from '../reports/ReportPanel'
 import { Blocks } from './Blocks'

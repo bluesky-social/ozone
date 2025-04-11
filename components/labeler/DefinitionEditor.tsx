@@ -71,7 +71,7 @@ const LabelMinimalDefinitionEditor = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    onUpdate(label)
+    onUpdate(formState.label)
   }
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormState({ ...formState, [e.target.name]: e.target.value })
@@ -160,6 +160,7 @@ const LabelFullDefinitionEditor: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    console.log(formState)
     onUpdate(formState)
   }
 
@@ -255,17 +256,19 @@ const LabelFullDefinitionEditor: React.FC<{
             className="p-3 border rounded bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-gray-700 mb-2"
           >
             <div className="flex flex-row items-center gap-2 mb-2">
-              <FormLabel label="Language" className="w-1/4">
+              <FormLabel label="Language" htmlFor="lang" className="w-1/4">
                 <Input
                   value={locale.lang}
+                  name="lang"
                   className="block p-2 w-full"
                   onChange={(e) =>
                     handleLocaleChange(index, 'lang', e.target.value)
                   }
                 />
               </FormLabel>
-              <FormLabel label="Name" className="flex-1">
+              <FormLabel label="Name" className="flex-1" htmlFor="name">
                 <Input
+                  name="name"
                   value={locale.name}
                   className="block p-2 w-full"
                   onChange={(e) =>
@@ -274,9 +277,10 @@ const LabelFullDefinitionEditor: React.FC<{
                 />
               </FormLabel>
             </div>
-            <FormLabel label="Description">
+            <FormLabel label="Description" htmlFor="description">
               <Textarea
                 value={locale.description}
+                name="description"
                 className="block p-2 w-full"
                 onChange={(e) =>
                   handleLocaleChange(index, 'description', e.target.value)
