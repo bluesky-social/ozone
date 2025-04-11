@@ -56,7 +56,9 @@ export function AuthProvider({ children, ...options }: AuthProviderProps) {
     clientId:
       !ozonePublicUrl || typeof window === 'undefined'
         ? undefined // Disabled server side
-        : isLoopbackHost(ozonePublicUrl.hostname)
+        : isLoopbackHost(ozonePublicUrl.hostname) ||
+          (process.env.NODE_ENV === 'development' &&
+            isLoopbackHost(window.location.hostname))
         ? // The following requires a yet to be released version of the oauth-client:
           // &scope=${OAUTH_SCOPE.split(' ').map(encodeURIComponent).join('+')}
           `http://localhost?redirect_uri=${encodeURIComponent(
