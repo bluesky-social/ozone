@@ -1,7 +1,7 @@
 import Dropzone, { DropzoneRef } from 'react-dropzone'
 import { ActionPanel } from '@/common/ActionPanel'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { PropsOf } from '@/lib/types'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import {

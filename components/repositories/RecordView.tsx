@@ -17,9 +17,9 @@ import { BlobsTable } from './BlobsTable'
 import {
   LabelList,
   LabelListEmpty,
-  getLabelsForSubject,
   ModerationLabel,
-} from '@/common/labels'
+} from '@/common/labels/List'
+import { getLabelsForSubject } from '@/common/labels/util'
 import { DataField } from '@/common/DataField'
 import { ModEventList } from '@/mod-event/EventList'
 import { ReviewStateIconLink } from '@/subject/ReviewStateMarker'

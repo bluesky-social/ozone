@@ -1,5 +1,5 @@
 import { ActionButton } from '@/common/buttons'
-import { LabelChip, ModerationLabel } from '@/common/labels'
+import { LabelChip, ModerationLabel } from '@/common/labels/List'
 import { Loading } from '@/common/Loader'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { buildBlueSkyAppUrl } from '@/lib/util'
