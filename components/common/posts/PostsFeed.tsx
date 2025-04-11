@@ -26,7 +26,7 @@ import {
   pluralize,
 } from '@/lib/util'
 import { RichText } from '../RichText'
-import { LabelList, ModerationLabel } from '../labels'
+import { LabelList, ModerationLabel } from '../labels/List'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
