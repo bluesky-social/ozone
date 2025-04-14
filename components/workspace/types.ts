@@ -2,6 +2,11 @@ export type DurationUnit = 'days' | 'weeks' | 'months' | 'years'
 
 export type WorkspaceFilterItem =
   | {
+      field: 'tag'
+      operator: 'eq' | 'neq'
+      value: string
+    }
+  | {
       field: 'followersCount'
       operator: 'gte' | 'lte'
       value: number
