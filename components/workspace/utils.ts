@@ -89,6 +89,12 @@ export const checkFilterMatchForWorkspaceItem = (
   data: ToolsOzoneModerationDefs.SubjectView,
 ): boolean => {
   switch (filter.field) {
+    case 'tag':
+      const { tags } = data.status || {}
+      if (!tags) return false
+      return filter.operator === 'eq'
+        ? tags.includes(filter.value)
+        : !tags.includes(filter.value)
     case 'emailConfirmed':
       const confirmedAt = data.repo?.emailConfirmedAt
       return !!filter.value ? !!confirmedAt : !confirmedAt

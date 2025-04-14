@@ -21,6 +21,8 @@ const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   Partial<{ unit: DurationUnit }> & {
     text: string
   })[] = [
+  { field: 'tag', operator: 'eq', text: 'With Tag' },
+  { field: 'tag', operator: 'neq', text: 'Without Tag' },
   { field: 'followersCount', operator: 'gte', text: 'Min. Follower Count' },
   { field: 'followersCount', operator: 'lte', text: 'Max. Follower Count' },
   { field: 'followsCount', operator: 'gte', text: 'Min. Follow Count' },
