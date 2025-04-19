@@ -3,6 +3,7 @@ import { CopyButton } from '@/common/CopyButton'
 import { NoSymbolIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { WorkspaceFilterSelector } from './FilterSelector'
 import { WorkspaceListData } from './useWorkspaceListData'
+import { BulkVerificationActionButton } from 'components/verification/ActionButton'
 
 export const WorkspacePanelActions = ({
   handleRemoveSelected,
@@ -63,6 +64,8 @@ export const WorkspacePanelActions = ({
           Find correlation
         </ActionButton>
       )}
+
+      <BulkVerificationActionButton subjects={listData} size="xs" />
 
       <ActionButton
         appearance="outlined"

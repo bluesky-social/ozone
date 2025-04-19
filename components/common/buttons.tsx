@@ -30,7 +30,7 @@ export function ButtonSecondary(props: ComponentProps<'button'>) {
   )
 }
 
-type ButtonAppearance = 'outlined' | 'primary' | 'secondary'
+type ButtonAppearance = 'outlined' | 'primary' | 'secondary' | 'negative'
 type ButtonSize = 'xs' | 'sm' | 'md' | 'lg'
 type ActionButtonProps = {
   appearance: ButtonAppearance
@@ -42,6 +42,8 @@ const appearanceClassNames = {
     'bg-transparent dark:bg-slate-800 disabled:bg-gray-300 text-black dark:text-gray-50 hover:bg-gray-500 dark:hover:bg-slate-700 focus:ring-gray-500 dark:focus:ring-slate-600 border-gray-700 dark:border-slate-600',
   primary:
     'bg-indigo-600 dark:bg-teal-600 disabled:bg-gray-400 text-white hover:bg-indigo-700 dark:hover:bg-teal-700 focus:ring-indigo-500 dark:focus:ring-teal-500 border-transparent',
+  negative:
+    'bg-red-600 dark:bg-red-700 disabled:bg-gray-400 text-white hover:bg-red-700 dark:hover:bg-red-800 focus:ring-red-500 dark:focus:ring-red-500 border-transparent',
 }
 const sizeClassNames = {
   xs: 'px-1 py-1 text-xs font-light',

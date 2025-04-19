@@ -13,6 +13,7 @@ export const PLC_DIRECTORY_URL =
     : 'https://plc.directory')
 
 export const QUEUE_CONFIG = process.env.NEXT_PUBLIC_QUEUE_CONFIG || '{}'
+export const OPT_IN_FEATURES = process.env.NEXT_PUBLIC_OPT_IN_FEATURES || '{}'
 
 export const QUEUE_SEED = process.env.NEXT_PUBLIC_QUEUE_SEED || ''
 
@@ -30,6 +31,7 @@ export const HANDLE_RESOLVER_URL =
 
 export const DM_DISABLE_TAG = 'chat-disabled'
 export const VIDEO_UPLOAD_DISABLE_TAG = 'video-upload-disabled'
+export const TRUSTED_VERIFIER_TAG = 'trusted-verifier'
 
 export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`
 
