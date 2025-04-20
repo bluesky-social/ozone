@@ -3,6 +3,11 @@ import { WorkspaceFilterItem } from './types'
 import { SubjectTag } from 'components/tags/SubjectTag'
 
 export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
+  if (filter.field === 'verifier') {
+    return (
+      <div>{filter.operator === 'eq' ? 'Verified By' : 'Not Verified By'}</div>
+    )
+  }
   if (filter.field === 'tag') {
     return (
       <div>

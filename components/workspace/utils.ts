@@ -158,6 +158,12 @@ export const checkFilterMatchForWorkspaceItem = (
       return filter.operator === 'eq'
         ? !!data.status?.takendown
         : !data.status?.takendown
+    case 'verifier':
+      if (!isValidProfileViewDetailed(data.profile)) return false
+      const verification = data.profile?.verification?.verifications?.find(
+        (v) => v.issuer === filter.value && v.isValid,
+      )
+      return filter.operator === 'eq' ? !!verification : !verification
     default:
       return false
   }

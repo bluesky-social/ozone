@@ -65,7 +65,7 @@ export const WorkspacePanelActions = ({
         </ActionButton>
       )}
 
-      <BulkVerificationActionButton subjects={listData} size="xs" />
+      <BulkVerificationActionButton subjects={listData} />
 
       <ActionButton
         appearance="outlined"

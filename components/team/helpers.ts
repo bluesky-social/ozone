@@ -3,6 +3,7 @@ import { ToolsOzoneTeamDefs } from '@atproto/api'
 export const MemberRoleNames = {
   [ToolsOzoneTeamDefs.ROLETRIAGE]: 'Triage',
   [ToolsOzoneTeamDefs.ROLEMODERATOR]: 'Moderator',
+  [ToolsOzoneTeamDefs.ROLEVERIFIER]: 'Verifier',
   [ToolsOzoneTeamDefs.ROLEADMIN]: 'Admin',
 }
 
@@ -15,6 +16,9 @@ export const getRoleText = (role: ToolsOzoneTeamDefs.Member['role']) => {
   }
   if (role === ToolsOzoneTeamDefs.ROLETRIAGE) {
     return MemberRoleNames[ToolsOzoneTeamDefs.ROLETRIAGE]
+  }
+  if (role === ToolsOzoneTeamDefs.ROLEVERIFIER) {
+    return MemberRoleNames[ToolsOzoneTeamDefs.ROLEVERIFIER]
   }
   return 'Unknown'
 }
@@ -33,6 +37,10 @@ export const isRoleSuperiorOrSame = (manager: string, target: string) => {
 
   if (manager === ToolsOzoneTeamDefs.ROLETRIAGE) {
     return target === ToolsOzoneTeamDefs.ROLETRIAGE
+  }
+
+  if (manager === ToolsOzoneTeamDefs.ROLEVERIFIER) {
+    return target === ToolsOzoneTeamDefs.ROLEVERIFIER
   }
 
   return false
