@@ -64,3 +64,7 @@ export const getProfileFromRepo = (
 export const isValidProfileViewDetailed = asPredicate(
   AppBskyActorDefs.validateProfileViewDetailed,
 )
+
+export const isValidRepoViewDetailed = asPredicate(
+  ToolsOzoneModerationDefs.validateRepoViewDetail,
+)

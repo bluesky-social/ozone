@@ -1,7 +1,7 @@
 import { CollectionId, EmbedTypes } from '@/reports/helpers/subject'
 import { pluralize } from '@/lib/util'
 import { DurationUnit, WorkspaceFilterItem } from './types'
-import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { addDays, addMonths, addWeeks, addYears } from 'date-fns'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
