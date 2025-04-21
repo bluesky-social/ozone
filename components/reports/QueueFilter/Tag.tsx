@@ -34,6 +34,7 @@ const availableTagOptions = {
       { text: 'French', value: 'lang:fr' },
       { text: 'Japanese', value: 'lang:ja' },
       { text: 'German', value: 'lang:de' },
+      { text: 'Turkish', value: 'lang:tr' },
       { text: 'Italian', value: 'lang:it' },
       { text: 'Korean', value: 'lang:ko' },
       { text: 'Russian', value: 'lang:ru' },
