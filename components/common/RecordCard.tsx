@@ -33,6 +33,7 @@ import {
 } from '@/workspace/hooks'
 
 import type { JSX } from 'react'
+import { VerificationBadge } from 'components/verification/Badge'
 
 export function RecordCard(props: {
   uri: string
@@ -390,7 +391,7 @@ export const RepoCardView = ({
               href={`/repositories/${did}`}
               className="hover:underline text-gray-500 dark:text-gray-50"
             >
-              {profile?.displayName ? (
+              {profile ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
                   <span
@@ -399,6 +400,11 @@ export const RepoCardView = ({
                   >
                     @{repo?.handle || did}
                   </span>
+                  <VerificationBadge
+                    className="ml-0.5"
+                    size="sm"
+                    profile={profile}
+                  />
                 </>
               ) : (
                 <span className="font-bold">@{repo?.handle || did}</span>

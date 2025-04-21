@@ -64,6 +64,7 @@ import { ProfileAvatar } from './ProfileAvatar'
 import { obscureIp, parseThreatSigs } from './helpers'
 import { useCopyAccountDetails } from './useCopyAccountDetails'
 import { getProfiles } from './api'
+import { VerificationBadge } from 'components/verification/Badge'
 
 enum Views {
   Details,
@@ -455,6 +456,7 @@ function Header({
                   target="_blank"
                 >
                   {displayActorName}
+                  {profile && <VerificationBadge profile={profile} />}
                 </a>{' '}
                 {subjectStatus && (
                   <SubjectReviewStateBadge subjectStatus={subjectStatus} />

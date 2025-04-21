@@ -2,14 +2,12 @@ import { Dropdown } from '@/common/Dropdown'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
-import { PostAsCard } from '@/common/posts/PostsFeed'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
-import { ProfileCard } from '@/repositories/AccountView'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { WorkspacePanel } from '@/workspace/Panel'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
-import { CheckBadgeIcon, Cog8ToothIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon, Cog8ToothIcon } from '@heroicons/react/24/solid'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { VerificationFilterPanel } from 'components/verification/FilterPanel'
 import { VerificationList } from 'components/verification/List'
@@ -112,7 +110,7 @@ export const VerificationPageContent = () => {
 
       {!isLoading && !verifications.length && (
         <EmptyDataset message="No verifications indexed">
-          <CheckBadgeIcon className="h-8 w-8" />
+          <CheckCircleIcon className="h-8 w-8" />
         </EmptyDataset>
       )}
 

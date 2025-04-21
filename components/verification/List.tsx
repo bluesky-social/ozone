@@ -1,10 +1,8 @@
-import { ProfileCard } from '@/repositories/AccountView'
 import {
   isValidProfileViewDetailed,
   isValidRepoViewDetailed,
 } from '@/repositories/helpers'
 import { ToolsOzoneVerificationDefs } from '@atproto/api'
-import { CheckBadgeIcon } from '@heroicons/react/24/solid'
 import { getVerificationIssuerHandle } from './utils'
 import { Card } from '@/common/Card'
 import { SubjectOverview } from '@/reports/SubjectOverview'

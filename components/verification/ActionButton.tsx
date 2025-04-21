@@ -7,7 +7,7 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react'
-import { CheckBadgeIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/solid'
 import { Fragment } from 'react'
 import { useVerifier } from './useVerifier'
 import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
@@ -150,7 +150,7 @@ const VerificationActionPopup = ({
         <>
           <PopoverButton className="ring-none">
             <ActionButton appearance="outlined" size={size} type="button">
-              <CheckBadgeIcon className="inline-block h-4 w-4 mr-1" />
+              <CheckCircleIcon className="inline-block h-4 w-4 mr-1" />
               <span className={classNames(`text-${size}`)}>{buttonText}</span>
             </ActionButton>
           </PopoverButton>

@@ -8,7 +8,7 @@ import {
   MoonIcon,
   WrenchScrewdriverIcon,
   MagnifyingGlassIcon,
-  CheckBadgeIcon,
+  CheckCircleIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -23,7 +23,7 @@ export const ICONS = {
   moon: MoonIcon,
   configure: WrenchScrewdriverIcon,
   search: MagnifyingGlassIcon,
-  verification: CheckBadgeIcon,
+  verification: CheckCircleIcon,
 }
 
 export type SidebarNavItem = {

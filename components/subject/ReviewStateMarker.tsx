@@ -6,13 +6,13 @@ import {
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 import {
-  CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   ScaleIcon,
   ShieldExclamationIcon,
   NoSymbolIcon,
 } from '@heroicons/react/20/solid'
+import { HandThumbUpIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 
 const reviewStateDescription = {
@@ -53,7 +53,7 @@ const reviewStateToColor = {
 const reviewStateToIcon = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: ExclamationCircleIcon,
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
-  [ToolsOzoneModerationDefs.REVIEWCLOSED]: CheckCircleIcon,
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: HandThumbUpIcon,
   [ToolsOzoneModerationDefs.REVIEWNONE]: NoSymbolIcon,
 }
 
@@ -126,7 +126,7 @@ export const ReviewStateIcon = ({
     reviewStateToText[subjectStatus.reviewState] || subjectStatus.reviewState
   let color =
     reviewStateToColor[subjectStatus.reviewState]?.text || 'text-gray-800'
-  let Icon = reviewStateToIcon[subjectStatus.reviewState] || CheckCircleIcon
+  let Icon = reviewStateToIcon[subjectStatus.reviewState] || HandThumbUpIcon
 
   if (subjectStatus.takendown) {
     text = 'Taken Down'
