@@ -52,8 +52,8 @@ export const BulkVerificationActionButton = ({
       grantVerifications={grantVerifications}
       size="xs"
     >
-      Granting verification will issue a verification record for each{' '}
-      <b>selected</b> user in your workspace.
+      Granting verification will issue a verification record for all users in
+      your workspace.
       <br />
       Revoking verification will remove any active verification record issued by
       you in the past.
