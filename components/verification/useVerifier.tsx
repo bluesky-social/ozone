@@ -15,20 +15,12 @@ export const useVerifier = () => {
       let failed = 0
 
       for (const chunk of chunkArray(verifications, 100)) {
-        const { data } = await labelerAgent.tools.ozone.verification.grant({
-          verifications: chunk,
-        })
-
-        for (const verification of data.verifications) {
-          if (
-            verification.$type ===
-            'tools.ozone.verification.defs#verificationView'
-          ) {
-            verified++
-          } else {
-            failed++
-          }
-        }
+        const { data } =
+          await labelerAgent.tools.ozone.verification.grantVerifications({
+            verifications: chunk,
+          })
+        verified += data.verifications.length
+        failed += data.failedVerifications.length
       }
 
       return { verified, failed }
@@ -60,11 +52,13 @@ export const useVerifier = () => {
 
       for (const chunk of chunkArray(uris, 100)) {
         const { data: chunkData } =
-          await labelerAgent.tools.ozone.verification.revoke({
+          await labelerAgent.tools.ozone.verification.revokeVerifications({
             uris: chunk,
           })
         data.revokedVerifications.push(...chunkData.revokedVerifications)
-        data.failedRevocations.push(...chunkData.failedRevocations)
+        data.failedRevocations.push(
+          ...chunkData.failedRevocations.map((item) => item.uri),
+        )
       }
 
       return data

@@ -168,7 +168,7 @@ export const useVerificationList = ({
       isRevoked,
     ],
     queryFn: async ({ pageParam }) => {
-      const { data } = await labelerAgent.tools.ozone.verification.list({
+      const { data } = await labelerAgent.tools.ozone.verification.listVerifications({
         issuers: issuers,
         isRevoked,
         createdAfter,
