@@ -13,7 +13,6 @@ export const PLC_DIRECTORY_URL =
     : 'https://plc.directory')
 
 export const QUEUE_CONFIG = process.env.NEXT_PUBLIC_QUEUE_CONFIG || '{}'
-export const OPT_IN_FEATURES = process.env.NEXT_PUBLIC_OPT_IN_FEATURES || '{}'
 
 export const QUEUE_SEED = process.env.NEXT_PUBLIC_QUEUE_SEED || ''
 
