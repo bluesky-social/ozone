@@ -24,7 +24,6 @@ export const useAccountHistory = (did: string) => {
 }
 
 const AccountHistoryDetails = ({ details }) => {
-  console.log(details)
   if (
     details.$type === 'tools.ozone.hosting.getAccountHistory#accountCreated'
   ) {
@@ -84,12 +83,7 @@ const AccountHistoryDetails = ({ details }) => {
     )
   }
 
-  return (
-    <>
-      <td>Unknown Event</td>
-      <td>Unrecognized event type</td>
-    </>
-  )
+  return null
 }
 
 export const AccountHistory = ({ did }: { did: string }) => {
