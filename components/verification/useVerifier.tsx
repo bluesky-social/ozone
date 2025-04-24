@@ -1,6 +1,6 @@
 import { chunkArray, pluralize } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneVerificationGrant } from '@atproto/api'
+import { ToolsOzoneVerificationGrantVerifications } from '@atproto/api'
 import { useMutation } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
@@ -9,7 +9,7 @@ export const useVerifier = () => {
 
   const grant = useMutation({
     mutationFn: async (
-      verifications: ToolsOzoneVerificationGrant.VerificationInput[],
+      verifications: ToolsOzoneVerificationGrantVerifications.VerificationInput[],
     ) => {
       let verified = 0
       let failed = 0

@@ -421,7 +421,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                         setShowItemCreator={setShowItemCreator}
                         showActionForm={showActionForm}
                         workspaceList={workspaceList}
-                        getSelectedItems={getSelectedItems}
                       />
                     </div>
                   )}

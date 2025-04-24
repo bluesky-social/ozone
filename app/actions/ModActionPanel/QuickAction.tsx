@@ -651,7 +651,6 @@ function Form(
                     <ModEventDetailsPopover modEventType={modEventType} />
                     {isSubjectDid && profile && (
                       <VerificationActionButton
-                        repo={repo}
                         did={subject}
                         profile={profile}
                       />

@@ -1,6 +1,9 @@
 import { ActionButton } from '@/common/buttons'
 import { usePermission, useServerConfig } from '@/shell/ConfigurationContext'
-import { AppBskyActorDefs, ToolsOzoneVerificationGrant } from '@atproto/api'
+import {
+  AppBskyActorDefs,
+  ToolsOzoneVerificationGrantVerifications,
+} from '@atproto/api'
 import {
   Popover,
   PopoverButton,
@@ -20,7 +23,8 @@ export const BulkVerificationActionButton = ({
   subjects?: WorkspaceListData
 }) => {
   const { verifierDid } = useServerConfig()
-  const grantVerifications: ToolsOzoneVerificationGrant.VerificationInput[] = []
+  const grantVerifications: ToolsOzoneVerificationGrantVerifications.VerificationInput[] =
+    []
   const revokeUris: string[] = []
 
   Object.values(subjects || {}).map((sub) => {
@@ -135,7 +139,7 @@ const VerificationActionPopup = ({
   title: string
   children?: React.ReactNode
   revokeUris?: string[]
-  grantVerifications: ToolsOzoneVerificationGrant.VerificationInput[]
+  grantVerifications: ToolsOzoneVerificationGrantVerifications.VerificationInput[]
 }) => {
   const canVerify = usePermission('canVerify')
   const { revoke, grant } = useVerifier()
