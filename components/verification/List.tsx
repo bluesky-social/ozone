@@ -7,6 +7,7 @@ import { getVerificationIssuerHandle } from './utils'
 import { Card } from '@/common/Card'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { RepoCardView } from '@/common/RecordCard'
+import VerificationErrorBoundary from './VerificationError'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -28,11 +29,14 @@ const VerificationCard = ({
     createdAt,
     revokedAt,
     revokedBy,
-    uri,
   } = verification
   const isRepoView = isValidRepoViewDetailed(subjectRepo)
   const isProfileView = isValidProfileViewDetailed(subjectProfile)
   const revokedByNonIssuer = revokedBy && revokedBy !== issuer
+
+  if (handle.includes('ar')) {
+    throw new Error('Invalid handle')
+  }
 
   return (
     <Card className="mb-3 text-sm px-3">
@@ -85,7 +89,9 @@ export const VerificationList = ({
       {verifications.map((verification) => {
         return (
           <div key={verification.uri}>
-            <VerificationCard verification={verification} />
+            <VerificationErrorBoundary uri={verification.uri}>
+              <VerificationCard verification={verification} />
+            </VerificationErrorBoundary>
           </div>
         )
       })}
