@@ -34,10 +34,6 @@ const VerificationCard = ({
   const isProfileView = isValidProfileViewDetailed(subjectProfile)
   const revokedByNonIssuer = revokedBy && revokedBy !== issuer
 
-  if (handle.includes('ar')) {
-    throw new Error('Invalid handle')
-  }
-
   return (
     <Card className="mb-3 text-sm px-3">
       <div className="flex flex-row gap-2">
