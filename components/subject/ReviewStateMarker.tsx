@@ -126,7 +126,7 @@ export const ReviewStateIcon = ({
     reviewStateToText[subjectStatus.reviewState] || subjectStatus.reviewState
   let color =
     reviewStateToColor[subjectStatus.reviewState]?.text || 'text-gray-800'
-  let Icon = reviewStateToIcon[subjectStatus.reviewState] || HandThumbUpIcon
+  let Icon = reviewStateToIcon[subjectStatus.reviewState] || CheckCircleIcon
 
   if (subjectStatus.takendown) {
     text = 'Taken Down'
