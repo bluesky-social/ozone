@@ -6,6 +6,7 @@ export type ServerConfig = {
   blobDivert?: string
   chat?: string
   role?: ToolsOzoneServerGetConfig.ViewerConfig['role']
+  verifierDid?: string
   permissions: {
     canManageTemplates: boolean
     canTakedown: boolean
@@ -16,6 +17,7 @@ export type ServerConfig = {
     canTakedownFeedGenerators: boolean
     canDivertBlob: boolean
     canManageSets: boolean
+    canVerify: boolean
   }
 }
 
@@ -27,6 +29,8 @@ export const parseServerConfig = (
   const isAdmin = config.viewer?.role === ToolsOzoneTeamDefs.ROLEADMIN
   const isModerator =
     isAdmin || config.viewer?.role === ToolsOzoneTeamDefs.ROLEMODERATOR
+  const isVerifier =
+    isAdmin || config.viewer?.role === ToolsOzoneTeamDefs.ROLEVERIFIER
 
   return {
     pds: config.pds?.url,
@@ -34,6 +38,7 @@ export const parseServerConfig = (
     appview: config.appview?.url,
     chat: config.chat?.url,
     role: config.viewer?.role,
+    verifierDid: config.verifierDid,
     permissions: {
       canManageTemplates: isModerator,
       canTakedown: !!config.pds?.url && isModerator,
@@ -44,6 +49,7 @@ export const parseServerConfig = (
       canTakedownFeedGenerators: isAdmin,
       canManageSets: isAdmin,
       canDivertBlob: !!config.blobDivert?.url && isModerator,
+      canVerify: !!config.verifierDid && isVerifier,
     },
   }
 }

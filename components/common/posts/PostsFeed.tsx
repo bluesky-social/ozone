@@ -41,6 +41,7 @@ import { ImageList } from './ImageList'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 import { getVideoUrlWithFallback } from '../video/helpers'
 import { isValidPostRecord, extractEmbed } from './helpers'
+import { VerificationBadge } from 'components/verification/Badge'
 
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
   ssr: false,
@@ -165,6 +166,11 @@ function PostHeader({
               ) : (
                 <span className="font-bold">@{item.post.author.handle}</span>
               )}
+              <VerificationBadge
+                className="ml-0.5"
+                size="sm"
+                profile={item.post.author}
+              />
             </Link>
             &nbsp;&middot;&nbsp;
             <Link

@@ -1,6 +1,6 @@
 'use client'
 
-import { Agent, CredentialSession } from '@atproto/api'
+import { Agent } from '@atproto/api'
 import {
   createContext,
   ReactNode,

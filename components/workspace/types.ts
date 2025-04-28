@@ -2,6 +2,11 @@ export type DurationUnit = 'days' | 'weeks' | 'months' | 'years'
 
 export type WorkspaceFilterItem =
   | {
+      field: 'verifier'
+      operator: 'eq' | 'neq'
+      value: string
+    }
+  | {
       field: 'tag'
       operator: 'eq' | 'neq'
       value: string

@@ -6,13 +6,13 @@ import {
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 import {
-  CheckCircleIcon,
   ExclamationCircleIcon,
   ExclamationTriangleIcon,
   ScaleIcon,
   ShieldExclamationIcon,
   NoSymbolIcon,
 } from '@heroicons/react/20/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 
 const reviewStateDescription = {

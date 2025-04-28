@@ -4,7 +4,11 @@ import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { Dropdown } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
-import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import {
+  DM_DISABLE_TAG,
+  TRUSTED_VERIFIER_TAG,
+  VIDEO_UPLOAD_DISABLE_TAG,
+} from '@/lib/constants'
 import { usePermission } from '@/shell/ConfigurationContext'
 
 const actions = [
@@ -61,6 +65,14 @@ const actions = [
     key: MOD_EVENTS.ENABLE_VIDEO_UPLOAD,
   },
   {
+    text: 'Make Trusted Verifier',
+    key: MOD_EVENTS.MAKE_VERIFIER,
+  },
+  {
+    text: 'Revoke Trusted Verifier',
+    key: MOD_EVENTS.REVOKE_VERIFIER,
+  },
+  {
     text: 'Set Priority Score',
     key: MOD_EVENTS.SET_PRIORITY,
   },
@@ -89,14 +101,8 @@ export const ModEventSelectorButton = ({
   const canTakedown = usePermission('canTakedown')
   const canManageChat = usePermission('canManageChat')
   const canSendEmail = usePermission('canSendEmail')
-  const {
-    takendown,
-    muteUntil,
-    muteReportingUntil,
-    reviewState,
-    appealed,
-    tags,
-  } = subjectStatus || {}
+  const canVerify = usePermission('canVerify')
+  const { takendown, reviewState, appealed, tags } = subjectStatus || {}
   const isMutedSubject = isSubjectMuted(subjectStatus)
   const isMutedReporter = isReporterMuted(subjectStatus)
 
@@ -207,6 +213,19 @@ export const ModEventSelectorButton = ({
         return false
       }
 
+      if (
+        key === MOD_EVENTS.MAKE_VERIFIER &&
+        (tags?.includes(TRUSTED_VERIFIER_TAG) || !isSubjectDid || !canVerify)
+      ) {
+        return false
+      }
+      if (
+        key === MOD_EVENTS.REVOKE_VERIFIER &&
+        (!tags?.includes(TRUSTED_VERIFIER_TAG) || !isSubjectDid || !canVerify)
+      ) {
+        return false
+      }
+
       return true
     })
   }, [
@@ -222,6 +241,7 @@ export const ModEventSelectorButton = ({
     canTakedown,
     canDivertBlob,
     canSendEmail,
+    canVerify,
     forceDisplayActions,
   ])
 

@@ -58,6 +58,7 @@ import { PriorityScore } from '@/subject/PriorityScore'
 import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
+import { VerificationActionButton } from 'components/verification/ActionButton'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -639,7 +640,7 @@ function Form(
                       <HighProfileWarning profile={profile} />
                     </div>
                   )}
-                  <div className="relative flex flex-row gap-1 items-center">
+                  <div className="relative flex flex-row gap-3 items-center">
                     <ModEventSelectorButton
                       subjectStatus={subjectStatus}
                       selectedAction={modEventType}
@@ -648,6 +649,12 @@ function Form(
                       setSelectedAction={(action) => setModEventType(action)}
                     />
                     <ModEventDetailsPopover modEventType={modEventType} />
+                    {isSubjectDid && profile && (
+                      <VerificationActionButton
+                        did={subject}
+                        profile={profile}
+                      />
+                    )}
                   </div>
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
@@ -925,7 +932,7 @@ function useSubjectQuery(subject: string) {
 
   return useQuery({
     // subject of the report
-    queryKey: ['modActionSubject', { subject }],
+    queryKey: ['modActionSubject', subject],
     queryFn: async () => {
       if (subject.startsWith('did:')) {
         const [{ data: repo }, profile] = await Promise.all([

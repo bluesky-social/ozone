@@ -22,7 +22,10 @@ import {
 } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { getProfileFromRepo } from '@/repositories/helpers'
+import {
+  getProfileFromRepo,
+  isValidRepoViewDetailed,
+} from '@/repositories/helpers'
 import {
   useWorkspaceAddItemsMutation,
   useWorkspaceList,
@@ -30,6 +33,7 @@ import {
 } from '@/workspace/hooks'
 
 import type { JSX } from 'react'
+import { VerificationBadge } from 'components/verification/Badge'
 
 export function RecordCard(props: {
   uri: string
@@ -336,10 +340,6 @@ const AssociatedProfileIcon = ({
 export function RepoCard(props: { did: string }) {
   const { did } = props
   const { data: { repo, profile } = {}, error } = useRepoAndProfile({ did })
-  const { data: workspaceList } = useWorkspaceList()
-  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
-  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
-  const isInWorkspace = workspaceList?.includes(did)
 
   if (error) {
     return (
@@ -353,7 +353,25 @@ export function RepoCard(props: { did: string }) {
   if (!repo) {
     return <LoadingDense />
   }
-  const takendown = !!repo.moderation.subjectStatus?.takendown
+
+  return <RepoCardView {...{ did, repo, profile }} />
+}
+
+export const RepoCardView = ({
+  did,
+  repo,
+  profile,
+}: {
+  did: string
+  repo?: ToolsOzoneModerationDefs.RepoViewDetail
+  profile?: AppBskyActorDefs.ProfileViewDetailed
+}) => {
+  const { data: workspaceList } = useWorkspaceList()
+  const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
+  const { mutate: removeFromWorkspace } = useWorkspaceRemoveItemsMutation()
+  const isInWorkspace = workspaceList?.includes(did)
+  const isRepoView = isValidRepoViewDetailed(repo)
+  const takendown = isRepoView && !!repo?.moderation.subjectStatus?.takendown
 
   return (
     <div className="bg-white dark:bg-slate-800">
@@ -370,21 +388,26 @@ export function RepoCard(props: { did: string }) {
         <div className="min-w-0 flex-1">
           <p className="text-sm font-medium text-gray-900 dark:text-gray-200">
             <Link
-              href={`/repositories/${repo.did}`}
+              href={`/repositories/${did}`}
               className="hover:underline text-gray-500 dark:text-gray-50"
             >
-              {profile?.displayName ? (
+              {profile ? (
                 <>
                   <span className="font-bold">{profile.displayName}</span>
                   <span
                     className="ml-1 text-gray-500 dark:text-gray-50"
-                    title={`@${repo.handle}`}
+                    title={`@${repo?.handle || did}`}
                   >
-                    @{repo.handle}
+                    @{repo?.handle || did}
                   </span>
+                  <VerificationBadge
+                    className="ml-0.5"
+                    size="sm"
+                    profile={profile}
+                  />
                 </>
               ) : (
-                <span className="font-bold">@{repo.handle}</span>
+                <span className="font-bold">@{repo?.handle || did}</span>
               )}
             </Link>{' '}
             &nbsp;&middot;&nbsp;
@@ -404,7 +427,7 @@ export function RepoCard(props: { did: string }) {
           {!!profile && (
             <div className="flex flex-row items-center gap-2">
               <Link
-                href={`/repositories/${repo.did}?tab=followers`}
+                href={`/repositories/${did}?tab=followers`}
                 className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
@@ -412,7 +435,7 @@ export function RepoCard(props: { did: string }) {
                 </span>
               </Link>
               <Link
-                href={`/repositories/${repo.did}?tab=follows`}
+                href={`/repositories/${did}?tab=follows`}
                 className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
@@ -420,7 +443,7 @@ export function RepoCard(props: { did: string }) {
                 </span>
               </Link>
               <Link
-                href={`/repositories/${repo.did}?tab=posts`}
+                href={`/repositories/${did}?tab=posts`}
                 className="flex gap-1 items-center rounded-md pt-2 pb-1 text-gray-500 dark:text-gray-50 underline hover:underline cursor-pointer"
               >
                 <span className="text-sm">
