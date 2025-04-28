@@ -29,6 +29,8 @@ export const parseServerConfig = (
   const isAdmin = config.viewer?.role === ToolsOzoneTeamDefs.ROLEADMIN
   const isModerator =
     isAdmin || config.viewer?.role === ToolsOzoneTeamDefs.ROLEMODERATOR
+  const isVerifier =
+    isAdmin || config.viewer?.role === ToolsOzoneTeamDefs.ROLEVERIFIER
 
   return {
     pds: config.pds?.url,
@@ -47,7 +49,7 @@ export const parseServerConfig = (
       canTakedownFeedGenerators: isAdmin,
       canManageSets: isAdmin,
       canDivertBlob: !!config.blobDivert?.url && isModerator,
-      canVerify: !!config.verifierDid && isAdmin,
+      canVerify: !!config.verifierDid && isVerifier,
     },
   }
 }

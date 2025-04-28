@@ -19,8 +19,10 @@ import { classNames } from '@/lib/util'
 
 export const BulkVerificationActionButton = ({
   subjects,
+  onVerification,
 }: {
   subjects?: WorkspaceListData
+  onVerification?: () => void
 }) => {
   const { verifierDid } = useServerConfig()
   const grantVerifications: ToolsOzoneVerificationGrantVerifications.VerificationInput[] =
@@ -29,11 +31,11 @@ export const BulkVerificationActionButton = ({
 
   Object.values(subjects || {}).map((sub) => {
     if (isValidProfileViewDetailed(sub.profile)) {
-      const verification = sub.profile.verification?.verifications?.find(
+      const verifications = sub.profile.verification?.verifications?.filter(
         (v) => v.issuer == verifierDid,
       )
-      if (verification) {
-        revokeUris.push(verification.uri)
+      if (verifications?.length) {
+        verifications.forEach((v) => revokeUris.push(v.uri))
       } else {
         grantVerifications.push({
           subject: sub.profile.did,
@@ -55,6 +57,7 @@ export const BulkVerificationActionButton = ({
       revokeUris={revokeUris}
       grantVerifications={grantVerifications}
       size="xs"
+      onVerification={onVerification}
     >
       Granting verification will issue a verification record for all users in
       your workspace.
@@ -104,7 +107,7 @@ export const VerificationActionButton = ({
       {revocableVerificationUri ? (
         <div>
           You have already verified this user. Do you want to revoke the
-          verification record at <b>{revocableVerificationUri}</b>?
+          verification record?
         </div>
       ) : (
         <div>
@@ -132,6 +135,7 @@ const VerificationActionPopup = ({
   title,
   children,
   revokeUris,
+  onVerification,
   grantVerifications,
 }: {
   size?: 'xs' | 'sm'
@@ -139,6 +143,7 @@ const VerificationActionPopup = ({
   title: string
   children?: React.ReactNode
   revokeUris?: string[]
+  onVerification?: () => void
   grantVerifications: ToolsOzoneVerificationGrantVerifications.VerificationInput[]
 }) => {
   const canVerify = usePermission('canVerify')
@@ -188,30 +193,40 @@ const VerificationActionPopup = ({
                     >
                       Cancel
                     </ActionButton>
-                    {!!revokeUris?.length && (
-                      <ActionButton
-                        disabled={revoke.isLoading}
-                        appearance="negative"
-                        className="m-2"
-                        type="button"
-                        size="xs"
-                        onClick={() => revoke.mutate(revokeUris)}
-                      >
-                        {revoke.isLoading ? 'Revoking...' : 'Yes, Revoke'}
-                      </ActionButton>
-                    )}
-                    {!!grantVerifications.length && (
-                      <ActionButton
-                        disabled={grant.isLoading}
-                        appearance="primary"
-                        className="m-2"
-                        type="button"
-                        size="xs"
-                        onClick={() => grant.mutate(grantVerifications)}
-                      >
-                        {grant.isLoading ? 'Verifying user...' : 'Yes, Verify'}
-                      </ActionButton>
-                    )}
+                    <div>
+                      {!!revokeUris?.length && (
+                        <ActionButton
+                          disabled={revoke.isLoading}
+                          appearance="negative"
+                          className="m-2"
+                          type="button"
+                          size="xs"
+                          onClick={() =>
+                            revoke
+                              .mutateAsync(revokeUris)
+                              .then(() => onVerification?.())
+                          }
+                        >
+                          {revoke.isLoading ? 'Revoking...' : 'Revoke'}
+                        </ActionButton>
+                      )}
+                      {!!grantVerifications.length && (
+                        <ActionButton
+                          disabled={grant.isLoading}
+                          appearance="primary"
+                          className="m-2"
+                          type="button"
+                          size="xs"
+                          onClick={() =>
+                            grant
+                              .mutateAsync(grantVerifications)
+                              .then(() => onVerification?.())
+                          }
+                        >
+                          {grant.isLoading ? 'Verifying user...' : 'Verify'}
+                        </ActionButton>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

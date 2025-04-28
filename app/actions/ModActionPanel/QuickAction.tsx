@@ -932,7 +932,7 @@ function useSubjectQuery(subject: string) {
 
   return useQuery({
     // subject of the report
-    queryKey: ['modActionSubject', { subject }],
+    queryKey: ['modActionSubject', subject],
     queryFn: async () => {
       if (subject.startsWith('did:')) {
         const [{ data: repo }, profile] = await Promise.all([

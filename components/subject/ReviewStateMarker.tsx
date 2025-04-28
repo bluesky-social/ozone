@@ -12,7 +12,7 @@ import {
   ShieldExclamationIcon,
   NoSymbolIcon,
 } from '@heroicons/react/20/solid'
-import { HandThumbUpIcon } from '@heroicons/react/24/solid'
+import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
 
 const reviewStateDescription = {
@@ -53,7 +53,7 @@ const reviewStateToColor = {
 const reviewStateToIcon = {
   [ToolsOzoneModerationDefs.REVIEWOPEN]: ExclamationCircleIcon,
   [ToolsOzoneModerationDefs.REVIEWESCALATED]: ExclamationTriangleIcon,
-  [ToolsOzoneModerationDefs.REVIEWCLOSED]: HandThumbUpIcon,
+  [ToolsOzoneModerationDefs.REVIEWCLOSED]: CheckCircleIcon,
   [ToolsOzoneModerationDefs.REVIEWNONE]: NoSymbolIcon,
 }
 

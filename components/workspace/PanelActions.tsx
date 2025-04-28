@@ -9,6 +9,7 @@ export const WorkspacePanelActions = ({
   handleRemoveSelected,
   handleEmptyWorkspace,
   handleFindCorrelation,
+  onVerification,
   setShowActionForm,
   setShowItemCreator,
   showActionForm,
@@ -18,6 +19,7 @@ export const WorkspacePanelActions = ({
   handleRemoveSelected: () => void
   handleEmptyWorkspace: () => void
   handleFindCorrelation?: () => void
+  onVerification?: () => void
   setShowActionForm: React.Dispatch<React.SetStateAction<boolean>>
   setShowItemCreator: React.Dispatch<React.SetStateAction<boolean>>
   showActionForm: boolean
@@ -65,7 +67,10 @@ export const WorkspacePanelActions = ({
         </ActionButton>
       )}
 
-      <BulkVerificationActionButton subjects={listData} />
+      <BulkVerificationActionButton
+        subjects={listData}
+        onVerification={onVerification}
+      />
 
       <ActionButton
         appearance="outlined"

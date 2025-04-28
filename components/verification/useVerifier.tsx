@@ -1,11 +1,12 @@
 import { chunkArray, pluralize } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneVerificationGrantVerifications } from '@atproto/api'
-import { useMutation } from '@tanstack/react-query'
+import { AtUri, ToolsOzoneVerificationGrantVerifications } from '@atproto/api'
+import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
 export const useVerifier = () => {
   const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
 
   const grant = useMutation({
     mutationFn: async (
@@ -19,6 +20,11 @@ export const useVerifier = () => {
           await labelerAgent.tools.ozone.verification.grantVerifications({
             verifications: chunk,
           })
+
+        data.verifications.forEach((v) => {
+          queryClient.invalidateQueries(['modActionSubject', v.subject])
+        })
+
         verified += data.verifications.length
         failed += data.failedVerifications.length
       }
@@ -55,7 +61,13 @@ export const useVerifier = () => {
           await labelerAgent.tools.ozone.verification.revokeVerifications({
             uris: chunk,
           })
-        data.revokedVerifications.push(...chunkData.revokedVerifications)
+        chunkData.revokedVerifications.forEach((uri) => {
+          queryClient.invalidateQueries([
+            'modActionSubject',
+            new AtUri(uri).host,
+          ])
+          data.revokedVerifications.push(uri)
+        })
         data.failedRevocations.push(
           ...chunkData.failedRevocations.map((item) => item.uri),
         )

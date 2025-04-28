@@ -26,9 +26,13 @@ const VerificationCard = ({
     subjectProfile,
     issuer,
     createdAt,
+    revokedAt,
+    revokedBy,
+    uri,
   } = verification
   const isRepoView = isValidRepoViewDetailed(subjectRepo)
   const isProfileView = isValidProfileViewDetailed(subjectProfile)
+  const revokedByNonIssuer = revokedBy && revokedBy !== issuer
 
   return (
     <Card className="mb-3 text-sm px-3">
@@ -52,6 +56,12 @@ const VerificationCard = ({
               withTruncation={true}
             />
           </div>
+          {!!revokedAt && (
+            <div className="text-red-500 dark:text-red-300">
+              Revoked at {dateFormatter.format(new Date(revokedAt))}{' '}
+              {revokedByNonIssuer && ` by ${revokedBy}`}
+            </div>
+          )}
         </div>
       </div>
       <div className="border-t mt-2 pt-2 border-gray-200 dark:border-gray-700">
