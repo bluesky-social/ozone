@@ -77,23 +77,24 @@ export const VerificationActionButton = ({
 }) => {
   const { verifierDid } = useServerConfig()
   // Revocation is only allowed when there is a verification record by the issuer that is configured with the ozone agent
-  const revocableVerificationUri = profile.verification?.verifications?.find(
-    (v) => v.issuer == verifierDid,
-  )?.uri
+  const revocableVerificationUris = profile.verification?.verifications
+    ?.filter((v) => v.issuer == verifierDid)
+    ?.map((v) => v.uri)
+  const hasRevocableVerification = !!revocableVerificationUris?.length
 
   return (
     <VerificationActionPopup
       buttonText={
-        revocableVerificationUri ? 'Revoke Verification' : 'Verify User'
+        hasRevocableVerification ? 'Revoke Verification' : 'Verify User'
       }
       title={
-        revocableVerificationUri
+        hasRevocableVerification
           ? `Revoke Verification?`
           : `Verify ${profile.displayName || profile.handle}?`
       }
-      revokeUris={revocableVerificationUri ? [revocableVerificationUri] : []}
+      revokeUris={hasRevocableVerification ? revocableVerificationUris : []}
       grantVerifications={
-        !revocableVerificationUri
+        !hasRevocableVerification
           ? [
               {
                 subject: did,
@@ -104,7 +105,7 @@ export const VerificationActionButton = ({
           : []
       }
     >
-      {revocableVerificationUri ? (
+      {hasRevocableVerification ? (
         <div>
           You have already verified this user. Do you want to revoke the
           verification record?

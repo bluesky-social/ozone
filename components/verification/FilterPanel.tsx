@@ -1,9 +1,10 @@
 'use client'
 
-import { useEffect, FormEvent, useState } from 'react'
+import { FormEvent } from 'react'
 import { VerificationFilterOptions } from './useVerificationList'
 import { FormLabel, Input, Select } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
+import { useSyncedState } from '@/lib/useSyncedState'
 
 interface VerificationFilterPanelProps {
   filters: VerificationFilterOptions
@@ -16,7 +17,7 @@ export const VerificationFilterPanel = ({
   onApplyFilters,
   onResetFilters,
 }: VerificationFilterPanelProps) => {
-  const [formState, setFormState] = useState({
+  const [formState, setFormState] = useSyncedState({
     subjectsInput: (filters.subjects || []).join(', '),
     issuersInput: (filters.issuers || []).join(', '),
     isRevoked:
@@ -24,17 +25,6 @@ export const VerificationFilterPanel = ({
     createdAfter: filters.createdAfter || '',
     createdBefore: filters.createdBefore || '',
   })
-
-  useEffect(() => {
-    setFormState({
-      subjectsInput: (filters.subjects || []).join(', '),
-      issuersInput: (filters.issuers || []).join(', '),
-      isRevoked:
-        filters.isRevoked === undefined ? 'any' : filters.isRevoked.toString(),
-      createdAfter: filters.createdAfter || '',
-      createdBefore: filters.createdBefore || '',
-    })
-  }, [filters, setFormState])
 
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
