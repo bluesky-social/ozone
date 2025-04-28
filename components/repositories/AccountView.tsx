@@ -65,6 +65,7 @@ import { obscureIp, parseThreatSigs } from './helpers'
 import { useCopyAccountDetails } from './useCopyAccountDetails'
 import { getProfiles } from './api'
 import { VerificationBadge } from 'components/verification/Badge'
+import { AccountHistory } from './AccountHistory'
 
 enum Views {
   Details,
@@ -709,6 +710,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <AccountHistory did={repo.did} />
       {canShowDidHistory && <DidHistory did={repo.did} />}
       {profile && (
         <Json
