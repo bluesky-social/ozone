@@ -57,9 +57,11 @@ export const AccountStats = ({
   stats,
   showAll,
   onAccountTakedownClick,
+  onAccountAppealClick,
 }: {
   showAll: boolean
   onAccountTakedownClick?: () => void
+  onAccountAppealClick?: () => void
   stats: ToolsOzoneModerationDefs.AccountStats
 }) => {
   const { takedownCount, suspendCount, appealCount, reportCount } = stats
@@ -112,7 +114,7 @@ export const AccountStats = ({
         <StatView
           appearance="warning"
           count={appealCount}
-          onClick={onAccountTakedownClick}
+          onClick={onAccountAppealClick}
           text={
             showAll
               ? pluralize(appealCount, 'Appeal', { includeCount: false })
@@ -142,11 +144,13 @@ export const AccountStats = ({
 export const RecordsStats = ({
   stats,
   showAll,
-  onlyNumbers,
+  onRecordTakedownClick,
+  onRecordEscalationClick,
 }: {
   showAll: boolean
-  onlyNumbers?: boolean
   stats: ToolsOzoneModerationDefs.RecordsStats
+  onRecordTakedownClick?: () => void
+  onRecordEscalationClick?: () => void
 }) => {
   const {
     totalReports,
@@ -184,6 +188,7 @@ export const RecordsStats = ({
             takendownCount,
             'record',
           )} authored by this account has been taken down`}
+          onClick={onRecordTakedownClick}
         />
       )}
       {!!escalatedCount && (
@@ -195,6 +200,7 @@ export const RecordsStats = ({
               ? pluralize(escalatedCount, 'Escalation', { includeCount: false })
               : ''
           }
+          onClick={onRecordEscalationClick}
           Icon={ExclamationTriangleIcon}
           title={`${pluralize(
             escalatedCount,
@@ -248,8 +254,14 @@ export const RecordsStats = ({
 export const SubjectSummary = ({
   stats,
   onAccountTakedownClick,
+  onRecordTakedownClick,
+  onAccountAppealClick,
+  onRecordEscalationClick,
 }: {
   onAccountTakedownClick?: () => void
+  onRecordTakedownClick?: () => void
+  onAccountAppealClick?: () => void
+  onRecordEscalationClick?: () => void
   stats: {
     accountStats?: ToolsOzoneModerationDefs.AccountStats
     recordsStats?: ToolsOzoneModerationDefs.RecordsStats
@@ -265,11 +277,17 @@ export const SubjectSummary = ({
           showAll={showAll}
           stats={stats.accountStats}
           onAccountTakedownClick={onAccountTakedownClick}
+          onAccountAppealClick={onAccountAppealClick}
         />
       )}
       {showAll && stats.recordsStats && <div className="w-full" />}
       {stats.recordsStats && (
-        <RecordsStats showAll={showAll} stats={stats.recordsStats} />
+        <RecordsStats
+          showAll={showAll}
+          stats={stats.recordsStats}
+          onRecordTakedownClick={onRecordTakedownClick}
+          onRecordEscalationClick={onRecordEscalationClick}
+        />
       )}
       {stats.recordsStats && stats.accountStats && (
         <button type="button" onClick={() => setShowAll((current) => !current)}>

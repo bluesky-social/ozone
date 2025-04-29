@@ -137,7 +137,7 @@ const getReposAndRecordsForEvents = async (
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
 export type EventListState = Omit<
   typeof initialListState,
-  'subject' | 'createdBy'
+  'subject' | 'createdBy' | 'subjectType'
 > & {
   subject?: string
   createdBy?: string
@@ -331,6 +331,10 @@ const getModEvents =
 
     if (filterTypes.includes(MOD_EVENTS.TAKEDOWN) && policies) {
       queryParams.policies = policies
+    }
+
+    if (subjectType) {
+      queryParams.subjectType = subjectType
     }
 
     const { data } = await labelerAgent.tools.ozone.moderation.queryEvents(
