@@ -75,7 +75,7 @@ export const AccountStats = ({
 
   return (
     <>
-      {hasStats && <UserCircleIcon className="w-4 h-4 dark:text-gray-200" />}
+      {!!hasStats && <UserCircleIcon className="w-4 h-4 dark:text-gray-200" />}
       {!!suspendCount && (
         <StatView
           appearance="danger"
@@ -173,7 +173,9 @@ export const RecordsStats = ({
 
   return (
     <>
-      {hasStats && <PencilSquareIcon className="w-4 h-4 dark:text-gray-200" />}
+      {!!hasStats && (
+        <PencilSquareIcon className="w-4 h-4 dark:text-gray-200" />
+      )}
       {!!takendownCount && (
         <StatView
           appearance="danger"
