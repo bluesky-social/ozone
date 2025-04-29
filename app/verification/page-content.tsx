@@ -11,6 +11,7 @@ import { CheckCircleIcon, Cog8ToothIcon } from '@heroicons/react/24/solid'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { VerificationFilterPanel } from 'components/verification/FilterPanel'
 import { VerificationList } from 'components/verification/List'
+import { useTrustedVerifiers } from 'components/verification/useTrustedVerifiers'
 import {
   useVerificationFilter,
   useVerificationList,
@@ -47,6 +48,7 @@ export const VerificationPageContent = () => {
 
   useTitle(pageTitle)
 
+  const { data: trustedVerifierSubjects } = useTrustedVerifiers()
   const { filters, applyFilters, resetFilters } = useVerificationFilter()
   const { data, isLoading, fetchNextPage, hasNextPage, isInitialLoading } =
     useVerificationList(filters)
@@ -105,6 +107,7 @@ export const VerificationPageContent = () => {
           filters={filters}
           onApplyFilters={applyFilters}
           onResetFilters={resetFilters}
+          trustedVerifierSubjects={trustedVerifierSubjects}
         />
       )}
 
