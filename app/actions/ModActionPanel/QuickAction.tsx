@@ -180,6 +180,7 @@ function Form(
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
+  const isAppealed = !!subjectStatus?.appealed
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
@@ -837,7 +838,7 @@ function Form(
                     />
                   )}
 
-                  {isAckEvent && (
+                  {isAckEvent && isAppealed && (
                     <Checkbox
                       defaultChecked
                       value="true"
