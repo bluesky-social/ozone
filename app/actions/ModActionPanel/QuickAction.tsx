@@ -384,6 +384,18 @@ function Form(
         })
       }
 
+      if (formData.get('additionalResolveAppealEvent')) {
+        await onSubmit({
+          subject: subjectInfo,
+          createdBy: accountDid,
+          subjectBlobCids,
+          event: {
+            $type: MOD_EVENTS.RESOLVE_APPEAL,
+            comment: '[RESOLVING_APPEAL_DUE_TO_PREVIOUS_ACK_ACTION]',
+          },
+        })
+      }
+
       refetchSubjectStatus()
       refetchSubject()
       queryClient.invalidateQueries(['modEventList'])
@@ -820,6 +832,21 @@ function Form(
                         <span className="leading-4">
                           Acknowledge all open/escalated/appealed reports on
                           subjects created by this user
+                        </span>
+                      }
+                    />
+                  )}
+
+                  {isAckEvent && (
+                    <Checkbox
+                      defaultChecked
+                      value="true"
+                      id="additionalResolveAppealEvent"
+                      name="additionalResolveAppealEvent"
+                      className="mb-3 flex items-center leading-3"
+                      label={
+                        <span className="leading-4">
+                          Resolve appeal from the user
                         </span>
                       }
                     />
