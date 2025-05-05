@@ -180,6 +180,7 @@ function Form(
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
+  const isAppealed = !!subjectStatus?.appealed
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
@@ -380,6 +381,18 @@ function Form(
           event: {
             $type: MOD_EVENTS.ACKNOWLEDGE,
             comment: '[DEFINITIVE_PREVIOUS_ACTION]',
+          },
+        })
+      }
+
+      if (formData.get('additionalResolveAppealEvent')) {
+        await onSubmit({
+          subject: subjectInfo,
+          createdBy: accountDid,
+          subjectBlobCids,
+          event: {
+            $type: MOD_EVENTS.RESOLVE_APPEAL,
+            comment: '[RESOLVING_APPEAL_DUE_TO_PREVIOUS_ACK_ACTION]',
           },
         })
       }
@@ -820,6 +833,21 @@ function Form(
                         <span className="leading-4">
                           Acknowledge all open/escalated/appealed reports on
                           subjects created by this user
+                        </span>
+                      }
+                    />
+                  )}
+
+                  {isAckEvent && isAppealed && (
+                    <Checkbox
+                      defaultChecked
+                      value="true"
+                      id="additionalResolveAppealEvent"
+                      name="additionalResolveAppealEvent"
+                      className="mb-3 flex items-center leading-3"
+                      label={
+                        <span className="leading-4">
+                          Resolve appeal from the user
                         </span>
                       }
                     />
