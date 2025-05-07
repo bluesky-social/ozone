@@ -25,6 +25,17 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install node 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Yarn install
+        run: yarn
+
       - name: Setup Docker buildx
         uses: docker/setup-buildx-action@v2
 
