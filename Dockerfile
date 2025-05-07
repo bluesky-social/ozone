@@ -2,7 +2,9 @@ FROM node:20.11-alpine3.18 as build
 
 WORKDIR /usr/src/ozone
 
-COPY package.json yarn.lock .
+RUN corepack enable
+
+COPY package.json yarn.lock .yarnrc.yml ./
 RUN yarn
 COPY . .
 RUN yarn build
