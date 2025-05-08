@@ -200,7 +200,15 @@ export const ModEventList = (
   if (hasFilter) {
     eventActions.push({
       text: 'Clear filters',
-      onClick: () => resetListFilters(),
+      onClick: () => {
+        resetListFilters()
+        if (props.subject) {
+          changeListFilter({ field: 'subject', value: props.subject })
+        }
+        if (props.createdBy) {
+          changeListFilter({ field: 'createdBy', value: props.createdBy })
+        }
+      },
     })
   }
 
@@ -226,7 +234,24 @@ export const ModEventList = (
       {!!props.stats && (
         <SubjectSummary
           onAccountTakedownClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.TAKEDOWN] })
+            changeListFilter({ field: 'types', value: [MOD_EVENTS.APPEAL] })
+          }}
+          onAccountAppealClick={() => {
+            changeListFilter({ field: 'types', value: [MOD_EVENTS.ESCALATE] })
+          }}
+          onRecordTakedownClick={() => {
+            applyFilterMacro({
+              includeAllUserRecords: true,
+              types: [MOD_EVENTS.TAKEDOWN],
+              subjectType: 'record',
+            })
+          }}
+          onRecordEscalationClick={() => {
+            applyFilterMacro({
+              includeAllUserRecords: true,
+              types: [MOD_EVENTS.ESCALATE],
+              subjectType: 'record',
+            })
           }}
           stats={props.stats}
         />
