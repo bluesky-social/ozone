@@ -1,5 +1,5 @@
 import { ActionButton } from '@/common/buttons'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'

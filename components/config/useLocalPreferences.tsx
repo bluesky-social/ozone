@@ -3,7 +3,7 @@ import {
   labelsRequiringMediaFilter,
   GraphicMediaFilter,
   GraphicMediaFilterOptions,
-} from '@/common/labels'
+} from '@/common/labels/util'
 import { useLocalStorage } from 'react-use'
 
 export type GraphicMediaFilterPreference = Record<GraphicMediaFilter, boolean>

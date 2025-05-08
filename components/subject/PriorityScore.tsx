@@ -1,4 +1,4 @@
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { classNames } from '@/lib/util'
 import { HandRaisedIcon } from '@heroicons/react/24/solid'
 

@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { PencilIcon, PlusIcon, TrashIcon } from '@heroicons/react/20/solid'
 import { useTitle } from 'react-use'
 
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { useCommunicationTemplateList } from 'components/communication-template/hooks'
 import { CommunicationTemplateDeleteConfirmationModal } from 'components/communication-template/delete-confirmation-modal'

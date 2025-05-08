@@ -12,7 +12,7 @@ import { Fragment, useState } from 'react'
 import { Alert } from '@/common/Alert'
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, Textarea } from '@/common/forms'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 const useInviteCodeMutation = ({ did, id }) => {

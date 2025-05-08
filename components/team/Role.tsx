@@ -1,4 +1,4 @@
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { getRoleText } from './helpers'
 
