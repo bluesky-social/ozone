@@ -168,15 +168,16 @@ export const useVerificationList = ({
       isRevoked,
     ],
     queryFn: async ({ pageParam }) => {
-      const { data } = await labelerAgent.tools.ozone.verification.listVerifications({
-        issuers: issuers,
-        isRevoked,
-        createdAfter,
-        createdBefore,
-        limit: 100,
-        subjects,
-        cursor: pageParam,
-      })
+      const { data } =
+        await labelerAgent.tools.ozone.verification.listVerifications({
+          issuers: issuers,
+          isRevoked,
+          createdAfter,
+          createdBefore,
+          limit: 100,
+          subjects,
+          cursor: pageParam,
+        })
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,

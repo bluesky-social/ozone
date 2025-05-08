@@ -4,36 +4,51 @@ import { useEffect, FormEvent, useState } from 'react'
 import { VerificationFilterOptions } from './useVerificationList'
 import { FormLabel, Input, Select } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
+import { ComAtprotoAdminDefs, ToolsOzoneModerationDefs } from '@atproto/api'
+import { pluralize } from '@/lib/util'
+import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
+import { SubjectOverview } from '@/reports/SubjectOverview'
 
-interface VerificationFilterPanelProps {
+type VerificationFilterPanelProps = {
   filters: VerificationFilterOptions
   onApplyFilters: (filters: VerificationFilterOptions) => void
   onResetFilters: () => void
+  trustedVerifierSubjects?: ToolsOzoneModerationDefs.SubjectStatusView[]
 }
 
-export const VerificationFilterPanel = ({
-  filters,
-  onApplyFilters,
-  onResetFilters,
-}: VerificationFilterPanelProps) => {
-  const [formState, setFormState] = useState({
+type FilterFormState = {
+  subjectsInput: string
+  issuersInput: string
+  isRevoked: string
+  createdAfter: string
+  createdBefore: string
+}
+
+const filtersToFormState = (
+  filters: VerificationFilterOptions,
+): FilterFormState => {
+  return {
     subjectsInput: (filters.subjects || []).join(', '),
     issuersInput: (filters.issuers || []).join(', '),
     isRevoked:
       filters.isRevoked === undefined ? 'any' : filters.isRevoked.toString(),
     createdAfter: filters.createdAfter || '',
     createdBefore: filters.createdBefore || '',
-  })
+  }
+}
+
+export const VerificationFilterPanel = ({
+  filters,
+  onApplyFilters,
+  onResetFilters,
+  trustedVerifierSubjects,
+}: VerificationFilterPanelProps) => {
+  const [formState, setFormState] = useState<FilterFormState>(
+    filtersToFormState(filters),
+  )
 
   useEffect(() => {
-    setFormState({
-      subjectsInput: (filters.subjects || []).join(', '),
-      issuersInput: (filters.issuers || []).join(', '),
-      isRevoked:
-        filters.isRevoked === undefined ? 'any' : filters.isRevoked.toString(),
-      createdAfter: filters.createdAfter || '',
-      createdBefore: filters.createdBefore || '',
-    })
+    setFormState(filtersToFormState(filters))
   }, [filters])
 
   const handleInputChange = (
@@ -46,15 +61,13 @@ export const VerificationFilterPanel = ({
     }))
   }
 
-  const handleSubmit = (e: FormEvent) => {
-    e.preventDefault()
-
-    const subjects = formState.subjectsInput
+  const applyFormStateToFilters = (formData: FilterFormState) => {
+    const subjects = formData.subjectsInput
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
 
-    const issuers = formState.issuersInput
+    const issuers = formData.issuersInput
       .split(',')
       .map((s) => s.trim())
       .filter(Boolean)
@@ -63,14 +76,19 @@ export const VerificationFilterPanel = ({
       subjects: subjects.length > 0 ? subjects : undefined,
       issuers: issuers.length > 0 ? issuers : undefined,
       isRevoked:
-        formState.isRevoked === 'any'
+        formData.isRevoked === 'any'
           ? undefined
-          : formState.isRevoked === 'true',
-      createdAfter: formState.createdAfter || undefined,
-      createdBefore: formState.createdBefore || undefined,
+          : formData.isRevoked === 'true',
+      createdAfter: formData.createdAfter || undefined,
+      createdBefore: formData.createdBefore || undefined,
     }
 
     onApplyFilters(newFilters)
+  }
+
+  const handleSubmit = (e: FormEvent) => {
+    e.preventDefault()
+    applyFormStateToFilters(formState)
   }
 
   const handleReset = () => {
@@ -83,6 +101,29 @@ export const VerificationFilterPanel = ({
     })
 
     onResetFilters()
+  }
+  const applyTrustedVerifierFilter = () => {
+    const subjects: string[] = []
+    if (!trustedVerifierSubjects?.length) {
+      return
+    }
+
+    for (const sub of trustedVerifierSubjects) {
+      if (ComAtprotoAdminDefs.isRepoRef(sub.subject)) {
+        subjects.push(sub.subject.did)
+      }
+    }
+
+    if (!subjects.length) {
+      return
+    }
+
+    const newFormState = {
+      ...formState,
+      issuersInput: subjects.join(', '),
+    }
+    setFormState(newFormState)
+    applyFormStateToFilters(newFormState)
   }
 
   return (
@@ -111,6 +152,46 @@ export const VerificationFilterPanel = ({
           placeholder="Comma separated list of issuer dids"
         />
       </FormLabel>
+
+      {!!trustedVerifierSubjects?.length && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          <button
+            className="underline text-gray-800 dark:text-gray-300"
+            onClick={applyTrustedVerifierFilter}
+          >
+            Click here
+          </button>{' '}
+          to only show verifications from{' '}
+          <Popover className="inline-block">
+            <PopoverButton className="underline text-gray-800 dark:text-gray-300">
+              {pluralize(trustedVerifierSubjects.length, 'trusted verifier', {
+                plural: 'trusted verifiers',
+              })}
+            </PopoverButton>
+            <PopoverPanel
+              anchor="bottom"
+              className="rounded-sm dark:bg-slate-800"
+            >
+              <div className="p-3 dark:text-gray-300">
+                {trustedVerifierSubjects.map((sub) => {
+                  if (!ComAtprotoAdminDefs.isRepoRef(sub.subject)) {
+                    return null
+                  }
+                  return (
+                    <div key={sub.subjectRepoHandle} className="pb-1">
+                      <SubjectOverview
+                        subject={{ did: sub.subject.did }}
+                        subjectRepoHandle={sub.subjectRepoHandle}
+                        withTruncation={true}
+                      />
+                    </div>
+                  )
+                })}
+              </div>
+            </PopoverPanel>
+          </Popover>
+        </p>
+      )}
 
       {/* Revocation Status */}
       <FormLabel label="Revocation Status" className="mt-2">
