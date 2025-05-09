@@ -30,14 +30,7 @@ async function main() {
     await db.close()
   }
   const ozone = await OzoneService.create(config, secrets)
-  // setup handlers
-  ozone.app.get('/.well-known/ozone-metadata.json', (_req, res) => {
-    return res.json({
-      did: ozone.ctx.cfg.service.did,
-      url: ozone.ctx.cfg.service.publicUrl,
-      publicKey: ozone.ctx.signingKey.did(),
-    })
-  })
+
   // Note: We must use `use()` here. This should be the last middleware.
   ozone.app.use((req, res) => {
     void frontendHandler(req, res, undefined)
