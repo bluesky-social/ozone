@@ -38,7 +38,7 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
-import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import { useGraphicMediaPreferences } from '@/config/useLabelPreferences'
 import { getVideoUrlWithFallback } from '../video/helpers'
 import { isValidPostRecord, extractEmbed } from './helpers'
 import { VerificationBadge } from 'components/verification/Badge'

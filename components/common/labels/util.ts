@@ -79,11 +79,6 @@ export const GraphicMediaFilterOptions = [
   'translucent',
 ] as const
 
-export const buildGraphicPreferenceKeyForLabel = (
-  label: string,
-  filter: GraphicMediaFilter,
-) => `graphic-pref-${filter}-${label}`
-
 export const getProfileAndRepoLabels = ({
   profile,
   repo,

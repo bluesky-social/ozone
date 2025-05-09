@@ -5,7 +5,7 @@ import { classNames } from '@/lib/util'
 import {
   GraphicMediaFilterPreference,
   useGraphicMediaPreferences,
-} from '@/config/useLocalPreferences'
+} from '@/config/useLabelPreferences'
 import { getProfileAndRepoLabels } from '@/common/labels'
 import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 

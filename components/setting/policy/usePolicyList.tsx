@@ -11,7 +11,7 @@ const nameToKey = (name: string) => name.toLowerCase().replace(/\s/g, '-')
 export const usePolicyListSetting = () => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
-    queryKey: ['policy-list'],
+    queryKey: ['setting-policy-list'],
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',

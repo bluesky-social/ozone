@@ -21,7 +21,7 @@ export const useQueueSetting = () => {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const setting = useQuery({
-    queryKey: ['queue-setting'],
+    queryKey: ['setting-queue'],
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',

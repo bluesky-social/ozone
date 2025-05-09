@@ -1,5 +1,5 @@
 'use client'
-import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import { useGraphicMediaPreferences } from '@/config/useLabelPreferences'
 import { classNames } from '@/lib/util'
 import {
   AppBskyEmbedExternal,

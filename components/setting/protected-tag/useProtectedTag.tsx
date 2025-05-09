@@ -11,7 +11,7 @@ const ProtectedTagSettingKey = 'tools.ozone.setting.protectedTags'
 export const useProtectedTagList = () => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
-    queryKey: ['protected-tag-setting'],
+    queryKey: ['setting-protected-tag'],
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',

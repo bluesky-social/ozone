@@ -2,7 +2,7 @@ import { getLanguageName } from '@/lib/locale/helpers'
 import { AppBskyEmbedVideo } from '@atproto/api'
 import Hls from 'hls.js/dist/hls.light' // Use light build of hls.
 import { useEffect, useId, useRef, useState } from 'react'
-import { GraphicMediaFilterPreference } from '@/config/useLocalPreferences'
+import { GraphicMediaFilterPreference } from '@/config/useLabelPreferences'
 import { classNames } from '@/lib/util'
 
 export default function VideoPlayer({

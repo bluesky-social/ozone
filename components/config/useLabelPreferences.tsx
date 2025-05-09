@@ -1,50 +1,51 @@
 import {
-  buildGraphicPreferenceKeyForLabel,
   labelsRequiringMediaFilter,
   GraphicMediaFilter,
   GraphicMediaFilterOptions,
 } from '@/common/labels'
-import { useLocalStorage } from 'react-use'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useQuery } from '@tanstack/react-query'
 
 export type GraphicMediaFilterPreference = Record<GraphicMediaFilter, boolean>
+export type LabelPreferences = {
+  graphicMedia?: GraphicMediaFilterPreference
+  color?: string
+}
 
-// This is the container hook for interfacing on top of localstorage and storing device level preferences
-// There may be various types of preferences that can be stored here and ideally each preference category
-// will have its own hook that will utilize this
-export const useLocalPreferences = () => {
-  const initialValue: Record<string, Record<string, boolean>> = {
-    graphicMediaPrefs: {},
-  }
+export const useLabelPreferences = () => {
+  const labelerAgent = useLabelerAgent()
+  return useQuery({
+    queryKey: ['setting-label-preferences'],
+    queryFn: async () => {
+      const { data } = await labelerAgent.tools.ozone.setting.listOptions({
+        scope: 'instance',
+        keys: ['tools.ozone.setting.client.label.preferences'],
+      })
 
-  labelsRequiringMediaFilter.forEach((label) => {
-    GraphicMediaFilterOptions.forEach((filter) => {
-      initialValue.graphicMediaPrefs[
-        buildGraphicPreferenceKeyForLabel(label, filter)
-      ] = true
-    })
-  })
+      if (!data.options[0]) {
+        const defaultPreferences = {}
+        labelsRequiringMediaFilter.forEach((label) => {
+          if (!defaultPreferences[label]) {
+            defaultPreferences[label] = {
+              graphicMedia: {
+                blur: true,
+                grayscale: true,
+                translucent: true,
+              },
+            }
+          }
+        })
+        return defaultPreferences
+      }
 
-  const [localPreferences, setLocalPreferences] = useLocalStorage(
-    'ozoneLocalPreferences',
-    initialValue,
-    {
-      raw: false,
-      serializer: JSON.stringify,
-      deserializer: (value) => {
-        try {
-          return JSON.parse(value)
-        } catch {
-          return {}
-        }
-      },
+      return data.options[0].value as Record<string, LabelPreferences>
     },
-  )
-
-  return { localPreferences, setLocalPreferences }
+    refetchOnWindowFocus: false,
+  })
 }
 
 export const useGraphicMediaPreferences = () => {
-  const { localPreferences, setLocalPreferences } = useLocalPreferences()
+  const { localPreferences, setLocalPreferences } = useLabelPreferences()
   return {
     setPreferences: (graphicMediaPrefs: Record<string, boolean>) => {
       setLocalPreferences({ ...localPreferences, graphicMediaPrefs })

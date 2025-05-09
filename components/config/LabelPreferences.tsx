@@ -8,7 +8,7 @@ import {
   LabelChip,
   labelsRequiringMediaFilter,
 } from '@/common/labels'
-import { useGraphicMediaPreferences } from './useLocalPreferences'
+import { useGraphicMediaPreferences } from './useLabelPreferences'
 import { toast } from 'react-toastify'
 
 const GraphicMediaPreferenceSelectorForLabel = ({
@@ -38,7 +38,7 @@ const GraphicMediaPreferenceSelectorForLabel = ({
   )
 }
 
-export const LocalPreferences = () => {
+export const LabelPreferences = () => {
   const { setPreferences } = useGraphicMediaPreferences()
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
