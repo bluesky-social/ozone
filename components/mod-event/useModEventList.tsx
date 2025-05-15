@@ -15,7 +15,7 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
-import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import { DM_DISABLE_TAG, TRUSTED_VERIFIER_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { chunkArray } from '@/lib/util'
 import { toast } from 'react-toastify'
 
@@ -562,6 +562,14 @@ const TagBasedTypeFilters = {
   },
   [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: {
     remove: VIDEO_UPLOAD_DISABLE_TAG,
+    add: '',
+  },
+  [MOD_EVENTS.MAKE_VERIFIER]: {
+    add: TRUSTED_VERIFIER_TAG,
+    remove: '',
+  },
+  [MOD_EVENTS.REVOKE_VERIFIER]: {
+    remove: TRUSTED_VERIFIER_TAG,
     add: '',
   },
 }
