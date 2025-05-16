@@ -1,4 +1,4 @@
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { LANGUAGES_MAP_CODE2 } from '@/lib/locale/languages'
 import { FlagIcon } from '@heroicons/react/24/solid'
 import { ComponentProps } from 'react'

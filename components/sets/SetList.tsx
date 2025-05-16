@@ -1,6 +1,6 @@
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { ToolsOzoneSetDefs } from '@atproto/api'
 import { PencilIcon } from '@heroicons/react/20/solid'
 import { LoadMoreButton } from '@/common/LoadMoreButton'

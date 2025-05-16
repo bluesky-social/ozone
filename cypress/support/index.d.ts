@@ -1,5 +1,7 @@
 /// <reference types="cypress" />
 
+import { mount } from 'cypress/react'
+
 declare namespace Cypress {
   interface Chainable<Subject> {
     /**
@@ -21,5 +23,7 @@ declare namespace Cypress {
      * cy.openCommandPalette()
      */
     openCommandPalette(input?: string): Chainable<any>
+
+    mount: typeof mount
   }
 }

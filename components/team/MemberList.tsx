@@ -1,6 +1,6 @@
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { useActionPanelLink } from '@/common/useActionPanelLink'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { PencilIcon } from '@heroicons/react/20/solid'

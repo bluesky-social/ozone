@@ -11,7 +11,7 @@ import {
 } from '@headlessui/react'
 import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { getLanguageName } from '@/lib/locale/helpers'
 
 export const TemplateSelector = ({

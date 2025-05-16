@@ -14,12 +14,14 @@ import { BlobListFormField } from './BlobList'
 import {
   LabelList,
   LabelListEmpty,
+  ModerationLabel,
+} from '@/common/labels/List'
+import {
   diffLabels,
   getLabelsForSubject,
   toLabelVal,
   isSelfLabel,
-  ModerationLabel,
-} from '@/common/labels'
+} from '@/common/labels/util'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
 import { createBreakpoint, useKeyPressEvent } from 'react-use'

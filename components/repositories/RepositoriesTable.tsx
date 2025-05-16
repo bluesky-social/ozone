@@ -8,7 +8,7 @@ import { Loading } from '@/common/Loader'
 import { getProfileFromRepo, obscureIp, parseThreatSigs } from './helpers'
 import Link from 'next/link'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
-import { LabelChip } from '@/common/labels'
+import { LabelChip } from '@/common/labels/List'
 import { SubjectSummaryColumn } from '@/subject/table'
 import { Country } from './Country'
 
