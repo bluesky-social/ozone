@@ -59,6 +59,7 @@ import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { VerificationActionButton } from 'components/verification/ActionButton'
+import { AccountTimeline } from '@/repositories/AccountTimeline'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -911,6 +912,7 @@ function Form(
         </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
+            <AccountTimeline did={subject} />
             <ModEventList
               stats={{
                 accountStats: subjectStatus?.accountStats,
