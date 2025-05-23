@@ -36,7 +36,7 @@ export const BulkVerificationActionButton = ({
       )
       if (verifications?.length) {
         verifications.forEach((v) => revokeUris.push(v.uri))
-      } else {
+      } else if (!!sub.profile.displayName?.trim()) {
         grantVerifications.push({
           subject: sub.profile.did,
           handle: sub.profile.handle,
