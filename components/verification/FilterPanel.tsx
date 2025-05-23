@@ -8,6 +8,7 @@ import { ComAtprotoAdminDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import { pluralize } from '@/lib/util'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { SubjectOverview } from '@/reports/SubjectOverview'
+import { CopyButton } from '@/common/CopyButton'
 
 type VerificationFilterPanelProps = {
   filters: VerificationFilterOptions
@@ -178,11 +179,20 @@ export const VerificationFilterPanel = ({
                     return null
                   }
                   return (
-                    <div key={sub.subjectRepoHandle} className="pb-1">
+                    <div
+                      key={sub.subjectRepoHandle}
+                      className="pb-1 flex flex-row"
+                    >
                       <SubjectOverview
                         subject={{ did: sub.subject.did }}
                         subjectRepoHandle={sub.subjectRepoHandle}
                         withTruncation={true}
+                      />
+
+                      <CopyButton
+                        text={sub.subject.did}
+                        className="ml-1"
+                        title={`Copy DID to clipboard`}
                       />
                     </div>
                   )

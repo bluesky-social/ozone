@@ -6,7 +6,10 @@ import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { WorkspacePanel } from '@/workspace/Panel'
-import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import {
+  ComAtprotoAdminDefs,
+  ToolsOzoneModerationEmitEvent,
+} from '@atproto/api'
 import { CheckCircleIcon, Cog8ToothIcon } from '@heroicons/react/24/solid'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { VerificationFilterPanel } from 'components/verification/FilterPanel'
@@ -17,17 +20,13 @@ import {
   useVerificationList,
 } from 'components/verification/useVerificationList'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useTitle } from 'react-use'
 
 export const VerificationPageContent = () => {
   const [isFiltersShown, setIsFiltersShown] = useState(false)
   const emitEvent = useEmitEvent()
   const searchParams = useSearchParams()
-  const isRevoked = searchParams.get('isRevoked') || undefined
-  const issuers = searchParams.get('issuers') ?? ''
-  const createdAfter = searchParams.get('createdAfter') ?? undefined
-  const createdBefore = searchParams.get('createdBefore') ?? undefined
 
   const router = useRouter()
   const pathname = usePathname()
@@ -48,11 +47,38 @@ export const VerificationPageContent = () => {
 
   useTitle(pageTitle)
 
-  const { data: trustedVerifierSubjects } = useTrustedVerifiers()
+  const [hasLoadedInitialFilters, setHasLoadedInitialFilters] = useState(false)
+  const {
+    data: trustedVerifierSubjects,
+    isLoading: isLoadingTrustedVerifiers,
+  } = useTrustedVerifiers()
   const { filters, applyFilters, resetFilters } = useVerificationFilter()
   const { data, isLoading, fetchNextPage, hasNextPage, isInitialLoading } =
-    useVerificationList(filters)
+    useVerificationList(filters, hasLoadedInitialFilters)
   const verifications = data?.pages?.flatMap((page) => page.verifications) ?? []
+
+  useEffect(() => {
+    if (hasLoadedInitialFilters || isLoadingTrustedVerifiers) {
+      return
+    }
+
+    if (trustedVerifierSubjects?.length) {
+      const trustedVerifiers = trustedVerifierSubjects.map((verifier) =>
+        ComAtprotoAdminDefs.isRepoRef(verifier.subject)
+          ? verifier.subject.did
+          : '',
+      )
+      if (trustedVerifiers.length > 0) {
+        applyFilters({ ...filters, issuers: trustedVerifiers })
+      }
+    }
+
+    setHasLoadedInitialFilters(true)
+  }, [
+    trustedVerifierSubjects,
+    isLoadingTrustedVerifiers,
+    hasLoadedInitialFilters,
+  ])
 
   const { mutate: addToWorkspace } = useWorkspaceAddItemsMutation()
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
@@ -80,6 +106,7 @@ export const VerificationPageContent = () => {
     },
   ]
 
+  console.log({ isLoading, verifications })
   return (
     <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
       <div className="flex flex-row justify-between items-center">
