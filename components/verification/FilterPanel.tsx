@@ -5,7 +5,7 @@ import { VerificationFilterOptions } from './useVerificationList'
 import { FormLabel, Input, Select } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { ComAtprotoAdminDefs, ToolsOzoneModerationDefs } from '@atproto/api'
-import { pluralize } from '@/lib/util'
+import { isNonNullable, pluralize } from '@/lib/util'
 import { Popover, PopoverButton, PopoverPanel } from '@headlessui/react'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { CopyButton } from '@/common/CopyButton'
@@ -44,6 +44,13 @@ export const VerificationFilterPanel = ({
   onResetFilters,
   trustedVerifierSubjects,
 }: VerificationFilterPanelProps) => {
+  const trustedVerifierDids = trustedVerifierSubjects
+    ?.map((sub) => {
+      if (ComAtprotoAdminDefs.isRepoRef(sub.subject)) {
+        return sub.subject.did
+      }
+    })
+    .filter(isNonNullable)
   const [formState, setFormState] = useState<FilterFormState>(
     filtersToFormState(filters),
   )
@@ -104,28 +111,57 @@ export const VerificationFilterPanel = ({
     onResetFilters()
   }
   const applyTrustedVerifierFilter = () => {
-    const subjects: string[] = []
-    if (!trustedVerifierSubjects?.length) {
-      return
-    }
-
-    for (const sub of trustedVerifierSubjects) {
-      if (ComAtprotoAdminDefs.isRepoRef(sub.subject)) {
-        subjects.push(sub.subject.did)
-      }
-    }
-
-    if (!subjects.length) {
+    if (!trustedVerifierDids?.length) {
       return
     }
 
     const newFormState = {
       ...formState,
-      issuersInput: subjects.join(', '),
+      issuersInput: trustedVerifierDids.join(', '),
     }
     setFormState(newFormState)
     applyFormStateToFilters(newFormState)
   }
+
+  const hasAllTrustedVerifiers =
+    !!trustedVerifierDids?.length &&
+    trustedVerifierDids.every((did) => {
+      return filters.issuers?.includes(did)
+    })
+
+  const trustedVerifierText = !!trustedVerifierSubjects?.length && (
+    <Popover className="inline-block">
+      <PopoverButton className="underline text-gray-800 dark:text-gray-300">
+        {pluralize(trustedVerifierSubjects.length, 'trusted verifier', {
+          plural: 'trusted verifiers',
+        })}
+      </PopoverButton>
+      <PopoverPanel anchor="bottom" className="rounded-sm dark:bg-slate-800">
+        <div className="p-3 dark:text-gray-300">
+          {trustedVerifierSubjects.map((sub) => {
+            if (!ComAtprotoAdminDefs.isRepoRef(sub.subject)) {
+              return null
+            }
+            return (
+              <div key={sub.subjectRepoHandle} className="pb-1 flex flex-row">
+                <SubjectOverview
+                  subject={{ did: sub.subject.did }}
+                  subjectRepoHandle={sub.subjectRepoHandle}
+                  withTruncation={true}
+                />
+
+                <CopyButton
+                  text={sub.subject.did}
+                  className="ml-1"
+                  title={`Copy DID to clipboard`}
+                />
+              </div>
+            )
+          })}
+        </div>
+      </PopoverPanel>
+    </Popover>
+  )
 
   return (
     <form
@@ -154,7 +190,7 @@ export const VerificationFilterPanel = ({
         />
       </FormLabel>
 
-      {!!trustedVerifierSubjects?.length && (
+      {!!trustedVerifierSubjects?.length && !hasAllTrustedVerifiers && (
         <p className="text-sm text-gray-500 dark:text-gray-400">
           <button
             className="underline text-gray-800 dark:text-gray-300"
@@ -162,44 +198,13 @@ export const VerificationFilterPanel = ({
           >
             Click here
           </button>{' '}
-          to only show verifications from{' '}
-          <Popover className="inline-block">
-            <PopoverButton className="underline text-gray-800 dark:text-gray-300">
-              {pluralize(trustedVerifierSubjects.length, 'trusted verifier', {
-                plural: 'trusted verifiers',
-              })}
-            </PopoverButton>
-            <PopoverPanel
-              anchor="bottom"
-              className="rounded-sm dark:bg-slate-800"
-            >
-              <div className="p-3 dark:text-gray-300">
-                {trustedVerifierSubjects.map((sub) => {
-                  if (!ComAtprotoAdminDefs.isRepoRef(sub.subject)) {
-                    return null
-                  }
-                  return (
-                    <div
-                      key={sub.subjectRepoHandle}
-                      className="pb-1 flex flex-row"
-                    >
-                      <SubjectOverview
-                        subject={{ did: sub.subject.did }}
-                        subjectRepoHandle={sub.subjectRepoHandle}
-                        withTruncation={true}
-                      />
+          to only show verifications from {trustedVerifierText}
+        </p>
+      )}
 
-                      <CopyButton
-                        text={sub.subject.did}
-                        className="ml-1"
-                        title={`Copy DID to clipboard`}
-                      />
-                    </div>
-                  )
-                })}
-              </div>
-            </PopoverPanel>
-          </Popover>
+      {!!trustedVerifierSubjects?.length && hasAllTrustedVerifiers && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          All of your {trustedVerifierText} are already selected.
         </p>
       )}
 
