@@ -18,10 +18,10 @@ export type KnownEmbedView =
   | $Typed<AppBskyEmbedRecord.View>
   | $Typed<AppBskyEmbedVideo.View>
 
-export function extractEmbed(
+export function extractEmbeds(
   post: AppBskyFeedDefs.PostView,
-): KnownEmbedView | { $type: string } | undefined {
+): (KnownEmbedView | { $type: string } | undefined)[] {
   return AppBskyEmbedRecordWithMedia.isView(post.embed)
-    ? post.embed.media
-    : post.embed
+    ? [post.embed.media, post.embed.record.record]
+    : [post.embed]
 }

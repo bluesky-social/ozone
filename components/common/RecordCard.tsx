@@ -4,7 +4,6 @@ import {
   ToolsOzoneModerationDefs,
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
-  AppBskyActorProfile,
   asPredicate,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
