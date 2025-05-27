@@ -371,18 +371,13 @@ function EmbedRenderer({
   }
   // render quote posts embeds
   if (AppBskyEmbedRecord.isView(embed)) {
-    const recordView = <RecordEmbedView embed={embed} />
-    if (recordView) {
-      return recordView
-    }
+    return <RecordEmbedView embed={embed} />
   }
 
   if (AppBskyEmbedRecord.isViewRecord(embed)) {
-    const recordView = <RecordEmbedView embed={{ record: embed }} />
-    if (recordView) {
-      return recordView
-    }
+    return <RecordEmbedView embed={{ record: embed }} />
   }
+
   return <span />
 }
 
