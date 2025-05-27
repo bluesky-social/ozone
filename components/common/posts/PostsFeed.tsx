@@ -9,7 +9,6 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
   AppBskyGraphDefs,
-  AppBskyEmbedRecordWithMedia,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -27,7 +26,7 @@ import {
   pluralize,
 } from '@/lib/util'
 import { RichText } from '../RichText'
-import { GraphicMediaFilter, LabelList, ModerationLabel } from '../labels'
+import { LabelList, ModerationLabel } from '../labels/List'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'

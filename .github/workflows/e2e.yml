@@ -1,4 +1,4 @@
-name: E2E Cypress Tests
+name: Cypress Tests
 
 on:
   pull_request:
@@ -12,7 +12,7 @@ env:
   NEXT_PUBLIC_HANDLE_RESOLVER_URL: https://api.bsky.app
 
 jobs:
-  cypress-run:
+  cypress-tests:
     runs-on: ubuntu-22.04
     steps:
       - name: Checkout
@@ -26,17 +26,44 @@ jobs:
       - name: Enable Corepack
         run: corepack enable
 
-      - name: Cypress run
+      - name: Cache dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            **/node_modules
+            ~/.cache/Cypress
+          key: ${{ runner.os }}-modules-${{ hashFiles('**/yarn.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-modules-
+
+      - name: Install dependencies
+        run: yarn install
+
+      - name: Build application
+        run: yarn build
+
+      # Run E2E tests
+      - name: Cypress E2E Tests
         uses: cypress-io/github-action@v5
         with:
-          build: yarn build
-          start: yarn start
+          install: false # Skip installation as we've already done it
+          start: yarn start # Start the app server
           browser: chrome
-          install-command: yarn install
+          wait-on: 'http://localhost:3000' # Wait for the server to be ready
 
-      - name: Setup Screenshot Artifacts
+      # Run Component tests
+      - name: Cypress Component Tests
+        uses: cypress-io/github-action@v5
+        with:
+          install: false # Skip installation again
+          component: true # Run component tests
+          browser: chrome
+
+      # Upload screenshots if either test type fails
+      - name: Upload Screenshots on Failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
           name: cypress-screenshots
           path: cypress/screenshots
+          if-no-files-found: ignore

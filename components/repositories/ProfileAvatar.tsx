@@ -6,7 +6,7 @@ import {
   GraphicMediaFilterPreference,
   useGraphicMediaPreferences,
 } from '@/config/useLocalPreferences'
-import { getProfileAndRepoLabels } from '@/common/labels'
+import { getProfileAndRepoLabels } from '@/common/labels/util'
 import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 
 export const avatarClassNames = (
