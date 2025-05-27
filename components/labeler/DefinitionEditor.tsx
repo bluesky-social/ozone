@@ -3,6 +3,7 @@ import { Input, Select, Textarea, FormLabel, Checkbox } from '@/common/forms'
 import { ComAtprotoLabelDefs } from '@atproto/api'
 import { defaultLabelValueDefinition } from './helpers'
 import { ActionButton } from '@/common/buttons'
+import { useSyncedState } from '@/lib/useSyncedState'
 
 export const LabelDefinitionEditor: React.FC<{
   label: ComAtprotoLabelDefs.LabelValue
@@ -13,12 +14,7 @@ export const LabelDefinitionEditor: React.FC<{
   ) => void
   onCancel: () => void
 }> = ({ label, definition, onUpdate, onCancel }) => {
-  const [hasDefinition, setHasDefinition] = useState(!!definition)
-
-  // Keep state synced with parent state
-  useEffect(() => {
-    setHasDefinition(!!definition)
-  }, [definition])
+  const [hasDefinition, setHasDefinition] = useSyncedState(!!definition)
 
   if (hasDefinition) {
     return (

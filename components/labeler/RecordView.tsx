@@ -37,7 +37,7 @@ const LabelDefinitionView = ({
   label: ComAtprotoLabelDefs.LabelValue
   definition?: ComAtprotoLabelDefs.LabelValueDefinition
   onUpdate: (
-    label,
+    label: ComAtprotoLabelDefs.LabelValue,
     updatedDef?: ComAtprotoLabelDefs.LabelValueDefinition,
   ) => void
 }) => {
@@ -115,7 +115,7 @@ const LabelDefinitionView = ({
         <div className="mt-2 space-y-2">
           {definition.locales.map((locale, index) => (
             <div
-              key={index}
+              key={locale.lang}
               className="p-3 border rounded bg-gray-50 dark:bg-slate-900 border-gray-300 dark:border-gray-700"
             >
               <p className="text-sm font-semibold text-gray-700 dark:text-gray-300">
@@ -140,32 +140,131 @@ export const LabelerRecordView = ({
   record: AppBskyLabelerService.Record
   onUpdate: (record: AppBskyLabelerService.Record) => void
 }) => {
+  const handleAddLabel = () => {
+    const newPolicies: AppBskyLabelerDefs.LabelerPolicies = {
+      labelValues: [...(record.policies.labelValues || []), ''],
+    }
+
+    if (record.policies.labelValueDefinitions) {
+      newPolicies.labelValueDefinitions = [
+        ...record.policies.labelValueDefinitions,
+      ]
+    }
+
+    onUpdate({
+      ...record,
+      policies: newPolicies,
+    })
+  }
+
+  const handleLabelDefinitionUpdate =
+    (label: string) =>
+    (
+      newLabel: ComAtprotoLabelDefs.LabelValue,
+      newDefinition?: ComAtprotoLabelDefs.LabelValueDefinition,
+    ) => {
+      const { labelValueDefinitions, labelValues } = record.policies
+
+      // If definition is not set we need to remove existing definition if there is one
+      // and then update the label value if there is an update
+      if (!newDefinition) {
+        const newDefinitions = labelValueDefinitions?.length
+          ? labelValueDefinitions.filter(
+              ({ identifier }) => identifier === label,
+            )
+          : labelValueDefinitions
+
+        // Replace the label being edited with the updated value
+        const newValues = labelValues.map((l) => {
+          if (l === label) {
+            return newLabel
+          }
+          return l
+        })
+
+        // Call update with the new label values and definitions
+        return onUpdate({
+          ...record,
+          policies: {
+            ...record.policies,
+            labelValues: newValues,
+            labelValueDefinitions: newDefinitions,
+          },
+        })
+      }
+
+      const newDefinitions = labelValueDefinitions?.length
+        ? labelValueDefinitions.map((def) => {
+            if (def.identifier === label) {
+              return newDefinition
+            }
+            return def
+          })
+        : [newDefinition]
+
+      // Replace the label value from identifier value of definition
+      const newValues = labelValues.map((l) => {
+        if (l === label) {
+          return newDefinition.identifier
+        }
+        return l
+      })
+
+      onUpdate({
+        ...record,
+        policies: {
+          ...record.policies,
+          labelValues: newValues,
+          labelValueDefinitions: newDefinitions,
+        },
+      })
+    }
+
+  const handleReportTypeChange =
+    (reasonType: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      let newReasonTypes =
+        record.reasonTypes === undefined
+          ? [...reasonTypes]
+          : [...record.reasonTypes]
+      if (e.target.checked) {
+        newReasonTypes.push(reasonType)
+      } else {
+        newReasonTypes = newReasonTypes.filter((type) => type !== reasonType)
+      }
+
+      if (newReasonTypes.length === 0) {
+        onUpdate({ ...record, reasonTypes: undefined })
+      } else {
+        onUpdate({ ...record, reasonTypes: newReasonTypes })
+      }
+    }
+
+  const handleSubjectTypeChange =
+    (subjectType: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
+      let newSubjectTypes =
+        record.subjectTypes === undefined
+          ? [...subjectTypes]
+          : [...record.subjectTypes]
+      if (e.target.checked) {
+        newSubjectTypes.push(subjectType)
+      } else {
+        newSubjectTypes = newSubjectTypes.filter((type) => type !== subjectType)
+      }
+
+      if (newSubjectTypes.length === 0) {
+        onUpdate({ ...record, subjectTypes: undefined })
+      } else {
+        onUpdate({ ...record, subjectTypes: newSubjectTypes })
+      }
+    }
+
   return (
     <div>
       <div className="flex flex-row justify-between">
         <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
           Labels
         </h3>
-        <ActionButton
-          appearance="secondary"
-          size="xs"
-          onClick={() => {
-            const newPolicies: AppBskyLabelerDefs.LabelerPolicies = {
-              labelValues: [...(record.policies.labelValues || []), ''],
-            }
-
-            if (record.policies.labelValueDefinitions) {
-              newPolicies.labelValueDefinitions = [
-                ...record.policies.labelValueDefinitions,
-              ]
-            }
-
-            onUpdate({
-              ...record,
-              policies: newPolicies,
-            })
-          }}
-        >
+        <ActionButton appearance="secondary" size="xs" onClick={handleAddLabel}>
           Add Label
         </ActionButton>
       </div>
@@ -179,63 +278,7 @@ export const LabelerRecordView = ({
             definition={record.policies.labelValueDefinitions?.find(
               (def) => def.identifier === label,
             )}
-            onUpdate={(newLabel, newDefinition) => {
-              const { labelValueDefinitions, labelValues } = record.policies
-
-              // If definition is not set we need to remove existing definition if there is one
-              // and then update the label value if there is an update
-              if (!newDefinition) {
-                const newDefinitions = labelValueDefinitions?.length
-                  ? labelValueDefinitions.filter(
-                      ({ identifier }) => identifier === label,
-                    )
-                  : labelValueDefinitions
-
-                // Replace the label being edited with the updated value
-                const newValues = labelValues.map((l) => {
-                  if (l === label) {
-                    return newLabel
-                  }
-                  return l
-                })
-
-                // Call update with the new label values and definitions
-                return onUpdate({
-                  ...record,
-                  policies: {
-                    ...record.policies,
-                    labelValues: newValues,
-                    labelValueDefinitions: newDefinitions,
-                  },
-                })
-              }
-
-              const newDefinitions = labelValueDefinitions?.length
-                ? labelValueDefinitions.map((def) => {
-                    if (def.identifier === label) {
-                      return newDefinition
-                    }
-                    return def
-                  })
-                : [newDefinition]
-
-              // Replace the label value from identifier value of definition
-              const newValues = labelValues.map((l) => {
-                if (l === label) {
-                  return newDefinition.identifier
-                }
-                return l
-              })
-
-              onUpdate({
-                ...record,
-                policies: {
-                  ...record.policies,
-                  labelValues: newValues,
-                  labelValueDefinitions: newDefinitions,
-                },
-              })
-            }}
+            onUpdate={handleLabelDefinitionUpdate(label)}
           />
         </div>
       ))}
@@ -255,25 +298,7 @@ export const LabelerRecordView = ({
                   }
                   name={`reasonType-${reasonType}`}
                   className="mb-3 flex items-center leading-3"
-                  onChange={(e) => {
-                    let newReasonTypes =
-                      record.reasonTypes === undefined
-                        ? [...reasonTypes]
-                        : [...record.reasonTypes]
-                    if (e.target.checked) {
-                      newReasonTypes.push(reasonType)
-                    } else {
-                      newReasonTypes = newReasonTypes.filter(
-                        (type) => type !== reasonType,
-                      )
-                    }
-
-                    if (newReasonTypes.length === 0) {
-                      onUpdate({ ...record, reasonTypes: undefined })
-                    } else {
-                      onUpdate({ ...record, reasonTypes: newReasonTypes })
-                    }
-                  }}
+                  onChange={handleReportTypeChange(reasonType)}
                   label={
                     <span className="capitalize">
                       {reasonTypeOptions[reasonType]}
@@ -300,25 +325,7 @@ export const LabelerRecordView = ({
                   }
                   name={`subjectType-${subjectType}`}
                   className="mb-3 flex items-center leading-3"
-                  onChange={(e) => {
-                    let newSubjectTypes =
-                      record.subjectTypes === undefined
-                        ? [...subjectTypes]
-                        : [...record.subjectTypes]
-                    if (e.target.checked) {
-                      newSubjectTypes.push(subjectType)
-                    } else {
-                      newSubjectTypes = newSubjectTypes.filter(
-                        (type) => type !== subjectType,
-                      )
-                    }
-
-                    if (newSubjectTypes.length === 0) {
-                      onUpdate({ ...record, subjectTypes: undefined })
-                    } else {
-                      onUpdate({ ...record, subjectTypes: newSubjectTypes })
-                    }
-                  }}
+                  onChange={handleSubjectTypeChange(subjectType)}
                   label={<span className="capitalize">{subjectType}</span>}
                 />
               </div>
