@@ -4,7 +4,7 @@ Ozone User Guide
 
 ## Quickstart
 
-The Ozone web interface allows a team of moderators or curators to collaboratively review reports, create labels, inspect content from the atproto network, and more. The Ozone interface and backend service are open source projects developed by Bluesky PBC, and released for independent third parties to use and operate. Individual moderation services are responsible for their actions, policies, and decision making, and Bluesky provides no non-public information or access to external moderation services.
+The Ozone web interface allows a team of moderators or curators to collaboratively review reports, create labels, inspect content from the atproto network, and more. The Ozone interface and backend service are open source projects developed by Bluesky Social PBC, and released for independent third parties to use and operate. Individual moderation services are responsible for their actions, policies, and decision making, and Bluesky provides no non-public information or access to external moderation services.
 
 Individual users log in to the web interface using an atproto account, with their handle and password. Note that this will probably change in the near future (Spring 2024) when OAuth support is added. Each instance of the web interface is configured to talk to a specific moderation service backend (e.g., an independent instance of the Ozone backend service), and which accounts have permission to log in is configured in the backend.
 

@@ -21,6 +21,8 @@ const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   Partial<{ unit: DurationUnit }> & {
     text: string
   })[] = [
+  { field: 'tag', operator: 'eq', text: 'With Tag' },
+  { field: 'tag', operator: 'neq', text: 'Without Tag' },
   { field: 'followersCount', operator: 'gte', text: 'Min. Follower Count' },
   { field: 'followersCount', operator: 'lte', text: 'Max. Follower Count' },
   { field: 'followsCount', operator: 'gte', text: 'Min. Follow Count' },
@@ -47,6 +49,7 @@ const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   { field: 'reviewState', operator: 'neq', text: 'Not In Review State' },
   { field: 'takendown', operator: 'eq', text: 'Is Takendown' },
   { field: 'takendown', operator: 'neq', text: 'Not Takendown' },
+  { field: 'verifier', operator: 'eq', text: 'Verifier' },
 ]
 const booleanFields = ['emailConfirmed', 'accountDeactivated', 'takendown']
 const isBooleanFilter = (field: string) => booleanFields.includes(field)

@@ -81,16 +81,15 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
                     {description}
                   </Description>
                 )}
-                <Description>
-                  {children}
-                  {!!error && (
-                    <Alert
-                      type="error"
-                      body={error}
-                      title="Something went wrong"
-                    />
-                  )}
-                </Description>
+                
+                {children}
+                {!!error && (
+                  <Alert
+                    type="error"
+                    body={error}
+                    title="Something went wrong"
+                  />
+                )}
 
                 <div className="mt-4 flex flex-row justify-end">
                   <ActionButton

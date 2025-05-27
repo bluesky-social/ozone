@@ -20,7 +20,11 @@ import { chunkArray } from '@/lib/util'
 import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
 import { compileTemplateContent } from 'components/email/helpers'
 import { diffTags } from 'components/tags/utils'
-import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import {
+  DM_DISABLE_TAG,
+  TRUSTED_VERIFIER_TAG,
+  VIDEO_UPLOAD_DISABLE_TAG,
+} from '@/lib/constants'
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
 
@@ -458,7 +462,9 @@ export const getEventFromFormData = (
     MOD_EVENTS.DISABLE_DMS === $type ||
     MOD_EVENTS.ENABLE_DMS === $type ||
     MOD_EVENTS.DISABLE_VIDEO_UPLOAD === $type ||
-    MOD_EVENTS.ENABLE_VIDEO_UPLOAD === $type
+    MOD_EVENTS.ENABLE_VIDEO_UPLOAD === $type ||
+    MOD_EVENTS.MAKE_VERIFIER === $type ||
+    MOD_EVENTS.REVOKE_VERIFIER === $type
   ) {
     let add,
       remove: string[] = []
@@ -477,6 +483,14 @@ export const getEventFromFormData = (
     if ($type === MOD_EVENTS.ENABLE_VIDEO_UPLOAD) {
       add = []
       remove = [VIDEO_UPLOAD_DISABLE_TAG]
+    }
+    if ($type === MOD_EVENTS.MAKE_VERIFIER) {
+      add = [TRUSTED_VERIFIER_TAG]
+      remove = []
+    }
+    if ($type === MOD_EVENTS.REVOKE_VERIFIER) {
+      add = []
+      remove = [TRUSTED_VERIFIER_TAG]
     }
     return {
       add,

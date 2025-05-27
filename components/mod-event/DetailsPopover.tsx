@@ -17,8 +17,8 @@ export const ModEventDetailsPopover = ({
     <Popover className="relative">
       {() => (
         <>
-          <PopoverButton className="ring-none">
-            <QuestionMarkCircleIcon className="h-6 w-6 ml-2 dark:fill-teal-500" />
+          <PopoverButton className="ring-none h-5">
+            <QuestionMarkCircleIcon className="h-6 w-6 dark:fill-teal-500" />
           </PopoverButton>
           <Transition
             as={Fragment}

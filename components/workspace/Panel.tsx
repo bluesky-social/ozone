@@ -193,11 +193,12 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       : undefined
 
   const { data: workspaceList } = useWorkspaceList()
-  const { data: workspaceListStatuses } = useWorkspaceListData({
-    subjects: workspaceList || [],
-    // Make sure we aren't constantly refreshing the data unless the panel is open
-    enabled: props.open,
-  })
+  const { data: workspaceListStatuses, refetch: refetchWorkspaceListData } =
+    useWorkspaceListData({
+      subjects: workspaceList || [],
+      // Make sure we aren't constantly refreshing the data unless the panel is open
+      enabled: props.open,
+    })
 
   // on form submit
   const onFormSubmit = async (
@@ -421,6 +422,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                         setShowItemCreator={setShowItemCreator}
                         showActionForm={showActionForm}
                         workspaceList={workspaceList}
+                        onVerification={refetchWorkspaceListData}
                       />
                     </div>
                   )}

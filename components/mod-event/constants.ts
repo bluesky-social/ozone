@@ -20,6 +20,8 @@ export const MOD_EVENTS = {
   ENABLE_DMS: 'enableDms',
   DISABLE_VIDEO_UPLOAD: 'disableVideoUpload',
   ENABLE_VIDEO_UPLOAD: 'enableVideoUpload',
+  MAKE_VERIFIER: 'makeVerifier',
+  REVOKE_VERIFIER: 'revokeVerifier',
 } as const
 
 export const MOD_EVENT_TITLES = {
@@ -44,6 +46,8 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.ENABLE_DMS]: 'Enable DMs',
   [MOD_EVENTS.DISABLE_VIDEO_UPLOAD]: 'Disable Video Upload',
   [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: 'Enable Video Upload',
+  [MOD_EVENTS.MAKE_VERIFIER]: 'Make Trusted Verifier',
+  [MOD_EVENTS.REVOKE_VERIFIER]: 'Revoke Trusted Verifier',
 }
 
 export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'

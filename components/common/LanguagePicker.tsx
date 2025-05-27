@@ -15,6 +15,7 @@ export const availableLanguageCodes = [
   'ru',
   'zh',
   'ar',
+  'tr',
 ]
 
 export const LanguageSelectorDropdown = ({

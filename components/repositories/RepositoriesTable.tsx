@@ -10,6 +10,7 @@ import Link from 'next/link'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { LabelChip } from '@/common/labels/List'
 import { SubjectSummaryColumn } from '@/subject/table'
+import { Country } from './Country'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -112,16 +113,7 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
                 </Link>
               </>
             )}
-            {lastSigninCountry && (
-              <Link
-                prefetch={false}
-                href={`/repositories?term=sig:${encodeURIComponent(
-                  lastSigninCountry,
-                )}`}
-              >
-                <LabelChip>{lastSigninCountry}</LabelChip>
-              </Link>
-            )}
+            {lastSigninCountry && <Country code={lastSigninCountry} />}
           </div>
         )}
         {subjectStatus?.comment && (
@@ -155,14 +147,7 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
               {obscureIp(registrationIp)}{' '}
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
-            {ipCountry && (
-              <Link
-                prefetch={false}
-                href={`/repositories?term=sig:${encodeURIComponent(ipCountry)}`}
-              >
-                <LabelChip>{ipCountry}</LabelChip>
-              </Link>
-            )}
+            {ipCountry && <Country code={ipCountry} />}
           </div>
         )}
       </td>

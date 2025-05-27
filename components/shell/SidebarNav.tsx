@@ -5,13 +5,25 @@ import { usePathname } from 'next/navigation'
 import { useKBar } from 'kbar'
 import { classNames } from '@/lib/util'
 import { ICONS, NAV_ITEMS, isCurrent } from './common'
+import { useServerConfig } from './ConfigurationContext'
+import { useMemo } from 'react'
 
 export function SidebarNav({ theme, toggleTheme }) {
   const kbar = useKBar()
   const pathname = usePathname() || '/'
+  const { verifierDid } = useServerConfig()
+  const navItems = useMemo(() => {
+    return NAV_ITEMS.filter((item) => {
+      if (item.name === 'Verification') {
+        return !!verifierDid
+      }
+      return true
+    })
+  }, [verifierDid])
+
   return (
     <div className="mt-6 w-full flex-1 space-y-1 px-2">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         let iconName = item.icon
         if (iconName === 'sun' && theme === 'dark') {
           iconName = 'moon'

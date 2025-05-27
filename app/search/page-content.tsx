@@ -6,7 +6,6 @@ import { PostAsCard } from '@/common/posts/PostsFeed'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { ProfileCard } from '@/repositories/AccountView'
 import { WorkspacePanel } from '@/workspace/Panel'
-import { AppBskyActorDefs, AppBskyFeedDefs } from '@atproto/api'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import {
   isActorData,

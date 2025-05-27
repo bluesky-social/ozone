@@ -60,6 +60,7 @@ import { PriorityScore } from '@/subject/PriorityScore'
 import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
+import { VerificationActionButton } from 'components/verification/ActionButton'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -181,6 +182,7 @@ function Form(
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
+  const isAppealed = !!subjectStatus?.appealed
 
   const allLabels = getLabelsForSubject({ repo, record })
   const currentLabels = allLabels.map((label) =>
@@ -381,6 +383,18 @@ function Form(
           event: {
             $type: MOD_EVENTS.ACKNOWLEDGE,
             comment: '[DEFINITIVE_PREVIOUS_ACTION]',
+          },
+        })
+      }
+
+      if (formData.get('additionalResolveAppealEvent')) {
+        await onSubmit({
+          subject: subjectInfo,
+          createdBy: accountDid,
+          subjectBlobCids,
+          event: {
+            $type: MOD_EVENTS.RESOLVE_APPEAL,
+            comment: '[RESOLVING_APPEAL_DUE_TO_PREVIOUS_ACK_ACTION]',
           },
         })
       }
@@ -641,7 +655,7 @@ function Form(
                       <HighProfileWarning profile={profile} />
                     </div>
                   )}
-                  <div className="relative flex flex-row gap-1 items-center">
+                  <div className="relative flex flex-row gap-3 items-center">
                     <ModEventSelectorButton
                       subjectStatus={subjectStatus}
                       selectedAction={modEventType}
@@ -650,6 +664,12 @@ function Form(
                       setSelectedAction={(action) => setModEventType(action)}
                     />
                     <ModEventDetailsPopover modEventType={modEventType} />
+                    {isSubjectDid && profile && (
+                      <VerificationActionButton
+                        did={subject}
+                        profile={profile}
+                      />
+                    )}
                   </div>
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
@@ -820,6 +840,21 @@ function Form(
                     />
                   )}
 
+                  {isAckEvent && isAppealed && (
+                    <Checkbox
+                      defaultChecked
+                      value="true"
+                      id="additionalResolveAppealEvent"
+                      name="additionalResolveAppealEvent"
+                      className="mb-3 flex items-center leading-3"
+                      label={
+                        <span className="leading-4">
+                          Resolve appeal from the user
+                        </span>
+                      }
+                    />
+                  )}
+
                   {submission.error && (
                     <div className="my-2">
                       <ActionError error={submission.error} />
@@ -927,7 +962,7 @@ function useSubjectQuery(subject: string) {
 
   return useQuery({
     // subject of the report
-    queryKey: ['modActionSubject', { subject }],
+    queryKey: ['modActionSubject', subject],
     queryFn: async () => {
       if (subject.startsWith('did:')) {
         const [{ data: repo }, profile] = await Promise.all([

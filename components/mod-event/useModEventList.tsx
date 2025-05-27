@@ -15,7 +15,7 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
-import { DM_DISABLE_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import { DM_DISABLE_TAG, TRUSTED_VERIFIER_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
 import { chunkArray } from '@/lib/util'
 import { toast } from 'react-toastify'
 
@@ -137,7 +137,7 @@ const getReposAndRecordsForEvents = async (
 // The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
 export type EventListState = Omit<
   typeof initialListState,
-  'subject' | 'createdBy'
+  'subject' | 'createdBy' | 'subjectType'
 > & {
   subject?: string
   createdBy?: string
@@ -331,6 +331,10 @@ const getModEvents =
 
     if (filterTypes.includes(MOD_EVENTS.TAKEDOWN) && policies) {
       queryParams.policies = policies
+    }
+
+    if (subjectType) {
+      queryParams.subjectType = subjectType
     }
 
     const { data } = await labelerAgent.tools.ozone.moderation.queryEvents(
@@ -558,6 +562,14 @@ const TagBasedTypeFilters = {
   },
   [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: {
     remove: VIDEO_UPLOAD_DISABLE_TAG,
+    add: '',
+  },
+  [MOD_EVENTS.MAKE_VERIFIER]: {
+    add: TRUSTED_VERIFIER_TAG,
+    remove: '',
+  },
+  [MOD_EVENTS.REVOKE_VERIFIER]: {
+    remove: TRUSTED_VERIFIER_TAG,
     add: '',
   },
 }

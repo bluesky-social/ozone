@@ -64,6 +64,9 @@ import { ProfileAvatar } from './ProfileAvatar'
 import { obscureIp, parseThreatSigs } from './helpers'
 import { useCopyAccountDetails } from './useCopyAccountDetails'
 import { getProfiles } from './api'
+import { VerificationBadge } from 'components/verification/Badge'
+import { AccountHistory } from './AccountHistory'
+import { Country } from './Country'
 
 enum Views {
   Details,
@@ -455,6 +458,7 @@ function Header({
                   target="_blank"
                 >
                   {displayActorName}
+                  {profile && <VerificationBadge profile={profile} />}
                 </a>{' '}
                 {subjectStatus && (
                   <SubjectReviewStateBadge subjectStatus={subjectStatus} />
@@ -575,13 +579,7 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
-            {ipCountry && (
-              <Link
-                href={`/repositories?term=sig:${encodeURIComponent(ipCountry)}`}
-              >
-                <LabelChip>{ipCountry}</LabelChip>
-              </Link>
-            )}
+            {ipCountry && <Country code={ipCountry} />}
           </DataField>
         )}
         {lastSigninIp && (
@@ -594,15 +592,7 @@ function Details({
             >
               <MagnifyingGlassIcon className="h-3 w-3 inline" />
             </Link>
-            {lastSigninCountry && (
-              <Link
-                href={`/repositories?term=sig:${encodeURIComponent(
-                  lastSigninCountry,
-                )}`}
-              >
-                <LabelChip>{lastSigninCountry}</LabelChip>
-              </Link>
-            )}
+            {lastSigninCountry && <Country code={lastSigninCountry} />}
             {lastSigninTime && (
               <div className="text-gray-400">
                 {new Date(lastSigninTime).toLocaleString()}
@@ -610,7 +600,7 @@ function Details({
             )}
           </DataField>
         )}
-        {hcapDetail && (
+        {!!hcapDetail?.length && (
           <DataField label="Hcaptcha">
             {hcapDetail?.map(({ property, value }) => (
               <Link
@@ -707,6 +697,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <AccountHistory did={repo.did} />
       {canShowDidHistory && <DidHistory did={repo.did} />}
       {profile && (
         <Json
