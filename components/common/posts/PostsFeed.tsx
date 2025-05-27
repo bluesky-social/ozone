@@ -286,7 +286,7 @@ export function PostEmbeds({
   ))
 }
 
-function EmbedRenderer({
+export function EmbedRenderer({
   embed,
   mediaFilters,
   imageClassName,
