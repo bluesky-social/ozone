@@ -103,7 +103,7 @@ export const BlobListFormField = ({
         <button
           type="button"
           className="flex flex-row items-center"
-          onClick={() => setShowBlobList(!showBlobList)}
+          onClick={() => setShowBlobList((show) => !show)}
         >
           {pluralize(blobs.length, 'Blob', {
             includeCount: false,

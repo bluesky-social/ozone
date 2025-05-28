@@ -118,7 +118,9 @@ function PostContent({ item }: { item: AppBskyFeedDefs.FeedViewPost }) {
   // TODO entities
   return (
     <>
-      {item.reply ? <ReplyParent reply={item.reply} inline /> : undefined}
+      {item.reply ? (
+        <ReplyParent parent={item.reply.parent} inline />
+      ) : undefined}
       <span className="block dark:text-gray-300">
         {item.post.record.text as string}
       </span>

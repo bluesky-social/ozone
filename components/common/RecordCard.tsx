@@ -175,6 +175,7 @@ function PostCard({
     <PostAsCard
       dense
       showLabels={showLabels}
+      parent={data.thread.parent}
       item={{ post: data.thread.post }}
       isAuthorTakendown={isAuthorTakendown}
       isAuthorDeactivated={isAuthorDeactivated}

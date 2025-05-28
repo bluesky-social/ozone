@@ -9,6 +9,7 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
   AppBskyGraphDefs,
+  $Typed,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -97,6 +98,7 @@ export const PostControlOptions = [
 export function PostAsCard({
   item,
   dense,
+  parent,
   onReport,
   className = '',
   showLabels = true,
@@ -111,6 +113,11 @@ export function PostAsCard({
   controls?: PostControl[]
   onReport?: (uri: string) => void
   className?: string
+  parent?:
+    | $Typed<AppBskyFeedDefs.ThreadViewPost>
+    | $Typed<AppBskyFeedDefs.NotFoundPost>
+    | $Typed<AppBskyFeedDefs.BlockedPost>
+    | { $type: string }
   showLabels?: boolean
 }) {
   return (
@@ -123,6 +130,11 @@ export function PostAsCard({
         isAuthorDeactivated={isAuthorDeactivated}
       />
       {showLabels && <PostLabels item={item} dense={dense} />}
+      {!!parent && (
+        <div className="pl-10">
+          <ReplyParent parent={parent} />
+        </div>
+      )}
       {!!controls?.length && (
         <PostControls item={item} onReport={onReport} controls={controls} />
       )}
@@ -196,7 +208,7 @@ function PostHeader({
               Peek
             </a>
           </p>
-          {item.reply ? <ReplyParent reply={item.reply} /> : undefined}
+          {item.reply ? <ReplyParent parent={item.reply.parent} /> : undefined}
         </div>
       </div>
     </div>

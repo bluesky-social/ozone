@@ -4,13 +4,12 @@ import { ReactNode } from 'react'
 import { useActionPanelLink } from '../useActionPanelLink'
 
 export const ReplyParent = ({
-  reply,
+  parent,
   inline = false,
 }: {
-  reply: AppBskyFeedDefs.ReplyRef
+  parent: AppBskyFeedDefs.ReplyRef['parent'] | AppBskyFeedDefs.ThreadViewPost
   inline?: boolean
 }) => {
-  const { parent } = reply
   const Wrapper = inline ? 'span' : 'p'
 
   if (AppBskyFeedDefs.isNotFoundPost(parent)) {
@@ -59,6 +58,27 @@ export const ReplyParent = ({
     )
   }
 
+  if (AppBskyFeedDefs.isThreadViewPost(parent)) {
+    const { post } = parent
+    return (
+      <Wrapper className="text-gray-500 dark:text-gray-50 text-sm">
+        {post.author ? (
+          <>
+            <LinkToPost post={parent.post} /> to{' '}
+            <LinkToPostAuthor post={parent.post}>
+              @{parent.post.author.handle}
+            </LinkToPostAuthor>
+          </>
+        ) : (
+          <>
+            <LinkToPost post={parent.post} /> to an anonymous user
+          </>
+        )}
+      </Wrapper>
+    )
+  }
+
+  console.log('here', parent.$type)
   return null
 }
 
