@@ -78,7 +78,6 @@ export const ReplyParent = ({
     )
   }
 
-  console.log('here', parent.$type)
   return null
 }
 

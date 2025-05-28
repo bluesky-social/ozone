@@ -156,7 +156,6 @@ const LabelFullDefinitionEditor: React.FC<{
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-    console.log(formState)
     onUpdate(formState)
   }
 

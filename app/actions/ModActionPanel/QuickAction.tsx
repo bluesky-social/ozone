@@ -645,7 +645,7 @@ function Form(
               {!isSubjectDid && !!profile?.labels?.length && (
                 <div className="mb-2">
                   <div className="flex flex-row items-center">
-                    <div className='mr-1'>Account Labels</div>
+                    <div className="mr-1">Account Labels</div>
                     {profile.labels.map((label) => {
                       return (
                         <ModerationLabel
@@ -662,7 +662,7 @@ function Form(
               {!!record?.repo.moderation.subjectStatus?.tags?.length && (
                 <div className="mb-2">
                   <div className="flex flex-row items-center">
-                    <div className='mr-2'>Account Tags</div>
+                    <div className="mr-2">Account Tags</div>
                     <LabelList className="-ml-1 flex-wrap gap-1">
                       {record.repo.moderation.subjectStatus?.tags
                         .sort()
