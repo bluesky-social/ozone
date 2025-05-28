@@ -410,6 +410,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                   ref={formRef}
                   id={WORKSPACE_FORM_ID}
                   onSubmit={onFormSubmit}
+                  // The overflow here allows dropdowns in the form filter to adjust height of the window accordingly
+                  className='overflow-y-auto'
                 >
                   {!showItemCreator && (
                     <div className="mb-2 flex space-x-2">
