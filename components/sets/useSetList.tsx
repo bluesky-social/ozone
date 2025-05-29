@@ -1,5 +1,10 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 
 export const useSetList = (searchQuery: string | null) => {
   const labelerAgent = useLabelerAgent()
@@ -14,5 +19,23 @@ export const useSetList = (searchQuery: string | null) => {
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+  })
+}
+
+export const useSetRemove = (name: string) => {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+  return useMutation({
+    mutationKey: ['setRemove', { name }],
+    mutationFn: async () => {
+      await labelerAgent.tools.ozone.set.deleteSet({ name })
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries(['setList'])
+      toast.success(`Set ${name} removed!`)
+    },
+    onError: (err) => {
+      toast.error(`Error removing set ${name}: ${(err as Error).message}`)
+    },
   })
 }
