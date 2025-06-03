@@ -6,7 +6,6 @@ import {
   mockOzoneDidDataResponse,
   mockServerConfigResponse,
   API_URL,
-  mockRecordResponse,
   mockLabelerServiceRecordResponse,
 } from './api'
 

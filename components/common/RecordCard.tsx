@@ -4,7 +4,6 @@ import {
   ToolsOzoneModerationDefs,
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
-  AppBskyActorProfile,
   asPredicate,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
@@ -176,6 +175,7 @@ function PostCard({
     <PostAsCard
       dense
       showLabels={showLabels}
+      parent={data.thread.parent}
       item={{ post: data.thread.post }}
       isAuthorTakendown={isAuthorTakendown}
       isAuthorDeactivated={isAuthorDeactivated}

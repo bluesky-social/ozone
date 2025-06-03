@@ -14,12 +14,14 @@ import { BlobListFormField } from './BlobList'
 import {
   LabelList,
   LabelListEmpty,
+  ModerationLabel,
+} from '@/common/labels/List'
+import {
   diffLabels,
   getLabelsForSubject,
   toLabelVal,
   isSelfLabel,
-  ModerationLabel,
-} from '@/common/labels'
+} from '@/common/labels/util'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
 import { createBreakpoint, useKeyPressEvent } from 'react-use'
@@ -593,21 +595,24 @@ function Form(
                 </div>
               )}
 
-              {record?.blobs && (
+              {!!record?.blobs?.length && (
                 <BlobListFormField
                   blobs={record.blobs}
                   authorDid={record.repo.did}
-                  className="mb-3"
+                  className="mb-2"
                 />
               )}
               {isSubjectDid && canManageChat && (
-                <div className="mb-3">
+                <div className="mb-2">
                   <MessageActorMeta did={subject} />
                 </div>
               )}
-              <div className={`mb-3`}>
-                <FormLabel label="Labels">
-                  <LabelList className="-ml-1 flex-wrap">
+              <div className={`mb-2`}>
+                <FormLabel
+                  label="Labels"
+                  className="flex flex-row items-center gap-2"
+                >
+                  <LabelList className="-ml-1 -mt-1 flex-wrap">
                     {!currentLabels.length && (
                       <LabelListEmpty className="ml-1" />
                     )}
@@ -624,14 +629,49 @@ function Form(
                 </FormLabel>
               </div>
               {!!subjectStatus?.tags?.length && (
-                <div className={`mb-3`}>
-                  <FormLabel label="Tags">
-                    <LabelList className="-ml-1 flex-wrap gap-1">
+                <div className={`mb-2`}>
+                  <FormLabel
+                    label="Tags"
+                    className="flex flex-row items-center gap-2"
+                  >
+                    <LabelList className="-mt-1 -ml-1 flex-wrap gap-1">
                       {subjectStatus.tags.sort().map((tag) => {
                         return <SubjectTag key={tag} tag={tag} />
                       })}
                     </LabelList>
                   </FormLabel>
+                </div>
+              )}
+
+              {!isSubjectDid && !!profile?.labels?.length && (
+                <div className="mb-2">
+                  <div className="flex flex-row items-center">
+                    <div className="mr-1">Account Labels</div>
+                    {profile.labels.map((label) => {
+                      return (
+                        <ModerationLabel
+                          label={label}
+                          key={label.val}
+                          recordAuthorDid={profile.did}
+                        />
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {!!record?.repo.moderation.subjectStatus?.tags?.length && (
+                <div className="mb-2">
+                  <div className="flex flex-row items-center">
+                    <div className="mr-2">Account Tags</div>
+                    <LabelList className="-ml-1 flex-wrap gap-1">
+                      {record.repo.moderation.subjectStatus?.tags
+                        .sort()
+                        .map((tag) => {
+                          return <SubjectTag key={tag} tag={tag} />
+                        })}
+                    </LabelList>
+                  </div>
                 </div>
               )}
 

@@ -9,6 +9,7 @@ import {
   AppBskyEmbedImages,
   AppBskyEmbedExternal,
   AppBskyGraphDefs,
+  $Typed,
 } from '@atproto/api'
 import Link from 'next/link'
 import {
@@ -26,7 +27,7 @@ import {
   pluralize,
 } from '@/lib/util'
 import { RichText } from '../RichText'
-import { LabelList, ModerationLabel } from '../labels'
+import { LabelList, ModerationLabel } from '../labels/List'
 import { CollectionId } from '@/reports/helpers/subject'
 import { ProfileAvatar } from '@/repositories/ProfileAvatar'
 import { getTranslatorLink, isPostInLanguage } from '@/lib/locale/helpers'
@@ -38,9 +39,12 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
-import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
+import {
+  GraphicMediaFilterPreference,
+  useGraphicMediaPreferences,
+} from '@/config/useLocalPreferences'
 import { getVideoUrlWithFallback } from '../video/helpers'
-import { isValidPostRecord, extractEmbed } from './helpers'
+import { isValidPostRecord, extractEmbeds, KnownEmbedView } from './helpers'
 import { VerificationBadge } from 'components/verification/Badge'
 
 const VideoPlayer = dynamic(() => import('@/common/video/player'), {
@@ -94,6 +98,7 @@ export const PostControlOptions = [
 export function PostAsCard({
   item,
   dense,
+  parent,
   onReport,
   className = '',
   showLabels = true,
@@ -108,6 +113,11 @@ export function PostAsCard({
   controls?: PostControl[]
   onReport?: (uri: string) => void
   className?: string
+  parent?:
+    | $Typed<AppBskyFeedDefs.ThreadViewPost>
+    | $Typed<AppBskyFeedDefs.NotFoundPost>
+    | $Typed<AppBskyFeedDefs.BlockedPost>
+    | { $type: string }
   showLabels?: boolean
 }) {
   return (
@@ -120,6 +130,11 @@ export function PostAsCard({
         isAuthorDeactivated={isAuthorDeactivated}
       />
       {showLabels && <PostLabels item={item} dense={dense} />}
+      {!!parent && (
+        <div className="pl-10">
+          <ReplyParent parent={parent} />
+        </div>
+      )}
       {!!controls?.length && (
         <PostControls item={item} onReport={onReport} controls={controls} />
       )}
@@ -193,7 +208,7 @@ function PostHeader({
               Peek
             </a>
           </p>
-          {item.reply ? <ReplyParent reply={item.reply} /> : undefined}
+          {item.reply ? <ReplyParent parent={item.reply.parent} /> : undefined}
         </div>
       </div>
     </div>
@@ -258,7 +273,7 @@ export function PostEmbeds({
   item: AppBskyFeedDefs.FeedViewPost
 }) {
   const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
-  const embed = extractEmbed(item.post)
+  const embeds = extractEmbeds(item.post)
 
   const allLabels = item.post.labels?.map(({ val }) => val)
   const mediaFilters = getMediaFiltersForLabels(allLabels)
@@ -269,8 +284,36 @@ export function PostEmbeds({
     mediaFilters.translucent ? 'opacity-40' : '',
   )
 
+  return embeds.map((embed, i) => (
+    <EmbedRenderer
+      key={embed?.$type || i}
+      embed={embed}
+      item={item}
+      mediaFilters={mediaFilters}
+      imageClassName={imageClassName}
+      isAuthorDeactivated={isAuthorDeactivated}
+      isAuthorTakendown={isAuthorTakendown}
+    />
+  ))
+}
+
+export function EmbedRenderer({
+  embed,
+  mediaFilters,
+  imageClassName,
+  isAuthorTakendown,
+  isAuthorDeactivated,
+  item,
+}: {
+  embed: KnownEmbedView | { $type: string } | undefined
+  mediaFilters: GraphicMediaFilterPreference
+  imageClassName?: string
+  isAuthorTakendown?: boolean
+  isAuthorDeactivated?: boolean
+  item?: AppBskyFeedDefs.FeedViewPost
+}) {
   if (AppBskyEmbedVideo.isView(embed)) {
-    const captions = item.post.record?.['embed']?.['captions']
+    const captions = item?.post.record?.['embed']?.['captions']
     const sourceUrl = getVideoUrlWithFallback(embed.playlist, {
       isAuthorDeactivated,
       isAuthorTakendown,
@@ -339,11 +382,13 @@ export function PostEmbeds({
   }
   // render quote posts embeds
   if (AppBskyEmbedRecord.isView(embed)) {
-    const recordView = <RecordEmbedView embed={embed} />
-    if (recordView) {
-      return recordView
-    }
+    return <RecordEmbedView embed={embed} />
   }
+
+  if (AppBskyEmbedRecord.isViewRecord(embed)) {
+    return <RecordEmbedView embed={{ record: embed }} />
+  }
+
   return <span />
 }
 
@@ -354,12 +399,15 @@ export function RecordEmbedView({
   embed: AppBskyEmbedRecord.View
   leftAligned?: boolean
 }) {
+  const { getMediaFiltersForLabels } = useGraphicMediaPreferences()
   const leftPadding = !leftAligned ? 'pl-14' : 'pl-2'
   if (
     AppBskyEmbedRecord.isViewRecord(embed.record) &&
     isValidPostRecord(embed.record.value)
   ) {
-    const { author, uri, indexedAt, value } = embed.record
+    const { author, uri, indexedAt, value, embeds, labels } = embed.record
+    const allLabels = labels?.map(({ val }) => val)
+    const mediaFilters = getMediaFiltersForLabels(allLabels)
     return (
       <div
         className={`flex gap-2 pb-2 ${leftPadding} flex-col border-2 border-gray-400 border-dashed my-2 rounded pt-2`}
@@ -398,6 +446,17 @@ export function RecordEmbedView({
         >
           <RichText post={value} />
         </div>
+        {!!embeds?.length && (
+          <div>
+            {embeds.map((e) => (
+              <EmbedRenderer
+                embed={e}
+                key={e.$type}
+                mediaFilters={mediaFilters}
+              />
+            ))}
+          </div>
+        )}
       </div>
     )
   } else if (AppBskyGraphDefs.isListView(embed.record)) {

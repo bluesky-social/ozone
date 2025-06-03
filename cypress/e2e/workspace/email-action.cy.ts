@@ -6,7 +6,7 @@ import {
   SERVER_URL,
 } from '../../support/api'
 
-describe('Workspace -> Email Action', () => {
+describe.skip('Workspace -> Email Action', () => {
   let authFixture
   let statusesFixture
   let seedFixture

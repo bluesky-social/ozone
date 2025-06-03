@@ -1,5 +1,26 @@
 {
-  "extends": "next/core-web-vitals",
+  "extends": [
+    "next/core-web-vitals",     
+    "plugin:cypress/recommended"
+  ],
+  "plugins":["cypress"],
+  "overrides": [
+    {
+      "files": [
+        "cypress/**/*.{js,jsx,ts,tsx}",
+        "**/*.cy.{js,jsx,ts,tsx}"
+      ],
+      "env": {
+        "cypress/globals": true
+      },
+      "rules": {
+        // Add any Cypress-specific rules here
+        "cypress/no-assigning-return-values": "error",
+        "cypress/no-unnecessary-waiting": "error",
+        "cypress/assertion-before-screenshot": "warn"
+      }
+    }
+  ],
   "rules": {
     "react-hooks/exhaustive-deps": [
       "warn",

@@ -3,11 +3,10 @@ import { Card } from '@/common/Card'
 import { Checkbox } from '@/common/forms'
 import {
   buildGraphicPreferenceKeyForLabel,
-  GraphicMediaFilter,
   GraphicMediaFilterOptions,
-  LabelChip,
   labelsRequiringMediaFilter,
-} from '@/common/labels'
+} from '@/common/labels/util'
+import { LabelChip } from '@/common/labels/List'
 import { useGraphicMediaPreferences } from './useLocalPreferences'
 import { toast } from 'react-toastify'
 

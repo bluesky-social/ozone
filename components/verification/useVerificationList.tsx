@@ -148,17 +148,20 @@ export function useVerificationFilter(
   }
 }
 
-export const useVerificationList = ({
-  subjects,
-  issuers,
-  isRevoked,
-  createdAfter,
-  createdBefore,
-}: VerificationFilterOptions) => {
+export const useVerificationList = (
+  {
+    subjects,
+    issuers,
+    isRevoked,
+    createdAfter,
+    createdBefore,
+  }: VerificationFilterOptions,
+  isEnabled: boolean,
+) => {
   const serverConfig = useServerConfig()
   const labelerAgent = useLabelerAgent()
   return useInfiniteQuery({
-    enabled: !!serverConfig.verifierDid,
+    enabled: !!serverConfig.verifierDid && isEnabled,
     queryKey: [
       'verification-list',
       issuers,

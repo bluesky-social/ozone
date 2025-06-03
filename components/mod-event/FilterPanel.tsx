@@ -445,6 +445,8 @@ export const EventFilterPanel = ({
                   oldestFirst,
                   createdAfter,
                   createdBefore,
+                  subjectType,
+                  selectedCollections,
                 },
               })
               return true
