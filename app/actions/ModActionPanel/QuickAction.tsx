@@ -953,13 +953,13 @@ function Form(
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
             <AccountTimeline did={subject} />
-            <ModEventList
+            {/* <ModEventList
               stats={{
                 accountStats: subjectStatus?.accountStats,
                 recordsStats: subjectStatus?.recordsStats,
               }}
               subject={subject}
-            />
+            /> */}
           </div>
         )}
       </div>
