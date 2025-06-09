@@ -591,6 +591,19 @@ function Form(
                       />
                     </div>
                   )}
+                  {!!record?.repo.moderation.subjectStatus?.comment && (
+                    <div className="mt-2">
+                      <Alert
+                        type="info"
+                        title="Account Note"
+                        body={
+                          <TextWithLinks
+                            text={record.repo.moderation.subjectStatus.comment}
+                          />
+                        }
+                      />
+                    </div>
+                  )}
                 </div>
               )}
 
