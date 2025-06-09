@@ -42,7 +42,8 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
       <Dialog
         ref={ref}
         as="div"
-        className="relative z-10"
+        // The z-index here is the second largest value. we want this to be overlayed on other dialogs/modals but the cmd palette needs to be overlayed on top of this
+        className="relative z-40"
         onClose={() => setIsOpen(false)}
       >
         <TransitionChild
@@ -81,7 +82,7 @@ export const ConfirmationModal = forwardRef(function ConfirmationModal(
                     {description}
                   </Description>
                 )}
-                
+
                 {children}
                 {!!error && (
                   <Alert
