@@ -6,6 +6,10 @@ import { PencilIcon } from '@heroicons/react/20/solid'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import Link from 'next/link'
 import { createSetPageLink } from './utils'
+import { TrashIcon } from '@heroicons/react/24/solid'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { useState } from 'react'
+import { useSetRemove } from './useSetList'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -45,49 +49,13 @@ export function SetList({
             )}
             {sets?.map((set, i) => {
               const lastItem = i === sets.length - 1
-              const editUrl = createSetPageLink({
-                edit: set.name,
-                description: set.description || '',
-              })
-              const viewUrl = createSetPageLink({ view: set.name })
               return (
-                <div
+                <SetItem
                   key={set.name}
-                  className={`flex flex-row justify-between px-2 ${
-                    !lastItem
-                      ? 'mb-2 border-b dark:border-gray-700 border-gray-100 pb-3'
-                      : ''
-                  }`}
-                >
-                  <div>
-                    <p>
-                      <Link href={viewUrl}>{set.name}</Link>
-                    </p>
-                    <p className="text-sm">{set.description}</p>
-                    <div className="-mx-1">
-                      <Link href={viewUrl}>
-                        <LabelChip>{set.setSize} values</LabelChip>
-                      </Link>
-
-                      <span className="text-xs">
-                        Updated{' '}
-                        {dateFormatter.format(new Date(set.updatedAt))}
-                      </span>
-                    </div>
-                  </div>
-                  <div>
-                    {canEdit && (
-                      <LinkButton
-                        size="xs"
-                        appearance="outlined"
-                        href={editUrl}
-                      >
-                        <PencilIcon className="h-3 w-3 mr-1" />
-                        <span className="text-xs">Edit</span>
-                      </LinkButton>
-                    )}
-                  </div>
-                </div>
+                  lastItem={lastItem}
+                  set={set}
+                  canEdit={canEdit}
+                />
               )
             })}
           </div>
@@ -100,5 +68,85 @@ export function SetList({
         </div>
       )}
     </>
+  )
+}
+
+function SetItem({
+  set,
+  lastItem,
+  canEdit,
+}: {
+  set: ToolsOzoneSetDefs.SetView
+  lastItem: boolean
+  canEdit: boolean
+}) {
+  const [showRemoveConfirmation, setShowRemoveConfirmation] = useState(false)
+  const editUrl = createSetPageLink({
+    edit: set.name,
+    description: set.description || '',
+  })
+  const viewUrl = createSetPageLink({ view: set.name })
+  const removeSet = useSetRemove(set.name)
+
+  return (
+    <div
+      className={`flex flex-row justify-between items-start px-2 ${
+        !lastItem
+          ? 'mb-2 border-b dark:border-gray-700 border-gray-100 pb-3'
+          : ''
+      }`}
+    >
+      <div>
+        <p>
+          <Link href={viewUrl}>{set.name}</Link>
+        </p>
+        <p className="text-sm">{set.description}</p>
+        <div className="-mx-1">
+          <Link href={viewUrl}>
+            <LabelChip>{set.setSize} values</LabelChip>
+          </Link>
+
+          <span className="text-xs">
+            Updated {dateFormatter.format(new Date(set.updatedAt))}
+          </span>
+        </div>
+      </div>
+      {canEdit && (
+        <ConfirmationModal
+          onConfirm={() => {
+            removeSet.mutateAsync().then(() => setShowRemoveConfirmation(false))
+          }}
+          isOpen={showRemoveConfirmation}
+          setIsOpen={setShowRemoveConfirmation}
+          confirmButtonText={'Remove Set'}
+          confirmButtonDisabled={removeSet.isLoading}
+          error={removeSet.error?.['message']}
+          title={`Remove Set?`}
+          description={
+            <>
+              You{"'"}re about to remove the set <b>{set.name}</b>. All values
+              in the set will be removed along with the set.
+            </>
+          }
+        />
+      )}
+      <div className="flex flex-row items-center gap-2">
+        {canEdit && (
+          <ActionButton
+            appearance="outlined"
+            size="sm"
+            onClick={() => setShowRemoveConfirmation(true)}
+          >
+            <TrashIcon className="h-3 w-3 my-0.5" />
+          </ActionButton>
+        )}
+        {canEdit && (
+          <LinkButton size="xs" appearance="outlined" href={editUrl}>
+            <PencilIcon className="h-3 w-3 mr-1" />
+            <span className="text-xs">Edit</span>
+          </LinkButton>
+        )}
+      </div>
+    </div>
   )
 }
