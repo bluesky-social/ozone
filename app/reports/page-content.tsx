@@ -322,6 +322,8 @@ function useModerationQueueQuery() {
     useFluentReportSearchParams()
 
   return useInfiniteQuery({
+    // lighten load on the server
+    refetchOnWindowFocus: false,
     queryKey: [
       'events',
       {
