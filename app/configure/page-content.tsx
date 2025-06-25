@@ -13,11 +13,13 @@ import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { SetsConfig } from '@/config/Sets'
 import { ProtectedTagsConfig } from '@/config/ProtectedTags'
 import { PoliciesConfig } from '@/config/Policies'
+import { SafelinkConfigWrapper } from '@/config/SafelinkConfig'
 
 enum Views {
   Configure,
   Members,
   Sets,
+  Safelink,
   ProtectedTags,
   Policies,
 }
@@ -26,6 +28,7 @@ const TabKeys = {
   configure: Views.Configure,
   members: Views.Members,
   sets: Views.Sets,
+  safelink: Views.Safelink,
   protectedTags: Views.ProtectedTags,
   policies: Views.Policies,
 }
@@ -77,6 +80,10 @@ export default function ConfigurePageContent() {
       label: 'Sets',
     },
     {
+      view: Views.Safelink,
+      label: 'Safelink',
+    },
+    {
       view: Views.Policies,
       label: 'Policies',
     },
@@ -97,6 +104,7 @@ export default function ConfigurePageContent() {
       {currentView === Views.Configure && <LabelerConfig />}
       {currentView === Views.Members && <MemberConfig />}
       {currentView === Views.Sets && <SetsConfig />}
+      {currentView === Views.Safelink && <SafelinkConfigWrapper />}
       {currentView === Views.ProtectedTags && <ProtectedTagsConfig />}
       {currentView === Views.Policies && <PoliciesConfig />}
 
