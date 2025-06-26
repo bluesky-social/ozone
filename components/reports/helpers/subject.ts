@@ -2,7 +2,7 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ComAtprotoRepoStrongRef, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { WorkspaceListData } from '@/components/workspace/useWorkspaceListData'
+import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
 
