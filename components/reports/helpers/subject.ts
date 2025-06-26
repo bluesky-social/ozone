@@ -1,11 +1,14 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ComAtprotoRepoStrongRef, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useCallback } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
+import { WorkspaceListData } from '@/components/workspace/useWorkspaceListData'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
 
 export const useCreateSubjectFromId = () => {
   const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
 
   return useCallback(
     async (
@@ -18,6 +21,28 @@ export const useCreateSubjectFromId = () => {
       record: ToolsOzoneModerationDefs.RecordViewDetail | null
     }> => {
       if (isIdRecord(id)) {
+        // Check if we have this record data in any workspaceListData cache
+        const workspaceQueries = queryClient.getQueryCache().findAll({
+          queryKey: ['workspaceListData'],
+        })
+
+        for (const query of workspaceQueries) {
+          const workspaceData = query.state.data as
+            | WorkspaceListData
+            | undefined
+          if (workspaceData?.[id]?.record) {
+            const cachedRecord = workspaceData[id].record
+            return {
+              record: cachedRecord,
+              subject: {
+                $type: 'com.atproto.repo.strongRef',
+                uri: cachedRecord.uri,
+                cid: cachedRecord.cid,
+              },
+            }
+          }
+        }
+
         try {
           const { data: record } =
             await labelerAgent.tools.ozone.moderation.getRecord({ uri: id })
