@@ -8,12 +8,6 @@ import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 
-interface SafelinkEditorProps {
-  rule?: ToolsOzoneSafelinkDefs.UrlRule | null
-  onSuccess: () => void
-  onCancel: () => void
-}
-
 const getSubmitButtonText = (
   rule: ToolsOzoneSafelinkDefs.UrlRule | null | undefined,
   isSubmitting: boolean,
@@ -85,7 +79,11 @@ export function SafelinkEditor({
   rule,
   onSuccess,
   onCancel,
-}: SafelinkEditorProps) {
+}: {
+  rule?: ToolsOzoneSafelinkDefs.UrlRule | null
+  onSuccess: () => void
+  onCancel: () => void
+}) {
   const isUpdate = !!rule
   const { onFormSubmit, submission } = useSafelinkEditor({
     isUpdate,
@@ -129,7 +127,6 @@ export function SafelinkEditor({
               defaultValue={rule?.pattern || ToolsOzoneSafelinkDefs.DOMAIN}
               required
               disabled={submission.isSubmitting}
-              readOnly={isUpdate}
             >
               {Object.entries(PatternTypeNames).map(([value, label]) => (
                 <option key={value} value={value}>

@@ -1,38 +1,28 @@
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 
-export const ActionTypeNames: Record<
-  ToolsOzoneSafelinkDefs.ActionType,
-  string
-> = {
+export const ActionTypeNames: Record<string, string> = {
   [ToolsOzoneSafelinkDefs.BLOCK]: 'Block',
   [ToolsOzoneSafelinkDefs.WARN]: 'Warn',
   [ToolsOzoneSafelinkDefs.WHITELIST]: 'Whitelist',
 }
 
-export const PatternTypeNames: Record<
-  ToolsOzoneSafelinkDefs.PatternType,
-  string
-> = {
+export const PatternTypeNames: Record<string, string> = {
   [ToolsOzoneSafelinkDefs.DOMAIN]: 'Domain',
   [ToolsOzoneSafelinkDefs.URL]: 'URL',
 }
 
-export const ReasonTypeNames: Record<
-  ToolsOzoneSafelinkDefs.ReasonType,
-  string
-> = {
+export const ReasonTypeNames: Record<string, string> = {
   [ToolsOzoneSafelinkDefs.CSAM]: 'CSAM',
   [ToolsOzoneSafelinkDefs.SPAM]: 'Spam',
   [ToolsOzoneSafelinkDefs.PHISHING]: 'Phishing',
   [ToolsOzoneSafelinkDefs.NONE]: 'None',
 }
 
-export const EventTypeNames: Record<ToolsOzoneSafelinkDefs.EventType, string> =
-  {
-    [ToolsOzoneSafelinkDefs.ADDRULE]: 'Add Rule',
-    [ToolsOzoneSafelinkDefs.UPDATERULE]: 'Update Rule',
-    [ToolsOzoneSafelinkDefs.REMOVERULE]: 'Remove Rule',
-  }
+export const EventTypeNames: Record<string, string> = {
+  [ToolsOzoneSafelinkDefs.ADDRULE]: 'Add',
+  [ToolsOzoneSafelinkDefs.UPDATERULE]: 'Update',
+  [ToolsOzoneSafelinkDefs.REMOVERULE]: 'Remove',
+}
 
 export const getActionText = (
   action: ToolsOzoneSafelinkDefs.ActionType,
@@ -59,15 +49,13 @@ export const getEventTypeText = (
 }
 
 export const createSafelinkPageLink = (params: {
-  tab?: string
   search?: string
   view?: string
   edit?: string
   create?: boolean
 }) => {
-  const searchParams = new URLSearchParams()
+  const searchParams = new URLSearchParams({ tab: 'safelink' })
 
-  if (params.tab) searchParams.set('tab', params.tab)
   if (params.search) searchParams.set('search', params.search)
   if (params.view) searchParams.set('view', params.view)
   if (params.edit) searchParams.set('edit', params.edit)

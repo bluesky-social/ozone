@@ -1,36 +1,68 @@
 'use client'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
-import { useState } from 'react'
-import { SafelinkList } from '../safelink/SafelinkList'
-import { SafelinkEditor } from '../safelink/SafelinkEditor'
-import { SafelinkEventsView } from '../safelink/SafelinkEventsView'
-import { createSafelinkPageLink } from '../safelink/helpers'
-import { ActionButton } from '@/common/buttons'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useDebounce } from 'react-use'
+import { SafelinkRuleList } from '@/safelink/RuleList'
+import { SafelinkEditor } from '@/safelink/Editor'
+import { SafelinkEventList } from '@/safelink/EventList'
+import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
 import { Input } from '@/common/forms'
-import { Card } from '@/common/Card'
-import { PlusIcon, ArrowLeftIcon } from '@heroicons/react/24/outline'
+import { useSyncedState } from '@/lib/useSyncedState'
+import {
+  PlusIcon,
+  MagnifyingGlassIcon,
+  ArrowLeftIcon,
+} from '@heroicons/react/24/outline'
+import { createSafelinkPageLink } from '@/safelink/helpers'
 
 export enum SafelinkView {
   List = 'safelink-list',
   Events = 'safelink-events',
 }
 
-interface SafelinkConfigProps {
-  searchQuery: string
-  onSearchChange: (search: string) => void
-  view: SafelinkView
-  onViewChange: (view: SafelinkView) => void
-  editingRule?: ToolsOzoneSafelinkDefs.UrlRule | null
-  onEditRule: (rule: ToolsOzoneSafelinkDefs.UrlRule | null) => void
-  creatingRule: boolean
-  onCreateRule: (creating: boolean) => void
-  viewingEvents?: { url: string; pattern: ToolsOzoneSafelinkDefs.PatternType } | null
-  onViewEvents: (params: { url: string; pattern: ToolsOzoneSafelinkDefs.PatternType } | null) => void
+const SafelinkSearchInput = () => {
+  const router = useRouter()
+  const searchParams = useSearchParams()
+  const searchQuery = searchParams.get('search') || ''
+  const view = searchParams.get('view') || SafelinkView.List
+  const [inputValue, setInputValue] = useSyncedState(searchQuery)
+
+  useDebounce(
+    () => {
+      if (inputValue !== searchQuery) {
+        const url = createSafelinkPageLink({ search: inputValue })
+        router.push(url, { scroll: false })
+      }
+    },
+    300,
+    [inputValue],
+  )
+
+  const handleCancel = () => {
+    const url = createSafelinkPageLink({ view })
+    router.push(url, { scroll: false })
+  }
+
+  return (
+    <div className="flex items-center gap-4 mb-4">
+      <div className="flex-1">
+        <Input
+          type="text"
+          placeholder="Search rules by URL or domain..."
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          autoFocus
+        />
+      </div>
+      <ActionButton size="sm" appearance="outlined" onClick={handleCancel}>
+        Cancel
+      </ActionButton>
+    </div>
+  )
 }
 
 export function SafelinkConfig({
   searchQuery,
-  onSearchChange,
   view,
   onViewChange,
   editingRule,
@@ -39,7 +71,26 @@ export function SafelinkConfig({
   onCreateRule,
   viewingEvents,
   onViewEvents,
-}: SafelinkConfigProps) {
+}: {
+  searchQuery: string
+  view: SafelinkView
+  onViewChange: (view: SafelinkView) => void
+  editingRule?: ToolsOzoneSafelinkDefs.UrlRule | null
+  onEditRule: (rule: ToolsOzoneSafelinkDefs.UrlRule | null) => void
+  creatingRule: boolean
+  onCreateRule: (creating: boolean) => void
+  viewingEvents?: {
+    url: string
+    pattern: ToolsOzoneSafelinkDefs.PatternType
+  } | null
+  onViewEvents: (
+    params: { url: string; pattern: ToolsOzoneSafelinkDefs.PatternType } | null,
+  ) => void
+}) {
+  const searchParams = useSearchParams()
+  const searchFromUrl = searchParams.get('search')
+  const showSearch = typeof searchFromUrl === 'string'
+
   const showEditor = creatingRule || editingRule
   const showEventDetails = viewingEvents
 
@@ -53,7 +104,10 @@ export function SafelinkConfig({
     onCreateRule(false)
   }
 
-  const handleViewEvents = (url: string, pattern: ToolsOzoneSafelinkDefs.PatternType) => {
+  const handleViewEvents = (
+    url: string,
+    pattern: ToolsOzoneSafelinkDefs.PatternType,
+  ) => {
     onViewEvents({ url, pattern })
     onViewChange(SafelinkView.Events)
   }
@@ -74,90 +128,86 @@ export function SafelinkConfig({
   }
 
   return (
-    <div className="space-y-4">
-      {/* Header and controls */}
-      <Card>
-        <div className="p-4">
+    <div className="pt-4">
+      {showSearch ? (
+        <SafelinkSearchInput />
+      ) : (
+        <>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
               {showEventDetails && (
                 <ActionButton
                   size="sm"
-                  variant="outline"
+                  appearance="primary"
                   onClick={handleBackToList}
                 >
                   <ArrowLeftIcon className="h-4 w-4 mr-2" />
                   Back to Rules
                 </ActionButton>
               )}
-              
-              <h2 className="text-lg font-semibold">
+
+              <h4 className="font-medium text-gray-700 dark:text-gray-100">
                 {showEventDetails ? 'Safelink Events' : 'Safelink Rules'}
-              </h2>
+              </h4>
             </div>
 
             {!showEventDetails && (
-              <ActionButton onClick={() => onCreateRule(true)}>
-                <PlusIcon className="h-4 w-4 mr-2" />
-                Add Rule
-              </ActionButton>
-            )}
-          </div>
-
-          {/* Search and view toggle */}
-          <div className="flex items-center gap-4">
-            <div className="flex-1">
-              <Input
-                type="text"
-                placeholder={showEventDetails ? "Search events by URL or domain..." : "Search rules by URL or domain..."}
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-            </div>
-
-            {!showEventDetails && (
-              <div className="flex border border-gray-300 dark:border-gray-600 rounded-lg">
-                <button
-                  className={`px-3 py-2 text-sm font-medium rounded-l-lg ${
-                    view === SafelinkView.List
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                  onClick={() => onViewChange(SafelinkView.List)}
+              <div className="flex flex-row justify-end">
+                <ActionButton
+                  appearance="primary"
+                  size="sm"
+                  onClick={() => onCreateRule(true)}
                 >
-                  Rules
-                </button>
-                <button
-                  className={`px-3 py-2 text-sm font-medium rounded-r-lg border-l border-gray-300 dark:border-gray-600 ${
-                    view === SafelinkView.Events
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700'
-                  }`}
-                  onClick={() => onViewChange(SafelinkView.Events)}
+                  <PlusIcon className="h-3 w-3 mr-1" />
+                  <span className="text-xs">Add Rule</span>
+                </ActionButton>
+
+                <LinkButton
+                  size="sm"
+                  className="ml-1"
+                  appearance="outlined"
+                  href={createSafelinkPageLink({ search: '' })}
                 >
-                  Events
-                </button>
+                  <MagnifyingGlassIcon className="h-4 w-4" />
+                </LinkButton>
+                <ButtonGroup
+                  size="xs"
+                  appearance="primary"
+                  items={[
+                    {
+                      id: 'rules',
+                      text: 'Rules',
+                      onClick: () => onViewChange(SafelinkView.List),
+                      isActive: view === SafelinkView.List,
+                    },
+                    {
+                      id: 'events',
+                      text: 'Events',
+                      onClick: () => onViewChange(SafelinkView.Events),
+                      isActive: view === SafelinkView.Events,
+                    },
+                  ]}
+                />
               </div>
             )}
           </div>
-        </div>
-      </Card>
+        </>
+      )}
 
-      {/* Content */}
       {showEventDetails ? (
-        <SafelinkEventsView
+        <SafelinkEventList
           searchQuery={searchQuery}
           url={viewingEvents.url}
           pattern={viewingEvents.pattern}
         />
       ) : view === SafelinkView.List ? (
-        <SafelinkList
+        <SafelinkRuleList
           searchQuery={searchQuery}
           onEdit={onEditRule}
           onViewEvents={handleViewEvents}
         />
       ) : (
-        <SafelinkEventsView searchQuery={searchQuery} />
+        <SafelinkEventList searchQuery={searchQuery} />
       )}
     </div>
   )
