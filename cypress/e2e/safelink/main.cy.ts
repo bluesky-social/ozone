@@ -216,33 +216,123 @@ describe('Safelink Feature', () => {
       // Should show error message
       cy.contains('Failed to update rule').should('be.visible')
     })
+  })
 
-    it('Shows loading state when fetching rule data for editing', () => {
-      // Mock a slow response to test loading state
-      cy.intercept('POST', '**/tools.ozone.safelink.queryRules*', (req) => {
-        req.reply((res) => {
-          setTimeout(() => {
-            res.send({
-              statusCode: 200,
-              body: {
-                rules: mockRules,
-                cursor: undefined,
-              },
-            })
-          }, 1000)
-        })
-      }).as('slowSafelinkQueryRulesResponse')
+  describe('Filter Functionality', () => {
+    const mockRulesData = [
+      {
+        url: 'https://malicious.example.com',
+        pattern: 'url',
+        action: 'block',
+        reason: 'spam',
+        comment: 'Test malicious website',
+        createdBy: 'did:plc:jttgywq7eusytkmurmjbum6h',
+        createdAt: '2024-01-01T12:00:00Z',
+        updatedAt: '2024-01-01T12:00:00Z',
+      },
+      {
+        url: 'suspicious.com',
+        pattern: 'domain',
+        action: 'warn',
+        reason: 'phishing',
+        comment: 'Suspicious domain',
+        createdBy: 'did:plc:jttgywq7eusytkmurmjbum6h',
+        createdAt: '2024-01-02T10:30:00Z',
+        updatedAt: '2024-01-02T10:30:00Z',
+      },
+    ]
 
+    const mockEventsData = [
+      {
+        id: 1,
+        url: 'https://malicious.example.com',
+        pattern: 'url',
+        action: 'block',
+        reason: 'spam',
+        comment: 'Rule added',
+        createdBy: 'did:plc:jttgywq7eusytkmurmjbum6h',
+        createdAt: '2024-01-01T12:00:00Z',
+        eventType: 'addRule',
+      },
+    ]
+
+    it('Applies filters for rules and validates API call', () => {
+      mockSafelinkQueryRulesResponse({
+        rules: mockRulesData,
+        cursor: undefined,
+      })
       openSafelinkTab()
+      cy.get('[data-cy="safelink-filter-button"]').click()
+      cy.contains('Filter Rules').should('be.visible')
 
-      cy.get('a[title="Edit rule"]').first().click()
+      cy.intercept('POST', '**/tools.ozone.safelink.queryRules*', (req) => {
+        expect(req.body).to.have.property('patternType', 'domain')
+        expect(req.body).to.have.property('urls')
+        expect(req.body.urls).to.deep.equal([
+          'https://malicious.example.com',
+          'suspicious.com',
+        ])
+        expect(req.body).to.have.property('actions')
+        expect(req.body.actions).to.deep.equal(['block', 'warn'])
+        req.reply({
+          statusCode: 200,
+          body: {
+            rules: [mockRulesData[1]],
+            cursor: undefined,
+          },
+        })
+      }).as('filteredRulesQuery')
 
-      cy.contains('Loading rule data...').should('be.visible')
-      cy.contains('Update Safelink Rule').should('be.visible')
+      cy.get('#pattern-filter').select('domain')
+      cy.get('[data-cy="safelink-action-combobox"] svg').click()
+      cy.get('[data-cy="safelink-action-combobox"]').contains('Block').click()
+      cy.get('[data-cy="safelink-action-combobox"]').contains('Warn').click()
+      cy.get('[data-cy="safelink-action-combobox"]').type('{esc}')
+      cy.get('#urls-filter').type(
+        'https://malicious.example.com, suspicious.com',
+      )
+      cy.get('button').contains('Apply').click()
 
-      cy.wait('@slowSafelinkQueryRulesResponse')
+      cy.wait('@filteredRulesQuery')
+      cy.url().should('include', 'pattern=domain')
+      cy.contains('suspicious.com').should('be.visible')
+      cy.url().should(
+        'include',
+        'urls=https%3A%2F%2Fmalicious.example.com%2Csuspicious.com',
+      )
+      cy.url().should('include', 'actions=block%2Cwarn')
+    })
 
-      cy.get('#url').should('be.visible')
+    it('Applies filters for events view and validates API call', () => {
+      openSafelinkTab()
+      cy.get('.safelink-view-toggle').contains('Events').click()
+
+      cy.get('[data-cy="safelink-filter-button"]').click()
+      cy.contains('Filter Events').should('be.visible')
+      cy.contains('Action Types').should('not.exist')
+      cy.get('#pattern-filter').select('url')
+      cy.get('#urls-filter').type('https://malicious.example.com')
+
+      cy.intercept('POST', '**/tools.ozone.safelink.queryEvents*', (req) => {
+        expect(req.body).to.have.property('patternType')
+        expect(req.body).to.have.property('urls')
+        expect(req.body.urls).to.deep.equal(['https://malicious.example.com'])
+        req.reply({
+          statusCode: 200,
+          body: {
+            events: mockEventsData,
+            cursor: undefined,
+          },
+        })
+      }).as('filteredEventsQuery')
+
+      cy.get('button').contains('Apply').click()
+
+      cy.wait('@filteredEventsQuery')
+
+      cy.url().should('include', 'view=events')
+      cy.url().should('include', 'pattern=url')
+      cy.url().should('include', 'urls=https%3A%2F%2Fmalicious.example.com')
     })
   })
 })

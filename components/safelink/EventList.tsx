@@ -13,14 +13,15 @@ import {
   SafelinkUrl,
 } from './Shared'
 import { LabelChip } from '@/common/labels/List'
+import { useSearchParams } from 'next/navigation'
 
-export function SafelinkEventList({
-  urls,
-  pattern,
-}: {
-  urls?: string[]
-  pattern?: ToolsOzoneSafelinkDefs.PatternType
-}) {
+export function SafelinkEventList() {
+  const searchParams = useSearchParams()
+  const urls = searchParams.get('urls')?.split(',').filter(Boolean) || []
+  const pattern = searchParams.get('pattern') as
+    | ToolsOzoneSafelinkDefs.PatternType
+    | undefined
+
   const {
     data,
     isLoading,

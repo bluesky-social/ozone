@@ -20,7 +20,7 @@ export interface SafelinkQueryParams {
   sortDirection?: 'asc' | 'desc'
 }
 
-export const useSafelinkList = ({
+export const useSafelinkRules = ({
   urls,
   patternType,
   actions,

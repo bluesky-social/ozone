@@ -56,6 +56,7 @@ export const createSafelinkPageLink = (params: {
   url?: string
   urls?: string[]
   pattern?: ToolsOzoneSafelinkDefs.PatternType
+  actions?: string[]
 }) => {
   const searchParams = new URLSearchParams({ tab: 'safelink' })
 
@@ -64,6 +65,7 @@ export const createSafelinkPageLink = (params: {
   if (params.url) searchParams.set('url', params.url)
   if (params.urls?.length) searchParams.set('urls', params.urls.join(','))
   if (params.pattern) searchParams.set('pattern', params.pattern)
+  if (params.actions?.length) searchParams.set('actions', params.actions.join(','))
 
   return `/configure?${searchParams.toString()}`
 }

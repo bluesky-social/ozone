@@ -1,7 +1,8 @@
 'use client'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 import { useState } from 'react'
-import { useSafelinkList, useSafelinkRemove } from './useSafelinkList'
+import { useSearchParams } from 'next/navigation'
+import { useSafelinkRules, useSafelinkRemove } from './useSafelinkRules'
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
@@ -16,6 +17,12 @@ import {
 import { createSafelinkEventsLink, createSafelinkEditLink } from './helpers'
 
 export function SafelinkRuleList() {
+  const searchParams = useSearchParams()
+  
+  const urls = searchParams.get('urls')?.split(',').filter(Boolean) || []
+  const pattern = searchParams.get('pattern') as ToolsOzoneSafelinkDefs.PatternType | undefined
+  const actions = searchParams.get('actions')?.split(',').filter(Boolean) as ToolsOzoneSafelinkDefs.ActionType[] | undefined
+
   const {
     data,
     isLoading,
@@ -23,7 +30,11 @@ export function SafelinkRuleList() {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useSafelinkList({})
+  } = useSafelinkRules({
+    urls: urls.length > 0 ? urls : undefined,
+    patternType: pattern,
+    actions: actions,
+  })
 
   const removeRule = useSafelinkRemove()
   const [removingRule, setRemovingRule] = useState<string | null>(null)

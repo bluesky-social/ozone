@@ -4,8 +4,8 @@ import { FormEvent, useState, useEffect } from 'react'
 import {
   useSafelinkAdd,
   useSafelinkUpdate,
-  useSafelinkList,
-} from './useSafelinkList'
+  useSafelinkRules,
+} from './useSafelinkRules'
 import { useQueryClient } from '@tanstack/react-query'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
@@ -49,7 +49,7 @@ const useSafelinkEditor = () => {
 
   const isUpdate = !!url && !!pattern
 
-  const { data: rulesData, isLoading: isLoadingRule } = useSafelinkList({
+  const { data: rulesData, isLoading: isLoadingRule } = useSafelinkRules({
     urls: url ? [url] : undefined,
     patternType: pattern || undefined,
     isDisabled: !url || !pattern,
