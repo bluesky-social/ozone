@@ -1,8 +1,13 @@
 'use client'
-import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { toast } from 'react-toastify'
+import { validatePatternInput } from './helpers'
 
 export interface SafelinkQueryParams {
   cursor?: string
@@ -15,28 +20,61 @@ export interface SafelinkQueryParams {
   sortDirection?: 'asc' | 'desc'
 }
 
-export const useSafelinkList = (searchQuery = '') => {
+export const useSafelinkList = ({
+  urls,
+  patternType,
+  actions,
+  reason,
+  createdBy,
+  isDisabled = false,
+}: {
+  urls?: string[]
+  patternType?: ToolsOzoneSafelinkDefs.PatternType
+  actions?: ToolsOzoneSafelinkDefs.ActionType[]
+  reason?: ToolsOzoneSafelinkDefs.ReasonType
+  createdBy?: string
+  isDisabled?: boolean
+}) => {
   const labelerAgent = useLabelerAgent()
 
   return useInfiniteQuery({
-    queryKey: ['safelink-rules', searchQuery],
+    queryKey: [
+      'safelink-rules',
+      { urls, patternType, actions, reason, createdBy },
+    ],
     queryFn: async ({ pageParam }) => {
       const queryParams: any = {
         limit: 25,
         cursor: pageParam,
       }
 
-      if (searchQuery) {
-        // For search, we'll search both URLs and domains
-        queryParams.urls = [searchQuery]
-        queryParams.domains = [searchQuery]
+      if (urls?.length) {
+        queryParams.urls = urls
       }
 
-      const { data } = await labelerAgent.tools.ozone.safelink.queryRules(queryParams)
+      if (patternType) {
+        queryParams.patternType = patternType
+      }
+
+      if (actions?.length) {
+        queryParams.actions = actions
+      }
+
+      if (reason) {
+        queryParams.reason = reason
+      }
+
+      if (createdBy) {
+        queryParams.createdBy = createdBy
+      }
+
+      const { data } = await labelerAgent.tools.ozone.safelink.queryRules(
+        queryParams,
+      )
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
-    enabled: !!labelerAgent,
+    enabled: !!labelerAgent && !isDisabled,
   })
 }
 
@@ -45,14 +83,14 @@ export const useSafelinkRemove = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ 
-      url, 
-      pattern, 
-      comment 
-    }: { 
+    mutationFn: async ({
+      url,
+      pattern,
+      comment,
+    }: {
       url: string
       pattern: ToolsOzoneSafelinkDefs.PatternType
-      comment?: string 
+      comment?: string
     }) => {
       await labelerAgent.tools.ozone.safelink.removeRule({
         url,
@@ -76,6 +114,12 @@ export const useSafelinkAdd = () => {
 
   return useMutation({
     mutationFn: async (rule: ToolsOzoneSafelinkDefs.UrlRule) => {
+      // Validate that the input matches the pattern type
+      const validation = validatePatternInput(rule.url, rule.pattern)
+      if (!validation.isValid) {
+        throw new Error(validation.error)
+      }
+
       const { data } = await labelerAgent.tools.ozone.safelink.addRule(rule)
       return data
     },
@@ -102,6 +146,11 @@ export const useSafelinkUpdate = () => {
       comment?: string
       createdBy?: string
     }) => {
+      const validation = validatePatternInput(rule.url, rule.pattern)
+      if (!validation.isValid) {
+        throw new Error(validation.error)
+      }
+
       const { data } = await labelerAgent.tools.ozone.safelink.updateRule(rule)
       return data
     },

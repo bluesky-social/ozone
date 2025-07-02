@@ -13,7 +13,7 @@ import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { SetsConfig } from '@/config/Sets'
 import { ProtectedTagsConfig } from '@/config/ProtectedTags'
 import { PoliciesConfig } from '@/config/Policies'
-import { SafelinkConfigWrapper } from '@/config/SafelinkConfig'
+import { SafelinkConfig } from '@/config/Safelink'
 
 enum Views {
   Configure,
@@ -104,7 +104,7 @@ export default function ConfigurePageContent() {
       {currentView === Views.Configure && <LabelerConfig />}
       {currentView === Views.Members && <MemberConfig />}
       {currentView === Views.Sets && <SetsConfig />}
-      {currentView === Views.Safelink && <SafelinkConfigWrapper />}
+      {currentView === Views.Safelink && <SafelinkConfig />}
       {currentView === Views.ProtectedTags && <ProtectedTagsConfig />}
       {currentView === Views.Policies && <PoliciesConfig />}
 

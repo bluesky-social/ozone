@@ -90,3 +90,47 @@ export const mockEmitEventResponse = (response: {
     `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
     response,
   )
+
+export const mockSafelinkQueryEventsResponse = (response: Record<string, any>) =>
+  cy.intercept(
+    'GET',
+    `${SERVER_URL}/tools.ozone.safelink.queryEvents*`,
+    response,
+  ).as('mockSafelinkQueryEventsResponse')
+
+export const mockSafelinkQueryRulesResponse = (response: Record<string, any>) =>
+  cy.intercept(
+    'POST',
+    `${SERVER_URL}/tools.ozone.safelink.queryRules*`,
+    response,
+  ).as('mockSafelinkQueryRulesResponse')
+
+export const mockSafelinkRemoveRuleResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy.intercept(
+    'POST',
+    `${SERVER_URL}/tools.ozone.safelink.removeRule`,
+    response,
+  ).as('mockSafelinkRemoveRuleResponse')
+
+export const mockSafelinkAddRuleResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy.intercept(
+    'POST',
+    `${SERVER_URL}/tools.ozone.safelink.addRule`,
+    response,
+  ).as('mockSafelinkAddRuleResponse')
+
+export const mockSafelinkUpdateRuleResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy.intercept(
+    'POST',
+    `${SERVER_URL}/tools.ozone.safelink.updateRule`,
+    response,
+  ).as('mockSafelinkUpdateRuleResponse')

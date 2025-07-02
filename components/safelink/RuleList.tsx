@@ -2,38 +2,20 @@
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 import { useState } from 'react'
 import { useSafelinkList, useSafelinkRemove } from './useSafelinkList'
-import {
-  getActionText,
-  getPatternText,
-  getReasonText,
-  getActionColor,
-} from './helpers'
-import { ActionButton } from '@/common/buttons'
+import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { PencilIcon } from '@heroicons/react/24/solid'
-import { CopyButton } from '@/common/CopyButton'
-import { LabelChip } from '@/common/labels/List'
 import {
   SafelinkAction,
   SafelinkPattern,
   SafelinkReason,
   SafelinkUrl,
 } from './Shared'
+import { createSafelinkEventsLink, createSafelinkEditLink } from './helpers'
 
-export function SafelinkRuleList({
-  searchQuery = '',
-  onEdit,
-  onViewEvents,
-}: {
-  searchQuery?: string
-  onEdit?: (rule: ToolsOzoneSafelinkDefs.UrlRule) => void
-  onViewEvents?: (
-    url: string,
-    pattern: ToolsOzoneSafelinkDefs.PatternType,
-  ) => void
-}) {
+export function SafelinkRuleList() {
   const {
     data,
     isLoading,
@@ -41,7 +23,7 @@ export function SafelinkRuleList({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  } = useSafelinkList(searchQuery)
+  } = useSafelinkList({})
 
   const removeRule = useSafelinkRemove()
   const [removingRule, setRemovingRule] = useState<string | null>(null)
@@ -93,9 +75,7 @@ export function SafelinkRuleList({
     return (
       <Card className="mt-4">
         <div className="p-4 text-center text-gray-600 dark:text-gray-400">
-          {searchQuery
-            ? 'No safelink rules found matching your search.'
-            : 'No safelink rules found.'}
+          {'No safelink rules found.'}
         </div>
       </Card>
     )
@@ -125,35 +105,26 @@ export function SafelinkRuleList({
                       {rule.comment}
                     </div>
                   )}
-
-                  {rule.createdBy && (
-                    <div className="text-xs text-gray-500 dark:text-gray-500">
-                      Created by: {rule.createdBy}
-                    </div>
-                  )}
                 </div>
 
                 <div className="flex items-center gap-2 ml-4">
-                  {onViewEvents && (
-                    <ActionButton
-                      size="xs"
-                      appearance="outlined"
-                      onClick={() => onViewEvents(rule.url, rule.pattern)}
-                      title="View events"
-                    >
-                      <ChevronRightIcon className="h-3 w-3" />
-                    </ActionButton>
-                  )}
+                  <LinkButton
+                    size="xs"
+                    appearance="outlined"
+                    href={createSafelinkEventsLink(rule.url, rule.pattern)}
+                    title="View events"
+                  >
+                    <ChevronRightIcon className="h-3 w-3" />
+                  </LinkButton>
 
-                  {onEdit && (
-                    <ActionButton
-                      size="xs"
-                      appearance="outlined"
-                      onClick={() => onEdit(rule)}
-                    >
-                      <PencilIcon className="h-3 w-3" />
-                    </ActionButton>
-                  )}
+                  <LinkButton
+                    size="xs"
+                    appearance="outlined"
+                    href={createSafelinkEditLink(rule.url, rule.pattern)}
+                    title="Edit rule"
+                  >
+                    <PencilIcon className="h-3 w-3" />
+                  </LinkButton>
 
                   <ActionButton
                     size="xs"
@@ -166,6 +137,13 @@ export function SafelinkRuleList({
                   </ActionButton>
                 </div>
               </div>
+
+              {rule.createdBy && (
+                <div className="text-xs text-gray-500 dark:text-gray-500 flex flex-row justify-between">
+                  <div>Created by: {rule.createdBy}</div>
+                  <div>{new Date(rule.updatedAt).toLocaleString()}</div>
+                </div>
+              )}
             </div>
           </Card>
         )

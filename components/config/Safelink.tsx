@@ -1,5 +1,4 @@
 'use client'
-import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useDebounce } from 'react-use'
 import { SafelinkRuleList } from '@/safelink/RuleList'
@@ -14,10 +13,14 @@ import {
   ArrowLeftIcon,
 } from '@heroicons/react/24/outline'
 import { createSafelinkPageLink } from '@/safelink/helpers'
+import Link from 'next/link'
+import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 
 export enum SafelinkView {
-  List = 'safelink-list',
-  Events = 'safelink-events',
+  List = 'list',
+  Events = 'events',
+  Create = 'create',
+  Edit = 'edit',
 }
 
 const SafelinkSearchInput = () => {
@@ -61,70 +64,18 @@ const SafelinkSearchInput = () => {
   )
 }
 
-export function SafelinkConfig({
-  searchQuery,
-  view,
-  onViewChange,
-  editingRule,
-  onEditRule,
-  creatingRule,
-  onCreateRule,
-  viewingEvents,
-  onViewEvents,
-}: {
-  searchQuery: string
-  view: SafelinkView
-  onViewChange: (view: SafelinkView) => void
-  editingRule?: ToolsOzoneSafelinkDefs.UrlRule | null
-  onEditRule: (rule: ToolsOzoneSafelinkDefs.UrlRule | null) => void
-  creatingRule: boolean
-  onCreateRule: (creating: boolean) => void
-  viewingEvents?: {
-    url: string
-    pattern: ToolsOzoneSafelinkDefs.PatternType
-  } | null
-  onViewEvents: (
-    params: { url: string; pattern: ToolsOzoneSafelinkDefs.PatternType } | null,
-  ) => void
-}) {
+export function SafelinkConfig() {
+  const router = useRouter()
   const searchParams = useSearchParams()
   const searchFromUrl = searchParams.get('search')
   const showSearch = typeof searchFromUrl === 'string'
-
-  const showEditor = creatingRule || editingRule
-  const showEventDetails = viewingEvents
-
-  const handleEditSuccess = () => {
-    onEditRule(null)
-    onCreateRule(false)
-  }
-
-  const handleEditCancel = () => {
-    onEditRule(null)
-    onCreateRule(false)
-  }
-
-  const handleViewEvents = (
-    url: string,
-    pattern: ToolsOzoneSafelinkDefs.PatternType,
-  ) => {
-    onViewEvents({ url, pattern })
-    onViewChange(SafelinkView.Events)
-  }
-
-  const handleBackToList = () => {
-    onViewEvents(null)
-    onViewChange(SafelinkView.List)
-  }
+  const view = searchParams.get('view') || SafelinkView.List
+  const isEditingRule = view === SafelinkView.Edit
+  const showEditor = view === SafelinkView.Create || isEditingRule
+  const isEventsView = view === SafelinkView.Events
 
   if (showEditor) {
-    return (
-      <SafelinkEditor
-        rule={editingRule}
-        onSuccess={handleEditSuccess}
-        onCancel={handleEditCancel}
-      />
-    )
+    return <SafelinkEditor />
   }
 
   return (
@@ -135,32 +86,29 @@ export function SafelinkConfig({
         <>
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-4">
-              {showEventDetails && (
-                <ActionButton
-                  size="sm"
-                  appearance="primary"
-                  onClick={handleBackToList}
-                >
-                  <ArrowLeftIcon className="h-4 w-4 mr-2" />
-                  Back to Rules
-                </ActionButton>
+              {isEditingRule && (
+                <Link href="/configure?tab=safelink&view=list">
+                  <ArrowLeftIcon className="h-4 w-4" />
+                </Link>
               )}
 
               <h4 className="font-medium text-gray-700 dark:text-gray-100">
-                {showEventDetails ? 'Safelink Events' : 'Safelink Rules'}
+                {isEventsView ? 'Safelink Events' : 'Safelink Rules'}
               </h4>
             </div>
 
-            {!showEventDetails && (
+            {!showEditor && (
               <div className="flex flex-row justify-end">
-                <ActionButton
+                <LinkButton
                   appearance="primary"
                   size="sm"
-                  onClick={() => onCreateRule(true)}
+                  href={createSafelinkPageLink({
+                    view: SafelinkView.Create,
+                  })}
                 >
                   <PlusIcon className="h-3 w-3 mr-1" />
                   <span className="text-xs">Add Rule</span>
-                </ActionButton>
+                </LinkButton>
 
                 <LinkButton
                   size="sm"
@@ -177,13 +125,19 @@ export function SafelinkConfig({
                     {
                       id: 'rules',
                       text: 'Rules',
-                      onClick: () => onViewChange(SafelinkView.List),
+                      onClick: () =>
+                        router.push(
+                          createSafelinkPageLink({ view: SafelinkView.List }),
+                        ),
                       isActive: view === SafelinkView.List,
                     },
                     {
                       id: 'events',
                       text: 'Events',
-                      onClick: () => onViewChange(SafelinkView.Events),
+                      onClick: () =>
+                        router.push(
+                          createSafelinkPageLink({ view: SafelinkView.Events }),
+                        ),
                       isActive: view === SafelinkView.Events,
                     },
                   ]}
@@ -194,20 +148,19 @@ export function SafelinkConfig({
         </>
       )}
 
-      {showEventDetails ? (
+      {isEventsView ? (
         <SafelinkEventList
-          searchQuery={searchQuery}
-          url={viewingEvents.url}
-          pattern={viewingEvents.pattern}
-        />
-      ) : view === SafelinkView.List ? (
-        <SafelinkRuleList
-          searchQuery={searchQuery}
-          onEdit={onEditRule}
-          onViewEvents={handleViewEvents}
+          urls={searchParams.get('urls')?.split(',') || []}
+          pattern={
+            searchParams.get('pattern')
+              ? (searchParams.get(
+                  'pattern',
+                ) as ToolsOzoneSafelinkDefs.PatternType)
+              : undefined
+          }
         />
       ) : (
-        <SafelinkEventList searchQuery={searchQuery} />
+        <SafelinkRuleList />
       )}
     </div>
   )

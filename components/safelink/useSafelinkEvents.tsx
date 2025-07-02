@@ -1,32 +1,36 @@
 'use client'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 
-export interface SafelinkEventsQueryParams {
-  cursor?: string
-  limit?: number
+export const useSafelinkEvents = ({
+  urls,
+  pattern,
+}: {
   urls?: string[]
-  domains?: string[]
-}
-
-export const useSafelinkEvents = (searchQuery = '') => {
+  pattern?: ToolsOzoneSafelinkDefs.PatternType
+}) => {
   const labelerAgent = useLabelerAgent()
 
   return useInfiniteQuery({
-    queryKey: ['safelink-events', searchQuery],
+    queryKey: ['safelink-events', { urls, pattern }],
     queryFn: async ({ pageParam }) => {
       const queryParams: any = {
         limit: 25,
         cursor: pageParam,
       }
 
-      if (searchQuery) {
-        // For search, we'll search both URLs and domains
-        queryParams.urls = [searchQuery]
-        queryParams.domains = [searchQuery]
+      if (urls?.length) {
+        queryParams.urls = urls
       }
 
-      const { data } = await labelerAgent.tools.ozone.safelink.queryEvents(queryParams)
+      if (pattern) {
+        queryParams.patternType = pattern
+      }
+
+      const { data } = await labelerAgent.tools.ozone.safelink.queryEvents(
+        queryParams,
+      )
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,

@@ -1,12 +1,26 @@
 'use client'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
-import { FormEvent, useState } from 'react'
-import { useSafelinkAdd, useSafelinkUpdate } from './useSafelinkList'
-import { ActionTypeNames, PatternTypeNames, ReasonTypeNames } from './helpers'
+import { FormEvent, useState, useEffect } from 'react'
+import {
+  useSafelinkAdd,
+  useSafelinkUpdate,
+  useSafelinkList,
+} from './useSafelinkList'
+import { useQueryClient } from '@tanstack/react-query'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import {
+  ActionTypeNames,
+  createSafelinkPageLink,
+  PatternTypeNames,
+  ReasonTypeNames,
+} from './helpers'
 import { Alert } from '@/common/Alert'
-import { ActionButton } from '@/common/buttons'
+import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { FormLabel, Input, Select, Textarea } from '@/common/forms'
+import { ArrowLeftIcon } from '@heroicons/react/24/solid'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 const getSubmitButtonText = (
   rule: ToolsOzoneSafelinkDefs.UrlRule | null | undefined,
@@ -18,19 +32,32 @@ const getSubmitButtonText = (
   return !!rule ? 'Updating Rule...' : 'Adding Rule...'
 }
 
-const useSafelinkEditor = ({
-  isUpdate,
-  onSuccess,
-}: {
-  isUpdate: boolean
-  onSuccess: () => void
-}) => {
+const useSafelinkEditor = () => {
+  const searchParams = useSearchParams()
+  const url = searchParams.get('url') || ''
+  const pattern = searchParams.get(
+    'pattern',
+  ) as ToolsOzoneSafelinkDefs.PatternType | null
+  const router = useRouter()
   const addRule = useSafelinkAdd()
   const updateRule = useSafelinkUpdate()
+
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+
+  const isUpdate = !!url && !!pattern
+
+  const { data: rulesData, isLoading: isLoadingRule } = useSafelinkList({
+    urls: url ? [url] : undefined,
+    patternType: pattern || undefined,
+    isDisabled: !url || !pattern,
+  })
+
+  const rule = rulesData?.pages[0]?.rules.find(
+    (r) => r.url === url && r.pattern === pattern,
+  )
 
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
@@ -40,8 +67,8 @@ const useSafelinkEditor = ({
       setSubmission({ isSubmitting: true, error: '' })
       const formData = new FormData(ev.currentTarget)
 
-      const url = formData.get('url') as string
-      const pattern = formData.get(
+      const formUrl = formData.get('url') as string
+      const formPattern = formData.get(
         'pattern',
       ) as ToolsOzoneSafelinkDefs.PatternType
       const action = formData.get('action') as ToolsOzoneSafelinkDefs.ActionType
@@ -49,20 +76,25 @@ const useSafelinkEditor = ({
       const comment = formData.get('comment') as string
 
       const ruleData = {
-        url: url.trim(),
-        pattern,
+        url: rule ? rule.url : formUrl.trim(),
+        pattern: rule ? rule.pattern : formPattern,
         action,
         reason,
         comment: comment?.trim() || undefined,
       }
 
-      if (isUpdate) {
-        await updateRule.mutateAsync(ruleData)
+      if (isUpdate && rule) {
+        await updateRule.mutateAsync({
+          ...rule,
+          ...ruleData,
+        })
       } else {
-        await addRule.mutateAsync(ruleData)
+        await addRule.mutateAsync(ruleData as ToolsOzoneSafelinkDefs.UrlRule)
       }
 
-      onSuccess()
+      setSubmission({ isSubmitting: false, error: '' })
+
+      router.push(createSafelinkPageLink({ view: 'list' }))
     } catch (err: any) {
       console.log(err)
       setSubmission({
@@ -72,44 +104,97 @@ const useSafelinkEditor = ({
     }
   }
 
-  return { onFormSubmit, submission }
+  return {
+    onFormSubmit,
+    submission,
+    isUpdate,
+    rule,
+    isLoadingRule,
+  }
 }
 
-export function SafelinkEditor({
-  rule,
-  onSuccess,
-  onCancel,
-}: {
-  rule?: ToolsOzoneSafelinkDefs.UrlRule | null
-  onSuccess: () => void
-  onCancel: () => void
-}) {
-  const isUpdate = !!rule
-  const { onFormSubmit, submission } = useSafelinkEditor({
-    isUpdate,
-    onSuccess,
-  })
+export function SafelinkEditor() {
+  const { onFormSubmit, submission, isUpdate, rule, isLoadingRule } =
+    useSafelinkEditor()
+
+  // Show loading state when fetching rule data for editing
+  if (isUpdate && isLoadingRule) {
+    return (
+      <div>
+        <div className="flex items-center gap-4 my-4">
+          <Link href="/configure?tab=safelink&view=list">
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Link>
+          <h4 className="font-medium text-gray-700 dark:text-gray-100">
+            Update Safelink Rule
+          </h4>
+        </div>
+        <Card>
+          <div className="px-2 py-8 text-center text-gray-600 dark:text-gray-400">
+            Loading rule data...
+          </div>
+        </Card>
+      </div>
+    )
+  }
+
+  // Show error if rule not found in edit mode
+  if (isUpdate && !isLoadingRule && !rule) {
+    return (
+      <div>
+        <div className="flex items-center gap-4 my-4">
+          <Link href="/configure?tab=safelink&view=list">
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Link>
+          <h4 className="font-medium text-gray-700 dark:text-gray-100">
+            Update Safelink Rule
+          </h4>
+        </div>
+        <Card>
+          <div className="px-2 py-8">
+            <Alert
+              title="Rule not found"
+              body="The rule you're trying to edit could not be found. It may have been deleted or the URL parameters are incorrect."
+              type="error"
+            />
+            <div className="mt-4">
+              <LinkButton
+                href={createSafelinkPageLink({ view: 'list' })}
+                appearance="primary"
+                size="sm"
+              >
+                Back to Rules List
+              </LinkButton>
+            </div>
+          </div>
+        </Card>
+      </div>
+    )
+  }
 
   return (
-    <Card>
-      <div className="p-4">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold">
-            {isUpdate ? 'Update Safelink Rule' : 'Add Safelink Rule'}
-          </h2>
-        </div>
-
-        <form onSubmit={onFormSubmit} className="space-y-4">
+    <div>
+      <div className="flex items-center gap-4 my-4">
+        <Link href="/configure?tab=safelink&view=list">
+          <ArrowLeftIcon className="h-4 w-4" />
+        </Link>
+        <h4 className="font-medium text-gray-700 dark:text-gray-100">
+          {isUpdate ? 'Update Safelink Rule' : 'Add Safelink Rule'}
+        </h4>
+      </div>
+      <Card>
+        <form onSubmit={onFormSubmit} className="px-2 space-y-4">
           <div>
             <FormLabel label="URL or Domain" htmlFor="url" />
             <Input
               type="text"
               id="url"
               name="url"
+              className="w-full"
               defaultValue={rule?.url || ''}
-              placeholder="https://example.com or example.com"
+              placeholder="https://example.com/profile or example.com"
               required
-              disabled={submission.isSubmitting}
+              disabled={submission.isSubmitting || !!rule}
               readOnly={isUpdate}
             />
             <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
@@ -124,12 +209,15 @@ export function SafelinkEditor({
             <Select
               id="pattern"
               name="pattern"
-              defaultValue={rule?.pattern || ToolsOzoneSafelinkDefs.DOMAIN}
               required
-              disabled={submission.isSubmitting}
+              disabled={submission.isSubmitting || isUpdate}
             >
               {Object.entries(PatternTypeNames).map(([value, label]) => (
-                <option key={value} value={value}>
+                <option
+                  selected={rule?.pattern === value}
+                  key={value}
+                  value={value}
+                >
                   {label}
                 </option>
               ))}
@@ -146,7 +234,7 @@ export function SafelinkEditor({
             <Select
               id="action"
               name="action"
-              defaultValue={rule?.action || ToolsOzoneSafelinkDefs.BLOCK}
+              defaultValue={rule?.action || 'block'}
               required
               disabled={submission.isSubmitting}
             >
@@ -167,7 +255,7 @@ export function SafelinkEditor({
             <Select
               id="reason"
               name="reason"
-              defaultValue={rule?.reason || ToolsOzoneSafelinkDefs.NONE}
+              defaultValue={rule?.reason || 'none'}
               required
               disabled={submission.isSubmitting}
             >
@@ -184,6 +272,7 @@ export function SafelinkEditor({
             <Textarea
               id="comment"
               name="comment"
+              className="w-full"
               defaultValue={rule?.comment || ''}
               placeholder="Optional comment about this rule"
               rows={3}
@@ -202,18 +291,23 @@ export function SafelinkEditor({
             >
               {getSubmitButtonText(rule, submission.isSubmitting)}
             </ActionButton>
-            <ActionButton
+            <LinkButton
               type="button"
               appearance="outlined"
               size="sm"
-              onClick={onCancel}
-              disabled={submission.isSubmitting}
+              href={
+                submission.isSubmitting
+                  ? '#'
+                  : createSafelinkPageLink({
+                      view: 'list',
+                    })
+              }
             >
               Cancel
-            </ActionButton>
+            </LinkButton>
           </div>
         </form>
-      </div>
-    </Card>
+      </Card>
+    </div>
   )
 }
