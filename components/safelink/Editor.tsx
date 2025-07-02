@@ -96,7 +96,6 @@ const useSafelinkEditor = () => {
 
       router.push(createSafelinkPageLink({ view: 'list' }))
     } catch (err: any) {
-      console.log(err)
       setSubmission({
         isSubmitting: false,
         error: err.message || 'An error occurred',

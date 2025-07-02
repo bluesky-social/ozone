@@ -97,7 +97,7 @@ describe('Safelink Feature', () => {
     })
   })
 
-  describe.only('Edit Safelink', () => {
+  describe('Edit Safelink', () => {
     const mockRules = [
       {
         url: 'https://malicious.example.com',
@@ -215,6 +215,34 @@ describe('Safelink Feature', () => {
 
       // Should show error message
       cy.contains('Failed to update rule').should('be.visible')
+    })
+
+    it('Shows loading state when fetching rule data for editing', () => {
+      // Mock a slow response to test loading state
+      cy.intercept('POST', '**/tools.ozone.safelink.queryRules*', (req) => {
+        req.reply((res) => {
+          setTimeout(() => {
+            res.send({
+              statusCode: 200,
+              body: {
+                rules: mockRules,
+                cursor: undefined,
+              },
+            })
+          }, 1000)
+        })
+      }).as('slowSafelinkQueryRulesResponse')
+
+      openSafelinkTab()
+
+      cy.get('a[title="Edit rule"]').first().click()
+
+      cy.contains('Loading rule data...').should('be.visible')
+      cy.contains('Update Safelink Rule').should('be.visible')
+
+      cy.wait('@slowSafelinkQueryRulesResponse')
+
+      cy.get('#url').should('be.visible')
     })
   })
 })
