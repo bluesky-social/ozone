@@ -336,7 +336,7 @@ describe('Safelink Feature', () => {
     })
   })
 
-  describe.only('Remove Safelink Rule', () => {
+  describe('Remove Safelink Rule', () => {
     const mockRules = [
       {
         url: 'https://malicious.example.com',
@@ -420,7 +420,7 @@ describe('Safelink Feature', () => {
       cy.contains('Remove Safelink Rule?').should('not.exist')
     })
 
-    it.only('Shows error when remove API call fails', () => {
+    it('Shows error when remove API call fails', () => {
       mockSafelinkRemoveRuleResponse({
         statusCode: 401,
         body: {
