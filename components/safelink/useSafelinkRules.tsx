@@ -83,6 +83,7 @@ export const useSafelinkRemove = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
+    mutationKey: ['safelink-remove-rule'],
     mutationFn: async ({
       url,
       pattern,
@@ -114,7 +115,6 @@ export const useSafelinkAdd = () => {
 
   return useMutation({
     mutationFn: async (rule: ToolsOzoneSafelinkDefs.UrlRule) => {
-      // Validate that the input matches the pattern type
       const validation = validatePatternInput(rule.url, rule.pattern)
       if (!validation.isValid) {
         throw new Error(validation.error)
@@ -138,6 +138,7 @@ export const useSafelinkUpdate = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
+    mutationKey: ['safelink-update-rule'],
     mutationFn: async (rule: {
       url: string
       pattern: ToolsOzoneSafelinkDefs.PatternType

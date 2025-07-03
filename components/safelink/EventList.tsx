@@ -13,14 +13,22 @@ import {
   SafelinkUrl,
 } from './Shared'
 import { LabelChip } from '@/common/labels/List'
-import { useSearchParams } from 'next/navigation'
+import { usePathname, useSearchParams } from 'next/navigation'
+import Link from 'next/link'
 
 export function SafelinkEventList() {
+  const pathname = usePathname()
+
   const searchParams = useSearchParams()
   const urls = searchParams.get('urls')?.split(',').filter(Boolean) || []
   const pattern = searchParams.get('pattern') as
     | ToolsOzoneSafelinkDefs.PatternType
     | undefined
+
+  const getQuickActionPanelLink = (subject: string) =>
+    `${pathname}?${
+      searchParams.toString() ? searchParams.toString() + '&' : ''
+    }quickOpen=${subject}`
 
   const {
     data,
@@ -105,12 +113,20 @@ export function SafelinkEventList() {
               <SafelinkUrl rule={event} />
               {event.comment && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
-                  {event.comment}
+                  Note: {event.comment}
                 </div>
               )}
 
               <div className="text-xs text-gray-500 dark:text-gray-500 flex justify-between">
-                <span>Created by: {event.createdBy}</span>
+                <div>
+                  Created by:{' '}
+                  <Link
+                    className="underline"
+                    href={getQuickActionPanelLink(event.createdBy)}
+                  >
+                    {event.createdBy}
+                  </Link>
+                </div>
                 <span>{new Date(event.createdAt).toLocaleString()}</span>
               </div>
             </div>

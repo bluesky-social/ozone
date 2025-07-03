@@ -1,11 +1,13 @@
 'use client'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
-import { useState } from 'react'
-import { useSearchParams } from 'next/navigation'
+import { useRef, useState } from 'react'
+import { usePathname, useSearchParams } from 'next/navigation'
 import { useSafelinkRules, useSafelinkRemove } from './useSafelinkRules'
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { FormLabel, Textarea } from '@/common/forms'
 import { ChevronRightIcon, TrashIcon } from '@heroicons/react/24/outline'
 import { PencilIcon } from '@heroicons/react/24/solid'
 import {
@@ -14,14 +16,27 @@ import {
   SafelinkReason,
   SafelinkUrl,
 } from './Shared'
-import { createSafelinkEventsLink, createSafelinkEditLink } from './helpers'
+import {
+  createSafelinkEventsLink,
+  createSafelinkEditLink,
+  getPatternText,
+} from './helpers'
+import Link from 'next/link'
 
 export function SafelinkRuleList() {
+  const pathname = usePathname()
   const searchParams = useSearchParams()
-  
   const urls = searchParams.get('urls')?.split(',').filter(Boolean) || []
-  const pattern = searchParams.get('pattern') as ToolsOzoneSafelinkDefs.PatternType | undefined
-  const actions = searchParams.get('actions')?.split(',').filter(Boolean) as ToolsOzoneSafelinkDefs.ActionType[] | undefined
+  const pattern = searchParams.get('pattern') as
+    | ToolsOzoneSafelinkDefs.PatternType
+    | undefined
+  const actions = searchParams.get('actions')?.split(',').filter(Boolean) as
+    | ToolsOzoneSafelinkDefs.ActionType[]
+    | undefined
+  const getQuickActionPanelLink = (subject: string) =>
+    `${pathname}?${
+      searchParams.toString() ? searchParams.toString() + '&' : ''
+    }quickOpen=${subject}`
 
   const {
     data,
@@ -36,25 +51,37 @@ export function SafelinkRuleList() {
     actions: actions,
   })
 
+  const removeFormRef = useRef<HTMLFormElement>(null)
   const removeRule = useSafelinkRemove()
   const [removingRule, setRemovingRule] = useState<string | null>(null)
+  const [ruleToRemove, setRuleToRemove] =
+    useState<ToolsOzoneSafelinkDefs.UrlRule | null>(null)
 
-  const handleRemove = async (rule: ToolsOzoneSafelinkDefs.UrlRule) => {
-    if (
-      !confirm(`Are you sure you want to remove the rule for "${rule.url}"?`)
-    ) {
-      return
-    }
+  const handleRemove = (rule: ToolsOzoneSafelinkDefs.UrlRule) => {
+    setRuleToRemove(rule)
+  }
 
-    const ruleKey = `${rule.url}-${rule.pattern}`
+  const confirmRemove = async () => {
+    if (!ruleToRemove) return
+
+    const form = removeFormRef.current
+    if (!form) return
+
+    const formData = new FormData(form)
+    const comment = (formData.get('comment') as string) || 'Removed via UI'
+
+    const ruleKey = `${ruleToRemove.url}-${ruleToRemove.pattern}`
     setRemovingRule(ruleKey)
 
     try {
       await removeRule.mutateAsync({
-        url: rule.url,
-        pattern: rule.pattern,
-        comment: 'Removed via UI',
+        url: ruleToRemove.url,
+        pattern: ruleToRemove.pattern,
+        comment,
       })
+      setRuleToRemove(null)
+    } catch (err) {
+      // Error is already handled by the mutation and toast is shown
     } finally {
       setRemovingRule(null)
     }
@@ -113,7 +140,7 @@ export function SafelinkRuleList() {
 
                   {rule.comment && (
                     <div className="text-sm text-gray-600 dark:text-gray-400">
-                      {rule.comment}
+                      Note: {rule.comment}
                     </div>
                   )}
                 </div>
@@ -151,7 +178,15 @@ export function SafelinkRuleList() {
 
               {rule.createdBy && (
                 <div className="text-xs text-gray-500 dark:text-gray-500 flex flex-row justify-between">
-                  <div>Created by: {rule.createdBy}</div>
+                  <div>
+                    Created by:{' '}
+                    <Link
+                      className="underline"
+                      href={getQuickActionPanelLink(rule.createdBy)}
+                    >
+                      {rule.createdBy}
+                    </Link>
+                  </div>
                   <div>{new Date(rule.updatedAt).toLocaleString()}</div>
                 </div>
               )}
@@ -168,6 +203,41 @@ export function SafelinkRuleList() {
           />
         </div>
       )}
+
+      <ConfirmationModal
+        isOpen={!!ruleToRemove}
+        setIsOpen={(isOpen) => !isOpen && setRuleToRemove(null)}
+        onConfirm={confirmRemove}
+        title="Remove Safelink Rule?"
+        confirmButtonText={removingRule ? 'Removing...' : 'Remove Rule'}
+        confirmButtonDisabled={!!removingRule}
+        error={removeRule.error?.message}
+        description={
+          <>
+            Are you sure you want to remove the{' '}
+            {ruleToRemove && getPatternText(ruleToRemove?.pattern)} rule for{' '}
+            <a className="underline" href={ruleToRemove?.url} target="_blank">
+              {ruleToRemove?.url}
+            </a>
+            ?
+          </>
+        }
+      >
+        <div className="pt-4">
+          <form ref={removeFormRef}>
+            <FormLabel label="Comment" htmlFor="remove-comment">
+              <Textarea
+                id="remove-comment"
+                name="comment"
+                rows={3}
+                defaultValue="Removed via UI"
+                className="w-full"
+                placeholder="Enter a comment for this action..."
+              />
+            </FormLabel>
+          </form>
+        </div>
+      </ConfirmationModal>
     </div>
   )
 }

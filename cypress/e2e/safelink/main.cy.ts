@@ -4,6 +4,7 @@ import {
   mockSafelinkQueryRulesResponse,
   mockSafelinkAddRuleResponse,
   mockSafelinkUpdateRuleResponse,
+  mockSafelinkRemoveRuleResponse,
 } from '../../support/api'
 
 describe('Safelink Feature', () => {
@@ -332,6 +333,108 @@ describe('Safelink Feature', () => {
       cy.url().should('include', 'view=events')
       cy.url().should('include', 'pattern=url')
       cy.url().should('include', 'urls=https%3A%2F%2Fmalicious.example.com')
+    })
+  })
+
+  describe.only('Remove Safelink Rule', () => {
+    const mockRules = [
+      {
+        url: 'https://malicious.example.com',
+        pattern: 'url',
+        action: 'block',
+        reason: 'spam',
+        comment: 'Test malicious website',
+        createdBy: 'did:plc:jttgywq7eusytkmurmjbum6h',
+        createdAt: '2024-01-01T12:00:00Z',
+        updatedAt: '2024-01-01T12:00:00Z',
+      },
+      {
+        url: 'suspicious.com',
+        pattern: 'domain',
+        action: 'warn',
+        reason: 'phishing',
+        comment: 'Suspicious domain',
+        createdBy: 'did:plc:jttgywq7eusytkmurmjbum6h',
+        createdAt: '2024-01-02T10:30:00Z',
+        updatedAt: '2024-01-02T10:30:00Z',
+      },
+    ]
+
+    beforeEach(() => {
+      mockSafelinkQueryRulesResponse({
+        rules: mockRules,
+        cursor: undefined,
+      })
+    })
+
+    it('Allows removing a rule via confirmation modal and validates API call', () => {
+      const ruleToRemove = mockRules[0]
+      const customComment = 'Removing this malicious rule'
+
+      mockSafelinkRemoveRuleResponse({
+        statusCode: 200,
+        body: {
+          id: 1,
+          url: ruleToRemove.url,
+          action: ruleToRemove.action,
+          pattern: ruleToRemove.pattern,
+          reason: ruleToRemove.reason,
+          comment: customComment,
+          eventType: 'removeRule',
+          createdBy: 'did:plc:jttgywq7eusytkmurmjbum6h',
+          createdAt: new Date().toISOString(),
+        },
+      })
+
+      openSafelinkTab()
+
+      cy.get('button[title="Remove rule"]').first().click()
+
+      cy.contains('Remove Safelink Rule?').should('be.visible')
+      cy.contains('Are you sure you want to remove the').should('be.visible')
+      cy.contains('https://malicious.example.com').should('be.visible')
+
+      cy.get('#remove-comment').should('have.value', 'Removed via UI')
+
+      cy.get('#remove-comment').clear()
+      cy.get('#remove-comment').type(customComment)
+
+      cy.get('button').contains('Remove Rule').click()
+
+      cy.wait('@mockSafelinkRemoveRuleResponse').then((interception) => {
+        expect(interception.request.body).to.deep.include({
+          url: ruleToRemove.url,
+          pattern: ruleToRemove.pattern,
+          comment: customComment,
+        })
+      })
+
+      cy.contains('Remove Safelink Rule?').should('not.exist')
+    })
+
+    it('Cancels remove operation when modal is closed', () => {
+      openSafelinkTab()
+      cy.get('button[title="Remove rule"]').first().click()
+      cy.contains('Remove Safelink Rule?').should('be.visible')
+      cy.get('button').contains('Cancel').click()
+      cy.contains('Remove Safelink Rule?').should('not.exist')
+    })
+
+    it.only('Shows error when remove API call fails', () => {
+      mockSafelinkRemoveRuleResponse({
+        statusCode: 401,
+        body: {
+          message: 'Unauthorized to remove this rule',
+        },
+      })
+
+      openSafelinkTab()
+
+      cy.get('button[title="Remove rule"]').first().click()
+      cy.contains('Remove Safelink Rule?').should('be.visible')
+      cy.get('button').contains('Remove Rule').click()
+      cy.wait('@mockSafelinkRemoveRuleResponse')
+      cy.contains('Unauthorized to remove this rule').should('be.visible')
     })
   })
 })

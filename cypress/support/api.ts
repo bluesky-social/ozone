@@ -111,7 +111,7 @@ export const mockSafelinkRemoveRuleResponse = (response: {
 }) =>
   cy.intercept(
     'POST',
-    `${SERVER_URL}/tools.ozone.safelink.removeRule`,
+    `${SERVER_URL}/tools.ozone.safelink.removeRule*`,
     response,
   ).as('mockSafelinkRemoveRuleResponse')
 
