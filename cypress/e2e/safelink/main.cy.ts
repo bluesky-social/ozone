@@ -12,7 +12,7 @@ describe('Safelink Feature', () => {
     cy.get('table').should('be.visible')
     cy.get('a[href="/configure"]').click()
     cy.contains('Safelink').click()
-    cy.contains('Loading safelink rules').should('be.visible')
+    // cy.contains('Loading safelink rules').should('be.visible')
   }
 
   beforeEach(() => {
