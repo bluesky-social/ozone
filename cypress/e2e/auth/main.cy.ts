@@ -21,7 +21,8 @@ describe('Authentication', () => {
       },
     })
 
-    cy.get('#service-url').clear().type(API_URL)
+    cy.get('#service-url').clear()
+    cy.get('#service-url').type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()

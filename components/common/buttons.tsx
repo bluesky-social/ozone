@@ -101,11 +101,13 @@ export const ButtonGroup = ({
   size = 'sm',
   items,
   leftAligned = false,
+  className,
 }: ComponentProps<'span'> &
   ActionButtonProps & { items: ButtonGroupItem[]; leftAligned?: boolean }) => {
   const containerClasses = classNames(
     `isolate inline-flex rounded-md shadow-sm my-2 sm:my-0`,
     leftAligned ? '' : 'sm:ml-4',
+    className,
   )
   return (
     <span className={containerClasses}>
