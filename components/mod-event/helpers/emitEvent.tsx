@@ -351,6 +351,7 @@ const eventTexts = {
   [MOD_EVENTS.APPEAL]: 'appealed',
   [MOD_EVENTS.RESOLVE_APPEAL]: 'appealed',
   [MOD_EVENTS.EMAIL]: 'emailed',
+  [MOD_EVENTS.AGE_ASSURANCE]: 'age assurance updated',
 }
 
 export const getEventFromFormData = (
@@ -446,6 +447,11 @@ export const getEventFromFormData = (
 
   if ($type === MOD_EVENTS.SET_PRIORITY) {
     return { $type, comment, score }
+  }
+
+  if ($type === MOD_EVENTS.AGE_ASSURANCE) {
+    const ageAssuranceState = String(formData.get('ageAssuranceState'))
+    return { $type, comment, status: ageAssuranceState, source: 'admin' }
   }
 
   if ($type === MOD_EVENTS.APPEAL) {

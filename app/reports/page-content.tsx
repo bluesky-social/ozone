@@ -317,6 +317,7 @@ function useModerationQueueQuery() {
   const minReportedRecordsCount = params.get('minReportedRecordsCount')
   const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
   const minPriorityScore = params.get('minPriorityScore')
+  const ageAssuranceState = params.get('ageAssuranceState')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
     useFluentReportSearchParams()
@@ -345,6 +346,7 @@ function useModerationQueueQuery() {
         minReportedRecordsCount,
         minTakendownRecordsCount,
         minPriorityScore,
+        ageAssuranceState,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -411,6 +413,10 @@ function useModerationQueueQuery() {
 
       if (minPriorityScore) {
         queryParams.minPriorityScore = Number(minPriorityScore)
+      }
+
+      if (ageAssuranceState) {
+        queryParams.ageAssuranceState = ageAssuranceState
       }
 
       // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in

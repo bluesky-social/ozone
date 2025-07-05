@@ -6,6 +6,7 @@ import {
 } from '@atproto/api'
 import { ModEventViewWithDetails } from './useModEventList'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
+import { MOD_EVENTS } from './constants'
 
 import type { JSX } from 'react'
 
@@ -99,6 +100,10 @@ export const ItemTitle = ({
   if (ToolsOzoneModerationDefs.isModEventPriorityScore(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Updated priority score'
+  }
+  if (modEvent.event.$type === MOD_EVENTS.AGE_ASSURANCE) {
+    eventColor = 'text-purple-400'
+    eventTitle = 'Age assurance updated'
   }
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus

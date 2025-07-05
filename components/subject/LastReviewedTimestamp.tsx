@@ -13,7 +13,7 @@ export const LastReviewedTimestamp = ({
         {subjectStatus.reviewState === ToolsOzoneModerationDefs.REVIEWNONE
           ? 'event'
           : 'reviewed'}{' '}
-        at: {getLastReviewedAt(subjectStatus)}
+        : {getLastReviewedAt(subjectStatus)}
       </span>
     )
   }

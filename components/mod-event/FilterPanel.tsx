@@ -4,7 +4,7 @@ import {
   formatDateForInput,
   useModEventList,
 } from './useModEventList'
-import { MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
+import { AGE_ASSURANCE_STATES, MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 import { addDays } from 'date-fns'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
@@ -19,6 +19,7 @@ import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
 import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { SubjectTypeFilter } from '@/reports/QueueFilter/SubjectType'
+import { AgeAssuranceBadgeButton } from './AgeAssuranceStateBadge'
 
 export const EventFilterPanel = ({
   limit,
@@ -38,6 +39,7 @@ export const EventFilterPanel = ({
   changeListFilter,
   subjectType,
   selectedCollections,
+  ageAssuranceState,
 }: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> &
   Pick<
     ReturnType<typeof useModEventList>,
@@ -410,6 +412,35 @@ export const EventFilterPanel = ({
             })}
           </FormLabel>
         )}
+
+        {types.includes(MOD_EVENTS.AGE_ASSURANCE) && (
+          <FormLabel
+            label="Age Assurance Status"
+            htmlFor="ageAssuranceState"
+            className="mt-2"
+          >
+            {Object.values(AGE_ASSURANCE_STATES).map((state) => {
+              const isSelected = ageAssuranceState === state
+              console.log({ ageAssuranceState, state, isSelected })
+              return (
+                <AgeAssuranceBadgeButton
+                  key={state}
+                  ageAssuranceState={state}
+                  className={`mr-1 ${isSelected ? 'font-bold' : ''}`}
+                  isHighlighted={isSelected}
+                  onClick={(e) => {
+                    e.preventDefault()
+                    const value = isSelected ? undefined : state
+                    changeListFilter({
+                      field: 'ageAssuranceState',
+                      value,
+                    })
+                  }}
+                />
+              )
+            })}
+          </FormLabel>
+        )}
       </div>
       <div>
         <h5 className="text-gray-700 dark:text-gray-100 font-medium my-2">
@@ -447,6 +478,7 @@ export const EventFilterPanel = ({
                   createdBefore,
                   subjectType,
                   selectedCollections,
+                  ageAssuranceState,
                 },
               })
               return true

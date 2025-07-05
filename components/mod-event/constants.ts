@@ -22,6 +22,7 @@ export const MOD_EVENTS = {
   ENABLE_VIDEO_UPLOAD: 'enableVideoUpload',
   MAKE_VERIFIER: 'makeVerifier',
   REVOKE_VERIFIER: 'revokeVerifier',
+  AGE_ASSURANCE: 'tools.ozone.moderation.defs#ageAssuranceEvent',
 } as const
 
 export const MOD_EVENT_TITLES = {
@@ -48,6 +49,13 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.ENABLE_VIDEO_UPLOAD]: 'Enable Video Upload',
   [MOD_EVENTS.MAKE_VERIFIER]: 'Make Trusted Verifier',
   [MOD_EVENTS.REVOKE_VERIFIER]: 'Revoke Trusted Verifier',
+  [MOD_EVENTS.AGE_ASSURANCE]: 'Age Assurance',
 }
 
 export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'
+
+export const AGE_ASSURANCE_STATES = {
+  UNKNOWN: 'unknown',
+  ASSURED: 'assured',
+  PENDING: 'pending',
+}

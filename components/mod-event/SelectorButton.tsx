@@ -76,6 +76,10 @@ const actions = [
     text: 'Set Priority Score',
     key: MOD_EVENTS.SET_PRIORITY,
   },
+  {
+    text: 'Set Age Assurance',
+    key: MOD_EVENTS.AGE_ASSURANCE,
+  },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
   acc[action.key] = action.text
@@ -223,6 +227,11 @@ export const ModEventSelectorButton = ({
         key === MOD_EVENTS.REVOKE_VERIFIER &&
         (!tags?.includes(TRUSTED_VERIFIER_TAG) || !isSubjectDid || !canVerify)
       ) {
+        return false
+      }
+
+      // Don't show age assurance event on non did subjects
+      if (key === MOD_EVENTS.AGE_ASSURANCE && !isSubjectDid) {
         return false
       }
 

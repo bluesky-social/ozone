@@ -20,6 +20,9 @@ import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
+import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
+import { CopyButton } from '@/common/CopyButton'
+import { MOD_EVENTS } from './constants'
 
 import type { JSX } from 'react'
 
@@ -130,6 +133,56 @@ const PriorityScore = ({
       </p>
 
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
+const AgeAssurance = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: any // Age assurance event type not yet in @atproto/api types
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <span>
+          By{' '}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
+        </span>
+        <div className="flex items-center gap-2">
+          {modEvent.event.source && (
+            <span className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium">
+              {modEvent.event.source}
+            </span>
+          )}
+          {modEvent.event.status && (
+            <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+          )}
+        </div>
+      </div>
+
+      {modEvent.event.attemptId && (
+        <div className="flex items-center gap-1 mt-1">
+          <span className="text-sm text-gray-600 dark:text-gray-400">
+            Attempt ID:
+          </span>
+          <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+            {modEvent.event.attemptId}
+          </code>
+          <CopyButton text={modEvent.event.attemptId} label="Copy attempt ID" />
+        </div>
+      )}
+
+      {modEvent.event.comment && (
+        <div className="mt-2">
+          <TextWithLinks text={modEvent.event.comment} />
+        </div>
+      )}
     </>
   )
 }
@@ -461,6 +514,11 @@ export const ModEventItem = ({
   ) {
     eventItem = (
       <PriorityScore modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (modEvent.event.$type === MOD_EVENTS.AGE_ASSURANCE) {
+    eventItem = (
+      <AgeAssurance modEvent={{ ...modEvent, event: modEvent.event }} />
     )
   }
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)
