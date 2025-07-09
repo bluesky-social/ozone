@@ -28,6 +28,23 @@ import {
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
 
+export enum ActionPanelNames {
+  Workspace = 'workspace',
+  QuickAction = 'quick-action',
+}
+
+const getModToolContext = (
+  panel: ActionPanelNames,
+  meta?: {
+    batchSize?: number
+    batchId?: string
+  },
+) => {
+  const name = `ozone-ui/${panel}`
+
+  return { name, meta }
+}
+
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
