@@ -23,6 +23,8 @@ export const MOD_EVENTS = {
   MAKE_VERIFIER: 'makeVerifier',
   REVOKE_VERIFIER: 'revokeVerifier',
   AGE_ASSURANCE: 'tools.ozone.moderation.defs#ageAssuranceEvent',
+  AGE_ASSURANCE_OVERRIDE:
+    'tools.ozone.moderation.defs#ageAssuranceOverrideEvent',
 } as const
 
 export const MOD_EVENT_TITLES = {
@@ -50,12 +52,19 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.MAKE_VERIFIER]: 'Make Trusted Verifier',
   [MOD_EVENTS.REVOKE_VERIFIER]: 'Revoke Trusted Verifier',
   [MOD_EVENTS.AGE_ASSURANCE]: 'Age Assurance',
+  [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'Age Assurance Override',
 }
 
 export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'
 
+export const AGE_ASSURANCE_OVERRIDE_STATES = {
+  ASSURED: 'assured',
+  RESET: 'reset',
+  BLOCKED: 'blocked',
+}
+
 export const AGE_ASSURANCE_STATES = {
   UNKNOWN: 'unknown',
-  ASSURED: 'assured',
   PENDING: 'pending',
+  ...AGE_ASSURANCE_OVERRIDE_STATES,
 }

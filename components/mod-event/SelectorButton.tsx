@@ -77,8 +77,8 @@ const actions = [
     key: MOD_EVENTS.SET_PRIORITY,
   },
   {
-    text: 'Set Age Assurance',
-    key: MOD_EVENTS.AGE_ASSURANCE,
+    text: 'Override Age Assurance',
+    key: MOD_EVENTS.AGE_ASSURANCE_OVERRIDE,
   },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
@@ -230,8 +230,8 @@ export const ModEventSelectorButton = ({
         return false
       }
 
-      // Don't show age assurance event on non did subjects
-      if (key === MOD_EVENTS.AGE_ASSURANCE && !isSubjectDid) {
+      // Don't show age assurance override action on non did subjects
+      if (key === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE && !isSubjectDid) {
         return false
       }
 

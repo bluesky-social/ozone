@@ -141,7 +141,7 @@ const AgeAssurance = ({
   modEvent,
 }: {
   modEvent: ToolsOzoneModerationDefs.ModEventView & {
-    event: any // Age assurance event type not yet in @atproto/api types
+    event: ToolsOzoneModerationDefs.AgeAssuranceEvent
   }
 }) => {
   return (
@@ -155,28 +155,79 @@ const AgeAssurance = ({
           />
         </span>
         <div className="flex items-center gap-2">
-          {modEvent.event.source && (
-            <span className="bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium">
-              {modEvent.event.source}
-            </span>
-          )}
-          {modEvent.event.status && (
-            <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
-          )}
+          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
         </div>
       </div>
 
-      {modEvent.event.attemptId && (
+      <div className="flex items-center gap-1 mt-1">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Attempt ID:
+        </span>
+        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+          {modEvent.event.attemptId}
+        </code>
+        <CopyButton text={modEvent.event.attemptId} label="Copy attempt ID" />
+      </div>
+
+      {modEvent.event.initIp && modEvent.event.initUa && (
         <div className="flex items-center gap-1 mt-1">
-          <span className="text-sm text-gray-600 dark:text-gray-400">
-            Attempt ID:
-          </span>
-          <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
-            {modEvent.event.attemptId}
-          </code>
-          <CopyButton text={modEvent.event.attemptId} label="Copy attempt ID" />
+          <div>
+            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+              {modEvent.event.initIp}
+            </code>
+            <CopyButton text={modEvent.event.initIp} label="Copy IP address" />
+          </div>
+          <div>
+            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+              {modEvent.event.initUa}
+            </code>
+          </div>
         </div>
       )}
+
+      {modEvent.event.completeIp && modEvent.event.completeUa && (
+        <div className="flex items-center gap-1 mt-1">
+          <div>
+            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+              {modEvent.event.completeIp}
+            </code>
+            <CopyButton
+              text={modEvent.event.completeIp}
+              label="Copy IP address"
+            />
+          </div>
+          <div>
+            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+              {modEvent.event.completeUa}
+            </code>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
+
+const AgeAssuranceOverride = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.AgeAssuranceOverrideEvent
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <span>
+          By{' '}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
+        </span>
+        <div className="flex items-center gap-2">
+          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+        </div>
+      </div>
 
       {modEvent.event.comment && (
         <div className="mt-2">
@@ -516,9 +567,22 @@ export const ModEventItem = ({
       <PriorityScore modEvent={{ ...modEvent, event: modEvent.event }} />
     )
   }
-  if (modEvent.event.$type === MOD_EVENTS.AGE_ASSURANCE) {
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateAgeAssuranceEvent)(
+      modEvent.event,
+    )
+  ) {
     eventItem = (
       <AgeAssurance modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateAgeAssuranceOverrideEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <AgeAssuranceOverride modEvent={{ ...modEvent, event: modEvent.event }} />
     )
   }
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)

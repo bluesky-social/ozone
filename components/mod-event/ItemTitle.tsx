@@ -105,6 +105,10 @@ export const ItemTitle = ({
     eventColor = 'text-purple-400'
     eventTitle = 'Age assurance updated'
   }
+  if (modEvent.event.$type === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE) {
+    eventColor = 'text-orange-400'
+    eventTitle = 'Age assurance overridden'
+  }
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus
     : modEvent.record

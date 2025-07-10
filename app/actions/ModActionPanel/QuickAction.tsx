@@ -34,7 +34,11 @@ import { LabelSelector } from '@/common/labels/Selector'
 import { takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import { MOD_EVENTS, AGE_ASSURANCE_STATES } from '@/mod-event/constants'
+import {
+  MOD_EVENTS,
+  AGE_ASSURANCE_STATES,
+  AGE_ASSURANCE_OVERRIDE_STATES,
+} from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
@@ -202,7 +206,8 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
-  const isAgeAssuranceEvent = modEventType === MOD_EVENTS.AGE_ASSURANCE
+  const isAgeAssuranceOverrideEvent =
+    modEventType === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE
   const shouldShowDurationInHoursField =
     isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
   const canManageChat = usePermission('canManageChat')
@@ -792,7 +797,7 @@ function Form(
                     </div>
                   )}
 
-                  {isAgeAssuranceEvent && (
+                  {isAgeAssuranceOverrideEvent && (
                     <div className="mt-2">
                       <Select
                         id="ageAssuranceState"
@@ -800,11 +805,13 @@ function Form(
                         required
                       >
                         <option value="">Select status...</option>
-                        {Object.values(AGE_ASSURANCE_STATES).map((state) => (
-                          <option key={state} value={state}>
-                            {state.charAt(0).toUpperCase() + state.slice(1)}
-                          </option>
-                        ))}
+                        {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
+                          (state) => (
+                            <option key={state} value={state}>
+                              {state.charAt(0).toUpperCase() + state.slice(1)}
+                            </option>
+                          ),
+                        )}
                       </Select>
                     </div>
                   )}

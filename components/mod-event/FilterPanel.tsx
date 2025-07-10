@@ -421,7 +421,6 @@ export const EventFilterPanel = ({
           >
             {Object.values(AGE_ASSURANCE_STATES).map((state) => {
               const isSelected = ageAssuranceState === state
-              console.log({ ageAssuranceState, state, isSelected })
               return (
                 <AgeAssuranceBadgeButton
                   key={state}
