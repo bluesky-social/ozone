@@ -139,6 +139,10 @@ export const useQueueFilter = () => {
     updateFilters({ minPriorityScore })
   }
 
+  const setAgeAssuranceState = (ageAssuranceState?: string) => {
+    updateFilters({ ageAssuranceState })
+  }
+
   return {
     queueFilters,
     updateTagExclusions,
@@ -151,5 +155,6 @@ export const useQueueFilter = () => {
     setMinReportedRecordsCount,
     setMinTakendownRecordsCount,
     setMinPriorityScore,
+    setAgeAssuranceState,
   }
 }

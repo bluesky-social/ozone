@@ -67,6 +67,7 @@ import { getProfiles } from './api'
 import { VerificationBadge } from 'components/verification/Badge'
 import { AccountHistory } from './AccountHistory'
 import { Country } from './Country'
+import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 
 enum Views {
   Details,
@@ -642,6 +643,13 @@ function Details({
               : 'Not verified'
           }
         />
+        {repo.moderation?.subjectStatus?.ageAssuranceState && (
+          <DataField label="Age Assurance">
+            <AgeAssuranceBadge 
+              ageAssuranceState={repo.moderation.subjectStatus.ageAssuranceState}
+            />
+          </DataField>
+        )}
         {deactivatedAt && (
           <DataField
             label="Account Deactivated"

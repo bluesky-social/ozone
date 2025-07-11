@@ -15,7 +15,11 @@ import { useEffect, useReducer, useRef, useState } from 'react'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
-import { DM_DISABLE_TAG, TRUSTED_VERIFIER_TAG, VIDEO_UPLOAD_DISABLE_TAG } from '@/lib/constants'
+import {
+  DM_DISABLE_TAG,
+  TRUSTED_VERIFIER_TAG,
+  VIDEO_UPLOAD_DISABLE_TAG,
+} from '@/lib/constants'
 import { chunkArray } from '@/lib/util'
 import { toast } from 'react-toastify'
 
@@ -68,6 +72,7 @@ const initialListState = {
   limit: 25,
   subjectType: undefined,
   selectedCollections: [],
+  ageAssuranceState: undefined,
 }
 
 const getReposAndRecordsForEvents = async (
@@ -147,6 +152,7 @@ export type EventListState = Omit<
   showContentPreview: boolean
   subjectType?: 'account' | 'record'
   selectedCollections: string[]
+  ageAssuranceState?: string
 }
 
 type EventListFilterPayload =
@@ -167,6 +173,7 @@ type EventListFilterPayload =
   | { field: 'limit'; value: number }
   | { field: 'subjectType'; value?: 'account' | 'record' }
   | { field: 'selectedCollections'; value: string[] }
+  | { field: 'ageAssuranceState'; value?: string }
 
 type EventListAction =
   | {
@@ -237,6 +244,7 @@ const getModEvents =
       limit,
       subjectType,
       selectedCollections,
+      ageAssuranceState,
     } = listState
     const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
       limit,
@@ -262,6 +270,10 @@ const getModEvents =
 
     if (reportTypes.length) {
       queryParams.reportTypes = reportTypes
+    }
+
+    if (ageAssuranceState) {
+      queryParams.ageAssuranceState = ageAssuranceState
     }
 
     if (addedLabels.length) {
@@ -473,7 +485,8 @@ export const useModEventList = (
     listState.addedTags.length > 0 ||
     listState.removedTags.length > 0 ||
     listState.subjectType ||
-    listState.selectedCollections.length > 0
+    listState.selectedCollections.length > 0 ||
+    listState.ageAssuranceState
 
   const addToWorkspace = async () => {
     if (!showWorkspaceConfirmation) {
