@@ -37,6 +37,7 @@
       "@/sets/*": ["components/sets/*"],
       "@/setting/*": ["components/setting/*"],
       "@/team/*": ["components/team/*"],
+      "@/safelink/*": ["components/safelink/*"],
     }
   },
   "include": [
