@@ -184,9 +184,7 @@ export default function RecordViewPageContent({
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/repositories/[id]/[...record]',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           refetch()
         }}

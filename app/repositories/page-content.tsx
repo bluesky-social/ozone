@@ -312,9 +312,7 @@ export default function RepositoriesListPage() {
         isInitialLoading={isLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/repositories',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           refetch()
         }}

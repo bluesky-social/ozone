@@ -277,9 +277,7 @@ export const ReportsPageContent = () => {
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/reports',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           refetch()
         }}

@@ -122,9 +122,7 @@ export default function ConfigurePageContent() {
         isInitialLoading={false}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/configure',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
         }}
       />

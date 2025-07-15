@@ -45,9 +45,7 @@ export default function EventListPageContent() {
         isInitialLoading={false}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/events',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
         }}
       />

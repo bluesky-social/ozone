@@ -84,9 +84,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/repositories/[id]',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           refetch()
         }}

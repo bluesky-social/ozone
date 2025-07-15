@@ -166,9 +166,7 @@ export const VerificationPageContent = () => {
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
-              route: '/verification',
-            }),
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
         }}
       />
