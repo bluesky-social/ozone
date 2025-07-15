@@ -23,7 +23,11 @@ import { SubjectTable } from 'components/subject/table'
 import { useTitle } from 'react-use'
 import { QueueSelector } from '@/reports/QueueSelector'
 import { unique } from '@/lib/util'
-import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
 import { useFluentReportSearchParams } from '@/reports/useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from 'components/workspace/Panel'
@@ -272,7 +276,11 @@ export const ReportsPageContent = () => {
         subjectOptions={subjectOptions}
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(vals)
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
+              route: '/reports',
+            }),
+          )
           refetch()
         }}
       />

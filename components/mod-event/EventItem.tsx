@@ -476,9 +476,7 @@ export const ModEventItem = ({
       <ItemTitle {...{ modEvent, showContentDetails, showContentAuthor }} />
       <Card>
         {eventItem}
-        {(modEvent.event as any).modTool && (
-          <ModToolInfo modTool={(modEvent.event as any).modTool} />
-        )}
+        {modEvent.modTool && <ModToolInfo modTool={modEvent.modTool} />}
         {typeof previewSubject === 'string' && showContentPreview && (
           <div className="border-t dark:border-gray-500 mt-2">
             <PreviewCard subject={previewSubject} />

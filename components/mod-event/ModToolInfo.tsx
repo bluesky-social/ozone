@@ -1,9 +1,12 @@
 'use client'
-import { WrenchIcon, ChevronRightIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
+import {
+  WrenchIcon,
+  ChevronRightIcon,
+  ChevronDownIcon,
+} from '@heroicons/react/20/solid'
 import { useModToolContext } from './ModToolContext'
-import { classNames } from '@/lib/util'
 
-interface ModToolInfoProps {
+type ModToolInfoProps = {
   modTool: {
     name: string
     meta?: Record<string, any>
@@ -19,8 +22,7 @@ export const ModToolInfo = ({ modTool }: ModToolInfoProps) => {
     <div className="mt-2 border-t border-gray-200 dark:border-gray-600 pt-2">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1 text-sm text-gray-600 dark:text-gray-400">
-          <WrenchIcon className="h-4 w-4" />
-          <span className="font-medium">Tool:</span>
+          <WrenchIcon className="h-3 w-3" />
           <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
             {modTool.name}
           </span>
@@ -40,13 +42,10 @@ export const ModToolInfo = ({ modTool }: ModToolInfoProps) => {
           </button>
         )}
       </div>
-      
+
       {hasMetadata && showModToolMeta && (
-        <div className="mt-2 rounded bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-600 px-3 py-2">
-          <div className="text-xs text-gray-600 dark:text-gray-400 mb-1 font-medium">
-            Tool Metadata:
-          </div>
-          <div className="font-mono text-xs whitespace-pre overflow-x-auto text-gray-800 dark:text-gray-200">
+        <div className="rounded bg-gray-50 dark:bg-gray-800">
+          <div className="bg-gray-50 dark:bg-slate-700 dark:bg-slate-700 px-1 py-2 sm:p-2 font-mono whitespace-pre overflow-x-auto text-xs dark:text-gray-300">
             {JSON.stringify(modTool.meta, null, 2)}
           </div>
         </div>

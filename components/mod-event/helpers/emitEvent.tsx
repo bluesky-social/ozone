@@ -31,18 +31,21 @@ const DELAY_DURATION_MS = 10000 // 10 seconds
 export enum ActionPanelNames {
   Workspace = 'workspace',
   QuickAction = 'quick-action',
+  EmailComposer = 'email-composer',
 }
 
-const getModToolContext = (
+export const hydrateModToolInfo = (
+  event: ToolsOzoneModerationEmitEvent.InputSchema,
   panel: ActionPanelNames,
   meta?: {
+    route?: string
     batchSize?: number
     batchId?: string
   },
 ) => {
   const name = `ozone-ui/${panel}`
-
-  return { name, meta }
+  const modTool = { name, meta }
+  return { ...event, modTool }
 }
 
 export function useEmitEvent() {

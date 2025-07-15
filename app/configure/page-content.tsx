@@ -5,7 +5,12 @@ import { LabelerConfig } from 'components/config/Labeler'
 import { MemberConfig } from 'components/config/Member'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
-import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { WorkspacePanel } from '@/workspace/Panel'
@@ -116,7 +121,11 @@ export default function ConfigurePageContent() {
         subjectOptions={[quickOpenParam]}
         isInitialLoading={false}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(vals)
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
+              route: '/configure',
+            }),
+          )
         }}
       />
       <WorkspacePanel

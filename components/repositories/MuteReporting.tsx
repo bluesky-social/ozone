@@ -6,6 +6,10 @@ import { ConfirmationModal } from '@/common/modals/confirmation'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+} from '@/mod-event/helpers/emitEvent'
 
 const useMuteReporting = ({
   did,
@@ -27,19 +31,24 @@ const useMuteReporting = ({
     unknown
   >(
     async (params) => {
-      const result = await labelerAgent.api.tools.ozone.moderation.emitEvent({
-        event: {
-          $type: isReportingMuted
-            ? `tools.ozone.moderation.defs#modEventUnmuteReporter`
-            : `tools.ozone.moderation.defs#modEventMuteReporter`,
-          ...params,
-        },
-        subject: {
-          $type: 'com.atproto.admin.defs#repoRef',
-          did,
-        },
-        createdBy: labelerAgent.assertDid,
-      })
+      const result = await labelerAgent.api.tools.ozone.moderation.emitEvent(
+        hydrateModToolInfo(
+          {
+            event: {
+              $type: isReportingMuted
+                ? `tools.ozone.moderation.defs#modEventUnmuteReporter`
+                : `tools.ozone.moderation.defs#modEventMuteReporter`,
+              ...params,
+            },
+            subject: {
+              $type: 'com.atproto.admin.defs#repoRef',
+              did,
+            },
+            createdBy: labelerAgent.assertDid,
+          },
+          ActionPanelNames.QuickAction,
+        ),
+      )
 
       return result
     },

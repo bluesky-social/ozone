@@ -11,7 +11,11 @@ import { useTitle } from 'react-use'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { getDidFromHandle } from '@/lib/identity'
 import { createAtUri } from '@/lib/util'
-import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
 import { ReportPanel } from '@/reports/ReportPanel'
 import { CollectionId } from '@/reports/helpers/subject'
 import { RecordView } from '@/repositories/RecordView'
@@ -179,7 +183,11 @@ export default function RecordViewPageContent({
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(vals)
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction, {
+              route: '/repositories/[id]/[...record]',
+            }),
+          )
           refetch()
         }}
       />
