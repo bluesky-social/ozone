@@ -22,9 +22,9 @@ import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
 import { CopyButton } from '@/common/CopyButton'
-import { MOD_EVENTS } from './constants'
 
 import type { JSX } from 'react'
+import { UserAgent } from '@/common/UserAgent'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -159,48 +159,32 @@ const AgeAssurance = ({
         </div>
       </div>
 
-      <div className="flex items-center gap-1 mt-1">
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-1 mt-1">
         <span className="text-sm text-gray-600 dark:text-gray-400">
           Attempt ID:
         </span>
         <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
           {modEvent.event.attemptId}
+          <CopyButton text={modEvent.event.attemptId} label="Copy attempt ID" />
         </code>
-        <CopyButton text={modEvent.event.attemptId} label="Copy attempt ID" />
       </div>
 
       {modEvent.event.initIp && modEvent.event.initUa && (
-        <div className="flex items-center gap-1 mt-1">
-          <div>
-            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
-              {modEvent.event.initIp}
-            </code>
-            <CopyButton text={modEvent.event.initIp} label="Copy IP address" />
-          </div>
-          <div>
-            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
-              {modEvent.event.initUa}
-            </code>
-          </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-1 mt-1 ">
+          <code>{modEvent.event.initIp}</code>
+          <CopyButton text={modEvent.event.initIp} label="Copy IP address" />
+          <UserAgent userAgent={modEvent.event.initUa} />
         </div>
       )}
 
       {modEvent.event.completeIp && modEvent.event.completeUa && (
-        <div className="flex items-center gap-1 mt-1">
-          <div>
-            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
-              {modEvent.event.completeIp}
-            </code>
-            <CopyButton
-              text={modEvent.event.completeIp}
-              label="Copy IP address"
-            />
-          </div>
-          <div>
-            <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
-              {modEvent.event.completeUa}
-            </code>
-          </div>
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-1 mt-1 ">
+          <code>{modEvent.event.completeIp}</code>
+          <CopyButton
+            text={modEvent.event.completeIp}
+            label="Copy IP address"
+          />
+          <UserAgent userAgent={modEvent.event.completeUa} />
         </div>
       )}
     </>
