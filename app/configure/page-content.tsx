@@ -8,7 +8,6 @@ import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
-  hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
 import { usePathname, useSearchParams, useRouter } from 'next/navigation'
