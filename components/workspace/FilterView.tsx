@@ -43,6 +43,15 @@ export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
     )
   }
 
+  if (filter.field === 'ageAssuranceState') {
+    return (
+      <div>
+        In Age Assurance State{' '}
+        <span className="font-semibold">{`${filter.value}`.charAt(0).toUpperCase() + `${filter.value}`.slice(1)}</span>
+      </div>
+    )
+  }
+
   if (filter.field === 'takendown') {
     return (
       <div>{filter.operator === 'eq' ? 'Is Takendown' : 'Not Takendown'} </div>

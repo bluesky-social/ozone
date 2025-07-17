@@ -165,9 +165,9 @@ export const QueueFilterPanel = () => {
                   <QueueFilterSubjectType />
                 </div>
 
-                <QueueFilterAgeAssurance />
                 <QueueFilterTags />
                 <QueueFilterStats />
+                <QueueFilterAgeAssurance />
               </div>
             </PopoverPanel>
           </Transition>

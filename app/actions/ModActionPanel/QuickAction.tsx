@@ -36,7 +36,6 @@ import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import {
   MOD_EVENTS,
-  AGE_ASSURANCE_STATES,
   AGE_ASSURANCE_OVERRIDE_STATES,
 } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'

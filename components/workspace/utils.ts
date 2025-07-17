@@ -154,6 +154,8 @@ export const checkFilterMatchForWorkspaceItem = (
       return filter.operator === 'eq'
         ? data.status?.reviewState === filter.value
         : data.status?.reviewState !== filter.value
+    case 'ageAssuranceState':
+      return data.status?.ageAssuranceState === filter.value
     case 'takendown':
       return filter.operator === 'eq'
         ? !!data.status?.takendown

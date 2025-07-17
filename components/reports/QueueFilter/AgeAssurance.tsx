@@ -1,7 +1,7 @@
-import { XCircleIcon } from '@heroicons/react/24/solid'
+import { XCircleIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
 import { useQueueFilter } from '../useQueueFilter'
-import { AgeAssuranceBadgeButton } from '@/mod-event/AgeAssuranceStateBadge'
 import { AGE_ASSURANCE_STATES } from '@/mod-event/constants'
+import { Dropdown } from '@/common/Dropdown'
 
 export const QueueFilterAgeAssurance = () => {
   const { queueFilters, setAgeAssuranceState } = useQueueFilter()
@@ -33,22 +33,29 @@ export const QueueFilterAgeAssurance = () => {
         </button>
       </h3>
 
-      <div className="flex flex-row gap-1">
-        {Object.values(AGE_ASSURANCE_STATES).map((state) => {
-          const isSelected = selectedState === state
-          return (
-            <AgeAssuranceBadgeButton
-              key={state}
-              ageAssuranceState={state}
-              isHighlighted={isSelected}
-              onClick={() => {
-                const newState = isSelected ? undefined : state
-                setAgeAssuranceState(newState)
-              }}
-            />
-          )
-        })}
-      </div>
+      <Dropdown
+        className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-2 py-1 text-xs font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
+        items={[
+          {
+            id: 'all',
+            text: 'All States',
+            onClick: () => setAgeAssuranceState(undefined),
+          },
+          ...Object.values(AGE_ASSURANCE_STATES).map((state) => ({
+            id: state,
+            text: state.charAt(0).toUpperCase() + state.slice(1),
+            onClick: () => setAgeAssuranceState(state),
+          })),
+        ]}
+      >
+        {selectedState
+          ? selectedState.charAt(0).toUpperCase() + selectedState.slice(1)
+          : 'All States'}
+        <ChevronDownIcon
+          className="ml-1 h-4 w-4 text-violet-200 hover:text-violet-100"
+          aria-hidden="true"
+        />
+      </Dropdown>
     </div>
   )
 }
