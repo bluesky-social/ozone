@@ -869,8 +869,8 @@ function Form(
                       label={
                         <span className="leading-4">
                           {isEscalated
-                            ? `De-escalate the subject and acknowledge all open reports after labeling`
-                            : `Acknowledge all open reports after labeling`}
+                            ? `De-escalate the subject and acknowledge all open reports after this action`
+                            : `Acknowledge all open reports after this action`}
                         </span>
                       }
                     />
