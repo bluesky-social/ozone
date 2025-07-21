@@ -859,7 +859,7 @@ function Form(
                     </p>
                   )}
 
-                  {isLabelEvent && !isReviewClosed && (
+                  {(isLabelEvent || isTagEvent) && !isReviewClosed && (
                     <Checkbox
                       value="true"
                       defaultChecked
