@@ -77,13 +77,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     emptyWorkspaceMutation.mutate()
   }
 
-  const selectFailedIems = (failedItems: string[]) => {
+  const selectItems = (items: string[]) => {
     document
       .querySelectorAll<HTMLInputElement>(
         'input[type="checkbox"][name="workspaceItem"]',
       )
       .forEach((checkbox) => {
-        if (failedItems.includes(checkbox.value)) {
+        if (items.includes(checkbox.value)) {
           checkbox.checked = true
           // There's an event handler on the checkbox for mousedown event that syncs with a react state
           // for last checked index. We need to trigger that event to keep the state in sync
@@ -264,9 +264,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ error: '', isSubmitting: false })
 
-      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
-      if (results.failed.length) {
-        selectFailedIems(results.failed)
+      // Select items that were actioned so that user can either clear them or perform the next action on them
+      if (results.succeeded.length) {
+        selectItems(results.succeeded)
       }
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
@@ -411,7 +411,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                   id={WORKSPACE_FORM_ID}
                   onSubmit={onFormSubmit}
                   // The overflow here allows dropdowns in the form filter to adjust height of the window accordingly
-                  className='overflow-y-auto'
+                  className="overflow-y-auto"
                 >
                   {!showItemCreator && (
                     <div className="mb-2 flex space-x-2">
