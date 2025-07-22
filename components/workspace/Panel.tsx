@@ -286,10 +286,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         workspaceListStatuses || {},
       )
 
-      // If there are any item that failed to action, we want to keep them checked so users know which ones to retry
-      if (results.failed.length) {
-        // If there are failed items, don't reset the form
-        return selectFailedIems(results.failed)
+      // Select items that were actioned so that user can either clear them or perform the next action on them
+      if (results.succeeded.length) {
+        return selectItems(results.succeeded)
       }
 
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
