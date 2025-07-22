@@ -19,7 +19,11 @@ import { WorkspacePanel } from '@/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { chunkArray } from '@/lib/util'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
-import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
 
 const isEmailSearch = (q: string) => q.startsWith('email:')
 const isSignatureSearch = (q: string) => q.startsWith('sig:')
@@ -307,7 +311,9 @@ export default function RepositoriesListPage() {
         }
         isInitialLoading={isLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(vals)
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+          )
           refetch()
         }}
       />

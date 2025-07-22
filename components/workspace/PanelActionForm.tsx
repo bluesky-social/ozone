@@ -9,6 +9,10 @@ import { WORKSPACE_FORM_ID } from './constants'
 import { EmailComposer } from 'components/email/Composer'
 import { EmailComposerData } from 'components/email/helpers'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { getBatchId, regenerateBatchId } from '@/lib/batchId'
+import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { ArrowPathIcon } from '@heroicons/react/24/solid'
 
 export const WorkspacePanelActionForm = ({
   handleEmailSubmit,
@@ -21,6 +25,13 @@ export const WorkspacePanelActionForm = ({
   setModEventType: (action: string) => void
   onCancel: () => void
 }) => {
+  const [currentBatchId, setCurrentBatchId] = useState(getBatchId())
+
+  const handleRegenerateBatchId = () => {
+    const newBatchId = regenerateBatchId()
+    setCurrentBatchId(newBatchId)
+    toast.success('Batch ID regenerated successfully')
+  }
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
@@ -182,6 +193,40 @@ export const WorkspacePanelActionForm = ({
               }
             />
           )}
+
+          <div className="mt-2 mb-3">
+            <FormLabel label="External URL" htmlFor="externalUrl">
+              <Input
+                type="url"
+                id="externalUrl"
+                name="externalUrl"
+                form={WORKSPACE_FORM_ID}
+                className="block w-full"
+                placeholder="https://example.com (optional)"
+              />
+            </FormLabel>
+          </div>
+
+          <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+            <div className="flex items-center justify-between">
+              <div>
+                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Batch ID:
+                </span>
+                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400 font-mono">
+                  {currentBatchId}
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={handleRegenerateBatchId}
+                className="px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded transition-colors"
+                title="Regenerate Batch ID"
+              >
+                <ArrowPathIcon className="h-3 w-3 text-gray-500 dark:text-gray-300" />
+              </button>
+            </div>
+          </div>
 
           <div className="flex flex-row gap-2">
             <ActionButton

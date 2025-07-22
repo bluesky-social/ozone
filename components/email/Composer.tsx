@@ -19,6 +19,10 @@ import { TemplateSelector } from './template-selector'
 import { availableLanguageCodes } from '@/common/LanguagePicker'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { useEmailComposer } from './useComposer'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+} from '@/mod-event/helpers/emitEvent'
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
@@ -115,11 +119,16 @@ export const EmailComposer = ({
         await handleSubmit(event)
       } else {
         await toast.promise(
-          labelerAgent.tools.ozone.moderation.emitEvent({
-            event,
-            createdBy: labelerAgent.assertDid,
-            subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-          }),
+          labelerAgent.tools.ozone.moderation.emitEvent(
+            hydrateModToolInfo(
+              {
+                event,
+                createdBy: labelerAgent.assertDid,
+                subject: { $type: 'com.atproto.admin.defs#repoRef', did },
+              },
+              ActionPanelNames.EmailComposer,
+            ),
+          ),
           {
             pending: 'Sending email...',
             success: {

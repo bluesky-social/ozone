@@ -3,7 +3,11 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
-import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { WorkspacePanel } from '@/workspace/Panel'
 import {
@@ -161,7 +165,9 @@ export const VerificationPageContent = () => {
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(vals)
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+          )
         }}
       />
       <WorkspacePanel
