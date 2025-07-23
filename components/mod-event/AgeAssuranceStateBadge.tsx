@@ -7,6 +7,7 @@ import {
   ArrowPathIcon,
   XCircleIcon,
 } from '@heroicons/react/20/solid'
+import { capitalize } from '@/lib/util'
 
 export function AgeAssuranceBadgeButton(
   props: {
@@ -21,8 +22,7 @@ export function AgeAssuranceBadgeButton(
     isHighlighted = false,
     ...rest
   } = props
-  const readable =
-    ageAssuranceState.charAt(0).toUpperCase() + ageAssuranceState.slice(1)
+  const readable = capitalize(ageAssuranceState)
   const color = isHighlighted
     ? 'bg-indigo-600 border-indigo-500 text-white dark:bg-teal-600 dark:border-teal-500'
     : ageAssuranceColors[ageAssuranceState] ?? ageAssuranceColors.default
@@ -51,8 +51,7 @@ export function AgeAssuranceBadge(props: {
 }) {
   const { ageAssuranceState, className = '' } = props
 
-  const readable =
-    ageAssuranceState.charAt(0).toUpperCase() + ageAssuranceState.slice(1)
+  const readable = capitalize(ageAssuranceState)
   const color =
     ageAssuranceColors[ageAssuranceState] ?? ageAssuranceColors.default
   const IconComponent =

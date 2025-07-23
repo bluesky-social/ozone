@@ -1,6 +1,7 @@
 import { reviewStateToText } from '@/subject/ReviewStateMarker'
 import { WorkspaceFilterItem } from './types'
 import { SubjectTag } from 'components/tags/SubjectTag'
+import { capitalize } from '@/lib/util'
 
 export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
   if (filter.field === 'verifier') {
@@ -47,7 +48,7 @@ export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
     return (
       <div>
         In Age Assurance State{' '}
-        <span className="font-semibold">{`${filter.value}`.charAt(0).toUpperCase() + `${filter.value}`.slice(1)}</span>
+        <span className="font-semibold">{capitalize(filter.value)}</span>
       </div>
     )
   }

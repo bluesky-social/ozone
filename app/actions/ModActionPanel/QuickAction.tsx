@@ -31,7 +31,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
-import { takesKeyboardEvt } from '@/lib/util'
+import { capitalize, takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import {
@@ -807,7 +807,7 @@ function Form(
                         {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
                           (state) => (
                             <option key={state} value={state}>
-                              {state.charAt(0).toUpperCase() + state.slice(1)}
+                              {capitalize(state)}
                             </option>
                           ),
                         )}

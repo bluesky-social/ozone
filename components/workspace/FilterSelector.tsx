@@ -17,6 +17,7 @@ import { ChevronDownIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { FilterView } from './FilterView'
 import { reviewStateToText } from '@/subject/ReviewStateMarker'
 import { AGE_ASSURANCE_STATES } from '@/mod-event/constants'
+import { capitalize } from '@/lib/util'
 
 const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   Partial<{ unit: DurationUnit }> & {
@@ -48,7 +49,11 @@ const availableFilters: (Omit<WorkspaceFilterItem, 'value'> &
   { field: 'content', operator: 'ilike', text: 'Record Content' },
   { field: 'reviewState', operator: 'eq', text: 'In Review State' },
   { field: 'reviewState', operator: 'neq', text: 'Not In Review State' },
-  { field: 'ageAssuranceState', operator: 'eq', text: 'In Age Assurance State' },
+  {
+    field: 'ageAssuranceState',
+    operator: 'eq',
+    text: 'In Age Assurance State',
+  },
   { field: 'takendown', operator: 'eq', text: 'Is Takendown' },
   { field: 'takendown', operator: 'neq', text: 'Not Takendown' },
   { field: 'verifier', operator: 'eq', text: 'Verifier' },
@@ -133,14 +138,16 @@ export function FilterSelector({ groupId }: { groupId: number }) {
           aria-hidden="true"
         />
       </Dropdown>
-      {!isBooleanFilter(selected.field) && selected.field !== 'reviewState' && selected.field !== 'ageAssuranceState' && (
-        <Input
-          className="text-xs py-0.5"
-          type="text" // Checkbox for boolean fields
-          value={`${value}`} // Ensure only string/number go in text input
-          onChange={(e) => setValue(e.target.value)}
-        />
-      )}
+      {!isBooleanFilter(selected.field) &&
+        selected.field !== 'reviewState' &&
+        selected.field !== 'ageAssuranceState' && (
+          <Input
+            className="text-xs py-0.5"
+            type="text" // Checkbox for boolean fields
+            value={`${value}`} // Ensure only string/number go in text input
+            onChange={(e) => setValue(e.target.value)}
+          />
+        )}
       {selected.field === 'reviewState' && (
         <Dropdown
           className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-2 py-1 text-xs text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
@@ -161,12 +168,12 @@ export function FilterSelector({ groupId }: { groupId: number }) {
         <Dropdown
           className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-2 py-1 text-xs text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
           items={Object.entries(AGE_ASSURANCE_STATES).map(([, value]) => ({
-            text: value.charAt(0).toUpperCase() + value.slice(1),
+            text: capitalize(value),
             id: value,
             onClick: () => setValue(value),
           }))}
         >
-          {value ? `${value}`.charAt(0).toUpperCase() + `${value}`.slice(1) : 'Select Age Assurance State'}
+          {value ? capitalize(`${value}`) : 'Select Age Assurance State'}
           <ChevronDownIcon
             className="ml-1 h-4 w-4 text-violet-200 hover:text-violet-100"
             aria-hidden="true"

@@ -77,11 +77,7 @@ const FilterSummary = ({
   }
 
   if (ageAssuranceState) {
-    inclusions.push(
-      `Age: ${
-        ageAssuranceState.charAt(0).toUpperCase() + ageAssuranceState.slice(1)
-      }`,
-    )
+    inclusions.push(`Age: ${capitalize(ageAssuranceState)}`)
   }
 
   excludeTags?.forEach((tag) => {

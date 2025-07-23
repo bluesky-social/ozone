@@ -23,6 +23,7 @@ import { WorkspaceExportPanel } from './ExportPanel'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { isValidProfileViewDetailed } from '@/repositories/helpers'
 import { VerificationBadge } from 'components/verification/Badge'
+import { capitalize } from '@/lib/util'
 
 interface WorkspaceListProps {
   list: string[]
@@ -67,10 +68,7 @@ const WorkspaceList: React.FC<WorkspaceListProps> = ({
               listData={listData}
               onRemoveItem={onRemoveItem}
               canExport={canExport}
-              title={
-                GroupTitles[key] ||
-                `${key.charAt(0).toUpperCase()}${key.slice(1)}`
-              }
+              title={GroupTitles[key] || capitalize(key)}
             />
           )
         })}

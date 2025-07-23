@@ -2,6 +2,7 @@ import { XCircleIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
 import { useQueueFilter } from '../useQueueFilter'
 import { AGE_ASSURANCE_STATES } from '@/mod-event/constants'
 import { Dropdown } from '@/common/Dropdown'
+import { capitalize } from '@/lib/util'
 
 export const QueueFilterAgeAssurance = () => {
   const { queueFilters, setAgeAssuranceState } = useQueueFilter()
@@ -10,14 +11,15 @@ export const QueueFilterAgeAssurance = () => {
   const hasAgeAssuranceFilter = !!selectedState
 
   // Only show age assurance filter when no subject type is selected or account type is selected
-  const shouldShow = !queueFilters.subjectType || queueFilters.subjectType === 'account'
+  const shouldShow =
+    !queueFilters.subjectType || queueFilters.subjectType === 'account'
 
   if (!shouldShow) {
     return null
   }
 
   return (
-    <div className='px-2 mt-4'>
+    <div className="px-2 mt-4">
       <h3 className="text-gray-900 dark:text-gray-200 mb-2">
         <button
           type="button"
@@ -43,14 +45,12 @@ export const QueueFilterAgeAssurance = () => {
           },
           ...Object.values(AGE_ASSURANCE_STATES).map((state) => ({
             id: state,
-            text: state.charAt(0).toUpperCase() + state.slice(1),
+            text: capitalize(state),
             onClick: () => setAgeAssuranceState(state),
           })),
         ]}
       >
-        {selectedState
-          ? selectedState.charAt(0).toUpperCase() + selectedState.slice(1)
-          : 'All States'}
+        {selectedState ? capitalize(selectedState) : 'All States'}
         <ChevronDownIcon
           className="ml-1 h-4 w-4 text-violet-200 hover:text-violet-100"
           aria-hidden="true"
