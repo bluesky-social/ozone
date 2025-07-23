@@ -1,6 +1,7 @@
 import { reviewStateToText } from '@/subject/ReviewStateMarker'
 import { WorkspaceFilterItem } from './types'
 import { SubjectTag } from 'components/tags/SubjectTag'
+import { capitalize } from '@/lib/util'
 
 export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
   if (filter.field === 'verifier') {
@@ -39,6 +40,15 @@ export const FilterView = ({ filter }: { filter: WorkspaceFilterItem }) => {
       <div>
         {filter.operator === 'eq' ? 'In Review State' : 'Not In Review State'}{' '}
         <span className="font-semibold">{reviewStateToText[filter.value]}</span>
+      </div>
+    )
+  }
+
+  if (filter.field === 'ageAssuranceState') {
+    return (
+      <div>
+        In Age Assurance State{' '}
+        <span className="font-semibold">{capitalize(filter.value)}</span>
       </div>
     )
   }

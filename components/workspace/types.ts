@@ -83,6 +83,11 @@ export type WorkspaceFilterItem =
       operator: 'eq' | 'neq'
       value: string
     }
+  | {
+      field: 'ageAssuranceState'
+      operator: 'eq'
+      value: string
+    }
 
 export type FilterOperator = 'AND' | 'OR'
 

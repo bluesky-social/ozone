@@ -8,7 +8,7 @@ import {
 import { FormEvent, useEffect, useRef, useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
-import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
+import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
 import { PropsOf } from '@/lib/types'
 import { BlobListFormField } from './BlobList'
 import {
@@ -31,10 +31,13 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
-import { takesKeyboardEvt } from '@/lib/util'
+import { capitalize, takesKeyboardEvt } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import { MOD_EVENTS } from '@/mod-event/constants'
+import {
+  MOD_EVENTS,
+  AGE_ASSURANCE_OVERRIDE_STATES,
+} from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
@@ -61,6 +64,7 @@ import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { VerificationActionButton } from 'components/verification/ActionButton'
+import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -201,6 +205,8 @@ function Form(
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
+  const isAgeAssuranceOverrideEvent =
+    modEventType === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE
   const shouldShowDurationInHoursField =
     isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
   const canManageChat = usePermission('canManageChat')
@@ -579,6 +585,13 @@ function Form(
                         priorityScore={subjectStatus.priorityScore}
                       />
                     )}
+                    {!!subjectStatus?.ageAssuranceState &&
+                      subjectStatus.ageAssuranceState !== 'unknown' && (
+                        <AgeAssuranceBadge
+                          ageAssuranceState={subjectStatus.ageAssuranceState}
+                          className="mr-1"
+                        />
+                      )}
                     <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                     <LastReviewedTimestamp subjectStatus={subjectStatus} />
                   </p>
@@ -780,6 +793,25 @@ function Form(
                           <ActionPolicySelector name="policies" />
                         </div>
                       )}
+                    </div>
+                  )}
+
+                  {isAgeAssuranceOverrideEvent && (
+                    <div className="mt-2">
+                      <Select
+                        id="ageAssuranceState"
+                        name="ageAssuranceState"
+                        required
+                      >
+                        <option value="">Select status...</option>
+                        {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
+                          (state) => (
+                            <option key={state} value={state}>
+                              {capitalize(state)}
+                            </option>
+                          ),
+                        )}
+                      </Select>
                     </div>
                   )}
 

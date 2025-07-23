@@ -184,3 +184,7 @@ export function simpleHash(str: string) {
 export function isNonNullable<V>(v: V): v is NonNullable<V> {
   return v != null
 }
+
+export function capitalize(str: string) {
+  return str.charAt(0).toUpperCase() + str.slice(1)
+}
