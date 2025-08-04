@@ -41,7 +41,7 @@ export const resolveDidDocData = async function (
   }
   if (did.startsWith('did:web:')) {
     const hostname = did.slice('did:web:'.length)
-    const url = new URL(`/.well-known/did.json`, hostname)
+    const url = new URL(`https://${hostname}/.well-known/did.json`)
     const res = await fetch(url, { signal })
     if (res.status !== 200) return null
     const doc = await res.json().catch(() => null)

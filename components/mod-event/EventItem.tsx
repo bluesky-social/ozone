@@ -21,8 +21,11 @@ import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { ModToolInfo } from './ModToolInfo'
+import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
+import { CopyButton } from '@/common/CopyButton'
 
 import type { JSX } from 'react'
+import { UserAgent } from '@/common/UserAgent'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -131,6 +134,91 @@ const PriorityScore = ({
       </p>
 
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
+const AgeAssurance = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.AgeAssuranceEvent
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <span>
+          By{' '}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
+        </span>
+        <div className="flex items-center gap-2">
+          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+        </div>
+      </div>
+
+      <div className="flex flex-col md:flex-row items-start md:items-center gap-1 mt-1">
+        <span className="text-sm text-gray-600 dark:text-gray-400">
+          Attempt ID:
+        </span>
+        <code className="text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
+          {modEvent.event.attemptId}
+          <CopyButton text={modEvent.event.attemptId} label="Copy attempt ID" />
+        </code>
+      </div>
+
+      {modEvent.event.initIp && modEvent.event.initUa && (
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-1 mt-1 ">
+          <code>{modEvent.event.initIp}</code>
+          <CopyButton text={modEvent.event.initIp} label="Copy IP address" />
+          <UserAgent userAgent={modEvent.event.initUa} />
+        </div>
+      )}
+
+      {modEvent.event.completeIp && modEvent.event.completeUa && (
+        <div className="flex flex-col md:flex-row items-start md:items-center gap-1 mt-1 ">
+          <code>{modEvent.event.completeIp}</code>
+          <CopyButton
+            text={modEvent.event.completeIp}
+            label="Copy IP address"
+          />
+          <UserAgent userAgent={modEvent.event.completeUa} />
+        </div>
+      )}
+    </>
+  )
+}
+
+const AgeAssuranceOverride = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.AgeAssuranceOverrideEvent
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <span>
+          By{' '}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
+        </span>
+        <div className="flex items-center gap-2">
+          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+        </div>
+      </div>
+
+      {modEvent.event.comment && (
+        <div className="mt-2">
+          <TextWithLinks text={modEvent.event.comment} />
+        </div>
+      )}
     </>
   )
 }
@@ -462,6 +550,24 @@ export const ModEventItem = ({
   ) {
     eventItem = (
       <PriorityScore modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateAgeAssuranceEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <AgeAssurance modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateAgeAssuranceOverrideEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <AgeAssuranceOverride modEvent={{ ...modEvent, event: modEvent.event }} />
     )
   }
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)

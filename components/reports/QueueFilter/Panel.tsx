@@ -11,9 +11,10 @@ import { useQueueFilterBuilder } from '../useQueueFilter'
 import { ToolsOzoneModerationQueryStatuses } from '@atproto/api'
 import { getLanguageFlag } from 'components/tags/SubjectTag'
 import { getCollectionName } from '../helpers/subject'
-import { classNames } from '@/lib/util'
+import { capitalize, classNames } from '@/lib/util'
 import { QueueFilterTags } from './Tag'
 import { QueueFilterStats } from './Stats'
+import { QueueFilterAgeAssurance } from './AgeAssurance'
 
 const buildTagFilterSummary = (tags: string[]) => {
   const filtered = tags.filter(Boolean)
@@ -48,12 +49,14 @@ const FilterSummary = ({
 }: {
   queueFilters: ToolsOzoneModerationQueryStatuses.QueryParams
 }) => {
-  const { tags, excludeTags, collections, subjectType } = queueFilters
+  const { tags, excludeTags, collections, subjectType, ageAssuranceState } =
+    queueFilters
   if (
     !tags?.filter(Boolean).length &&
     !excludeTags?.length &&
     !collections?.length &&
-    !subjectType
+    !subjectType &&
+    !ageAssuranceState
   ) {
     return <>Filters</>
   }
@@ -71,6 +74,10 @@ const FilterSummary = ({
 
   if (tags?.length) {
     inclusions.push(buildTagFilterSummary(tags))
+  }
+
+  if (ageAssuranceState) {
+    inclusions.push(`Age: ${capitalize(ageAssuranceState)}`)
   }
 
   excludeTags?.forEach((tag) => {
@@ -153,8 +160,10 @@ export const QueueFilterPanel = () => {
                 <div className="flex flex-row px-2 gap-6">
                   <QueueFilterSubjectType />
                 </div>
+
                 <QueueFilterTags />
                 <QueueFilterStats />
+                <QueueFilterAgeAssurance />
               </div>
             </PopoverPanel>
           </Transition>

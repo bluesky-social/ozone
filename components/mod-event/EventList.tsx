@@ -157,6 +157,7 @@ export const ModEventList = (
     policies,
     subjectType,
     selectedCollections,
+    ageAssuranceState,
     toggleCommentFilter,
     setCommentFilterKeyword,
     createdBy,
@@ -349,6 +350,7 @@ export const ModEventList = (
             policies,
             subjectType,
             selectedCollections,
+            ageAssuranceState,
           }}
         />
       )}
