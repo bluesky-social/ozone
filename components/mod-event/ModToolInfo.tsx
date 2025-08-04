@@ -46,7 +46,7 @@ export const ModToolInfo = ({ modTool }: ModToolInfoProps) => {
       {hasMetadata && showModToolMeta && (
         <div className="rounded bg-gray-50 dark:bg-gray-800">
           <div className="bg-gray-50 dark:bg-slate-700 dark:bg-slate-700 px-1 py-2 sm:p-2 font-mono whitespace-pre overflow-x-auto text-xs dark:text-gray-300">
-            {JSON.stringify(modTool.meta, null, 2)}
+            <pre>{JSON.stringify(modTool.meta, null, 2)}</pre>
           </div>
         </div>
       )}
