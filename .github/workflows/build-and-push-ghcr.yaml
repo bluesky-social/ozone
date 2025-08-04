@@ -15,6 +15,7 @@ env:
 
 jobs:
   ozone-container-ghcr:
+    if: github.repository == 'bluesky-social/ozone'
     runs-on: ubuntu-latest
     permissions:
       contents: read
