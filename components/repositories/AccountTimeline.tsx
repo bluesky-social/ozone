@@ -1,116 +1,23 @@
 import { useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneModerationGetAccountTimeline } from '@atproto/api'
+import { ToolsOzoneModerationGetAccountTimeline, ToolsOzoneModerationDefs } from '@atproto/api'
 import { pluralize } from '@/lib/util'
 import { MOD_EVENT_TITLES } from '@/mod-event/constants'
 import { Card } from '@/common/Card'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
 import { ModEventItem } from '@/mod-event/EventItem'
 
-const timeline = [
-  {
-    day: '2025-06-02',
-    summary: [
-      {
-        eventSubjectType: 'record',
-        eventType: 'tools.ozone.moderation.defs#modEventReport',
-        count: 5,
-      },
-      {
-        eventSubjectType: 'record',
-        eventType: 'tools.ozone.moderation.defs#modEventTag',
-        count: 2,
-      },
-      {
-        eventSubjectType: 'account',
-        eventType: 'plc_operation',
-        count: 1,
-      },
-    ],
-  },
-  {
-    day: '2025-06-01',
-    summary: [
-      {
-        eventSubjectType: 'account',
-        eventType: 'tools.ozone.moderation.defs#modEventReport',
-        count: 1,
-      },
-      {
-        eventSubjectType: 'account',
-        eventType: 'tools.ozone.moderation.defs#modEventTag',
-        count: 1,
-      },
-    ],
-  },
-  {
-    day: '2025-05-28',
-    summary: [
-      {
-        eventSubjectType: 'account',
-        eventType: 'tools.ozone.hosting.getAccountHistory#emailUpdated',
-        count: 3,
-      },
-      {
-        eventSubjectType: 'account',
-        eventType: 'tools.ozone.hosting.getAccountHistory#emailConfirmed',
-        count: 1,
-      },
-    ],
-  },
-]
-
-const eventList = {
-  '2025-06-01': [
-    {
-      id: 58606942,
-      event: {
-        $type: 'tools.ozone.moderation.defs#modEventReport',
-        isReporterMuted: false,
-        reportType: 'com.atproto.moderation.defs#reasonSpam',
-        comment: 'This is spam',
-      },
-      subject: {
-        $type: 'com.atproto.admin.defs#repoRef',
-        did: 'did:plc:qq2jij6z46yjzlocxhp7qo6g',
-      },
-      subjectBlobCids: [],
-      createdBy: 'did:plc:mhy5m3wby5nq7flr2nj7m6ef',
-      createdAt: '2025-05-28T19:16:11.714Z',
-      subjectHandle: 'alice.test',
-      creatorHandle: 'mod.bsky.social',
-    },
-    {
-      id: 58606941,
-      event: {
-        $type: 'tools.ozone.moderation.defs#modEventTag',
-        add: ['chat-disable'],
-        remove: [],
-      },
-      subject: {
-        $type: 'com.atproto.admin.defs#repoRef',
-        did: 'did:plc:qq2jij6z46yjzlocxhp7qo6g',
-      },
-      subjectBlobCids: [],
-      createdBy: 'did:plc:mhy5m3wby5nq7flr2nj7m6ef',
-      createdAt: '2025-05-28T19:16:11.714Z',
-      subjectHandle: 'alice.test',
-      creatorHandle: 'mod.bsky.social',
-    },
-  ],
-}
-
 const useAccountTimelineQuery = (did: string) => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
     queryKey: ['accountTimeline', { did }],
     queryFn: async () => {
-      // const {
-      //   data: { timeline },
-      // } = await labelerAgent.tools.ozone.moderation.getAccountTimeline({
-      //   did,
-      // })
+      const {
+        data: { timeline },
+      } = await labelerAgent.tools.ozone.moderation.getAccountTimeline({
+        did,
+      })
 
       return timeline
     },
@@ -123,7 +30,7 @@ export const AccountTimeline = ({ did }: { did: string }) => {
   if (isError) return <div>Error loading timeline</div>
   if (!data) return <div>No timeline data available</div>
 
-  return <VerticalTimeline timelineData={data} />
+  return <VerticalTimeline timelineData={data} accountDid={did} />
 }
 
 // Format date to a more readable format
@@ -139,8 +46,10 @@ const formatDate = (dateString) => {
 
 const VerticalTimeline = ({
   timelineData = [],
+  accountDid,
 }: {
-  timelineData: ToolsOzoneModerationGetAccountTimeline.AccountTimeline[]
+  timelineData: ToolsOzoneModerationGetAccountTimeline.TimelineItem[]
+  accountDid: string
 }) => {
   return (
     <div className="">
@@ -148,7 +57,7 @@ const VerticalTimeline = ({
         {timelineData.map((item, index) => {
           return (
             <li key={item.day}>
-              <TimelineDay item={item} />
+              <TimelineDay item={item} accountDid={accountDid} />
             </li>
           )
         })}
@@ -163,11 +72,11 @@ const VerticalTimeline = ({
   )
 }
 
-const TimelineDay = ({ item }) => {
+const TimelineDay = ({ item, accountDid }: { item: ToolsOzoneModerationGetAccountTimeline.TimelineItem; accountDid: string }) => {
   const [showEvents, setShowEvents] = useState(false)
 
   if (showEvents) {
-    return <EventList item={item} onShowEvents={() => setShowEvents(false)} />
+    return <EventList item={item} accountDid={accountDid} onShowEvents={() => setShowEvents(false)} />
   }
 
   return (
@@ -176,9 +85,9 @@ const TimelineDay = ({ item }) => {
 }
 
 const TimelineSummary = ({ item, onShowEvents }) => {
-  const accountSummaries: ToolsOzoneModerationGetAccountTimeline.AccountTimelineSummary[] =
+  const accountSummaries: ToolsOzoneModerationGetAccountTimeline.TimelineItemSummary[] =
     []
-  const recordSummaries: ToolsOzoneModerationGetAccountTimeline.AccountTimelineSummary[] =
+  const recordSummaries: ToolsOzoneModerationGetAccountTimeline.TimelineItemSummary[] =
     []
   item.summary.forEach((summary) => {
     if (summary.eventSubjectType === 'account') {
@@ -231,20 +140,54 @@ const TimelineDayHeader = ({ item, onShowEvents }) => {
   )
 }
 
-const EventList = ({ item, onShowEvents }) => {
+const useEventsForDay = (accountDid: string, day: string, enabled: boolean) => {
+  const labelerAgent = useLabelerAgent()
+  
+  return useQuery({
+    queryKey: ['eventsForDay', { accountDid, day }],
+    queryFn: async () => {
+      const startDate = new Date(day)
+      const endDate = new Date(day)
+      endDate.setDate(endDate.getDate() + 1)
+      
+      const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
+        subject: accountDid,
+        createdAfter: startDate.toISOString(),
+        createdBefore: endDate.toISOString(),
+        limit: 100,
+      })
+      
+      return data.events
+    },
+    enabled,
+  })
+}
+
+const EventList = ({ item, accountDid, onShowEvents }: { 
+  item: ToolsOzoneModerationGetAccountTimeline.TimelineItem
+  accountDid: string
+  onShowEvents: () => void 
+}) => {
+  const { data: events, isLoading, isError } = useEventsForDay(accountDid, item.day, true)
+  
   return (
     <div className="mb-2">
       <TimelineDayHeader item={item} onShowEvents={onShowEvents} />
       <div className="-mt-2">
-        {eventList[item.day]?.map((modEvent) => (
+        {isLoading && <div className="p-4 text-center text-gray-500">Loading events...</div>}
+        {isError && <div className="p-4 text-center text-red-500">Error loading events</div>}
+        {events?.map((modEvent) => (
           <ModEventItem
             key={modEvent.id}
-            modEvent={modEvent}
+            modEvent={modEvent as ToolsOzoneModerationDefs.ModEventView}
             showContentAuthor={false}
             showContentPreview={false}
             showContentDetails={false}
           />
         ))}
+        {events && events.length === 0 && (
+          <div className="p-4 text-center text-gray-500">No events found for this day</div>
+        )}
       </div>
     </div>
   )
