@@ -64,6 +64,7 @@ import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { VerificationActionButton } from 'components/verification/ActionButton'
+import { AccountTimeline } from '@/repositories/AccountTimeline'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 
 const FORM_ID = 'mod-action-panel'
@@ -996,13 +997,14 @@ function Form(
         </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
-            <ModEventList
+            <AccountTimeline did={subject} />
+            {/* <ModEventList
               stats={{
                 accountStats: subjectStatus?.accountStats,
                 recordsStats: subjectStatus?.recordsStats,
               }}
               subject={subject}
-            />
+            /> */}
           </div>
         )}
       </div>
