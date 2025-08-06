@@ -20,6 +20,7 @@ import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
+import { ModToolInfo } from './ModToolInfo'
 import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
 import { CopyButton } from '@/common/CopyButton'
 
@@ -581,6 +582,7 @@ export const ModEventItem = ({
       <ItemTitle {...{ modEvent, showContentDetails, showContentAuthor }} />
       <Card>
         {eventItem}
+        {modEvent.modTool && <ModToolInfo modTool={modEvent.modTool} />}
         {typeof previewSubject === 'string' && showContentPreview && (
           <div className="border-t dark:border-gray-500 mt-2">
             <PreviewCard subject={previewSubject} />

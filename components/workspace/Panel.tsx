@@ -251,10 +251,12 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       }
 
       // No need to break if one of the requests fail, continue on with others
+      const externalUrl = String(formData.get('externalUrl') || '')
       const results = await actionSubjects(
         { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
         workspaceListStatuses || {},
+        externalUrl,
       )
 
       // After successful submission, reset the form state to clear inputs for previous submission
@@ -284,6 +286,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         // Emails can only be sent to DID subjects so filter out anything that's not a did
         getSelectedItems().filter(isValidDid),
         workspaceListStatuses || {},
+        '', // No external URL for email events
       )
 
       // Select items that were actioned so that user can either clear them or perform the next action on them

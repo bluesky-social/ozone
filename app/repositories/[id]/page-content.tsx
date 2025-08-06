@@ -6,7 +6,11 @@ import { useTitle } from 'react-use'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { WorkspacePanel } from '@/workspace/Panel'
 
-import { useEmitEvent } from '@/mod-event/helpers/emitEvent'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
 import { AccountView } from '@/repositories/AccountView'
 import { useCreateReport } from '@/repositories/createReport'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
@@ -79,7 +83,9 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
         subjectOptions={[quickOpenParam]}
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(vals)
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+          )
           refetch()
         }}
       />

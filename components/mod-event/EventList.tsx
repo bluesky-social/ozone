@@ -24,6 +24,7 @@ import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { SubjectSummary } from '@/subject/Summary'
 import { MOD_EVENTS } from './constants'
+import { ModToolProvider } from './ModToolContext'
 
 const getConfirmWorkspaceTitle = (
   showWorkspaceConfirmation: WorkspaceConfirmationOptions,
@@ -372,25 +373,27 @@ export const ModEventList = (
             )}
           </div>
         ) : (
-          modEvents.map((modEvent) => {
-            return (
-              <ModEventItem
-                key={modEvent.id}
-                modEvent={modEvent}
-                showContentAuthor={
-                  // isEntireHistoryView means user is viewing the events page so
-                  // we need to provide context for each event and link to content details
-                  // Same when we are showing events by a certain author to since the author
-                  // may be reporting different subjects
-                  isEntireHistoryView || isShowingEventsByCreator
-                }
-                // When the event history is being displayed for a single record/subject
-                // there's no point showing the preview in each event
-                showContentPreview={showContentPreview && isMultiSubjectView}
-                showContentDetails={isMultiSubjectView}
-              />
-            )
-          })
+          <ModToolProvider>
+            {modEvents.map((modEvent) => {
+              return (
+                <ModEventItem
+                  key={modEvent.id}
+                  modEvent={modEvent}
+                  showContentAuthor={
+                    // isEntireHistoryView means user is viewing the events page so
+                    // we need to provide context for each event and link to content details
+                    // Same when we are showing events by a certain author to since the author
+                    // may be reporting different subjects
+                    isEntireHistoryView || isShowingEventsByCreator
+                  }
+                  // When the event history is being displayed for a single record/subject
+                  // there's no point showing the preview in each event
+                  showContentPreview={showContentPreview && isMultiSubjectView}
+                  showContentDetails={isMultiSubjectView}
+                />
+              )
+            })}
+          </ModToolProvider>
         )}
       </div>
       {hasMoreModEvents && (

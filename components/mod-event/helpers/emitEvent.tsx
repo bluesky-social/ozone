@@ -25,8 +25,40 @@ import {
   TRUSTED_VERIFIER_TAG,
   VIDEO_UPLOAD_DISABLE_TAG,
 } from '@/lib/constants'
+import { getBatchId } from '@/lib/batchId'
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
+
+export enum ActionPanelNames {
+  Workspace = 'workspace',
+  QuickAction = 'quick-action',
+  EmailComposer = 'email-composer',
+}
+
+export const buildModToolInfo = (
+  panel: ActionPanelNames,
+  meta?: {
+    batchSize?: number
+    batchId?: string
+    externalUrl?: string
+  },
+) => {
+  const name = `ozone-ui/${panel}`
+  const modTool = { name, meta }
+  return modTool
+}
+
+export const hydrateModToolInfo = (
+  event: ToolsOzoneModerationEmitEvent.InputSchema,
+  panel: ActionPanelNames,
+  meta?: {
+    batchSize?: number
+    batchId?: string
+    externalUrl?: string
+  },
+) => {
+  return { ...event, modTool: buildModToolInfo(panel, meta) }
+}
 
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
@@ -231,12 +263,14 @@ const emitEventsInBulk = async ({
   subjects,
   eventData,
   subjectData,
+  modTool,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
   subjects: string[]
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>
   subjectData: WorkspaceListData
+  modTool?: ToolsOzoneModerationEmitEvent.InputSchema['modTool']
 }) => {
   const toastId = 'workspace-bulk-action'
   try {
@@ -253,6 +287,7 @@ const emitEventsInBulk = async ({
             ...eventForSubject(eventData, subjectData[sub]),
             subject,
             createdBy: labelerAgent.assertDid,
+            modTool,
           })
           results.succeeded.push(sub)
         } catch (err) {
@@ -298,6 +333,7 @@ export const useActionSubjects = () => {
       eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
       subjects: string[],
       subjectData: WorkspaceListData,
+      externalUrl?: string,
     ) => {
       if (!subjects.length) {
         toast.error(`No subject to action`)
@@ -308,6 +344,13 @@ export const useActionSubjects = () => {
         succeeded: [],
         failed: [],
       }
+
+      const batchId = getBatchId()
+      const modTool = buildModToolInfo(ActionPanelNames.Workspace, {
+        batchId,
+        batchSize: subjects.length,
+        externalUrl: externalUrl || undefined,
+      })
 
       // Emails have a lower limit per second so we want to make sure we are well below that
       const chunkSize = ToolsOzoneModerationDefs.isModEventEmail(
@@ -322,6 +365,7 @@ export const useActionSubjects = () => {
           subjects: chunk,
           eventData,
           subjectData,
+          modTool,
         })
 
         results.succeeded.push(...succeeded)
