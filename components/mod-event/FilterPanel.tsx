@@ -30,6 +30,8 @@ export const EventFilterPanel = ({
   commentFilter,
   createdBy,
   subject,
+  batchId,
+  disableBatchIdFilter,
   oldestFirst,
   createdAfter,
   createdBefore,
@@ -40,8 +42,9 @@ export const EventFilterPanel = ({
   subjectType,
   selectedCollections,
   ageAssuranceState,
-}: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> &
-  Pick<
+}: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> & {
+  disableBatchIdFilter?: boolean
+} & Pick<
     ReturnType<typeof useModEventList>,
     | 'changeListFilter'
     | 'applyFilterMacro'
@@ -311,6 +314,24 @@ export const EventFilterPanel = ({
           </FormLabel>
         </div>
       </div>
+      <FormLabel label="Batch ID" htmlFor="batchId" className="flex-1 mt-2">
+        <Input
+          type="text"
+          id="batchId"
+          name="batchId"
+          placeholder="Batch identifier"
+          className="block w-full"
+          value={batchId}
+          onChange={(ev) =>
+            changeListFilter({
+              field: 'batchId',
+              value: ev.target.value,
+            })
+          }
+          autoComplete="off"
+        />
+      </FormLabel>
+
       {types.includes(MOD_EVENTS.TAKEDOWN) && (
         <div className="flex flex-row gap-2 mt-2">
           <FormLabel label="Policy" className="flex-1">
@@ -472,6 +493,7 @@ export const EventFilterPanel = ({
                   commentFilter,
                   createdBy,
                   subject,
+                  batchId,
                   oldestFirst,
                   createdAfter,
                   createdBefore,
