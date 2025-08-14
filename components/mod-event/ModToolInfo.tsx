@@ -5,6 +5,7 @@ import {
   ChevronDownIcon,
 } from '@heroicons/react/20/solid'
 import { useModToolContext } from './ModToolContext'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/outline'
 
 type ModToolInfoProps = {
   modTool: {
@@ -26,6 +27,15 @@ export const ModToolInfo = ({ modTool }: ModToolInfoProps) => {
           <span className="font-mono text-xs bg-gray-100 dark:bg-gray-800 px-1 py-0.5 rounded">
             {modTool.name}
           </span>
+          {hasMetadata && modTool.meta?.batchId && (
+            <a
+              href={`/events/batch/${modTool.meta.batchId}`}
+              title="View Batch Actions"
+              target="_blank"
+            >
+              <ArrowTopRightOnSquareIcon className="h-3 w-3 text-gray-700 dark:text-gray-100 hover:text-gray-700 dark:hover:text-gray-200 transition-colors" />
+            </a>
+          )}
         </div>
         {hasMetadata && (
           <button
