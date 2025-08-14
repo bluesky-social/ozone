@@ -134,7 +134,6 @@ export const ModEventList = (
     subject?: string
     createdBy?: string
     batchId?: string
-    disableBatchIdFilter?: boolean
     stats?: {
       accountStats?: ToolsOzoneModerationDefs.AccountStats
       recordsStats?: ToolsOzoneModerationDefs.RecordsStats
@@ -347,7 +346,7 @@ export const ModEventList = (
             createdBy,
             subject,
             batchId,
-            disableBatchIdFilter: props.disableBatchIdFilter,
+            isBatchIdFromProp: !!props.batchId,
             oldestFirst,
             createdAfter,
             createdBefore,

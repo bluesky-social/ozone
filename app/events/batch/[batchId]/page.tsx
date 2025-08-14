@@ -16,7 +16,7 @@ export default function BatchActions(props: {
             Batch ID: {batchId}
           </h1>
         </div>
-        <ModEventList batchId={batchId} disableBatchIdFilter={true} />
+        <ModEventList batchId={batchId} />
       </div>
     </div>
   )

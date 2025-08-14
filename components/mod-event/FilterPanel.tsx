@@ -31,7 +31,6 @@ export const EventFilterPanel = ({
   createdBy,
   subject,
   batchId,
-  disableBatchIdFilter,
   oldestFirst,
   createdAfter,
   createdBefore,
@@ -42,8 +41,9 @@ export const EventFilterPanel = ({
   subjectType,
   selectedCollections,
   ageAssuranceState,
+  isBatchIdFromProp = false,
 }: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> & {
-  disableBatchIdFilter?: boolean
+  isBatchIdFromProp?: boolean
 } & Pick<
     ReturnType<typeof useModEventList>,
     | 'changeListFilter'
@@ -328,6 +328,7 @@ export const EventFilterPanel = ({
               value: ev.target.value,
             })
           }
+          disabled={isBatchIdFromProp}
           autoComplete="off"
         />
       </FormLabel>
