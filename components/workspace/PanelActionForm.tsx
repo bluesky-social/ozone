@@ -13,6 +13,7 @@ import { getBatchId, regenerateBatchId } from '@/lib/batchId'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { ArrowPathIcon } from '@heroicons/react/24/solid'
+import { CopyButton } from '@/common/CopyButton'
 
 export const WorkspacePanelActionForm = ({
   handleEmailSubmit,
@@ -30,7 +31,7 @@ export const WorkspacePanelActionForm = ({
   const handleRegenerateBatchId = () => {
     const newBatchId = regenerateBatchId()
     setCurrentBatchId(newBatchId)
-    toast.success('Batch ID regenerated successfully')
+    toast.success('Workspace Batch ID updated')
   }
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
@@ -207,7 +208,7 @@ export const WorkspacePanelActionForm = ({
             </FormLabel>
           </div>
 
-          <div className="mb-3 p-3 bg-gray-50 dark:bg-gray-800 rounded border">
+          <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -217,14 +218,22 @@ export const WorkspacePanelActionForm = ({
                   {currentBatchId}
                 </span>
               </div>
-              <button
-                type="button"
-                onClick={handleRegenerateBatchId}
-                className="px-2 py-1 text-xs bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600 rounded transition-colors"
-                title="Regenerate Batch ID"
-              >
-                <ArrowPathIcon className="h-3 w-3 text-gray-500 dark:text-gray-300" />
-              </button>
+              <div>
+                <CopyButton
+                  text={currentBatchId}
+                  className="mr-2"
+                  labelText="Batch ID "
+                  title={`Copy batch id to clipboard`}
+                />
+                <button
+                  type="button"
+                  onClick={handleRegenerateBatchId}
+                  className="text-xs text-white transition-colors"
+                  title="Regenerate Batch ID"
+                >
+                  <ArrowPathIcon className="h-3 w-3 text-gray-500 dark:text-gray-300" />
+                </button>
+              </div>
             </div>
           </div>
 

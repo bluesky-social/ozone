@@ -1,6 +1,7 @@
 'use client'
 import { use } from 'react'
 import { ModEventList } from '@/mod-event/EventList'
+import { CopyButton } from '@/common/CopyButton'
 
 export default function BatchActions(props: {
   params: Promise<{ batchId: string }>
@@ -14,6 +15,11 @@ export default function BatchActions(props: {
         <div className="mb-6">
           <h1 className="text-base font-bold text-gray-900 dark:text-gray-100">
             Batch ID: {batchId}
+            <CopyButton
+              text={batchId}
+              className="ml-1"
+              title={`Copy batch id to clipboard`}
+            />
           </h1>
         </div>
         <ModEventList batchId={batchId} />
