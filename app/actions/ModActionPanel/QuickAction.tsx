@@ -214,6 +214,8 @@ function Form(
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
 
+  const [showAccountTimeline, setShowAccountTimeline] = useState(true)
+
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
     const len = subjectOptions?.length
@@ -997,14 +999,29 @@ function Form(
         </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
-            <AccountTimeline did={subject} />
-            {/* <ModEventList
-              stats={{
-                accountStats: subjectStatus?.accountStats,
-                recordsStats: subjectStatus?.recordsStats,
-              }}
-              subject={subject}
-            /> */}
+            {showAccountTimeline ? (
+              <AccountTimeline
+                stats={{
+                  accountStats: subjectStatus?.accountStats,
+                  recordsStats: subjectStatus?.recordsStats,
+                }}
+                onToggleView={() =>
+                  setShowAccountTimeline(!showAccountTimeline)
+                }
+                did={isSubjectDid ? subject : new AtUri(subject).host}
+              />
+            ) : (
+              <ModEventList
+                stats={{
+                  accountStats: subjectStatus?.accountStats,
+                  recordsStats: subjectStatus?.recordsStats,
+                }}
+                onToggleView={() =>
+                  setShowAccountTimeline(!showAccountTimeline)
+                }
+                subject={subject}
+              />
+            )}
           </div>
         )}
       </div>

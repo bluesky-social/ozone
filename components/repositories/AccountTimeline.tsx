@@ -1,12 +1,23 @@
 import { useState } from 'react'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useInfiniteQuery } from '@tanstack/react-query'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneModerationGetAccountTimeline, ToolsOzoneModerationDefs } from '@atproto/api'
-import { pluralize } from '@/lib/util'
+import {
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationGetAccountTimeline,
+} from '@atproto/api'
+import { classNames, pluralize } from '@/lib/util'
 import { MOD_EVENT_TITLES } from '@/mod-event/constants'
 import { Card } from '@/common/Card'
-import { ChevronDownIcon } from '@heroicons/react/24/solid'
+import {
+  ChevronDownIcon,
+  ListBulletIcon,
+  PencilSquareIcon,
+  UserCircleIcon,
+} from '@heroicons/react/24/solid'
 import { ModEventItem } from '@/mod-event/EventItem'
+import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { SubjectSummary } from '@/subject/Summary'
+import { ActionButton } from '@/common/buttons'
 
 const useAccountTimelineQuery = (did: string) => {
   const labelerAgent = useLabelerAgent()
@@ -24,13 +35,41 @@ const useAccountTimelineQuery = (did: string) => {
   })
 }
 
-export const AccountTimeline = ({ did }: { did: string }) => {
+export const AccountTimeline = ({
+  did,
+  stats,
+  onToggleView,
+}: {
+  did: string
+  stats?: {
+    accountStats?: ToolsOzoneModerationDefs.AccountStats
+    recordsStats?: ToolsOzoneModerationDefs.RecordsStats
+  }
+  onToggleView: () => void
+}) => {
   const { data, isLoading, isError } = useAccountTimelineQuery(did)
   if (isLoading) return <div>Loading...</div>
   if (isError) return <div>Error loading timeline</div>
   if (!data) return <div>No timeline data available</div>
 
-  return <VerticalTimeline timelineData={data} accountDid={did} />
+  return (
+    <>
+      {!!stats && (
+        <div className="flex flex-row justify-between items-center mb-2">
+          <SubjectSummary stats={stats} />
+          <ActionButton
+            onClick={onToggleView}
+            size="xs"
+            appearance="outlined"
+            title="Show event log"
+          >
+            <ListBulletIcon className="h-4 w-4" />
+          </ActionButton>
+        </div>
+      )}
+      <VerticalTimeline timelineData={data} accountDid={did} />
+    </>
+  )
 }
 
 // Format date to a more readable format
@@ -72,11 +111,24 @@ const VerticalTimeline = ({
   )
 }
 
-const TimelineDay = ({ item, accountDid }: { item: ToolsOzoneModerationGetAccountTimeline.TimelineItem; accountDid: string }) => {
+const TimelineDay = ({
+  item,
+  accountDid,
+}: {
+  item: ToolsOzoneModerationGetAccountTimeline.TimelineItem
+  accountDid: string
+}) => {
   const [showEvents, setShowEvents] = useState(false)
 
   if (showEvents) {
-    return <EventList item={item} accountDid={accountDid} onShowEvents={() => setShowEvents(false)} />
+    return (
+      <EventList
+        item={item}
+        accountDid={accountDid}
+        showEvents={showEvents}
+        onShowEvents={() => setShowEvents(false)}
+      />
+    )
   }
 
   return (
@@ -113,7 +165,7 @@ const TimelineSummary = ({ item, onShowEvents }) => {
             {recordSummaries
               .map((summary) => getSummaryText({ summary }))
               .join(', ')}{' '}
-            on records
+            {recordSummaries.length > 1 ? 'across records' : 'on 1 record'}
           </div>
         )}
       </div>
@@ -122,71 +174,125 @@ const TimelineSummary = ({ item, onShowEvents }) => {
 }
 
 const TimelineDayHeader = ({ item, onShowEvents }) => {
+  let accountEventCount = 0
+  let recordEventCount = 0
+
+  item.summary.forEach((summary) => {
+    if (summary.eventSubjectType === 'account') {
+      accountEventCount += summary.count
+    } else if (summary.eventSubjectType === 'record') {
+      recordEventCount += summary.count
+    }
+  })
+
   return (
     <div className="flex justify-between items-center">
       <h4 className="dark:text-gray-100 text-gray-700 mb-1">
         {formatDate(item.day)}
       </h4>
-      <div className="text-gray-500 text-sm">
-        <button onClick={() => onShowEvents()}>
-          {pluralize(
-            item.summary?.reduce((acc, event) => acc + event.count, 0),
-            'event',
+      <div className="text-gray-500 text-sm flex flex-row items-center">
+        <button
+          onClick={() => onShowEvents()}
+          className="flex flex-row items-center"
+        >
+          {accountEventCount > 0 && (
+            <>
+              <UserCircleIcon className="h-4 w-4 mr-0.5" />
+              <span className="mr-1">{accountEventCount}</span>
+            </>
           )}
-          <ChevronDownIcon className="inline-block h-4 w-4" />
+          {recordEventCount > 0 && (
+            <>
+              <PencilSquareIcon className="h-4 w-4 mr-0.5" />
+              <span className="mr-1">{recordEventCount}</span>
+            </>
+          )}
         </button>
       </div>
     </div>
   )
 }
 
-const useEventsForDay = (accountDid: string, day: string, enabled: boolean) => {
+const useEventsForDay = (subject: string, day: string, enabled: boolean) => {
   const labelerAgent = useLabelerAgent()
-  
-  return useQuery({
-    queryKey: ['eventsForDay', { accountDid, day }],
-    queryFn: async () => {
+
+  return useInfiniteQuery({
+    queryKey: ['eventsForDay', { subject, day }],
+    queryFn: async ({ pageParam }) => {
       const startDate = new Date(day)
       const endDate = new Date(day)
       endDate.setDate(endDate.getDate() + 1)
-      
+
       const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
-        subject: accountDid,
+        subject,
+        includeAllUserRecords: true,
         createdAfter: startDate.toISOString(),
         createdBefore: endDate.toISOString(),
-        limit: 100,
+        limit: 25,
+        cursor: pageParam,
       })
-      
-      return data.events
+
+      return {
+        events: data.events,
+        cursor: data.cursor,
+      }
     },
+    getNextPageParam: (lastPage) => lastPage.cursor,
     enabled,
   })
 }
 
-const EventList = ({ item, accountDid, onShowEvents }: { 
+const EventList = ({
+  item,
+  accountDid,
+  onShowEvents,
+  showEvents,
+}: {
   item: ToolsOzoneModerationGetAccountTimeline.TimelineItem
   accountDid: string
-  onShowEvents: () => void 
+  onShowEvents: () => void
+  showEvents: boolean
 }) => {
-  const { data: events, isLoading, isError } = useEventsForDay(accountDid, item.day, true)
-  
+  const { data, isLoading, isError, fetchNextPage, hasNextPage } =
+    useEventsForDay(accountDid, item.day, true)
+
+  const allEvents = data?.pages.flatMap((page) => page.events) ?? []
+
   return (
-    <div className="mb-2">
+    <div
+      className={classNames(
+        'mb-2',
+        showEvents ? 'border-t border-b my-2 py-2 dark:border-gray-700' : '',
+      )}
+    >
       <TimelineDayHeader item={item} onShowEvents={onShowEvents} />
       <div className="-mt-2">
-        {isLoading && <div className="p-4 text-center text-gray-500">Loading events...</div>}
-        {isError && <div className="p-4 text-center text-red-500">Error loading events</div>}
-        {events?.map((modEvent) => (
+        {isLoading && (
+          <div className="p-4 text-center text-gray-500">Loading events...</div>
+        )}
+        {isError && (
+          <div className="p-4 text-center text-red-500">
+            Error loading events
+          </div>
+        )}
+        {allEvents.map((modEvent) => (
           <ModEventItem
             key={modEvent.id}
-            modEvent={modEvent as ToolsOzoneModerationDefs.ModEventView}
+            modEvent={modEvent}
             showContentAuthor={false}
             showContentPreview={false}
-            showContentDetails={false}
+            showContentDetails={true}
           />
         ))}
-        {events && events.length === 0 && (
-          <div className="p-4 text-center text-gray-500">No events found for this day</div>
+        {allEvents.length === 0 && !isLoading && (
+          <div className="p-4 text-center text-gray-500">
+            No events found for this day
+          </div>
+        )}
+        {hasNextPage && (
+          <div className="flex justify-center my-2">
+            <LoadMoreButton onClick={() => fetchNextPage()} />
+          </div>
         )}
       </div>
     </div>
@@ -198,8 +304,14 @@ const getSummaryText = ({ summary }) => {
 
   let eventTitle = MOD_EVENT_TITLES[eventType]
 
-  if (eventType === 'plc_operation') {
-    eventTitle = `PLC Operation`
+  if (eventType === 'tools.ozone.moderation.defs#timelineEventPlcOperation') {
+    eventTitle = `PLC Op`
+  }
+  if (eventType === 'tools.ozone.moderation.defs#timelineEventPlcCreate') {
+    eventTitle = `PLC Creation`
+  }
+  if (eventType === 'tools.ozone.moderation.defs#timelineEventPlcTombstone') {
+    eventTitle = `PLC Tombstone`
   }
   if (eventType === 'tools.ozone.hosting.getAccountHistory#emailConfirmed') {
     eventTitle = 'Email Confirmation'
