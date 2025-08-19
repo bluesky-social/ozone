@@ -64,6 +64,7 @@ import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { VerificationActionButton } from 'components/verification/ActionButton'
+import { AccountTimeline } from '@/repositories/AccountTimeline'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 
 const FORM_ID = 'mod-action-panel'
@@ -212,6 +213,8 @@ function Form(
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
+
+  const [showAccountTimeline, setShowAccountTimeline] = useState(true)
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -996,13 +999,29 @@ function Form(
         </div>
         {!replaceFormWithEvents && (
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
-            <ModEventList
-              stats={{
-                accountStats: subjectStatus?.accountStats,
-                recordsStats: subjectStatus?.recordsStats,
-              }}
-              subject={subject}
-            />
+            {showAccountTimeline ? (
+              <AccountTimeline
+                stats={{
+                  accountStats: subjectStatus?.accountStats,
+                  recordsStats: subjectStatus?.recordsStats,
+                }}
+                onToggleView={() =>
+                  setShowAccountTimeline(!showAccountTimeline)
+                }
+                did={isSubjectDid ? subject : new AtUri(subject).host}
+              />
+            ) : (
+              <ModEventList
+                stats={{
+                  accountStats: subjectStatus?.accountStats,
+                  recordsStats: subjectStatus?.recordsStats,
+                }}
+                onToggleView={() =>
+                  setShowAccountTimeline(!showAccountTimeline)
+                }
+                subject={subject}
+              />
+            )}
           </div>
         )}
       </div>

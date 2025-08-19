@@ -79,9 +79,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atproto/api@npm:0.15.24":
-  version: 0.15.24
-  resolution: "@atproto/api@npm:0.15.24"
+"@atproto/api@npm:0.16.2":
+  version: 0.16.2
+  resolution: "@atproto/api@npm:0.16.2"
   dependencies:
     "@atproto/common-web": "npm:^0.4.2"
     "@atproto/lexicon": "npm:^0.4.12"
@@ -91,7 +91,7 @@ __metadata:
     multiformats: "npm:^9.9.0"
     tlds: "npm:^1.234.0"
     zod: "npm:^3.23.8"
-  checksum: 10c0/4e75f9c1bdd211693e9ef52e554bbb70254f7fe1b6d29eb939c352c4014ce7924dce18f33c8744b1004064425508045d031476fe25e16d16c8e0f0ea52202648
+  checksum: 10c0/5699da064b274ee07315ee143073875b6847701010ce0abfe8922e48aee94a6dbd7a27b895991fe38c7a403f29e4370718895a50560b4a758962121785d3daae
   languageName: node
   linkType: hard
 
@@ -7311,7 +7311,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ozone@workspace:."
   dependencies:
-    "@atproto/api": "npm:0.15.24"
+    "@atproto/api": "npm:0.16.2"
     "@atproto/oauth-client-browser": "npm:^0.2.0"
     "@atproto/oauth-types": "npm:^0.1.4"
     "@atproto/xrpc": "npm:^0.6.1"

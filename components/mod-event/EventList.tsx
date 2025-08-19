@@ -16,6 +16,7 @@ import {
   EyeIcon,
 } from '@heroicons/react/24/outline'
 import {
+  CalendarDaysIcon,
   Cog8ToothIcon,
   FunnelIcon as FunnelFilledIcon,
 } from '@heroicons/react/24/solid'
@@ -137,6 +138,7 @@ export const ModEventList = (
       accountStats?: ToolsOzoneModerationDefs.AccountStats
       recordsStats?: ToolsOzoneModerationDefs.RecordsStats
     }
+    onToggleView?: () => void
   } & ModEventListQueryOptions,
 ) => {
   const {
@@ -234,29 +236,41 @@ export const ModEventList = (
   return (
     <div className="mr-1">
       {!!props.stats && (
-        <SubjectSummary
-          onAccountTakedownClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.APPEAL] })
-          }}
-          onAccountAppealClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.ESCALATE] })
-          }}
-          onRecordTakedownClick={() => {
-            applyFilterMacro({
-              includeAllUserRecords: true,
-              types: [MOD_EVENTS.TAKEDOWN],
-              subjectType: 'record',
-            })
-          }}
-          onRecordEscalationClick={() => {
-            applyFilterMacro({
-              includeAllUserRecords: true,
-              types: [MOD_EVENTS.ESCALATE],
-              subjectType: 'record',
-            })
-          }}
-          stats={props.stats}
-        />
+        <div className="flex flex-row justify-between items-center mb-2">
+          <SubjectSummary
+            onAccountTakedownClick={() => {
+              changeListFilter({ field: 'types', value: [MOD_EVENTS.APPEAL] })
+            }}
+            onAccountAppealClick={() => {
+              changeListFilter({ field: 'types', value: [MOD_EVENTS.ESCALATE] })
+            }}
+            onRecordTakedownClick={() => {
+              applyFilterMacro({
+                includeAllUserRecords: true,
+                types: [MOD_EVENTS.TAKEDOWN],
+                subjectType: 'record',
+              })
+            }}
+            onRecordEscalationClick={() => {
+              applyFilterMacro({
+                includeAllUserRecords: true,
+                types: [MOD_EVENTS.ESCALATE],
+                subjectType: 'record',
+              })
+            }}
+            stats={props.stats}
+          />
+          {props.onToggleView && (
+            <ActionButton
+              size="xs"
+              appearance="outlined"
+              title="Show events timeline"
+              onClick={props.onToggleView}
+            >
+              <CalendarDaysIcon className="h-4 w-4" />
+            </ActionButton>
+          )}
+        </div>
       )}
       <div className="flex flex-row justify-between items-center">
         {!isEntireHistoryView ? (
