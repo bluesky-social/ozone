@@ -7,13 +7,40 @@ import {
 import { AGE_ASSURANCE_STATES, MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 import { addDays } from 'date-fns'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
-import { reasonTypeOptions } from '@/reports/helpers/getType'
+import { reasonTypeOptions, groupedReasonTypes } from '@/reports/helpers/getType'
+import Select from 'react-tailwindcss-select'
+import { classNames } from '@/lib/util'
 import { LabelSelector } from '@/common/labels/Selector'
 import { ReasonBadgeButton } from '@/reports/ReasonBadge'
 import { CreateMacroForm } from './CreateMacroForm'
 import { useFilterMacroUpsertMutation } from './useFilterMacrosList'
 import { MacroList } from './MacroPicker'
 import { useState } from 'react'
+
+const selectClassNames = {
+  menuButton: ({ isDisabled }: { isDisabled?: boolean } = {}) =>
+    classNames(
+      isDisabled ? 'bg-gray-200' : 'bg-white hover:border-gray-400 focus:ring',
+      'flex text-sm text-gray-500 border border-gray-300 rounded shadow-sm transition-all duration-300 focus:outline-none dark:bg-slate-700 dark:text-gray-100',
+    ),
+  menu: 'absolute z-10 w-full bg-white shadow-lg border rounded py-1 mt-1.5 text-sm text-gray-700 dark:bg-slate-700 dark:text-gray-100',
+  searchBox:
+    'w-full py-2 pl-8 text-sm text-gray-500 bg-gray-100 border border-gray-200 rounded focus:border-gray-200 focus:ring-0 focus:outline-none dark:bg-slate-800 dark:text-gray-100',
+  listGroupLabel:
+    'pr-2 py-2 cursor-default select-none truncate text-gray-700 dark:text-gray-100 font-semibold bg-gray-50 dark:bg-slate-600',
+  listItem: ({ isSelected }: { isSelected?: boolean } = {}) => {
+    const baseClass =
+      'block transition duration-200 px-2 py-2 cursor-pointer select-none truncate rounded dark:hover:bg-slate-800 dark:hover:text-gray-200'
+    const selectedClass = isSelected
+      ? `bg-indigo-600 text-white`
+      : `text-gray-500 dark:text-gray-300 hover:bg-gray-100`
+
+    return classNames(baseClass, selectedClass)
+  },
+  tagItemText: `text-gray-600 text-xs truncate cursor-default select-none`,
+  tagItemIconContainer:
+    'flex items-center px-1 cursor-pointer rounded-r-sm hover:bg-red-200 hover:text-red-600 dark:text-slate-900',
+}
 import { RepoFinder } from '@/repositories/Finder'
 import { Dropdown } from '@/common/Dropdown'
 import { ChevronDownIcon } from '@heroicons/react/24/solid'
@@ -411,27 +438,35 @@ export const EventFilterPanel = ({
             htmlFor="reasonType"
             className="mt-2"
           >
-            {Object.keys(reasonTypeOptions).map((typeValue) => {
-              const isSelected = reportTypes.includes(typeValue)
-              return (
-                <ReasonBadgeButton
-                  key={typeValue}
-                  className={`mr-1 ${isSelected ? 'font-bold' : ''}`}
-                  reasonType={typeValue}
-                  isHighlighted={isSelected}
-                  onClick={(e) => {
-                    e.preventDefault()
-                    const value: string[] = isSelected
-                      ? reportTypes.filter((t) => t !== typeValue)
-                      : [...reportTypes, typeValue]
-                    changeListFilter({
-                      field: 'reportTypes',
-                      value,
-                    })
-                  }}
-                />
-              )
-            })}
+            <Select
+              primaryColor="indigo"
+              isMultiple
+              isSearchable
+              isClearable
+              classNames={selectClassNames}
+              placeholder="Select report reasons..."
+              value={reportTypes.map((reasonType) => ({
+                label: reasonTypeOptions[reasonType] || reasonType,
+                value: reasonType,
+              }))}
+              onChange={(selections) => {
+                const selectedValues = Array.isArray(selections)
+                  ? selections.map((s) => s.value)
+                  : []
+                changeListFilter({
+                  field: 'reportTypes',
+                  value: selectedValues,
+                })
+              }}
+              options={Object.entries(groupedReasonTypes).map(([categoryName, reasonTypes]) => ({
+                label: categoryName,
+                options: reasonTypes.map((reasonType) => ({
+                  label: reasonTypeOptions[reasonType] || reasonType,
+                  value: reasonType,
+                  isSelected: reportTypes.includes(reasonType),
+                })),
+              }))}
+            />
           </FormLabel>
         )}
 
