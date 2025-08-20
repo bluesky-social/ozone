@@ -1,4 +1,4 @@
-export const OAUTH_SCOPE = 'atproto transition:generic'
+export const OAUTH_SCOPE = 'atproto transition:generic transition:chat:bsky'
 
 export const OZONE_SERVICE_DID =
   process.env.NEXT_PUBLIC_OZONE_SERVICE_DID || undefined
