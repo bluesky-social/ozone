@@ -133,6 +133,7 @@ export const ModEventList = (
   props: {
     subject?: string
     createdBy?: string
+    batchId?: string
     stats?: {
       accountStats?: ToolsOzoneModerationDefs.AccountStats
       recordsStats?: ToolsOzoneModerationDefs.RecordsStats
@@ -162,6 +163,7 @@ export const ModEventList = (
     setCommentFilterKeyword,
     createdBy,
     subject,
+    batchId,
     oldestFirst,
     createdAfter,
     createdBefore,
@@ -209,6 +211,9 @@ export const ModEventList = (
         }
         if (props.createdBy) {
           changeListFilter({ field: 'createdBy', value: props.createdBy })
+        }
+        if (props.batchId) {
+          changeListFilter({ field: 'batchId', value: props.batchId })
         }
       },
     })
@@ -340,6 +345,8 @@ export const ModEventList = (
             setCommentFilterKeyword,
             createdBy,
             subject,
+            batchId,
+            isBatchIdFromProp: !!props.batchId,
             oldestFirst,
             createdAfter,
             createdBefore,

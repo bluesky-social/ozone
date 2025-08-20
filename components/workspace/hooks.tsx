@@ -6,6 +6,7 @@ import {
 } from '@/lib/csv'
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
 import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
+import { regenerateBatchId } from '@/lib/batchId'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
   AtUri,
@@ -275,5 +276,7 @@ const removeFromList = (items: string[]) => {
 
 const emptyList = () => {
   setLocalStorageData(WORKSPACE_LIST_KEY, null)
+  // Clearing workspace needs to regenerate Batch ID to avoid accidental duplicate batch ids
+  regenerateBatchId()
   return []
 }

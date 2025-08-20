@@ -59,6 +59,7 @@ const initialListState = {
   commentFilter: { enabled: false, keyword: '' },
   createdBy: undefined,
   subject: undefined,
+  batchId: undefined,
   oldestFirst: false,
   createdBefore: formatDateForInput(addDays(new Date(), 1)),
   createdAfter: FIRST_EVENT_TIMESTAMP,
@@ -139,13 +140,14 @@ const getReposAndRecordsForEvents = async (
   return { repos, records }
 }
 
-// The 2 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
+// The 3 fields need overriding because in the initialState, they are set as undefined so the alternative string type is not accepted without override
 export type EventListState = Omit<
   typeof initialListState,
-  'subject' | 'createdBy' | 'subjectType'
+  'subject' | 'createdBy' | 'batchId' | 'subjectType'
 > & {
   subject?: string
   createdBy?: string
+  batchId?: string
   reportTypes: string[]
   addedLabels: string[]
   removedLabels: string[]
@@ -161,6 +163,7 @@ type EventListFilterPayload =
   | { field: 'commentFilter'; value: CommentFilter }
   | { field: 'createdBy'; value: string | undefined }
   | { field: 'subject'; value: string | undefined }
+  | { field: 'batchId'; value: string | undefined }
   | { field: 'oldestFirst'; value: boolean }
   | { field: 'createdBefore'; value: string }
   | { field: 'createdAfter'; value: string }
@@ -232,6 +235,7 @@ const getModEvents =
       commentFilter,
       createdBy,
       subject,
+      batchId,
       oldestFirst,
       createdBefore,
       createdAfter,
@@ -258,6 +262,10 @@ const getModEvents =
 
     if (createdBy?.trim()) {
       queryParams.createdBy = createdBy
+    }
+
+    if (batchId?.trim()) {
+      queryParams.batchId = batchId.trim()
     }
 
     if (createdAfter) {
@@ -381,6 +389,7 @@ export const useModEventList = (
     subject?: string
     createdBy?: string
     eventType?: string
+    batchId?: string
   } & ModEventListQueryOptions,
 ) => {
   const [showWorkspaceConfirmation, setShowWorkspaceConfirmation] =
@@ -419,6 +428,15 @@ export const useModEventList = (
       })
     }
   }, [props.eventType])
+
+  useEffect(() => {
+    if (props.batchId !== listState.batchId) {
+      dispatch({
+        type: 'SET_FILTER',
+        payload: { field: 'batchId', value: props.batchId },
+      })
+    }
+  }, [props.batchId])
 
   useEffect(() => {
     if (!showWorkspaceConfirmation) {
@@ -477,6 +495,7 @@ export const useModEventList = (
     listState.commentFilter.enabled ||
     listState.createdBy ||
     listState.subject ||
+    listState.batchId ||
     listState.oldestFirst ||
     listState.policies.length > 0 ||
     listState.reportTypes.length > 0 ||
