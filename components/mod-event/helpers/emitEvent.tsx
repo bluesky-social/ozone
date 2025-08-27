@@ -33,6 +33,7 @@ export enum ActionPanelNames {
   Workspace = 'workspace',
   QuickAction = 'quick-action',
   EmailComposer = 'email-composer',
+  AccountManager = 'account-manager',
 }
 
 export const buildModToolInfo = (

@@ -37,6 +37,7 @@ import { useWorkspaceListData } from './useWorkspaceListData'
 import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
+import { RevokeCredentials } from 'components/repositories/RevokeCredential'
 import { findHighProfileCountInWorkspace } from './utils'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { numberFormatter } from '@/repositories/HighProfileWarning'
@@ -46,6 +47,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
   const formRef = useRef<HTMLFormElement>(null)
   const [showActionForm, setShowActionForm] = useState(false)
+  const [showAccountActions, setShowAccountActions] = useState(false)
   const removeItemsMutation = useWorkspaceRemoveItemsMutation()
   const emptyWorkspaceMutation = useWorkspaceEmptyMutation()
   const { importFromFiles } = useWorkspaceImport()
@@ -406,6 +408,21 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                     )}
                   </>
                 )}
+                {showAccountActions && (
+                  <div className="mb-3">
+                    <RevokeCredentials
+                      accounts={Object.values(workspaceListStatuses || {})
+                        .filter((item) => item.subject.startsWith('did:'))
+                        .map((item) => {
+                          return {
+                            did: item.subject,
+                            handle: item.repo?.handle || 'Unknown Handle',
+                          }
+                        })}
+                      onClose={() => setShowAccountActions(false)}
+                    />
+                  </div>
+                )}
                 {/* The form component can't wrap the panel action form above because we may render the email composer */}
                 {/* inside the panel action form which is it's own form so we use form ids to avoid nesting forms */}
                 <form
@@ -425,6 +442,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                         setShowActionForm={setShowActionForm}
                         setShowItemCreator={setShowItemCreator}
                         showActionForm={showActionForm}
+                        setShowAccountActions={setShowAccountActions}
+                        showAccountActions={showAccountActions}
                         workspaceList={workspaceList}
                         onVerification={refetchWorkspaceListData}
                       />

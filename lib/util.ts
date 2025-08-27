@@ -188,3 +188,129 @@ export function isNonNullable<V>(v: V): v is NonNullable<V> {
 export function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
+
+export interface BatchedOperationOptions<T, R> {
+  items: T[]
+  batchSize?: number
+  maxRetries?: number
+  retryDelay?: number
+  operation: (item: T) => Promise<R>
+  isRateLimit?: (error: any) => boolean
+  onBatchStart?: (batchIndex: number, totalBatches: number) => void
+  onBatchProgress?: (processed: number, failed: number, total: number, batchIndex: number, totalBatches: number, retryAttempt?: number) => void
+  onBatchComplete?: (results: Array<{ item: T; success: boolean; result?: R; error?: string }>) => void
+}
+
+export interface BatchedOperationResult<T, R> {
+  results: Array<{ item: T; success: boolean; result?: R; error?: string }>
+  successCount: number
+  failedCount: number
+  totalCount: number
+}
+
+export async function executeBatchedOperation<T, R>({
+  items,
+  batchSize = 25,
+  maxRetries = 3,
+  retryDelay = 3000,
+  operation,
+  isRateLimit = (error) => error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('429'),
+  onBatchStart,
+  onBatchProgress,
+  onBatchComplete,
+}: BatchedOperationOptions<T, R>): Promise<BatchedOperationResult<T, R>> {
+  const chunks = chunkArray(items, batchSize)
+  const results: Array<{ item: T; success: boolean; result?: R; error?: string }> = []
+  let processed = 0
+  let failed = 0
+  const totalCount = items.length
+
+  for (let i = 0; i < chunks.length; i++) {
+    const chunk = chunks[i]
+    let retryCount = 0
+
+    onBatchStart?.(i, chunks.length)
+
+    while (retryCount <= maxRetries) {
+      try {
+        onBatchProgress?.(processed, failed, totalCount, i, chunks.length, retryCount > 0 ? retryCount : undefined)
+
+        const chunkResults = await Promise.allSettled(
+          chunk.map(async (item) => {
+            try {
+              const result = await operation(item)
+              return { item, success: true as const, result }
+            } catch (error: any) {
+              return {
+                item,
+                success: false as const,
+                error: error?.message || 'Unknown error'
+              }
+            }
+          })
+        )
+
+        let hasRateLimitError = false
+        chunkResults.forEach((chunkResult) => {
+          if (chunkResult.status === 'fulfilled') {
+            const result = chunkResult.value
+            results.push(result)
+            if (result.success) {
+              processed++
+            } else {
+              failed++
+              if (isRateLimit && isRateLimit({ message: result.error })) {
+                hasRateLimitError = true
+              }
+            }
+          } else {
+            results.push({
+              item: chunk[chunkResults.indexOf(chunkResult)],
+              success: false,
+              error: chunkResult.reason?.message || 'Unknown error'
+            })
+            failed++
+            if (isRateLimit && isRateLimit(chunkResult.reason)) {
+              hasRateLimitError = true
+            }
+          }
+        })
+
+        if (!hasRateLimitError) {
+          break
+        } else if (retryCount < maxRetries) {
+          retryCount++
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        } else {
+          break
+        }
+      } catch (error: any) {
+        if (isRateLimit && isRateLimit(error) && retryCount < maxRetries) {
+          retryCount++
+          await new Promise(resolve => setTimeout(resolve, retryDelay))
+        } else {
+          chunk.forEach((item) => {
+            results.push({
+              item,
+              success: false,
+              error: error?.message || 'Unknown error'
+            })
+            failed++
+          })
+          break
+        }
+      }
+    }
+  }
+
+  const finalResults = {
+    results,
+    successCount: results.filter(r => r.success).length,
+    failedCount: results.filter(r => !r.success).length,
+    totalCount
+  }
+
+  onBatchComplete?.(results)
+
+  return finalResults
+}

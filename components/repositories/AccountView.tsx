@@ -1,6 +1,5 @@
 'use client'
-import { Alert } from '@/common/Alert'
-import { ActionButton, ButtonGroup, LinkButton } from '@/common/buttons'
+import { ActionButton, ButtonGroup } from '@/common/buttons'
 import { DataField } from '@/common/DataField'
 import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
@@ -24,7 +23,6 @@ import {
   ToolsOzoneModerationGetRepo as GetRepo,
 } from '@atproto/api'
 import {
-  ArrowTopRightOnSquareIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
@@ -34,8 +32,6 @@ import {
   XCircleIcon,
 } from '@heroicons/react/20/solid'
 import { useQuery } from '@tanstack/react-query'
-import { EmailComposer } from 'components/email/Composer'
-import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
 import { Followers } from 'components/graph/Followers'
 import { Follows } from 'components/graph/Follows'
 import { Lists } from 'components/list/Lists'
@@ -43,7 +39,7 @@ import { RelatedAccounts } from 'components/signature/RelatedAccounts'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ComponentProps, useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import Lightbox from 'yet-another-react-lightbox'
 import { AuthorFeed } from '../common/feeds/AuthorFeed'
 import { Json } from '../common/Json'
@@ -68,6 +64,7 @@ import { VerificationBadge } from 'components/verification/Badge'
 import { AccountHistory } from './AccountHistory'
 import { Country } from './Country'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
+import { ManageView } from './ManageView'
 
 enum Views {
   Details,
@@ -77,7 +74,7 @@ enum Views {
   Invites,
   Blocks,
   Events,
-  Email,
+  Manage,
   Lists,
   RelatedAccounts,
 }
@@ -91,7 +88,7 @@ const TabKeys = {
   invites: Views.Invites,
   blocks: Views.Blocks,
   events: Views.Events,
-  email: Views.Email,
+  manage: Views.Manage,
   related: Views.RelatedAccounts,
 }
 
@@ -137,8 +134,6 @@ export function AccountView({
       setReportUri(repo?.did || profile?.did)
     }
   }, [repo, reportUri])
-
-  const canSendEmail = usePermission('canSendEmail')
 
   const getTabViews = () => {
     const numInvited = (repo?.invites || []).reduce(
@@ -187,9 +182,7 @@ export function AccountView({
       { view: Views.Events, label: 'Events' },
     )
 
-    if (canSendEmail) {
-      views.push({ view: Views.Email, label: 'Email' })
-    }
+    views.push({ view: Views.Manage, label: 'Manage' })
 
     return views
   }
@@ -264,7 +257,9 @@ export function AccountView({
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
                   )}
-                  {currentView === Views.Email && <EmailView did={repo.did} />}
+                  {currentView === Views.Manage && (
+                    <ManageView repo={repo} did={repo.did} />
+                  )}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -467,32 +462,6 @@ function Header({
               </h1>
             </div>
             <div className="justify-stretch mt-6 flex flex-row space-x-3">
-              {repo?.email && (
-                <a
-                  role="button"
-                  href={`mailto:${repo.email}`}
-                  title={
-                    repo.emailConfirmedAt
-                      ? `Email verified at ${dateFormatter.format(
-                          new Date(repo.emailConfirmedAt),
-                        )}`
-                      : 'Email not verified'
-                  }
-                  className={`inline-flex justify-center rounded-md border ${
-                    repo.emailConfirmedAt
-                      ? 'border-green-600'
-                      : 'border-gray-300'
-                  } bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2`}
-                >
-                  <EnvelopeIcon
-                    className={`-ml-1 mr-2 h-5 w-5  ${
-                      repo.emailConfirmedAt ? 'text-green-600' : 'text-gray-400'
-                    }`}
-                    aria-hidden="true"
-                  />
-                  <span>Email Account</span>
-                </a>
-              )}
               {!!reportOptions.length && (
                 <Dropdown
                   className="inline-flex justify-center rounded-md border border-gray-300 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
@@ -645,8 +614,10 @@ function Details({
         />
         {repo.moderation?.subjectStatus?.ageAssuranceState && (
           <DataField label="Age Assurance">
-            <AgeAssuranceBadge 
-              ageAssuranceState={repo.moderation.subjectStatus.ageAssuranceState}
+            <AgeAssuranceBadge
+              ageAssuranceState={
+                repo.moderation.subjectStatus.ageAssuranceState
+              }
             />
           </DataField>
         )}
@@ -935,36 +906,6 @@ export const EventsView = ({ did }: { did: string }) => {
             : { subject: did })}
         />
       </div>
-    </div>
-  )
-}
-
-const EmailView = (props: ComponentProps<typeof EmailComposer>) => {
-  const { cantReceive } = useEmailRecipientStatus(props.did)
-  return (
-    <div className="mx-auto mt-8 max-w-5xl px-4 pb-12 sm:px-6 lg:px-8">
-      <div className="flex flex-row justify-end items-center">
-        <LinkButton
-          prefetch={false}
-          href="/communication-template"
-          appearance="primary"
-          size="sm"
-        >
-          Manage Templates
-          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 ml-1" />
-        </LinkButton>
-      </div>
-      {cantReceive && (
-        <div className="my-2">
-          <Alert
-            showIcon
-            type="warning"
-            title="Can not send email to this user"
-            body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
-          />
-        </div>
-      )}
-      <EmailComposer {...props} />
     </div>
   )
 }
