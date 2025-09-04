@@ -68,15 +68,11 @@ function getReasonColor(reasonType: string): string {
 }
 
 // Fallback function to create readable text for unknown reason types
+// For input "com.atproto.moderation.defs#reasonBanEvasion" output "Ban Evasion"
 function getReadableReasonType(reasonType: string): string {
-  // Remove namespace prefixes and make more readable
   return reasonType
     .replace('com.atproto.moderation.defs#reason', '')
     .replace('tools.ozone.report.defs#reason', '')
     .replace(/([A-Z])/g, ' $1')
     .trim()
-    .toLowerCase()
-    .split(' ')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
 }

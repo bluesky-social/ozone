@@ -173,7 +173,7 @@ function ReasonTypeCombobox({
   onQueryChange: (query: string) => void
 }) {
   const [isFocused, setIsFocused] = useState(false)
-  
+
   // Create a flat list of all reason types with their categories for searching
   const allReasonTypes = Object.entries(groupedReasonTypes).flatMap(
     ([categoryName, reasonTypes]) =>
@@ -181,7 +181,7 @@ function ReasonTypeCombobox({
         value: reasonType,
         label: reasonTypeOptions[reasonType] || reasonType,
         category: categoryName,
-      }))
+      })),
   )
 
   const filteredReasonTypes = allReasonTypes.filter((reason) => {
@@ -196,9 +196,7 @@ function ReasonTypeCombobox({
 
   // Group filtered results by category
   const groupedFilteredResults = filteredReasonTypes.reduce((acc, reason) => {
-    if (!acc[reason.category]) {
-      acc[reason.category] = []
-    }
+    acc[reason.category] ??= []
     acc[reason.category].push(reason)
     return acc
   }, {} as Record<string, typeof filteredReasonTypes>)
@@ -243,51 +241,53 @@ function ReasonTypeCombobox({
                 No reason types found {query ? `matching "${query}"` : ''}.
               </div>
             ) : (
-              Object.entries(groupedFilteredResults).map(([categoryName, reasons]) => (
-                <div key={categoryName}>
-                  <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-slate-600">
-                    {categoryName}
-                  </div>
-                  {reasons.map((reason) => (
-                    <ComboboxOption
-                      key={reason.value}
-                      className={({ focus }) =>
-                        `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                          focus
-                            ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
-                            : 'text-gray-900 dark:text-gray-200'
-                        }`
-                      }
-                      value={reason.value}
-                      onClick={() => setIsFocused(false)}
-                    >
-                      {({ selected, focus }) => (
-                        <>
-                          {selected ? (
+              Object.entries(groupedFilteredResults).map(
+                ([categoryName, reasons]) => (
+                  <div key={categoryName}>
+                    <div className="px-4 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider bg-gray-50 dark:bg-slate-600">
+                      {categoryName}
+                    </div>
+                    {reasons.map((reason) => (
+                      <ComboboxOption
+                        key={reason.value}
+                        className={({ focus }) =>
+                          `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                            focus
+                              ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
+                              : 'text-gray-900 dark:text-gray-200'
+                          }`
+                        }
+                        value={reason.value}
+                        onClick={() => setIsFocused(false)}
+                      >
+                        {({ selected, focus }) => (
+                          <>
+                            {selected ? (
+                              <span
+                                className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                                  focus ? 'text-indigo-900' : 'text-indigo-600'
+                                }`}
+                              >
+                                <CheckIcon
+                                  className="h-5 w-5 dark:text-gray-50"
+                                  aria-hidden="true"
+                                />
+                              </span>
+                            ) : null}
                             <span
-                              className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                                focus ? 'text-indigo-900' : 'text-indigo-600'
+                              className={`block truncate ${
+                                selected ? 'font-medium' : 'font-normal'
                               }`}
                             >
-                              <CheckIcon
-                                className="h-5 w-5 dark:text-gray-50"
-                                aria-hidden="true"
-                              />
+                              {reason.label}
                             </span>
-                          ) : null}
-                          <span
-                            className={`block truncate ${
-                              selected ? 'font-medium' : 'font-normal'
-                            }`}
-                          >
-                            {reason.label}
-                          </span>
-                        </>
-                      )}
-                    </ComboboxOption>
-                  ))}
-                </div>
-              ))
+                          </>
+                        )}
+                      </ComboboxOption>
+                    ))}
+                  </div>
+                ),
+              )
             )}
           </ComboboxOptions>
         </Transition>
