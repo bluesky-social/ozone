@@ -6,7 +6,7 @@ import { useLabelGroups, type LabelGroup } from '@/config/useLabelGroups'
 import { Input } from '../forms'
 import { ALL_LABELS } from './util'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/solid'
-import { SharedLabelChip } from './SharedLabelChip'
+import { LabelChip } from './LabelChip'
 
 const EMPTY_ARR = []
 
@@ -115,14 +115,13 @@ export const LabelSelector = (props: LabelsProps) => {
                 const isSelected = !!selectedLabels.find((l) => l === label)
 
                 return (
-                  <SharedLabelChip
+                  <LabelChip
                     key={label}
                     labelValue={label}
                     labelGroups={null}
                     isSelected={isSelected}
                     interactive={true}
                     onClick={() => toggleLabel(label)}
-                    style={{ cursor: 'pointer' }}
                   />
                 )
               })}
@@ -153,14 +152,13 @@ export const LabelSelector = (props: LabelsProps) => {
                       )
 
                       return (
-                        <SharedLabelChip
+                        <LabelChip
                           key={label}
                           labelValue={label}
                           labelGroups={labelGroups}
                           isSelected={isSelected}
                           interactive={true}
                           onClick={() => toggleLabel(label)}
-                          style={{ cursor: 'pointer' }}
                         />
                       )
                     })}

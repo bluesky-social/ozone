@@ -20,7 +20,7 @@ import { ComponentProps, Fragment } from 'react'
 import { useLabelerDefinitionQuery } from './useLabelerDefinition'
 import { isSelfLabel, toLabelVal } from './util'
 import { useLabelGroups } from '@/config/useLabelGroups'
-import { getLabelColorConfig, getGroupInfo } from './SharedLabelChip'
+import { getLabelColorConfig, getGroupInfo } from './LabelChip'
 
 export function LabelList(props: ComponentProps<'div'>) {
   const { className = '', ...others } = props
@@ -44,9 +44,13 @@ export function LabelListEmpty(props: ComponentProps<'div'>) {
 
 export function LabelChip(props: ComponentProps<'span'>) {
   const { className = '', ...others } = props
+
   return (
     <span
-      className={`inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold ${className}`}
+      className={classNames(
+        `inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 font-semibold ${className}`,
+        !className.includes('text-') ? 'text-gray-600' : '',
+      )}
       {...others}
     />
   )
@@ -68,9 +72,11 @@ const getLabelChipClassNames = ({
     label.val,
     isSelfLabeled,
     labelDefFromService,
-    groupColor ? { [label.val]: { labels: [label.val], color: groupColor } } : undefined
+    groupColor
+      ? { [label.val]: { labels: [label.val], color: groupColor } }
+      : undefined,
   )
-  
+
   // Build wrapper classes for non-group colors
   const wrapper: string[] = []
   if (!colorConfig.hasGroupColor) {
@@ -119,7 +125,7 @@ export const ModerationLabel = ({
   const labelDefFromService =
     labelerServiceDef?.policies.definitionById?.[label.val]
   const labelerProfile = labelerServiceDef?.creator
-  
+
   // Use shared utility to get group info
   const groupInfo = getGroupInfo(label.val, labelGroups)
 
@@ -136,29 +142,31 @@ export const ModerationLabel = ({
         <>
           <PopoverButton className="ring-none">
             <LabelChip
-              className={classNames(...[labelClassNames.wrapper, className])}
-              style={labelClassNames.hasGroupColor ? { backgroundColor: labelClassNames.groupColor } : undefined}
+              className={classNames(
+                labelClassNames.wrapper,
+                labelClassNames.text,
+                className,
+              )}
+              style={
+                labelClassNames.hasGroupColor
+                  ? { backgroundColor: labelClassNames.groupColor }
+                  : undefined
+              }
               {...props}
             >
               {isFromCurrentService && (
                 <HomeIcon
-                  className={classNames(
-                    ...['h-3 w-3 mr-1', labelClassNames.text],
-                  )}
+                  className={classNames('h-3 w-3 mr-1', labelClassNames.text)}
                 />
               )}
               {isSelfLabeled && (
                 <TagIcon
-                  className={classNames(
-                    ...['h-3 w-3 mr-1', labelClassNames.text],
-                  )}
+                  className={classNames('h-3 w-3 mr-1', labelClassNames.text)}
                 />
               )}
               {label.exp && (
                 <ClockIcon
-                  className={classNames(
-                    ...['h-3 w-3 mr-1', labelClassNames.text],
-                  )}
+                  className={classNames('h-3 w-3 mr-1', labelClassNames.text)}
                 />
               )}
               {labelVal}
@@ -264,12 +272,20 @@ export const LabelDefinition = ({
 
   const groupInfo = groupName && (
     <div className="flex flex-row items-start leading-4">
-      <div 
+      <div
         className="h-4 w-4 mr-1 mt-0.5 rounded-sm border border-gray-300"
         style={{ backgroundColor: groupColor || '#6366f1' }}
       />
       <p className="italic">
-        This label belongs to the <strong>{groupName}</strong> group
+        This label belongs to the{' '}
+        <a
+          target="_blank"
+          className="underline"
+          href={`/configure#configure-label-groups`}
+        >
+          {groupName}
+        </a>{' '}
+        group
       </p>
     </div>
   )

@@ -1,7 +1,7 @@
 import { ComponentProps } from 'react'
 import { ComAtprotoLabelDefs } from '@atproto/api'
 import { classNames, getReadableTextColor } from '@/lib/util'
-import { useLabelGroups } from '@/config/useLabelGroups'
+import { LabelGroupsSetting, useLabelGroups } from '@/config/useLabelGroups'
 
 interface LabelColorConfig {
   backgroundColor?: string
@@ -13,15 +13,15 @@ export const getLabelColorConfig = (
   labelValue: string,
   isSelfLabeled = false,
   labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition,
-  labelGroups?: Record<string, any>
+  labelGroups?: LabelGroupsSetting | null,
 ): LabelColorConfig => {
   // Group color has the highest priority
   if (labelGroups) {
-    const labelGroup = Object.entries(labelGroups).find(
-      ([_, group]) => group.labels.includes(labelValue)
+    const labelGroup = Object.entries(labelGroups).find(([_, group]) =>
+      group.labels.includes(labelValue),
     )
     const groupColor = labelGroup?.[1]?.color
-    
+
     if (groupColor) {
       return {
         backgroundColor: groupColor,
@@ -31,14 +31,14 @@ export const getLabelColorConfig = (
     }
   }
 
-  // Fallback to existing service definition logic
+  // Then use self-labeling logic
   if (isSelfLabeled) {
     return {
       textColor: 'text-green-700',
       hasGroupColor: false,
     }
   }
-  
+
   if (labelDefFromService) {
     if (labelDefFromService.severity === 'alert') {
       return {
@@ -65,15 +65,18 @@ export const getLabelColorConfig = (
   }
 }
 
-export const getGroupInfo = (labelValue: string, labelGroups?: Record<string, any>) => {
+export const getGroupInfo = (
+  labelValue: string,
+  labelGroups?: LabelGroupsSetting | null,
+) => {
   if (!labelGroups) return null
-  
-  const labelGroup = Object.entries(labelGroups).find(
-    ([_, group]) => group.labels.includes(labelValue)
+
+  const labelGroup = Object.entries(labelGroups).find(([_, group]) =>
+    group.labels.includes(labelValue),
   )
-  
+
   if (!labelGroup) return null
-  
+
   return {
     name: labelGroup[0],
     color: labelGroup[1]?.color,
@@ -84,14 +87,14 @@ export const getGroupInfo = (labelValue: string, labelGroups?: Record<string, an
 export const getLabelWrapperClasses = (
   isSelfLabeled = false,
   labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition,
-  hasGroupColor = false
+  hasGroupColor = false,
 ): string => {
   if (hasGroupColor) {
     return '' // No wrapper classes when using group colors (inline style instead)
   }
 
   const classes: string[] = []
-  
+
   if (isSelfLabeled) {
     classes.push('bg-green-200 text-green-700')
   } else if (labelDefFromService) {
@@ -103,11 +106,11 @@ export const getLabelWrapperClasses = (
       classes.push('bg-yellow-200 text-yellow-700')
     }
   }
-  
+
   return classNames(...classes)
 }
 
-export interface SharedLabelChipProps extends ComponentProps<'span'> {
+export interface LabelChipProps extends ComponentProps<'span'> {
   labelValue: string
   isSelfLabeled?: boolean
   labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition
@@ -116,7 +119,7 @@ export interface SharedLabelChipProps extends ComponentProps<'span'> {
   interactive?: boolean
 }
 
-export const SharedLabelChip = ({
+export const LabelChip = ({
   labelValue,
   isSelfLabeled = false,
   labelDefFromService,
@@ -126,20 +129,20 @@ export const SharedLabelChip = ({
   className = '',
   children,
   ...props
-}: SharedLabelChipProps) => {
+}: LabelChipProps) => {
   const colorConfig = getLabelColorConfig(
     labelValue,
     isSelfLabeled,
     labelDefFromService,
-    labelGroups || undefined
+    labelGroups || undefined,
   )
-  
+
   const wrapperClasses = getLabelWrapperClasses(
     isSelfLabeled,
     labelDefFromService,
-    colorConfig.hasGroupColor
+    colorConfig.hasGroupColor,
   )
-  
+
   const baseClasses = interactive
     ? `mr-1 my-1 px-2 py-0.5 text-xs rounded-md inline-flex items-center border transition-opacity ${
         isSelected
@@ -150,9 +153,17 @@ export const SharedLabelChip = ({
       }`
     : `inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold ${wrapperClasses}`
 
-  const style = colorConfig.hasGroupColor && (interactive ? isSelected : true)
-    ? { backgroundColor: colorConfig.backgroundColor }
-    : undefined
+  const style: Record<string, string | undefined> =
+    colorConfig.hasGroupColor && (interactive ? isSelected : true)
+      ? {
+          backgroundColor: colorConfig.backgroundColor,
+          borderColor: colorConfig.backgroundColor,
+        }
+      : {}
+
+  if (interactive) {
+    style.cursor = 'pointer'
+  }
 
   return (
     <span
@@ -165,12 +176,16 @@ export const SharedLabelChip = ({
   )
 }
 
-// Hook to get both label groups and color configuration
 export const useLabelColorConfig = (labelValue: string) => {
   const labelGroups = useLabelGroups()
-  const colorConfig = getLabelColorConfig(labelValue, false, undefined, labelGroups)
+  const colorConfig = getLabelColorConfig(
+    labelValue,
+    false,
+    undefined,
+    labelGroups,
+  )
   const groupInfo = getGroupInfo(labelValue, labelGroups)
-  
+
   return {
     colorConfig,
     groupInfo,

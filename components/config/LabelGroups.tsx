@@ -8,7 +8,6 @@ import { ActionButton } from '@/common/buttons'
 import { TrashIcon } from '@heroicons/react/24/solid'
 import { FormLabel, Input } from '@/common/forms'
 
-
 interface GroupDropZoneProps {
   groupTitle: string
   group: LabelGroup
@@ -230,7 +229,7 @@ export const LabelGroupsConfig = () => {
   const validatedGroupTitle = validateGroupTitle(trimmedGroupTitle)
 
   return (
-    <div>
+    <div id="configure-label-groups">
       <div className="flex flex-row justify-between my-4">
         <h4 className="font-medium text-gray-700 dark:text-gray-100">
           Label Groups
