@@ -2,10 +2,10 @@ import { useState, useMemo } from 'react'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { useLabelGroupsEditor, type LabelGroup } from './useLabelGroups'
 import { unique, getReadableTextColor } from '@/lib/util'
-import { ALL_LABELS } from '../common/labels/util'
+import { ALL_LABELS, DEFAULT_LABEL_GROUP_COLOR } from '@/common/labels/util'
 import { Card } from '@/common/Card'
 import { ActionButton } from '@/common/buttons'
-import { TrashIcon } from '@heroicons/react/24/solid'
+import { TrashIcon, PlusIcon, CheckIcon } from '@heroicons/react/24/solid'
 import { FormLabel, Input } from '@/common/forms'
 
 interface GroupDropZoneProps {
@@ -32,6 +32,10 @@ const GroupDropZone = ({
   onDragEnd,
 }: GroupDropZoneProps) => {
   const [isDragOver, setIsDragOver] = useState(false)
+  const [addLabelState, setAddLabelState] = useState({
+    show: false,
+    value: '',
+  })
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault()
@@ -51,6 +55,29 @@ const GroupDropZone = ({
     if (label && label !== '') {
       onAddLabelToGroup(groupTitle, label)
       onDragEnd()
+    }
+  }
+
+  const handleAddLabel = () => {
+    const trimmedLabel = addLabelState.value.trim()
+    if (trimmedLabel && !group.labels.includes(trimmedLabel)) {
+      onAddLabelToGroup(groupTitle, trimmedLabel)
+      setAddLabelState({ show: false, value: '' })
+    }
+  }
+
+  // Don't allow space in label values
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\s/g, '')
+    setAddLabelState((prev) => ({ ...prev, value }))
+  }
+
+  const handleInputKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault()
+      handleAddLabel()
+    } else if (e.key === 'Escape') {
+      setAddLabelState({ show: false, value: '' })
     }
   }
 
@@ -77,9 +104,19 @@ const GroupDropZone = ({
           )}
         </div>
         <div className="flex flex-row gap-2">
+          <ActionButton
+            size="sm"
+            appearance="outlined"
+            onClick={() =>
+              setAddLabelState((prev) => ({ ...prev, show: !prev.show }))
+            }
+            title="Add label manually"
+          >
+            <PlusIcon className="h-3 w-3" />
+          </ActionButton>
           <input
             type="color"
-            value={group.color || '#6366f1'}
+            value={group.color || DEFAULT_LABEL_GROUP_COLOR}
             onChange={(e) =>
               onUpdateGroup(groupTitle, { color: e.target.value })
             }
@@ -108,7 +145,7 @@ const GroupDropZone = ({
         </div>
         <div className="flex flex-wrap gap-2">
           {group.labels.map((label) => {
-            const groupColor = group.color || '#6366f1'
+            const groupColor = group.color || DEFAULT_LABEL_GROUP_COLOR
             const textColor = getReadableTextColor(groupColor)
             return (
               <div
@@ -145,6 +182,30 @@ const GroupDropZone = ({
               Drag labels from above to add them to this group
             </p>
           )}
+          {addLabelState.show && (
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={addLabelState.value}
+                onChange={handleInputChange}
+                onKeyDown={handleInputKeyPress}
+                placeholder="Enter label name (no spaces)"
+                className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:border-indigo-500 dark:bg-gray-700 dark:text-gray-200"
+                autoFocus
+              />
+              <ActionButton
+                size="sm"
+                appearance="outlined"
+                onClick={handleAddLabel}
+                disabled={
+                  !addLabelState.value.trim() ||
+                  group.labels.includes(addLabelState.value.trim())
+                }
+              >
+                <CheckIcon className="h-3 w-3" />
+              </ActionButton>
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -168,7 +229,7 @@ export const LabelGroupsConfig = () => {
 
   const [newGroupTitle, setNewGroupTitle] = useState('')
   const [newGroupNote, setNewGroupNote] = useState('')
-  const [newGroupColor, setNewGroupColor] = useState('#6366f1')
+  const [newGroupColor, setNewGroupColor] = useState(DEFAULT_LABEL_GROUP_COLOR)
   const [draggedLabel, setDraggedLabel] = useState<string | null>(null)
 
   const allLabels = useMemo(
@@ -201,7 +262,7 @@ export const LabelGroupsConfig = () => {
     if (success) {
       setNewGroupTitle('')
       setNewGroupNote('')
-      setNewGroupColor('#6366f1')
+      setNewGroupColor(DEFAULT_LABEL_GROUP_COLOR)
     }
   }
 

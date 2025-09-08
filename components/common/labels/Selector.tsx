@@ -85,7 +85,7 @@ export const LabelSelector = (props: LabelsProps) => {
     } else {
       newSelectedLabels = [...selectedLabels, label]
     }
-    // update the label listthen call the onChange function to allow the parent component know about the change
+    // Update the label list and call the onChange function to allow the parent component know about the change
     setSelectedLabels(newSelectedLabels)
     onChange?.(newSelectedLabels)
   }

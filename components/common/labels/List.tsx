@@ -18,7 +18,7 @@ import {
 } from '@heroicons/react/24/outline'
 import { ComponentProps, Fragment } from 'react'
 import { useLabelerDefinitionQuery } from './useLabelerDefinition'
-import { isSelfLabel, toLabelVal } from './util'
+import { DEFAULT_LABEL_GROUP_COLOR, isSelfLabel, toLabelVal } from './util'
 import { useLabelGroups } from '@/config/useLabelGroups'
 import { getLabelColorConfig, getGroupInfo } from './LabelChip'
 
@@ -274,7 +274,7 @@ export const LabelDefinition = ({
     <div className="flex flex-row items-start leading-4">
       <div
         className="h-4 w-4 mr-1 mt-0.5 rounded-sm border border-gray-300"
-        style={{ backgroundColor: groupColor || '#6366f1' }}
+        style={{ backgroundColor: groupColor || DEFAULT_LABEL_GROUP_COLOR }}
       />
       <p className="italic">
         This label belongs to the{' '}
