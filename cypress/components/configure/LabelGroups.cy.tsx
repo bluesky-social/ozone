@@ -239,18 +239,7 @@ describe('<LabelGroups />', () => {
     cy.get('input[name="title"]').should('not.exist')
   })
 
-  it('calls save handler when save button is clicked', () => {
-    cy.mount(<LabelGroups {...mockProps} />)
-
-    cy.contains('Save Groups').click()
-
-    cy.wrap(mockProps.handleSave).should(
-      'have.been.calledWith',
-      Cypress.sinon.match.object,
-    )
-  })
-
-  it('supports drag and drop between ungrouped labels and groups', () => {
+  it('supports drag and drop between ungrouped labels and groups and saves updated data', () => {
     const propsWithGroups = {
       ...mockProps,
       initialData: {
@@ -288,6 +277,16 @@ describe('<LabelGroups />', () => {
       .parent()
       .contains('span', 'nsfw')
       .should('be.visible')
+
+    cy.contains('Save Groups').click()
+
+    cy.wrap(mockProps.handleSave).should('have.been.calledWith', {
+      'Target Group': {
+        labels: ['spam', 'nsfw'],
+        color: '#6366f1',
+        note: undefined,
+      },
+    })
   })
 
   it('shows drag feedback when dragging labels', () => {

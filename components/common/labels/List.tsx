@@ -56,7 +56,6 @@ export function LabelChip(props: ComponentProps<'span'>) {
   )
 }
 
-// Legacy function kept for backward compatibility - now uses shared utilities
 const getLabelChipClassNames = ({
   label,
   isSelfLabeled = false,
