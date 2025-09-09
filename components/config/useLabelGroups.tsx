@@ -38,18 +38,12 @@ export const useLabelGroupsList = () => {
   })
 }
 
-export const useLabelGroupsEditor = () => {
+// wrangles external data from context/react-query etc. helps keep tests and components cleaner
+export const useLabelGroupsData = () => {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const { data: initialSetting } = useLabelGroupsList()
-  const [editorData, setEditorData] = useState<LabelGroupsSetting>({})
   const { role } = useServerConfig()
-
-  useEffect(() => {
-    if (initialSetting) {
-      setEditorData(initialSetting.value)
-    }
-  }, [initialSetting])
 
   const mutation = useMutation({
     mutationKey: ['label-groups-setting', 'upsert'],
@@ -71,6 +65,21 @@ export const useLabelGroupsEditor = () => {
       toast.error(`Failed to save label groups: ${error?.['message']}`)
     },
   })
+
+  return {
+    initialSetting,
+    mutation,
+    canManageGroups: role === ToolsOzoneTeamDefs.ROLEADMIN,
+  }
+}
+
+// local state management hook for group editor
+export const useLabelGroupsEditor = (initialData: LabelGroupsSetting = {}) => {
+  const [editorData, setEditorData] = useState<LabelGroupsSetting>(initialData)
+
+  useEffect(() => {
+    setEditorData(initialData)
+  }, [initialData])
 
   const handleAddGroup = (title: string, note?: string, color?: string) => {
     const trimmedTitle = title.trim()
@@ -142,12 +151,6 @@ export const useLabelGroupsEditor = () => {
     }))
   }
 
-  const handleSave = () => {
-    if (editorData) {
-      mutation.mutate(editorData)
-    }
-  }
-
   const getGroupTitles = () => Object.keys(editorData)
 
   const validateGroupTitle = (title: string) => {
@@ -164,10 +167,8 @@ export const useLabelGroupsEditor = () => {
   }
 
   return {
-    mutation,
     editorData,
     setEditorData,
-    handleSave,
     handleAddGroup,
     handleUpdateGroup,
     handleRemoveGroup,
@@ -176,7 +177,6 @@ export const useLabelGroupsEditor = () => {
     getGroupTitles,
     validateGroupTitle,
     getLabelGroup,
-    canManageGroups: role === ToolsOzoneTeamDefs.ROLEADMIN,
   }
 }
 

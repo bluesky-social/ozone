@@ -1,6 +1,10 @@
 import { useState, useMemo } from 'react'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
-import { useLabelGroupsEditor, type LabelGroup } from './useLabelGroups'
+import {
+  useLabelGroupsData,
+  useLabelGroupsEditor,
+  type LabelGroup,
+} from './useLabelGroups'
 import { unique, getReadableTextColor } from '@/lib/util'
 import { ALL_LABELS, DEFAULT_LABEL_GROUP_COLOR } from '@/common/labels/util'
 import { Card } from '@/common/Card'
@@ -92,7 +96,7 @@ const GroupDropZone = ({
           : 'border-gray-200 dark:border-gray-700'
       }`}
     >
-      <div className="flex justify-between items-start mb-3">
+      <div className="flex justify-between items-start mb-2">
         <div className="flex-1">
           <h3 className="text-sm capitalize text-gray-900 dark:text-gray-100">
             {groupTitle}
@@ -110,6 +114,7 @@ const GroupDropZone = ({
             onClick={() =>
               setAddLabelState((prev) => ({ ...prev, show: !prev.show }))
             }
+            data-cy="add-group-button"
             title="Add label manually"
           >
             <PlusIcon className="h-3 w-3" />
@@ -124,7 +129,9 @@ const GroupDropZone = ({
           />
           <ActionButton
             size="sm"
+            title="Remove group"
             appearance="outlined"
+            data-cy="remove-group-button"
             onClick={() => onRemoveGroup(groupTitle)}
           >
             <TrashIcon className="h-3 w-3" />
@@ -133,10 +140,7 @@ const GroupDropZone = ({
       </div>
 
       <div>
-        <div className="flex justify-between items-center mb-2">
-          <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
-            Labels ({group.labels.length})
-          </p>
+        <div className="flex justify-between items-center">
           {isDragOver && (
             <p className="text-sm text-indigo-600 dark:text-indigo-400">
               Drop here to add label
@@ -197,6 +201,8 @@ const GroupDropZone = ({
                 size="sm"
                 appearance="outlined"
                 onClick={handleAddLabel}
+                title="Add custom label to the group"
+                data-cy="add-custom-label-button"
                 disabled={
                   !addLabelState.value.trim() ||
                   group.labels.includes(addLabelState.value.trim())
@@ -212,25 +218,10 @@ const GroupDropZone = ({
   )
 }
 
-export const LabelGroupsConfig = () => {
+// custom hook to abstract away external dependencies (context, auth, etc.)
+function useLabelGroupsBuilder() {
   const { config } = useConfigurationContext()
-  const {
-    editorData,
-    handleAddGroup,
-    handleRemoveGroup,
-    handleAddLabelToGroup,
-    handleRemoveLabelFromGroup,
-    handleUpdateGroup,
-    handleSave,
-    validateGroupTitle,
-    mutation,
-    canManageGroups,
-  } = useLabelGroupsEditor()
-
-  const [newGroupTitle, setNewGroupTitle] = useState('')
-  const [newGroupNote, setNewGroupNote] = useState('')
-  const [newGroupColor, setNewGroupColor] = useState(DEFAULT_LABEL_GROUP_COLOR)
-  const [draggedLabel, setDraggedLabel] = useState<string | null>(null)
+  const { initialSetting, mutation, canManageGroups } = useLabelGroupsData()
 
   const allLabels = useMemo(
     () =>
@@ -241,7 +232,67 @@ export const LabelGroupsConfig = () => {
     [config],
   )
 
-  // gather ungrouped labels
+  const handleSave = (editorData: Record<string, LabelGroup>) => {
+    if (editorData) {
+      mutation.mutate(editorData)
+    }
+  }
+
+  return {
+    initialData: initialSetting?.value || {},
+    allLabels,
+    canManageGroups,
+    mutation,
+
+    handleSave,
+  }
+}
+
+type LabelGroupsProps = {
+  initialData: Record<string, LabelGroup>
+  allLabels: string[]
+  canManageGroups: boolean
+  mutation: { isLoading: boolean }
+  handleSave: (editorData: Record<string, LabelGroup>) => void
+}
+
+export const LabelGroups = ({
+  initialData,
+  allLabels,
+  canManageGroups,
+  mutation,
+  handleSave,
+}: LabelGroupsProps) => {
+  const {
+    editorData,
+    handleAddGroup,
+    handleRemoveGroup,
+    handleAddLabelToGroup,
+    handleRemoveLabelFromGroup,
+    handleUpdateGroup,
+    validateGroupTitle,
+  } = useLabelGroupsEditor(initialData)
+  const [state, setState] = useState({
+    newGroupTitle: '',
+    newGroupNote: '',
+    newGroupColor: DEFAULT_LABEL_GROUP_COLOR,
+    draggedLabel: null as string | null,
+  })
+
+  // helpers to update individual state properties
+  const setNewGroupTitle = (title: string) =>
+    setState((prev) => ({ ...prev, newGroupTitle: title }))
+
+  const setNewGroupNote = (note: string) =>
+    setState((prev) => ({ ...prev, newGroupNote: note }))
+
+  const setNewGroupColor = (color: string) =>
+    setState((prev) => ({ ...prev, newGroupColor: color }))
+
+  const setDraggedLabel = (label: string | null) =>
+    setState((prev) => ({ ...prev, draggedLabel: label }))
+
+  // all ungrouped labels
   const ungroupedLabels = useMemo(() => {
     const groupedLabels = new Set<string>()
     Object.values(editorData).forEach((group) => {
@@ -252,17 +303,24 @@ export const LabelGroupsConfig = () => {
 
   const handleCreateGroup = (e: React.FormEvent) => {
     e.preventDefault()
-    const trimmedTitle = newGroupTitle.trim()
+    const trimmedTitle = state.newGroupTitle.trim()
     const error = validateGroupTitle(trimmedTitle)
     if (error) {
       return
     }
 
-    const success = handleAddGroup(trimmedTitle, newGroupNote, newGroupColor)
+    const success = handleAddGroup(
+      trimmedTitle,
+      state.newGroupNote,
+      state.newGroupColor,
+    )
     if (success) {
-      setNewGroupTitle('')
-      setNewGroupNote('')
-      setNewGroupColor(DEFAULT_LABEL_GROUP_COLOR)
+      setState((prev) => ({
+        ...prev,
+        newGroupTitle: '',
+        newGroupNote: '',
+        newGroupColor: DEFAULT_LABEL_GROUP_COLOR,
+      }))
     }
   }
 
@@ -276,6 +334,8 @@ export const LabelGroupsConfig = () => {
     setDraggedLabel(null)
   }
 
+  const trimmedGroupTitle = state.newGroupTitle.trim()
+  const validatedGroupTitle = validateGroupTitle(trimmedGroupTitle)
   if (!canManageGroups) {
     return (
       <div className="p-4 bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 rounded">
@@ -285,9 +345,6 @@ export const LabelGroupsConfig = () => {
       </div>
     )
   }
-
-  const trimmedGroupTitle = newGroupTitle.trim()
-  const validatedGroupTitle = validateGroupTitle(trimmedGroupTitle)
 
   return (
     <div id="configure-label-groups">
@@ -320,7 +377,7 @@ export const LabelGroupsConfig = () => {
                   required
                   type="text"
                   name="title"
-                  value={newGroupTitle}
+                  value={state.newGroupTitle}
                   className="w-full"
                   onChange={(e) => setNewGroupTitle(e.target.value)}
                   placeholder="NSFW, Account Labels etc."
@@ -337,12 +394,12 @@ export const LabelGroupsConfig = () => {
                   <input
                     type="color"
                     id="color"
-                    value={newGroupColor}
+                    value={state.newGroupColor}
                     onChange={(e) => setNewGroupColor(e.target.value)}
                     className="w-10 h-8 rounded border border-gray-300 dark:border-gray-600 cursor-pointer"
                   />
                   <span className="text-sm text-gray-600 dark:text-gray-400">
-                    {newGroupColor}
+                    {state.newGroupColor}
                   </span>
                 </div>
               </FormLabel>
@@ -350,7 +407,7 @@ export const LabelGroupsConfig = () => {
             <FormLabel htmlFor="note" label="Note">
               <Input
                 type="text"
-                value={newGroupNote}
+                value={state.newGroupNote}
                 placeholder="Optional note describing the group"
                 onChange={(e) => setNewGroupNote(e.target.value)}
                 className="w-full"
@@ -372,15 +429,16 @@ export const LabelGroupsConfig = () => {
               Drag and drop labels from here into groups
             </p>
           </div>
-          <div className="flex flex-wrap gap-2 border-t border-b border-gray-200 pb-2 dark:border-gray-700">
+          <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-2 dark:border-gray-700">
             {ungroupedLabels.map((label) => (
               <div
                 key={label}
                 draggable
+                data-cy="ungrouped-label"
                 onDragStart={(e) => handleDragStart(e, label)}
                 onDragEnd={handleDragEnd}
                 className={`text-xs px-2 py-1 rounded cursor-move select-none transition-colors ${
-                  draggedLabel === label
+                  state.draggedLabel === label
                     ? 'bg-blue-200 dark:bg-blue-700 text-blue-800 dark:text-blue-200'
                     : 'bg-gray-100 dark:bg-gray-600 text-gray-800 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-500'
                 }`}
@@ -402,7 +460,7 @@ export const LabelGroupsConfig = () => {
                 key={groupTitle}
                 groupTitle={groupTitle}
                 group={group}
-                draggedLabel={draggedLabel}
+                draggedLabel={state.draggedLabel}
                 onAddLabelToGroup={handleAddLabelToGroup}
                 onRemoveLabelFromGroup={handleRemoveLabelFromGroup}
                 onRemoveGroup={handleRemoveGroup}
@@ -425,7 +483,7 @@ export const LabelGroupsConfig = () => {
             <ActionButton
               appearance={mutation.isLoading ? 'outlined' : 'primary'}
               disabled={mutation.isLoading}
-              onClick={handleSave}
+              onClick={() => handleSave(editorData)}
               size="sm"
             >
               Save Groups
@@ -435,4 +493,9 @@ export const LabelGroupsConfig = () => {
       </Card>
     </div>
   )
+}
+
+export const LabelGroupsConfig = () => {
+  const props = useLabelGroupsBuilder()
+  return <LabelGroups {...props} />
 }
