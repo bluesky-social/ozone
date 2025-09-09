@@ -11,7 +11,7 @@ import Link from 'next/link'
 import { ActionButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { Checkbox } from '@/common/forms'
+import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { useActionCommunicationTemplates } from 'components/communication-template/action-template'
 import { useCommunicationTemplateList } from 'components/communication-template/hooks'
 import { Alert } from '@/common/Alert'
@@ -20,12 +20,11 @@ import { MOD_EVENTS } from '@/mod-event/constants'
 import { compileTemplateContent } from '@/email/helpers'
 import { executeBatchedOperation, pluralize } from '@/lib/util'
 import { getBatchId, regenerateBatchId } from '@/lib/batchId'
-import { ArrowPathIcon } from '@heroicons/react/24/solid'
-import { CopyButton } from '@/common/CopyButton'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
 } from '@/mod-event/helpers/emitEvent'
+import { ModToolForm } from '@/workspace/ModToolForm'
 
 const useRevokeCredentialsMutation = () => {
   const labelerAgent = useLabelerAgent()
@@ -34,6 +33,8 @@ const useRevokeCredentialsMutation = () => {
       accounts,
       emailTemplate,
       batchId,
+      comment,
+      externalUrl,
     }: {
       accounts: Array<{
         did: string
@@ -41,6 +42,8 @@ const useRevokeCredentialsMutation = () => {
       }>
       emailTemplate?: ToolsOzoneCommunicationDefs.TemplateView
       batchId?: string
+      comment?: string
+      externalUrl?: string
     }) => {
       let emailContent: string
       if (emailTemplate) {
@@ -64,17 +67,39 @@ const useRevokeCredentialsMutation = () => {
           items: accounts,
           batchSize: 25,
           operation: async (account) => {
-            await labelerAgent.com.atproto.temp.revokeCredentials({
+            const subject = {
+              $type: 'com.atproto.admin.defs#repoRef',
               did: account.did,
-            })
+            }
+            const modToolName = batchId
+              ? ActionPanelNames.Workspace
+              : ActionPanelNames.AccountManager
+            const modToolMeta = batchId
+              ? {
+                  batchId,
+                  externalUrl,
+                  batchSize: totalCount,
+                }
+              : undefined
+            await labelerAgent.tools.ozone.moderation.emitEvent(
+              hydrateModToolInfo(
+                {
+                  subject,
+                  event: {
+                    $type: MOD_EVENTS.REVOKE_ACCOUNT_CREDENTIALS,
+                    comment,
+                  },
+                  createdBy: labelerAgent.assertDid,
+                },
+                modToolName,
+                modToolMeta,
+              ),
+            )
             if (emailContent) {
               await labelerAgent.tools.ozone.moderation.emitEvent(
                 hydrateModToolInfo(
                   {
-                    subject: {
-                      $type: 'com.atproto.admin.defs#repoRef',
-                      did: account.did,
-                    },
+                    subject,
                     event: {
                       content: compileTemplateContent(emailContent, {
                         handle: account.handle,
@@ -85,15 +110,8 @@ const useRevokeCredentialsMutation = () => {
                     },
                     createdBy: labelerAgent.assertDid,
                   },
-                  batchId
-                    ? ActionPanelNames.Workspace
-                    : ActionPanelNames.AccountManager,
-                  batchId
-                    ? {
-                        batchId,
-                        batchSize: totalCount,
-                      }
-                    : undefined,
+                  modToolName,
+                  modToolMeta,
                 ),
               )
             }
@@ -148,19 +166,9 @@ const useRevokeCredentialsMutation = () => {
   })
 }
 
-export const RevokeCredentials = (props: {
-  accounts: Array<{ did: string; handle: string }>
-  onClose?: () => void
-}) => {
-  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false)
-  const [currentBatchId, setCurrentBatchId] = useState(getBatchId())
-  const {
-    mutate: revokeCredentials,
-    isLoading,
-    error,
-  } = useRevokeCredentialsMutation()
-  const { accounts, onClose } = props
-
+// keeping data management with outside deps together here to help test component separately (mutations, data fetching)
+function useRevokeCredentialsData() {
+  const mutation = useRevokeCredentialsMutation()
   const { data: actionTemplatesSetting } = useActionCommunicationTemplates()
   const { data: communicationTemplates } = useCommunicationTemplateList({})
 
@@ -171,7 +179,20 @@ export const RevokeCredentials = (props: {
           (template) => template.id === revokeCredentialsTemplateId,
         )
       : undefined
-  const templateName = emailTemplate?.name
+
+  return {
+    mutation,
+    emailTemplate,
+    revokeCredentialsTemplateId,
+  }
+}
+
+// custom hook managing local state
+function useRevokeCredentialsState() {
+  const [isRevokeModalOpen, setIsRevokeModalOpen] = useState(false)
+  const [currentBatchId, setCurrentBatchId] = useState(getBatchId())
+  const [comment, setComment] = useState('')
+  const [externalUrl, setExternalUrl] = useState('')
 
   const handleRegenerateBatchId = () => {
     const newBatchId = regenerateBatchId()
@@ -179,9 +200,57 @@ export const RevokeCredentials = (props: {
     toast.success('Batch ID updated')
   }
 
+  return {
+    isRevokeModalOpen,
+    setIsRevokeModalOpen,
+    currentBatchId,
+    setCurrentBatchId,
+    comment,
+    setComment,
+    externalUrl,
+    setExternalUrl,
+    handleRegenerateBatchId,
+  }
+}
+
+type RevokeCredentialsFormProps = {
+  accounts: Array<{ did: string; handle: string }>
+  onClose?: () => void
+  revokeCredentials: ReturnType<typeof useRevokeCredentialsMutation>['mutate']
+  isLoading: boolean
+  error: ReturnType<typeof useRevokeCredentialsMutation>['error']
+  emailTemplate?: ToolsOzoneCommunicationDefs.TemplateView
+  revokeCredentialsTemplateId?: string
+}
+
+export const RevokeCredentialsForm = ({
+  accounts,
+  onClose,
+  revokeCredentials,
+  isLoading,
+  error,
+  emailTemplate,
+  revokeCredentialsTemplateId,
+}: RevokeCredentialsFormProps) => {
+  const {
+    isRevokeModalOpen,
+    setIsRevokeModalOpen,
+    currentBatchId,
+    setCurrentBatchId,
+    comment,
+    setComment,
+    externalUrl,
+    setExternalUrl,
+    handleRegenerateBatchId,
+  } = useRevokeCredentialsState()
+
+  const templateName = emailTemplate?.name
+
   const handleRevokeCredentials = () => {
     revokeCredentials(
       {
+        comment,
+        externalUrl,
         accounts,
         emailTemplate,
         batchId: shouldShowBatchId ? currentBatchId : undefined,
@@ -197,10 +266,7 @@ export const RevokeCredentials = (props: {
     )
   }
 
-  // batch id is only needed when actioning multiple accounts from workspace
-  // this component is also shown in repository page for single account where we wont need batch id
-  const shouldShowBatchId = accounts.length > 1 && !!emailTemplate
-
+  const shouldShowBatchId = accounts.length > 1
   const accountText =
     accounts.length === 1
       ? `@${accounts[0].handle}`
@@ -213,9 +279,20 @@ export const RevokeCredentials = (props: {
       </h3>
       <p className="text-gray-700 dark:text-gray-300 text-sm mb-2">
         Revoking account credentials will remove all active session tokens,
-        revoke all app passwords and force password reset for the selected{' '}
-        {pluralize(accounts.length, 'user')}.
+        revoke all app passwords and force password reset for {accountText}.
       </p>
+
+      <FormLabel label="Reason (optional)" htmlFor="comment" className="mb-3">
+        <Input
+          autoFocus
+          type="text"
+          name="comment"
+          value={comment}
+          className="block w-full"
+          onChange={(e) => setComment(e.target.value)}
+          placeholder="Account was compromised/User contacted support etc."
+        />
+      </FormLabel>
 
       {revokeCredentialsTemplateId && templateName ? (
         <Checkbox
@@ -258,34 +335,12 @@ export const RevokeCredentials = (props: {
       )}
 
       {shouldShowBatchId && (
-        <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                Batch ID:
-              </span>
-              <span className="ml-2 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                {currentBatchId}
-              </span>
-            </div>
-            <div>
-              <CopyButton
-                text={currentBatchId}
-                className="mr-2"
-                labelText="Batch ID "
-                title={`Copy batch id to clipboard`}
-              />
-              <button
-                type="button"
-                onClick={handleRegenerateBatchId}
-                className="text-xs text-white transition-colors"
-                title="Regenerate Batch ID"
-              >
-                <ArrowPathIcon className="h-3 w-3 text-gray-500 dark:text-gray-300" />
-              </button>
-            </div>
-          </div>
-        </div>
+        <ModToolForm
+          externalUrl={externalUrl}
+          setExternalUrl={setExternalUrl}
+          currentBatchId={currentBatchId}
+          handleRegenerateBatchId={handleRegenerateBatchId}
+        />
       )}
 
       <ActionButton
@@ -318,6 +373,26 @@ export const RevokeCredentials = (props: {
         error={error?.message}
       />
     </div>
+  )
+}
+
+// wrappercomponent that combines external dependencies and pure component
+export const RevokeCredentials = (props: {
+  accounts: Array<{ did: string; handle: string }>
+  onClose?: () => void
+}) => {
+  const { mutation, emailTemplate, revokeCredentialsTemplateId } =
+    useRevokeCredentialsData()
+
+  return (
+    <RevokeCredentialsForm
+      {...props}
+      revokeCredentials={mutation.mutate}
+      error={mutation.error}
+      isLoading={mutation.isLoading}
+      emailTemplate={emailTemplate}
+      revokeCredentialsTemplateId={revokeCredentialsTemplateId}
+    />
   )
 }
 

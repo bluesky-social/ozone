@@ -25,6 +25,8 @@ export const MOD_EVENTS = {
   AGE_ASSURANCE: 'tools.ozone.moderation.defs#ageAssuranceEvent',
   AGE_ASSURANCE_OVERRIDE:
     'tools.ozone.moderation.defs#ageAssuranceOverrideEvent',
+  REVOKE_ACCOUNT_CREDENTIALS:
+    'tools.ozone.moderation.defs#revokeAccountCredentialsEvent',
 } as const
 
 export const MOD_EVENT_TITLES = {
@@ -53,6 +55,7 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.REVOKE_VERIFIER]: 'Revoke Trusted Verifier',
   [MOD_EVENTS.AGE_ASSURANCE]: 'Age Assurance',
   [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'Age Assurance Override',
+  [MOD_EVENTS.REVOKE_ACCOUNT_CREDENTIALS]: 'Revoke Account Credentials',
 }
 
 export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'
