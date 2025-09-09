@@ -409,7 +409,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                   </>
                 )}
                 {showAccountActions && (
-                  <div className="mb-3">
+                  <div className="mb-3 md:w-1/2 sm:w-2/3">
                     <RevokeCredentials
                       accounts={Object.values(workspaceListStatuses || {})
                         .filter((item) => item.subject.startsWith('did:'))
