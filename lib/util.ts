@@ -197,8 +197,17 @@ export interface BatchedOperationOptions<T, R> {
   operation: (item: T) => Promise<R>
   isRateLimit?: (error: any) => boolean
   onBatchStart?: (batchIndex: number, totalBatches: number) => void
-  onBatchProgress?: (processed: number, failed: number, total: number, batchIndex: number, totalBatches: number, retryAttempt?: number) => void
-  onBatchComplete?: (results: Array<{ item: T; success: boolean; result?: R; error?: string }>) => void
+  onBatchProgress?: (
+    processed: number,
+    failed: number,
+    total: number,
+    batchIndex: number,
+    totalBatches: number,
+    retryAttempt?: number,
+  ) => void
+  onBatchComplete?: (
+    results: Array<{ item: T; success: boolean; result?: R; error?: string }>,
+  ) => void
 }
 
 export interface BatchedOperationResult<T, R> {
@@ -214,13 +223,21 @@ export async function executeBatchedOperation<T, R>({
   maxRetries = 3,
   retryDelay = 3000,
   operation,
-  isRateLimit = (error) => error?.status === 429 || error?.message?.includes('rate limit') || error?.message?.includes('429'),
+  isRateLimit = (error) =>
+    error?.status === 429 ||
+    error?.message?.includes('rate limit') ||
+    error?.message?.includes('429'),
   onBatchStart,
   onBatchProgress,
   onBatchComplete,
 }: BatchedOperationOptions<T, R>): Promise<BatchedOperationResult<T, R>> {
   const chunks = chunkArray(items, batchSize)
-  const results: Array<{ item: T; success: boolean; result?: R; error?: string }> = []
+  const results: Array<{
+    item: T
+    success: boolean
+    result?: R
+    error?: string
+  }> = []
   let processed = 0
   let failed = 0
   const totalCount = items.length
@@ -233,7 +250,14 @@ export async function executeBatchedOperation<T, R>({
 
     while (retryCount <= maxRetries) {
       try {
-        onBatchProgress?.(processed, failed, totalCount, i, chunks.length, retryCount > 0 ? retryCount : undefined)
+        onBatchProgress?.(
+          processed,
+          failed,
+          totalCount,
+          i,
+          chunks.length,
+          retryCount > 0 ? retryCount : undefined,
+        )
 
         const chunkResults = await Promise.allSettled(
           chunk.map(async (item) => {
@@ -244,10 +268,10 @@ export async function executeBatchedOperation<T, R>({
               return {
                 item,
                 success: false as const,
-                error: error?.message || 'Unknown error'
+                error: error?.message || 'Unknown error',
               }
             }
-          })
+          }),
         )
 
         let hasRateLimitError = false
@@ -267,7 +291,7 @@ export async function executeBatchedOperation<T, R>({
             results.push({
               item: chunk[chunkResults.indexOf(chunkResult)],
               success: false,
-              error: chunkResult.reason?.message || 'Unknown error'
+              error: chunkResult.reason?.message || 'Unknown error',
             })
             failed++
             if (isRateLimit && isRateLimit(chunkResult.reason)) {
@@ -280,20 +304,20 @@ export async function executeBatchedOperation<T, R>({
           break
         } else if (retryCount < maxRetries) {
           retryCount++
-          await new Promise(resolve => setTimeout(resolve, retryDelay))
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
         } else {
           break
         }
       } catch (error: any) {
         if (isRateLimit && isRateLimit(error) && retryCount < maxRetries) {
           retryCount++
-          await new Promise(resolve => setTimeout(resolve, retryDelay))
+          await new Promise((resolve) => setTimeout(resolve, retryDelay))
         } else {
           chunk.forEach((item) => {
             results.push({
               item,
               success: false,
-              error: error?.message || 'Unknown error'
+              error: error?.message || 'Unknown error',
             })
             failed++
           })
@@ -305,12 +329,22 @@ export async function executeBatchedOperation<T, R>({
 
   const finalResults = {
     results,
-    successCount: results.filter(r => r.success).length,
-    failedCount: results.filter(r => !r.success).length,
-    totalCount
+    successCount: results.filter((r) => r.success).length,
+    failedCount: results.filter((r) => !r.success).length,
+    totalCount,
   }
 
   onBatchComplete?.(results)
 
   return finalResults
+}
+
+// Utility function to determine if we should use light or dark text based on background color
+export function getReadableTextColor(backgroundColor: string) {
+  const hex = backgroundColor.replace('#', '')
+  const r = parseInt(hex.substring(0, 2), 16)
+  const g = parseInt(hex.substring(2, 4), 16)
+  const b = parseInt(hex.substring(4, 6), 16)
+  const brightness = (r * 299 + g * 587 + b * 114) / 1000
+  return brightness > 128 ? 'text-gray-900' : 'text-white'
 }

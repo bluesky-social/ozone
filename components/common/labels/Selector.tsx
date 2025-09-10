@@ -2,8 +2,11 @@ import { useMemo, useState } from 'react'
 
 import { unique } from '@/lib/util'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
+import { useLabelGroups, type LabelGroup } from '@/config/useLabelGroups'
 import { Input } from '../forms'
 import { ALL_LABELS } from './util'
+import { QuestionMarkCircleIcon } from '@heroicons/react/24/solid'
+import { LabelChip } from './LabelChip'
 
 const EMPTY_ARR = []
 
@@ -19,6 +22,7 @@ export const LabelSelector = (props: LabelsProps) => {
   const { config } = useConfigurationContext()
   const [query, setQuery] = useState<string>('')
   const [selectedLabels, setSelectedLabels] = useState<string[]>(defaultLabels)
+  const labelGroups = useLabelGroups()
 
   const selectorOptions = useMemo(
     () =>
@@ -38,9 +42,38 @@ export const LabelSelector = (props: LabelsProps) => {
     [config, query, selectedLabels],
   )
 
-  // Function to toggle label selection
-  const toggleLabel = (label) => {
-    const isSelected = selectedLabels.find((l) => l === label)
+  const organizedLabels = useMemo(() => {
+    if (!labelGroups || !selectorOptions.length) {
+      return { Ungrouped: selectorOptions }
+    }
+
+    const grouped: Record<string, string[]> = {}
+    const groupedLabels = new Set<string>()
+
+    // show labels in configured groups
+    Object.entries(labelGroups).forEach(([groupName, groupData]) => {
+      const groupLabels = selectorOptions.filter((label) =>
+        (groupData as LabelGroup).labels.includes(label),
+      )
+      if (groupLabels.length > 0) {
+        grouped[groupName] = groupLabels
+        groupLabels.forEach((label) => groupedLabels.add(label))
+      }
+    })
+
+    // when grouping exists, put remaining labels to "Ungrouped" option
+    const remainingLabels = selectorOptions.filter(
+      (label) => !groupedLabels.has(label),
+    )
+    if (remainingLabels.length > 0) {
+      grouped['Ungrouped'] = remainingLabels
+    }
+
+    return grouped
+  }, [labelGroups, selectorOptions])
+
+  const toggleLabel = (label: string) => {
+    const isSelected = selectedLabels.some((l) => l === label)
     let newSelectedLabels: string[] = []
     if (isSelected) {
       newSelectedLabels = selectedLabels.filter((l) => l !== label)
@@ -68,27 +101,42 @@ export const LabelSelector = (props: LabelsProps) => {
         placeholder="Search or add your own label"
         onChange={(e) => setQuery(e.currentTarget.value)}
       />
-      <div className="flex flex-wrap" data-cy="label-selector-buttons">
+      <div data-cy="label-selector-buttons">
         {selectorOptions?.length ? (
-          selectorOptions.map((label) => {
-            const selectedLabel = selectedLabels.find((l) => l === label)
-            const isSelected = !!selectedLabel
+          Object.entries(organizedLabels).map(([groupName, groupLabels]) => (
+            <div key={groupName} className="mb-2">
+              <div className="mb-1">
+                <h3 className="text-sm font-medium text-gray-700 dark:text-gray-100">
+                  {groupName}
 
-            return (
-              <button
-                key={label}
-                type="button"
-                className={`mr-1 my-1 px-2 py-0.5 text-xs rounded-md ${
-                  isSelected
-                    ? 'bg-indigo-600 border-indigo-500 text-white dark:bg-teal-600 dark:border-teal-500'
-                    : 'bg-white dark:bg-gray-600 dark:border-slate-500'
-                } inline-flex items-center border`}
-                onClick={() => toggleLabel(label)}
-              >
-                {label}
-              </button>
-            )
-          })
+                  {labelGroups?.[groupName]?.note && (
+                    <button
+                      type="button"
+                      title={labelGroups[groupName].note}
+                    >
+                      <QuestionMarkCircleIcon className="inline-block ml-1 h-4 w-4 text-gray-700 dark:text-gray-300" />
+                    </button>
+                  )}
+                </h3>
+              </div>
+              <div className="flex flex-wrap">
+                {groupLabels.map((label) => {
+                  const isSelected = selectedLabels.some((l) => l === label)
+
+                  return (
+                    <LabelChip
+                      key={label}
+                      labelValue={label}
+                      labelGroups={labelGroups}
+                      isSelected={isSelected}
+                      interactive={true}
+                      onClick={() => toggleLabel(label)}
+                    />
+                  )
+                })}
+              </div>
+            </div>
+          ))
         ) : (
           <div className="text-gray-500 dark:text-gray-400">
             No labels found.{' '}

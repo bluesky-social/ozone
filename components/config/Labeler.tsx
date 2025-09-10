@@ -16,6 +16,7 @@ import { QueueSetting } from 'components/setting/Queue'
 import { toast } from 'react-toastify'
 import { LabelerRecordView } from 'components/labeler/RecordView'
 import { ActionTemplateConfig } from 'components/communication-template/action-template'
+import { LabelGroupsConfig } from './LabelGroups'
 
 export function LabelerConfig() {
   const { config, isServiceAccount } = useConfigurationContext()
@@ -40,6 +41,7 @@ export function LabelerConfig() {
       <ServerConfig />
       <QueueSetting />
       <ActionTemplateConfig />
+      <LabelGroupsConfig />
       <LocalPreferences />
       <ExternalLabelerConfig />
     </div>

@@ -18,7 +18,9 @@ import {
 } from '@heroicons/react/24/outline'
 import { ComponentProps, Fragment } from 'react'
 import { useLabelerDefinitionQuery } from './useLabelerDefinition'
-import { isSelfLabel, toLabelVal } from './util'
+import { DEFAULT_LABEL_GROUP_COLOR, isSelfLabel, toLabelVal } from './util'
+import { useLabelGroups } from '@/config/useLabelGroups'
+import { getLabelColorConfig, getGroupInfo } from './LabelChip'
 
 export function LabelList(props: ComponentProps<'div'>) {
   const { className = '', ...others } = props
@@ -42,9 +44,13 @@ export function LabelListEmpty(props: ComponentProps<'div'>) {
 
 export function LabelChip(props: ComponentProps<'span'>) {
   const { className = '', ...others } = props
+
   return (
     <span
-      className={`inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 font-semibold ${className}`}
+      className={classNames(
+        `inline-flex mx-1 items-center rounded-md px-2 py-0.5 text-xs font-medium bg-gray-100 font-semibold ${className}`,
+        !className.includes('text-') ? 'text-gray-600' : '',
+      )}
       {...others}
     />
   )
@@ -54,31 +60,44 @@ const getLabelChipClassNames = ({
   label,
   isSelfLabeled = false,
   labelDefFromService,
+  groupColor,
 }: {
   label: ComAtprotoLabelDefs.Label
   isSelfLabeled: boolean
   labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition
+  groupColor?: string
 }) => {
-  const wrapper: string[] = []
-  const text: string[] = []
+  const colorConfig = getLabelColorConfig(
+    label.val,
+    isSelfLabeled,
+    labelDefFromService,
+    groupColor
+      ? { [label.val]: { labels: [label.val], color: groupColor } }
+      : undefined,
+  )
 
-  if (isSelfLabeled) {
-    wrapper.push('bg-green-200 text-green-700')
-    text.push('text-green-700')
-  } else if (labelDefFromService) {
-    if (labelDefFromService.severity === 'alert') {
-      wrapper.push('bg-red-200 text-red-700')
-      text.push('text-red-700')
-    } else if (labelDefFromService.blurs === 'content') {
-      wrapper.push('bg-indigo-200 text-indigo-700')
-      text.push('text-indigo-700')
-    } else if (labelDefFromService.blurs === 'media') {
-      wrapper.push('bg-yellow-200 text-yellow-700')
-      text.push('text-yellow-700')
+  // Build wrapper classes for non-group colors
+  const wrapper: string[] = []
+  if (!colorConfig.hasGroupColor) {
+    if (isSelfLabeled) {
+      wrapper.push('bg-green-200 text-green-700')
+    } else if (labelDefFromService) {
+      if (labelDefFromService.severity === 'alert') {
+        wrapper.push('bg-red-200 text-red-700')
+      } else if (labelDefFromService.blurs === 'content') {
+        wrapper.push('bg-indigo-200 text-indigo-700')
+      } else if (labelDefFromService.blurs === 'media') {
+        wrapper.push('bg-yellow-200 text-yellow-700')
+      }
     }
   }
 
-  return { wrapper: classNames(...wrapper), text: classNames(...text) }
+  return {
+    wrapper: classNames(...wrapper),
+    text: colorConfig.textColor,
+    hasGroupColor: colorConfig.hasGroupColor,
+    groupColor: colorConfig.backgroundColor,
+  }
 }
 
 /*
@@ -97,6 +116,7 @@ export const ModerationLabel = ({
   recordAuthorDid?: string
 } & ComponentProps<'span'>) => {
   const { data: labelerServiceDef } = useLabelerDefinitionQuery(label.src)
+  const labelGroups = useLabelGroups()
   const isFromCurrentService = label.src === OZONE_SERVICE_DID
 
   const labelVal = toLabelVal(label, recordAuthorDid)
@@ -104,10 +124,15 @@ export const ModerationLabel = ({
   const labelDefFromService =
     labelerServiceDef?.policies.definitionById?.[label.val]
   const labelerProfile = labelerServiceDef?.creator
+
+  // Use shared utility to get group info
+  const groupInfo = getGroupInfo(label.val, labelGroups)
+
   const labelClassNames = getLabelChipClassNames({
     label,
     isSelfLabeled,
     labelDefFromService,
+    groupColor: groupInfo?.color,
   })
 
   return (
@@ -116,28 +141,31 @@ export const ModerationLabel = ({
         <>
           <PopoverButton className="ring-none">
             <LabelChip
-              className={classNames(...[labelClassNames.wrapper, className])}
+              className={classNames(
+                labelClassNames.wrapper,
+                labelClassNames.text,
+                className,
+              )}
+              style={
+                labelClassNames.hasGroupColor
+                  ? { backgroundColor: labelClassNames.groupColor }
+                  : undefined
+              }
               {...props}
             >
               {isFromCurrentService && (
                 <HomeIcon
-                  className={classNames(
-                    ...['h-3 w-3 mr-1', labelClassNames.text],
-                  )}
+                  className={classNames('h-3 w-3 mr-1', labelClassNames.text)}
                 />
               )}
               {isSelfLabeled && (
                 <TagIcon
-                  className={classNames(
-                    ...['h-3 w-3 mr-1', labelClassNames.text],
-                  )}
+                  className={classNames('h-3 w-3 mr-1', labelClassNames.text)}
                 />
               )}
               {label.exp && (
                 <ClockIcon
-                  className={classNames(
-                    ...['h-3 w-3 mr-1', labelClassNames.text],
-                  )}
+                  className={classNames('h-3 w-3 mr-1', labelClassNames.text)}
                 />
               )}
               {labelVal}
@@ -161,6 +189,8 @@ export const ModerationLabel = ({
                     labelerProfile={labelerProfile}
                     isSelfLabeled={isSelfLabeled}
                     label={label}
+                    groupName={groupInfo?.name}
+                    groupColor={groupInfo?.color}
                   />
                 </div>
               </div>
@@ -178,12 +208,16 @@ export const LabelDefinition = ({
   isSelfLabeled,
   labelerProfile,
   label,
+  groupName,
+  groupColor,
 }: {
   labelerProfile?: AppBskyActorDefs.ProfileView
   isSelfLabeled: boolean
   isFromCurrentService: boolean
   label: ComAtprotoLabelDefs.Label
   labelDefFromService?: ComAtprotoLabelDefs.LabelValueDefinition
+  groupName?: string
+  groupColor?: string
 }) => {
   if (isSelfLabeled) {
     return (
@@ -235,6 +269,26 @@ export const LabelDefinition = ({
     </div>
   )
 
+  const groupInfo = groupName && (
+    <div className="flex flex-row items-start leading-4">
+      <div
+        className="h-4 w-4 mr-1 mt-0.5 rounded-sm border border-gray-300"
+        style={{ backgroundColor: groupColor || DEFAULT_LABEL_GROUP_COLOR }}
+      />
+      <p className="italic">
+        This label belongs to the{' '}
+        <a
+          target="_blank"
+          className="underline"
+          href={`/configure#configure-label-groups`}
+        >
+          {groupName}
+        </a>{' '}
+        group
+      </p>
+    </div>
+  )
+
   return (
     <>
       <div className="px-4 py-3">
@@ -253,8 +307,11 @@ export const LabelDefinition = ({
             <p className="leading-4 pb-3">{labelerProfile.description}</p>
           </>
         )}
-        {currentServiceReminder}
-        {temporaryWarning}
+        <div className="space-y-2">
+          {currentServiceReminder}
+          {groupInfo}
+          {temporaryWarning}
+        </div>
       </div>
 
       <div className="bg-gray-50 dark:bg-slate-600 px-4 py-3">
