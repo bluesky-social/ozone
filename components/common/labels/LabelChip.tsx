@@ -17,10 +17,10 @@ export const getLabelColorConfig = (
 ): LabelColorConfig => {
   // Group color has the highest priority
   if (labelGroups) {
-    const labelGroup = Object.entries(labelGroups).find(([_, group]) =>
+    const labelGroup = Object.values(labelGroups).find((group) =>
       group.labels.includes(labelValue),
     )
-    const groupColor = labelGroup?.[1]?.color
+    const groupColor = labelGroup?.color
 
     if (groupColor) {
       return {
@@ -77,11 +77,8 @@ export const getGroupInfo = (
 
   if (!labelGroup) return null
 
-  return {
-    name: labelGroup[0],
-    color: labelGroup[1]?.color,
-    note: labelGroup[1]?.note,
-  }
+  const [name, group] = labelGroup
+  return { name, ...group }
 }
 
 export const getLabelWrapperClasses = (
