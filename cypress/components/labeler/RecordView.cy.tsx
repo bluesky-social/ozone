@@ -1,5 +1,6 @@
 /// <reference types="cypress" />
 import React from 'react'
+import '../../../styles/globals.css'
 import { AppBskyLabelerService, ComAtprotoModerationDefs } from '@atproto/api'
 import { deepCopy } from '../../support/utils'
 import { LabelerRecordView } from '../../../components/labeler/RecordView'
@@ -93,7 +94,7 @@ describe('<LabelerRecordView />', () => {
     // Assert that subject collections field is not shown when subject types does not contain record
     cy.get('h3').contains('Subject Collections').should('not.exist')
   })
-  it.only('Shows label only editor view when a detailed definition doesnt exist', () => {
+  it('Shows label only editor view when a detailed definition doesnt exist', () => {
     const labelOnly: AppBskyLabelerService.Record = deepCopy(basicLabelerRecord)
 
     const onUpdateSpy = cy.spy().as('onUpdateSpy')

@@ -37,11 +37,11 @@ describe('Mod Action -> Label', () => {
     )
     cy.get('[data-cy="mod-event-selector"] button').click()
     cy.get('[data-headlessui-state="open"] > a:contains("Label")').click()
-    cy.get('[data-cy="label-selector-buttons"] button')
+    cy.get('[data-cy="label-selector-buttons"] span')
       .contains(seedFixture.carla.repo.labels[0].val)
       .click()
     cy.get(
-      `[data-cy="label-selector-buttons"] button:contains("${NUDITY_LABEL}")`,
+      `[data-cy="label-selector-buttons"] span:contains("${NUDITY_LABEL}")`,
     ).click()
     cy.get('#mod-action-panel button[type="submit"]').click()
 
@@ -87,7 +87,7 @@ describe('Mod Action -> Label', () => {
     cy.get('button')
       .contains(`Click here to add ${TEST_LABEL} as a label.`)
       .click()
-    cy.get('[data-cy="label-selector-buttons"] button').contains(TEST_LABEL)
+    cy.get('[data-cy="label-selector-buttons"] span').contains(TEST_LABEL)
     cy.get('#mod-action-panel button[type="submit"]').click()
 
     cy.intercept(

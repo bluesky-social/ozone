@@ -48,7 +48,7 @@ describe('Mod Action -> Label', () => {
     cy.get('[data-cy="label-list"]').contains(PORN_LABEL)
     cy.get('[data-cy="mod-event-selector"] button').click()
     cy.get('[data-headlessui-state="open"] > a:contains("Label")').click()
-    cy.get('[data-cy="label-selector-buttons"] button')
+    cy.get('[data-cy="label-selector-buttons"] span')
       .contains(PORN_LABEL)
       .click()
 

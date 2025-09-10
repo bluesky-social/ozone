@@ -115,3 +115,5 @@ export const getLabelsForSubject = ({
 }) => {
   return record?.labels ?? repo?.labels ?? []
 }
+
+export const DEFAULT_LABEL_GROUP_COLOR = '#6366f1'
