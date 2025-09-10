@@ -419,6 +419,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                             handle: item.repo?.handle || 'Unknown Handle',
                           }
                         })}
+                      onSuccess={(dids) => {
+                        removeItemsMutation.mutate(dids)
+                      }}
                       onClose={() => setShowAccountActions(false)}
                     />
                   </div>

@@ -216,6 +216,7 @@ function useRevokeCredentialsState() {
 type RevokeCredentialsFormProps = {
   accounts: Array<{ did: string; handle: string }>
   onClose?: () => void
+  onSuccess?: (dids: string[]) => void
   revokeCredentials: ReturnType<typeof useRevokeCredentialsMutation>['mutate']
   isLoading: boolean
   error: ReturnType<typeof useRevokeCredentialsMutation>['error']
@@ -231,6 +232,7 @@ export const RevokeCredentialsForm = ({
   error,
   emailTemplate,
   revokeCredentialsTemplateId,
+  onSuccess,
 }: RevokeCredentialsFormProps) => {
   const {
     isRevokeModalOpen,
@@ -256,10 +258,11 @@ export const RevokeCredentialsForm = ({
         batchId: shouldShowBatchId ? currentBatchId : undefined,
       },
       {
-        onSuccess: () => {
+        onSuccess: (data) => {
           setIsRevokeModalOpen(false)
           const newBatchId = regenerateBatchId()
           setCurrentBatchId(newBatchId)
+          onSuccess?.(data.results.map((r) => r.item.did))
           onClose?.()
         },
       },
@@ -380,6 +383,7 @@ export const RevokeCredentialsForm = ({
 export const RevokeCredentials = (props: {
   accounts: Array<{ did: string; handle: string }>
   onClose?: () => void
+  onSuccess?: (dids: string[]) => void
 }) => {
   const { mutation, emailTemplate, revokeCredentialsTemplateId } =
     useRevokeCredentialsData()

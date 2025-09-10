@@ -195,7 +195,6 @@ export interface BatchedOperationOptions<T, R> {
   maxRetries?: number
   retryDelay?: number
   operation: (item: T) => Promise<R>
-  isRateLimit?: (error: any) => boolean
   onBatchStart?: (batchIndex: number, totalBatches: number) => void
   onBatchProgress?: (
     processed: number,
@@ -217,16 +216,29 @@ export interface BatchedOperationResult<T, R> {
   totalCount: number
 }
 
+/**
+ * given an array of items to process through http api calls (or any async operation) this function
+ * will process them in batches, handling rate limits and retries as needed.
+ *
+ * - Items are processed in parallel within each batch for performance
+ * - On rate limit (429 status), successful items in batch are kept, only failed items are retried
+ * - Non-rate-limit errors cause individual items to fail but don't trigger retries
+ * - Progress callbacks are called for each batch attempt, including retries
+ *
+ * - If maxRetries is reached for rate limits, remaining items are marked as failed
+ * - Empty items array returns immediately with zero counts
+ * - Callback errors don't affect the main operation flow
+ * - Operation timeouts/network errors are treated as regular failures, not rate limits
+ *
+ * @param options Configuration object with items, operation, and optional callbacks
+ * @returns Promise resolving to results with success/failure counts and detailed item results
+ */
 export async function executeBatchedOperation<T, R>({
   items,
   batchSize = 25,
   maxRetries = 3,
   retryDelay = 3000,
   operation,
-  isRateLimit = (error) =>
-    error?.status === 429 ||
-    error?.message?.includes('rate limit') ||
-    error?.message?.includes('429'),
   onBatchStart,
   onBatchProgress,
   onBatchComplete,
@@ -243,7 +255,7 @@ export async function executeBatchedOperation<T, R>({
   const totalCount = items.length
 
   for (let i = 0; i < chunks.length; i++) {
-    const chunk = chunks[i]
+    let chunk = chunks[i]
     let retryCount = 0
 
     onBatchStart?.(i, chunks.length)
@@ -259,6 +271,7 @@ export async function executeBatchedOperation<T, R>({
           retryCount > 0 ? retryCount : undefined,
         )
 
+        // handle items in parallel, but fail fast on rate limits
         const chunkResults = await Promise.allSettled(
           chunk.map(async (item) => {
             try {
@@ -269,60 +282,82 @@ export async function executeBatchedOperation<T, R>({
                 item,
                 success: false as const,
                 error: error?.message || 'Unknown error',
+                originalError: error,
               }
             }
           }),
         )
 
-        let hasRateLimitError = false
-        chunkResults.forEach((chunkResult) => {
+        let rateLimitError: any = null
+        const successfulItems: typeof results = []
+        const failedItems: typeof results = []
+
+        chunkResults.forEach((chunkResult, idx) => {
           if (chunkResult.status === 'fulfilled') {
             const result = chunkResult.value
-            results.push(result)
             if (result.success) {
-              processed++
+              successfulItems.push(result)
             } else {
-              failed++
-              if (isRateLimit && isRateLimit({ message: result.error })) {
-                hasRateLimitError = true
+              failedItems.push(result)
+              // Check if this is a rate limit error
+              if ((result as any).originalError?.status === 429) {
+                rateLimitError = (result as any).originalError
               }
             }
           } else {
-            results.push({
-              item: chunk[chunkResults.indexOf(chunkResult)],
+            // Promise itself rejected - shouldn't happen with our setup but handle it
+            const item = chunk[idx]
+            failedItems.push({
+              item,
               success: false,
               error: chunkResult.reason?.message || 'Unknown error',
             })
-            failed++
-            if (isRateLimit && isRateLimit(chunkResult.reason)) {
-              hasRateLimitError = true
-            }
           }
         })
 
-        if (!hasRateLimitError) {
-          break
-        } else if (retryCount < maxRetries) {
-          retryCount++
-          await new Promise((resolve) => setTimeout(resolve, retryDelay))
-        } else {
-          break
-        }
-      } catch (error: any) {
-        if (isRateLimit && isRateLimit(error) && retryCount < maxRetries) {
-          retryCount++
-          await new Promise((resolve) => setTimeout(resolve, retryDelay))
-        } else {
-          chunk.forEach((item) => {
-            results.push({
-              item,
-              success: false,
-              error: error?.message || 'Unknown error',
-            })
+        // Add successful items to results immediately
+        successfulItems.forEach((result) => {
+          results.push(result)
+          processed++
+        })
+
+        // If rate limit hit, only retry the failed items, otherwise add failed items to results
+        if (!rateLimitError) {
+          failedItems.forEach((result) => {
+            results.push(result)
             failed++
           })
-          break
+          break // Batch completed
+        } else {
+          // Rate limit hit - update chunk to only contain failed items for retry
+          chunk = failedItems.map((result) => result.item)
+          if (retryCount < maxRetries) {
+            retryCount++
+            await new Promise((resolve) => setTimeout(resolve, retryDelay))
+          } else {
+            // Max retries reached - add remaining failed items to results
+            failedItems.forEach((result) => {
+              results.push({
+                ...result,
+                error:
+                  result.error || 'Rate limit exceeded - max retries reached',
+              })
+              failed++
+            })
+            break
+          }
         }
+      } catch (error: any) {
+        // Catch-all for unexpected errors
+        chunk.forEach((item) => {
+          results.push({
+            item,
+            success: false,
+            error: error?.message || 'Unknown error',
+          })
+          failed++
+        })
+        break
       }
     }
   }
