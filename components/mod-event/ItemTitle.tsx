@@ -109,6 +109,10 @@ export const ItemTitle = ({
     eventColor = 'text-orange-400'
     eventTitle = 'Age assurance overridden'
   }
+  if (modEvent.event.$type === MOD_EVENTS.REVOKE_ACCOUNT_CREDENTIALS) {
+    eventColor = 'text-orange-700'
+    eventTitle = 'Account credentials revoked'
+  }
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus
     : modEvent.record

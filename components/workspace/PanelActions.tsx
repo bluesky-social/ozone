@@ -1,6 +1,11 @@
 import { ActionButton } from '@/common/buttons'
 import { CopyButton } from '@/common/CopyButton'
-import { NoSymbolIcon, PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
+import {
+  LockClosedIcon,
+  NoSymbolIcon,
+  PlusIcon,
+  TrashIcon,
+} from '@heroicons/react/24/solid'
 import { WorkspaceFilterSelector } from './FilterSelector'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { BulkVerificationActionButton } from 'components/verification/ActionButton'
@@ -13,6 +18,8 @@ export const WorkspacePanelActions = ({
   setShowActionForm,
   setShowItemCreator,
   showActionForm,
+  setShowAccountActions,
+  showAccountActions,
   workspaceList,
   listData,
 }: {
@@ -23,6 +30,8 @@ export const WorkspacePanelActions = ({
   setShowActionForm: React.Dispatch<React.SetStateAction<boolean>>
   setShowItemCreator: React.Dispatch<React.SetStateAction<boolean>>
   showActionForm: boolean
+  setShowAccountActions: React.Dispatch<React.SetStateAction<boolean>>
+  showAccountActions: boolean
   workspaceList: string[]
   listData: WorkspaceListData | undefined
 }) => {
@@ -54,6 +63,16 @@ export const WorkspacePanelActions = ({
         onClick={() => setShowActionForm((current) => !current)}
       >
         {showActionForm ? 'Hide Action Form' : 'Show Action Form'}
+      </ActionButton>
+
+      <ActionButton
+        appearance="outlined"
+        size="xs"
+        type="button"
+        onClick={() => setShowAccountActions((current) => !current)}
+      >
+        <LockClosedIcon className="h-3 w-3 mr-1" />
+        {showAccountActions ? 'Hide Account Actions' : 'Show Account Actions'}
       </ActionButton>
 
       {handleFindCorrelation && (

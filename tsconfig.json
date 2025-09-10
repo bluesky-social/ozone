@@ -38,6 +38,7 @@
       "@/setting/*": ["components/setting/*"],
       "@/team/*": ["components/team/*"],
       "@/safelink/*": ["components/safelink/*"],
+      "@/email/*": ["components/email/*"],
     }
   },
   "include": [

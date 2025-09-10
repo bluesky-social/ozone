@@ -138,6 +138,28 @@ const PriorityScore = ({
   )
 }
 
+const RevokeAccountCredentials = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: ToolsOzoneModerationDefs.RevokeAccountCredentialsEvent
+  }
+}) => {
+  return (
+    <>
+      <p>
+        Account Credentials Revoked By{' '}
+        <LinkToAuthor
+          createdBy={modEvent.createdBy}
+          creatorHandle={modEvent.creatorHandle}
+        />
+      </p>
+
+      {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+    </>
+  )
+}
+
 const AgeAssurance = ({
   modEvent,
 }: {
@@ -550,6 +572,17 @@ export const ModEventItem = ({
   ) {
     eventItem = (
       <PriorityScore modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateRevokeAccountCredentialsEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <RevokeAccountCredentials
+        modEvent={{ ...modEvent, event: modEvent.event }}
+      />
     )
   }
   if (

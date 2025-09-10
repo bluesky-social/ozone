@@ -189,6 +189,191 @@ export function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+export interface BatchedOperationOptions<T, R> {
+  items: T[]
+  batchSize?: number
+  maxRetries?: number
+  retryDelay?: number
+  operation: (item: T) => Promise<R>
+  onBatchStart?: (batchIndex: number, totalBatches: number) => void
+  onBatchProgress?: (
+    processed: number,
+    failed: number,
+    total: number,
+    batchIndex: number,
+    totalBatches: number,
+    retryAttempt?: number,
+  ) => void
+  onBatchComplete?: (
+    results: Array<{ item: T; success: boolean; result?: R; error?: string }>,
+  ) => void
+}
+
+export interface BatchedOperationResult<T, R> {
+  results: Array<{ item: T; success: boolean; result?: R; error?: string }>
+  successCount: number
+  failedCount: number
+  totalCount: number
+}
+
+/**
+ * given an array of items to process through http api calls (or any async operation) this function
+ * will process them in batches, handling rate limits and retries as needed.
+ *
+ * - Items are processed in parallel within each batch for performance
+ * - On rate limit (429 status), successful items in batch are kept, only failed items are retried
+ * - Non-rate-limit errors cause individual items to fail but don't trigger retries
+ * - Progress callbacks are called for each batch attempt, including retries
+ *
+ * - If maxRetries is reached for rate limits, remaining items are marked as failed
+ * - Empty items array returns immediately with zero counts
+ * - Callback errors don't affect the main operation flow
+ * - Operation timeouts/network errors are treated as regular failures, not rate limits
+ *
+ * @param options Configuration object with items, operation, and optional callbacks
+ * @returns Promise resolving to results with success/failure counts and detailed item results
+ */
+export async function executeBatchedOperation<T, R>({
+  items,
+  batchSize = 25,
+  maxRetries = 3,
+  retryDelay = 3000,
+  operation,
+  onBatchStart,
+  onBatchProgress,
+  onBatchComplete,
+}: BatchedOperationOptions<T, R>): Promise<BatchedOperationResult<T, R>> {
+  const chunks = chunkArray(items, batchSize)
+  const results: Array<{
+    item: T
+    success: boolean
+    result?: R
+    error?: string
+  }> = []
+  let processed = 0
+  let failed = 0
+  const totalCount = items.length
+
+  for (let i = 0; i < chunks.length; i++) {
+    let chunk = chunks[i]
+    let retryCount = 0
+
+    onBatchStart?.(i, chunks.length)
+
+    while (retryCount <= maxRetries) {
+      try {
+        onBatchProgress?.(
+          processed,
+          failed,
+          totalCount,
+          i,
+          chunks.length,
+          retryCount > 0 ? retryCount : undefined,
+        )
+
+        // handle items in parallel, but fail fast on rate limits
+        const chunkResults = await Promise.allSettled(
+          chunk.map(async (item) => {
+            try {
+              const result = await operation(item)
+              return { item, success: true as const, result }
+            } catch (error: any) {
+              return {
+                item,
+                success: false as const,
+                error: error?.message || 'Unknown error',
+                originalError: error,
+              }
+            }
+          }),
+        )
+
+        let rateLimitError: any = null
+        const successfulItems: typeof results = []
+        const failedItems: typeof results = []
+
+        chunkResults.forEach((chunkResult, idx) => {
+          if (chunkResult.status === 'fulfilled') {
+            const result = chunkResult.value
+            if (result.success) {
+              successfulItems.push(result)
+            } else {
+              failedItems.push(result)
+              // Check if this is a rate limit error
+              if ((result as any).originalError?.status === 429) {
+                rateLimitError = (result as any).originalError
+              }
+            }
+          } else {
+            // Promise itself rejected - shouldn't happen with our setup but handle it
+            const item = chunk[idx]
+            failedItems.push({
+              item,
+              success: false,
+              error: chunkResult.reason?.message || 'Unknown error',
+            })
+          }
+        })
+
+        // Add successful items to results immediately
+        successfulItems.forEach((result) => {
+          results.push(result)
+          processed++
+        })
+
+        // If rate limit hit, only retry the failed items, otherwise add failed items to results
+        if (!rateLimitError) {
+          failedItems.forEach((result) => {
+            results.push(result)
+            failed++
+          })
+          break // Batch completed
+        } else {
+          // Rate limit hit - update chunk to only contain failed items for retry
+          chunk = failedItems.map((result) => result.item)
+          if (retryCount < maxRetries) {
+            retryCount++
+            await new Promise((resolve) => setTimeout(resolve, retryDelay))
+          } else {
+            // Max retries reached - add remaining failed items to results
+            failedItems.forEach((result) => {
+              results.push({
+                ...result,
+                error:
+                  result.error || 'Rate limit exceeded - max retries reached',
+              })
+              failed++
+            })
+            break
+          }
+        }
+      } catch (error: any) {
+        // Catch-all for unexpected errors
+        chunk.forEach((item) => {
+          results.push({
+            item,
+            success: false,
+            error: error?.message || 'Unknown error',
+          })
+          failed++
+        })
+        break
+      }
+    }
+  }
+
+  const finalResults = {
+    results,
+    successCount: results.filter((r) => r.success).length,
+    failedCount: results.filter((r) => !r.success).length,
+    totalCount,
+  }
+
+  onBatchComplete?.(results)
+
+  return finalResults
+}
+
 // Utility function to determine if we should use light or dark text based on background color
 export function getReadableTextColor(backgroundColor: string) {
   const hex = backgroundColor.replace('#', '')

@@ -14,6 +14,7 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { ArrowPathIcon } from '@heroicons/react/24/solid'
 import { CopyButton } from '@/common/CopyButton'
+import { ModToolForm } from './ModToolForm'
 
 export const WorkspacePanelActionForm = ({
   handleEmailSubmit,
@@ -195,47 +196,10 @@ export const WorkspacePanelActionForm = ({
             />
           )}
 
-          <div className="mt-2 mb-3">
-            <FormLabel label="External URL" htmlFor="externalUrl">
-              <Input
-                type="url"
-                id="externalUrl"
-                name="externalUrl"
-                form={WORKSPACE_FORM_ID}
-                className="block w-full"
-                placeholder="https://example.com (optional)"
-              />
-            </FormLabel>
-          </div>
-
-          <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  Batch ID:
-                </span>
-                <span className="ml-2 text-sm text-gray-600 dark:text-gray-400 font-mono">
-                  {currentBatchId}
-                </span>
-              </div>
-              <div>
-                <CopyButton
-                  text={currentBatchId}
-                  className="mr-2"
-                  labelText="Batch ID "
-                  title={`Copy batch id to clipboard`}
-                />
-                <button
-                  type="button"
-                  onClick={handleRegenerateBatchId}
-                  className="text-xs text-white transition-colors"
-                  title="Regenerate Batch ID"
-                >
-                  <ArrowPathIcon className="h-3 w-3 text-gray-500 dark:text-gray-300" />
-                </button>
-              </div>
-            </div>
-          </div>
+          <ModToolForm
+            currentBatchId={currentBatchId}
+            handleRegenerateBatchId={handleRegenerateBatchId}
+          />
 
           <div className="flex flex-row gap-2">
             <ActionButton
