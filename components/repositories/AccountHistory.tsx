@@ -43,6 +43,17 @@ const AccountHistoryDetails = ({ details }) => {
     )
   }
 
+  if (
+    details.$type === 'tools.ozone.hosting.getAccountHistory#credentialsRevoked'
+  ) {
+    return (
+      <>
+        <td>Credentials Revoked</td>
+        <td>Mod Action</td>
+      </>
+    )
+  }
+
   if (details.$type === 'tools.ozone.hosting.getAccountHistory#emailUpdated') {
     return (
       <>
@@ -122,7 +133,17 @@ export const AccountHistory = ({ did }: { did: string }) => {
                 {dateFormatter.format(new Date(item.createdAt))}
               </td>
               <td className="px-2 py-2">
-                {item.createdBy === did ? 'User' : did}
+                {item.createdBy === did ? (
+                  'User'
+                ) : (
+                  <a
+                    href={`/repositories/${did}`}
+                    target="_blank"
+                    className="underline"
+                  >
+                    {did}
+                  </a>
+                )}
               </td>
               <AccountHistoryDetails details={item.details} />
             </tr>
