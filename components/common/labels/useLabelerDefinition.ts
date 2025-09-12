@@ -12,7 +12,7 @@ export const useLabelerDefinitionQuery = (did: string) => {
       if (!did?.startsWith('did:')) {
         return null
       }
-      const { data } = await pdsAgent.api.app.bsky.labeler.getServices({
+      const { data } = await pdsAgent.app.bsky.labeler.getServices({
         dids: [did],
         detailed: true,
       })
