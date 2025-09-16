@@ -205,7 +205,7 @@ function RecordInitStep({ repo }: { repo: string }) {
 
   const createInitialRecord = useMutation({
     mutationFn: async () => {
-      await pdsAgent.api.com.atproto.repo.putRecord({
+      await pdsAgent.com.atproto.repo.putRecord({
         repo,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
@@ -289,7 +289,7 @@ function RecordEditStep({
   }, [recordVal])
   const updateRecord = useMutation({
     mutationFn: async () => {
-      await pdsAgent.api.com.atproto.repo.putRecord({
+      await pdsAgent.com.atproto.repo.putRecord({
         repo,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
@@ -316,7 +316,7 @@ function RecordEditStep({
               try {
                 setRecordVal({
                   ...recordVal,
-                  policies: JSON.parse(ev.target.value) as any,
+                  ...(JSON.parse(ev.target.value) as any),
                 })
                 setIsPlainTextInvalid(false)
               } catch (e) {
