@@ -1,5 +1,8 @@
 import { Alert } from '@/common/Alert'
-import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
+import {
+  HIGH_PROFILE_FOLLOWER_THRESHOLD,
+  SOCIAL_APP_URL,
+} from '@/lib/constants'
 import { AppBskyActorDefs } from '@atproto/api'
 
 export const numberFormatter = new Intl.NumberFormat('en', {
@@ -12,13 +15,14 @@ export const HighProfileWarning = ({
 }: {
   profile: AppBskyActorDefs.ProfileViewDetailed
 }) => {
-  const { followersCount, verification } = profile
+  const { followersCount, verification, associated, did } = profile
   const lowFollowerCount =
     !followersCount || followersCount < HIGH_PROFILE_FOLLOWER_THRESHOLD
   const trustedVerifier = verification?.trustedVerifierStatus === 'valid'
   const isVerified = verification?.verifiedStatus === 'valid'
+  const isLabeler = !!associated?.labeler
 
-  if (lowFollowerCount && !trustedVerifier && !isVerified) {
+  if (lowFollowerCount && !trustedVerifier && !isVerified && !isLabeler) {
     return null
   }
 
@@ -29,6 +33,23 @@ export const HighProfileWarning = ({
       <>
         has more than {numberFormatter.format(HIGH_PROFILE_FOLLOWER_THRESHOLD)}{' '}
         followers (<b>{numberFormatter.format(followersCount)} total</b>)
+      </>,
+    )
+  }
+
+  if (isLabeler) {
+    fragments.push(
+      <>
+        has a{' '}
+        <b>
+          <a
+            className="underline"
+            href={`${SOCIAL_APP_URL}/profile/${did}`}
+            target="_blank"
+          >
+            labeler profile
+          </a>
+        </b>
       </>,
     )
   }
