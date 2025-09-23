@@ -56,7 +56,7 @@ const getServiceDetails = ({
   return ''
 }
 
-// This function processes the DID history events to extract handle changes over time in plain text where each 
+// This function processes the DID history events to extract handle changes over time in plain text where each
 function getHandleChanges(events: DidHistoryEvent[]): string {
   const sortedEvents = events
     .filter((event) => event.operation.handle || event.operation.alsoKnownAs)
@@ -73,11 +73,10 @@ function getHandleChanges(events: DidHistoryEvent[]): string {
       event.operation.handle || event.operation.alsoKnownAs?.[0]
 
     if (currentHandle && currentHandle !== previousHandle) {
-      const from = previousHandle || ''
       changes.push(
-        !from
+        !previousHandle
           ? `${currentHandle} (${event.createdAt})`
-          : `${from} → ${currentHandle} (${event.createdAt})`,
+          : `${previousHandle} → ${currentHandle} (${event.createdAt})`,
       )
     }
 
