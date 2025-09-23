@@ -1,7 +1,9 @@
+import { CopyButton } from '@/common/CopyButton'
 import { Loading } from '@/common/Loader'
 import { PLC_DIRECTORY_URL } from '@/lib/constants'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
 import { useQuery } from '@tanstack/react-query'
+import { useMemo } from 'react'
 
 // Not a complete mapping of the DID history event, just the parts we care about in the UI
 type DidHistoryEvent = {
@@ -54,8 +56,46 @@ const getServiceDetails = ({
   return ''
 }
 
+// This function processes the DID history events to extract handle changes over time in plain text where each
+function getHandleChanges(events: DidHistoryEvent[]): string {
+  const sortedEvents = events
+    .filter((event) => event.operation.handle || event.operation.alsoKnownAs)
+    .sort(
+      (a, b) =>
+        new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    )
+
+  const changes: string[] = []
+  let previousHandle: string | undefined
+
+  for (const event of sortedEvents) {
+    const currentHandle =
+      event.operation.handle || event.operation.alsoKnownAs?.[0]
+
+    if (currentHandle && currentHandle !== previousHandle) {
+      changes.push(
+        !previousHandle
+          ? `${currentHandle} (${event.createdAt})`
+          : `${previousHandle} → ${currentHandle} (${event.createdAt})`,
+      )
+    }
+
+    previousHandle = currentHandle
+  }
+
+  return changes.join('\n')
+}
+
 export const DidHistory = ({ did }: { did: string }) => {
   const { data: history, isLoading, isError } = useDidHistory(did)
+
+  const plainTextHistory = useMemo(() => {
+    if (Array.isArray(history)) {
+      return getHandleChanges(history)
+    }
+    return ''
+  }, [history])
+
   if (history === null) return null
   if (isLoading) return <Loading />
   if (!history) {
@@ -86,8 +126,13 @@ export const DidHistory = ({ did }: { did: string }) => {
           target="_blank"
           title="Open the web view for this DID record"
         >
-          <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
+          <ArrowTopRightOnSquareIcon className="inline-block h-3 w-3 mr-1" />
         </a>
+        <CopyButton
+          text={plainTextHistory}
+          title={`Copy change history to clipboard`}
+          labelText="change history "
+        />
       </h4>
       <table className="min-w-full divide-y divide-gray-300">
         <thead className="bg-gray-50 dark:bg-slate-700">

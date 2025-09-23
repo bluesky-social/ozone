@@ -31,6 +31,7 @@ import { Thread } from '@/common/feeds/PostThread'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { CollectionId } from '@/reports/helpers/subject'
 import ListAccounts from 'components/list/Accounts'
+import { useCopyRecordDetails } from './useCopyRecordDetails'
 
 enum Views {
   Details,
@@ -219,6 +220,8 @@ function Header({
     .replace('app.bsky.graph.', '')
   if (shortCollection === 'generator') shortCollection = 'feed generator'
   const { subjectStatus } = record.moderation
+  const copyRecordDetails = useCopyRecordDetails({ record })
+
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8">
       <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-200">
@@ -245,6 +248,10 @@ function Header({
             {
               text: 'Show action panel',
               onClick: () => onShowActionPanel(record.uri),
+            },
+            {
+              text: 'Copy info',
+              onClick: () => copyRecordDetails(),
             },
           ]}
         >
