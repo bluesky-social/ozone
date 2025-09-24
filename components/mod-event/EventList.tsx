@@ -241,10 +241,10 @@ export const ModEventList = (
       {!!props.stats && (
         <SubjectSummary
           onAccountTakedownClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.APPEAL] })
+            changeListFilter({ field: 'types', value: [MOD_EVENTS.TAKEDOWN] })
           }}
           onAccountAppealClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.ESCALATE] })
+            changeListFilter({ field: 'types', value: [MOD_EVENTS.APPEAL] })
           }}
           onRecordTakedownClick={() => {
             applyFilterMacro({
