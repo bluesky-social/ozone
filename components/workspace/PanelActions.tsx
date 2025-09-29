@@ -22,6 +22,7 @@ export const WorkspacePanelActions = ({
   showAccountActions,
   workspaceList,
   listData,
+  canTakeAccountActions,
 }: {
   handleRemoveSelected: () => void
   handleEmptyWorkspace: () => void
@@ -34,6 +35,7 @@ export const WorkspacePanelActions = ({
   showAccountActions: boolean
   workspaceList: string[]
   listData: WorkspaceListData | undefined
+  canTakeAccountActions: boolean
 }) => {
   return (
     <>
@@ -65,15 +67,17 @@ export const WorkspacePanelActions = ({
         {showActionForm ? 'Hide Action Form' : 'Show Action Form'}
       </ActionButton>
 
-      <ActionButton
-        appearance="outlined"
-        size="xs"
-        type="button"
-        onClick={() => setShowAccountActions((current) => !current)}
-      >
-        <LockClosedIcon className="h-3 w-3 mr-1" />
-        {showAccountActions ? 'Hide Account Actions' : 'Show Account Actions'}
-      </ActionButton>
+      {canTakeAccountActions && (
+        <ActionButton
+          appearance="outlined"
+          size="xs"
+          type="button"
+          onClick={() => setShowAccountActions((current) => !current)}
+        >
+          <LockClosedIcon className="h-3 w-3 mr-1" />
+          {showAccountActions ? 'Hide Account Actions' : 'Show Account Actions'}
+        </ActionButton>
+      )}
 
       {handleFindCorrelation && (
         <ActionButton

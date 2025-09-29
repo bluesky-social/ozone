@@ -449,6 +449,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                         showAccountActions={showAccountActions}
                         workspaceList={workspaceList}
                         onVerification={refetchWorkspaceListData}
+                        canTakeAccountActions={
+                          role === ToolsOzoneTeamDefs.ROLEADMIN
+                        }
                       />
                     </div>
                   )}
