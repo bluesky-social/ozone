@@ -39,6 +39,7 @@
       "@/team/*": ["components/team/*"],
       "@/safelink/*": ["components/safelink/*"],
       "@/email/*": ["components/email/*"],
+      "@/scheduled-actions/*": ["components/scheduled-actions/*"],
     }
   },
   "include": [

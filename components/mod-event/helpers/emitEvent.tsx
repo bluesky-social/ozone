@@ -6,6 +6,7 @@ import {
   ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
+  ToolsOzoneModerationScheduleAction,
 } from '@atproto/api'
 import { useQueryClient } from '@tanstack/react-query'
 
@@ -265,6 +266,7 @@ const emitEventsInBulk = async ({
   eventData,
   subjectData,
   modTool,
+  scheduling,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
@@ -272,6 +274,7 @@ const emitEventsInBulk = async ({
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>
   subjectData: WorkspaceListData
   modTool?: ToolsOzoneModerationEmitEvent.InputSchema['modTool']
+  scheduling?: ToolsOzoneModerationScheduleAction.SchedulingConfig
 }) => {
   const toastId = 'workspace-bulk-action'
   try {
@@ -280,22 +283,55 @@ const emitEventsInBulk = async ({
       failed: [],
     }
 
-    const actions = Promise.allSettled(
-      subjects.map(async (sub) => {
-        try {
-          const { subject } = await createSubjectFromId(sub)
-          await labelerAgent.tools.ozone.moderation.emitEvent({
-            ...eventForSubject(eventData, subjectData[sub]),
-            subject,
-            createdBy: labelerAgent.assertDid,
-            modTool,
-          })
-          results.succeeded.push(sub)
-        } catch (err) {
-          results.failed.push(sub)
-        }
-      }),
-    )
+    let actions: PromiseSettledResult<void>[] | Promise<any>
+    // For takedowns with scheduling we can't just emit the event
+    // instead use the scheduling api
+    if (
+      ToolsOzoneModerationDefs.isModEventTakedown(eventData.event) &&
+      scheduling
+    ) {
+      actions = labelerAgent.tools.ozone.moderation
+        .scheduleAction({
+          subjects,
+          modTool,
+          scheduling,
+          createdBy: labelerAgent.assertDid,
+          action: {
+            ...eventData.event,
+            $type: 'tools.ozone.moderation.scheduleAction#takedown',
+          },
+        })
+        .then(({ data }) => {
+          if (data.succeeded.length) {
+            results.succeeded.push(...data.succeeded)
+          }
+          if (data.failed.length) {
+            data.failed.map((failed) => {
+              results.failed.push(failed.subject)
+            })
+          }
+        })
+        .catch(() => {
+          results.failed.push(...subjects)
+        })
+    } else {
+      actions = Promise.allSettled(
+        subjects.map(async (sub) => {
+          try {
+            const { subject } = await createSubjectFromId(sub)
+            await labelerAgent.tools.ozone.moderation.emitEvent({
+              ...eventForSubject(eventData, subjectData[sub]),
+              subject,
+              createdBy: labelerAgent.assertDid,
+              modTool,
+            })
+            results.succeeded.push(sub)
+          } catch (err) {
+            results.failed.push(sub)
+          }
+        }),
+      )
+    }
     await toast.promise(actions, {
       pending: {
         toastId,
@@ -334,7 +370,13 @@ export const useActionSubjects = () => {
       eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
       subjects: string[],
       subjectData: WorkspaceListData,
-      externalUrl?: string,
+      {
+        externalUrl,
+        scheduling,
+      }: {
+        externalUrl?: string
+        scheduling?: ToolsOzoneModerationScheduleAction.SchedulingConfig
+      },
     ) => {
       if (!subjects.length) {
         toast.error(`No subject to action`)
@@ -367,6 +409,7 @@ export const useActionSubjects = () => {
           eventData,
           subjectData,
           modTool,
+          scheduling,
         })
 
         results.succeeded.push(...succeeded)

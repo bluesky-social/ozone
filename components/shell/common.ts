@@ -9,6 +9,7 @@ import {
   WrenchScrewdriverIcon,
   MagnifyingGlassIcon,
   CheckCircleIcon,
+  ClockIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -24,6 +25,7 @@ export const ICONS = {
   configure: WrenchScrewdriverIcon,
   search: MagnifyingGlassIcon,
   verification: CheckCircleIcon,
+  clock: ClockIcon,
 }
 
 export type SidebarNavItem = {
@@ -62,6 +64,11 @@ export const NAV_ITEMS: SidebarNavItem[] = [
     name: 'Configure',
     href: '/configure',
     icon: 'configure',
+  },
+  {
+    name: 'Schedule',
+    href: '/scheduled-actions',
+    icon: 'clock',
   },
   {
     name: 'Verification',

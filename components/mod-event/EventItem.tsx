@@ -464,6 +464,87 @@ const Tag = ({
   )
 }
 
+const ScheduleTakedown = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ScheduleTakedownEvent>
+}) => {
+  const scheduledActionLink = `/scheduled-actions?subjects=${modEvent.subject['did']}`
+  return (
+    <>
+      <p>
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </p>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
+      {modEvent.event.executeAt && (
+        <p className="dark:text-gray-300 text-gray-600">
+          Execute At:{' '}
+          <a
+            className="underline"
+            href={scheduledActionLink}
+            target="_blank"
+          >
+            {dateFormatter.format(new Date(modEvent.event.executeAt))}
+          </a>
+        </p>
+      )}
+      {modEvent.event.executeAfter && (
+        <p className="dark:text-gray-300 text-gray-600">
+          Execute After:{' '}
+          <a
+            className="underline"
+            href={scheduledActionLink}
+            target="_blank"
+          >
+            {dateFormatter.format(new Date(modEvent.event.executeAfter))}
+          </a>
+        </p>
+      )}
+      {modEvent.event.executeUntil && (
+        <p className="dark:text-gray-300 text-gray-600">
+          Execute Before:{' '}
+          <a
+            className="underline"
+            href={scheduledActionLink}
+            target="_blank"
+          >
+            {dateFormatter.format(new Date(modEvent.event.executeUntil))}
+          </a>
+        </p>
+      )}
+    </>
+  )
+}
+
+const CancelScheduledTakedown = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.CancelScheduledTakedownEvent>
+}) => {
+  return (
+    <>
+      <p>
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </p>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
+    </>
+  )
+}
+
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
@@ -601,6 +682,26 @@ export const ModEventItem = ({
   ) {
     eventItem = (
       <AgeAssuranceOverride modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateScheduleTakedownEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <ScheduleTakedown modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateCancelScheduledTakedownEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <CancelScheduledTakedown
+        modEvent={{ ...modEvent, event: modEvent.event }}
+      />
     )
   }
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)
