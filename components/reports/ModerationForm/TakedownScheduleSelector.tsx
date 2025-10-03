@@ -96,10 +96,11 @@ export const TakedownScheduleSelector = (
           <Checkbox
             value="true"
             defaultChecked
+            form={form}
             id="randomizeExecutionTime"
             name="randomizeExecutionTime"
             className="flex items-center leading-3 mt-2"
-            label={'Randomize execution time by ±4 hours'}
+            label={'Randomize execution time by +8 hours'}
           />
         </div>
       )}

@@ -258,11 +258,12 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       const executionStartTime = new Date(
         Date.now() + executeInHours * 3600 * 1000,
       )
+      
       const scheduling = formData.get('randomizeExecutionTime')
         ? {
             executeAfter: executionStartTime.toISOString(),
             executeUntil: new Date(
-              executionStartTime.getTime() + 4 * 3600 * 1000,
+              executionStartTime.getTime() + 8 * 3600 * 1000,
             ).toISOString(),
           }
         : { executeAt: executionStartTime.toISOString() }

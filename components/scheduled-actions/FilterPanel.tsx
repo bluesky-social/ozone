@@ -1,63 +1,58 @@
 'use client'
 import { useState } from 'react'
 import { ActionButton } from '@/common/buttons'
-import { FormLabel, Input, Textarea, Select } from '@/common/forms'
+import { FormLabel, Input, Textarea } from '@/common/forms'
+import { StatusSelector } from './StatusSelector'
 
 interface FilterPanelProps {
   isOpen: boolean
   onClose: () => void
   currentFilters: {
-    startTime?: string
-    endTime?: string
+    startsAfter?: string
+    endsBefore?: string
     subjects?: string[]
     statuses?: string[]
   }
   onApplyFilters: (filters: {
-    startTime?: string
-    endTime?: string
+    startsAfter?: string
+    endsBefore?: string
     subjects?: string[]
     statuses?: string[]
   }) => void
 }
 
-const STATUS_OPTIONS = [
-  { value: '', label: 'All Statuses' },
-  { value: 'pending', label: 'Pending' },
-  { value: 'executed', label: 'Executed' },
-  { value: 'cancelled', label: 'Cancelled' },
-  { value: 'failed', label: 'Failed' },
-]
+const DEFAULT_STATUSES = ['pending', 'executed', 'cancelled', 'failed']
 
 export function ScheduledActionsFilterPanel({
   isOpen,
   currentFilters,
   onApplyFilters,
 }: FilterPanelProps) {
-  const [startTime, setStartTime] = useState<string>(
-    currentFilters.startTime || '',
+  const [startsAfter, setStartTime] = useState<string>(
+    currentFilters.startsAfter || '',
   )
-  const [endTime, setEndTime] = useState<string>(currentFilters.endTime || '')
+  const [endsBefore, setEndTime] = useState<string>(currentFilters.endsBefore || '')
   const [subjects, setSubjects] = useState<string>(
     currentFilters.subjects ? currentFilters.subjects.join(', ') : '',
   )
-  const [status, setStatus] = useState<string>(
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>(
     currentFilters.statuses && currentFilters.statuses.length > 0
-      ? currentFilters.statuses[0]
-      : '',
+      ? currentFilters.statuses
+      : DEFAULT_STATUSES,
   )
 
   const handleApplyFilters = () => {
     const filters: any = {}
 
-    if (startTime.trim()) filters.startTime = startTime.trim()
-    if (endTime.trim()) filters.endTime = endTime.trim()
+    if (startsAfter.trim()) filters.startsAfter = startsAfter.trim()
+    if (endsBefore.trim()) filters.endsBefore = endsBefore.trim()
     if (subjects.trim()) {
       filters.subjects = subjects
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
     }
-    if (status) filters.statuses = [status]
+    if (selectedStatuses.length > 0) filters.statuses = selectedStatuses
 
     onApplyFilters(filters)
   }
@@ -66,13 +61,13 @@ export function ScheduledActionsFilterPanel({
     setStartTime('')
     setEndTime('')
     setSubjects('')
-    setStatus('')
+    setSelectedStatuses(DEFAULT_STATUSES)
     onApplyFilters({})
   }
 
   const hasActiveFilters =
-    currentFilters.startTime ||
-    currentFilters.endTime ||
+    currentFilters.startsAfter ||
+    currentFilters.endsBefore ||
     (currentFilters.subjects && currentFilters.subjects.length > 0) ||
     (currentFilters.statuses && currentFilters.statuses.length > 0)
 
@@ -86,7 +81,7 @@ export function ScheduledActionsFilterPanel({
           <Input
             id="start-time-filter"
             type="datetime-local"
-            value={startTime}
+            value={startsAfter}
             onChange={(e) => setStartTime(e.target.value)}
             className="w-full"
           />
@@ -97,26 +92,18 @@ export function ScheduledActionsFilterPanel({
           <Input
             id="end-time-filter"
             type="datetime-local"
-            value={endTime}
+            value={endsBefore}
             onChange={(e) => setEndTime(e.target.value)}
             className="w-full"
           />
         </div>
 
         <div>
-          <FormLabel label="Status" htmlFor="status-filter" />
-          <Select
-            id="status-filter"
-            value={status}
-            onChange={(e) => setStatus(e.target.value)}
-            className="w-full"
-          >
-            {STATUS_OPTIONS.map((option) => (
-              <option key={option.value} value={option.value}>
-                {option.label}
-              </option>
-            ))}
-          </Select>
+          <FormLabel label="Status" />
+          <StatusSelector
+            selectedStatuses={selectedStatuses}
+            onStatusChange={setSelectedStatuses}
+          />
         </div>
       </div>
 

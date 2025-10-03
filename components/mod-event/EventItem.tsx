@@ -288,6 +288,33 @@ const Report = ({
   )
 }
 
+export const TakedownPolicy = ({ policies }: { policies?: string[] }) => {
+  if (!policies?.length) return null
+
+  return (
+    <p className="pb-1 flex flex-row items-center">
+      <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
+      <i>
+        Under{' '}
+        {policies.map((policy) => {
+          return (
+            <Link
+              key={policy}
+              prefetch={false}
+              href={`/configure?tab=policies&search=${policy}`}
+            >
+              <u>{`${policy}`}</u>{' '}
+            </Link>
+          )
+        })}
+        {pluralize(policies.length, 'policy', {
+          plural: 'policies',
+        })}
+      </i>
+    </p>
+  )
+}
+
 const TakedownOrMute = ({
   modEvent,
 }: {
@@ -327,29 +354,9 @@ const TakedownOrMute = ({
           Until {dateFormatter.format(expiresAt)}
         </p>
       )}
-      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) &&
-      modEvent.event.policies?.length ? (
-        <p className="pb-1 flex flex-row items-center">
-          <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
-          <i>
-            Under{' '}
-            {modEvent.event.policies.map((policy) => {
-              return (
-                <Link
-                  key={policy}
-                  prefetch={false}
-                  href={`/configure?tab=policies&search=${policy}`}
-                >
-                  <u>{`${policy}`}</u>{' '}
-                </Link>
-              )
-            })}
-            {pluralize(modEvent.event.policies.length, 'policy', {
-              plural: 'policies',
-            })}
-          </i>
-        </p>
-      ) : null}
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
+        <TakedownPolicy policies={modEvent.event.policies} />
+      )}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
@@ -485,37 +492,22 @@ const ScheduleTakedown = ({
       )}
       {modEvent.event.executeAt && (
         <p className="dark:text-gray-300 text-gray-600">
-          Execute At:{' '}
-          <a
-            className="underline"
-            href={scheduledActionLink}
-            target="_blank"
-          >
+          Execution:{' '}
+          <a className="underline" href={scheduledActionLink} target="_blank">
             {dateFormatter.format(new Date(modEvent.event.executeAt))}
           </a>
         </p>
       )}
       {modEvent.event.executeAfter && (
         <p className="dark:text-gray-300 text-gray-600">
-          Execute After:{' '}
-          <a
-            className="underline"
-            href={scheduledActionLink}
-            target="_blank"
-          >
+          Execution:{' '}
+          <a className="underline" href={scheduledActionLink} target="_blank">
             {dateFormatter.format(new Date(modEvent.event.executeAfter))}
-          </a>
-        </p>
-      )}
-      {modEvent.event.executeUntil && (
-        <p className="dark:text-gray-300 text-gray-600">
-          Execute Before:{' '}
-          <a
-            className="underline"
-            href={scheduledActionLink}
-            target="_blank"
-          >
-            {dateFormatter.format(new Date(modEvent.event.executeUntil))}
+
+            {!!modEvent.event.executeUntil &&
+              ` - ${dateFormatter.format(
+                new Date(modEvent.event.executeUntil),
+              )}`}
           </a>
         </p>
       )}

@@ -27,8 +27,9 @@ import {
 } from '@/mod-event/helpers/emitEvent'
 import { ActionButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
-import { chunkArray } from '@/lib/util'
 import { useCancelScheduledAction } from '@/scheduled-actions/useScheduledActionsList'
+import { Textarea } from '@/common/forms'
+import { ModToolProvider } from '@/mod-event/ModToolContext'
 
 export function ScheduledActionsPageContent() {
   const router = useRouter()
@@ -38,6 +39,7 @@ export function ScheduledActionsPageContent() {
   const [selectedDids, setSelectedDids] = useState<string[]>([])
   const [isFiltersShown, setIsFiltersShown] = useState(false)
   const [showCancelModal, setShowCancelModal] = useState(false)
+  const [cancelComment, setCancelComment] = useState('')
   const emitEvent = useEmitEvent()
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
   const cancelMutation = useCancelScheduledAction()
@@ -72,10 +74,14 @@ export function ScheduledActionsPageContent() {
   }
 
   const handleCancelConfirm = async () => {
-    await cancelMutation.mutateAsync({ subjects: selectedDids })
+    await cancelMutation.mutateAsync({
+      subjects: selectedDids,
+      comment: cancelComment.trim() || undefined,
+    })
 
     setSelectedDids([])
     setShowCancelModal(false)
+    setCancelComment('')
     refetch()
   }
 
@@ -144,13 +150,15 @@ export function ScheduledActionsPageContent() {
       {isLoading ? (
         <Loading message="Loading scheduled actions..." />
       ) : (
-        <ScheduledActionsTable
-          actions={actions}
-          repos={repos}
-          onLoadMore={fetchNextPage}
-          showLoadMore={!!hasNextPage}
-          onSelect={handleSelect}
-        />
+        <ModToolProvider>
+          <ScheduledActionsTable
+            actions={actions}
+            repos={repos}
+            onLoadMore={fetchNextPage}
+            showLoadMore={!!hasNextPage}
+            onSelect={handleSelect}
+          />
+        </ModToolProvider>
       )}
       <WorkspacePanel
         open={isWorkspaceOpen}
@@ -187,7 +195,16 @@ export function ScheduledActionsPageContent() {
             {selectedDids.length} selected items?
           </>
         }
-      />
+      >
+        <Textarea
+          value={cancelComment}
+          onChange={(e) => setCancelComment(e.target.value)}
+          name="cancelComment"
+          className="w-full mt-4"
+          placeholder="Reason for cancelling these scheduled actions..."
+          rows={3}
+        />
+      </ConfirmationModal>
     </div>
   )
 }

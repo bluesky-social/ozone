@@ -4,33 +4,31 @@ import {
   useMutation,
   useQueryClient,
 } from '@tanstack/react-query'
-import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  Agent,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationListScheduledActions,
+} from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { chunkArray, pluralize } from '@/lib/util'
 import { toast } from 'react-toastify'
 import { AppRouterInstance } from 'next/dist/shared/lib/app-router-context.shared-runtime'
 
-export interface ScheduledActionsFilters {
-  startTime?: string
-  endTime?: string
-  subjects?: string[]
-  statuses?: string[]
-  limit?: number
-}
+const DEFAULT_STATUSES = ['pending', 'executed', 'cancelled', 'failed']
 
 const getScheduledActions =
   ({ labelerAgent }: { labelerAgent: Agent }) =>
   async (
     {
       pageParam,
-      startTime,
-      endTime,
+      startsAfter,
+      endsBefore,
       subjects,
       statuses,
       limit = 50,
     }: {
       pageParam?: string
-    } & ScheduledActionsFilters,
+    } & ToolsOzoneModerationListScheduledActions.InputSchema,
     options: { signal?: AbortSignal } = {},
   ): Promise<{
     actions: ToolsOzoneModerationDefs.ScheduledActionView[]
@@ -41,10 +39,11 @@ const getScheduledActions =
       cursor: pageParam,
     }
 
-    if (startTime) params.startTime = startTime
-    if (endTime) params.endTime = endTime
+    if (startsAfter) params.startsAfter = startsAfter
+    if (endsBefore) params.endsBefore = endsBefore
     if (subjects && subjects.length > 0) params.subjects = subjects
-    if (statuses && statuses.length > 0) params.statuses = statuses
+    // statuses is now required, default to all statuses if none provided
+    params.statuses = statuses && statuses.length > 0 ? statuses : DEFAULT_STATUSES
 
     const res = await labelerAgent.tools.ozone.moderation.listScheduledActions(
       params,
@@ -58,30 +57,30 @@ export function useScheduledActionsListFilter(
   router: AppRouterInstance,
   pathname: string,
 ) {
-  const startTime = searchParams.get('startTime') || undefined
-  const endTime = searchParams.get('endTime') || undefined
+  const startsAfter = searchParams.get('startsAfter') || undefined
+  const endsBefore = searchParams.get('endsBefore') || undefined
   const subjects =
     searchParams.get('subjects')?.split(',').filter(Boolean) || undefined
   const statuses =
-    searchParams.get('statuses')?.split(',').filter(Boolean) || undefined
+    searchParams.get('statuses')?.split(',').filter(Boolean) || DEFAULT_STATUSES
 
   const filters = {
-    startTime,
-    endTime,
+    startsAfter,
+    endsBefore,
     subjects,
     statuses,
   }
 
   const updateFilters = (newFilters: {
-    startTime?: string
-    endTime?: string
+    startsAfter?: string
+    endsBefore?: string
     subjects?: string[]
     statuses?: string[]
   }) => {
     const params = new URLSearchParams()
 
-    if (newFilters.startTime) params.set('startTime', newFilters.startTime)
-    if (newFilters.endTime) params.set('endTime', newFilters.endTime)
+    if (newFilters.startsAfter) params.set('startsAfter', newFilters.startsAfter)
+    if (newFilters.endsBefore) params.set('endsBefore', newFilters.endsBefore)
     if (newFilters.subjects && newFilters.subjects.length > 0) {
       params.set('subjects', newFilters.subjects.join(','))
     }
@@ -93,15 +92,15 @@ export function useScheduledActionsListFilter(
   }
 
   const hasActiveFilters =
-    startTime ||
-    endTime ||
+    startsAfter ||
+    endsBefore ||
     (subjects && subjects.length > 0) ||
     (statuses && statuses.length > 0)
 
   return { filters, updateFilters, hasActiveFilters }
 }
 
-export function useScheduledActionsList(filters: ScheduledActionsFilters) {
+export function useScheduledActionsList(filters: ToolsOzoneModerationListScheduledActions.InputSchema) {
   const labelerAgent = useLabelerAgent()
   const getScheduledActionsPage = getScheduledActions({ labelerAgent })
 
@@ -162,14 +161,15 @@ export function useCancelScheduledAction() {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async ({ subjects }: { subjects: string[] }) => {
+    mutationFn: async ({ subjects, comment }: { subjects: string[]; comment?: string }) => {
       const succeeded: string[] = []
       const failed: string[] = []
       for (const chunk of chunkArray(subjects, 50)) {
+        const params: any = { subjects: chunk }
+        if (comment) params.comment = comment
+
         const { data } =
-          await labelerAgent.tools.ozone.moderation.cancelScheduledActions({
-            subjects: chunk,
-          })
+          await labelerAgent.tools.ozone.moderation.cancelScheduledActions(params)
 
         succeeded.push(...data.succeeded)
         data.failed.forEach((f) => failed.push(f.did))

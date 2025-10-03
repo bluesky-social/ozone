@@ -6,6 +6,10 @@ import { formatDistanceToNow } from 'date-fns'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { Checkbox } from '@/common/forms'
+import { ModToolInfo } from '@/mod-event/ModToolInfo'
+import { TakedownPolicy } from '@/mod-event/EventItem'
+import { usePermission } from '@/shell/ConfigurationContext'
+import { TextWithLinks } from '@/common/TextWithLinks'
 
 interface ScheduledActionsTableProps {
   actions: ToolsOzoneModerationDefs.ScheduledActionView[]
@@ -45,6 +49,19 @@ const getStatusBadgeClass = (status: string) => {
   }
 }
 
+const getEventData = (action: ToolsOzoneModerationDefs.ScheduledActionView) => {
+  if (
+    action.eventData?.$type === 'tools.ozone.moderation.scheduleAction#takedown'
+  ) {
+    return {
+      event: action.eventData as ToolsOzoneModerationDefs.ModEventTakedown,
+      modTool: action.eventData.modTool as ToolsOzoneModerationDefs.ModTool,
+    }
+  }
+
+  return null
+}
+
 export function ScheduledActionsTable({
   actions,
   repos,
@@ -52,6 +69,7 @@ export function ScheduledActionsTable({
   showLoadMore,
   onSelect,
 }: ScheduledActionsTableProps) {
+  const canTakedown = usePermission('canTakedown')
   return (
     <>
       {actions.map((action, index) => {
@@ -76,15 +94,16 @@ export function ScheduledActionsTable({
         const timeToExecution = formatDistanceToNow(executionDate, {
           addSuffix: true,
         })
-        const canCancel = action.status === 'pending'
+        const canCancel = action.status === 'pending' && canTakedown
         const isLastItem = index === actions.length - 1
+        const eventData = getEventData(action)
 
         return (
           <Card key={action.id} className={`py-3 ${!isLastItem ? 'mb-3' : ''}`}>
             <div className="px-2">
               <div className="flex flex-row justify-between items-start mb-2">
                 <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
+                  <div className="flex items-center gap-2">
                     {canCancel && (
                       <Checkbox
                         onChange={(e) => {
@@ -125,7 +144,16 @@ export function ScheduledActionsTable({
                 </div>
               </div>
 
-              <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
+              {eventData?.event && (
+                <div className="dark:text-gray-300 mb-1">
+                  <TakedownPolicy policies={eventData.event.policies} />
+                  {eventData.event.comment && (
+                    <TextWithLinks text={eventData.event.comment} />
+                  )}
+                </div>
+              )}
+
+              <div className="text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex flex-row justify-between">
                   <span>
                     Execution: {execution} ({timeToExecution})
@@ -143,6 +171,10 @@ export function ScheduledActionsTable({
                   </a>
                 </div>
 
+                {action.status !== 'pending' && (
+                  <p>Last Update: {formatDateTime(action.createdAt)}</p>
+                )}
+
                 {action.lastFailureReason && (
                   <div className="text-xs text-red-600 dark:text-red-400">
                     Failed: {action.lastFailureReason}
@@ -150,6 +182,9 @@ export function ScheduledActionsTable({
                 )}
               </div>
             </div>
+            {!!eventData?.modTool && (
+              <ModToolInfo modTool={eventData.modTool} />
+            )}
           </Card>
         )
       })}
