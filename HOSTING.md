@@ -92,6 +92,9 @@ $ sudo ufw allow 80/tcp
 $ sudo ufw allow 443/tcp
 ```
 
+> [!WARNING]
+> The PostgreSQL Database in the docker compose configuration should not be exposed directly to the internet, make sure you have a firewall in place to prevent this. If you need to access the database from a different machine, use a vlan or similar private networking (e.g., tailscale or ssh port forwarding), exposing the database directly to the public internet is a security risk.
+
 #### Install Docker
 
 On your server, install Docker CE (Community Edition), using the the following instructions. For other operating systems you may reference the [official Docker install guides](https://docs.docker.com/engine/install/).
