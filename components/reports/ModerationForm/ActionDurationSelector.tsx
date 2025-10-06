@@ -3,9 +3,6 @@ import { MOD_EVENTS } from '@/mod-event/constants'
 import { ComponentProps } from 'react'
 
 export const TakedownActionDurations = {
-  0: {
-    text: 'Permanent',
-  },
   24: {
     text: '1 Day',
   },
@@ -72,7 +69,7 @@ export const ActionDurationSelector = (
           ? MuteActionDurations
           : TakedownActionDurations,
       ).map(([key, info]) => (
-        <option key={key} value={key}>
+        <option selected={rest.defaultValue === key} key={key} value={key}>
           {info.text}
         </option>
       ))}

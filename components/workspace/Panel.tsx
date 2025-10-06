@@ -14,6 +14,7 @@ import {
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
+  ToolsOzoneModerationScheduleAction,
   ToolsOzoneTeamDefs,
 } from '@atproto/api'
 import { DialogTitle } from '@headlessui/react'
@@ -233,7 +234,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         }
       }
 
-      // @TODO: Limitation that we only allow adding tags/labels in bulk but not removal
       if (ToolsOzoneModerationDefs.isModEventTag(coreEvent)) {
         // By default, when there are no reference subject stats, the event builder returns all selected tags to be added
         // If the user wants to remove tags, we need to swap the add and remove properties
@@ -254,11 +254,25 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // No need to break if one of the requests fail, continue on with others
       const externalUrl = String(formData.get('externalUrl') || '')
+      const executeInHours = Number(formData.get('scheduledDurationInHours'))
+      const executionStartTime = new Date(
+        Date.now() + executeInHours * 3600 * 1000,
+      )
+      
+      const scheduling = formData.get('randomizeExecutionTime')
+        ? {
+            executeAfter: executionStartTime.toISOString(),
+            executeUntil: new Date(
+              executionStartTime.getTime() + 8 * 3600 * 1000,
+            ).toISOString(),
+          }
+        : { executeAt: executionStartTime.toISOString() }
+
       const results = await actionSubjects(
         { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
         workspaceListStatuses || {},
-        externalUrl,
+        { externalUrl, scheduling },
       )
 
       // After successful submission, reset the form state to clear inputs for previous submission
@@ -288,7 +302,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         // Emails can only be sent to DID subjects so filter out anything that's not a did
         getSelectedItems().filter(isValidDid),
         workspaceListStatuses || {},
-        '', // No external URL for email events
+        { externalUrl: '' }, // No external URL for email events
       )
 
       // Select items that were actioned so that user can either clear them or perform the next action on them

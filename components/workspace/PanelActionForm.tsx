@@ -12,9 +12,8 @@ import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelec
 import { getBatchId, regenerateBatchId } from '@/lib/batchId'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { ArrowPathIcon } from '@heroicons/react/24/solid'
-import { CopyButton } from '@/common/CopyButton'
 import { ModToolForm } from './ModToolForm'
+import { TakedownScheduleSelector } from '@/reports/ModerationForm/TakedownScheduleSelector'
 
 export const WorkspacePanelActionForm = ({
   handleEmailSubmit,
@@ -42,8 +41,7 @@ export const WorkspacePanelActionForm = ({
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
-  const shouldShowDurationInHoursField =
-    isTakedownEvent || isMuteEvent || isLabelEvent
+  const shouldShowDurationInHoursField = isMuteEvent || isLabelEvent
 
   return (
     <div className="mb-4 w-1/2">
@@ -107,12 +105,17 @@ export const WorkspacePanelActionForm = ({
                   }
                 />
               </FormLabel>
+            </div>
+          )}
 
-              {isTakedownEvent && (
-                <div className="mt-2 w-full">
-                  <ActionPolicySelector name="policies" />
-                </div>
-              )}
+          {isTakedownEvent && (
+            <div className="mt-3">
+              <div className="w-full">
+                <ActionPolicySelector name="policies" />
+              </div>  
+              <div className="mt-2 flex flex-row gap-2">
+                <TakedownScheduleSelector form={WORKSPACE_FORM_ID} />
+              </div>
             </div>
           )}
 

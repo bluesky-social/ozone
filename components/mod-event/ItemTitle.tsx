@@ -101,6 +101,14 @@ export const ItemTitle = ({
     eventColor = 'text-blue-400'
     eventTitle = 'Updated priority score'
   }
+  if (ToolsOzoneModerationDefs.isScheduleTakedownEvent(modEvent.event)) {
+    eventColor = 'text-red-400'
+    eventTitle = 'Scheduled takedown'
+  }
+  if (ToolsOzoneModerationDefs.isCancelScheduledTakedownEvent(modEvent.event)) {
+    eventColor = 'text-green-400'
+    eventTitle = 'Canceled scheduled takedown'
+  }
   if (modEvent.event.$type === MOD_EVENTS.AGE_ASSURANCE) {
     eventColor = 'text-purple-400'
     eventTitle = 'Age assurance updated'

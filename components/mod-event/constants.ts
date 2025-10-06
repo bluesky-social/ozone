@@ -27,6 +27,9 @@ export const MOD_EVENTS = {
     'tools.ozone.moderation.defs#ageAssuranceOverrideEvent',
   REVOKE_ACCOUNT_CREDENTIALS:
     'tools.ozone.moderation.defs#revokeAccountCredentialsEvent',
+  SCHEDULE_TAKEDOWN: 'tools.ozone.moderation.defs#scheduleTakedownEvent',
+  CANCEL_SCHEDULED_TAKEDOWN:
+    'tools.ozone.moderation.defs#cancelScheduledTakedownEvent',
 } as const
 
 export const MOD_EVENT_TITLES = {
@@ -56,6 +59,8 @@ export const MOD_EVENT_TITLES = {
   [MOD_EVENTS.AGE_ASSURANCE]: 'Age Assurance',
   [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'Age Assurance Override',
   [MOD_EVENTS.REVOKE_ACCOUNT_CREDENTIALS]: 'Revoke Account Credentials',
+  [MOD_EVENTS.SCHEDULE_TAKEDOWN]: 'Schedule Takedown',
+  [MOD_EVENTS.CANCEL_SCHEDULED_TAKEDOWN]: 'Cancel Scheduled Takedown',
 }
 
 export const FILTER_MACROS_LIST_KEY = 'filter_macros_list'

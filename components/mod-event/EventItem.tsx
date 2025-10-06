@@ -288,6 +288,33 @@ const Report = ({
   )
 }
 
+export const TakedownPolicy = ({ policies }: { policies?: string[] }) => {
+  if (!policies?.length) return null
+
+  return (
+    <p className="pb-1 flex flex-row items-center">
+      <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
+      <i>
+        Under{' '}
+        {policies.map((policy) => {
+          return (
+            <Link
+              key={policy}
+              prefetch={false}
+              href={`/configure?tab=policies&search=${policy}`}
+            >
+              <u>{`${policy}`}</u>{' '}
+            </Link>
+          )
+        })}
+        {pluralize(policies.length, 'policy', {
+          plural: 'policies',
+        })}
+      </i>
+    </p>
+  )
+}
+
 const TakedownOrMute = ({
   modEvent,
 }: {
@@ -327,29 +354,9 @@ const TakedownOrMute = ({
           Until {dateFormatter.format(expiresAt)}
         </p>
       )}
-      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) &&
-      modEvent.event.policies?.length ? (
-        <p className="pb-1 flex flex-row items-center">
-          <DocumentTextIcon className="h-3 w-3 inline-block mr-1" />
-          <i>
-            Under{' '}
-            {modEvent.event.policies.map((policy) => {
-              return (
-                <Link
-                  key={policy}
-                  prefetch={false}
-                  href={`/configure?tab=policies&search=${policy}`}
-                >
-                  <u>{`${policy}`}</u>{' '}
-                </Link>
-              )
-            })}
-            {pluralize(modEvent.event.policies.length, 'policy', {
-              plural: 'policies',
-            })}
-          </i>
-        </p>
-      ) : null}
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
+        <TakedownPolicy policies={modEvent.event.policies} />
+      )}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
@@ -460,6 +467,72 @@ const Tag = ({
       ) : null}
       <EventLabels isTag header="Added: " labels={modEvent.event.add} />
       <EventLabels isTag header="Removed: " labels={modEvent.event.remove} />
+    </>
+  )
+}
+
+const ScheduleTakedown = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ScheduleTakedownEvent>
+}) => {
+  const scheduledActionLink = `/scheduled-actions?subjects=${modEvent.subject['did']}`
+  return (
+    <>
+      <p>
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </p>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
+      {modEvent.event.executeAt && (
+        <p className="dark:text-gray-300 text-gray-600">
+          Execution:{' '}
+          <a className="underline" href={scheduledActionLink} target="_blank">
+            {dateFormatter.format(new Date(modEvent.event.executeAt))}
+          </a>
+        </p>
+      )}
+      {modEvent.event.executeAfter && (
+        <p className="dark:text-gray-300 text-gray-600">
+          Execution:{' '}
+          <a className="underline" href={scheduledActionLink} target="_blank">
+            {dateFormatter.format(new Date(modEvent.event.executeAfter))}
+
+            {!!modEvent.event.executeUntil &&
+              ` - ${dateFormatter.format(
+                new Date(modEvent.event.executeUntil),
+              )}`}
+          </a>
+        </p>
+      )}
+    </>
+  )
+}
+
+const CancelScheduledTakedown = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.CancelScheduledTakedownEvent>
+}) => {
+  return (
+    <>
+      <p>
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </p>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
     </>
   )
 }
@@ -601,6 +674,26 @@ export const ModEventItem = ({
   ) {
     eventItem = (
       <AgeAssuranceOverride modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateScheduleTakedownEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <ScheduleTakedown modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateCancelScheduledTakedownEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <CancelScheduledTakedown
+        modEvent={{ ...modEvent, event: modEvent.event }}
+      />
     )
   }
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)
