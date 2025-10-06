@@ -48,11 +48,24 @@ export const MuteActionDurations = {
 }
 
 export const ActionDurationSelector = (
-  props: { labelText?: string; action?: string } & ComponentProps<
-    typeof Select
-  >,
+  props: {
+    labelText?: string
+    action?: string
+    // only valid for takedown durations
+    showPermanent?: boolean
+  } & ComponentProps<typeof Select>,
 ) => {
-  const { labelText, action, ...rest } = props
+  const { labelText, action, showPermanent, ...rest } = props
+
+  let options: Record<number, { text: string }> = {}
+  if (action === MOD_EVENTS.MUTE) {
+    options = MuteActionDurations
+  } else if (showPermanent) {
+    options = { 0: { text: 'Permanent' }, ...TakedownActionDurations }
+  } else {
+    options = TakedownActionDurations
+  }
+
   return (
     <Select
       id="durationInHours"
@@ -64,11 +77,7 @@ export const ActionDurationSelector = (
       <option hidden value="">
         {labelText || 'Suspension Period'}
       </option>
-      {Object.entries(
-        action === MOD_EVENTS.MUTE
-          ? MuteActionDurations
-          : TakedownActionDurations,
-      ).map(([key, info]) => (
+      {Object.entries(options).map(([key, info]) => (
         <option selected={rest.defaultValue === key} key={key} value={key}>
           {info.text}
         </option>
