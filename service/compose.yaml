@@ -32,6 +32,7 @@ services:
   postgres:
     container_name: postgres
     image: postgres:14.11-bookworm
+    command: postgres -c listen_addresses=localhost
     network_mode: host
     restart: unless-stopped
     healthcheck:
