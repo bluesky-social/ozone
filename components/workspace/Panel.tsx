@@ -254,19 +254,24 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
 
       // No need to break if one of the requests fail, continue on with others
       const externalUrl = String(formData.get('externalUrl') || '')
+      const takedownType = String(formData.get('takedownType') || '')
       const executeInHours = Number(formData.get('scheduledDurationInHours'))
       const executionStartTime = new Date(
         Date.now() + executeInHours * 3600 * 1000,
       )
-      
-      const scheduling = formData.get('randomizeExecutionTime')
-        ? {
-            executeAfter: executionStartTime.toISOString(),
-            executeUntil: new Date(
-              executionStartTime.getTime() + 8 * 3600 * 1000,
-            ).toISOString(),
-          }
-        : { executeAt: executionStartTime.toISOString() }
+
+      // only respect scheduling when takedown type is scheduled for permanent or suspension, execution is immediate
+      const scheduling =
+        takedownType === 'scheduled'
+          ? formData.get('randomizeExecutionTime')
+            ? {
+                executeAfter: executionStartTime.toISOString(),
+                executeUntil: new Date(
+                  executionStartTime.getTime() + 8 * 3600 * 1000,
+                ).toISOString(),
+              }
+            : { executeAt: executionStartTime.toISOString() }
+          : undefined
 
       const results = await actionSubjects(
         { event: coreEvent },
