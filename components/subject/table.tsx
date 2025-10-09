@@ -98,11 +98,13 @@ export function SubjectTable(
 }
 
 export const SubjectSummaryColumn = ({
+  strikeCount,
   recordStats,
   accountStats,
   priorityScore,
 }: {
   priorityScore?: number
+  strikeCount?: number
   recordStats?: ToolsOzoneModerationDefs.RecordsStats
   accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
@@ -212,6 +214,7 @@ function SubjectRow({
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <SubjectSummaryColumn
+          strikeCount={subjectStatus.strikeCount}
           priorityScore={subjectStatus.priorityScore}
           recordStats={subjectStatus.recordsStats}
           accountStats={subjectStatus.accountStats}

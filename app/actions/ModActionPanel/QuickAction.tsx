@@ -59,12 +59,16 @@ import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { ActionSeverityLevelSelector } from '@/reports/ModerationForm/ActionSeverityLevelSelector'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { getEventFromFormData } from '@/mod-event/helpers/emitEvent'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { VerificationActionButton } from 'components/verification/ActionButton'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
+import { usePolicyListSetting } from '@/setting/policy/usePolicyList'
+import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
+import { useActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -195,6 +199,22 @@ function Form(
   const [modEventType, setModEventType] = useState<string>(
     MOD_EVENTS.ACKNOWLEDGE,
   )
+  // Track only the details needed for UI rendering
+  const [policyDetails, setPolicyDetails] = useState<{
+    severityLevels?: string[]
+  } | null>(null)
+  const [severityLevelStrikeCount, setSeverityLevelStrikeCount] = useState<
+    number | null
+  >(null)
+  const [selectedPolicyName, setSelectedPolicyName] = useState<string>('')
+  const [selectedSeverityLevelName, setSelectedSeverityLevelName] =
+    useState<string>('')
+
+  const { data: policyData } = usePolicyListSetting()
+  const { data: severityLevelData } = useSeverityLevelSetting()
+  const { currentStrikes, getRecommendedAction } =
+    useActionRecommendation(subject)
+
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
@@ -212,6 +232,20 @@ function Form(
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')
+
+  // Get action recommendation whenever policy, severity level, or strike count changes
+  const actionRecommendation =
+    isTakedownEvent && selectedPolicyName && selectedSeverityLevelName
+      ? getRecommendedAction(
+          selectedPolicyName,
+          selectedSeverityLevelName,
+          severityLevelStrikeCount,
+          selectedSeverityLevelName
+            ? severityLevelData?.value?.[selectedSeverityLevelName]
+            : undefined,
+        )
+      : null
+  console.log(actionRecommendation)
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -377,6 +411,41 @@ function Form(
           subjectBlobCids,
           event: coreEvent,
         })
+
+        // If this is a takedown and we have an action recommendation (meaning threshold reached),
+        // emit an additional account-level takedown event
+        if (
+          ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
+          actionRecommendation
+        ) {
+          // Extract the DID from the subject
+          const subjectDid =
+            'did' in subjectInfo ? subjectInfo.did : new AtUri(subject).host
+
+          const accountEvent: any = {
+            $type: MOD_EVENTS.TAKEDOWN,
+            comment: coreEvent.comment,
+            policies: coreEvent.policies,
+          }
+
+          // Only set durationInHours if not permanent (for suspensions)
+          if (
+            !actionRecommendation.isPermanent &&
+            actionRecommendation.suspensionDurationInHours
+          ) {
+            accountEvent.durationInHours =
+              actionRecommendation.suspensionDurationInHours
+          }
+
+          await onSubmit({
+            subject: {
+              $type: 'com.atproto.admin.defs#repoRef',
+              did: subjectDid,
+            },
+            createdBy: accountDid,
+            event: accountEvent,
+          })
+        }
       }
 
       if (formData.get('additionalAcknowledgeEvent')) {
@@ -791,7 +860,95 @@ function Form(
                       </FormLabel>
                       {isTakedownEvent && (
                         <div className="mt-2 w-full">
-                          <ActionPolicySelector name="policies" />
+                          <ActionPolicySelector
+                            name="policies"
+                            onSelect={(policyName) => {
+                              const policyKey = policyName
+                                .toLowerCase()
+                                .replace(/\s/g, '-')
+                              const policy = policyData?.value?.[policyKey]
+                              setPolicyDetails(
+                                policy
+                                  ? { severityLevels: policy.severityLevels }
+                                  : null,
+                              )
+                              setSeverityLevelStrikeCount(null)
+                              setSelectedPolicyName(policyName)
+                              setSelectedSeverityLevelName('')
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                  {isTakedownEvent && policyDetails && (
+                    <div className="flex flex-col gap-2 mt-2">
+                      <div className="w-full">
+                        <ActionSeverityLevelSelector
+                          name="severityLevel"
+                          policySeverityLevels={policyDetails.severityLevels}
+                          onSelect={(levelName) => {
+                            const levelKey = levelName
+                              .toLowerCase()
+                              .replace(/\s/g, '-')
+                            const level = severityLevelData?.value?.[levelKey]
+                            setSeverityLevelStrikeCount(
+                              level?.strikeCount !== undefined
+                                ? level.strikeCount
+                                : null,
+                            )
+                            setSelectedSeverityLevelName(levelName)
+                          }}
+                        />
+                      </div>
+                      {severityLevelStrikeCount !== null && (
+                        <div className="flex flex-row items-center gap-2 px-2 py-1 bg-orange-50 dark:bg-orange-900/20 rounded border border-orange-200 dark:border-orange-800">
+                          <span className="text-sm font-medium text-orange-900 dark:text-orange-200">
+                            Strike Count:
+                          </span>
+                          <span className="text-sm text-orange-700 dark:text-orange-300">
+                            {severityLevelStrikeCount}
+                          </span>
+                          <input
+                            type="hidden"
+                            name="strikeCount"
+                            value={severityLevelStrikeCount}
+                          />
+                        </div>
+                      )}
+                      {currentStrikes > 0 && (
+                        <div className="px-2 py-1 bg-blue-50 dark:bg-blue-900/20 rounded border border-blue-200 dark:border-blue-800">
+                          <span className="text-xs text-blue-700 dark:text-blue-300">
+                            Current strikes: {currentStrikes}
+                          </span>
+                        </div>
+                      )}
+                      {actionRecommendation && (
+                        <div
+                          className={`px-2 py-1 rounded border ${
+                            actionRecommendation.isPermanent
+                              ? 'bg-red-50 dark:bg-red-900/20 border-red-200 dark:border-red-800'
+                              : 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-200 dark:border-yellow-800'
+                          }`}
+                        >
+                          <div className="flex flex-col">
+                            <span
+                              className={`text-xs font-medium ${
+                                actionRecommendation.isPermanent
+                                  ? 'text-red-900 dark:text-red-200'
+                                  : 'text-yellow-900 dark:text-yellow-200'
+                              }`}
+                            ></span>
+                            <span
+                              className={`text-xs ${
+                                actionRecommendation.isPermanent
+                                  ? 'text-red-700 dark:text-red-300'
+                                  : 'text-yellow-700 dark:text-yellow-300'
+                              }`}
+                            >
+                              {actionRecommendation.message}
+                            </span>
+                          </div>
                         </div>
                       )}
                     </div>

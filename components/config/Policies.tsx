@@ -8,6 +8,8 @@ import { useServerConfig } from '@/shell/ConfigurationContext'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { PlusIcon, MagnifyingGlassIcon } from '@heroicons/react/24/outline'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { SeverityLevelsConfig } from '@/config/SeverityLevels'
+import { useState } from 'react'
 
 export function PoliciesConfig() {
   const router = useRouter()
@@ -16,6 +18,42 @@ export function PoliciesConfig() {
   const { role } = useServerConfig()
   const canManagePolicies = role === ToolsOzoneTeamDefs.ROLEADMIN
   const showPoliciesCreateForm = searchParams.has('create')
+
+  const [showSeverityLevels, setShowSeverityLevels] = useState(false)
+  const [severityLevelSearch, setSeverityLevelSearch] = useState<string | null>(
+    null,
+  )
+  const [showSeverityLevelCreateForm, setShowSeverityLevelCreateForm] =
+    useState(false)
+
+  if (showSeverityLevels) {
+    return (
+      <div className="pt-4">
+        <div className="mb-4">
+          <ActionButton
+            size="sm"
+            appearance="outlined"
+            onClick={() => {
+              setShowSeverityLevels(false)
+              setSeverityLevelSearch(null)
+              setShowSeverityLevelCreateForm(false)
+            }}
+          >
+            ← Back to Policies
+          </ActionButton>
+        </div>
+        <SeverityLevelsConfig
+          searchQuery={severityLevelSearch}
+          showCreateForm={showSeverityLevelCreateForm}
+          onSearchChange={(value) => setSeverityLevelSearch(value)}
+          onCancelSearch={() => setSeverityLevelSearch(null)}
+          onCreateClick={() => setShowSeverityLevelCreateForm(true)}
+          onCancelCreate={() => setShowSeverityLevelCreateForm(false)}
+          onCreateSuccess={() => setShowSeverityLevelCreateForm(false)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="pt-4">
@@ -50,16 +88,25 @@ export function PoliciesConfig() {
               </h4>
             </div>
             {!showPoliciesCreateForm && (
-              <div className="flex flex-row items-center">
+              <div className="flex flex-row items-center gap-1">
                 {canManagePolicies && (
-                  <LinkButton
-                    size="sm"
-                    appearance="primary"
-                    href={createPolicyPageLink({ create: 'true' })}
-                  >
-                    <PlusIcon className="h-3 w-3 mr-1" />
-                    <span className="text-xs">Add New Policy</span>
-                  </LinkButton>
+                  <>
+                    <LinkButton
+                      size="sm"
+                      appearance="primary"
+                      href={createPolicyPageLink({ create: 'true' })}
+                    >
+                      <PlusIcon className="h-3 w-3 mr-1" />
+                      <span className="text-xs">Add New Policy</span>
+                    </LinkButton>
+                    <ActionButton
+                      size="sm"
+                      appearance="outlined"
+                      onClick={() => setShowSeverityLevels(true)}
+                    >
+                      <span className="text-xs">Severity Levels</span>
+                    </ActionButton>
+                  </>
                 )}
 
                 <LinkButton

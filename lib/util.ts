@@ -383,3 +383,7 @@ export function getReadableTextColor(backgroundColor: string) {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000
   return brightness > 128 ? 'text-gray-900' : 'text-white'
 }
+
+export const MINUTE = 60 * 1000
+export const HOUR = 60 * MINUTE
+export const DAY = 24 * HOUR

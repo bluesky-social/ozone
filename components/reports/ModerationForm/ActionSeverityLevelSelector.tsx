@@ -1,6 +1,4 @@
-import { usePolicyListSetting } from '@/setting/policy/usePolicyList'
-import { useServerConfig } from '@/shell/ConfigurationContext'
-import { ToolsOzoneTeamDefs } from '@atproto/api'
+import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import {
   Combobox,
   Transition,
@@ -9,37 +7,47 @@ import {
   ComboboxOptions,
   ComboboxOption,
 } from '@headlessui/react'
-import {
-  ArrowTopRightOnSquareIcon,
-  CheckIcon,
-  ChevronUpDownIcon,
-} from '@heroicons/react/24/solid'
-import { Fragment, useState } from 'react'
+import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/solid'
+import { Fragment, useState, useEffect } from 'react'
 
-export const ActionPolicySelector = ({
-  defaultPolicy,
+export const ActionSeverityLevelSelector = ({
+  defaultSeverityLevel,
   onSelect,
-  name = 'policies',
+  name = 'severityLevel',
+  policySeverityLevels,
 }: {
   name?: string
-  defaultPolicy?: string
+  defaultSeverityLevel?: string
   onSelect?: (name: string) => void
+  policySeverityLevels?: string[]
 }) => {
-  const { data, isLoading } = usePolicyListSetting()
-  const [selected, setSelected] = useState(defaultPolicy)
-  const policyList = Object.values(data?.value || {})
+  const { data, isLoading } = useSeverityLevelSetting()
+  const [selected, setSelected] = useState(defaultSeverityLevel)
+  const severityLevelList = Object.values(data?.value || {})
+
+  // Auto-select first severity level from policy when policy changes
+  useEffect(() => {
+    if (policySeverityLevels && policySeverityLevels.length > 0) {
+      const firstLevel = policySeverityLevels[0]
+      setSelected(firstLevel)
+      onSelect?.(firstLevel)
+    } else {
+      setSelected('')
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [policySeverityLevels])
 
   return (
     <>
       <Combobox
         value={selected}
         disabled={isLoading}
-        onChange={(selectedPolicy) => {
-          setSelected(selectedPolicy || '')
-          onSelect?.(selectedPolicy || '')
+        onChange={(selectedLevel) => {
+          setSelected(selectedLevel || '')
+          onSelect?.(selectedLevel || '')
         }}
       >
-        <ActionPolicyList policyList={policyList} />
+        <ActionSeverityLevelList severityLevelList={severityLevelList} />
       </Combobox>
       {/* Hidden input to ensure value is submitted with form */}
       <input type="hidden" name={name} value={selected || ''} />
@@ -47,44 +55,17 @@ export const ActionPolicySelector = ({
   )
 }
 
-export const ActionPoliciesSelector = ({
-  defaultPolicies,
-  onSelect,
-  name = 'policies',
+const ActionSeverityLevelList = ({
+  severityLevelList,
 }: {
-  name?: string
-  defaultPolicies?: string[]
-  onSelect?: (names: string[]) => void
+  severityLevelList: any[]
 }) => {
-  const { data, isLoading } = usePolicyListSetting()
-  const [selected, setSelected] = useState(defaultPolicies)
-  const policyList = Object.values(data?.value || {})
-
-  return (
-    <>
-      <Combobox
-        multiple
-        value={selected}
-        disabled={isLoading}
-        onChange={(selectedPolicies) => {
-          setSelected(selectedPolicies)
-          onSelect?.(selectedPolicies)
-        }}
-        name={name}
-      >
-        <ActionPolicyList policyList={policyList} />
-      </Combobox>
-    </>
-  )
-}
-
-const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
   const [query, setQuery] = useState('')
   const [isFocused, setIsFocused] = useState(false)
-  const matchingPolicies = policyList
-    ?.filter((tpl) => {
+  const matchingSeverityLevels = severityLevelList
+    ?.filter((level) => {
       if (query.length) {
-        return tpl.name.toLowerCase().includes(query.toLowerCase())
+        return level.name.toLowerCase().includes(query.toLowerCase())
       }
 
       return true
@@ -99,17 +80,10 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
           onChange={(event) => setQuery(event.target.value)}
           onFocus={() => setIsFocused(true)}
           onBlur={() => setIsFocused(false)}
-          displayValue={(values: string | string[]) => {
-            // When focused from blur, display empty value allowing user to input their search query
-            return isFocused
-              ? ''
-              : // when blurred, selected values may be an array of strings or just a string
-              // when array, we apply the OR condition between multiple policies so show that
-              Array.isArray(values)
-              ? values.join(' OR ')
-              : values || ''
+          displayValue={(value: string) => {
+            return isFocused ? '' : value || ''
           }}
-          placeholder="Select policy. Type or click arrows to see all policies"
+          placeholder="Select severity level. Type or click arrows to see all"
         />
         <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
           <ChevronUpDownIcon
@@ -126,12 +100,15 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
         afterLeave={() => setQuery('')}
       >
         <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
-          {!matchingPolicies?.length ? (
-            <NoPolicyOption query={query} />
+          {!matchingSeverityLevels?.length ? (
+            <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
+              No severity level found {query.length ? `matching "${query}"` : ''}
+              .
+            </div>
           ) : (
-            matchingPolicies?.map((tpl) => (
+            matchingSeverityLevels?.map((level) => (
               <ComboboxOption
-                key={tpl.name}
+                key={level.name}
                 className={({ focus }) =>
                   `relative cursor-default select-none py-2 pl-10 pr-4 ${
                     focus
@@ -139,9 +116,7 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
                       : 'text-gray-900 dark:text-gray-200'
                   }`
                 }
-                value={tpl.name}
-                // Force focus away so that selection is shown in the input field
-                // Combobox input will automatically bring focus back
+                value={level.name}
                 onClick={() => setIsFocused(false)}
               >
                 {({ selected, focus }) => (
@@ -165,9 +140,14 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
                             selected ? 'font-medium' : 'font-normal'
                           }`}
                         >
-                          {tpl.name}
+                          {level.name}
                         </p>
-                        <p className="text-xs">{tpl.description}</p>
+                        <p className="text-xs">{level.description}</p>
+                        {level.strikeCount !== undefined && (
+                          <p className="text-xs text-orange-600 dark:text-orange-400">
+                            Strike Count: {level.strikeCount}
+                          </p>
+                        )}
                       </div>
                     </div>
                   </>
@@ -177,25 +157,6 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
           )}
         </ComboboxOptions>
       </Transition>
-    </div>
-  )
-}
-
-const NoPolicyOption = ({ query = '' }: { query?: string }) => {
-  const isAdmin = useServerConfig().role === ToolsOzoneTeamDefs.ROLEADMIN
-  return (
-    <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
-      No policy found {query.length ? `matching "${query}"` : ''}.
-      {isAdmin && (
-        <a
-          target="_blank"
-          className="underline mx-1"
-          href="/configure?tab=policies"
-        >
-          Add policy
-        </a>
-      )}
-      <ArrowTopRightOnSquareIcon className="h-3 w-3 inline" />
     </div>
   )
 }

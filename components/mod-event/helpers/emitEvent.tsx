@@ -75,6 +75,7 @@ export function useEmitEvent() {
 
       // Define the actual emit event function to reuse
       const emitModerationEventAsync = async () => {
+        debugger;
         const { data } = await labelerAgent.tools.ozone.moderation.emitEvent(
           vals,
         )
@@ -457,6 +458,8 @@ export const getEventFromFormData = (
   )
   const score = Number(formData.get('priorityScore'))
   const tags = formData.get('tags')
+  const severityLevel = formData.get('severityLevel')
+  const strikeCount = formData.get('strikeCount')
 
   if ($type === MOD_EVENTS.ACKNOWLEDGE) {
     return { $type, comment, acknowledgeAccountSubjects }
@@ -487,13 +490,30 @@ export const getEventFromFormData = (
   }
 
   if ($type === MOD_EVENTS.TAKEDOWN) {
-    return {
+    const event: any = {
       $type,
       durationInHours,
       acknowledgeAccountSubjects,
       policies: [String(policies)],
       comment: comment ? String(comment) : undefined,
     }
+
+    // Add severityLevel if present
+    if (
+      severityLevel &&
+      String(severityLevel) !== 'null' &&
+      String(severityLevel) !== ''
+    ) {
+      event.severityLevel = String(severityLevel)
+    }
+
+    // Add strikeCount if present and valid
+    const strikeCountNum = Number(strikeCount)
+    if (strikeCount && !isNaN(strikeCountNum) && strikeCountNum > 0) {
+      event.strikeCount = strikeCountNum
+    }
+
+    return event
   }
 
   if ($type === MOD_EVENTS.COMMENT) {

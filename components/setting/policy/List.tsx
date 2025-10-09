@@ -48,12 +48,42 @@ export function PolicyList({
                       : ''
                   }`}
                 >
-                  <div>
-                    <p>{policy.name}</p>
-                    <p className="text-sm">{policy.description}</p>
+                  <div className="flex-1">
+                    <p className="font-medium">{policy.name}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {policy.description}
+                    </p>
+                    {policy.url && (
+                      <p className="text-sm mt-1">
+                        <span className="text-gray-500 dark:text-gray-500">
+                          URL:{' '}
+                        </span>
+                        <a
+                          href={policy.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-blue-600 dark:text-blue-400 hover:underline"
+                        >
+                          {policy.url}
+                        </a>
+                      </p>
+                    )}
+                    {policy.severityLevels &&
+                      policy.severityLevels.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-1">
+                          {policy.severityLevels.map((level) => (
+                            <span
+                              key={level}
+                              className="inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-xs"
+                            >
+                              {level}
+                            </span>
+                          ))}
+                        </div>
+                      )}
                   </div>
                   {canEdit && (
-                    <div className="flex flex-row items-center gap-2">
+                    <div className="flex flex-row items-center gap-2 ml-4">
                       <ActionButton
                         size="xs"
                         appearance="outlined"

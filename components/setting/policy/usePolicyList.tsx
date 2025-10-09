@@ -60,16 +60,19 @@ export const usePolicyListEditor = () => {
     },
   })
 
-  const onSubmit = async (e) => {
+  const onSubmit = async (e, severityLevels?: string[]) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name')?.toString().trim() ?? ''
     const description = formData.get('description')?.toString().trim() ?? ''
+    const url = formData.get('url')?.toString().trim() ?? ''
     const newSetting = {
       ...(initialSetting?.value ?? {}),
       [nameToKey(name)]: {
         name,
         description,
+        ...(url && { url }),
+        ...(severityLevels && severityLevels.length > 0 && { severityLevels }),
       },
     }
     await mutation.mutateAsync(newSetting)
