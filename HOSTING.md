@@ -21,7 +21,7 @@ Ensure that you can ssh to your server and have root access.
 
 - Public IPv4 address
 - Public DNS name
-- Public inbound internet access permitted on port 80/tcp and 443/tcp
+- Public inbound and outbound internet access permitted on port 80/tcp, 443/tcp, and 22/ssh
 
 **Server Recommendations**
 
