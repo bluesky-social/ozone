@@ -40,10 +40,11 @@ Ensure that you can ssh to your server and have root access.
 
 One of the most common sources of misconfiguration is not opening firewall ports correctly. Please be sure to double check this step.
 
-In your cloud provider's console, the following ports should be open to inbound access from the public internet.
+In your cloud provider's console, the following ports should be open to inbound and outbound access to and from the public internet.
 
 - 80/tcp (Used only for TLS certification verification)
 - 443/tcp (Used for all application requests)
+- 22/ssh (Used for SSH commands into the instance)
 
 Note that WebSockets (over HTTPS) will be used to pull labels from your Ozone instance in to the network.
 
@@ -88,8 +89,8 @@ This should return your server's public IP.
 If your server is running a Linux firewall managed with `ufw`, you will need to open these ports:
 
 ```bash
-$ sudo ufw allow 80/tcp
-$ sudo ufw allow 443/tcp
+sudo ufw allow 80/tcp
+sudo ufw allow 443/tcp
 ```
 
 #### Install Docker
@@ -226,7 +227,7 @@ OZONE_CONFIG
 
 Download the `compose.yaml` to run your Ozone instance, which includes the following containers:
 
-- `ozone` Node Ozone server—both UI and backend—running on http://localhost:3000
+- `ozone` Node Ozone server—both UI and backend—running on <http://localhost:3000>
 - `postgres` Postgres database used by the Ozone backend
 - `caddy` HTTP reverse proxy handling TLS and proxying requests to Ozone
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
@@ -291,7 +292,7 @@ sudo docker ps
 
 ### Verify that Ozone is online
 
-You can check if your server is online and healthy by requesting the healthcheck endpoint, and by visiting the UI in browser at https://ozone.example.com/.
+You can check if your server is online and healthy by requesting the healthcheck endpoint, and by visiting the UI in browser at <https://ozone.example.com/>.
 
 ```bash
 curl https://ozone.EXAMPLE.COM/xrpc/_health
@@ -310,10 +311,10 @@ Note that there will be no labels output on the WebSocket until they are created
 
 Once you've successfully started running your service, there is a final step to make the rest of the network aware of it, so that users can find your labeler in the Bluesky app and so that Bluesky can consume the labels that you publish. This step can be completed from within the Ozone UI.
 
-1.  Navigate to your Ozone UI at https://ozone.example.com.
-2.  Login to Ozone using the service account that you created in the first step of this guide.
-3.  The Ozone UI will lead you through the following steps to announce your service to the network.
-    - The first step associates https://ozone.example.com with your service account's identity on the network. In technical terms this involves adding a service and a verification method to your account's DID document. This step is required to use your Ozone service.
+1. Navigate to your Ozone UI at <https://ozone.example.com>.
+2. Login to Ozone using the service account that you created in the first step of this guide.
+3. The Ozone UI will lead you through the following steps to announce your service to the network.
+    - The first step associates <https://ozone.example.com> with your service account's identity on the network. In technical terms this involves adding a service and a verification method to your account's DID document. This step is required to use your Ozone service.
     - The second step publishes a record in your service account's repository. This allows the Bluesky application to understand that your service account represents a labeler. This step is optional: each time you login as your service account, you'll be prompted to complete it.
 
 ### Manually updating Ozone
