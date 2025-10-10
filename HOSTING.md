@@ -21,7 +21,7 @@ Ensure that you can ssh to your server and have root access.
 
 - Public IPv4 address
 - Public DNS name
-- Public inbound internet access permitted on port 80/tcp and 443/tcp
+- Public inbound and outbound internet access permitted on port 80/tcp, 443/tcp, and 22/ssh
 
 **Server Recommendations**
 
@@ -40,10 +40,11 @@ Ensure that you can ssh to your server and have root access.
 
 One of the most common sources of misconfiguration is not opening firewall ports correctly. Please be sure to double check this step.
 
-In your cloud provider's console, the following ports should be open to inbound access from the public internet.
+In your cloud provider's console, the following ports should be open to inbound and outbound access to and from the public internet.
 
 - 80/tcp (Used only for TLS certification verification)
 - 443/tcp (Used for all application requests)
+- 22/ssh (Used for SSH commands into the instance)
 
 Note that WebSockets (over HTTPS) will be used to pull labels from your Ozone instance in to the network.
 
