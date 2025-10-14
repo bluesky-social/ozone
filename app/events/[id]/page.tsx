@@ -8,16 +8,20 @@ import { EventView } from '@/mod-event/View'
 import { MOD_EVENT_TITLES } from '@/mod-event/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-export default function EventViewPage(props: { params: Promise<{ id: string }> }) {
+export default function EventViewPage(props: {
+  params: Promise<{ id: string }>
+}) {
   const params = use(props.params)
   const id = decodeURIComponent(params.id)
   const labelerAgent = useLabelerAgent()
   const { data: event, error } = useQuery({
     queryKey: ['event', { id }],
     queryFn: async () => {
-      const { data } = await labelerAgent.api.tools.ozone.moderation.getEvent({
-        id: parseInt(id, 10),
-      })
+      const { data } = await labelerAgent.tools.ozone.moderation
+        .getEvent({
+          id: parseInt(id, 10),
+        })
+        .catch((err) => console.log(err.validationError))
       return data
     },
   })

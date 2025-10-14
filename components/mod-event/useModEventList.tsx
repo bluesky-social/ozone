@@ -115,7 +115,8 @@ const getReposAndRecordsForEvents = async (
                 repos.set(repo.did, repo)
               }
             }
-          }),
+          })
+          .catch((err) => console.log(err)),
       )
     }
   }
@@ -130,7 +131,8 @@ const getReposAndRecordsForEvents = async (
                 records.set(record.uri, record)
               }
             }
-          }),
+          })
+          .catch((err) => console.log(err.response)),
       )
     }
   }

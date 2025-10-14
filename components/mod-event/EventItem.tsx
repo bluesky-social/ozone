@@ -57,7 +57,6 @@ const Comment = ({
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmuteReporter>
       | $Typed<ToolsOzoneModerationDefs.ModEventResolveAppeal>
       | $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
-      | $Typed<ToolsOzoneModerationDefs.ModEventDivert>
   }
 }) => {
   return (
@@ -537,6 +536,39 @@ const CancelScheduledTakedown = ({
   )
 }
 
+const BlobDivert = ({
+  modEvent,
+}: {
+  modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventDivert>
+}) => {
+  return (
+    <>
+      <div className="flex justify-between">
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </div>
+      <div>
+        <p>Blob CIDs:</p>
+        <ul className="dark:text-gray-300 text-gray-500">
+          {modEvent.subjectBlobCids.map((cid) => (
+            <li key={cid} className="break-all">
+              <CopyButton text={cid} label="Copy CID" className="mr-1" />
+              {cid}
+            </li>
+          ))}
+        </ul>
+      </div>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
+    </>
+  )
+}
+
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
@@ -598,10 +630,14 @@ export const ModEventItem = ({
     ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventReverseTakedown)(
       modEvent.event,
-    ) ||
-    asPredicate(ToolsOzoneModerationDefs.validateModEventDivert)(modEvent.event)
+    )
   ) {
     eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateModEventDivert)(modEvent.event)
+  ) {
+    eventItem = <BlobDivert modEvent={{ ...modEvent, event: modEvent.event }} />
   }
   if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventTakedown)(

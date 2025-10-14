@@ -29,7 +29,7 @@ export const useActionRecommendation = (subject: string) => {
       // TODO: paginate if needed
       const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
         subject: did,
-        minStrikeCount: 1,
+        // minStrikeCount: 1,
         includeAllUserRecords: true,
         limit: 100, // Adjust as needed
       })

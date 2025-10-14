@@ -95,6 +95,7 @@ export const WorkspacePanelActionForm = ({
               >
                 <ActionDurationSelector
                   action={modEventType}
+                  showPermanent
                   form={WORKSPACE_FORM_ID}
                   labelText={
                     isMuteEvent
@@ -112,7 +113,7 @@ export const WorkspacePanelActionForm = ({
             <div className="mt-3">
               <div className="w-full">
                 <ActionPolicySelector name="policies" />
-              </div>  
+              </div>
               <div className="mt-2 flex flex-row gap-2">
                 <TakedownScheduleSelector form={WORKSPACE_FORM_ID} />
               </div>
