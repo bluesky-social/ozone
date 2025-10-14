@@ -109,9 +109,9 @@ export const BlobListFormField = ({
             includeCount: false,
           })}
           {!showBlobList ? (
-            <ChevronDownIcon className="w-4 h-4 ml-1 text-white" />
+            <ChevronDownIcon className="w-4 h-4 ml-1 dark:text-white" />
           ) : (
-            <ChevronUpIcon className="w-4 h-4 ml-1 text-white" />
+            <ChevronUpIcon className="w-4 h-4 ml-1 dark:text-white" />
           )}
         </button>
       }
