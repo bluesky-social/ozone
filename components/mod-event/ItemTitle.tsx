@@ -57,6 +57,10 @@ export const ItemTitle = ({
       : 'text-red-500'
     eventTitle = modEvent.event.durationInHours ? 'Suspended' : 'Taken down'
   }
+  if (ToolsOzoneModerationDefs.isModEventDivert(modEvent.event)) {
+    eventColor = 'text-red-400'
+    eventTitle = 'Blob Diverted'
+  }
   if (ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event)) {
     eventColor = 'text-blue-400'
     eventTitle = 'Reverted takedown'
