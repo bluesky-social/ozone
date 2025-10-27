@@ -56,6 +56,10 @@ const Comment = ({
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmute>
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmuteReporter>
       | $Typed<ToolsOzoneModerationDefs.ModEventResolveAppeal>
+<<<<<<< HEAD
+=======
+      | $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
+>>>>>>> a14da6a80b1f73e45b8fc71ab85cf31e758b1a1b
   }
 }) => {
   return (
@@ -703,6 +707,8 @@ export const ModEventItem = ({
       modEvent.event,
     ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventUnmuteReporter)(
+      modEvent.event,
+    ) || asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
       modEvent.event,
     )
   ) {
