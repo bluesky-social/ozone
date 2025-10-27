@@ -1,3 +1,4 @@
+import { SeverityLevelListSetting } from '@/setting/severity-level/types'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import {
   Combobox,
@@ -19,22 +20,30 @@ export const ActionSeverityLevelSelector = ({
   name?: string
   defaultSeverityLevel?: string
   onSelect?: (name: string) => void
-  policySeverityLevels?: string[]
+  policySeverityLevels?: Record<
+    string,
+    { description: string; isDefault: boolean }
+  >
 }) => {
   const { data, isLoading } = useSeverityLevelSetting()
   const [selected, setSelected] = useState(defaultSeverityLevel)
-  const severityLevelList = Object.values(data?.value || {})
 
-  // Auto-select first severity level from policy when policy changes
+  // Auto-select default severity level from policy when policy changes
   useEffect(() => {
-    if (policySeverityLevels && policySeverityLevels.length > 0) {
-      const firstLevel = policySeverityLevels[0]
-      setSelected(firstLevel)
-      onSelect?.(firstLevel)
+    if (policySeverityLevels && Object.keys(policySeverityLevels).length > 0) {
+      // Find the default level
+      const defaultLevel = Object.entries(policySeverityLevels).find(
+        ([_, config]) => config.isDefault,
+      )
+      const levelToSelect = defaultLevel
+        ? defaultLevel[0]
+        : Object.keys(policySeverityLevels)[0] // fallback to first if no default
+
+      setSelected(levelToSelect)
+      onSelect?.(levelToSelect)
     } else {
       setSelected('')
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [policySeverityLevels])
 
   return (
@@ -47,7 +56,10 @@ export const ActionSeverityLevelSelector = ({
           onSelect?.(selectedLevel || '')
         }}
       >
-        <ActionSeverityLevelList severityLevelList={severityLevelList} />
+        <ActionSeverityLevelList
+          severityLevelList={data?.value || {}}
+          policySeverityLevels={policySeverityLevels}
+        />
       </Combobox>
       {/* Hidden input to ensure value is submitted with form */}
       <input type="hidden" name={name} value={selected || ''} />
@@ -57,20 +69,29 @@ export const ActionSeverityLevelSelector = ({
 
 const ActionSeverityLevelList = ({
   severityLevelList,
+  policySeverityLevels,
 }: {
-  severityLevelList: any[]
+  severityLevelList: SeverityLevelListSetting
+  policySeverityLevels?: Record<
+    string,
+    { description: string; isDefault: boolean }
+  >
 }) => {
   const [query, setQuery] = useState('')
   const [isFocused, setIsFocused] = useState(false)
-  const matchingSeverityLevels = severityLevelList
-    ?.filter((level) => {
+  const matchingSeverityLevels = Object.entries(severityLevelList)
+    ?.filter(([name, level]) => {
       if (query.length) {
-        return level.name.toLowerCase().includes(query.toLowerCase())
+        const q = query.toLowerCase()
+        return (
+          name.toLowerCase().includes(q) ||
+          level.description?.toLowerCase().includes(q)
+        )
       }
 
       return true
     })
-    .sort((prev, next) => prev.name.localeCompare(next.name))
+    .sort(([prev], [next]) => prev.localeCompare(next))
 
   return (
     <div className="relative mt-1 w-full">
@@ -102,13 +123,13 @@ const ActionSeverityLevelList = ({
         <ComboboxOptions className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm">
           {!matchingSeverityLevels?.length ? (
             <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
-              No severity level found {query.length ? `matching "${query}"` : ''}
-              .
+              No severity level found{' '}
+              {query.length ? `matching "${query}"` : ''}.
             </div>
           ) : (
-            matchingSeverityLevels?.map((level) => (
+            matchingSeverityLevels?.map(([key, level]) => (
               <ComboboxOption
-                key={level.name}
+                key={key}
                 className={({ focus }) =>
                   `relative cursor-default select-none py-2 pl-10 pr-4 ${
                     focus
@@ -116,7 +137,7 @@ const ActionSeverityLevelList = ({
                       : 'text-gray-900 dark:text-gray-200'
                   }`
                 }
-                value={level.name}
+                value={key}
                 onClick={() => setIsFocused(false)}
               >
                 {({ selected, focus }) => (
@@ -133,22 +154,36 @@ const ActionSeverityLevelList = ({
                         />
                       </span>
                     ) : null}
-                    <div className="flex flex-row">
-                      <div>
-                        <p
-                          className={`block truncate ${
+                    <div className="flex flex-col">
+                      <div className="flex flex-row items-baseline gap-2">
+                        <span
+                          className={`${
                             selected ? 'font-medium' : 'font-normal'
                           }`}
                         >
-                          {level.name}
-                        </p>
-                        <p className="text-xs">{level.description}</p>
+                          {key}
+                        </span>
                         {level.strikeCount !== undefined && (
-                          <p className="text-xs text-orange-600 dark:text-orange-400">
-                            Strike Count: {level.strikeCount}
-                          </p>
+                          <span className="text-xs text-orange-600 dark:text-orange-400">
+                            {level.strikeCount} strike
+                            {level.strikeCount !== 1 ? 's' : ''}
+                          </span>
+                        )}
+                        {level.expiryInDays !== undefined && (
+                          <span className="text-xs text-gray-500 dark:text-gray-400">
+                            expires {level.expiryInDays}d
+                          </span>
+                        )}
+                        {level.needsTakedown && (
+                          <span className="text-xs text-red-600 dark:text-red-400 font-semibold">
+                            immediate ban
+                          </span>
                         )}
                       </div>
+                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                        {policySeverityLevels?.[key]?.description ||
+                          level.description}
+                      </p>
                     </div>
                   </>
                 )}

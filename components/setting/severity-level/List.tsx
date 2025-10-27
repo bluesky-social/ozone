@@ -6,6 +6,7 @@ import {
   useSeverityLevelEditor,
   useSeverityLevelSetting,
 } from './useSeverityLevel'
+import { pluralize } from '@/lib/util'
 
 export function SeverityLevelList({
   canEdit = false,
@@ -15,15 +16,23 @@ export function SeverityLevelList({
   canEdit: boolean
 }) {
   const { data, isLoading } = useSeverityLevelSetting()
-  const { onRemove, mutation, removingSeverityLevel, setRemovingSeverityLevel } =
-    useSeverityLevelEditor()
-  let severityLevelList = Object.values(data?.value || {}).sort((prev, next) =>
-    prev.name.localeCompare(next.name),
+  const {
+    onRemove,
+    mutation,
+    removingSeverityLevel,
+    setRemovingSeverityLevel,
+  } = useSeverityLevelEditor()
+  let severityLevelList = Object.entries(data?.value || {}).sort(
+    ([prev], [next]) => prev.localeCompare(next),
   )
   if (searchQuery) {
-    severityLevelList = severityLevelList.filter((level) =>
-      level.name.toLowerCase().includes(searchQuery.toLowerCase()),
-    )
+    severityLevelList = severityLevelList.filter(([name, level]) => {
+      const q = searchQuery.toLowerCase()
+      return (
+        level.description?.toLowerCase().includes(q) ||
+        name.toLowerCase().includes(q)
+      )
+    })
   }
 
   return (
@@ -40,11 +49,11 @@ export function SeverityLevelList({
                   : `No severity level matches the prefix "${searchQuery}". Please clear your search to see all severity levels`}
               </p>
             )}
-            {severityLevelList?.map((level, i) => {
+            {severityLevelList?.map(([name, level], i) => {
               const lastItem = i === severityLevelList.length - 1
               return (
                 <div
-                  key={level.name}
+                  key={name}
                   className={`flex flex-row justify-between px-2 ${
                     !lastItem
                       ? 'mb-2 border-b dark:border-gray-700 border-gray-100 pb-3'
@@ -52,30 +61,48 @@ export function SeverityLevelList({
                   }`}
                 >
                   <div className="flex-1">
-                    <p className="font-medium">{level.name}</p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
-                      {level.description}
-                    </p>
-                    <div className="mt-2 flex flex-wrap gap-2 text-xs">
+                    <div className="flex flex-row items-center gap-2 flex-wrap mb-1">
+                      <p className="font-medium">{name}</p>
                       {level.strikeCount !== undefined && (
-                        <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-0.5 rounded">
-                          Strike Count: {level.strikeCount}
+                        <span className="inline-block bg-orange-100 dark:bg-orange-900 text-orange-800 dark:text-orange-200 px-2 py-0.5 rounded text-xs">
+                          {pluralize(level.strikeCount, 'strike')}
+                        </span>
+                      )}
+                      {level.firstOccurrenceStrikeCount !== undefined && (
+                        <span className="inline-block bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded text-xs">
+                          {pluralize(level.firstOccurrenceStrikeCount, 'strike')} on 1st
                         </span>
                       )}
                       {level.strikeOnOccurrence !== undefined && (
-                        <span className="inline-block bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-0.5 rounded">
-                          Strike on Occurrence: {level.strikeOnOccurrence}
+                        <span className="inline-block bg-purple-100 dark:bg-purple-900 text-purple-800 dark:text-purple-200 px-2 py-0.5 rounded text-xs">
+                          on {level.strikeOnOccurrence}
+                          {level.strikeOnOccurrence === 1
+                            ? 'st'
+                            : level.strikeOnOccurrence === 2
+                            ? 'nd'
+                            : level.strikeOnOccurrence === 3
+                            ? 'rd'
+                            : 'th'}{' '}
+                          occurrence
+                        </span>
+                      )}
+                      {level.expiryInDays !== undefined && (
+                        <span className="inline-block bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded text-xs">
+                          expires {level.expiryInDays}d
                         </span>
                       )}
                       {level.needsTakedown && (
-                        <span className="inline-block bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-0.5 rounded">
-                          Needs Takedown
+                        <span className="inline-block bg-red-100 dark:bg-red-900 text-red-800 dark:text-red-200 px-2 py-0.5 rounded text-xs">
+                          immediate ban
                         </span>
                       )}
                     </div>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      {level.description}
+                    </p>
                   </div>
                   {canEdit && (
-                    <div className="flex flex-row items-center gap-2 ml-4">
+                    <div className="flex flex-row items-start gap-2 ml-4">
                       <ActionButton
                         size="xs"
                         appearance="outlined"

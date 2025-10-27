@@ -1,8 +1,9 @@
-import { ActionButton } from '@/common/buttons'
+import { ActionButton, LinkButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
-import { TrashIcon } from '@heroicons/react/24/solid'
+import { PencilIcon, TrashIcon, StarIcon } from '@heroicons/react/24/solid'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { usePolicyListEditor, usePolicyListSetting } from './usePolicyList'
+import { createPolicyPageLink } from './utils'
 
 export function PolicyList({
   canEdit = false,
@@ -69,21 +70,38 @@ export function PolicyList({
                       </p>
                     )}
                     {policy.severityLevels &&
-                      policy.severityLevels.length > 0 && (
-                        <div className="mt-2 flex flex-wrap gap-1">
-                          {policy.severityLevels.map((level) => (
-                            <span
-                              key={level}
-                              className="inline-block bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 px-2 py-0.5 rounded text-xs"
+                      Object.keys(policy.severityLevels).length > 0 && (
+                        <div className="mt-2 flex flex-col gap-1">
+                          {Object.entries(policy.severityLevels).map(([levelName, config]) => (
+                            <div
+                              key={levelName}
+                              className="flex flex-row items-start gap-2"
                             >
-                              {level}
-                            </span>
+                              <div className="flex flex-row items-center gap-1 bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-2 py-0.5 rounded text-xs">
+                                {config.isDefault && (
+                                  <StarIcon className="h-3 w-3 text-purple-600 dark:text-purple-400" title="Default severity level" />
+                                )}
+                                <span className="font-medium">{levelName}</span>
+                              </div>
+                              {config.description && (
+                                <span className="text-xs text-gray-600 dark:text-gray-400 italic">
+                                  {config.description}
+                                </span>
+                              )}
+                            </div>
                           ))}
                         </div>
                       )}
                   </div>
                   {canEdit && (
-                    <div className="flex flex-row items-center gap-2 ml-4">
+                    <div className="flex flex-row items-start gap-2 ml-4">
+                      <LinkButton
+                        size="xs"
+                        appearance="outlined"
+                        href={createPolicyPageLink({ edit: policy.name })}
+                      >
+                        <PencilIcon className="h-3 w-3 mx-1" />
+                      </LinkButton>
                       <ActionButton
                         size="xs"
                         appearance="outlined"

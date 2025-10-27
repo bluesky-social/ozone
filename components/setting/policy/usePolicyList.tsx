@@ -1,17 +1,19 @@
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { PolicyListSetting } from './types'
+import { PolicyListSetting, SeverityLevelConfig } from './types'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
+import { nameToKey } from './utils'
+import { MINUTE } from '@/lib/util'
 
 const PolicyListSettingKey = 'tools.ozone.setting.policyList'
-const nameToKey = (name: string) => name.toLowerCase().replace(/\s/g, '-')
 
 export const usePolicyListSetting = () => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
     queryKey: ['policy-list'],
+    cacheTime: 10 * MINUTE,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',
@@ -60,23 +62,34 @@ export const usePolicyListEditor = () => {
     },
   })
 
-  const onSubmit = async (e, severityLevels?: string[]) => {
-    e.preventDefault()
+  const onSubmit = async (
+    e,
+    severityLevels?: Record<string, SeverityLevelConfig>,
+    editingPolicyName?: string,
+  ) => {
     const formData = new FormData(e.currentTarget)
     const name = formData.get('name')?.toString().trim() ?? ''
     const description = formData.get('description')?.toString().trim() ?? ''
     const url = formData.get('url')?.toString().trim() ?? ''
-    const newSetting = {
-      ...(initialSetting?.value ?? {}),
-      [nameToKey(name)]: {
-        name,
-        description,
-        ...(url && { url }),
-        ...(severityLevels && severityLevels.length > 0 && { severityLevels }),
-      },
+
+    const newSetting = { ...(initialSetting?.value ?? {}) }
+
+    // If editing and name changed, remove old key
+    if (editingPolicyName && editingPolicyName !== name) {
+      delete newSetting[nameToKey(editingPolicyName)]
     }
+
+    // Add/update policy with new/existing key
+    newSetting[nameToKey(name)] = {
+      name,
+      description,
+      ...(url && { url }),
+      ...(severityLevels &&
+        Object.keys(severityLevels).length > 0 && { severityLevels }),
+    }
+
     await mutation.mutateAsync(newSetting)
-    e.currentTarget.reset()
+    // Form reset and editor close is handled in Editor component on success
   }
 
   const onRemove = async (name: string) => {

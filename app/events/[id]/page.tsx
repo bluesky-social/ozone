@@ -17,11 +17,9 @@ export default function EventViewPage(props: {
   const { data: event, error } = useQuery({
     queryKey: ['event', { id }],
     queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.moderation
-        .getEvent({
-          id: parseInt(id, 10),
-        })
-        .catch((err) => console.log(err.validationError))
+      const { data } = await labelerAgent.tools.ozone.moderation.getEvent({
+        id: parseInt(id, 10),
+      })
       return data
     },
   })

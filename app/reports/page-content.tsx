@@ -276,7 +276,6 @@ export const ReportsPageContent = () => {
         subjectOptions={subjectOptions}
         isInitialLoading={isInitialLoading}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          debugger;
           await emitEvent(
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )

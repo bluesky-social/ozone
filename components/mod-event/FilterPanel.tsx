@@ -7,7 +7,10 @@ import {
 import { AGE_ASSURANCE_STATES, MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 import { addDays } from 'date-fns'
 import { Checkbox, FormLabel, Input } from '@/common/forms'
-import { reasonTypeOptions, groupedReasonTypes } from '@/reports/helpers/getType'
+import {
+  reasonTypeOptions,
+  groupedReasonTypes,
+} from '@/reports/helpers/getType'
 import Select from 'react-tailwindcss-select'
 import { classNames } from '@/lib/util'
 import { LabelSelector } from '@/common/labels/Selector'
@@ -68,6 +71,7 @@ export const EventFilterPanel = ({
   subjectType,
   selectedCollections,
   ageAssuranceState,
+  withStrike,
   isBatchIdFromProp = false,
 }: Omit<EventListState, 'includeAllUserRecords' | 'showContentPreview'> & {
   isBatchIdFromProp?: boolean
@@ -253,6 +257,20 @@ export const EventFilterPanel = ({
               />
             </Dropdown>
           </FormLabel>
+
+          <Checkbox
+            id="withStrike"
+            name="withStrike"
+            className="flex items-center"
+            checked={withStrike}
+            onChange={() =>
+              changeListFilter({
+                field: 'withStrike',
+                value: withStrike ? undefined : true,
+              })
+            }
+            label="Show events with strikes"
+          />
 
           <FormLabel
             label="Event Author DID"
@@ -458,14 +476,16 @@ export const EventFilterPanel = ({
                   value: selectedValues,
                 })
               }}
-              options={Object.entries(groupedReasonTypes).map(([categoryName, reasonTypes]) => ({
-                label: categoryName,
-                options: reasonTypes.map((reasonType) => ({
-                  label: reasonTypeOptions[reasonType] || reasonType,
-                  value: reasonType,
-                  isSelected: reportTypes.includes(reasonType),
-                })),
-              }))}
+              options={Object.entries(groupedReasonTypes).map(
+                ([categoryName, reasonTypes]) => ({
+                  label: categoryName,
+                  options: reasonTypes.map((reasonType) => ({
+                    label: reasonTypeOptions[reasonType] || reasonType,
+                    value: reasonType,
+                    isSelected: reportTypes.includes(reasonType),
+                  })),
+                }),
+              )}
             />
           </FormLabel>
         )}
@@ -536,6 +556,7 @@ export const EventFilterPanel = ({
                   subjectType,
                   selectedCollections,
                   ageAssuranceState,
+                  withStrike,
                 },
               })
               return true

@@ -42,48 +42,64 @@ export const SeverityLevelEditor = ({
           placeholder="Description of this severity level"
         />
       </FormLabel>
-      <FormLabel
-        label="Strike Count"
-        htmlFor="strikeCount"
-        className="flex-1 mb-3"
-      >
-        <Input
-          type="number"
-          id="strikeCount"
-          name="strikeCount"
-          min="0"
-          placeholder="Number of strikes for this severity level (optional)"
-          className="block w-full"
-        />
-      </FormLabel>
-      <FormLabel
-        label="Strike On Occurrence"
-        htmlFor="strikeOnOccurrence"
-        className="flex-1 mb-3"
-      >
-        <Input
-          type="number"
-          id="strikeOnOccurrence"
-          name="strikeOnOccurrence"
-          min="1"
-          placeholder="Apply strike on which occurrence (optional)"
-          className="block w-full"
-        />
-      </FormLabel>
-      <FormLabel
-        label="Strike Expiry (days)"
-        htmlFor="expiryInDays"
-        className="flex-1 mb-3"
-      >
-        <Input
-          type="number"
-          id="expiryInDays"
-          name="expiryInDays"
-          min="0"
-          placeholder="Days until strikes expire (leave empty for never)"
-          className="block w-full"
-        />
-      </FormLabel>
+      <div className="flex flex-wrap gap-3 mb-3">
+        <FormLabel
+          label="Strike Count"
+          htmlFor="strikeCount"
+          className="flex-1 min-w-[200px]"
+        >
+          <Input
+            type="number"
+            id="strikeCount"
+            name="strikeCount"
+            min="0"
+            placeholder="Number of strikes (optional)"
+            className="block w-full"
+          />
+        </FormLabel>
+        <FormLabel
+          label="First Occurrence Strike Count"
+          htmlFor="firstOccurrenceStrikeCount"
+          className="flex-1 min-w-[200px]"
+        >
+          <Input
+            type="number"
+            id="firstOccurrenceStrikeCount"
+            name="firstOccurrenceStrikeCount"
+            min="0"
+            placeholder="Strikes on first offense (optional)"
+            className="block w-full"
+          />
+        </FormLabel>
+        <FormLabel
+          label="Strike On Occurrence"
+          htmlFor="strikeOnOccurrence"
+          className="flex-1 min-w-[200px]"
+        >
+          <Input
+            type="number"
+            id="strikeOnOccurrence"
+            name="strikeOnOccurrence"
+            min="1"
+            placeholder="Apply on which occurrence (optional)"
+            className="block w-full"
+          />
+        </FormLabel>
+        <FormLabel
+          label="Strike Expiry (days)"
+          htmlFor="expiryInDays"
+          className="flex-1 min-w-[200px]"
+        >
+          <Input
+            type="number"
+            id="expiryInDays"
+            name="expiryInDays"
+            min="0"
+            placeholder="Days until expiry (optional)"
+            className="block w-full"
+          />
+        </FormLabel>
+      </div>
 
       <Checkbox
         value="true"

@@ -75,7 +75,6 @@ export function useEmitEvent() {
 
       // Define the actual emit event function to reuse
       const emitModerationEventAsync = async () => {
-        debugger;
         const { data } = await labelerAgent.tools.ozone.moderation.emitEvent(
           vals,
         )
@@ -521,7 +520,32 @@ export const getEventFromFormData = (
   }
 
   if ($type === MOD_EVENTS.REVERSE_TAKEDOWN) {
-    return { $type, comment }
+    const event: any = {
+      $type,
+      comment: comment ? String(comment) : undefined,
+    }
+
+    // Add policies if present
+    if (policies && String(policies) !== 'null' && String(policies) !== '') {
+      event.policies = [String(policies)]
+    }
+
+    // Add severityLevel if present
+    if (
+      severityLevel &&
+      String(severityLevel) !== 'null' &&
+      String(severityLevel) !== ''
+    ) {
+      event.severityLevel = String(severityLevel)
+    }
+
+    // Add strikeCount if present (should be negative for reverse takedown)
+    const strikeCountNum = Number(strikeCount)
+    if (strikeCount && !isNaN(strikeCountNum) && strikeCountNum !== 0) {
+      event.strikeCount = strikeCountNum
+    }
+
+    return event
   }
 
   if ($type === MOD_EVENTS.UNMUTE) {
@@ -537,7 +561,7 @@ export const getEventFromFormData = (
   }
 
   if ($type === MOD_EVENTS.RESOLVE_APPEAL) {
-    return { $type, comment }
+    return { $type, comment: comment ? String(comment) : undefined }
   }
 
   if ($type === MOD_EVENTS.TAG) {

@@ -56,7 +56,6 @@ const Comment = ({
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmute>
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmuteReporter>
       | $Typed<ToolsOzoneModerationDefs.ModEventResolveAppeal>
-      | $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
   }
 }) => {
   return (
@@ -94,6 +93,35 @@ const Comment = ({
   )
 }
 
+const ReverseTakedown = ({
+  modEvent,
+}: {
+  modEvent: Omit<ModEventViewWithDetails, 'event'> & {
+    event: $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between text-gray-500">
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </div>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
+      <TakedownPolicy policies={modEvent.event.policies} />
+      <StrikeInfo
+        strikeCount={modEvent.event.strikeCount}
+        severityLevel={modEvent.event.severityLevel}
+      />
+    </>
+  )
+}
+
 const Email = ({
   modEvent,
 }: {
@@ -111,6 +139,12 @@ const Email = ({
         <p>Subject: {modEvent.event.subjectLine}</p>
       )}
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      <TakedownPolicy policies={modEvent.event.policies} />
+      <StrikeInfo
+        strikeCount={modEvent.event.strikeCount}
+        severityLevel={modEvent.event.severityLevel}
+        strikeExpiresAt={modEvent.event.strikeExpiresAt}
+      />
     </>
   )
 }
@@ -314,6 +348,42 @@ export const TakedownPolicy = ({ policies }: { policies?: string[] }) => {
   )
 }
 
+const StrikeInfo = ({
+  strikeCount,
+  severityLevel,
+  strikeExpiresAt,
+}: {
+  strikeCount?: number
+  severityLevel?: string
+  strikeExpiresAt?: string
+}) => {
+  // Return null if all fields are undefined
+  if (!strikeCount && !severityLevel && !strikeExpiresAt) {
+    return null
+  }
+
+  return (
+    <div className="flex flex-row items-center gap-2 flex-wrap text-xs mt-1">
+      {strikeCount !== undefined && strikeCount !== null && (
+        <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded">
+          {pluralize(strikeCount, 'strike')}
+        </span>
+      )}
+      {severityLevel && (
+        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+          {severityLevel}
+        </span>
+      )}
+      {strikeExpiresAt && (
+        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded flex items-center">
+          <ClockIcon className="h-3 w-3 inline-block mr-1" />
+          Expires: {dateFormatter.format(new Date(strikeExpiresAt))}
+        </span>
+      )}
+    </div>
+  )
+}
+
 const TakedownOrMute = ({
   modEvent,
 }: {
@@ -354,7 +424,14 @@ const TakedownOrMute = ({
         </p>
       )}
       {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
-        <TakedownPolicy policies={modEvent.event.policies} />
+        <>
+          <TakedownPolicy policies={modEvent.event.policies} />
+          <StrikeInfo
+            strikeCount={modEvent.event.strikeCount}
+            severityLevel={modEvent.event.severityLevel}
+            strikeExpiresAt={modEvent.event.strikeExpiresAt}
+          />
+        </>
       )}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
@@ -619,20 +696,26 @@ export const ModEventItem = ({
     asPredicate(ToolsOzoneModerationDefs.validateModEventComment)(
       modEvent.event,
     ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
+      modEvent.event,
+    ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventUnmute)(
       modEvent.event,
     ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventUnmuteReporter)(
       modEvent.event,
-    ) ||
-    asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
-      modEvent.event,
-    ) ||
+    )
+  ) {
+    eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventReverseTakedown)(
       modEvent.event,
     )
   ) {
-    eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
+    eventItem = (
+      <ReverseTakedown modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
   }
   if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventDivert)(modEvent.event)

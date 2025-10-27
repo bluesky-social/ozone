@@ -4,14 +4,16 @@ import { SeverityLevelListSetting } from './types'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
+import { nameToKey } from '../policy/utils'
+import { MINUTE } from '@/lib/util'
 
-const SeverityLevelSettingKey = 'tools.ozone.setting.severityLevel'
-const nameToKey = (name: string) => name.toLowerCase().replace(/\s/g, '-')
+const SeverityLevelSettingKey = 'tools.ozone.setting.severityLevels'
 
 export const useSeverityLevelSetting = () => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
     queryKey: ['severity-level'],
+    cacheTime: 10 * MINUTE,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',
@@ -68,7 +70,8 @@ export const useSeverityLevelEditor = () => {
     const strikeCountStr = formData.get('strikeCount')?.toString().trim() ?? ''
     const strikeOnOccurrenceStr =
       formData.get('strikeOnOccurrence')?.toString().trim() ?? ''
-    const expiryInDaysStr = formData.get('expiryInDays')?.toString().trim() ?? ''
+    const expiryInDaysStr =
+      formData.get('expiryInDays')?.toString().trim() ?? ''
     const needsTakedown = formData.get('needsTakedown') === 'true'
 
     const newSetting = {

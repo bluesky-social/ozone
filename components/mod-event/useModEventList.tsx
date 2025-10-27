@@ -74,6 +74,7 @@ const initialListState = {
   subjectType: undefined,
   selectedCollections: [],
   ageAssuranceState: undefined,
+  withStrike: undefined,
 }
 
 const getReposAndRecordsForEvents = async (
@@ -115,8 +116,7 @@ const getReposAndRecordsForEvents = async (
                 repos.set(repo.did, repo)
               }
             }
-          })
-          .catch((err) => console.log(err)),
+          }),
       )
     }
   }
@@ -131,8 +131,7 @@ const getReposAndRecordsForEvents = async (
                 records.set(record.uri, record)
               }
             }
-          })
-          .catch((err) => console.log(err.response)),
+          }),
       )
     }
   }
@@ -157,6 +156,7 @@ export type EventListState = Omit<
   subjectType?: 'account' | 'record'
   selectedCollections: string[]
   ageAssuranceState?: string
+  withStrike?: boolean
 }
 
 type EventListFilterPayload =
@@ -179,6 +179,7 @@ type EventListFilterPayload =
   | { field: 'subjectType'; value?: 'account' | 'record' }
   | { field: 'selectedCollections'; value: string[] }
   | { field: 'ageAssuranceState'; value?: string }
+  | { field: 'withStrike'; value?: boolean }
 
 type EventListAction =
   | {
@@ -251,6 +252,7 @@ const getModEvents =
       subjectType,
       selectedCollections,
       ageAssuranceState,
+      withStrike,
     } = listState
     const queryParams: ToolsOzoneModerationQueryEvents.QueryParams = {
       limit,
@@ -351,7 +353,11 @@ const getModEvents =
       })
     }
 
-    if (filterTypes.includes(MOD_EVENTS.TAKEDOWN) && policies) {
+    if (
+      (filterTypes.includes(MOD_EVENTS.TAKEDOWN) ||
+        filterTypes.includes(MOD_EVENTS.EMAIL)) &&
+      policies
+    ) {
       queryParams.policies = policies
     }
 
@@ -359,10 +365,16 @@ const getModEvents =
       queryParams.subjectType = subjectType
     }
 
+    if (withStrike !== undefined) {
+      queryParams.withStrike = withStrike
+      // When filtering for events with strike and there is a subject set, we always want to see all strike events across the account
+      if (queryParams.subject) {
+        queryParams.includeAllUserRecords = true
+      }
+    }
+
     const { data } = await labelerAgent.tools.ozone.moderation.queryEvents(
-      {
-        ...queryParams,
-      },
+      queryParams,
       options,
     )
     const { repos, records } = await getReposAndRecordsForEvents(
@@ -507,7 +519,8 @@ export const useModEventList = (
     listState.removedTags.length > 0 ||
     listState.subjectType ||
     listState.selectedCollections.length > 0 ||
-    listState.ageAssuranceState
+    listState.ageAssuranceState ||
+    listState.withStrike !== undefined
 
   const addToWorkspace = async () => {
     if (!showWorkspaceConfirmation) {
