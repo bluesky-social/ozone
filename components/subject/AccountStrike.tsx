@@ -87,7 +87,9 @@ export const AccountStrike = ({
   if (size === 'detailed') {
     const content = (
       <div className="flex flex-row items-center gap-2 flex-wrap">
-        <ExclamationTriangleIcon className={classNames('h-5 w-5', colors.icon)} />
+        <ExclamationTriangleIcon
+          className={classNames('h-5 w-5', colors.icon)}
+        />
         <span className="font-semibold">
           {pluralize(accountStrike.activeStrikeCount, 'active strike')}
         </span>
@@ -167,7 +169,9 @@ export const AccountStrike = ({
         onClick={onClick}
         aria-label={tooltipContent}
       >
-        <ExclamationTriangleIcon className={classNames('w-3 h-3', colors.icon)} />
+        <ExclamationTriangleIcon
+          className={classNames('w-3 h-3', colors.icon)}
+        />
         {accountStrike.activeStrikeCount}
       </button>
     )

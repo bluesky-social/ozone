@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { strikeToSuspensionDurationInHours } from './strikes'
+import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { HOUR, DAY, pluralize } from '@/lib/util'
 import { Agent, AtUri, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
@@ -129,7 +129,9 @@ export const useActionRecommendation = (subject: string) => {
       const newTotalStrikes = Math.max(0, currentStrikes + negativeStrikeCount)
 
       // Find current suspension threshold
-      const sortedThresholds = Object.keys(strikeToSuspensionDurationInHours)
+      const sortedThresholds = Object.keys(
+        STRIKE_TO_SUSPENSION_DURATION_IN_HOURS,
+      )
         .map(Number)
         .sort((a, b) => a - b)
 
@@ -147,11 +149,11 @@ export const useActionRecommendation = (subject: string) => {
 
       const currentDuration =
         currentThreshold !== null
-          ? strikeToSuspensionDurationInHours[currentThreshold]
+          ? STRIKE_TO_SUSPENSION_DURATION_IN_HOURS[currentThreshold]
           : 0
       const newDuration =
         newThreshold !== null
-          ? strikeToSuspensionDurationInHours[newThreshold]
+          ? STRIKE_TO_SUSPENSION_DURATION_IN_HOURS[newThreshold]
           : 0
 
       const formatDuration = (durationInMs: number): string => {
@@ -312,9 +314,9 @@ export const useActionRecommendation = (subject: string) => {
 
     const totalStrikes = currentStrikes + actualStrikesToApply
 
-    // Find the matching threshold in strikeToSuspensionDurationInHours
+    // Find the matching threshold in STRIKE_TO_SUSPENSION_DURATION_IN_HOURS
     // The mapping keys are thresholds that trigger specific durations
-    const sortedThresholds = Object.keys(strikeToSuspensionDurationInHours)
+    const sortedThresholds = Object.keys(STRIKE_TO_SUSPENSION_DURATION_IN_HOURS)
       .map(Number)
       .sort((a, b) => a - b)
 
@@ -325,7 +327,7 @@ export const useActionRecommendation = (subject: string) => {
     for (const threshold of sortedThresholds) {
       if (totalStrikes >= threshold) {
         matchedThreshold = threshold
-        const duration = strikeToSuspensionDurationInHours[threshold]
+        const duration = STRIKE_TO_SUSPENSION_DURATION_IN_HOURS[threshold]
         isPermanent = duration === Infinity
         recommendedDuration = isPermanent ? 0 : duration
       }

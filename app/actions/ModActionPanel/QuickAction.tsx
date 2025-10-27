@@ -19,7 +19,7 @@ import {
   CheckCircleIcon,
 } from '@heroicons/react/24/outline'
 import { LabelSelector } from '@/common/labels/Selector'
-import { capitalize, pluralize } from '@/lib/util'
+import { capitalize } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { AGE_ASSURANCE_OVERRIDE_STATES } from '@/mod-event/constants'
@@ -37,14 +37,13 @@ import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { EmailComposer } from 'components/email/Composer'
-import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
-import { ActionSeverityLevelSelector } from '@/reports/ModerationForm/ActionSeverityLevelSelector'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { VerificationActionButton } from 'components/verification/ActionButton'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { useQuickAction, QuickActionProps } from './useQuickAction'
+import { PolicySeveritySelector } from './PolicySeveritySelector'
 
 const FORM_ID = 'mod-action-panel'
 const useBreakpoint = createBreakpoint({ xs: 340, sm: 640 })
@@ -480,54 +479,19 @@ function Form(
                           }
                         />
                       </FormLabel>
-                      {isTakedownEvent && (
-                        <div className="mt-2 w-full">
-                          <ActionPolicySelector
-                            name="policies"
-                            onSelect={handlePolicySelect}
-                          />
-                        </div>
-                      )}
                     </div>
                   )}
-                  {isTakedownEvent && policyDetails && !isSubjectDid && (
-                    <div className="flex flex-col gap-1 mt-2">
-                      <ActionSeverityLevelSelector
-                        name="severityLevel"
-                        policySeverityLevels={policyDetails.severityLevels}
-                        onSelect={handleSeverityLevelSelect}
-                      />
-                      {severityLevelStrikeCount !== null && (
-                        <input
-                          type="hidden"
-                          name="strikeCount"
-                          value={
-                            actionRecommendation?.actualStrikesToApply ??
-                            severityLevelStrikeCount
-                          }
-                        />
-                      )}
-                      {(currentStrikes > 0 || actionRecommendation) && (
-                        <div className="flex flex-row items-center gap-1 flex-wrap text-xs">
-                          {currentStrikes > 0 && (
-                            <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
-                              Current: {pluralize(currentStrikes, 'strike')}
-                            </span>
-                          )}
-                          {actionRecommendation && (
-                            <span
-                              className={`px-1.5 py-0.5 rounded ${
-                                actionRecommendation.isPermanent
-                                  ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                  : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                              }`}
-                            >
-                              → {actionRecommendation.message}
-                            </span>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                  {isTakedownEvent && (
+                    <PolicySeveritySelector
+                      policyDetails={policyDetails}
+                      isSubjectDid={isSubjectDid}
+                      handlePolicySelect={handlePolicySelect}
+                      handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      severityLevelStrikeCount={severityLevelStrikeCount}
+                      currentStrikes={currentStrikes}
+                      actionRecommendation={actionRecommendation}
+                      variant="takedown"
+                    />
                   )}
 
                   {isAgeAssuranceOverrideEvent && (
@@ -589,89 +553,30 @@ function Form(
                   )}
 
                   {isEmailEvent && (
-                    <div className="flex flex-col gap-2 mt-2">
-                      <div className="w-full">
-                        <ActionPolicySelector
-                          name="policies"
-                          onSelect={handlePolicySelect}
-                        />
-                      </div>
-                      {policyDetails && !isSubjectDid && (
-                        <div className="flex flex-col gap-1">
-                          <ActionSeverityLevelSelector
-                            name="severityLevel"
-                            policySeverityLevels={policyDetails.severityLevels}
-                            onSelect={handleSeverityLevelSelect}
-                          />
-                          {severityLevelStrikeCount !== null && (
-                            <input
-                              type="hidden"
-                              name="strikeCount"
-                              value={
-                                actionRecommendation?.actualStrikesToApply ??
-                                severityLevelStrikeCount
-                              }
-                            />
-                          )}
-                          {(currentStrikes > 0 || actionRecommendation) && (
-                            <div className="flex flex-row items-center gap-1 flex-wrap text-xs">
-                              {currentStrikes > 0 && (
-                                <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 rounded">
-                                  Current: {pluralize(currentStrikes, 'strike')}
-                                </span>
-                              )}
-                              {actionRecommendation && (
-                                <span
-                                  className={`px-1.5 py-0.5 rounded ${
-                                    actionRecommendation.isPermanent
-                                      ? 'bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-300'
-                                      : 'bg-yellow-100 dark:bg-yellow-900/30 text-yellow-700 dark:text-yellow-300'
-                                  }`}
-                                >
-                                  → {actionRecommendation.message}
-                                </span>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <PolicySeveritySelector
+                      policyDetails={policyDetails}
+                      isSubjectDid={isSubjectDid}
+                      handlePolicySelect={handlePolicySelect}
+                      handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      severityLevelStrikeCount={severityLevelStrikeCount}
+                      currentStrikes={currentStrikes}
+                      actionRecommendation={actionRecommendation}
+                      variant="email"
+                    />
                   )}
 
                   {isReverseTakedownEvent && (
-                    <div className="flex flex-col gap-2 mt-2">
-                      <div className="w-full">
-                        <ActionPolicySelector
-                          name="policies"
-                          defaultPolicy={selectedPolicyName}
-                          onSelect={handlePolicySelect}
-                        />
-                      </div>
-                      {policyDetails && !isSubjectDid && (
-                        <div className="flex flex-col gap-1">
-                          <ActionSeverityLevelSelector
-                            name="severityLevel"
-                            defaultSeverityLevel={selectedSeverityLevelName}
-                            policySeverityLevels={policyDetails.severityLevels}
-                            onSelect={handleSeverityLevelSelect}
-                          />
-                          {severityLevelStrikeCount !== null && (
-                            <>
-                              <input
-                                type="hidden"
-                                name="strikeCount"
-                                value={-Math.abs(severityLevelStrikeCount)}
-                              />
-                              {actionRecommendation && (
-                                <div className="px-1.5 py-0.5 rounded bg-blue-100 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300 text-xs">
-                                  → {actionRecommendation.message}
-                                </div>
-                              )}
-                            </>
-                          )}
-                        </div>
-                      )}
-                    </div>
+                    <PolicySeveritySelector
+                      policyDetails={policyDetails}
+                      isSubjectDid={isSubjectDid}
+                      handlePolicySelect={handlePolicySelect}
+                      handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      defaultPolicy={selectedPolicyName}
+                      defaultSeverityLevel={selectedSeverityLevelName}
+                      severityLevelStrikeCount={severityLevelStrikeCount}
+                      actionRecommendation={actionRecommendation}
+                      variant="reverse-takedown"
+                    />
                   )}
 
                   {!isEmailEvent && (
