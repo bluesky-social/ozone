@@ -60,12 +60,15 @@ export const FALLBACK_VIDEO_URL = (
 // strike to account suspension duration mapping (in hours)
 // format: "strikeCount:durationInHours" pairs, separated by commas
 // use "Infinity" for permanent suspension
-// Default: "4:72,8:168,12:336,16:Infinity" (4 strikes = 3 days, 8 = 7 days, 12 = 14 days, 16+ = permanent)
 const parseStrikeSuspensionConfig = (
   config: string,
 ): Record<number, number> => {
   const pairs = config.split(',').map((pair) => pair.trim())
   const result: Record<number, number> = {}
+
+  if (!pairs.length) {
+    return result
+  }
 
   for (const pair of pairs) {
     const [strikeStr, durationStr] = pair.split(':').map((s) => s.trim())
@@ -84,6 +87,5 @@ const parseStrikeSuspensionConfig = (
 
 export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
   parseStrikeSuspensionConfig(
-    process.env.NEXT_PUBLIC_STRIKE_SUSPENSION_CONFIG ||
-      '4:72,8:168,12:336,16:Infinity',
+    process.env.NEXT_PUBLIC_STRIKE_SUSPENSION_CONFIG || '',
   )
