@@ -490,7 +490,7 @@ function Form(
                       )}
                     </div>
                   )}
-                  {isTakedownEvent && policyDetails && (
+                  {isTakedownEvent && policyDetails && !isSubjectDid && (
                     <div className="flex flex-col gap-1 mt-2">
                       <ActionSeverityLevelSelector
                         name="severityLevel"
@@ -596,7 +596,7 @@ function Form(
                           onSelect={handlePolicySelect}
                         />
                       </div>
-                      {policyDetails && (
+                      {policyDetails && !isSubjectDid && (
                         <div className="flex flex-col gap-1">
                           <ActionSeverityLevelSelector
                             name="severityLevel"
@@ -647,7 +647,7 @@ function Form(
                           onSelect={handlePolicySelect}
                         />
                       </div>
-                      {policyDetails && (
+                      {policyDetails && !isSubjectDid && (
                         <div className="flex flex-col gap-1">
                           <ActionSeverityLevelSelector
                             name="severityLevel"

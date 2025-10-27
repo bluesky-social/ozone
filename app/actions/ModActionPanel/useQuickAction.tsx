@@ -30,11 +30,14 @@ export type QuickActionProps = {
   subject: string
   setSubject: (subject: string) => void
   subjectOptions?: string[]
-  onCancel: () => void
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
 
-export const useQuickAction = (props: QuickActionProps) => {
+export const useQuickAction = (
+  props: QuickActionProps & {
+    onCancel: () => void
+  },
+) => {
   const { config } = useConfigurationContext()
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
@@ -86,9 +89,7 @@ export const useQuickAction = (props: QuickActionProps) => {
   const handlePolicySelect = (policyName: string) => {
     const policyKey = nameToKey(policyName)
     const policy = policyData?.value?.[policyKey]
-    setPolicyDetails(
-      policy ? { severityLevels: policy.severityLevels } : null,
-    )
+    setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
     setSeverityLevelStrikeCount(null)
     setSelectedPolicyName(policyName)
     setSelectedSeverityLevelName('')
@@ -110,41 +111,37 @@ export const useQuickAction = (props: QuickActionProps) => {
   // Reset policy/severity level selection when event type changes
   // For reversals, auto-select from last takedown event
   useEffect(() => {
-    if (modEventType === MOD_EVENTS.REVERSE_TAKEDOWN) {
-      const lastDetails = getLastTakedownDetails()
-      if (lastDetails && lastDetails.policy && lastDetails.severityLevel) {
-        // Auto-select the policy
-        setSelectedPolicyName(lastDetails.policy)
-        const policyKey = nameToKey(lastDetails.policy)
-        const policy = policyData?.value?.[policyKey]
-        setPolicyDetails(
-          policy ? { severityLevels: policy.severityLevels } : null,
-        )
-
-        // Auto-select the severity level
-        setSelectedSeverityLevelName(lastDetails.severityLevel)
-        const level = severityLevelData?.value?.[lastDetails.severityLevel]
-        setSeverityLevelStrikeCount(
-          level?.strikeCount !== undefined ||
-            level?.firstOccurrenceStrikeCount !== undefined
-            ? level.strikeCount ?? 0
-            : null,
-        )
-      } else {
-        // No previous event found, reset
-        // setPolicyDetails(null)
-        // setSeverityLevelStrikeCount(null)
-        // setSelectedPolicyName('')
-        // setSelectedSeverityLevelName('')
-      }
-    } else {
-      // // For other event types, just reset
-      // setPolicyDetails(null)
-      // setSeverityLevelStrikeCount(null)
-      // setSelectedPolicyName('')
-      // setSelectedSeverityLevelName('')
+    if (modEventType !== MOD_EVENTS.REVERSE_TAKEDOWN) {
+      return
     }
-  }, [modEventType, policyData, severityLevelData, getLastTakedownDetails])
+
+    const lastDetails = getLastTakedownDetails()
+    if (!lastDetails?.policy || !lastDetails?.severityLevel) {
+      return
+    }
+
+    setSelectedPolicyName(lastDetails.policy)
+    const policyKey = nameToKey(lastDetails.policy)
+    const policy = policyData?.value?.[policyKey]
+    setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
+
+    if (!isSubjectDid) {
+      setSelectedSeverityLevelName(lastDetails.severityLevel)
+      const level = severityLevelData?.value?.[lastDetails.severityLevel]
+      setSeverityLevelStrikeCount(
+        level?.strikeCount !== undefined ||
+          level?.firstOccurrenceStrikeCount !== undefined
+          ? level.strikeCount ?? 0
+          : null,
+      )
+    }
+  }, [
+    modEventType,
+    policyData,
+    severityLevelData,
+    getLastTakedownDetails,
+    isSubjectDid,
+  ])
 
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
@@ -166,8 +163,9 @@ export const useQuickAction = (props: QuickActionProps) => {
   const canSendEmail = usePermission('canSendEmail')
 
   // Get action recommendation whenever policy, severity level, or strike count changes
+  // Only show recommendations for record-level subjects with severity levels
   const eventNeedsActionRecommendation =
-    isTakedownEvent || isEmailEvent || isReverseTakedownEvent
+    (isTakedownEvent || isEmailEvent || isReverseTakedownEvent) && !isSubjectDid
 
   const actionRecommendation =
     eventNeedsActionRecommendation &&
