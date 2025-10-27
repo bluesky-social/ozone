@@ -456,6 +456,7 @@ function Form(
                           action={modEventType}
                           required={isLabelEvent ? false : true}
                           showPermanent={!isMuteEvent}
+                          defaultValue={!isMuteEvent ? 0 : 6}
                           onChange={(e) => {
                             if (e.target.value === '0' && isTakedownEvent) {
                               // When permanent takedown is selected, auto check ack all checkbox
