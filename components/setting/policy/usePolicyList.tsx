@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { useState } from 'react'
 import { nameToKey } from './utils'
 import { MINUTE } from '@/lib/util'
+import { getTrimmedInput } from '@/common/forms'
 
 const PolicyListSettingKey = 'tools.ozone.setting.policyList'
 
@@ -68,9 +69,9 @@ export const usePolicyListEditor = () => {
     editingPolicyName?: string,
   ) => {
     const formData = new FormData(e.currentTarget)
-    const name = formData.get('name')?.toString().trim() ?? ''
-    const description = formData.get('description')?.toString().trim() ?? ''
-    const url = formData.get('url')?.toString().trim() ?? ''
+    const name = getTrimmedInput(formData.get('name'))
+    const description = getTrimmedInput(formData.get('description'))
+    const url = getTrimmedInput(formData.get('url'))
 
     const newSetting = { ...(initialSetting?.value ?? {}) }
 

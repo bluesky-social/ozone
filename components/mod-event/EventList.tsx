@@ -265,9 +265,7 @@ export const ModEventList = (
           onAccountStrikeClick={() => {
             applyFilterMacro({
               includeAllUserRecords: true,
-              types: [MOD_EVENTS.TAKEDOWN, MOD_EVENTS.EMAIL],
-              // Note: withStrike parameter doesn't exist in API yet
-              // withStrike: true,
+              withStrike: true,
             })
           }}
           stats={props.stats}

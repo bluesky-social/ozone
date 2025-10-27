@@ -6,6 +6,7 @@ import { toast } from 'react-toastify'
 import { useState } from 'react'
 import { nameToKey } from '../policy/utils'
 import { MINUTE } from '@/lib/util'
+import { getTrimmedInput } from '@/common/forms'
 
 const SeverityLevelSettingKey = 'tools.ozone.setting.severityLevels'
 
@@ -13,6 +14,7 @@ export const useSeverityLevelSetting = () => {
   const labelerAgent = useLabelerAgent()
   return useQuery({
     queryKey: ['severity-level'],
+    // Set a high cache time since severity levels change infrequently but we read this value very frequently
     cacheTime: 10 * MINUTE,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
@@ -65,13 +67,13 @@ export const useSeverityLevelEditor = () => {
   const onSubmit = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const name = formData.get('name')?.toString().trim() ?? ''
-    const description = formData.get('description')?.toString().trim() ?? ''
-    const strikeCountStr = formData.get('strikeCount')?.toString().trim() ?? ''
-    const strikeOnOccurrenceStr =
-      formData.get('strikeOnOccurrence')?.toString().trim() ?? ''
-    const expiryInDaysStr =
-      formData.get('expiryInDays')?.toString().trim() ?? ''
+    const name = getTrimmedInput(formData.get('name'))
+    const description = getTrimmedInput(formData.get('description'))
+    const strikeCountStr = getTrimmedInput(formData.get('strikeCount'))
+    const strikeOnOccurrenceStr = getTrimmedInput(
+      formData.get('strikeOnOccurrence'),
+    )
+    const expiryInDaysStr = getTrimmedInput(formData.get('expiryInDays'))
     const needsTakedown = formData.get('needsTakedown') === 'true'
 
     const newSetting = {

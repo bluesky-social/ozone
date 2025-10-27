@@ -29,7 +29,6 @@ export const SeverityLevelEditor = ({
         />
       </FormLabel>
       <FormLabel
-        required
         label="Description"
         htmlFor="description"
         className="flex-1 mb-3"

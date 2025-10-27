@@ -696,15 +696,13 @@ export const ModEventItem = ({
     asPredicate(ToolsOzoneModerationDefs.validateModEventComment)(
       modEvent.event,
     ) ||
-    asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
-      modEvent.event,
-    ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventUnmute)(
       modEvent.event,
     ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventUnmuteReporter)(
       modEvent.event,
-    ) || asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
+    ) ||
+    asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
       modEvent.event,
     )
   ) {

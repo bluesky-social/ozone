@@ -74,7 +74,7 @@ const initialListState = {
   subjectType: undefined,
   selectedCollections: [],
   ageAssuranceState: undefined,
-  withStrike: undefined,
+  withStrike: false,
 }
 
 const getReposAndRecordsForEvents = async (

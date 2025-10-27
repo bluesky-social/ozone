@@ -116,3 +116,6 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
     )
   },
 )
+
+export const getTrimmedInput = (field: FormDataEntryValue | null) =>
+  field?.toString().trim() ?? ''
