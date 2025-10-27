@@ -1,8 +1,4 @@
-import { DAY } from '@/lib/util'
+import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 
-export const strikeToSuspensionDurationInHours = {
-  4: 3 * DAY,
-  8: 7 * DAY,
-  12: 14 * DAY,
-  16: Infinity,
-}
+export const strikeToSuspensionDurationInHours =
+  STRIKE_TO_SUSPENSION_DURATION_IN_HOURS

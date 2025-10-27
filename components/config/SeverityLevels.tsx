@@ -10,6 +10,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createPolicyPageLink } from '@/setting/policy/utils'
+import { StrikeSuspensionConfig } from '@/setting/severity-level/StrikeSuspensionConfig'
 
 export function SeverityLevelsConfig() {
   const router = useRouter()
@@ -31,7 +32,9 @@ export function SeverityLevelsConfig() {
               placeholder="Search severity levels..."
               value={searchQuery}
               onChange={(e) => {
-                const url = createSeverityLevelPageLink({ search: e.target.value })
+                const url = createSeverityLevelPageLink({
+                  search: e.target.value,
+                })
                 router.push(url)
               }}
             />{' '}
@@ -101,6 +104,8 @@ export function SeverityLevelsConfig() {
           canEdit: canManageSeverityLevels,
         }}
       />
+
+      <StrikeSuspensionConfig />
     </div>
   )
 }

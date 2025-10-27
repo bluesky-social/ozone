@@ -56,3 +56,34 @@ export const HIGH_PROFILE_FOLLOWER_THRESHOLD = process.env
 export const FALLBACK_VIDEO_URL = (
   process.env.NEXT_PUBLIC_FALLBACK_VIDEO_URL || ''
 ).split(':')
+
+// strike to account suspension duration mapping (in hours)
+// format: "strikeCount:durationInHours" pairs, separated by commas
+// use "Infinity" for permanent suspension
+// Default: "4:72,8:168,12:336,16:Infinity" (4 strikes = 3 days, 8 = 7 days, 12 = 14 days, 16+ = permanent)
+const parseStrikeSuspensionConfig = (
+  config: string,
+): Record<number, number> => {
+  const pairs = config.split(',').map((pair) => pair.trim())
+  const result: Record<number, number> = {}
+
+  for (const pair of pairs) {
+    const [strikeStr, durationStr] = pair.split(':').map((s) => s.trim())
+    if (strikeStr && durationStr) {
+      const strikeCount = parseInt(strikeStr)
+      const duration =
+        durationStr === 'Infinity' ? Infinity : parseFloat(durationStr)
+      if (!isNaN(strikeCount) && !isNaN(duration)) {
+        result[strikeCount] = duration
+      }
+    }
+  }
+
+  return result
+}
+
+export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
+  parseStrikeSuspensionConfig(
+    process.env.NEXT_PUBLIC_STRIKE_SUSPENSION_CONFIG ||
+      '4:72,8:168,12:336,16:Infinity',
+  )

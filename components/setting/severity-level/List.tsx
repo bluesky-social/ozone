@@ -70,7 +70,11 @@ export function SeverityLevelList({
                       )}
                       {level.firstOccurrenceStrikeCount !== undefined && (
                         <span className="inline-block bg-amber-100 dark:bg-amber-900 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded text-xs">
-                          {pluralize(level.firstOccurrenceStrikeCount, 'strike')} on 1st
+                          {pluralize(
+                            level.firstOccurrenceStrikeCount,
+                            'strike',
+                          )}{' '}
+                          on 1st
                         </span>
                       )}
                       {level.strikeOnOccurrence !== undefined && (
