@@ -104,11 +104,11 @@ export const extractFromCSV = (data: string): string[] => {
 
   // before returning an empty array due to no headers, lets first try and parse out a did or an aturi from the data
   if (didIndex === -1 && uriIndex === -1 && content.length >= 1) {
-    for (const [idx, col] of content.entries()) {
-      if (col.startsWith('did:')) {
+    for (const [idx, value] of content.entries()) {
+      if (value.startsWith('did:')) {
         didIndex = idx
         break
-      } else if (col.startsWith('at://')) {
+      } else if (value.startsWith('at://')) {
         uriIndex = idx
         break
       }
