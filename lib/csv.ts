@@ -1,3 +1,4 @@
+import { isDid } from '@atproto/api'
 import { parseAtUri } from './util'
 
 export type CsvContent = {
@@ -105,10 +106,10 @@ export const extractFromCSV = (data: string): string[] => {
   // before returning an empty array due to no headers, lets first try and parse out a did or an aturi from the data
   if (didIndex === -1 && uriIndex === -1 && content.length >= 1) {
     for (const [idx, value] of content.entries()) {
-      if (value.startsWith('did:')) {
+      if (isDid(value)) {
         didIndex = idx
         break
-      } else if (value.startsWith('at://')) {
+      } else if (parseAtUri(value)) {
         uriIndex = idx
         break
       }
