@@ -156,14 +156,13 @@ export const useActionRecommendation = (subject: string) => {
           ? STRIKE_TO_SUSPENSION_DURATION_IN_HOURS[newThreshold]
           : 0
 
-      const formatDuration = (durationInMs: number): string => {
-        if (durationInMs === Infinity) return 'permanent'
-        const hours = durationInMs / HOUR
-        const days = durationInMs / DAY
+      const formatDuration = (durationInHours: number): string => {
+        if (durationInHours === Infinity) return 'permanent'
+        const days = (durationInHours * HOUR) / DAY
         if (days >= 1) {
           return `${days} day${days !== 1 ? 's' : ''}`
         }
-        return `${hours} hour${hours !== 1 ? 's' : ''}`
+        return `${durationInHours} hour${durationInHours !== 1 ? 's' : ''}`
       }
 
       // Find the most recent takedown event with durationInHours to calculate time served
@@ -345,14 +344,13 @@ export const useActionRecommendation = (subject: string) => {
       }
     }
 
-    const formatDuration = (durationInMs: number): string => {
-      const hours = durationInMs / HOUR
-      const days = durationInMs / DAY
+    const formatDuration = (durationInHours: number): string => {
+      const days = (durationInHours * HOUR) / DAY
 
       if (days >= 1) {
         return `${days} day${days !== 1 ? 's' : ''}`
       }
-      return `${hours} hour${hours !== 1 ? 's' : ''}`
+      return `${durationInHours} hour${durationInHours !== 1 ? 's' : ''}`
     }
 
     let message: string

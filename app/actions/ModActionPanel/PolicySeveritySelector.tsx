@@ -1,6 +1,9 @@
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { ActionSeverityLevelSelector } from '@/reports/ModerationForm/ActionSeverityLevelSelector'
 import { pluralize } from '@/lib/util'
+import { TargetServicesSelector } from '@/setting/policy/TargetServicesSelector'
+import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
+import { nameToKey } from '@/setting/policy/utils'
 
 type ActionRecommendation = {
   message: string
@@ -11,7 +14,7 @@ type ActionRecommendation = {
 type PolicySeveritySelectorProps = {
   // Required props
   policyDetails: {
-    severityLevels?: Record<string, { description: string; isDefault: boolean }>
+    severityLevels?: Record<string, { description: string; isDefault: boolean; targetServices?: ('appview' | 'pds')[] }>
   } | null
   isSubjectDid: boolean
   handlePolicySelect: (policyName: string) => void
@@ -25,6 +28,10 @@ type PolicySeveritySelectorProps = {
   severityLevelStrikeCount: number | null
   currentStrikes?: number
   actionRecommendation?: ActionRecommendation | null
+
+  targetServices?: ('appview' | 'pds')[]
+  setTargetServices?: (services: ('appview' | 'pds')[]) => void
+  selectedSeverityLevel?: string
 
   // Variant-specific behavior
   variant?: 'takedown' | 'email' | 'reverse-takedown'
@@ -40,10 +47,19 @@ export function PolicySeveritySelector({
   severityLevelStrikeCount,
   currentStrikes = 0,
   actionRecommendation,
+  targetServices = ['appview', 'pds'],
+  setTargetServices,
+  selectedSeverityLevel,
   variant = 'takedown',
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
   const showFullRecommendation = variant === 'takedown' || variant === 'email'
+  const { data: severityLevelData } = useSeverityLevelSetting()
+
+  // Get the full severity level details
+  const selectedLevel = selectedSeverityLevel && severityLevelData?.value
+    ? severityLevelData.value[nameToKey(selectedSeverityLevel)] ?? null
+    : null
 
   return (
     <div className="flex flex-col gap-2 mt-2">
@@ -101,6 +117,14 @@ export function PolicySeveritySelector({
                 </div>
               )}
             </>
+          )}
+          {selectedSeverityLevel && setTargetServices && (
+            <TargetServicesSelector
+              level={selectedLevel}
+              value={targetServices}
+              onChange={setTargetServices}
+              className="mt-2"
+            />
           )}
         </div>
       )}

@@ -1,6 +1,7 @@
 export type SeverityLevelConfig = {
   description: string
   isDefault: boolean
+  targetServices?: ('appview' | 'pds')[]
 }
 
 export type PolicyDetail = {

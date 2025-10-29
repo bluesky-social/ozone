@@ -70,6 +70,7 @@ const parseStrikeSuspensionConfig = (
     return result
   }
 
+  console.log({ pairs })
   for (const pair of pairs) {
     const [strikeStr, durationStr] = pair.split(':').map((s) => s.trim())
     if (strikeStr && durationStr) {

@@ -180,6 +180,8 @@ function Form(
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    targetServices,
+    setTargetServices,
     config,
   } = useQuickAction({
     onCancel,
@@ -490,6 +492,9 @@ function Form(
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
+                      targetServices={targetServices}
+                      setTargetServices={setTargetServices}
+                      selectedSeverityLevel={selectedSeverityLevelName}
                       variant="takedown"
                     />
                   )}
@@ -561,6 +566,9 @@ function Form(
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
+                      targetServices={targetServices}
+                      setTargetServices={setTargetServices}
+                      selectedSeverityLevel={selectedSeverityLevelName}
                       variant="email"
                     />
                   )}
@@ -575,6 +583,9 @@ function Form(
                       defaultSeverityLevel={selectedSeverityLevelName}
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       actionRecommendation={actionRecommendation}
+                      targetServices={targetServices}
+                      setTargetServices={setTargetServices}
+                      selectedSeverityLevel={selectedSeverityLevelName}
                       variant="reverse-takedown"
                     />
                   )}
