@@ -111,7 +111,7 @@ export function SeverityLevelList({
                         size="xs"
                         appearance="outlined"
                         onClick={() => {
-                          setRemovingSeverityLevel(level.name)
+                          setRemovingSeverityLevel(name)
                         }}
                       >
                         <TrashIcon className="h-3 w-3 mx-1" />

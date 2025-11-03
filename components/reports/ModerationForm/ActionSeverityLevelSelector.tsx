@@ -30,6 +30,10 @@ export const ActionSeverityLevelSelector = ({
 
   // Auto-select default severity level from policy when policy changes
   useEffect(() => {
+    if (defaultSeverityLevel) {
+      setSelected(defaultSeverityLevel)
+      return
+    }
     if (policySeverityLevels && Object.keys(policySeverityLevels).length > 0) {
       // Find the default level
       const defaultLevel = Object.entries(policySeverityLevels).find(
@@ -44,7 +48,7 @@ export const ActionSeverityLevelSelector = ({
     } else {
       setSelected('')
     }
-  }, [policySeverityLevels])
+  }, [policySeverityLevels, defaultSeverityLevel])
 
   return (
     <>

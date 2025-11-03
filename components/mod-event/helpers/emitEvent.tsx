@@ -441,6 +441,7 @@ const eventTexts = {
   [MOD_EVENTS.EMAIL]: 'emailed',
   [MOD_EVENTS.AGE_ASSURANCE]: 'age assurance updated',
   [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'age assurance overridden',
+  [MOD_EVENTS.REVERSE_TAKEDOWN]: 'reinstated',
 }
 
 export const getEventFromFormData = (

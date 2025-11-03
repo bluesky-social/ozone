@@ -16,6 +16,7 @@ export const useSeverityLevelSetting = () => {
     queryKey: ['severity-level'],
     // Set a high cache time since severity levels change infrequently but we read this value very frequently
     cacheTime: 10 * MINUTE,
+    staleTime: 10 * MINUTE,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',
@@ -73,6 +74,9 @@ export const useSeverityLevelEditor = () => {
     const strikeOnOccurrenceStr = getTrimmedInput(
       formData.get('strikeOnOccurrence'),
     )
+    const firstOccurrenceStrikeCount = getTrimmedInput(
+      formData.get('firstOccurrenceStrikeCount'),
+    )
     const expiryInDaysStr = getTrimmedInput(formData.get('expiryInDays'))
     const needsTakedown = formData.get('needsTakedown') === 'true'
 
@@ -84,6 +88,9 @@ export const useSeverityLevelEditor = () => {
         ...(strikeCountStr && { strikeCount: parseInt(strikeCountStr, 10) }),
         ...(strikeOnOccurrenceStr && {
           strikeOnOccurrence: parseInt(strikeOnOccurrenceStr, 10),
+        }),
+        ...(firstOccurrenceStrikeCount && {
+          firstOccurrenceStrikeCount: parseInt(firstOccurrenceStrikeCount, 10),
         }),
         ...(expiryInDaysStr && { expiryInDays: parseInt(expiryInDaysStr, 10) }),
         needsTakedown,

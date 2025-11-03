@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  $Typed,
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -82,8 +83,11 @@ export const useQuickAction = (
 
   const { data: policyData } = usePolicyListSetting()
   const { data: severityLevelData } = useSeverityLevelSetting()
-  const { currentStrikes, getRecommendedAction, getLastTakedownDetails } =
-    useActionRecommendation(subject)
+  const {
+    currentStrikes,
+    getRecommendedAction,
+    getLastContentTakedownDetails,
+  } = useActionRecommendation(subject)
 
   // Reusable handler for policy selection
   const handlePolicySelect = (policyName: string) => {
@@ -115,7 +119,7 @@ export const useQuickAction = (
       return
     }
 
-    const lastDetails = getLastTakedownDetails()
+    const lastDetails = getLastContentTakedownDetails()
     if (!lastDetails?.policy || !lastDetails?.severityLevel) {
       return
     }
@@ -127,21 +131,11 @@ export const useQuickAction = (
 
     if (!isSubjectDid) {
       setSelectedSeverityLevelName(lastDetails.severityLevel)
-      const level = severityLevelData?.value?.[lastDetails.severityLevel]
-      setSeverityLevelStrikeCount(
-        level?.strikeCount !== undefined ||
-          level?.firstOccurrenceStrikeCount !== undefined
-          ? level.strikeCount ?? 0
-          : null,
-      )
+      if (lastDetails.strikeCount) {
+        setSeverityLevelStrikeCount(lastDetails.strikeCount)
+      }
     }
-  }, [
-    modEventType,
-    policyData,
-    severityLevelData,
-    getLastTakedownDetails,
-    isSubjectDid,
-  ])
+  }, [modEventType])
 
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
@@ -165,7 +159,7 @@ export const useQuickAction = (
   // Get action recommendation whenever policy, severity level, or strike count changes
   // Only show recommendations for record-level subjects with severity levels
   const eventNeedsActionRecommendation =
-    (isTakedownEvent || isEmailEvent || isReverseTakedownEvent) && !isSubjectDid
+    isTakedownEvent || isReverseTakedownEvent || isEmailEvent
 
   const actionRecommendation =
     eventNeedsActionRecommendation &&
@@ -180,6 +174,20 @@ export const useQuickAction = (
           isReverseTakedownEvent, // Pass true for negative strikes
         )
       : null
+
+  // When action recommendation changes, if we're taking down an account,
+  // we need to automatically select the suspension duration based policy and sev level
+  useEffect(() => {
+    if (
+      isSubjectDid &&
+      durationSelectorRef.current &&
+      actionRecommendation?.suspensionDurationInHours !== undefined
+    ) {
+      durationSelectorRef.current.value = String(
+        actionRecommendation?.suspensionDurationInHours ?? 0,
+      )
+    }
+  }, [isSubjectDid, actionRecommendation?.suspensionDurationInHours])
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -350,19 +358,21 @@ export const useQuickAction = (
         const subjectDid =
           'did' in subjectInfo ? subjectInfo.did : new AtUri(subject).host
 
-        // If this is a takedown and we have reached a suspension/ban threshold,
+        // If this is a record takedown and we have reached a suspension/ban threshold,
         // emit an additional account-level takedown event
         if (
           ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
+          !isSubjectDid &&
           actionRecommendation &&
           (actionRecommendation.isPermanent ||
             actionRecommendation.suspensionDurationInHours !== null)
         ) {
-          const accountEvent: any = {
-            $type: MOD_EVENTS.TAKEDOWN,
-            comment: coreEvent.comment,
-            policies: coreEvent.policies,
-          }
+          const accountEvent: $Typed<ToolsOzoneModerationDefs.ModEventTakedown> =
+            {
+              $type: MOD_EVENTS.TAKEDOWN,
+              comment: coreEvent.comment,
+              policies: coreEvent.policies,
+            }
 
           // Only set durationInHours if not permanent (for suspensions)
           if (
@@ -485,7 +495,7 @@ export const useQuickAction = (
       setSubmission({ isSubmitting: true, error: '' })
 
       // Augment email event with policy, severity level, and strike count
-      const augmentedEvent: any = { ...event }
+      const augmentedEvent = { ...event }
       if (selectedPolicyName) {
         augmentedEvent.policies = [selectedPolicyName]
       }
@@ -514,6 +524,8 @@ export const useQuickAction = (
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
   }
+
+  const durationSelectorRef = useRef<HTMLSelectElement>(null)
 
   // Keyboard shortcuts for action types
   const submitButton = useRef<HTMLButtonElement>(null)
@@ -605,6 +617,7 @@ export const useQuickAction = (
     isEscalated,
     isAckEvent,
     moveToNextSubjectRef,
+    durationSelectorRef,
     submitButton,
     submitAndGoNext,
     handleEmailSubmit,

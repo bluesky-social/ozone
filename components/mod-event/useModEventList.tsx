@@ -365,7 +365,7 @@ const getModEvents =
       queryParams.subjectType = subjectType
     }
 
-    if (withStrike !== undefined) {
+    if (withStrike === true) {
       queryParams.withStrike = withStrike
       // When filtering for events with strike and there is a subject set, we always want to see all strike events across the account
       if (queryParams.subject) {

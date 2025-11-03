@@ -331,6 +331,16 @@ const ModEventDetails = ({ modEventType }: { modEventType: string }) => {
     )
   }
 
+  if (modEventType === MOD_EVENTS.SET_PRIORITY) {
+    return (
+      <p>
+        This event sets the priority of a subject. Using priority score the
+        queue may be sorted in order to prioritize reviewing more important
+        subjects.
+      </p>
+    )
+  }
+
   return (
     <p>
       Sorry, this event is not well defined and probably will not have any

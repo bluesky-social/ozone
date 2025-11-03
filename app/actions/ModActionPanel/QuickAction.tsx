@@ -168,13 +168,12 @@ function Form(
     isTagEvent,
     isEmailEvent,
     isReverseTakedownEvent,
-    selectedPolicyName,
-    selectedSeverityLevelName,
     isCommentEvent,
     isReviewClosed,
     isEscalated,
     isAckEvent,
     moveToNextSubjectRef,
+    durationSelectorRef,
     submitButton,
     submitAndGoNext,
     handleEmailSubmit,
@@ -395,7 +394,9 @@ function Form(
                   <ModEventList
                     subject={subject}
                     stats={{
-                      accountStrike: subjectStatus?.accountStrike,
+                      accountStrike:
+                        subjectStatus?.accountStrike ||
+                        actionRecommendation?.strikeData,
                       accountStats: subjectStatus?.accountStats,
                       recordsStats: subjectStatus?.recordsStats,
                     }}
@@ -424,6 +425,18 @@ function Form(
                       />
                     )}
                   </div>
+                  {isTakedownEvent && (
+                    <PolicySeveritySelector
+                      policyDetails={policyDetails}
+                      handlePolicySelect={handlePolicySelect}
+                      handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      severityLevelStrikeCount={severityLevelStrikeCount}
+                      currentStrikes={currentStrikes}
+                      actionRecommendation={actionRecommendation}
+                      variant="takedown"
+                    />
+                  )}
+
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
                       {isPriorityScoreEvent && (
@@ -452,6 +465,7 @@ function Form(
                         className={`mb-1 mt-2`}
                       >
                         <ActionDurationSelector
+                          ref={durationSelectorRef}
                           action={modEventType}
                           required={isLabelEvent ? false : true}
                           showPermanent={!isMuteEvent}
@@ -480,18 +494,6 @@ function Form(
                         />
                       </FormLabel>
                     </div>
-                  )}
-                  {isTakedownEvent && (
-                    <PolicySeveritySelector
-                      policyDetails={policyDetails}
-                      isSubjectDid={isSubjectDid}
-                      handlePolicySelect={handlePolicySelect}
-                      handleSeverityLevelSelect={handleSeverityLevelSelect}
-                      severityLevelStrikeCount={severityLevelStrikeCount}
-                      currentStrikes={currentStrikes}
-                      actionRecommendation={actionRecommendation}
-                      variant="takedown"
-                    />
                   )}
 
                   {isAgeAssuranceOverrideEvent && (
@@ -552,30 +554,15 @@ function Form(
                     </FormLabel>
                   )}
 
-                  {isEmailEvent && (
+                  {(isEmailEvent || isReverseTakedownEvent) && (
                     <PolicySeveritySelector
                       policyDetails={policyDetails}
-                      isSubjectDid={isSubjectDid}
                       handlePolicySelect={handlePolicySelect}
                       handleSeverityLevelSelect={handleSeverityLevelSelect}
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
-                      variant="email"
-                    />
-                  )}
-
-                  {isReverseTakedownEvent && (
-                    <PolicySeveritySelector
-                      policyDetails={policyDetails}
-                      isSubjectDid={isSubjectDid}
-                      handlePolicySelect={handlePolicySelect}
-                      handleSeverityLevelSelect={handleSeverityLevelSelect}
-                      defaultPolicy={selectedPolicyName}
-                      defaultSeverityLevel={selectedSeverityLevelName}
-                      severityLevelStrikeCount={severityLevelStrikeCount}
-                      actionRecommendation={actionRecommendation}
-                      variant="reverse-takedown"
+                      variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}
 
@@ -723,7 +710,9 @@ function Form(
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
             <ModEventList
               stats={{
-                accountStrike: subjectStatus?.accountStrike,
+                accountStrike:
+                  subjectStatus?.accountStrike ||
+                  actionRecommendation?.strikeData,
                 accountStats: subjectStatus?.accountStats,
                 recordsStats: subjectStatus?.recordsStats,
               }}
