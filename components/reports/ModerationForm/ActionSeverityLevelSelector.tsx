@@ -52,6 +52,10 @@ export const ActionSeverityLevelSelector = ({
     }
   }, [policySeverityLevels, defaultSeverityLevel])
 
+  if (!Object.keys(data?.value || {}).length) {
+    return null
+  }
+
   return (
     <>
       <Combobox
