@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { HOUR, DAY, pluralize } from '@/lib/util'
 import {
@@ -9,8 +8,10 @@ import {
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
-import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
-import { SeverityLevelDetail } from '@/setting/severity-level/types'
+import {
+  SeverityLevelDetail,
+  SeverityLevelListSetting,
+} from '@/setting/severity-level/types'
 import { nameToKey } from '@/setting/policy/utils'
 
 // We're modelling this after the ToolsOzoneModerationDefs.AccountStrike and rebuilding that data because
@@ -65,10 +66,11 @@ const formatDurationInHours = (durationInHours: number): string => {
   return pluralize(durationInHours, 'hour')
 }
 
-const useStrikeEvents = (subject) => {
-  const labelerAgent = useLabelerAgent()
-  const { data: severityLevelSettings } = useSeverityLevelSetting()
-
+const useStrikeEvents = (
+  labelerAgent: Agent,
+  subject: string,
+  severityLevelSettings?: SeverityLevelListSetting | null,
+) => {
   return useQuery({
     queryKey: ['strikeEvents', subject, severityLevelSettings],
     queryFn: async () => {
@@ -133,9 +135,9 @@ const useStrikeEvents = (subject) => {
         let isExpired = false
 
         // If the event has a severity level, check its expiry
-        if (event.event.severityLevel && severityLevelSettings?.value) {
+        if (event.event.severityLevel && severityLevelSettings) {
           const severityLevelKey = nameToKey(event.event.severityLevel)
-          const severityLevel = severityLevelSettings.value[severityLevelKey]
+          const severityLevel = severityLevelSettings[severityLevelKey]
 
           if (severityLevel?.expiryInDays) {
             const expiryDate = new Date(eventDate)
@@ -179,13 +181,17 @@ const useStrikeEvents = (subject) => {
   })
 }
 
-export const useActionRecommendation = (subject: string) => {
+export const useActionRecommendation = (
+  labelerAgent: Agent,
+  subject: string,
+  severityLevelSettings?: SeverityLevelListSetting | null,
+) => {
   const isSubjectDid = subject.startsWith('did:')
   const {
     isLoading,
     data: strikeData,
     error: strikeDataError,
-  } = useStrikeEvents(subject)
+  } = useStrikeEvents(labelerAgent, subject, severityLevelSettings)
 
   const getRecommendedAction = (
     strikeCount: number | null,

@@ -159,6 +159,8 @@ function Form(
     isPriorityScoreEvent,
     setModEventType,
     policyDetails,
+    strikeData,
+    strikeDataError,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
@@ -187,6 +189,7 @@ function Form(
     setSubject,
     subjectOptions,
   })
+
   return (
     <>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
@@ -394,9 +397,7 @@ function Form(
                   <ModEventList
                     subject={subject}
                     stats={{
-                      accountStrike:
-                        subjectStatus?.accountStrike ||
-                        actionRecommendation?.strikeData,
+                      accountStrike: subjectStatus?.accountStrike || strikeData,
                       accountStats: subjectStatus?.accountStats,
                       recordsStats: subjectStatus?.recordsStats,
                     }}
@@ -409,6 +410,30 @@ function Form(
                       <HighProfileWarning profile={profile} />
                     </div>
                   )}
+                  {!!strikeDataError &&
+                    (isTakedownEvent ||
+                      isEmailEvent ||
+                      isReverseTakedownEvent) && (
+                      <div className="mb-2">
+                        <Alert
+                          type="error"
+                          title="Error loading strike data!"
+                          body={
+                            <>
+                              Please be cautious when taking actions that
+                              require up-to-date strike info.{' '}
+                              <button
+                                className="underline"
+                                onClick={() => window.location.reload()}
+                              >
+                                Click here
+                              </button>{' '}
+                              to reload strike data for this account.
+                            </>
+                          }
+                        />
+                      </div>
+                    )}
                   <div className="relative flex flex-row gap-3 items-center">
                     <ModEventSelectorButton
                       subjectStatus={subjectStatus}
@@ -710,9 +735,7 @@ function Form(
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
             <ModEventList
               stats={{
-                accountStrike:
-                  subjectStatus?.accountStrike ||
-                  actionRecommendation?.strikeData,
+                accountStrike: subjectStatus?.accountStrike || strikeData,
                 accountStats: subjectStatus?.accountStats,
                 recordsStats: subjectStatus?.recordsStats,
               }}

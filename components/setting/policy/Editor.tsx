@@ -5,6 +5,7 @@ import { ActionButton } from '@/common/buttons'
 import { DocumentCheckIcon } from '@heroicons/react/24/solid'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import { PolicyDetail, SeverityLevelConfig } from './types'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const PolicyEditor = ({
   editingPolicy,
@@ -16,7 +17,8 @@ export const PolicyEditor = ({
   onCancel: () => void
 }) => {
   const { onSubmit, mutation } = usePolicyListEditor()
-  const { data: severityLevelSetting } = useSeverityLevelSetting()
+  const labelerAgent = useLabelerAgent()
+  const { data: severityLevelSetting } = useSeverityLevelSetting(labelerAgent)
   const [selectedSeverityLevels, setSelectedSeverityLevels] = useState<
     Record<string, SeverityLevelConfig>
   >(editingPolicy?.severityLevels || {})

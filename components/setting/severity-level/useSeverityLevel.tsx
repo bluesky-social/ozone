@@ -1,7 +1,7 @@
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { SeverityLevelListSetting } from './types'
-import { ToolsOzoneTeamDefs } from '@atproto/api'
+import { Agent, ToolsOzoneTeamDefs } from '@atproto/api'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
 import { nameToKey } from '../policy/utils'
@@ -10,8 +10,7 @@ import { getTrimmedInput } from '@/common/forms'
 
 const SeverityLevelSettingKey = 'tools.ozone.setting.severityLevels'
 
-export const useSeverityLevelSetting = () => {
-  const labelerAgent = useLabelerAgent()
+export const useSeverityLevelSetting = (labelerAgent: Agent) => {
   return useQuery({
     queryKey: ['severity-level'],
     // Set a high cache time since severity levels change infrequently but we read this value very frequently
@@ -40,7 +39,7 @@ export const useSeverityLevelSetting = () => {
 export const useSeverityLevelEditor = () => {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
-  const { data: initialSetting } = useSeverityLevelSetting()
+  const { data: initialSetting } = useSeverityLevelSetting(labelerAgent)
   const { role } = useServerConfig()
   const [removingSeverityLevel, setRemovingSeverityLevel] = useState('')
 

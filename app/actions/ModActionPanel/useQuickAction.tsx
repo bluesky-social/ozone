@@ -82,12 +82,14 @@ export const useQuickAction = (
     useState<string>('')
 
   const { data: policyData } = usePolicyListSetting()
-  const { data: severityLevelData } = useSeverityLevelSetting()
+  const { data: severityLevelData } = useSeverityLevelSetting(labelerAgent)
   const {
+    strikeData,
+    strikeDataError,
     currentStrikes,
     getRecommendedAction,
     getLastContentTakedownDetails,
-  } = useActionRecommendation(subject)
+  } = useActionRecommendation(labelerAgent, subject, severityLevelData?.value)
 
   // Reusable handler for policy selection
   const handlePolicySelect = (policyName: string) => {
@@ -270,6 +272,10 @@ export const useQuickAction = (
         throw new Error('policy-selection-required')
       }
 
+      // Extract the DID from the subject for account-level events
+      const subjectDid =
+        'did' in subjectInfo ? subjectInfo.did : new AtUri(subject).host
+
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
       // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
       // the label applied to the old CID.
@@ -353,10 +359,6 @@ export const useQuickAction = (
           subjectBlobCids,
           event: coreEvent,
         })
-
-        // Extract the DID from the subject for account-level events
-        const subjectDid =
-          'did' in subjectInfo ? subjectInfo.did : new AtUri(subject).host
 
         // If this is a record takedown and we have reached a suspension/ban threshold,
         // emit an additional account-level takedown event
@@ -602,6 +604,8 @@ export const useQuickAction = (
     setSelectedSeverityLevelName,
     policyDetails,
     severityLevelData,
+    strikeData,
+    strikeDataError,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,

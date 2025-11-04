@@ -1,5 +1,6 @@
 import { SeverityLevelListSetting } from '@/setting/severity-level/types'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   Combobox,
   Transition,
@@ -25,7 +26,8 @@ export const ActionSeverityLevelSelector = ({
     { description: string; isDefault: boolean }
   >
 }) => {
-  const { data, isLoading } = useSeverityLevelSetting()
+  const labelerAgent = useLabelerAgent()
+  const { data, isLoading } = useSeverityLevelSetting(labelerAgent)
   const [selected, setSelected] = useState(defaultSeverityLevel)
 
   // Auto-select default severity level from policy when policy changes
