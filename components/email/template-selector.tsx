@@ -13,6 +13,7 @@ import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 import { LabelChip } from '@/common/labels/List'
 import { getLanguageName } from '@/lib/locale/helpers'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
 
 export const TemplateSelector = ({
   defaultLang,
@@ -147,7 +148,15 @@ const NoTemplateOption = ({
   return (
     <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
       No template found {query.length ? `matching "${query}"` : ''}{' '}
-      {selectedLang ? `in ${getLanguageName(selectedLang)} language` : ''}
+      {selectedLang ? `in ${getLanguageName(selectedLang)} language. ` : '. '}
+      <a
+        href="/communication-template/create"
+        className="underline"
+        target="_blank"
+      >
+        Create one
+        <ArrowTopRightOnSquareIcon className="inline h-4 w-4 mx-0.5" />
+      </a>
     </div>
   )
 }

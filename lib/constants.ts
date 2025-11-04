@@ -89,3 +89,6 @@ export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
   parseStrikeSuspensionConfig(
     process.env.NEXT_PUBLIC_STRIKE_SUSPENSION_CONFIG || '',
   )
+
+export const STRIKE_EVENT_EMAIL_TEMPLATE_ID =
+  process.env.NEXT_PUBLIC_STRIKE_EVENT_EMAIL_TEMPLATE_ID

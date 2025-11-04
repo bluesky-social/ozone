@@ -36,7 +36,7 @@ import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
-import { EmailComposer } from 'components/email/Composer'
+import { EmailComposer, EmailComposerFields } from 'components/email/Composer'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
@@ -182,6 +182,13 @@ function Form(
     handlePolicySelect,
     handleSeverityLevelSelect,
     config,
+    communicationTemplates,
+    theme,
+    recipientLanguages,
+    emailContent,
+    setEmailContent,
+    onEmailTemplateSelect,
+    emailSubjectField,
   } = useQuickAction({
     onCancel,
     onSubmit,
@@ -189,6 +196,13 @@ function Form(
     setSubject,
     subjectOptions,
   })
+
+  let emailTemplateLabel = `Template`
+  if (recipientLanguages.languages.length > 1) {
+    emailTemplateLabel = `Template (account languages: ${recipientLanguages.languages.join(
+      ', ',
+    )})`
+  }
 
   return (
     <>
@@ -599,6 +613,23 @@ function Form(
                         className="block w-full mb-3"
                       />
                     </div>
+                  )}
+
+                  {isTakedownEvent && (
+                    <EmailComposerFields
+                      templateLabel={emailTemplateLabel}
+                      onTemplateSelect={onEmailTemplateSelect}
+                      communicationTemplates={communicationTemplates}
+                      recipientLanguages={recipientLanguages}
+                      subjectField={emailSubjectField}
+                      content={emailContent}
+                      setContent={setEmailContent}
+                      theme={theme}
+                      isSending={submission.isSubmitting}
+                      requiresConfirmation={false}
+                      isConfirmed={true}
+                      toggleConfirmation={() => null}
+                    />
                   )}
 
                   {isCommentEvent && (

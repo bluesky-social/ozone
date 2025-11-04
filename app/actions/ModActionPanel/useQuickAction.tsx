@@ -13,9 +13,12 @@ import {
   isSelfLabel,
 } from '@/common/labels/util'
 import { useKeyPressEvent } from 'react-use'
-import { takesKeyboardEvt } from '@/lib/util'
+import { DAY, HOUR, pluralize, takesKeyboardEvt } from '@/lib/util'
 import { MOD_EVENTS } from '@/mod-event/constants'
-import { useCreateSubjectFromId } from '@/reports/helpers/subject'
+import {
+  getCollectionName,
+  useCreateSubjectFromId,
+} from '@/reports/helpers/subject'
 import {
   useConfigurationContext,
   useLabelerAgent,
@@ -26,6 +29,11 @@ import { usePolicyListSetting } from '@/setting/policy/usePolicyList'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import { useActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
 import { nameToKey } from '@/setting/policy/utils'
+import { useCommunicationTemplateList } from 'components/communication-template/hooks'
+import { getRecipientsLanguages } from '@/email/Composer'
+import { useColorScheme } from '@/common/useColorScheme'
+import { compileTemplateContent, getTemplate } from '@/email/helpers'
+import { STRIKE_EVENT_EMAIL_TEMPLATE_ID } from '@/lib/constants'
 
 export type QuickActionProps = {
   subject: string
@@ -43,6 +51,14 @@ export const useQuickAction = (
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const accountDid = labelerAgent.assertDid
+  const { data: communicationTemplates } = useCommunicationTemplateList({})
+  const { theme } = useColorScheme()
+
+  const strikeEmailTemplate = STRIKE_EVENT_EMAIL_TEMPLATE_ID
+    ? communicationTemplates?.find(
+        (tpl) => tpl.id === STRIKE_EVENT_EMAIL_TEMPLATE_ID,
+      )
+    : undefined
 
   const { subject, setSubject, subjectOptions, onCancel, onSubmit } = props
   const [submission, setSubmission] = useState<{
@@ -55,6 +71,8 @@ export const useQuickAction = (
 
   const { data: { record, repo, profile } = {}, refetch: refetchSubject } =
     useSubjectQuery(subject)
+
+  const recipientLanguages = getRecipientsLanguages(repo)
 
   const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
@@ -527,6 +545,8 @@ export const useQuickAction = (
     }
   }
 
+  const emailSubjectField = useRef<HTMLInputElement>(null)
+  const [emailContent, setEmailContent] = useState<string>('')
   const durationSelectorRef = useRef<HTMLSelectElement>(null)
 
   // Keyboard shortcuts for action types
@@ -576,6 +596,45 @@ export const useQuickAction = (
       : undefined,
   )
 
+  useEffect(() => {
+    if (selectedPolicyName && strikeEmailTemplate) {
+      onEmailTemplateSelect(strikeEmailTemplate.name)
+    }
+  }, [actionRecommendation, strikeEmailTemplate, selectedPolicyName])
+
+  const onEmailTemplateSelect = (templateName: string) => {
+    // When templates are changed, force reset message
+    const template =
+      getTemplate(templateName, communicationTemplates || []) ||
+      communicationTemplates?.[0]
+    if (!template) {
+      return
+    }
+    console.log(actionRecommendation)
+    const emailSubject = template.subject || ''
+    const content = compileTemplateContent(template.contentMarkdown, {
+      subjectName: isSubjectDid
+        ? 'account'
+        : getCollectionName(subject.split('/')[3] || ''),
+      handle: repo?.handle,
+      policyName: selectedPolicyName,
+      strikeCount: actionRecommendation?.actualStrikesToApply
+        ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
+        : undefined,
+      suspensionContent: actionRecommendation?.suspensionDurationInHours
+        ? `Your account has been suspended for ${pluralize(
+            (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
+            'day',
+          )}.`
+        : actionRecommendation?.isPermanent
+        ? `Your account has been suspended permanently.`
+        : undefined,
+    })
+    setEmailContent(content)
+    if (emailSubjectField.current)
+      emailSubjectField.current.value = emailSubject
+  }
+
   return {
     config,
     submission,
@@ -623,6 +682,13 @@ export const useQuickAction = (
     moveToNextSubjectRef,
     durationSelectorRef,
     submitButton,
+    communicationTemplates,
+    theme,
+    recipientLanguages,
+    emailContent,
+    setEmailContent,
+    emailSubjectField,
+    onEmailTemplateSelect,
     submitAndGoNext,
     handleEmailSubmit,
     handlePolicySelect,
