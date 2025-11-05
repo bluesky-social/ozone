@@ -124,11 +124,14 @@ export const WORKSPACE_EXPORT_FIELDS = [
 ]
 export const ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS = ['email', 'ip']
 const filterExportFields = (fields: string[], isAdmin: boolean) => {
-  return isAdmin
-    ? fields
-    : fields.filter(
-        (field) => !ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS.includes(field),
-      )
+  // There's a slight bit of overhead here but iterating over the original fields
+  // Ensure that the order of header and row columns always match
+  return WORKSPACE_EXPORT_FIELDS.filter((field) => {
+    if (fields.includes(field)) {
+      return isAdmin || !ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS.includes(field)
+    }
+    return false
+  })
 }
 
 const ifString = (val: unknown): string | undefined =>
@@ -199,17 +202,15 @@ export const useWorkspaceExport = () => {
               const exportFields = getExportFieldsFromWorkspaceListItem(item)
               if (!exportFields) return ''
 
-              const line: string[] = [
-                exportFields.did,
-                exportFields.handle,
-                exportHeaders.includes('email') ? exportFields.email : '',
-                exportHeaders.includes('ip') ? exportFields.ip : '',
-                exportFields.name,
-                exportFields.labels,
-                exportFields.tags,
-                exportFields.bskyUrl,
-              ].filter(isNonNullable)
-              return line.map(escapeCSVValue).join(',')
+              const line: Array<string | undefined> = []
+
+              exportHeaders.forEach((header) => {
+                if (header in exportFields) {
+                  line.push(exportFields[header])
+                }
+              })
+
+              return line.filter(isNonNullable).map(escapeCSVValue).join(',')
             })
             .filter(Boolean),
         }),
