@@ -384,6 +384,15 @@ const StrikeInfo = ({
   )
 }
 
+const formatSuspensionDuration = (durationInHours: number) => {
+  if (durationInHours < 24) {
+    return pluralize(durationInHours, 'hr')
+  }
+
+  const days = (durationInHours / 24).toFixed(1)
+  return pluralize(Number(days), 'day')
+}
+
 const TakedownOrMute = ({
   modEvent,
 }: {
@@ -407,7 +416,7 @@ const TakedownOrMute = ({
         <div>
           {!!modEvent.event.durationInHours && (
             <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-              {modEvent.event.durationInHours}hrs
+              {formatSuspensionDuration(modEvent.event.durationInHours)}
             </span>
           )}
           {ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event) && (
