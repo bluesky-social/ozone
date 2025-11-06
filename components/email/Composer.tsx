@@ -67,6 +67,26 @@ export const getRecipientsLanguages = (
   }
 }
 
+export const buildEmailEventFromFormData = async (
+  formData: FormData,
+  content: string,
+) => {
+  const subject = formData.get('subject')?.toString() ?? undefined
+  const comment = formData.get('comment')?.toString() ?? undefined
+  const [{ remark }, { default: remarkHtml }] = await Promise.all([
+    import('remark'),
+    import('remark-html'),
+  ])
+  const htmlContent = remark().use(remarkHtml).processSync(content).toString()
+
+  return {
+    $type: MOD_EVENTS.EMAIL,
+    comment,
+    subjectLine: subject,
+    content: htmlContent,
+  }
+}
+
 export const EmailComposer = ({
   did,
   replacePlaceholders = true,
@@ -103,26 +123,10 @@ export const EmailComposer = ({
   const onSubmit = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const subject = formData.get('subject')?.toString() ?? undefined
-    const comment = formData.get('comment')?.toString() ?? undefined
 
     toggleSending(true)
     try {
-      const [{ remark }, { default: remarkHtml }] = await Promise.all([
-        import('remark'),
-        import('remark-html'),
-      ])
-      const htmlContent = remark()
-        .use(remarkHtml)
-        .processSync(content)
-        .toString()
-
-      const event = {
-        $type: MOD_EVENTS.EMAIL,
-        comment,
-        subjectLine: subject,
-        content: htmlContent,
-      }
+      const event = await buildEmailEventFromFormData(formData, content)
       if (handleSubmit) {
         await handleSubmit(event)
       } else {

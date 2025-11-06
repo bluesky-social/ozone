@@ -147,6 +147,7 @@ function Form(
     isSubjectDid,
     profile,
     subjectStatus,
+    canSendEmail,
     canManageChat,
     currentLabels,
     allLabels,
@@ -182,6 +183,7 @@ function Form(
     handlePolicySelect,
     handleSeverityLevelSelect,
     config,
+    showStrikeEmailComposer,
     communicationTemplates,
     theme,
     recipientLanguages,
@@ -615,7 +617,7 @@ function Form(
                     </div>
                   )}
 
-                  {isTakedownEvent && (
+                  {showStrikeEmailComposer && (
                     <EmailComposerFields
                       templateLabel={emailTemplateLabel}
                       onTemplateSelect={onEmailTemplateSelect}

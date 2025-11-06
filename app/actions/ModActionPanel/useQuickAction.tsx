@@ -30,10 +30,14 @@ import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLev
 import { useActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
 import { nameToKey } from '@/setting/policy/utils'
 import { useCommunicationTemplateList } from 'components/communication-template/hooks'
-import { getRecipientsLanguages } from '@/email/Composer'
+import {
+  buildEmailEventFromFormData,
+  getRecipientsLanguages,
+} from '@/email/Composer'
 import { useColorScheme } from '@/common/useColorScheme'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
 import { STRIKE_EVENT_EMAIL_TEMPLATE_ID } from '@/lib/constants'
+import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 
 export type QuickActionProps = {
   subject: string
@@ -56,7 +60,7 @@ export const useQuickAction = (
 
   const strikeEmailTemplate = STRIKE_EVENT_EMAIL_TEMPLATE_ID
     ? communicationTemplates?.find(
-        (tpl) => tpl.id === STRIKE_EVENT_EMAIL_TEMPLATE_ID,
+        (tpl) => tpl.id === `${STRIKE_EVENT_EMAIL_TEMPLATE_ID}`,
       )
     : undefined
 
@@ -65,6 +69,9 @@ export const useQuickAction = (
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+
+  // Extract the DID from the subject for account-level events
+  const subjectDid = subject ? new AtUri(subject).host : ''
 
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
     useSubjectStatusQuery(subject)
@@ -209,6 +216,13 @@ export const useQuickAction = (
     }
   }, [isSubjectDid, actionRecommendation?.suspensionDurationInHours])
 
+  const emailRecipientStatus = useEmailRecipientStatus(subjectDid)
+  const showStrikeEmailComposer =
+    isTakedownEvent &&
+    strikeEmailTemplate &&
+    canSendEmail &&
+    !emailRecipientStatus?.cantReceive
+
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
     const len = subjectOptions?.length
@@ -289,10 +303,6 @@ export const useQuickAction = (
       ) {
         throw new Error('policy-selection-required')
       }
-
-      // Extract the DID from the subject for account-level events
-      const subjectDid =
-        'did' in subjectInfo ? subjectInfo.did : new AtUri(subject).host
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
       // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
@@ -411,6 +421,22 @@ export const useQuickAction = (
             createdBy: accountDid,
             event: accountEvent,
           })
+
+          if (showStrikeEmailComposer && emailContent) {
+            const emailEvent = await buildEmailEventFromFormData(
+              formData,
+              emailContent,
+            )
+
+            await onSubmit({
+              subject: {
+                $type: 'com.atproto.admin.defs#repoRef',
+                did: subjectDid,
+              },
+              createdBy: accountDid,
+              event: emailEvent,
+            })
+          }
         }
 
         // If this is a REVERSE_TAKEDOWN and we've crossed a suspension threshold (going down),
@@ -610,7 +636,6 @@ export const useQuickAction = (
     if (!template) {
       return
     }
-    console.log(actionRecommendation)
     const emailSubject = template.subject || ''
     const content = compileTemplateContent(template.contentMarkdown, {
       subjectName: isSubjectDid
@@ -622,12 +647,12 @@ export const useQuickAction = (
         ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
         : undefined,
       suspensionContent: actionRecommendation?.suspensionDurationInHours
-        ? `Your account has been suspended for ${pluralize(
+        ? `As a result, your account has been suspended for ${pluralize(
             (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
             'day',
           )}.`
         : actionRecommendation?.isPermanent
-        ? `Your account has been suspended permanently.`
+        ? `As a result, your account has been suspended permanently.`
         : undefined,
     })
     setEmailContent(content)
@@ -682,8 +707,10 @@ export const useQuickAction = (
     moveToNextSubjectRef,
     durationSelectorRef,
     submitButton,
+    strikeEmailTemplate,
     communicationTemplates,
     theme,
+    showStrikeEmailComposer,
     recipientLanguages,
     emailContent,
     setEmailContent,
