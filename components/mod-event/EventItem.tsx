@@ -16,7 +16,12 @@ import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventViewWithDetails } from './useModEventList'
-import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ClockIcon,
+  DocumentTextIcon,
+} from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
@@ -24,7 +29,7 @@ import { ModToolInfo } from './ModToolInfo'
 import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
 import { CopyButton } from '@/common/CopyButton'
 
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { UserAgent } from '@/common/UserAgent'
 
 const LinkToAuthor = ({
@@ -127,6 +132,7 @@ const Email = ({
 }: {
   modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventEmail>
 }) => {
+  const [showEmailContent, setShowEmailContent] = useState(false)
   return (
     <>
       <p className="text-gray-500">
@@ -139,6 +145,29 @@ const Email = ({
         <p>Subject: {modEvent.event.subjectLine}</p>
       )}
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      {modEvent.event.content && (
+        <div className="mt-1">
+          {!showEmailContent ? (
+            <button
+              className="underline"
+              onClick={() => setShowEmailContent(true)}
+            >
+              Show email content
+              <ArrowDownIcon className="inline ml-1 h-3 w-3" />
+            </button>
+          ) : (
+            <div>
+              <button onClick={() => setShowEmailContent(false)}>
+                Email content <ArrowUpIcon className="inline ml-1 h-3 w-3" />
+              </button>
+              <div
+                className="border rounded-xs p-1 dark:border-gray-600"
+                dangerouslySetInnerHTML={{ __html: modEvent.event.content }}
+              />
+            </div>
+          )}
+        </div>
+      )}
       <TakedownPolicy policies={modEvent.event.policies} />
       <StrikeInfo
         strikeCount={modEvent.event.strikeCount}
