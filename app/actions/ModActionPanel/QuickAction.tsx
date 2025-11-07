@@ -635,7 +635,7 @@ function Form(
                       communicationTemplates={communicationTemplates}
                       recipientLanguages={recipientLanguages}
                       subjectField={emailSubjectField}
-                      content={emailContent}
+                      content={emailContent || ''}
                       setContent={setEmailContent}
                       theme={theme}
                       isSending={submission.isSubmitting}
