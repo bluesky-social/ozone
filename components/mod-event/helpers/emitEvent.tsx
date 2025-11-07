@@ -441,6 +441,7 @@ const eventTexts = {
   [MOD_EVENTS.EMAIL]: 'emailed',
   [MOD_EVENTS.AGE_ASSURANCE]: 'age assurance updated',
   [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'age assurance overridden',
+  [MOD_EVENTS.REVERSE_TAKEDOWN]: 'reinstated',
 }
 
 export const getEventFromFormData = (
@@ -457,6 +458,8 @@ export const getEventFromFormData = (
   )
   const score = Number(formData.get('priorityScore'))
   const tags = formData.get('tags')
+  const severityLevel = formData.get('severityLevel')
+  const strikeCount = formData.get('strikeCount')
 
   if ($type === MOD_EVENTS.ACKNOWLEDGE) {
     return { $type, comment, acknowledgeAccountSubjects }
@@ -487,13 +490,30 @@ export const getEventFromFormData = (
   }
 
   if ($type === MOD_EVENTS.TAKEDOWN) {
-    return {
+    const event: any = {
       $type,
       durationInHours,
       acknowledgeAccountSubjects,
       policies: [String(policies)],
       comment: comment ? String(comment) : undefined,
     }
+
+    // Add severityLevel if present
+    if (
+      severityLevel &&
+      String(severityLevel) !== 'null' &&
+      String(severityLevel) !== ''
+    ) {
+      event.severityLevel = String(severityLevel)
+    }
+
+    // Add strikeCount if present and valid
+    const strikeCountNum = Number(strikeCount)
+    if (!isNaN(strikeCountNum)) {
+      event.strikeCount = strikeCountNum
+    }
+
+    return event
   }
 
   if ($type === MOD_EVENTS.COMMENT) {
@@ -501,7 +521,32 @@ export const getEventFromFormData = (
   }
 
   if ($type === MOD_EVENTS.REVERSE_TAKEDOWN) {
-    return { $type, comment }
+    const event: any = {
+      $type,
+      comment: comment ? String(comment) : undefined,
+    }
+
+    // Add policies if present
+    if (policies && String(policies) !== 'null' && String(policies) !== '') {
+      event.policies = [String(policies)]
+    }
+
+    // Add severityLevel if present
+    if (
+      severityLevel &&
+      String(severityLevel) !== 'null' &&
+      String(severityLevel) !== ''
+    ) {
+      event.severityLevel = String(severityLevel)
+    }
+
+    // Add strikeCount if present (should be negative for reverse takedown)
+    const strikeCountNum = Number(strikeCount)
+    if (strikeCount && !isNaN(strikeCountNum) && strikeCountNum !== 0) {
+      event.strikeCount = strikeCountNum
+    }
+
+    return event
   }
 
   if ($type === MOD_EVENTS.UNMUTE) {
@@ -517,7 +562,7 @@ export const getEventFromFormData = (
   }
 
   if ($type === MOD_EVENTS.RESOLVE_APPEAL) {
-    return { $type, comment }
+    return { $type, comment: comment ? String(comment) : undefined }
   }
 
   if ($type === MOD_EVENTS.TAG) {

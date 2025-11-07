@@ -1,4 +1,6 @@
 import type { JSX } from 'react'
+import { classNames } from '@/lib/util'
+
 // Utility function to detect and replace links with <a> tags
 const wrapLinksInText = (text: string): JSX.Element[] => {
   // Regular expression to match URLs
@@ -27,6 +29,13 @@ const wrapLinksInText = (text: string): JSX.Element[] => {
   })
 }
 
-export const TextWithLinks: React.FC<{ text: string }> = ({ text }) => {
-  return <p className="whitespace-pre-wrap">{wrapLinksInText(text)}</p>
+export const TextWithLinks: React.FC<{ text: string; className?: string }> = ({
+  text,
+  className,
+}) => {
+  return (
+    <p className={classNames(`whitespace-pre-wrap`, className)}>
+      {wrapLinksInText(text)}
+    </p>
+  )
 }

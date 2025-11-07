@@ -1,5 +1,5 @@
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 import {
   Combobox,
@@ -13,17 +13,20 @@ import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { LanguageSelectorDropdown } from '@/common/LanguagePicker'
 import { LabelChip } from '@/common/labels/List'
 import { getLanguageName } from '@/lib/locale/helpers'
+import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
 
 export const TemplateSelector = ({
+  defaultTemplate,
   defaultLang,
   onSelect,
   communicationTemplates,
 }: {
+  defaultTemplate?: string
   defaultLang?: string
   onSelect: (name: string) => void
   communicationTemplates?: ToolsOzoneCommunicationDefs.TemplateView[]
 }) => {
-  const [selected, setSelected] = useState('')
+  const [selected, setSelected] = useState(defaultTemplate || '')
   const [query, setQuery] = useState('')
   const [selectedLang, setSelectedLang] = useState<string | undefined>(
     defaultLang,
@@ -42,6 +45,12 @@ export const TemplateSelector = ({
       return !tpl.disabled
     })
     .sort((prev, next) => prev.name.localeCompare(next.name))
+
+  useEffect(() => {
+    if (defaultTemplate && defaultTemplate !== selected) {
+      setSelected(defaultTemplate)
+    }
+  }, [defaultTemplate])
 
   return (
     <div className="flex flex-row items-center gap-2">
@@ -147,7 +156,15 @@ const NoTemplateOption = ({
   return (
     <div className="relative cursor-default select-none px-4 py-2 text-gray-700 dark:text-gray-100">
       No template found {query.length ? `matching "${query}"` : ''}{' '}
-      {selectedLang ? `in ${getLanguageName(selectedLang)} language` : ''}
+      {selectedLang ? `in ${getLanguageName(selectedLang)} language. ` : '. '}
+      <a
+        href="/communication-template/create"
+        className="underline"
+        target="_blank"
+      >
+        Create one
+        <ArrowTopRightOnSquareIcon className="inline h-4 w-4 mx-0.5" />
+      </a>
     </div>
   )
 }

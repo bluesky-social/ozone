@@ -75,7 +75,7 @@ export const HighProfileWarning = ({
       type="warning"
       title="High profile account"
       body={
-        <div>
+        <>
           Please take caution when moderating this account.{' '}
           {fragments.length > 1 ? (
             <>
@@ -89,7 +89,7 @@ export const HighProfileWarning = ({
           ) : (
             <>This user {fragments[0]}.</>
           )}
-        </div>
+        </>
       }
     />
   )

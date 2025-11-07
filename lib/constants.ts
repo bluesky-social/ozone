@@ -56,3 +56,49 @@ export const HIGH_PROFILE_FOLLOWER_THRESHOLD = process.env
 export const FALLBACK_VIDEO_URL = (
   process.env.NEXT_PUBLIC_FALLBACK_VIDEO_URL || ''
 ).split(':')
+
+// strike to account suspension duration mapping (in hours)
+// format: "strikeCount:durationInHours" pairs, separated by commas
+// use "Infinity" for permanent suspension
+const parseStrikeSuspensionConfig = (
+  config: string,
+): Record<number, number> => {
+  const pairs = config.split(',').map((pair) => pair.trim())
+  const result: Record<number, number> = {}
+
+  if (!pairs.length) {
+    return result
+  }
+
+  for (const pair of pairs) {
+    const [strikeStr, durationStr] = pair.split(':').map((s) => s.trim())
+    if (strikeStr && durationStr) {
+      const strikeCount = parseInt(strikeStr)
+      const duration =
+        durationStr === 'Infinity' ? Infinity : parseFloat(durationStr)
+      if (!isNaN(strikeCount) && !isNaN(duration)) {
+        result[strikeCount] = duration
+      }
+    }
+  }
+
+  return result
+}
+
+export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
+  parseStrikeSuspensionConfig(
+    process.env.NEXT_PUBLIC_STRIKE_SUSPENSION_CONFIG || '',
+  )
+
+export const AUTOMATED_ACTION_EMAIL_IDS = {
+  warningWithTakedown:
+    process.env.NEXT_PUBLIC_WARNING_WITH_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  suspensionWithTakedown:
+    process.env.NEXT_PUBLIC_SUSPENSION_WITH_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  suspensionWithoutTakedown:
+    process.env.NEXT_PUBLIC_SUSPENSION_WITHOUT_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  permanentTakedown:
+    process.env.NEXT_PUBLIC_PERMANENT_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  takedownWithoutStrike:
+    process.env.NEXT_PUBLIC_TAKEDOWN_WITHOUT_STRIKE_EMAIL_TEMPLATE_ID,
+}
