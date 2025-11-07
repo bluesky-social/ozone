@@ -1,5 +1,5 @@
 import { CheckIcon, ChevronUpDownIcon } from '@heroicons/react/24/outline'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 import {
   Combobox,
@@ -16,15 +16,17 @@ import { getLanguageName } from '@/lib/locale/helpers'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
 
 export const TemplateSelector = ({
+  defaultTemplate,
   defaultLang,
   onSelect,
   communicationTemplates,
 }: {
+  defaultTemplate?: string
   defaultLang?: string
   onSelect: (name: string) => void
   communicationTemplates?: ToolsOzoneCommunicationDefs.TemplateView[]
 }) => {
-  const [selected, setSelected] = useState('')
+  const [selected, setSelected] = useState(defaultTemplate || '')
   const [query, setQuery] = useState('')
   const [selectedLang, setSelectedLang] = useState<string | undefined>(
     defaultLang,
@@ -43,6 +45,12 @@ export const TemplateSelector = ({
       return !tpl.disabled
     })
     .sort((prev, next) => prev.name.localeCompare(next.name))
+
+  useEffect(() => {
+    if (defaultTemplate && defaultTemplate !== selected) {
+      setSelected(defaultTemplate)
+    }
+  }, [defaultTemplate])
 
   return (
     <div className="flex flex-row items-center gap-2">

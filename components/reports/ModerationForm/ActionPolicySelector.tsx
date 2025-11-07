@@ -172,7 +172,7 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
                         >
                           {tpl.name}
                         </p>
-                        <p className="text-xs">{tpl.description}</p>
+                        <p className="text-xs dark:text-gray-400 text-gray-500">{tpl.description}</p>
                       </div>
                     </div>
                   </>

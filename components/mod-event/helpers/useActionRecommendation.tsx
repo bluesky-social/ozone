@@ -200,11 +200,26 @@ export const useActionRecommendation = (
     // when reverting takedowns
     isNegative: boolean = false,
   ): ActionRecommendation | null => {
-    const currentStrikes = strikeData?.totalStrikeCount || 0
+    const currentStrikes = strikeData?.activeStrikeCount || 0
 
     // Handle negative strikes (for RESOLVE_APPEAL)
-    if (isNegative && strikeCount !== null) {
-      const negativeStrikeCount = -Math.abs(strikeCount)
+    if (isNegative) {
+      if (strikeCount === null) {
+        return {
+          totalStrikes: currentStrikes,
+          recommendedDuration: 0,
+          isPermanent: false,
+          suspensionDurationInHours: null,
+          actualStrikesToApply: 0,
+          needsReverseTakedown: true,
+          message: `Account will be reinstated without strike adjustment`,
+        }
+      }
+      const negativeStrikeCount = -Math.abs(
+        severityLevelData?.firstOccurrenceStrikeCount
+          ? severityLevelData.firstOccurrenceStrikeCount
+          : strikeCount,
+      )
       const newTotalStrikes = Math.max(0, currentStrikes + negativeStrikeCount)
 
       // Find current suspension threshold

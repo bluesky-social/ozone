@@ -36,7 +36,7 @@ import {
 } from '@/email/Composer'
 import { useColorScheme } from '@/common/useColorScheme'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
-import { STRIKE_EVENT_EMAIL_TEMPLATE_ID } from '@/lib/constants'
+import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 
 export type QuickActionProps = {
@@ -46,6 +46,9 @@ export type QuickActionProps = {
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
 
+const hasAutomatedEmailTemplates = Object.values(
+  AUTOMATED_ACTION_EMAIL_IDS,
+).some(Boolean)
 export const useQuickAction = (
   props: QuickActionProps & {
     onCancel: () => void
@@ -55,14 +58,7 @@ export const useQuickAction = (
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const accountDid = labelerAgent.assertDid
-  const { data: communicationTemplates } = useCommunicationTemplateList({})
   const { theme } = useColorScheme()
-
-  const strikeEmailTemplate = STRIKE_EVENT_EMAIL_TEMPLATE_ID
-    ? communicationTemplates?.find(
-        (tpl) => tpl.id === `${STRIKE_EVENT_EMAIL_TEMPLATE_ID}`,
-      )
-    : undefined
 
   const { subject, setSubject, subjectOptions, onCancel, onSubmit } = props
   const [submission, setSubmission] = useState<{
@@ -151,7 +147,11 @@ export const useQuickAction = (
       return
     }
 
-    setSelectedPolicyName(lastDetails.policy)
+    // TODO: /reports/id page 404s
+
+    if (lastDetails.policy) {
+      setSelectedPolicyName(lastDetails.policy)
+    }
     const policyKey = nameToKey(lastDetails.policy)
     const policy = policyData?.value?.[policyKey]
     setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
@@ -216,12 +216,57 @@ export const useQuickAction = (
     }
   }, [isSubjectDid, actionRecommendation?.suspensionDurationInHours])
 
-  const emailRecipientStatus = useEmailRecipientStatus(subjectDid)
-  const showStrikeEmailComposer =
-    isTakedownEvent &&
-    strikeEmailTemplate &&
-    canSendEmail &&
-    !emailRecipientStatus?.cantReceive
+  // Only load email template and related data if there's at least 1 template ID configured for automated emails
+  const needsAutomatedEmail =
+    isTakedownEvent && canSendEmail && hasAutomatedEmailTemplates
+
+  const { data: communicationTemplates } = useCommunicationTemplateList({
+    enabled: needsAutomatedEmail,
+  })
+
+  let automatedEmailTemplateId: string | undefined
+
+  if (isTakedownEvent && !isSubjectDid) {
+    if (
+      actionRecommendation?.suspensionDurationInHours &&
+      actionRecommendation?.suspensionDurationInHours > 0
+    ) {
+      automatedEmailTemplateId =
+        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithTakedown
+    } else if (actionRecommendation?.isPermanent) {
+      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
+    } else if (
+      actionRecommendation?.actualStrikesToApply &&
+      actionRecommendation?.actualStrikesToApply > 0
+    ) {
+      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.warningWithTakedown
+    } else {
+      automatedEmailTemplateId =
+        AUTOMATED_ACTION_EMAIL_IDS.takedownWithoutStrike
+    }
+  } else {
+    if (actionRecommendation?.isPermanent) {
+      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
+    }
+
+    if (
+      actionRecommendation?.suspensionDurationInHours &&
+      actionRecommendation?.suspensionDurationInHours > 0
+    ) {
+      automatedEmailTemplateId =
+        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithoutTakedown
+    }
+  }
+  const automatedEmailTemplate = automatedEmailTemplateId
+    ? communicationTemplates?.find((tpl) => tpl.id === automatedEmailTemplateId)
+    : undefined
+
+  // Only check recipient status if we have automated email templates configured
+  const emailRecipientStatus = useEmailRecipientStatus(
+    needsAutomatedEmail ? subjectDid : undefined,
+  )
+  const showAutomatedEmailComposer =
+    !!automatedEmailTemplate && !emailRecipientStatus?.cantReceive
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -402,6 +447,7 @@ export const useQuickAction = (
               $type: MOD_EVENTS.TAKEDOWN,
               comment: coreEvent.comment,
               policies: coreEvent.policies,
+              severityLevel: coreEvent.severityLevel,
             }
 
           // Only set durationInHours if not permanent (for suspensions)
@@ -421,28 +467,29 @@ export const useQuickAction = (
             createdBy: accountDid,
             event: accountEvent,
           })
+        }
 
-          if (showStrikeEmailComposer && emailContent) {
-            const emailEvent = await buildEmailEventFromFormData(
-              formData,
-              emailContent,
-            )
+        if (showAutomatedEmailComposer && emailContent) {
+          const emailEvent = await buildEmailEventFromFormData(
+            formData,
+            emailContent,
+          )
 
-            await onSubmit({
-              subject: {
-                $type: 'com.atproto.admin.defs#repoRef',
-                did: subjectDid,
-              },
-              createdBy: accountDid,
-              event: emailEvent,
-            })
-          }
+          await onSubmit({
+            subject: {
+              $type: 'com.atproto.admin.defs#repoRef',
+              did: subjectDid,
+            },
+            createdBy: accountDid,
+            event: emailEvent,
+          })
         }
 
         // If this is a REVERSE_TAKEDOWN and we've crossed a suspension threshold (going down),
         // emit an account-level REVERSE_TAKEDOWN, and potentially an adjusted TAKEDOWN
         if (
           ToolsOzoneModerationDefs.isModEventReverseTakedown(coreEvent) &&
+          !isSubjectDid &&
           actionRecommendation?.needsReverseTakedown
         ) {
           // First, emit account-level REVERSE_TAKEDOWN to remove current suspension
@@ -525,7 +572,8 @@ export const useQuickAction = (
         eventMayNeedEmail &&
           !shouldMoveToNextSubject &&
           canSendEmail &&
-          isSubjectDid
+          isSubjectDid &&
+          !showAutomatedEmailComposer
           ? MOD_EVENTS.EMAIL
           : MOD_EVENTS.ACKNOWLEDGE,
       )
@@ -572,7 +620,7 @@ export const useQuickAction = (
   }
 
   const emailSubjectField = useRef<HTMLInputElement>(null)
-  const [emailContent, setEmailContent] = useState<string>('')
+  const [emailContent, setEmailContent] = useState<string | undefined>('')
   const durationSelectorRef = useRef<HTMLSelectElement>(null)
 
   // Keyboard shortcuts for action types
@@ -623,10 +671,15 @@ export const useQuickAction = (
   )
 
   useEffect(() => {
-    if (selectedPolicyName && strikeEmailTemplate) {
-      onEmailTemplateSelect(strikeEmailTemplate.name)
+    if (selectedPolicyName && automatedEmailTemplate) {
+      onEmailTemplateSelect(automatedEmailTemplate.name)
     }
-  }, [actionRecommendation, strikeEmailTemplate, selectedPolicyName])
+  }, [
+    actionRecommendation?.isPermanent,
+    actionRecommendation?.suspensionDurationInHours,
+    automatedEmailTemplate,
+    selectedPolicyName,
+  ])
 
   const onEmailTemplateSelect = (templateName: string) => {
     // When templates are changed, force reset message
@@ -641,20 +694,20 @@ export const useQuickAction = (
       subjectName: isSubjectDid
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
-      handle: repo?.handle,
+      handle: repo?.handle || subjectStatus?.subjectRepoHandle,
       policyName: selectedPolicyName,
       strikeCount: actionRecommendation?.actualStrikesToApply
         ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
         : undefined,
-      suspensionContent: actionRecommendation?.suspensionDurationInHours
-        ? `As a result, your account has been suspended for ${pluralize(
+      suspensionDuration: actionRecommendation?.suspensionDurationInHours
+        ? pluralize(
             (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
             'day',
-          )}.`
-        : actionRecommendation?.isPermanent
-        ? `As a result, your account has been suspended permanently.`
+          )
         : undefined,
     })
+
+    // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
     setEmailContent(content)
     if (emailSubjectField.current)
       emailSubjectField.current.value = emailSubject
@@ -707,10 +760,10 @@ export const useQuickAction = (
     moveToNextSubjectRef,
     durationSelectorRef,
     submitButton,
-    strikeEmailTemplate,
+    automatedEmailTemplate,
     communicationTemplates,
     theme,
-    showStrikeEmailComposer,
+    showAutomatedEmailComposer,
     recipientLanguages,
     emailContent,
     setEmailContent,

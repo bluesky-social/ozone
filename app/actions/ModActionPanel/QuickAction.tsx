@@ -147,7 +147,7 @@ function Form(
     isSubjectDid,
     profile,
     subjectStatus,
-    canSendEmail,
+    selectedSeverityLevelName,
     canManageChat,
     currentLabels,
     allLabels,
@@ -175,6 +175,7 @@ function Form(
     isReviewClosed,
     isEscalated,
     isAckEvent,
+    selectedPolicyName,
     moveToNextSubjectRef,
     durationSelectorRef,
     submitButton,
@@ -183,7 +184,8 @@ function Form(
     handlePolicySelect,
     handleSeverityLevelSelect,
     config,
-    showStrikeEmailComposer,
+    showAutomatedEmailComposer,
+    automatedEmailTemplate,
     communicationTemplates,
     theme,
     recipientLanguages,
@@ -468,10 +470,12 @@ function Form(
                   </div>
                   {isTakedownEvent && (
                     <PolicySeveritySelector
+                      defaultPolicy={selectedPolicyName}
                       policyDetails={policyDetails}
                       handlePolicySelect={handlePolicySelect}
                       handleSeverityLevelSelect={handleSeverityLevelSelect}
                       severityLevelStrikeCount={severityLevelStrikeCount}
+                      defaultSeverityLevel={selectedSeverityLevelName}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
                       variant="takedown"
@@ -603,6 +607,8 @@ function Form(
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
+                      defaultSeverityLevel={selectedSeverityLevelName}
+                      defaultPolicy={selectedPolicyName}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}
@@ -617,8 +623,13 @@ function Form(
                     </div>
                   )}
 
-                  {showStrikeEmailComposer && (
+                  {showAutomatedEmailComposer && (
                     <EmailComposerFields
+                      defaultTemplate={
+                        !!actionRecommendation
+                          ? automatedEmailTemplate?.name
+                          : undefined
+                      }
                       templateLabel={emailTemplateLabel}
                       onTemplateSelect={onEmailTemplateSelect}
                       communicationTemplates={communicationTemplates}

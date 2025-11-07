@@ -509,7 +509,7 @@ export const getEventFromFormData = (
 
     // Add strikeCount if present and valid
     const strikeCountNum = Number(strikeCount)
-    if (strikeCount && !isNaN(strikeCountNum) && strikeCountNum > 0) {
+    if (!isNaN(strikeCountNum)) {
       event.strikeCount = strikeCountNum
     }
 

@@ -71,7 +71,7 @@ export const buildEmailEventFromFormData = async (
   formData: FormData,
   content: string,
 ) => {
-  const subject = formData.get('subject')?.toString() ?? undefined
+  const subject = formData.get('subjectLine')?.toString() ?? undefined
   const comment = formData.get('comment')?.toString() ?? undefined
   const [{ remark }, { default: remarkHtml }] = await Promise.all([
     import('remark'),
@@ -229,6 +229,7 @@ export const EmailComposer = ({
 }
 
 export const EmailComposerFields = ({
+  defaultTemplate,
   templateLabel,
   communicationTemplates,
   onTemplateSelect,
@@ -242,13 +243,14 @@ export const EmailComposerFields = ({
   isConfirmed,
   toggleConfirmation,
 }: {
+  defaultTemplate?: string
   templateLabel: string
   communicationTemplates?: ToolsOzoneCommunicationDefs.TemplateView[]
   onTemplateSelect: (templateName: string) => void
   recipientLanguages: RecipientLanguages
   subjectField: RefObject<HTMLInputElement | null>
   content: string
-  setContent: (content: string) => void
+  setContent: (content?: string) => void
   theme: 'light' | 'dark'
   isSending: boolean
   requiresConfirmation: boolean
@@ -261,14 +263,15 @@ export const EmailComposerFields = ({
         <TemplateSelector
           communicationTemplates={communicationTemplates}
           onSelect={onTemplateSelect}
+          defaultTemplate={defaultTemplate}
           defaultLang={recipientLanguages.defaultLang}
         />
       </FormLabel>
-      <FormLabel label="Subject" htmlFor="subject" className="mb-3">
+      <FormLabel label="Subject" htmlFor="subjectLine" className="mb-3">
         <Input
           type="text"
-          id="subject"
-          name="subject"
+          id="subjectLine"
+          name="subjectLine"
           ref={subjectField}
           placeholder="Subject line for the email"
           className="block w-full"

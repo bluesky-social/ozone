@@ -190,7 +190,7 @@ const ActionSeverityLevelList = ({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                         {policySeverityLevels?.[key]?.description ||
                           level.description}
                       </p>
