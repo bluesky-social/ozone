@@ -266,7 +266,9 @@ export const useQuickAction = (
     needsAutomatedEmail ? subjectDid : undefined,
   )
   const showAutomatedEmailComposer =
-    !!automatedEmailTemplate && !emailRecipientStatus?.cantReceive
+    !!automatedEmailTemplate &&
+    isTakedownEvent &&
+    !emailRecipientStatus?.cantReceive
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
