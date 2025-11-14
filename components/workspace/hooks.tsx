@@ -117,6 +117,7 @@ export const useWorkspaceEmptyMutation = () => {
 
 export const WORKSPACE_EXPORT_FIELDS = [
   'did',
+  'uri',
   'handle',
   'email',
   'ip',
@@ -146,6 +147,7 @@ const ifString = (val: unknown): string | undefined =>
 
 type ExportableObject = {
   did: string
+  uri: string
   handle?: string
   email?: string
   ip: string
@@ -169,11 +171,12 @@ const getExportFieldsFromWorkspaceListItem = (
     const profile = getProfileFromRepo(repo.relatedRecords)
     exportableObject = {
       did: repo.did,
+      uri: repo.did,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
       name: profile?.displayName || '',
-      tags: repo.moderation.subjectStatus?.tags?.join('|'),
+      tags: repo.moderation.subjectStatus?.tags?.join('|') || 'Unknown',
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
       // @ts-expect-error - Un-spec'd field returned by PDS
       ip: ifString(repo.ip) ?? 'Unknown',
@@ -188,6 +191,9 @@ const getExportFieldsFromWorkspaceListItem = (
       : ''
     exportableObject = {
       did,
+      uri: ComAtprotoRepoStrongRef.isMain(item.status.subject)
+        ? item.status.subject.uri
+        : did,
       handle: item.status.subjectRepoHandle,
       relatedRecords: [] as {}[],
       email: 'Unknown',
@@ -200,9 +206,9 @@ const getExportFieldsFromWorkspaceListItem = (
   }
 
   if (item.record && exportableObject) {
-    console.log(item)
     const recordData = {
-      tags: item.record.moderation.subjectStatus?.tags?.join('|'),
+      uri: item.record.uri,
+      tags: item.record.moderation.subjectStatus?.tags?.join('|') || 'Unknown',
       labels: item.record.labels?.map(({ val }) => val).join('|') || 'Unknown',
       text: ifString(item.record.value.text) ?? '',
       langs: Array.isArray(item.record.value.langs)
