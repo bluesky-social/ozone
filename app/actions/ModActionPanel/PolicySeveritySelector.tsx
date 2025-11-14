@@ -5,6 +5,7 @@ import { TargetServicesSelector } from '@/setting/policy/TargetServicesSelector'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import { nameToKey } from '@/setting/policy/utils'
 import { TakedownTargetService } from '@/lib/types'
+import { SeverityLevelListSetting } from '@/setting/severity-level/types'
 
 type ActionRecommendation = {
   message: string
@@ -24,7 +25,6 @@ type PolicySeveritySelectorProps = {
       }
     >
   } | null
-  isSubjectDid: boolean
   handlePolicySelect: (policyName: string) => void
   handleSeverityLevelSelect: (levelName: string) => void
 
@@ -40,6 +40,7 @@ type PolicySeveritySelectorProps = {
   targetServices?: TakedownTargetService[]
   setTargetServices?: (services: TakedownTargetService[]) => void
   selectedSeverityLevel?: string
+  severityLevelSetting?: SeverityLevelListSetting
 
   // Variant-specific behavior
   variant?: 'takedown' | 'email' | 'reverse-takedown'
@@ -47,7 +48,6 @@ type PolicySeveritySelectorProps = {
 
 export function PolicySeveritySelector({
   policyDetails,
-  isSubjectDid,
   handlePolicySelect,
   handleSeverityLevelSelect,
   defaultPolicy,
@@ -59,15 +59,15 @@ export function PolicySeveritySelector({
   setTargetServices,
   selectedSeverityLevel,
   variant = 'takedown',
+  severityLevelSetting,
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
   const showFullRecommendation = variant === 'takedown' || variant === 'email'
-  const { data: severityLevelData } = useSeverityLevelSetting()
 
   // Get the full severity level details
   const selectedLevel =
-    selectedSeverityLevel && severityLevelData?.value
-      ? severityLevelData.value[nameToKey(selectedSeverityLevel)] ?? null
+    severityLevelSetting && selectedSeverityLevel
+      ? severityLevelSetting[nameToKey(selectedSeverityLevel)] ?? null
       : null
 
   return (
