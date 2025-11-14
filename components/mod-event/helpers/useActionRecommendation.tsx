@@ -190,6 +190,7 @@ export const useActionRecommendation = (
   const {
     isLoading,
     data: strikeData,
+    error: strikeDataError,
   } = useStrikeEvents(labelerAgent, subject, severityLevelSettings)
 
   const getRecommendedAction = (
@@ -512,6 +513,7 @@ export const useActionRecommendation = (
   return {
     isLoading,
     strikeData,
+    strikeDataError,
     getRecommendedAction,
     getLastContentTakedownDetails,
     currentStrikes: strikeData?.totalStrikeCount || 0,

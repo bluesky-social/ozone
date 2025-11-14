@@ -1,11 +1,12 @@
 import { Checkbox } from '@/common/forms'
 import { SeverityLevelDetail } from '@/setting/severity-level/types'
 import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
+import { TakedownTargetService } from '@/lib/types'
 
 type TargetServicesSelectorProps = {
   level: SeverityLevelDetail | null
-  value: ('appview' | 'pds')[]
-  onChange: (services: ('appview' | 'pds')[]) => void
+  value: TakedownTargetService[]
+  onChange: (services: TakedownTargetService[]) => void
   className?: string
 }
 
@@ -42,8 +43,8 @@ export function TargetServicesSelector({
     return null
   }
 
-  const toggleService = (service: 'appview' | 'pds', checked: boolean) => {
-    let newServices: ('appview' | 'pds')[]
+  const toggleService = (service: TakedownTargetService, checked: boolean) => {
+    let newServices: TakedownTargetService[]
     if (checked) {
       // Add service if not already present
       newServices = value.includes(service) ? value : [...value, service]

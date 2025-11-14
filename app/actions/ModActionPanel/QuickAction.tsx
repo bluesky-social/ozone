@@ -36,11 +36,7 @@ import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
-<<<<<<< HEAD
-import { EmailComposer } from 'components/email/Composer'
-=======
 import { EmailComposer, EmailComposerFields } from 'components/email/Composer'
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
 import { PriorityScore } from '@/subject/PriorityScore'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
@@ -151,10 +147,7 @@ function Form(
     isSubjectDid,
     profile,
     subjectStatus,
-<<<<<<< HEAD
-=======
     selectedSeverityLevelName,
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
     canManageChat,
     currentLabels,
     allLabels,
@@ -167,11 +160,8 @@ function Form(
     isPriorityScoreEvent,
     setModEventType,
     policyDetails,
-<<<<<<< HEAD
-=======
     strikeData,
     strikeDataError,
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
@@ -181,32 +171,20 @@ function Form(
     isTagEvent,
     isEmailEvent,
     isReverseTakedownEvent,
-<<<<<<< HEAD
-    selectedPolicyName,
-    selectedSeverityLevelName,
-=======
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
     isCommentEvent,
     isReviewClosed,
     isEscalated,
     isAckEvent,
-<<<<<<< HEAD
-    moveToNextSubjectRef,
-=======
     selectedPolicyName,
     moveToNextSubjectRef,
     durationSelectorRef,
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
     submitButton,
     submitAndGoNext,
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
-<<<<<<< HEAD
     targetServices,
     setTargetServices,
-    config,
-=======
     config,
     showAutomatedEmailComposer,
     automatedEmailTemplate,
@@ -217,7 +195,6 @@ function Form(
     setEmailContent,
     onEmailTemplateSelect,
     emailSubjectField,
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
   } = useQuickAction({
     onCancel,
     onSubmit,
@@ -225,8 +202,6 @@ function Form(
     setSubject,
     subjectOptions,
   })
-<<<<<<< HEAD
-=======
 
   let emailTemplateLabel = `Template`
   if (recipientLanguages.languages.length > 1) {
@@ -235,7 +210,6 @@ function Form(
     )})`
   }
 
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
   return (
     <>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
@@ -443,11 +417,7 @@ function Form(
                   <ModEventList
                     subject={subject}
                     stats={{
-<<<<<<< HEAD
-                      accountStrike: subjectStatus?.accountStrike,
-=======
                       accountStrike: subjectStatus?.accountStrike || strikeData,
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
                       accountStats: subjectStatus?.accountStats,
                       recordsStats: subjectStatus?.recordsStats,
                     }}
@@ -646,48 +616,20 @@ function Form(
                     </FormLabel>
                   )}
 
-<<<<<<< HEAD
-                  {isEmailEvent && (
-                    <PolicySeveritySelector
-                      policyDetails={policyDetails}
-                      isSubjectDid={isSubjectDid}
-=======
                   {(isEmailEvent || isReverseTakedownEvent) && (
                     <PolicySeveritySelector
                       policyDetails={policyDetails}
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
                       handlePolicySelect={handlePolicySelect}
                       handleSeverityLevelSelect={handleSeverityLevelSelect}
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
-<<<<<<< HEAD
                       targetServices={targetServices}
                       setTargetServices={setTargetServices}
                       selectedSeverityLevel={selectedSeverityLevelName}
-                      variant="email"
-                    />
-                  )}
-
-                  {isReverseTakedownEvent && (
-                    <PolicySeveritySelector
-                      policyDetails={policyDetails}
-                      isSubjectDid={isSubjectDid}
-                      handlePolicySelect={handlePolicySelect}
-                      handleSeverityLevelSelect={handleSeverityLevelSelect}
-                      defaultPolicy={selectedPolicyName}
-                      defaultSeverityLevel={selectedSeverityLevelName}
-                      severityLevelStrikeCount={severityLevelStrikeCount}
-                      actionRecommendation={actionRecommendation}
-                      targetServices={targetServices}
-                      setTargetServices={setTargetServices}
-                      selectedSeverityLevel={selectedSeverityLevelName}
-                      variant="reverse-takedown"
-=======
                       defaultSeverityLevel={selectedSeverityLevelName}
                       defaultPolicy={selectedPolicyName}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
                     />
                   )}
 
@@ -857,11 +799,7 @@ function Form(
           <div className="hidden sm:block sm:w-1/2 sm:pl-4">
             <ModEventList
               stats={{
-<<<<<<< HEAD
-                accountStrike: subjectStatus?.accountStrike,
-=======
                 accountStrike: subjectStatus?.accountStrike || strikeData,
->>>>>>> cf54e5b50337626939283e7eb0764b659174149b
                 accountStats: subjectStatus?.accountStats,
                 recordsStats: subjectStatus?.recordsStats,
               }}

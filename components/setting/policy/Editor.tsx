@@ -8,6 +8,7 @@ import { PolicyDetail, SeverityLevelConfig } from './types'
 import { shouldShowTargetServices } from './TargetServicesSelector'
 import { toast } from 'react-toastify'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { TakedownTargetService } from '@/lib/types'
 
 export const PolicyEditor = ({
   editingPolicy,
@@ -29,10 +30,7 @@ export const PolicyEditor = ({
     ? Object.entries(severityLevelSetting.value)
     : []
 
-  const toggleSeverityLevel = (
-    key: string,
-    checked: boolean,
-  ) => {
+  const toggleSeverityLevel = (key: string, checked: boolean) => {
     if (checked) {
       const updated = {
         ...selectedSeverityLevels,
@@ -40,7 +38,7 @@ export const PolicyEditor = ({
           description: '',
           isDefault: false,
           // Default to both services selected
-          targetServices: ['appview', 'pds'] as ('appview' | 'pds')[],
+          targetServices: ['appview', 'pds'] as TakedownTargetService[],
         },
       }
       // If this is the only selected item, make it default
@@ -82,13 +80,13 @@ export const PolicyEditor = ({
 
   const toggleTargetService = (
     key: string,
-    service: 'appview' | 'pds',
+    service: TakedownTargetService,
     checked: boolean,
   ) => {
     const config = selectedSeverityLevels[key]
     const currentServices = config.targetServices || []
 
-    let newServices: ('appview' | 'pds')[]
+    let newServices: TakedownTargetService[]
     if (checked) {
       newServices = currentServices.includes(service)
         ? currentServices
@@ -261,7 +259,11 @@ export const PolicyEditor = ({
                                 config?.targetServices?.includes('pds') || false
                               }
                               onChange={(e) =>
-                                toggleTargetService(key, 'pds', e.target.checked)
+                                toggleTargetService(
+                                  key,
+                                  'pds',
+                                  e.target.checked,
+                                )
                               }
                               label="PDS"
                               className="text-sm"

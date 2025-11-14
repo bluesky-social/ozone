@@ -38,6 +38,7 @@ import { useColorScheme } from '@/common/useColorScheme'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
 import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
+import { TakedownTargetService } from '@/lib/types'
 
 export type QuickActionProps = {
   subject: string
@@ -93,7 +94,14 @@ export const useQuickAction = (
   )
   // Track only the details needed for UI rendering
   const [policyDetails, setPolicyDetails] = useState<{
-    severityLevels?: Record<string, { description: string; isDefault: boolean; targetServices?: ('appview' | 'pds')[] }>
+    severityLevels?: Record<
+      string,
+      {
+        description: string
+        isDefault: boolean
+        targetServices?: TakedownTargetService[]
+      }
+    >
   } | null>(null)
   const [severityLevelStrikeCount, setSeverityLevelStrikeCount] = useState<
     number | null
@@ -101,7 +109,9 @@ export const useQuickAction = (
   const [selectedPolicyName, setSelectedPolicyName] = useState<string>('')
   const [selectedSeverityLevelName, setSelectedSeverityLevelName] =
     useState<string>('')
-  const [targetServices, setTargetServices] = useState<('appview' | 'pds')[]>(['appview', 'pds'])
+  const [targetServices, setTargetServices] = useState<TakedownTargetService[]>(
+    ['appview', 'pds'],
+  )
 
   const { data: policyData } = usePolicyListSetting()
   const { data: severityLevelData } = useSeverityLevelSetting(labelerAgent)
@@ -135,7 +145,8 @@ export const useQuickAction = (
     setSelectedSeverityLevelName(levelName)
 
     // Update targetServices based on policy configuration for this severity level
-    const configuredServices = policyDetails?.severityLevels?.[levelName]?.targetServices
+    const configuredServices =
+      policyDetails?.severityLevels?.[levelName]?.targetServices
     if (configuredServices && configuredServices.length > 0) {
       setTargetServices(configuredServices)
     } else {

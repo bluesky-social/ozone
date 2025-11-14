@@ -4,6 +4,7 @@ import { pluralize } from '@/lib/util'
 import { TargetServicesSelector } from '@/setting/policy/TargetServicesSelector'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import { nameToKey } from '@/setting/policy/utils'
+import { TakedownTargetService } from '@/lib/types'
 
 type ActionRecommendation = {
   message: string
@@ -19,7 +20,7 @@ type PolicySeveritySelectorProps = {
       {
         description: string
         isDefault: boolean
-        targetServices?: ('appview' | 'pds')[]
+        targetServices?: TakedownTargetService[]
       }
     >
   } | null
@@ -36,8 +37,8 @@ type PolicySeveritySelectorProps = {
   currentStrikes?: number
   actionRecommendation?: ActionRecommendation | null
 
-  targetServices?: ('appview' | 'pds')[]
-  setTargetServices?: (services: ('appview' | 'pds')[]) => void
+  targetServices?: TakedownTargetService[]
+  setTargetServices?: (services: TakedownTargetService[]) => void
   selectedSeverityLevel?: string
 
   // Variant-specific behavior
