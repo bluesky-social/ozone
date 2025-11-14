@@ -162,6 +162,7 @@ function Form(
     policyDetails,
     strikeData,
     strikeDataError,
+    severityLevelData,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
@@ -183,6 +184,8 @@ function Form(
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    targetServices,
+    setTargetServices,
     config,
     showAutomatedEmailComposer,
     automatedEmailTemplate,
@@ -454,9 +457,9 @@ function Form(
                     )}
                   <div className="relative flex flex-row gap-3 items-center">
                     <ModEventSelectorButton
+                      isSubjectDid={isSubjectDid}
                       subjectStatus={subjectStatus}
                       selectedAction={modEventType}
-                      isSubjectDid={isSubjectDid}
                       hasBlobs={!!record?.blobs?.length}
                       setSelectedAction={(action) => setModEventType(action)}
                     />
@@ -479,6 +482,9 @@ function Form(
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
                       variant="takedown"
+                      targetServices={targetServices}
+                      setTargetServices={setTargetServices}
+                      severityLevelSetting={severityLevelData?.value}
                     />
                   )}
 
@@ -607,8 +613,12 @@ function Form(
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       currentStrikes={currentStrikes}
                       actionRecommendation={actionRecommendation}
+                      targetServices={targetServices}
+                      setTargetServices={setTargetServices}
+                      selectedSeverityLevel={selectedSeverityLevelName}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       defaultPolicy={selectedPolicyName}
+                      severityLevelSetting={severityLevelData?.value}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}

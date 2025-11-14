@@ -38,6 +38,7 @@ import { useColorScheme } from '@/common/useColorScheme'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
 import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
+import { TakedownTargetService } from '@/lib/types'
 
 export type QuickActionProps = {
   subject: string
@@ -93,7 +94,14 @@ export const useQuickAction = (
   )
   // Track only the details needed for UI rendering
   const [policyDetails, setPolicyDetails] = useState<{
-    severityLevels?: Record<string, { description: string; isDefault: boolean }>
+    severityLevels?: Record<
+      string,
+      {
+        description: string
+        isDefault: boolean
+        targetServices?: TakedownTargetService[]
+      }
+    >
   } | null>(null)
   const [severityLevelStrikeCount, setSeverityLevelStrikeCount] = useState<
     number | null
@@ -101,12 +109,14 @@ export const useQuickAction = (
   const [selectedPolicyName, setSelectedPolicyName] = useState<string>('')
   const [selectedSeverityLevelName, setSelectedSeverityLevelName] =
     useState<string>('')
+  const [targetServices, setTargetServices] = useState<TakedownTargetService[]>(
+    ['appview', 'pds'],
+  )
 
   const { data: policyData } = usePolicyListSetting()
   const { data: severityLevelData } = useSeverityLevelSetting(labelerAgent)
   const {
     strikeData,
-    strikeDataError,
     currentStrikes,
     getRecommendedAction,
     getLastContentTakedownDetails,
@@ -133,6 +143,16 @@ export const useQuickAction = (
         : null,
     )
     setSelectedSeverityLevelName(levelName)
+
+    // Update targetServices based on policy configuration for this severity level
+    const configuredServices =
+      policyDetails?.severityLevels?.[levelName]?.targetServices
+    if (configuredServices && configuredServices.length > 0) {
+      setTargetServices(configuredServices)
+    } else {
+      // Default to both if not configured
+      setTargetServices(['appview', 'pds'])
+    }
   }
 
   // Reset policy/severity level selection when event type changes
@@ -461,6 +481,11 @@ export const useQuickAction = (
               actionRecommendation.suspensionDurationInHours
           }
 
+          // Add targetServices if present in the original event
+          if (coreEvent.targetServices) {
+            accountEvent.targetServices = coreEvent.targetServices
+          }
+
           await onSubmit({
             subject: {
               $type: 'com.atproto.admin.defs#repoRef',
@@ -513,19 +538,26 @@ export const useQuickAction = (
               undefined &&
             actionRecommendation.adjustedTakedownDurationInHours > 0
           ) {
+            const adjustedTakedownEvent: any = {
+              $type: MOD_EVENTS.TAKEDOWN,
+              comment: `Re-applying suspension at reduced level (adjusted for time served)`,
+              durationInHours:
+                actionRecommendation.adjustedTakedownDurationInHours,
+              policies: coreEvent.policies,
+            }
+
+            // Add targetServices if present in the original event
+            if ('targetServices' in coreEvent && coreEvent.targetServices) {
+              adjustedTakedownEvent.targetServices = coreEvent.targetServices
+            }
+
             await onSubmit({
               subject: {
                 $type: 'com.atproto.admin.defs#repoRef',
                 did: subjectDid,
               },
               createdBy: accountDid,
-              event: {
-                $type: MOD_EVENTS.TAKEDOWN,
-                comment: `Re-applying suspension at reduced level (adjusted for time served)`,
-                durationInHours:
-                  actionRecommendation.adjustedTakedownDurationInHours,
-                policies: coreEvent.policies,
-              },
+              event: adjustedTakedownEvent,
             })
           }
         }
@@ -590,8 +622,8 @@ export const useQuickAction = (
     try {
       setSubmission({ isSubmitting: true, error: '' })
 
-      // Augment email event with policy, severity level, and strike count
-      const augmentedEvent = { ...event }
+      // Augment email event with policy, severity level, strike count, and targetServices
+      const augmentedEvent: any = { ...event }
       if (selectedPolicyName) {
         augmentedEvent.policies = [selectedPolicyName]
       }
@@ -602,6 +634,9 @@ export const useQuickAction = (
         // Use actualStrikesToApply from recommendation if available (accounts for strikeOnOccurrence)
         augmentedEvent.strikeCount =
           actionRecommendation?.actualStrikesToApply ?? severityLevelStrikeCount
+      }
+      if (targetServices && targetServices.length > 0) {
+        augmentedEvent.targetServices = targetServices
       }
 
       await onSubmit({
@@ -744,7 +779,6 @@ export const useQuickAction = (
     policyDetails,
     severityLevelData,
     strikeData,
-    strikeDataError,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
@@ -775,6 +809,8 @@ export const useQuickAction = (
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    targetServices,
+    setTargetServices,
   }
 }
 

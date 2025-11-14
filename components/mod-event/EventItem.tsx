@@ -465,8 +465,7 @@ const TakedownOrMute = ({
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
 
-      {(ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) ||
-        ToolsOzoneModerationDefs.isModEventReverseTakedown(modEvent.event)) && (
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
         <>
           <TakedownPolicy policies={modEvent.event.policies} />
           <StrikeInfo
