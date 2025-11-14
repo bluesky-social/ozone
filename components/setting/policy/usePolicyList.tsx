@@ -15,6 +15,7 @@ export const usePolicyListSetting = () => {
   return useQuery({
     queryKey: ['policy-list'],
     cacheTime: 10 * MINUTE,
+    staleTime: 10 * MINUTE,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',

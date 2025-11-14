@@ -7,6 +7,7 @@ import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLev
 import { PolicyDetail, SeverityLevelConfig } from './types'
 import { shouldShowTargetServices } from './TargetServicesSelector'
 import { toast } from 'react-toastify'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export const PolicyEditor = ({
   editingPolicy,
@@ -18,7 +19,8 @@ export const PolicyEditor = ({
   onCancel: () => void
 }) => {
   const { onSubmit, mutation } = usePolicyListEditor()
-  const { data: severityLevelSetting } = useSeverityLevelSetting()
+  const labelerAgent = useLabelerAgent()
+  const { data: severityLevelSetting } = useSeverityLevelSetting(labelerAgent)
   const [selectedSeverityLevels, setSelectedSeverityLevels] = useState<
     Record<string, SeverityLevelConfig>
   >(editingPolicy?.severityLevels || {})
@@ -169,112 +171,116 @@ export const PolicyEditor = ({
           defaultValue={editingPolicy?.url || ''}
         />
       </FormLabel>
-      <FormLabel
-        label="Severity Levels"
-        htmlFor="severityLevel"
-        className="flex-1 mb-3"
-      >
-        <div className="space-y-2">
-          {availableSeverityLevels.map(([key, level]) => {
-            const isSelected = !!selectedSeverityLevels[key]
-            const config = selectedSeverityLevels[key]
-            const selectedCount = Object.keys(selectedSeverityLevels).length
-            return (
-              <div
-                key={key}
-                className={
-                  isSelected ? 'bg-gray-50 dark:bg-gray-800/50 rounded p-2' : ''
-                }
-              >
-                <div className="flex flex-row items-center gap-3">
-                  <Checkbox
-                    id={`sev-${key}`}
-                    name={`sev-${key}`}
-                    checked={isSelected}
-                    onChange={(e) =>
-                      toggleSeverityLevel(key, e.target.checked)
-                    }
-                    label={key}
-                  />
-                  {isSelected && selectedCount > 1 && (
+      {!!availableSeverityLevels.length && (
+        <FormLabel
+          label="Severity Levels"
+          htmlFor="severityLevel"
+          className="flex-1 mb-3"
+        >
+          <div className="space-y-2">
+            {availableSeverityLevels.map(([key, level]) => {
+              const isSelected = !!selectedSeverityLevels[key]
+              const config = selectedSeverityLevels[key]
+              const selectedCount = Object.keys(selectedSeverityLevels).length
+              return (
+                <div
+                  key={key}
+                  className={
+                    isSelected
+                      ? 'bg-gray-50 dark:bg-gray-800/50 rounded p-2'
+                      : ''
+                  }
+                >
+                  <div className="flex flex-row items-center gap-3">
                     <Checkbox
-                      id={`sev-${key}-default`}
-                      name={`sev-${key}-default`}
-                      checked={config?.isDefault || false}
+                      id={`sev-${key}`}
+                      name={`sev-${key}`}
+                      checked={isSelected}
                       onChange={(e) =>
-                        toggleSeverityLevelDefault(key, e.target.checked)
+                        toggleSeverityLevel(key, e.target.checked)
                       }
-                      label="Default"
-                      className="text-sm text-gray-600 dark:text-gray-400"
+                      label={key}
                     />
-                  )}
-                  {isSelected && selectedCount === 1 && (
-                    <span className="text-xs text-gray-500 dark:text-gray-400 italic">
-                      (default)
-                    </span>
+                    {isSelected && selectedCount > 1 && (
+                      <Checkbox
+                        id={`sev-${key}-default`}
+                        name={`sev-${key}-default`}
+                        checked={config?.isDefault || false}
+                        onChange={(e) =>
+                          toggleSeverityLevelDefault(key, e.target.checked)
+                        }
+                        label="Default"
+                        className="text-sm text-gray-600 dark:text-gray-400"
+                      />
+                    )}
+                    {isSelected && selectedCount === 1 && (
+                      <span className="text-xs text-gray-500 dark:text-gray-400 italic">
+                        (default)
+                      </span>
+                    )}
+                  </div>
+                  {isSelected && (
+                    <>
+                      <Textarea
+                        id={`sev-${key}-desc`}
+                        placeholder={`Custom description (optional)`}
+                        className="block w-full text-sm mt-2"
+                        rows={2}
+                        value={config?.description || ''}
+                        onChange={(e) =>
+                          updateSeverityLevelDescription(key, e.target.value)
+                        }
+                      />
+                      {shouldShowTargetServices(level) && (
+                        <div className="mt-2 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            Target Services (at least one must be selected):
+                          </p>
+                          <div className="flex flex-col gap-1">
+                            <Checkbox
+                              id={`sev-${key}-appview`}
+                              name={`sev-${key}-appview`}
+                              checked={
+                                config?.targetServices?.includes('appview') ||
+                                false
+                              }
+                              onChange={(e) =>
+                                toggleTargetService(
+                                  key,
+                                  'appview',
+                                  e.target.checked,
+                                )
+                              }
+                              label="AppView"
+                              className="text-sm"
+                            />
+                            <Checkbox
+                              id={`sev-${key}-pds`}
+                              name={`sev-${key}-pds`}
+                              checked={
+                                config?.targetServices?.includes('pds') || false
+                              }
+                              onChange={(e) =>
+                                toggleTargetService(key, 'pds', e.target.checked)
+                              }
+                              label="PDS"
+                              className="text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
-                {isSelected && (
-                  <>
-                    <Textarea
-                      id={`sev-${key}-desc`}
-                      placeholder={`Custom description (optional)`}
-                      className="block w-full text-sm mt-2"
-                      rows={2}
-                      value={config?.description || ''}
-                      onChange={(e) =>
-                        updateSeverityLevelDescription(key, e.target.value)
-                      }
-                    />
-                    {shouldShowTargetServices(level) && (
-                      <div className="mt-2 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                          Target Services (at least one must be selected):
-                        </p>
-                        <div className="flex flex-col gap-1">
-                          <Checkbox
-                            id={`sev-${key}-appview`}
-                            name={`sev-${key}-appview`}
-                            checked={
-                              config?.targetServices?.includes('appview') ||
-                              false
-                            }
-                            onChange={(e) =>
-                              toggleTargetService(
-                                key,
-                                'appview',
-                                e.target.checked,
-                              )
-                            }
-                            label="AppView"
-                            className="text-sm"
-                          />
-                          <Checkbox
-                            id={`sev-${key}-pds`}
-                            name={`sev-${key}-pds`}
-                            checked={
-                              config?.targetServices?.includes('pds') || false
-                            }
-                            onChange={(e) =>
-                              toggleTargetService(key, 'pds', e.target.checked)
-                            }
-                            label="PDS"
-                            className="text-sm"
-                          />
-                        </div>
-                      </div>
-                    )}
-                  </>
-                )}
-              </div>
-            )
-          })}
-        </div>
-        <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
-          Select severity levels for this policy. If multiple are selected, mark
-          one as default.
-        </p>
-      </FormLabel>
+              )
+            })}
+          </div>
+          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+            Select severity levels for this policy. If multiple are selected,
+            mark one as default.
+          </p>
+        </FormLabel>
+      )}
 
       <div className="flex flex-row items-center gap-2">
         <ActionButton

@@ -70,7 +70,6 @@ const parseStrikeSuspensionConfig = (
     return result
   }
 
-  console.log({ pairs })
   for (const pair of pairs) {
     const [strikeStr, durationStr] = pair.split(':').map((s) => s.trim())
     if (strikeStr && durationStr) {
@@ -90,3 +89,16 @@ export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
   parseStrikeSuspensionConfig(
     process.env.NEXT_PUBLIC_STRIKE_SUSPENSION_CONFIG || '',
   )
+
+export const AUTOMATED_ACTION_EMAIL_IDS = {
+  warningWithTakedown:
+    process.env.NEXT_PUBLIC_WARNING_WITH_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  suspensionWithTakedown:
+    process.env.NEXT_PUBLIC_SUSPENSION_WITH_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  suspensionWithoutTakedown:
+    process.env.NEXT_PUBLIC_SUSPENSION_WITHOUT_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  permanentTakedown:
+    process.env.NEXT_PUBLIC_PERMANENT_TAKEDOWN_EMAIL_TEMPLATE_ID,
+  takedownWithoutStrike:
+    process.env.NEXT_PUBLIC_TAKEDOWN_WITHOUT_STRIKE_EMAIL_TEMPLATE_ID,
+}

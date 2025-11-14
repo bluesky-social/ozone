@@ -7,6 +7,7 @@ import {
   useSeverityLevelSetting,
 } from './useSeverityLevel'
 import { pluralize } from '@/lib/util'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
 export function SeverityLevelList({
   canEdit = false,
@@ -15,7 +16,8 @@ export function SeverityLevelList({
   searchQuery: string | null
   canEdit: boolean
 }) {
-  const { data, isLoading } = useSeverityLevelSetting()
+  const labelerAgent = useLabelerAgent()
+  const { data, isLoading } = useSeverityLevelSetting(labelerAgent)
   const {
     onRemove,
     mutation,
@@ -111,7 +113,7 @@ export function SeverityLevelList({
                         size="xs"
                         appearance="outlined"
                         onClick={() => {
-                          setRemovingSeverityLevel(level.name)
+                          setRemovingSeverityLevel(name)
                         }}
                       >
                         <TrashIcon className="h-3 w-3 mx-1" />

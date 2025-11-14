@@ -105,9 +105,9 @@ export const WorkspaceExportPanel = ({
                   <i>
                     The exported file will only contain the selected columns.
                     <br />
-                    When exporting from records (posts, profiles etc.) the
-                    exported file will only contain the author account details
-                    of the records.
+                    When exporting from mixed content (i.e: different types of
+                    records/accounts etc.) columns may be empty for certain
+                    rows.
                   </i>
                 </p>
                 <div className="flex flex-row mt-2 gap-2">

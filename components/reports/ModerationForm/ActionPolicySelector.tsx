@@ -14,7 +14,7 @@ import {
   CheckIcon,
   ChevronUpDownIcon,
 } from '@heroicons/react/24/solid'
-import { Fragment, useState } from 'react'
+import { Fragment, useEffect, useState } from 'react'
 
 export const ActionPolicySelector = ({
   defaultPolicy,
@@ -28,6 +28,11 @@ export const ActionPolicySelector = ({
   const { data, isLoading } = usePolicyListSetting()
   const [selected, setSelected] = useState(defaultPolicy)
   const policyList = Object.values(data?.value || {})
+
+  // If defaultPolicy changes from outside, update selected state
+  useEffect(() => {
+    setSelected(defaultPolicy)
+  }, [defaultPolicy])
 
   return (
     <>
@@ -167,7 +172,7 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
                         >
                           {tpl.name}
                         </p>
-                        <p className="text-xs">{tpl.description}</p>
+                        <p className="text-xs dark:text-gray-400 text-gray-500">{tpl.description}</p>
                       </div>
                     </div>
                   </>

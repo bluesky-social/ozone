@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
+  $Typed,
   AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -12,9 +13,12 @@ import {
   isSelfLabel,
 } from '@/common/labels/util'
 import { useKeyPressEvent } from 'react-use'
-import { takesKeyboardEvt } from '@/lib/util'
+import { DAY, HOUR, pluralize, takesKeyboardEvt } from '@/lib/util'
 import { MOD_EVENTS } from '@/mod-event/constants'
-import { useCreateSubjectFromId } from '@/reports/helpers/subject'
+import {
+  getCollectionName,
+  useCreateSubjectFromId,
+} from '@/reports/helpers/subject'
 import {
   useConfigurationContext,
   useLabelerAgent,
@@ -25,6 +29,15 @@ import { usePolicyListSetting } from '@/setting/policy/usePolicyList'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import { useActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
 import { nameToKey } from '@/setting/policy/utils'
+import { useCommunicationTemplateList } from 'components/communication-template/hooks'
+import {
+  buildEmailEventFromFormData,
+  getRecipientsLanguages,
+} from '@/email/Composer'
+import { useColorScheme } from '@/common/useColorScheme'
+import { compileTemplateContent, getTemplate } from '@/email/helpers'
+import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
+import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 
 export type QuickActionProps = {
   subject: string
@@ -33,6 +46,9 @@ export type QuickActionProps = {
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
 
+const hasAutomatedEmailTemplates = Object.values(
+  AUTOMATED_ACTION_EMAIL_IDS,
+).some(Boolean)
 export const useQuickAction = (
   props: QuickActionProps & {
     onCancel: () => void
@@ -42,6 +58,7 @@ export const useQuickAction = (
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
   const accountDid = labelerAgent.assertDid
+  const { theme } = useColorScheme()
 
   const { subject, setSubject, subjectOptions, onCancel, onSubmit } = props
   const [submission, setSubmission] = useState<{
@@ -49,11 +66,16 @@ export const useQuickAction = (
     error: string
   }>({ isSubmitting: false, error: '' })
 
+  // Extract the DID from the subject for account-level events
+  const subjectDid = subject ? new AtUri(subject).host : ''
+
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
     useSubjectStatusQuery(subject)
 
   const { data: { record, repo, profile } = {}, refetch: refetchSubject } =
     useSubjectQuery(subject)
+
+  const recipientLanguages = getRecipientsLanguages(repo)
 
   const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
@@ -82,9 +104,13 @@ export const useQuickAction = (
   const [targetServices, setTargetServices] = useState<('appview' | 'pds')[]>(['appview', 'pds'])
 
   const { data: policyData } = usePolicyListSetting()
-  const { data: severityLevelData } = useSeverityLevelSetting()
-  const { currentStrikes, getRecommendedAction, getLastTakedownDetails } =
-    useActionRecommendation(subject)
+  const { data: severityLevelData } = useSeverityLevelSetting(labelerAgent)
+  const {
+    strikeData,
+    currentStrikes,
+    getRecommendedAction,
+    getLastContentTakedownDetails,
+  } = useActionRecommendation(labelerAgent, subject, severityLevelData?.value)
 
   // Reusable handler for policy selection
   const handlePolicySelect = (policyName: string) => {
@@ -125,33 +151,27 @@ export const useQuickAction = (
       return
     }
 
-    const lastDetails = getLastTakedownDetails()
+    const lastDetails = getLastContentTakedownDetails()
     if (!lastDetails?.policy || !lastDetails?.severityLevel) {
       return
     }
 
-    setSelectedPolicyName(lastDetails.policy)
+    // TODO: /reports/id page 404s
+
+    if (lastDetails.policy) {
+      setSelectedPolicyName(lastDetails.policy)
+    }
     const policyKey = nameToKey(lastDetails.policy)
     const policy = policyData?.value?.[policyKey]
     setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
 
     if (!isSubjectDid) {
       setSelectedSeverityLevelName(lastDetails.severityLevel)
-      const level = severityLevelData?.value?.[lastDetails.severityLevel]
-      setSeverityLevelStrikeCount(
-        level?.strikeCount !== undefined ||
-          level?.firstOccurrenceStrikeCount !== undefined
-          ? level.strikeCount ?? 0
-          : null,
-      )
+      if (lastDetails.strikeCount) {
+        setSeverityLevelStrikeCount(lastDetails.strikeCount)
+      }
     }
-  }, [
-    modEventType,
-    policyData,
-    severityLevelData,
-    getLastTakedownDetails,
-    isSubjectDid,
-  ])
+  }, [modEventType])
 
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
@@ -175,7 +195,7 @@ export const useQuickAction = (
   // Get action recommendation whenever policy, severity level, or strike count changes
   // Only show recommendations for record-level subjects with severity levels
   const eventNeedsActionRecommendation =
-    (isTakedownEvent || isEmailEvent || isReverseTakedownEvent) && !isSubjectDid
+    isTakedownEvent || isReverseTakedownEvent || isEmailEvent
 
   const actionRecommendation =
     eventNeedsActionRecommendation &&
@@ -190,6 +210,74 @@ export const useQuickAction = (
           isReverseTakedownEvent, // Pass true for negative strikes
         )
       : null
+
+  // When action recommendation changes, if we're taking down an account,
+  // we need to automatically select the suspension duration based policy and sev level
+  useEffect(() => {
+    if (
+      isSubjectDid &&
+      durationSelectorRef.current &&
+      actionRecommendation?.suspensionDurationInHours !== undefined
+    ) {
+      durationSelectorRef.current.value = String(
+        actionRecommendation?.suspensionDurationInHours ?? 0,
+      )
+    }
+  }, [isSubjectDid, actionRecommendation?.suspensionDurationInHours])
+
+  // Only load email template and related data if there's at least 1 template ID configured for automated emails
+  const needsAutomatedEmail =
+    isTakedownEvent && canSendEmail && hasAutomatedEmailTemplates
+
+  const { data: communicationTemplates } = useCommunicationTemplateList({
+    enabled: needsAutomatedEmail,
+  })
+
+  let automatedEmailTemplateId: string | undefined
+
+  if (isTakedownEvent && !isSubjectDid) {
+    if (
+      actionRecommendation?.suspensionDurationInHours &&
+      actionRecommendation?.suspensionDurationInHours > 0
+    ) {
+      automatedEmailTemplateId =
+        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithTakedown
+    } else if (actionRecommendation?.isPermanent) {
+      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
+    } else if (
+      actionRecommendation?.actualStrikesToApply &&
+      actionRecommendation?.actualStrikesToApply > 0
+    ) {
+      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.warningWithTakedown
+    } else {
+      automatedEmailTemplateId =
+        AUTOMATED_ACTION_EMAIL_IDS.takedownWithoutStrike
+    }
+  } else {
+    if (actionRecommendation?.isPermanent) {
+      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
+    }
+
+    if (
+      actionRecommendation?.suspensionDurationInHours &&
+      actionRecommendation?.suspensionDurationInHours > 0
+    ) {
+      automatedEmailTemplateId =
+        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithoutTakedown
+    }
+  }
+  const automatedEmailTemplate = automatedEmailTemplateId
+    ? communicationTemplates?.find((tpl) => tpl.id === automatedEmailTemplateId)
+    : undefined
+
+  // Only check recipient status if we have automated email templates configured
+  const emailRecipientStatus = useEmailRecipientStatus(
+    needsAutomatedEmail ? subjectDid : undefined,
+  )
+  const showAutomatedEmailComposer =
+    !!automatedEmailTemplate &&
+    isTakedownEvent &&
+    !emailRecipientStatus?.cantReceive
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -356,23 +444,22 @@ export const useQuickAction = (
           event: coreEvent,
         })
 
-        // Extract the DID from the subject for account-level events
-        const subjectDid =
-          'did' in subjectInfo ? subjectInfo.did : new AtUri(subject).host
-
-        // If this is a takedown and we have reached a suspension/ban threshold,
+        // If this is a record takedown and we have reached a suspension/ban threshold,
         // emit an additional account-level takedown event
         if (
           ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
+          !isSubjectDid &&
           actionRecommendation &&
           (actionRecommendation.isPermanent ||
             actionRecommendation.suspensionDurationInHours !== null)
         ) {
-          const accountEvent: any = {
-            $type: MOD_EVENTS.TAKEDOWN,
-            comment: coreEvent.comment,
-            policies: coreEvent.policies,
-          }
+          const accountEvent: $Typed<ToolsOzoneModerationDefs.ModEventTakedown> =
+            {
+              $type: MOD_EVENTS.TAKEDOWN,
+              comment: coreEvent.comment,
+              policies: coreEvent.policies,
+              severityLevel: coreEvent.severityLevel,
+            }
 
           // Only set durationInHours if not permanent (for suspensions)
           if (
@@ -398,22 +485,11 @@ export const useQuickAction = (
           })
         }
 
-        // If this is a REVERSE_TAKEDOWN and we've crossed a suspension threshold (going down),
-        // emit an account-level REVERSE_TAKEDOWN, and potentially an adjusted TAKEDOWN
-        if (
-          ToolsOzoneModerationDefs.isModEventReverseTakedown(coreEvent) &&
-          actionRecommendation?.needsReverseTakedown
-        ) {
-          // First, emit account-level REVERSE_TAKEDOWN to remove current suspension
-          const reverseTakedownEvent: any = {
-            $type: MOD_EVENTS.REVERSE_TAKEDOWN,
-            comment: `Strike reduction - reversing account suspension`,
-          }
-
-          // Add targetServices if present in the original event
-          if ('targetServices' in coreEvent && coreEvent.targetServices) {
-            reverseTakedownEvent.targetServices = coreEvent.targetServices
-          }
+        if (showAutomatedEmailComposer && emailContent) {
+          const emailEvent = await buildEmailEventFromFormData(
+            formData,
+            emailContent,
+          )
 
           await onSubmit({
             subject: {
@@ -421,7 +497,28 @@ export const useQuickAction = (
               did: subjectDid,
             },
             createdBy: accountDid,
-            event: reverseTakedownEvent,
+            event: emailEvent,
+          })
+        }
+
+        // If this is a REVERSE_TAKEDOWN and we've crossed a suspension threshold (going down),
+        // emit an account-level REVERSE_TAKEDOWN, and potentially an adjusted TAKEDOWN
+        if (
+          ToolsOzoneModerationDefs.isModEventReverseTakedown(coreEvent) &&
+          !isSubjectDid &&
+          actionRecommendation?.needsReverseTakedown
+        ) {
+          // First, emit account-level REVERSE_TAKEDOWN to remove current suspension
+          await onSubmit({
+            subject: {
+              $type: 'com.atproto.admin.defs#repoRef',
+              did: subjectDid,
+            },
+            createdBy: accountDid,
+            event: {
+              $type: MOD_EVENTS.REVERSE_TAKEDOWN,
+              comment: `Strike reduction - reversing account suspension`,
+            },
           })
 
           // If user still deserves a lower-tier suspension, emit adjusted TAKEDOWN
@@ -498,7 +595,8 @@ export const useQuickAction = (
         eventMayNeedEmail &&
           !shouldMoveToNextSubject &&
           canSendEmail &&
-          isSubjectDid
+          isSubjectDid &&
+          !showAutomatedEmailComposer
           ? MOD_EVENTS.EMAIL
           : MOD_EVENTS.ACKNOWLEDGE,
       )
@@ -547,6 +645,10 @@ export const useQuickAction = (
     }
   }
 
+  const emailSubjectField = useRef<HTMLInputElement>(null)
+  const [emailContent, setEmailContent] = useState<string | undefined>('')
+  const durationSelectorRef = useRef<HTMLSelectElement>(null)
+
   // Keyboard shortcuts for action types
   const submitButton = useRef<HTMLButtonElement>(null)
   const moveToNextSubjectRef = useRef<HTMLInputElement>(null)
@@ -594,6 +696,49 @@ export const useQuickAction = (
       : undefined,
   )
 
+  useEffect(() => {
+    if (selectedPolicyName && automatedEmailTemplate) {
+      onEmailTemplateSelect(automatedEmailTemplate.name)
+    }
+  }, [
+    actionRecommendation?.isPermanent,
+    actionRecommendation?.suspensionDurationInHours,
+    automatedEmailTemplate,
+    selectedPolicyName,
+  ])
+
+  const onEmailTemplateSelect = (templateName: string) => {
+    // When templates are changed, force reset message
+    const template =
+      getTemplate(templateName, communicationTemplates || []) ||
+      communicationTemplates?.[0]
+    if (!template) {
+      return
+    }
+    const emailSubject = template.subject || ''
+    const content = compileTemplateContent(template.contentMarkdown, {
+      subjectName: isSubjectDid
+        ? 'account'
+        : getCollectionName(subject.split('/')[3] || ''),
+      handle: repo?.handle || subjectStatus?.subjectRepoHandle,
+      policyName: selectedPolicyName,
+      strikeCount: actionRecommendation?.actualStrikesToApply
+        ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
+        : undefined,
+      suspensionDuration: actionRecommendation?.suspensionDurationInHours
+        ? pluralize(
+            (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
+            'day',
+          )
+        : undefined,
+    })
+
+    // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
+    setEmailContent(content)
+    if (emailSubjectField.current)
+      emailSubjectField.current.value = emailSubject
+  }
+
   return {
     config,
     submission,
@@ -622,6 +767,7 @@ export const useQuickAction = (
     setSelectedSeverityLevelName,
     policyDetails,
     severityLevelData,
+    strikeData,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
@@ -637,7 +783,17 @@ export const useQuickAction = (
     isEscalated,
     isAckEvent,
     moveToNextSubjectRef,
+    durationSelectorRef,
     submitButton,
+    automatedEmailTemplate,
+    communicationTemplates,
+    theme,
+    showAutomatedEmailComposer,
+    recipientLanguages,
+    emailContent,
+    setEmailContent,
+    emailSubjectField,
+    onEmailTemplateSelect,
     submitAndGoNext,
     handleEmailSubmit,
     handlePolicySelect,

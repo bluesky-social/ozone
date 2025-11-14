@@ -441,6 +441,7 @@ const eventTexts = {
   [MOD_EVENTS.EMAIL]: 'emailed',
   [MOD_EVENTS.AGE_ASSURANCE]: 'age assurance updated',
   [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'age assurance overridden',
+  [MOD_EVENTS.REVERSE_TAKEDOWN]: 'reinstated',
 }
 
 export const getEventFromFormData = (
@@ -512,10 +513,9 @@ export const getEventFromFormData = (
 
     // Add strikeCount if present and valid
     const strikeCountNum = Number(strikeCount)
-    if (strikeCount && !isNaN(strikeCountNum) && strikeCountNum > 0) {
+    if (!isNaN(strikeCountNum)) {
       event.strikeCount = strikeCountNum
     }
-
     // Add targetServices if present
     if (targetServices && targetServices.length > 0) {
       event.targetServices = targetServices

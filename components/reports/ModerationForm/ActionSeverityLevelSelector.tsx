@@ -1,5 +1,6 @@
 import { SeverityLevelListSetting } from '@/setting/severity-level/types'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   Combobox,
   Transition,
@@ -25,11 +26,16 @@ export const ActionSeverityLevelSelector = ({
     { description: string; isDefault: boolean }
   >
 }) => {
-  const { data, isLoading } = useSeverityLevelSetting()
+  const labelerAgent = useLabelerAgent()
+  const { data, isLoading } = useSeverityLevelSetting(labelerAgent)
   const [selected, setSelected] = useState(defaultSeverityLevel)
 
   // Auto-select default severity level from policy when policy changes
   useEffect(() => {
+    if (defaultSeverityLevel) {
+      setSelected(defaultSeverityLevel)
+      return
+    }
     if (policySeverityLevels && Object.keys(policySeverityLevels).length > 0) {
       // Find the default level
       const defaultLevel = Object.entries(policySeverityLevels).find(
@@ -44,7 +50,11 @@ export const ActionSeverityLevelSelector = ({
     } else {
       setSelected('')
     }
-  }, [policySeverityLevels])
+  }, [policySeverityLevels, defaultSeverityLevel])
+
+  if (!Object.keys(data?.value || {}).length) {
+    return null
+  }
 
   return (
     <>
@@ -180,7 +190,7 @@ const ActionSeverityLevelList = ({
                           </span>
                         )}
                       </div>
-                      <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
+                      <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
                         {policySeverityLevels?.[key]?.description ||
                           level.description}
                       </p>

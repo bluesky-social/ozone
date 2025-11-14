@@ -9,6 +9,9 @@ import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
 import { regenerateBatchId } from '@/lib/batchId'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
+  AppBskyEmbedImages,
+  AppBskyEmbedRecord,
+  asPredicate,
   AtUri,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
@@ -121,26 +124,50 @@ export const WORKSPACE_EXPORT_FIELDS = [
   'labels',
   'tags',
   'bskyUrl',
+  'createdAt',
+  'text',
+  'langs',
+  'embeds',
 ]
 export const ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS = ['email', 'ip']
 const filterExportFields = (fields: string[], isAdmin: boolean) => {
-  return isAdmin
-    ? fields
-    : fields.filter(
-        (field) => !ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS.includes(field),
-      )
+  // There's a slight bit of overhead here but iterating over the original fields
+  // Ensure that the order of header and row columns always match
+  return WORKSPACE_EXPORT_FIELDS.filter((field) => {
+    if (fields.includes(field)) {
+      return isAdmin || !ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS.includes(field)
+    }
+    return false
+  })
 }
 
 const ifString = (val: unknown): string | undefined =>
   typeof val === 'string' ? val : undefined
 
+type ExportableObject = {
+  did: string
+  handle?: string
+  email?: string
+  ip: string
+  name: string
+  labels: string
+  tags: string | undefined
+  bskyUrl: string
+  relatedRecords?: any[]
+  createdAt?: string
+  text?: string
+  langs?: string
+  embeds?: string
+}
+
 const getExportFieldsFromWorkspaceListItem = (
   item: ToolsOzoneModerationDefs.SubjectView,
-) => {
+): ExportableObject | null => {
+  let exportableObject: ExportableObject | null = null
   if (item.repo) {
     const { repo } = item
     const profile = getProfileFromRepo(repo.relatedRecords)
-    return {
+    exportableObject = {
       did: repo.did,
       handle: repo.handle,
       email: repo.email,
@@ -151,6 +178,7 @@ const getExportFieldsFromWorkspaceListItem = (
       // @ts-expect-error - Un-spec'd field returned by PDS
       ip: ifString(repo.ip) ?? 'Unknown',
       labels: repo.labels?.map(({ val }) => val).join('|') || 'Unknown',
+      createdAt: ifString(repo.indexedAt) ?? '',
     }
   } else if (item.status) {
     const did = ComAtprotoRepoStrongRef.isMain(item.status.subject)
@@ -158,7 +186,7 @@ const getExportFieldsFromWorkspaceListItem = (
       : ComAtprotoAdminDefs.isRepoRef(item.status.subject)
       ? item.status.subject.did
       : ''
-    return {
+    exportableObject = {
       did,
       handle: item.status.subjectRepoHandle,
       relatedRecords: [] as {}[],
@@ -170,7 +198,42 @@ const getExportFieldsFromWorkspaceListItem = (
       bskyUrl: buildBlueSkyAppUrl({ did }),
     }
   }
-  return null
+
+  if (item.record && exportableObject) {
+    console.log(item)
+    const recordData = {
+      tags: item.record.moderation.subjectStatus?.tags?.join('|'),
+      labels: item.record.labels?.map(({ val }) => val).join('|') || 'Unknown',
+      text: ifString(item.record.value.text) ?? '',
+      langs: Array.isArray(item.record.value.langs)
+        ? item.record.value.langs.join('|')
+        : '',
+      createdAt: ifString(item.record.indexedAt) ?? '',
+      embeds: item.record.value.embed
+        ? getEmbedValues(item.record.value.embed)
+        : '',
+    }
+    exportableObject = {
+      ...exportableObject,
+      ...recordData,
+    }
+  }
+
+  return exportableObject
+}
+
+const getEmbedValues = (embed: unknown): string => {
+  if (asPredicate(AppBskyEmbedImages.validateMain)(embed)) {
+    return embed.images
+      .map(({ image }) => {
+        return image.ref.toString()
+      })
+      .join('|')
+  }
+  if (asPredicate(AppBskyEmbedRecord.validateMain)(embed)) {
+    return embed.record.uri
+  }
+  return ''
 }
 
 export const useWorkspaceExport = () => {
@@ -199,17 +262,15 @@ export const useWorkspaceExport = () => {
               const exportFields = getExportFieldsFromWorkspaceListItem(item)
               if (!exportFields) return ''
 
-              const line: string[] = [
-                exportFields.did,
-                exportFields.handle,
-                exportHeaders.includes('email') ? exportFields.email : '',
-                exportHeaders.includes('ip') ? exportFields.ip : '',
-                exportFields.name,
-                exportFields.labels,
-                exportFields.tags,
-                exportFields.bskyUrl,
-              ].filter(isNonNullable)
-              return line.map(escapeCSVValue).join(',')
+              const line: Array<string | undefined> = []
+
+              exportHeaders.forEach((header) => {
+                if (header in exportFields) {
+                  line.push(exportFields[header])
+                }
+              })
+
+              return line.filter(isNonNullable).map(escapeCSVValue).join(',')
             })
             .filter(Boolean),
         }),

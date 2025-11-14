@@ -1,7 +1,7 @@
 import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { SeverityLevelListSetting } from './types'
-import { ToolsOzoneTeamDefs } from '@atproto/api'
+import { Agent, ToolsOzoneTeamDefs } from '@atproto/api'
 import { toast } from 'react-toastify'
 import { useState } from 'react'
 import { nameToKey } from '../policy/utils'
@@ -10,12 +10,12 @@ import { getTrimmedInput } from '@/common/forms'
 
 const SeverityLevelSettingKey = 'tools.ozone.setting.severityLevels'
 
-export const useSeverityLevelSetting = () => {
-  const labelerAgent = useLabelerAgent()
+export const useSeverityLevelSetting = (labelerAgent: Agent) => {
   return useQuery({
     queryKey: ['severity-level'],
     // Set a high cache time since severity levels change infrequently but we read this value very frequently
     cacheTime: 10 * MINUTE,
+    staleTime: 10 * MINUTE,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.setting.listOptions({
         scope: 'instance',
@@ -39,7 +39,7 @@ export const useSeverityLevelSetting = () => {
 export const useSeverityLevelEditor = () => {
   const queryClient = useQueryClient()
   const labelerAgent = useLabelerAgent()
-  const { data: initialSetting } = useSeverityLevelSetting()
+  const { data: initialSetting } = useSeverityLevelSetting(labelerAgent)
   const { role } = useServerConfig()
   const [removingSeverityLevel, setRemovingSeverityLevel] = useState('')
 
@@ -73,6 +73,9 @@ export const useSeverityLevelEditor = () => {
     const strikeOnOccurrenceStr = getTrimmedInput(
       formData.get('strikeOnOccurrence'),
     )
+    const firstOccurrenceStrikeCount = getTrimmedInput(
+      formData.get('firstOccurrenceStrikeCount'),
+    )
     const expiryInDaysStr = getTrimmedInput(formData.get('expiryInDays'))
     const needsTakedown = formData.get('needsTakedown') === 'true'
 
@@ -84,6 +87,9 @@ export const useSeverityLevelEditor = () => {
         ...(strikeCountStr && { strikeCount: parseInt(strikeCountStr, 10) }),
         ...(strikeOnOccurrenceStr && {
           strikeOnOccurrence: parseInt(strikeOnOccurrenceStr, 10),
+        }),
+        ...(firstOccurrenceStrikeCount && {
+          firstOccurrenceStrikeCount: parseInt(firstOccurrenceStrikeCount, 10),
         }),
         ...(expiryInDaysStr && { expiryInDays: parseInt(expiryInDaysStr, 10) }),
         needsTakedown,

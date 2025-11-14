@@ -1,11 +1,30 @@
 import { useQuery } from '@tanstack/react-query'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { HOUR, DAY, pluralize } from '@/lib/util'
-import { Agent, AtUri, ToolsOzoneModerationDefs } from '@atproto/api'
-import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
-import { SeverityLevelDetail } from '@/setting/severity-level/types'
+import {
+  Agent,
+  AtUri,
+  ComAtprotoAdminDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
+import {
+  SeverityLevelDetail,
+  SeverityLevelListSetting,
+} from '@/setting/severity-level/types'
 import { nameToKey } from '@/setting/policy/utils'
+
+// We're modelling this after the ToolsOzoneModerationDefs.AccountStrike and rebuilding that data because
+// when only records by a user has been reviewed but never the account, the account never gets a status
+// so the status data comes back empty which isn't true for strikes
+type StrikeData = ToolsOzoneModerationDefs.AccountStrike & {
+  events: ToolsOzoneModerationDefs.ModEventView[]
+  lastReverseTakedownEvent?: ToolsOzoneModerationDefs.ModEventView
+  lastAccountTakedownEvent?: ToolsOzoneModerationDefs.ModEventView
+  lastAccountSuspensionEvent?: ToolsOzoneModerationDefs.ModEventView
+  wasLastTakedownReverted?: boolean
+  wasLastSuspensionReverted?: boolean
+}
 
 type ActionRecommendation = {
   totalStrikes: number
@@ -16,10 +35,7 @@ type ActionRecommendation = {
   actualStrikesToApply: number
   needsReverseTakedown?: boolean
   adjustedTakedownDurationInHours?: number
-  lastTakedownEvent?: {
-    createdAt: string
-    durationInHours?: number
-  }
+  strikeData?: StrikeData
 }
 
 const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
@@ -41,78 +57,140 @@ const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
   return events
 }
 
-const getAccountTakedownEvents = async (labelerAgent: Agent, did: string) => {
-  let cursor: string | undefined = undefined
-  const events: ToolsOzoneModerationDefs.ModEventView[] = []
-
-  do {
-    const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
-      subject: did,
-      types: ['tools.ozone.moderation.defs#modEventTakedown'],
-      limit: 100,
-      cursor,
-    })
-    events.push(...data.events)
-    cursor = data.cursor
-  } while (cursor)
-
-  return events
+const formatDurationInHours = (durationInHours: number): string => {
+  if (durationInHours === Infinity) return 'permanent'
+  const days = (durationInHours * HOUR) / DAY
+  if (days >= 1) {
+    return pluralize(days, 'day')
+  }
+  return pluralize(durationInHours, 'hour')
 }
 
-export const useActionRecommendation = (subject: string) => {
-  const labelerAgent = useLabelerAgent()
-  const { data: severityLevelSettings } = useSeverityLevelSetting()
-
-  const { data: strikeData, isLoading } = useQuery({
+const useStrikeEvents = (
+  labelerAgent: Agent,
+  subject: string,
+  severityLevelSettings?: SeverityLevelListSetting | null,
+) => {
+  return useQuery({
     queryKey: ['strikeEvents', subject, severityLevelSettings],
     queryFn: async () => {
+      let lastAccountSuspensionEvent:
+        | ToolsOzoneModerationDefs.ModEventView
+        | undefined
+
+      let lastAccountTakedownEvent:
+        | ToolsOzoneModerationDefs.ModEventView
+        | undefined
+
+      let lastReverseTakedownEvent:
+        | ToolsOzoneModerationDefs.ModEventView
+        | undefined
+
       if (!subject) {
-        return { totalStrikes: 0, events: [], takedownEvents: [] }
+        return {
+          totalStrikeCount: 0,
+          activeStrikeCount: 0,
+          events: [],
+          lastReverseTakedownEvent: undefined,
+          lastAccountSuspensionEvent: undefined,
+          wasLastSuspensionReverted: false,
+        }
       }
 
       const did = subject.startsWith('did:') ? subject : new AtUri(subject).host
-      const [strikeEvents, takedownEvents] = await Promise.all([
-        getStrikeEvents(labelerAgent, did),
-        getAccountTakedownEvents(labelerAgent, did),
-      ])
+      const strikeEvents = await getStrikeEvents(labelerAgent, did)
+
       const now = new Date()
-      let totalStrikes = 0
+      let totalStrikeCount = 0
+      let activeStrikeCount = 0
 
       for (const event of strikeEvents) {
-        if ('strikeCount' in event.event && event.event.strikeCount) {
-          // Check if this strike has expired
-          const eventDate = new Date(event.createdAt)
-          let isExpired = false
-
-          // If the event has a severity level, check its expiry
-          if (event.event.severityLevel && severityLevelSettings?.value) {
-            const severityLevelKey = nameToKey(event.event.severityLevel)
-            const severityLevel = severityLevelSettings.value[severityLevelKey]
-
-            if (severityLevel?.expiryInDays) {
-              const expiryDate = new Date(eventDate)
-              expiryDate.setDate(
-                expiryDate.getDate() + severityLevel.expiryInDays,
-              )
-              isExpired = now > expiryDate
-            }
+        // Events are already sorted in reverse chronological order
+        // so once we find the first suspension/reversal event, that means it's the latest suspension event in the stream
+        if (
+          ToolsOzoneModerationDefs.isModEventTakedown(event.event) &&
+          event.subject.$type === 'com.atproto.admin.defs#repoRef'
+        ) {
+          if (!!event.event.durationInHours && !lastAccountSuspensionEvent) {
+            lastAccountSuspensionEvent = event
           }
-
-          // Only count strikes that haven't expired
-          if (!isExpired) {
-            totalStrikes += event.event.strikeCount
+          if (!lastAccountTakedownEvent) {
+            lastAccountTakedownEvent = event
           }
+        }
+
+        if (
+          ToolsOzoneModerationDefs.isModEventReverseTakedown(event.event) &&
+          event.subject.$type === 'com.atproto.admin.defs#repoRef' &&
+          !lastReverseTakedownEvent
+        ) {
+          lastReverseTakedownEvent = event
+        }
+
+        if (!('strikeCount' in event.event) || !event.event.strikeCount) {
+          continue
+        }
+        // Check if this strike has expired
+        const eventDate = new Date(event.createdAt)
+        let isExpired = false
+
+        // If the event has a severity level, check its expiry
+        if (event.event.severityLevel && severityLevelSettings) {
+          const severityLevelKey = nameToKey(event.event.severityLevel)
+          const severityLevel = severityLevelSettings[severityLevelKey]
+
+          if (severityLevel?.expiryInDays) {
+            const expiryDate = new Date(eventDate)
+            expiryDate.setDate(
+              expiryDate.getDate() + severityLevel.expiryInDays,
+            )
+            isExpired = now > expiryDate
+          }
+        }
+
+        // Only count strikes that haven't expired
+        if (!isExpired) {
+          activeStrikeCount += event.event.strikeCount
+        } else {
+          totalStrikeCount += event.event.strikeCount
         }
       }
 
       return {
-        totalStrikes,
+        totalStrikeCount,
+        activeStrikeCount,
         events: strikeEvents,
-        takedownEvents,
+        lastReverseTakedownEvent,
+        lastAccountTakedownEvent,
+        lastAccountSuspensionEvent,
+        firstStrikeAt: strikeEvents[0]?.createdAt,
+        lastStrikeAt: strikeEvents[strikeEvents.length - 1]?.createdAt,
+        wasLastTakedownReverted:
+          lastAccountTakedownEvent && lastReverseTakedownEvent
+            ? new Date(lastReverseTakedownEvent.createdAt) >
+              new Date(lastAccountTakedownEvent.createdAt)
+            : false,
+        wasLastSuspensionReverted:
+          lastAccountSuspensionEvent && lastReverseTakedownEvent
+            ? new Date(lastReverseTakedownEvent.createdAt) >
+              new Date(lastAccountSuspensionEvent.createdAt)
+            : false,
       }
     },
     enabled: !!subject,
   })
+}
+
+export const useActionRecommendation = (
+  labelerAgent: Agent,
+  subject: string,
+  severityLevelSettings?: SeverityLevelListSetting | null,
+) => {
+  const isSubjectDid = subject.startsWith('did:')
+  const {
+    isLoading,
+    data: strikeData,
+  } = useStrikeEvents(labelerAgent, subject, severityLevelSettings)
 
   const getRecommendedAction = (
     strikeCount: number | null,
@@ -121,11 +199,26 @@ export const useActionRecommendation = (subject: string) => {
     // when reverting takedowns
     isNegative: boolean = false,
   ): ActionRecommendation | null => {
-    const currentStrikes = strikeData?.totalStrikes || 0
+    const currentStrikes = strikeData?.activeStrikeCount || 0
 
     // Handle negative strikes (for RESOLVE_APPEAL)
-    if (isNegative && strikeCount !== null) {
-      const negativeStrikeCount = -Math.abs(strikeCount)
+    if (isNegative) {
+      if (strikeCount === null) {
+        return {
+          totalStrikes: currentStrikes,
+          recommendedDuration: 0,
+          isPermanent: false,
+          suspensionDurationInHours: null,
+          actualStrikesToApply: 0,
+          needsReverseTakedown: true,
+          message: `Account will be reinstated without strike adjustment`,
+        }
+      }
+      const negativeStrikeCount = -Math.abs(
+        severityLevelData?.firstOccurrenceStrikeCount
+          ? severityLevelData.firstOccurrenceStrikeCount
+          : strikeCount,
+      )
       const newTotalStrikes = Math.max(0, currentStrikes + negativeStrikeCount)
 
       // Find current suspension threshold
@@ -156,27 +249,6 @@ export const useActionRecommendation = (subject: string) => {
           ? STRIKE_TO_SUSPENSION_DURATION_IN_HOURS[newThreshold]
           : 0
 
-      const formatDuration = (durationInHours: number): string => {
-        if (durationInHours === Infinity) return 'permanent'
-        const days = (durationInHours * HOUR) / DAY
-        if (days >= 1) {
-          return `${days} day${days !== 1 ? 's' : ''}`
-        }
-        return `${durationInHours} hour${durationInHours !== 1 ? 's' : ''}`
-      }
-
-      // Find the most recent takedown event with durationInHours to calculate time served
-      const lastTakedownEvent = (strikeData?.takedownEvents || [])
-        .filter((event) => {
-          if (!ToolsOzoneModerationDefs.isModEventTakedown(event.event))
-            return false
-          return event.event.durationInHours !== undefined
-        })
-        .sort(
-          (a, b) =>
-            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-        )[0]
-
       let needsReverseTakedown = false
       let adjustedTakedownDurationInHours: number | undefined
 
@@ -193,10 +265,15 @@ export const useActionRecommendation = (subject: string) => {
 
           // Calculate time already served if we have a recent takedown event
           if (
-            lastTakedownEvent &&
-            ToolsOzoneModerationDefs.isModEventTakedown(lastTakedownEvent.event)
+            !strikeData?.wasLastSuspensionReverted &&
+            strikeData?.lastAccountSuspensionEvent?.event &&
+            ToolsOzoneModerationDefs.isModEventTakedown(
+              strikeData.lastAccountSuspensionEvent.event,
+            )
           ) {
-            const takedownDate = new Date(lastTakedownEvent.createdAt)
+            const takedownDate = new Date(
+              strikeData.lastAccountSuspensionEvent.createdAt,
+            )
             const now = new Date()
             const hoursServed = (now.getTime() - takedownDate.getTime()) / HOUR
 
@@ -225,14 +302,14 @@ export const useActionRecommendation = (subject: string) => {
           adjustedTakedownDurationInHours !== undefined
             ? ` (adjusted: ${adjustedTakedownDurationInHours}h after time served)`
             : ''
-        message = `${displayStrike} will be subtracted (${currentStrikes} → ${newTotalStrikes}) - Suspension will be reduced from ${formatDuration(
+        message = `${displayStrike} will be subtracted (${currentStrikes} → ${newTotalStrikes}) - Suspension will be reduced from ${formatDurationInHours(
           currentDuration,
-        )} to ${formatDuration(newDuration)}${adjustedInfo}`
+        )} to ${formatDurationInHours(newDuration)}${adjustedInfo}`
       } else if (
         currentThreshold !== null &&
         newThreshold === currentThreshold
       ) {
-        message = `${displayStrike} will be subtracted (${currentStrikes} → ${newTotalStrikes}) - Suspension remains ${formatDuration(
+        message = `${displayStrike} will be subtracted (${currentStrikes} → ${newTotalStrikes}) - Suspension remains ${formatDurationInHours(
           currentDuration,
         )}`
       } else {
@@ -253,14 +330,7 @@ export const useActionRecommendation = (subject: string) => {
         message,
         needsReverseTakedown,
         adjustedTakedownDurationInHours,
-        lastTakedownEvent:
-          lastTakedownEvent &&
-          ToolsOzoneModerationDefs.isModEventTakedown(lastTakedownEvent.event)
-            ? {
-                createdAt: lastTakedownEvent.createdAt,
-                durationInHours: lastTakedownEvent.event.durationInHours,
-              }
-            : undefined,
+        strikeData,
       }
     }
 
@@ -277,13 +347,13 @@ export const useActionRecommendation = (subject: string) => {
     }
 
     // Count previous occurrences of same policy + severity level
+    // TODO: We probably need to account for reverted actions here
     let previousOccurrences = 0
     if (policyName && severityLevelData?.name) {
       previousOccurrences = (strikeData?.events || []).filter((event) => {
         const isSameEvent =
           (ToolsOzoneModerationDefs.isModEventTakedown(event.event) ||
             ToolsOzoneModerationDefs.isModEventEmail(event.event)) &&
-          event.event.severityLevel === severityLevelData.name &&
           event.event.policies?.includes(policyName)
         return isSameEvent
       }).length
@@ -292,6 +362,7 @@ export const useActionRecommendation = (subject: string) => {
     // Check if this is the first occurrence and if firstOccurrenceStrikeCount is set
     let actualStrikesToApply = strikeCount || 0
     const isFirstOccurrence = previousOccurrences === 0
+    let willApplyStrikesOnFutureOccurrence = true
 
     if (
       isFirstOccurrence &&
@@ -308,6 +379,7 @@ export const useActionRecommendation = (subject: string) => {
       // For example, if strikeOnOccurrence is 2, we need at least 1 previous occurrence
       if (previousOccurrences < severityLevelData.strikeOnOccurrence - 1) {
         actualStrikesToApply = 0
+        willApplyStrikesOnFutureOccurrence = true
       }
     }
 
@@ -332,44 +404,53 @@ export const useActionRecommendation = (subject: string) => {
       }
     }
 
+    let message: string
     const displayStrike = pluralize(totalStrikes, 'total strike')
     if (matchedThreshold === null) {
+      if (willApplyStrikesOnFutureOccurrence && !actualStrikesToApply) {
+        let futureStrikes = severityLevelData?.strikeCount
+          ? `${pluralize(
+              severityLevelData.strikeCount,
+              'strike',
+            )} will be added`
+          : ''
+        if (severityLevelData?.strikeOnOccurrence && futureStrikes) {
+          futureStrikes += ` after ${pluralize(
+            severityLevelData.strikeOnOccurrence,
+            'violation',
+          )}`
+        }
+        message = futureStrikes
+          ? `${displayStrike} - ${futureStrikes}`
+          : displayStrike
+      } else {
+        message = `${displayStrike} - No suspension recommended`
+      }
       return {
+        message,
         totalStrikes,
         recommendedDuration: 0,
         isPermanent: false,
         suspensionDurationInHours: null,
         actualStrikesToApply,
-        message: `${displayStrike} - No suspension recommended`,
+        strikeData,
       }
     }
 
-    const formatDuration = (durationInHours: number): string => {
-      const days = (durationInHours * HOUR) / DAY
-
-      if (days >= 1) {
-        return `${days} day${days !== 1 ? 's' : ''}`
-      }
-      return `${durationInHours} hour${durationInHours !== 1 ? 's' : ''}`
-    }
-
-    let message: string
     if (actualStrikesToApply === 0 && strikeCount && strikeCount > 0) {
       // Strikes configured but not applied due to strikeOnOccurrence
       message = `${displayStrike} (no strikes added - occurrence threshold not met)`
     } else if (isPermanent) {
       message = `${displayStrike} - Account will be permanently taken down`
     } else if (matchedThreshold !== null) {
-      message = `${displayStrike} - Account will be suspended for ${formatDuration(
+      message = `${displayStrike} - Account will be suspended for ${formatDurationInHours(
         recommendedDuration,
       )}`
     } else {
       message = `${displayStrike} - No suspension recommended`
     }
 
-    const suspensionDurationInHours = isPermanent
-      ? null
-      : recommendedDuration / HOUR
+    const suspensionDurationInHours = isPermanent ? null : recommendedDuration
 
     return {
       totalStrikes,
@@ -378,23 +459,38 @@ export const useActionRecommendation = (subject: string) => {
       suspensionDurationInHours,
       actualStrikesToApply,
       message,
+      strikeData,
     }
   }
 
-  // Get the most recent TAKEDOWN/EMAIL event with policy/severity level for auto-selection
-  const getLastTakedownDetails = () => {
+  // Get the most recent TAKEDOWN/suspension event with policy/severity level for auto-selection
+  const getLastContentTakedownDetails = () => {
     if (!strikeData?.events?.length) {
       return null
     }
 
-    // Find the most recent event with policy and severity level
-    const lastEventWithPolicyDetails = strikeData.events.filter((event) => {
-      if (!ToolsOzoneModerationDefs.isModEventTakedown(event.event)) {
+    // Find the most recent event with policy and severity level for current subject
+    const lastEventWithPolicyDetails = strikeData.events.find((event) => {
+      // Only consider account events for DID subjects and record events for at-uri subjects
+      if (
+        !ToolsOzoneModerationDefs.isModEventTakedown(event.event) ||
+        (!isSubjectDid && ComAtprotoAdminDefs.isRepoRef(event.subject)) ||
+        (isSubjectDid && ComAtprotoRepoStrongRef.isMain(event.subject))
+      ) {
         return false
       }
 
-      return !!event.event.policies?.length
-    })[0]
+      // Since we fetch ALL events across all subjects for the DID, we want to filter out
+      // events that are not for the current subject
+      if (
+        ComAtprotoRepoStrongRef.isMain(event.subject) &&
+        event.subject.uri !== subject
+      ) {
+        return false
+      }
+
+      return true
+    })
 
     if (!lastEventWithPolicyDetails) {
       return null
@@ -408,15 +504,16 @@ export const useActionRecommendation = (subject: string) => {
 
     return {
       policy: event.policies?.[0],
+      strikeCount: event.strikeCount,
       severityLevel: event.severityLevel,
     }
   }
 
   return {
-    currentStrikes: strikeData?.totalStrikes || 0,
-    strikeData,
     isLoading,
+    strikeData,
     getRecommendedAction,
-    getLastTakedownDetails,
+    getLastContentTakedownDetails,
+    currentStrikes: strikeData?.totalStrikeCount || 0,
   }
 }

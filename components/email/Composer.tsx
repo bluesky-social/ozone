@@ -1,6 +1,6 @@
 import { PaperAirplaneIcon } from '@heroicons/react/24/outline'
 import { commands } from '@uiw/react-md-editor'
-import { useRef } from 'react'
+import { RefObject, useRef } from 'react'
 import { toast } from 'react-toastify'
 import dynamic from 'next/dynamic'
 
@@ -17,7 +17,10 @@ import {
 } from './helpers'
 import { TemplateSelector } from './template-selector'
 import { availableLanguageCodes } from '@/common/LanguagePicker'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  ToolsOzoneCommunicationDefs,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import { useEmailComposer } from './useComposer'
 import {
   ActionPanelNames,
@@ -26,9 +29,14 @@ import {
 
 const MDEditor = dynamic(() => import('@uiw/react-md-editor'), { ssr: false })
 
-const getRecipientsLanguages = (
+type RecipientLanguages = {
+  languages: string[]
+  defaultLang?: string
+}
+
+export const getRecipientsLanguages = (
   repo?: ToolsOzoneModerationDefs.RepoViewDetail,
-) => {
+): RecipientLanguages => {
   if (!repo) {
     return { languages: [], defaultLang: undefined }
   }
@@ -56,6 +64,26 @@ const getRecipientsLanguages = (
   return {
     defaultLang: recipientsLanguageTags[0],
     languages: recipientsLanguageTags,
+  }
+}
+
+export const buildEmailEventFromFormData = async (
+  formData: FormData,
+  content: string,
+) => {
+  const subject = formData.get('subjectLine')?.toString() ?? undefined
+  const comment = formData.get('comment')?.toString() ?? undefined
+  const [{ remark }, { default: remarkHtml }] = await Promise.all([
+    import('remark'),
+    import('remark-html'),
+  ])
+  const htmlContent = remark().use(remarkHtml).processSync(content).toString()
+
+  return {
+    $type: MOD_EVENTS.EMAIL,
+    comment,
+    subjectLine: subject,
+    content: htmlContent,
   }
 }
 
@@ -95,26 +123,10 @@ export const EmailComposer = ({
   const onSubmit = async (e) => {
     e.preventDefault()
     const formData = new FormData(e.currentTarget)
-    const subject = formData.get('subject')?.toString() ?? undefined
-    const comment = formData.get('comment')?.toString() ?? undefined
 
     toggleSending(true)
     try {
-      const [{ remark }, { default: remarkHtml }] = await Promise.all([
-        import('remark'),
-        import('remark-html'),
-      ])
-      const htmlContent = remark()
-        .use(remarkHtml)
-        .processSync(content)
-        .toString()
-
-      const event = {
-        $type: MOD_EVENTS.EMAIL,
-        comment,
-        subjectLine: subject,
-        content: htmlContent,
-      }
+      const event = await buildEmailEventFromFormData(formData, content)
       if (handleSubmit) {
         await handleSubmit(event)
       } else {
@@ -183,18 +195,83 @@ export const EmailComposer = ({
 
   return (
     <form onSubmit={onSubmit}>
+      <EmailComposerFields
+        templateLabel={templateLabel}
+        communicationTemplates={communicationTemplates}
+        onTemplateSelect={onTemplateSelect}
+        recipientLanguages={recipientLanguages}
+        subjectField={subjectField}
+        content={content}
+        setContent={setContent}
+        theme={theme}
+        isSending={isSending}
+        requiresConfirmation={requiresConfirmation}
+        isConfirmed={isConfirmed}
+        toggleConfirmation={toggleConfirmation}
+      />
+      <FormLabel label="Additional Comment" htmlFor="comment" className="mb-3">
+        <Textarea
+          name="comment"
+          ref={commentField}
+          className="block w-full mb-3"
+        />
+      </FormLabel>
+      <ActionButton
+        appearance="primary"
+        type="submit"
+        disabled={isSending || (requiresConfirmation && !isConfirmed)}
+      >
+        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
+        Send
+      </ActionButton>
+    </form>
+  )
+}
+
+export const EmailComposerFields = ({
+  defaultTemplate,
+  templateLabel,
+  communicationTemplates,
+  onTemplateSelect,
+  recipientLanguages,
+  subjectField,
+  content,
+  setContent,
+  theme,
+  isSending,
+  requiresConfirmation,
+  isConfirmed,
+  toggleConfirmation,
+}: {
+  defaultTemplate?: string
+  templateLabel: string
+  communicationTemplates?: ToolsOzoneCommunicationDefs.TemplateView[]
+  onTemplateSelect: (templateName: string) => void
+  recipientLanguages: RecipientLanguages
+  subjectField: RefObject<HTMLInputElement | null>
+  content: string
+  setContent: (content?: string) => void
+  theme: 'light' | 'dark'
+  isSending: boolean
+  requiresConfirmation: boolean
+  isConfirmed: boolean
+  toggleConfirmation: () => void
+}) => {
+  return (
+    <>
       <FormLabel label={templateLabel} htmlFor="template" className="mb-3">
         <TemplateSelector
           communicationTemplates={communicationTemplates}
           onSelect={onTemplateSelect}
+          defaultTemplate={defaultTemplate}
           defaultLang={recipientLanguages.defaultLang}
         />
       </FormLabel>
-      <FormLabel label="Subject" htmlFor="subject" className="mb-3">
+      <FormLabel label="Subject" htmlFor="subjectLine" className="mb-3">
         <Input
           type="text"
-          id="subject"
-          name="subject"
+          id="subjectLine"
+          name="subjectLine"
           ref={subjectField}
           placeholder="Subject line for the email"
           className="block w-full"
@@ -206,7 +283,7 @@ export const EmailComposer = ({
           preview="edit"
           height={400}
           value={content}
-          onChange={setContent}
+          onChange={(c) => setContent(c)}
           fullscreen={false}
           data-color-mode={theme}
           commands={[
@@ -242,21 +319,6 @@ export const EmailComposer = ({
           label="There may be placeholder texts in the content of the email that are meant to be replaced with actual content, please check this box if you're sure you want to send the email as is"
         />
       )}
-      <FormLabel label="Additional Comment" htmlFor="comment" className="mb-3">
-        <Textarea
-          name="comment"
-          ref={commentField}
-          className="block w-full mb-3"
-        />
-      </FormLabel>
-      <ActionButton
-        appearance="primary"
-        type="submit"
-        disabled={isSending || (requiresConfirmation && !isConfirmed)}
-      >
-        <PaperAirplaneIcon className="h-4 w-4 mr-2" />
-        Send
-      </ActionButton>
-    </form>
+    </>
   )
 }
