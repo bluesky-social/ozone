@@ -214,7 +214,8 @@ const getExportFieldsFromWorkspaceListItem = (
       langs: Array.isArray(item.record.value.langs)
         ? item.record.value.langs.join('|')
         : '',
-      createdAt: ifString(item.record.indexedAt) ?? '',
+      createdAt:
+        ifString(item.record.value.createdAt || item.record.indexedAt) ?? '',
       embeds: item.record.value.embed
         ? getEmbedValues(item.record.value.embed)
         : '',
