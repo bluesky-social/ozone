@@ -4,7 +4,6 @@ import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { TakedownTargetService } from '@/lib/types'
 
 type TargetServicesSelectorProps = {
-  level: SeverityLevelDetail | null
   value: TakedownTargetService[]
   onChange: (services: TakedownTargetService[]) => void
   className?: string
@@ -26,7 +25,7 @@ export const shouldShowTargetServices = (
     const thresholds = Object.keys(STRIKE_TO_SUSPENSION_DURATION_IN_HOURS).map(
       (k) => parseInt(k, 10),
     )
-    console.log(STRIKE_TO_SUSPENSION_DURATION_IN_HOURS, thresholds)
+
     return thresholds.some((threshold) => level.strikeCount! >= threshold)
   }
 
@@ -34,15 +33,10 @@ export const shouldShowTargetServices = (
 }
 
 export function TargetServicesSelector({
-  level,
   value,
   onChange,
   className = '',
 }: TargetServicesSelectorProps) {
-  if (!shouldShowTargetServices(level)) {
-    return null
-  }
-
   const toggleService = (service: TakedownTargetService, checked: boolean) => {
     let newServices: TakedownTargetService[]
     if (checked) {

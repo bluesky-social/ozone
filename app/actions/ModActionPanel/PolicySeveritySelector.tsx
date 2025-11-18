@@ -57,18 +57,10 @@ export function PolicySeveritySelector({
   actionRecommendation,
   targetServices = ['appview', 'pds'],
   setTargetServices,
-  selectedSeverityLevel,
   variant = 'takedown',
-  severityLevelSetting,
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
   const showFullRecommendation = variant === 'takedown' || variant === 'email'
-
-  // Get the full severity level details
-  const selectedLevel =
-    severityLevelSetting && selectedSeverityLevel
-      ? severityLevelSetting[nameToKey(selectedSeverityLevel)] ?? null
-      : null
 
   return (
     <div className="flex flex-col gap-2 mt-2">
@@ -125,9 +117,8 @@ export function PolicySeveritySelector({
               → {actionRecommendation.message}
             </div>
           )}
-          {selectedSeverityLevel && setTargetServices && (
+          {setTargetServices && (
             <TargetServicesSelector
-              level={selectedLevel}
               value={targetServices}
               onChange={setTargetServices}
               className="mt-2"

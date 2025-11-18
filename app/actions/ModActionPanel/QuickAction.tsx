@@ -484,7 +484,6 @@ function Form(
                       variant="takedown"
                       targetServices={targetServices}
                       setTargetServices={setTargetServices}
-                      severityLevelSetting={severityLevelData?.value}
                     />
                   )}
 
@@ -618,7 +617,6 @@ function Form(
                       selectedSeverityLevel={selectedSeverityLevelName}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       defaultPolicy={selectedPolicyName}
-                      severityLevelSetting={severityLevelData?.value}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}

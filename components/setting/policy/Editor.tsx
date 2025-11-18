@@ -234,7 +234,7 @@ export const PolicyEditor = ({
                           <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
                             Target Services (at least one must be selected):
                           </p>
-                          <div className="flex flex-col gap-1">
+                          <div className="flex flex-row gap-2">
                             <Checkbox
                               id={`sev-${key}-appview`}
                               name={`sev-${key}-appview`}
