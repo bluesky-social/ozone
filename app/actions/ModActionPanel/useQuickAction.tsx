@@ -120,6 +120,7 @@ export const useQuickAction = (
     currentStrikes,
     getRecommendedAction,
     getLastContentTakedownDetails,
+    strikeDataError,
   } = useActionRecommendation(labelerAgent, subject, severityLevelData?.value)
 
   // Reusable handler for policy selection
@@ -779,6 +780,7 @@ export const useQuickAction = (
     policyDetails,
     severityLevelData,
     strikeData,
+    strikeDataError,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
