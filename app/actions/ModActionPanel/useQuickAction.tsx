@@ -361,6 +361,15 @@ export const useQuickAction = (
         formData,
         subjectStatus || undefined,
       )
+
+      // For non-account takedowns, we never need the targetServices field
+      // however, due to non account takedown, there may be account level suspension/takedown
+      // where we do need to specify targetServices so let's keep the form data around to use later on
+      const targetServices = coreEvent['targetServices']
+      if (!isSubjectDid) {
+        delete coreEvent['targetServices']
+      }
+
       if (isDivertEvent && !subjectBlobCids.length) {
         throw new Error('blob-selection-required')
       }
@@ -483,10 +492,21 @@ export const useQuickAction = (
           }
 
           // Add targetServices if present in the original event
-          if (coreEvent.targetServices) {
-            accountEvent.targetServices = coreEvent.targetServices
+          if (targetServices) {
+            accountEvent.targetServices = targetServices
           }
 
+          console.log(
+            {
+              subject: {
+                $type: 'com.atproto.admin.defs#repoRef',
+                did: subjectDid,
+              },
+              createdBy: accountDid,
+              event: accountEvent,
+            },
+            targetServices,
+          )
           await onSubmit({
             subject: {
               $type: 'com.atproto.admin.defs#repoRef',
@@ -548,8 +568,8 @@ export const useQuickAction = (
             }
 
             // Add targetServices if present in the original event
-            if ('targetServices' in coreEvent && coreEvent.targetServices) {
-              adjustedTakedownEvent.targetServices = coreEvent.targetServices
+            if ('targetServices' in coreEvent && targetServices) {
+              adjustedTakedownEvent.targetServices = targetServices
             }
 
             await onSubmit({
@@ -778,7 +798,6 @@ export const useQuickAction = (
     setSelectedPolicyName,
     setSelectedSeverityLevelName,
     policyDetails,
-    severityLevelData,
     strikeData,
     strikeDataError,
     currentStrikes,

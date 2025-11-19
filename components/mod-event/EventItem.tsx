@@ -468,11 +468,20 @@ const TakedownOrMute = ({
       {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
         <>
           <TakedownPolicy policies={modEvent.event.policies} />
-          <StrikeInfo
-            strikeCount={modEvent.event.strikeCount}
-            severityLevel={modEvent.event.severityLevel}
-            strikeExpiresAt={modEvent.event.strikeExpiresAt}
-          />
+          <div className="flex flex-row gap-2 items-center">
+            <StrikeInfo
+              strikeCount={modEvent.event.strikeCount}
+              severityLevel={modEvent.event.severityLevel}
+              strikeExpiresAt={modEvent.event.strikeExpiresAt}
+            />
+            {!!modEvent.event.targetServices?.length && (
+              <div className="flex flex-row gap-2 mt-1">
+                {modEvent.event.targetServices.map((service) => (
+                  <LabelChip key={service}>{service}</LabelChip>
+                ))}
+              </div>
+            )}
+          </div>
         </>
       )}
       {/* This is only for legacy actions, new actions won't have these properties for these events */}

@@ -162,7 +162,6 @@ function Form(
     policyDetails,
     strikeData,
     strikeDataError,
-    severityLevelData,
     currentStrikes,
     actionRecommendation,
     isAgeAssuranceOverrideEvent,
@@ -484,6 +483,7 @@ function Form(
                       variant="takedown"
                       targetServices={targetServices}
                       setTargetServices={setTargetServices}
+                      isSubjectDid={isSubjectDid}
                     />
                   )}
 
@@ -617,6 +617,7 @@ function Form(
                       selectedSeverityLevel={selectedSeverityLevelName}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       defaultPolicy={selectedPolicyName}
+                      isSubjectDid={isSubjectDid}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}

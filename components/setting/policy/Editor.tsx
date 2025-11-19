@@ -232,7 +232,8 @@ export const PolicyEditor = ({
                       {shouldShowTargetServices(level) && (
                         <div className="mt-2 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
                           <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                            Target Services (at least one must be selected):
+                            Configure target services for account takedown using
+                            this policy (at least one must be selected):
                           </p>
                           <div className="flex flex-row gap-2">
                             <Checkbox

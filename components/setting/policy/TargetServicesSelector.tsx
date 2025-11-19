@@ -58,7 +58,7 @@ export function TargetServicesSelector({
       className={`pl-2 border-l-2 border-gray-200 dark:border-gray-700 ${className}`}
     >
       <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-        Target Services (at least one must be selected):
+        Target Services for account takedown (at least one must be selected):
       </p>
       <div className="flex flex-row gap-2">
         <Checkbox

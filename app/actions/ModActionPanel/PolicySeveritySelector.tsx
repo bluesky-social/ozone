@@ -2,16 +2,9 @@ import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelec
 import { ActionSeverityLevelSelector } from '@/reports/ModerationForm/ActionSeverityLevelSelector'
 import { pluralize } from '@/lib/util'
 import { TargetServicesSelector } from '@/setting/policy/TargetServicesSelector'
-import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
-import { nameToKey } from '@/setting/policy/utils'
 import { TakedownTargetService } from '@/lib/types'
 import { SeverityLevelListSetting } from '@/setting/severity-level/types'
-
-type ActionRecommendation = {
-  message: string
-  isPermanent?: boolean
-  actualStrikesToApply?: number
-}
+import { ActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
 
 type PolicySeveritySelectorProps = {
   // Required props
@@ -41,6 +34,7 @@ type PolicySeveritySelectorProps = {
   setTargetServices?: (services: TakedownTargetService[]) => void
   selectedSeverityLevel?: string
   severityLevelSetting?: SeverityLevelListSetting
+  isSubjectDid?: boolean
 
   // Variant-specific behavior
   variant?: 'takedown' | 'email' | 'reverse-takedown'
@@ -58,9 +52,17 @@ export function PolicySeveritySelector({
   targetServices = ['appview', 'pds'],
   setTargetServices,
   variant = 'takedown',
+  isSubjectDid,
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
   const showFullRecommendation = variant === 'takedown' || variant === 'email'
+
+  const shouldShowTargetServices =
+    !!setTargetServices &&
+    variant === 'takedown' &&
+    (isSubjectDid ||
+      !!actionRecommendation?.recommendedDuration ||
+      actionRecommendation?.isPermanent)
 
   return (
     <div className="flex flex-col gap-2 mt-2">
@@ -117,7 +119,7 @@ export function PolicySeveritySelector({
               → {actionRecommendation.message}
             </div>
           )}
-          {setTargetServices && (
+          {shouldShowTargetServices && (
             <TargetServicesSelector
               value={targetServices}
               onChange={setTargetServices}
