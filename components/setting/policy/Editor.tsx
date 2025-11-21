@@ -5,7 +5,10 @@ import { ActionButton } from '@/common/buttons'
 import { DocumentCheckIcon } from '@heroicons/react/24/solid'
 import { useSeverityLevelSetting } from '@/setting/severity-level/useSeverityLevel'
 import { PolicyDetail, SeverityLevelConfig } from './types'
+import { shouldShowTargetServices } from './TargetServicesSelector'
+import { toast } from 'react-toastify'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { TakedownTargetService } from '@/lib/types'
 
 export const PolicyEditor = ({
   editingPolicy,
@@ -31,7 +34,12 @@ export const PolicyEditor = ({
     if (checked) {
       const updated = {
         ...selectedSeverityLevels,
-        [key]: { description: '', isDefault: false },
+        [key]: {
+          description: '',
+          isDefault: false,
+          // Default to both services selected
+          targetServices: ['appview', 'pds'] as TakedownTargetService[],
+        },
       }
       // If this is the only selected item, make it default
       if (Object.keys(updated).length === 1) {
@@ -68,6 +76,34 @@ export const PolicyEditor = ({
       updated[key] = { ...updated[key], isDefault: false }
     }
     setSelectedSeverityLevels(updated)
+  }
+
+  const toggleTargetService = (
+    key: string,
+    service: TakedownTargetService,
+    checked: boolean,
+  ) => {
+    const config = selectedSeverityLevels[key]
+    const currentServices = config.targetServices || []
+
+    let newServices: TakedownTargetService[]
+    if (checked) {
+      newServices = currentServices.includes(service)
+        ? currentServices
+        : [...currentServices, service]
+    } else {
+      newServices = currentServices.filter((s) => s !== service)
+      if (newServices.length === 0) {
+        // Don't allow unchecking if it's the last one
+        toast.error('At least one target service must be selected.')
+        return
+      }
+    }
+
+    setSelectedSeverityLevels({
+      ...selectedSeverityLevels,
+      [key]: { ...config, targetServices: newServices },
+    })
   }
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -182,16 +218,61 @@ export const PolicyEditor = ({
                     )}
                   </div>
                   {isSelected && (
-                    <Textarea
-                      id={`sev-${key}-desc`}
-                      placeholder={`Custom description (optional)`}
-                      className="block w-full text-sm mt-2"
-                      rows={2}
-                      value={config?.description || ''}
-                      onChange={(e) =>
-                        updateSeverityLevelDescription(key, e.target.value)
-                      }
-                    />
+                    <>
+                      <Textarea
+                        id={`sev-${key}-desc`}
+                        placeholder={`Custom description (optional)`}
+                        className="block w-full text-sm mt-2"
+                        rows={2}
+                        value={config?.description || ''}
+                        onChange={(e) =>
+                          updateSeverityLevelDescription(key, e.target.value)
+                        }
+                      />
+                      {shouldShowTargetServices(level) && (
+                        <div className="mt-2 pl-2 border-l-2 border-gray-200 dark:border-gray-700">
+                          <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                            Configure target services for account takedown using
+                            this policy (at least one must be selected):
+                          </p>
+                          <div className="flex flex-row gap-2">
+                            <Checkbox
+                              id={`sev-${key}-appview`}
+                              name={`sev-${key}-appview`}
+                              checked={
+                                config?.targetServices?.includes('appview') ||
+                                false
+                              }
+                              onChange={(e) =>
+                                toggleTargetService(
+                                  key,
+                                  'appview',
+                                  e.target.checked,
+                                )
+                              }
+                              label="AppView"
+                              className="text-sm"
+                            />
+                            <Checkbox
+                              id={`sev-${key}-pds`}
+                              name={`sev-${key}-pds`}
+                              checked={
+                                config?.targetServices?.includes('pds') || false
+                              }
+                              onChange={(e) =>
+                                toggleTargetService(
+                                  key,
+                                  'pds',
+                                  e.target.checked,
+                                )
+                              }
+                              label="PDS"
+                              className="text-sm"
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )

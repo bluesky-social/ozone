@@ -5,9 +5,9 @@ __metadata:
   version: 8
   cacheKey: 10c0
 
-"@atproto/api@npm:^0.17.5":
-  version: 0.17.5
-  resolution: "@atproto/api@npm:0.17.5"
+"@atproto/api@npm:^0.18.1":
+  version: 0.18.1
+  resolution: "@atproto/api@npm:0.18.1"
   dependencies:
     "@atproto/common-web": "npm:^0.4.3"
     "@atproto/lexicon": "npm:^0.5.1"
@@ -17,7 +17,7 @@ __metadata:
     multiformats: "npm:^9.9.0"
     tlds: "npm:^1.234.0"
     zod: "npm:^3.23.8"
-  checksum: 10c0/edb1bf75e58f22f530da483761cb72df4f2e97379ef6dcd5298de03e95466232bf932d644bbbb22ab1b5110372551f2efc041fcb6adca073367a22c2e60665d7
+  checksum: 10c0/2e23d931199e7c77d3e49b38d6bf194982d463c7b79634ecaeaea62020da470b6cd5a2a18d8faec4cd05f39b4d791e7e8845b6cf6e3da5ce62e86a1353221ebc
   languageName: node
   linkType: hard
 
@@ -106,18 +106,19 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atproto/ozone@npm:0.1.151":
-  version: 0.1.151
-  resolution: "@atproto/ozone@npm:0.1.151"
+"@atproto/ozone@npm:0.1.156":
+  version: 0.1.156
+  resolution: "@atproto/ozone@npm:0.1.156"
   dependencies:
-    "@atproto/api": "npm:^0.17.5"
+    "@atproto/api": "npm:^0.18.1"
     "@atproto/common": "npm:^0.4.12"
     "@atproto/crypto": "npm:^0.4.4"
     "@atproto/identity": "npm:^0.4.9"
     "@atproto/lexicon": "npm:^0.5.1"
     "@atproto/syntax": "npm:^0.4.1"
+    "@atproto/ws-client": "npm:^0.0.2"
     "@atproto/xrpc": "npm:^0.7.5"
-    "@atproto/xrpc-server": "npm:^0.9.5"
+    "@atproto/xrpc-server": "npm:^0.9.6"
     "@did-plc/lib": "npm:^0.0.1"
     compression: "npm:^1.7.4"
     cors: "npm:^2.8.5"
@@ -134,7 +135,7 @@ __metadata:
     uint8arrays: "npm:3.0.0"
     undici: "npm:^6.14.1"
     ws: "npm:^8.12.0"
-  checksum: 10c0/89d3becb3794ea3e4575808dcb5dab6f664073617969c3b82eeb91afa82860112627ba8a1d939c4eb841e80ae74332abcacea41fe6e777f728cd76e3048d4dbb
+  checksum: 10c0/2d744d19c858ae54cb180be22c0ae59e52d66d19b871c81e6162b811f9215f2cdff734566f94830ddfacddc9d6e6f2fe16002202a0ff41fee7c4bfb781a29c26
   languageName: node
   linkType: hard
 
@@ -145,13 +146,24 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atproto/xrpc-server@npm:^0.9.5":
-  version: 0.9.5
-  resolution: "@atproto/xrpc-server@npm:0.9.5"
+"@atproto/ws-client@npm:^0.0.2":
+  version: 0.0.2
+  resolution: "@atproto/ws-client@npm:0.0.2"
+  dependencies:
+    "@atproto/common": "npm:^0.4.12"
+    ws: "npm:^8.12.0"
+  checksum: 10c0/0e3b6c5e30f2771c4fcb8d803912d9d2b0eb642d1587f0d39448afcad1fd3437923cc9680576215217807b4e6f73766d9f89ed5f4ab45dd10df38491ac861ce6
+  languageName: node
+  linkType: hard
+
+"@atproto/xrpc-server@npm:^0.9.6":
+  version: 0.9.6
+  resolution: "@atproto/xrpc-server@npm:0.9.6"
   dependencies:
     "@atproto/common": "npm:^0.4.12"
     "@atproto/crypto": "npm:^0.4.4"
     "@atproto/lexicon": "npm:^0.5.1"
+    "@atproto/ws-client": "npm:^0.0.2"
     "@atproto/xrpc": "npm:^0.7.5"
     cbor-x: "npm:^1.5.1"
     express: "npm:^4.17.2"
@@ -161,7 +173,7 @@ __metadata:
     uint8arrays: "npm:3.0.0"
     ws: "npm:^8.12.0"
     zod: "npm:^3.23.8"
-  checksum: 10c0/51a442ea558fb700f4faef8a2a13d5d6bc1350146d0b67f0a5a48b9b6ab5cb14fc49298c613b49b4c0fced77f17f125f063eca34d5290dffea932da273a293c8
+  checksum: 10c0/cd04e5efdc42f22ceb6987ec2e69d30869bb487b3f126bb4b3141f3010c5db9cb13ab70b6a04f0234d86b7edff2805661c8ed6a98052199454bd2153f754a03c
   languageName: node
   linkType: hard
 
@@ -1971,7 +1983,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ozone-service@workspace:."
   dependencies:
-    "@atproto/ozone": "npm:0.1.151"
+    "@atproto/ozone": "npm:0.1.156"
     next: "npm:15.2.4"
     react: "npm:19.1.0"
   languageName: unknown

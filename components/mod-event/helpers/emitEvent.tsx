@@ -460,6 +460,10 @@ export const getEventFromFormData = (
   const tags = formData.get('tags')
   const severityLevel = formData.get('severityLevel')
   const strikeCount = formData.get('strikeCount')
+  const targetServicesRaw = formData.get('targetServices')
+  const targetServices = targetServicesRaw
+    ? String(targetServicesRaw).split(',').filter(Boolean)
+    : undefined
 
   if ($type === MOD_EVENTS.ACKNOWLEDGE) {
     return { $type, comment, acknowledgeAccountSubjects }
@@ -512,6 +516,10 @@ export const getEventFromFormData = (
     if (!isNaN(strikeCountNum)) {
       event.strikeCount = strikeCountNum
     }
+    // Add targetServices if present
+    if (targetServices && targetServices.length > 0) {
+      event.targetServices = targetServices
+    }
 
     return event
   }
@@ -544,6 +552,11 @@ export const getEventFromFormData = (
     const strikeCountNum = Number(strikeCount)
     if (strikeCount && !isNaN(strikeCountNum) && strikeCountNum !== 0) {
       event.strikeCount = strikeCountNum
+    }
+
+    // Add targetServices if present
+    if (targetServices && targetServices.length > 0) {
+      event.targetServices = targetServices
     }
 
     return event

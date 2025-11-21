@@ -26,7 +26,7 @@ type StrikeData = ToolsOzoneModerationDefs.AccountStrike & {
   wasLastSuspensionReverted?: boolean
 }
 
-type ActionRecommendation = {
+export type ActionRecommendation = {
   totalStrikes: number
   recommendedDuration: number
   isPermanent: boolean
