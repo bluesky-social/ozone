@@ -135,12 +135,19 @@ const Email = ({
   const [showEmailContent, setShowEmailContent] = useState(false)
   return (
     <>
-      <p className="text-gray-500">
-        By{' '}
-        {modEvent.creatorHandle
-          ? `@${modEvent.creatorHandle}`
-          : `${modEvent.createdBy}`}
-      </p>
+      <div className="flex flex-row justify-between">
+        <p className="text-gray-500">
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : `${modEvent.createdBy}`}
+        </p>
+        {!modEvent.event.isDelivered && (
+          <LabelChip className="bg-red-200 text-red-800">
+            Not delivered
+          </LabelChip>
+        )}
+      </div>
       {modEvent.event.subjectLine && (
         <p>Subject: {modEvent.event.subjectLine}</p>
       )}
