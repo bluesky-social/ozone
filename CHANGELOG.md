@@ -1,3 +1,7 @@
+# Note
+
+This changelog is no longer updated; refer to [GitHub Releases](https://github.com/bluesky-social/ozone/releases) for an up-to-date changelog for recent versions.
+
 ## Release 0.1.5
 - Fix event type selector button ([#112](https://github.com/bluesky-social/ozone/pull/112))
 
