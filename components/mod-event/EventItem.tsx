@@ -142,7 +142,7 @@ const Email = ({
             ? `@${modEvent.creatorHandle}`
             : `${modEvent.createdBy}`}
         </p>
-        {!modEvent.event.isDelivered && (
+        {modEvent.event.isDelivered === false && (
           <LabelChip className="bg-red-200 text-red-800">
             Not delivered
           </LabelChip>
