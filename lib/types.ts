@@ -28,3 +28,5 @@ export type PropsOf<F extends Function> = F extends (
 ) => ReactNode
   ? P
   : never
+
+export type TakedownTargetService = 'appview' | 'pds'

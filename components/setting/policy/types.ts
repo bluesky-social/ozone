@@ -1,6 +1,9 @@
+import { TakedownTargetService } from '@/lib/types'
+
 export type SeverityLevelConfig = {
   description: string
   isDefault: boolean
+  targetServices?: TakedownTargetService[]
 }
 
 export type PolicyDetail = {

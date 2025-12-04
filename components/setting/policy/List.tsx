@@ -100,7 +100,7 @@ export function PolicyList({
                       <div className="mt-2">
                         {Object.entries(policy.severityLevels).map(
                           ([levelName, config]) => (
-                            <div key={levelName} className='mt-1'>
+                            <div key={levelName} className="mt-1">
                               <span className="bg-purple-100 dark:bg-purple-900/30 text-purple-800 dark:text-purple-300 px-2 py-0.5 rounded text-xs">
                                 {config.isDefault && (
                                   <StarIcon
