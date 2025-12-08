@@ -677,6 +677,7 @@ export const useQuickAction = (
     }
   }
 
+  const [selectedAgeAssuranceState, setSelectedAgeAssuranceState] = useState('')
   const emailSubjectField = useRef<HTMLInputElement>(null)
   const [emailContent, setEmailContent] = useState<string | undefined>('')
   const durationSelectorRef = useRef<HTMLSelectElement>(null)
@@ -832,6 +833,8 @@ export const useQuickAction = (
     handleSeverityLevelSelect,
     targetServices,
     setTargetServices,
+    selectedAgeAssuranceState,
+    setSelectedAgeAssuranceState,
   }
 }
 

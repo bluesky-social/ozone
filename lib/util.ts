@@ -134,12 +134,16 @@ export const buildAtUriFromFragments = (
   fragments: BlueSkyAppUrlFragments | null,
 ) => {
   if (fragments?.did || fragments?.handle) {
-    const uri = AtUri.make(
-      `${fragments?.did || fragments?.handle}`,
-      fragments.collection,
-      fragments.rkey,
-    )
-    return uri.toString()
+    try {
+      const uri = AtUri.make(
+        `${fragments?.did || fragments?.handle}`,
+        fragments.collection,
+        fragments.rkey,
+      )
+      return uri.toString()
+    } catch (e) {
+      return ''
+    }
   }
 
   return ''
