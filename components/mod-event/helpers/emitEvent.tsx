@@ -598,7 +598,9 @@ export const getEventFromFormData = (
 
   if ($type === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE) {
     const ageAssuranceState = String(formData.get('ageAssuranceState'))
-    return { $type, comment, status: ageAssuranceState }
+    const access = String(formData.get('ageAssuranceAccess')) || undefined
+
+    return { $type, comment, status: ageAssuranceState, access }
   }
 
   if ($type === MOD_EVENTS.APPEAL) {

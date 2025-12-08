@@ -71,6 +71,13 @@ export const AGE_ASSURANCE_OVERRIDE_STATES = {
   BLOCKED: 'blocked',
 }
 
+export const AGE_ASSURANCE_ACCESS_STATES = {
+  UNKNOWN: 'unknown',
+  NONE: 'none',
+  SAFE: 'safe',
+  FULL: 'full',
+}
+
 export const AGE_ASSURANCE_STATES = {
   UNKNOWN: 'unknown',
   PENDING: 'pending',

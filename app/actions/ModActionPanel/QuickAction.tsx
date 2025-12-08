@@ -22,7 +22,7 @@ import { LabelSelector } from '@/common/labels/Selector'
 import { capitalize } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import { AGE_ASSURANCE_OVERRIDE_STATES } from '@/mod-event/constants'
+import { AGE_ASSURANCE_OVERRIDE_STATES, AGE_ASSURANCE_ACCESS_STATES } from '@/mod-event/constants'
 import { ModEventList } from '@/mod-event/EventList'
 import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
@@ -139,6 +139,7 @@ function Form(
     subjectOptions,
     ...others
   } = props
+  const [selectedAgeAssuranceState, setSelectedAgeAssuranceState] = useState('')
   const {
     submission,
     navigateQueue,
@@ -547,22 +548,43 @@ function Form(
                   )}
 
                   {isAgeAssuranceOverrideEvent && (
-                    <div className="mt-2">
-                      <Select
-                        id="ageAssuranceState"
-                        name="ageAssuranceState"
-                        required
-                      >
-                        <option value="">Select status...</option>
-                        {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
-                          (state) => (
-                            <option key={state} value={state}>
-                              {capitalize(state)}
-                            </option>
-                          ),
-                        )}
-                      </Select>
-                    </div>
+                    <>
+                      <div className="mt-2">
+                        <Select
+                          id="ageAssuranceState"
+                          name="ageAssuranceState"
+                          required
+                          onChange={(e) => setSelectedAgeAssuranceState(e.target.value)}
+                        >
+                          <option value="">Select status...</option>
+                          {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
+                            (state) => (
+                              <option key={state} value={state}>
+                                {capitalize(state)}
+                              </option>
+                            ),
+                          )}
+                        </Select>
+                      </div>
+                      {selectedAgeAssuranceState && selectedAgeAssuranceState !== AGE_ASSURANCE_OVERRIDE_STATES.BLOCKED && (
+                        <div className="mt-2">
+                          <Select
+                            id="ageAssuranceAccess"
+                            name="ageAssuranceAccess"
+                            required
+                          >
+                            <option value="">Select access...</option>
+                            {Object.values(AGE_ASSURANCE_ACCESS_STATES).map(
+                              (state) => (
+                                <option key={state} value={state}>
+                                  {capitalize(state)}
+                                </option>
+                              ),
+                            )}
+                          </Select>
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {isMuteReporterEvent && (

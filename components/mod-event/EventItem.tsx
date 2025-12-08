@@ -247,7 +247,12 @@ const AgeAssurance = ({
           />
         </span>
         <div className="flex items-center gap-2">
-          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />{' '}
+          {modEvent.event.access && (
+            <LabelChip className="uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              {modEvent.event.access}
+            </LabelChip>
+          )}
         </div>
       </div>
 
@@ -302,6 +307,11 @@ const AgeAssuranceOverride = ({
         </span>
         <div className="flex items-center gap-2">
           <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+          {modEvent.event.access && (
+            <LabelChip className="uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              {modEvent.event.access}
+            </LabelChip>
+          )}
         </div>
       </div>
 
