@@ -20,7 +20,7 @@ export const StatView = ({
   ...rest
 }: {
   count: number
-  Icon: (props: React.ComponentProps<'svg'>) => JSX.Element
+  Icon: React.ComponentType<React.ComponentProps<'svg'>>
   text?: string
   appearance?: 'danger' | 'info' | 'warning' | 'success'
 } & ComponentProps<'button'>) => {
