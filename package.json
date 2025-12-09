@@ -26,8 +26,8 @@
     "@heroicons/react": "^2.0.13",
     "@tanstack/react-query": "^4.22.0",
     "@types/node": "18.11.17",
-    "@types/react": "19.1.0",
-    "@types/react-dom": "19.1.1",
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2",
     "@uiw/react-md-editor": "^4.0.5",
     "bcp-47-match": "^2.0.3",
     "date-fns": "^2.29.3",
@@ -37,8 +37,8 @@
     "kbar": "^0.1.0-beta.45",
     "lande": "^1.0.10",
     "next": "15.2.6",
-    "react": "19.1.0",
-    "react-dom": "19.1.0",
+    "react": "19.1.2",
+    "react-dom": "19.1.2",
     "react-dropzone": "^14.3.5",
     "react-json-view": "1.21.3",
     "react-tailwindcss-select": "^1.8.5",
@@ -61,8 +61,8 @@
   },
   "resolutions": {
     "jackspeak": "2.1.1",
-    "@types/react": "19.1.0",
-    "@types/react-dom": "19.1.1"
+    "@types/react": "19.1.2",
+    "@types/react-dom": "19.1.2"
   },
   "volta": {
     "node": "20.9.0"
