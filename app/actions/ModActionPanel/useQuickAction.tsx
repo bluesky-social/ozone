@@ -13,7 +13,13 @@ import {
   isSelfLabel,
 } from '@/common/labels/util'
 import { useKeyPressEvent } from 'react-use'
-import { DAY, HOUR, pluralize, takesKeyboardEvt } from '@/lib/util'
+import {
+  DAY,
+  getDidFromUri,
+  HOUR,
+  pluralize,
+  takesKeyboardEvt,
+} from '@/lib/util'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import {
   getCollectionName,
@@ -67,9 +73,8 @@ export const useQuickAction = (
     error: string
   }>({ isSubmitting: false, error: '' })
 
+  const subjectDid = getDidFromUri(subject)
   // Extract the DID from the subject for account-level events
-  const subjectDid = subject ? new AtUri(subject).host : ''
-
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
     useSubjectStatusQuery(subject)
 
@@ -869,7 +874,7 @@ function useSubjectQuery(subject: string) {
           labelerAgent.tools.ozone.moderation.getRecord({
             uri: subject,
           }),
-          getProfile(new AtUri(subject).host),
+          getProfile(getDidFromUri(subject)),
         ])
         return { record, profile }
       } else {
