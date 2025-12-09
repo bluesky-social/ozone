@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
-import { HOUR, DAY, pluralize } from '@/lib/util'
+import { HOUR, DAY, pluralize, getDidFromUri } from '@/lib/util'
 import {
   Agent,
   AtUri,
@@ -97,7 +97,7 @@ const useStrikeEvents = (
         }
       }
 
-      const did = subject.startsWith('did:') ? subject : new AtUri(subject).host
+      const did = subject.startsWith('did:') ? subject : getDidFromUri(subject)
       const strikeEvents = await getStrikeEvents(labelerAgent, did)
 
       const now = new Date()

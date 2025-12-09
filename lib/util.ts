@@ -378,6 +378,17 @@ export async function executeBatchedOperation<T, R>({
   return finalResults
 }
 
+export const getDidFromUri = (uri?: string) => {
+  let subjectDid = ''
+  if (uri) {
+    try {
+      subjectDid = new AtUri(uri.trim()).host
+    } catch {}
+  }
+
+  return subjectDid
+}
+
 // Utility function to determine if we should use light or dark text based on background color
 export function getReadableTextColor(backgroundColor: string) {
   const hex = backgroundColor.replace('#', '')
