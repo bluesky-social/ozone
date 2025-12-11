@@ -9,7 +9,7 @@ import { Fragment, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { ActionButton } from '@/common/buttons'
-import { Input } from '@/common/forms'
+import { Input, Textarea } from '@/common/forms'
 import { EventListState } from './useModEventList'
 
 export const ImportFilterModal = ({
@@ -85,17 +85,16 @@ export const ImportFilterModal = ({
                   onSubmit={handleSubmit}
                   className="flex flex-col items-center gap-2"
                 >
-                  <Input
-                    autoFocus
+                  <Textarea
                     disabled={isImporting}
                     name="items"
-                    placeholder={`Example: ${JSON.stringify(
+                    placeholder={`${JSON.stringify(
                       { types: ['appeal'] },
                       null,
                       1,
                     )}`}
                     className={`block p-2 w-full`}
-                    type="text"
+                    rows={5}
                   />
                   <div>
                     <ActionButton
@@ -107,7 +106,7 @@ export const ImportFilterModal = ({
                     </ActionButton>
                     <ActionButton
                       type="submit"
-                      appearance="outlined"
+                      appearance="primary"
                       disabled={isImporting}
                     >
                       Import

@@ -9,7 +9,7 @@ import { Fragment, useState } from 'react'
 import { toast } from 'react-toastify'
 
 import { ActionButton } from '@/common/buttons'
-import { Input } from '@/common/forms'
+import { Input, Textarea } from '@/common/forms'
 import { useFilterMacroUpsertMutation } from '@/mod-event/useFilterMacrosList'
 import { EventListState } from './useModEventList'
 
@@ -95,17 +95,16 @@ export const ImportMacroModal = ({
                     className={`block p-2 w-full`}
                     type="text"
                   />
-                  <Input
-                    autoFocus
+                  <Textarea
                     disabled={isImporting}
                     name="items"
-                    placeholder={`Example: ${JSON.stringify(
+                    placeholder={`${JSON.stringify(
                       { types: ['appeal'] },
                       null,
                       1,
                     )}`}
                     className={`block p-2 w-full`}
-                    type="text"
+                    rows={5}
                   />
                   <div>
                     <ActionButton
@@ -117,7 +116,7 @@ export const ImportMacroModal = ({
                     </ActionButton>
                     <ActionButton
                       type="submit"
-                      appearance="outlined"
+                      appearance="primary"
                       disabled={isImporting}
                     >
                       Import
