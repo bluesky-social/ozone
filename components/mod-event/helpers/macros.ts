@@ -41,3 +41,11 @@ export const emptyList = () => {
   setLocalStorageData(FILTER_MACROS_LIST_KEY, null)
   return []
 }
+
+export const copyToClipboard = async (name: string) => {
+  const list = getList()
+  if (list[name]) {
+    const text = JSON.stringify(list[name].filters, null, 2)
+    await navigator.clipboard.writeText(text)
+  }
+}
