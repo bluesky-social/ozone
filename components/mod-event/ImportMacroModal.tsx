@@ -99,24 +99,28 @@ export const ImportMacroModal = ({
                     autoFocus
                     disabled={isImporting}
                     name="items"
-                    placeholder={`Example: ${JSON.stringify({ types: ['appeal'] }, null, 1)}`}
+                    placeholder={`Example: ${JSON.stringify(
+                      { types: ['appeal'] },
+                      null,
+                      1,
+                    )}`}
                     className={`block p-2 w-full`}
                     type="text"
                   />
                   <div>
-                    <ActionButton
-                      type="submit"
-                      appearance="outlined"
-                      disabled={isImporting}
-                    >
-                      Import
-                    </ActionButton>
                     <ActionButton
                       appearance="outlined"
                       className="mr-2"
                       onClick={() => setIsDialogOpen(false)}
                     >
                       Cancel
+                    </ActionButton>
+                    <ActionButton
+                      type="submit"
+                      appearance="outlined"
+                      disabled={isImporting}
+                    >
+                      Import
                     </ActionButton>
                   </div>
                 </form>
