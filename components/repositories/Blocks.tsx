@@ -1,5 +1,4 @@
 import { LoadMoreButton } from '@/common/LoadMoreButton'
-import { AppBskyActorDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { AccountsGrid } from './AccountView'
 import { getProfiles, listRecords } from './api'
@@ -9,7 +8,6 @@ import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
-import { Card } from '@/common/Card'
 import { Alert } from '@/common/Alert'
 
 export function Blocks({ did }: { did: string }) {
