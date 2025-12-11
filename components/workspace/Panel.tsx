@@ -238,8 +238,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         // By default, when there are no reference subject stats, the event builder returns all selected tags to be added
         // If the user wants to remove tags, we need to swap the add and remove properties
         if (formData.get('removeTags')) {
+          coreEvent.remove = coreEvent.add 
           coreEvent.add = []
-          coreEvent.remove = coreEvent.add
         }
       }
 
