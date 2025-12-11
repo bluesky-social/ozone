@@ -5,6 +5,6 @@
   "dependencies": {
     "@atproto/ozone": "0.1.159",
     "next": "15.2.6",
-    "react": "19.1.2"
+    "react": "19.1.3"
   }
 }
