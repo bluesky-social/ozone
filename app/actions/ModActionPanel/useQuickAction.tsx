@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   $Typed,
-  AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -501,17 +500,6 @@ export const useQuickAction = (
             accountEvent.targetServices = targetServices
           }
 
-          console.log(
-            {
-              subject: {
-                $type: 'com.atproto.admin.defs#repoRef',
-                did: subjectDid,
-              },
-              createdBy: accountDid,
-              event: accountEvent,
-            },
-            targetServices,
-          )
           await onSubmit({
             subject: {
               $type: 'com.atproto.admin.defs#repoRef',
@@ -750,15 +738,17 @@ export const useQuickAction = (
     const template =
       getTemplate(templateName, communicationTemplates || []) ||
       communicationTemplates?.[0]
+
     if (!template) {
       return
     }
     const emailSubject = template.subject || ''
-    const content = compileTemplateContent(template.contentMarkdown, {
+    const templateData = {
       subjectName: isSubjectDid
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
-      handle: repo?.handle || subjectStatus?.subjectRepoHandle,
+      handle:
+        repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
       policyName: selectedPolicyName,
       strikeCount: actionRecommendation?.actualStrikesToApply
         ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
@@ -769,7 +759,11 @@ export const useQuickAction = (
             'day',
           )
         : undefined,
-    })
+    }
+    const content = compileTemplateContent(
+      template.contentMarkdown,
+      templateData,
+    )
 
     // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
     setEmailContent(content)
