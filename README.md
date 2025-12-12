@@ -30,11 +30,13 @@ docker run -p 3000:3000 ozone
 
 We recommend [`nvm`](https://github.com/nvm-sh/nvm) for managing Node.js installs. This project requires Node.js version 20. `yarn` is used to manage dependencies. You can install it with `npm install --global yarn`.
 
-First, run the development server:
+First, install dependencies and run the development server:
 
 ```bash
+npm install
 npm run dev
 # or
+yarn install
 yarn dev
 ```
 
