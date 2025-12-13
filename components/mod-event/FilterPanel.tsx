@@ -46,10 +46,18 @@ const selectClassNames = {
 }
 import { RepoFinder } from '@/repositories/Finder'
 import { Dropdown } from '@/common/Dropdown'
-import { ChevronDownIcon } from '@heroicons/react/24/solid'
+import {
+  ChevronDownIcon,
+  ClipboardIcon,
+  FolderArrowDownIcon,
+} from '@heroicons/react/24/solid'
 import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { SubjectTypeFilter } from '@/reports/QueueFilter/SubjectType'
 import { AgeAssuranceBadgeButton } from './AgeAssuranceStateBadge'
+import { toast } from 'react-toastify'
+import { ActionButton } from '@/common/buttons'
+import { ImportMacroModal } from './ImportMacroModal'
+import { ImportFilterModal } from './ImportFilterModal'
 
 export const EventFilterPanel = ({
   limit,
@@ -104,6 +112,30 @@ export const EventFilterPanel = ({
   }
   const { mutate: upsertMacro, error: upsertMacroError } =
     useFilterMacroUpsertMutation()
+
+  const [isImportOpen, setIsImportOpen] = useState(false)
+  const handleCopy = async () => {
+    const filters = {
+      types,
+      reportTypes,
+      addedLabels,
+      removedLabels,
+      commentFilter,
+      createdBy,
+      subject,
+      batchId,
+      oldestFirst,
+      createdAfter,
+      createdBefore,
+      subjectType,
+      selectedCollections,
+      ageAssuranceState,
+      withStrike,
+    }
+    const text = JSON.stringify(filters, null, 2)
+    await navigator.clipboard.writeText(text)
+    toast.success(`Copied to clipboard`)
+  }
 
   return (
     <div className="shadow dark:shadow-slate-700 rounded py-3 px-5 bg-white dark:bg-slate-800 mt-2">
@@ -357,6 +389,26 @@ export const EventFilterPanel = ({
               max={formatDateForInput(new Date())}
             />
           </FormLabel>
+          <div className="mt-5 flex gap-1">
+            <ActionButton
+              appearance="outlined"
+              size="sm"
+              type="button"
+              onClick={handleCopy}
+            >
+              <ClipboardIcon className="h-3 w-3" />
+              Copy Filters
+            </ActionButton>
+            <ActionButton
+              appearance="outlined"
+              size="sm"
+              type="button"
+              onClick={() => setIsImportOpen(true)}
+            >
+              <FolderArrowDownIcon className="h-4 w-4 mr-1" />
+              Import Filters
+            </ActionButton>
+          </div>
         </div>
       </div>
       <FormLabel label="Batch ID" htmlFor="batchId" className="flex-1 mt-2">
@@ -566,6 +618,11 @@ export const EventFilterPanel = ({
           }}
         />
       </div>
+      <ImportFilterModal
+        isOpen={isImportOpen}
+        setIsDialogOpen={setIsImportOpen}
+        onSubmit={applyFilterMacro}
+      />
     </div>
   )
 }
