@@ -106,6 +106,46 @@ export function SeverityLevelList({
                     <p className="text-sm text-gray-600 dark:text-gray-400">
                       {level.description}
                     </p>
+                    {level.contentEmailSummary && (
+                      <div className="mt-2">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          Content action email summary:
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                          {level.contentEmailSummary}
+                        </p>
+                      </div>
+                    )}
+                    {level.contentEmailBullets && (
+                      <div className="mt-2">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          Content action email bullets:
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                          {level.contentEmailBullets}
+                        </p>
+                      </div>
+                    )}
+                    {level.accountEmailSummary && (
+                      <div className="mt-2">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          Account action email summary:
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                          {level.accountEmailSummary}
+                        </p>
+                      </div>
+                    )}
+                    {level.accountEmailBullets && (
+                      <div className="mt-2">
+                        <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                          Account action email bullets:
+                        </p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                          {level.accountEmailBullets}
+                        </p>
+                      </div>
+                    )}
                   </div>
                   {canEdit && (
                     <div className="flex flex-row items-start gap-2 ml-4">

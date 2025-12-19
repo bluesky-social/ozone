@@ -108,6 +108,58 @@ export const SeverityLevelEditor = ({
         label="Requires takedown action"
       />
 
+      <FormLabel
+        label="Content action email summary"
+        htmlFor="contentEmailSummary"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="contentEmailSummary"
+          name="contentEmailSummary"
+          className="block w-full"
+          placeholder="Email summary for content actions (optional)"
+        />
+      </FormLabel>
+
+      <FormLabel
+        label="Content action email bullets"
+        htmlFor="contentEmailBullets"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="contentEmailBullets"
+          name="contentEmailBullets"
+          className="block w-full"
+          placeholder="Email bullet points for content actions (optional)"
+        />
+      </FormLabel>
+
+      <FormLabel
+        label="Account action email summary"
+        htmlFor="accountEmailSummary"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="accountEmailSummary"
+          name="accountEmailSummary"
+          className="block w-full"
+          placeholder="Email summary for account actions (optional)"
+        />
+      </FormLabel>
+
+      <FormLabel
+        label="Account action email bullets"
+        htmlFor="accountEmailBullets"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="accountEmailBullets"
+          name="accountEmailBullets"
+          className="block w-full"
+          placeholder="Email bullet points for account actions (optional)"
+        />
+      </FormLabel>
+
       <div className="flex flex-row items-center gap-2">
         <ActionButton
           size="sm"

@@ -73,6 +73,43 @@ export function PolicyList({
                       <p className="text-sm text-gray-600 dark:text-gray-400">
                         {policy.description}
                       </p>
+                      {policy.emailSummary && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            Email summary:
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                            {policy.emailSummary}
+                          </p>
+                        </div>
+                      )}
+                      {policy.emailBullets && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            Email bullets:
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                            {policy.emailBullets}
+                          </p>
+                        </div>
+                      )}
+                      {policy.emailExtraNotes && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-gray-700 dark:text-gray-300">
+                            Email extra notes:
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400 whitespace-pre-wrap">
+                            {policy.emailExtraNotes}
+                          </p>
+                        </div>
+                      )}
+                      {policy.emailNeedsContentDetails && (
+                        <div className="mt-2">
+                          <p className="text-xs font-semibold text-green-700 dark:text-green-300">
+                            ✓ Includes content details in email
+                          </p>
+                        </div>
+                      )}
                     </div>
                     {canEdit && (
                       <div className="flex flex-row items-start gap-2 ml-4">
