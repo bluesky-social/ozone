@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   $Typed,
-  AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -472,17 +471,6 @@ export const useQuickAction = (
             accountEvent.targetServices = targetServices
           }
 
-          console.log(
-            {
-              subject: {
-                $type: 'com.atproto.admin.defs#repoRef',
-                did: subjectDid,
-              },
-              createdBy: accountDid,
-              event: accountEvent,
-            },
-            targetServices,
-          )
           await onSubmit({
             subject: {
               $type: 'com.atproto.admin.defs#repoRef',
