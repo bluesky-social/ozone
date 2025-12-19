@@ -46,6 +46,7 @@ import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
 import { compileTakedownEmail } from './useTakedownEmail'
 import { format } from 'date-fns'
+import { getTemplate } from '@/email/helpers'
 
 export type QuickActionProps = {
   subject: string
@@ -705,8 +706,8 @@ export const useQuickAction = (
   )
 
   useEffect(() => {
-    if (selectedPolicyName) {
-      onEmailTemplateSelect()
+    if (selectedPolicyName && automatedEmailTemplate) {
+      onEmailTemplateSelect(automatedEmailTemplate.name)
     }
   }, [
     actionRecommendation?.isPermanent,
@@ -715,9 +716,13 @@ export const useQuickAction = (
     selectedPolicyName,
   ])
 
-  const onEmailTemplateSelect = () => {
-    // @TODO: Fix the subject, maybe we do need template after all?
-    const emailSubject = 'Your bluesky account behavior'
+  const onEmailTemplateSelect = (templateName: string) => {
+    // When templates are changed, force reset message
+    const template =
+      getTemplate(templateName, communicationTemplates || []) ||
+      communicationTemplates?.[0]
+
+    const emailSubject = template?.subject || 'Your bluesky account behavior'
 
     const policyKey = nameToKey(selectedPolicyName)
     const policy = policyData?.value?.[policyKey]
