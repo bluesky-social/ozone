@@ -134,12 +134,16 @@ export const buildAtUriFromFragments = (
   fragments: BlueSkyAppUrlFragments | null,
 ) => {
   if (fragments?.did || fragments?.handle) {
-    const uri = AtUri.make(
-      `${fragments?.did || fragments?.handle}`,
-      fragments.collection,
-      fragments.rkey,
-    )
-    return uri.toString()
+    try {
+      const uri = AtUri.make(
+        `${fragments?.did || fragments?.handle}`,
+        fragments.collection,
+        fragments.rkey,
+      )
+      return uri.toString()
+    } catch (e) {
+      return ''
+    }
   }
 
   return ''
@@ -374,6 +378,17 @@ export async function executeBatchedOperation<T, R>({
   return finalResults
 }
 
+export const getDidFromUri = (uri?: string) => {
+  let subjectDid = ''
+  if (uri) {
+    try {
+      subjectDid = new AtUri(uri.trim()).host
+    } catch {}
+  }
+
+  return subjectDid
+}
+
 // Utility function to determine if we should use light or dark text based on background color
 export function getReadableTextColor(backgroundColor: string) {
   const hex = backgroundColor.replace('#', '')
@@ -383,3 +398,7 @@ export function getReadableTextColor(backgroundColor: string) {
   const brightness = (r * 299 + g * 587 + b * 114) / 1000
   return brightness > 128 ? 'text-gray-900' : 'text-white'
 }
+
+export const MINUTE = 60 * 1000
+export const HOUR = 60 * MINUTE
+export const DAY = 24 * HOUR

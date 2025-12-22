@@ -1,3 +1,6 @@
+import { isDid } from '@atproto/api'
+import { parseAtUri } from './util'
+
 export type CsvContent = {
   filename: string
   headerRow: string
@@ -97,9 +100,23 @@ export const extractFromCSV = (data: string): string[] => {
 
   // In case header names are quoted, we want to exclude those quotes before check
   const headers = header.split(',').map(cleanCSVColumn)
-  const didIndex = headers.indexOf('did')
-  const uriIndex = headers.indexOf('uri')
+  let didIndex = headers.indexOf('did')
+  let uriIndex = headers.indexOf('uri')
 
+  // before returning an empty array due to no headers, lets first try and parse out a did or an aturi from the data
+  if (didIndex === -1 && uriIndex === -1 && content.length >= 1) {
+    for (const [idx, value] of content.entries()) {
+      if (isDid(value)) {
+        didIndex = idx
+        break
+      } else if (parseAtUri(value)) {
+        uriIndex = idx
+        break
+      }
+    }
+  }
+
+  // if we still have not found a did or uri index, now we can return empty data
   if (didIndex === -1 && uriIndex === -1) return []
 
   return content

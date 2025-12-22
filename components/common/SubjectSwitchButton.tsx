@@ -1,5 +1,5 @@
-import { AtUri } from "@atproto/api"
-import { getProfileUriForDid } from "@/reports/helpers/subject"
+import { getProfileUriForDid } from '@/reports/helpers/subject'
+import { getDidFromUri } from '@/lib/util'
 
 export const SubjectSwitchButton = ({
   subject,
@@ -17,7 +17,7 @@ export const SubjectSwitchButton = ({
         e.preventDefault()
         const newSubject = isSubjectDid
           ? getProfileUriForDid(subject)
-          : new AtUri(subject).host
+          : getDidFromUri(subject)
         setSubject(newSubject)
       }}
     >

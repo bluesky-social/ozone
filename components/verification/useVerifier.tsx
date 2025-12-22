@@ -1,4 +1,4 @@
-import { chunkArray, pluralize } from '@/lib/util'
+import { chunkArray, getDidFromUri, pluralize } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { AtUri, ToolsOzoneVerificationGrantVerifications } from '@atproto/api'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
@@ -64,7 +64,7 @@ export const useVerifier = () => {
         chunkData.revokedVerifications.forEach((uri) => {
           queryClient.invalidateQueries([
             'modActionSubject',
-            new AtUri(uri).host,
+            getDidFromUri(uri),
           ])
           data.revokedVerifications.push(uri)
         })

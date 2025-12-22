@@ -135,6 +135,7 @@ export const ModEventList = (
     createdBy?: string
     batchId?: string
     stats?: {
+      accountStrike?: ToolsOzoneModerationDefs.AccountStrike
       accountStats?: ToolsOzoneModerationDefs.AccountStats
       recordsStats?: ToolsOzoneModerationDefs.RecordsStats
     }
@@ -164,6 +165,7 @@ export const ModEventList = (
     createdBy,
     subject,
     batchId,
+    withStrike,
     oldestFirst,
     createdAfter,
     createdBefore,
@@ -258,6 +260,12 @@ export const ModEventList = (
               includeAllUserRecords: true,
               types: [MOD_EVENTS.ESCALATE],
               subjectType: 'record',
+            })
+          }}
+          onAccountStrikeClick={() => {
+            applyFilterMacro({
+              includeAllUserRecords: true,
+              withStrike: true,
             })
           }}
           stats={props.stats}
@@ -358,6 +366,7 @@ export const ModEventList = (
             subjectType,
             selectedCollections,
             ageAssuranceState,
+            withStrike,
           }}
         />
       )}

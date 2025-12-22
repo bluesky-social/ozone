@@ -9,6 +9,7 @@ import {
   UserCircleIcon,
 } from '@heroicons/react/24/solid'
 import { ComponentProps, useState, type JSX } from 'react'
+import { AccountStrike } from './AccountStrike'
 
 export const StatView = ({
   count,
@@ -19,7 +20,7 @@ export const StatView = ({
   ...rest
 }: {
   count: number
-  Icon: (props: React.ComponentProps<'svg'>) => JSX.Element
+  Icon: React.ComponentType<React.ComponentProps<'svg'>>
   text?: string
   appearance?: 'danger' | 'info' | 'warning' | 'success'
 } & ComponentProps<'button'>) => {
@@ -259,12 +260,15 @@ export const SubjectSummary = ({
   onRecordTakedownClick,
   onAccountAppealClick,
   onRecordEscalationClick,
+  onAccountStrikeClick,
 }: {
   onAccountTakedownClick?: () => void
   onRecordTakedownClick?: () => void
   onAccountAppealClick?: () => void
   onRecordEscalationClick?: () => void
+  onAccountStrikeClick?: () => void
   stats: {
+    accountStrike?: ToolsOzoneModerationDefs.AccountStrike
     accountStats?: ToolsOzoneModerationDefs.AccountStats
     recordsStats?: ToolsOzoneModerationDefs.RecordsStats
   }
@@ -273,31 +277,43 @@ export const SubjectSummary = ({
   if (!stats) return null
 
   return (
-    <div className="flex flex-row gap-1 items-center flex-wrap">
-      {stats.accountStats && (
-        <AccountStats
-          showAll={showAll}
-          stats={stats.accountStats}
-          onAccountTakedownClick={onAccountTakedownClick}
-          onAccountAppealClick={onAccountAppealClick}
+    <div className="flex flex-col gap-2">
+      {stats.accountStrike && (
+        <AccountStrike
+          size="detailed"
+          accountStrike={stats.accountStrike}
+          onClick={onAccountStrikeClick}
         />
       )}
-      {showAll && stats.recordsStats && <div className="w-full" />}
-      {stats.recordsStats && (
-        <RecordsStats
-          showAll={showAll}
-          stats={stats.recordsStats}
-          onRecordTakedownClick={onRecordTakedownClick}
-          onRecordEscalationClick={onRecordEscalationClick}
-        />
-      )}
-      {stats.recordsStats && stats.accountStats && (
-        <button type="button" onClick={() => setShowAll((current) => !current)}>
-          <span className="text-xs">
-            {showAll ? 'Show Summary' : 'Show All'}
-          </span>
-        </button>
-      )}
+      <div className="flex flex-row gap-1 items-center flex-wrap">
+        {stats.accountStats && (
+          <AccountStats
+            showAll={showAll}
+            stats={stats.accountStats}
+            onAccountTakedownClick={onAccountTakedownClick}
+            onAccountAppealClick={onAccountAppealClick}
+          />
+        )}
+        {showAll && stats.recordsStats && <div className="w-full" />}
+        {stats.recordsStats && (
+          <RecordsStats
+            showAll={showAll}
+            stats={stats.recordsStats}
+            onRecordTakedownClick={onRecordTakedownClick}
+            onRecordEscalationClick={onRecordEscalationClick}
+          />
+        )}
+        {stats.recordsStats && stats.accountStats && (
+          <button
+            type="button"
+            onClick={() => setShowAll((current) => !current)}
+          >
+            <span className="text-xs">
+              {showAll ? 'Show Summary' : 'Show All'}
+            </span>
+          </button>
+        )}
+      </div>
     </div>
   )
 }

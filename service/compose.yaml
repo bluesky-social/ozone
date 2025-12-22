@@ -48,7 +48,9 @@ services:
       - /ozone/postgres.env
   watchtower:
     container_name: watchtower
-    image: containrrr/watchtower:latest
+    # we're using a fork of watchtower, as containrrr/watchtower hasn't been
+    # updated in 2 years and is incompatible with latest docker on debian:
+    image: nickfedor/watchtower:latest
     network_mode: host
     volumes:
       - type: bind

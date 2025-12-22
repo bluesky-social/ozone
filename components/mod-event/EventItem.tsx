@@ -16,7 +16,12 @@ import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventViewWithDetails } from './useModEventList'
-import { ClockIcon, DocumentTextIcon } from '@heroicons/react/24/solid'
+import {
+  ArrowDownIcon,
+  ArrowUpIcon,
+  ClockIcon,
+  DocumentTextIcon,
+} from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { pluralize } from '@/lib/util'
 import { TextWithLinks } from '@/common/TextWithLinks'
@@ -24,7 +29,7 @@ import { ModToolInfo } from './ModToolInfo'
 import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
 import { CopyButton } from '@/common/CopyButton'
 
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { UserAgent } from '@/common/UserAgent'
 
 const LinkToAuthor = ({
@@ -56,7 +61,6 @@ const Comment = ({
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmute>
       | $Typed<ToolsOzoneModerationDefs.ModEventUnmuteReporter>
       | $Typed<ToolsOzoneModerationDefs.ModEventResolveAppeal>
-      | $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
   }
 }) => {
   return (
@@ -94,23 +98,89 @@ const Comment = ({
   )
 }
 
+const ReverseTakedown = ({
+  modEvent,
+}: {
+  modEvent: Omit<ModEventViewWithDetails, 'event'> & {
+    event: $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between text-gray-500">
+        <span>
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : modEvent.createdBy}
+        </span>
+      </div>
+      {modEvent.event.comment && (
+        <TextWithLinks text={modEvent.event.comment} />
+      )}
+      <TakedownPolicy policies={modEvent.event.policies} />
+      <StrikeInfo
+        strikeCount={modEvent.event.strikeCount}
+        severityLevel={modEvent.event.severityLevel}
+      />
+    </>
+  )
+}
+
 const Email = ({
   modEvent,
 }: {
   modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventEmail>
 }) => {
+  const [showEmailContent, setShowEmailContent] = useState(false)
   return (
     <>
-      <p className="text-gray-500">
-        By{' '}
-        {modEvent.creatorHandle
-          ? `@${modEvent.creatorHandle}`
-          : `${modEvent.createdBy}`}
-      </p>
+      <div className="flex flex-row justify-between">
+        <p className="text-gray-500">
+          By{' '}
+          {modEvent.creatorHandle
+            ? `@${modEvent.creatorHandle}`
+            : `${modEvent.createdBy}`}
+        </p>
+        {modEvent.event.isDelivered === false && (
+          <LabelChip className="bg-red-200 text-red-800">
+            Not delivered
+          </LabelChip>
+        )}
+      </div>
       {modEvent.event.subjectLine && (
         <p>Subject: {modEvent.event.subjectLine}</p>
       )}
       {modEvent.event.comment && <p>{modEvent.event.comment}</p>}
+      {modEvent.event.content && (
+        <div className="mt-1">
+          {!showEmailContent ? (
+            <button
+              className="underline"
+              onClick={() => setShowEmailContent(true)}
+            >
+              Show email content
+              <ArrowDownIcon className="inline ml-1 h-3 w-3" />
+            </button>
+          ) : (
+            <div>
+              <button onClick={() => setShowEmailContent(false)}>
+                Email content <ArrowUpIcon className="inline ml-1 h-3 w-3" />
+              </button>
+              <div
+                className="border rounded-xs p-1 dark:border-gray-600"
+                dangerouslySetInnerHTML={{ __html: modEvent.event.content }}
+              />
+            </div>
+          )}
+        </div>
+      )}
+      <TakedownPolicy policies={modEvent.event.policies} />
+      <StrikeInfo
+        strikeCount={modEvent.event.strikeCount}
+        severityLevel={modEvent.event.severityLevel}
+        strikeExpiresAt={modEvent.event.strikeExpiresAt}
+      />
     </>
   )
 }
@@ -177,7 +247,12 @@ const AgeAssurance = ({
           />
         </span>
         <div className="flex items-center gap-2">
-          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+          <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />{' '}
+          {modEvent.event.access && (
+            <LabelChip className="uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              {modEvent.event.access}
+            </LabelChip>
+          )}
         </div>
       </div>
 
@@ -232,6 +307,11 @@ const AgeAssuranceOverride = ({
         </span>
         <div className="flex items-center gap-2">
           <AgeAssuranceBadge ageAssuranceState={modEvent.event.status} />
+          {modEvent.event.access && (
+            <LabelChip className="uppercase bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+              {modEvent.event.access}
+            </LabelChip>
+          )}
         </div>
       </div>
 
@@ -314,6 +394,51 @@ export const TakedownPolicy = ({ policies }: { policies?: string[] }) => {
   )
 }
 
+const StrikeInfo = ({
+  strikeCount,
+  severityLevel,
+  strikeExpiresAt,
+}: {
+  strikeCount?: number
+  severityLevel?: string
+  strikeExpiresAt?: string
+}) => {
+  // Return null if all fields are undefined
+  if (!strikeCount && !severityLevel && !strikeExpiresAt) {
+    return null
+  }
+
+  return (
+    <div className="flex flex-row items-center gap-2 flex-wrap text-xs mt-1">
+      {strikeCount !== undefined && strikeCount !== null && (
+        <span className="px-2 py-0.5 bg-orange-100 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300 rounded">
+          {pluralize(strikeCount, 'strike')}
+        </span>
+      )}
+      {severityLevel && (
+        <span className="px-2 py-0.5 bg-purple-100 dark:bg-purple-900/30 text-purple-700 dark:text-purple-300 rounded">
+          {severityLevel}
+        </span>
+      )}
+      {strikeExpiresAt && (
+        <span className="px-2 py-0.5 bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 rounded flex items-center">
+          <ClockIcon className="h-3 w-3 inline-block mr-1" />
+          Expires: {dateFormatter.format(new Date(strikeExpiresAt))}
+        </span>
+      )}
+    </div>
+  )
+}
+
+const formatSuspensionDuration = (durationInHours: number) => {
+  if (durationInHours < 24) {
+    return pluralize(durationInHours, 'hr')
+  }
+
+  const days = (durationInHours / 24).toFixed(1)
+  return pluralize(Number(days), 'day')
+}
+
 const TakedownOrMute = ({
   modEvent,
 }: {
@@ -337,7 +462,7 @@ const TakedownOrMute = ({
         <div>
           {!!modEvent.event.durationInHours && (
             <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ">
-              {modEvent.event.durationInHours}hrs
+              {formatSuspensionDuration(modEvent.event.durationInHours)}
             </span>
           )}
           {ToolsOzoneModerationDefs.isModEventMuteReporter(modEvent.event) && (
@@ -353,12 +478,29 @@ const TakedownOrMute = ({
           Until {dateFormatter.format(expiresAt)}
         </p>
       )}
-      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
-        <TakedownPolicy policies={modEvent.event.policies} />
-      )}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
+
+      {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (
+        <>
+          <TakedownPolicy policies={modEvent.event.policies} />
+          <div className="flex flex-row gap-2 items-center">
+            <StrikeInfo
+              strikeCount={modEvent.event.strikeCount}
+              severityLevel={modEvent.event.severityLevel}
+              strikeExpiresAt={modEvent.event.strikeExpiresAt}
+            />
+            {!!modEvent.event.targetServices?.length && (
+              <div className="flex flex-row gap-2 mt-1">
+                {modEvent.event.targetServices.map((service) => (
+                  <LabelChip key={service}>{service}</LabelChip>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
+      )}
       {/* This is only for legacy actions, new actions won't have these properties for these events */}
       <EventLabels
         header="Added: "
@@ -627,12 +769,18 @@ export const ModEventItem = ({
     ) ||
     asPredicate(ToolsOzoneModerationDefs.validateModEventResolveAppeal)(
       modEvent.event,
-    ) ||
+    )
+  ) {
+    eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
+  }
+  if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventReverseTakedown)(
       modEvent.event,
     )
   ) {
-    eventItem = <Comment modEvent={{ ...modEvent, event: modEvent.event }} />
+    eventItem = (
+      <ReverseTakedown modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
   }
   if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventDivert)(modEvent.event)

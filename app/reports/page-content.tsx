@@ -57,6 +57,13 @@ const TABS = [
       ToolsOzoneModerationDefs.REVIEWCLOSED,
     )}`,
   },
+  {
+    key: 'noreview',
+    name: 'No review',
+    href: `/reports?reviewState=${encodeURIComponent(
+      ToolsOzoneModerationDefs.REVIEWNONE,
+    )}`,
+  },
   { key: 'all', name: 'All', href: '/reports' },
 ]
 
@@ -295,6 +302,7 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
     [ToolsOzoneModerationDefs.REVIEWESCALATED]: 'escalated',
     [ToolsOzoneModerationDefs.REVIEWCLOSED]: 'resolved',
     [ToolsOzoneModerationDefs.REVIEWOPEN]: 'unresolved',
+    [ToolsOzoneModerationDefs.REVIEWNONE]: 'noreview',
   }
 
   if (reviewState) {

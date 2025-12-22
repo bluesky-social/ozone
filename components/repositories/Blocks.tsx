@@ -1,5 +1,4 @@
 import { LoadMoreButton } from '@/common/LoadMoreButton'
-import { AppBskyActorDefs } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { AccountsGrid } from './AccountView'
 import { getProfiles, listRecords } from './api'
@@ -9,6 +8,7 @@ import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
+import { Alert } from '@/common/Alert'
 
 export function Blocks({ did }: { did: string }) {
   const labelerAgent = useLabelerAgent()
@@ -17,14 +17,19 @@ export function Blocks({ did }: { did: string }) {
   const [isAdding, setIsAdding] = useState(false)
   const { mutateAsync: addItemsToWorkspace } = useWorkspaceAddItemsMutation()
 
-  const { data, error, fetchNextPage, hasNextPage, isInitialLoading } =
+  const { data, error, fetchNextPage, hasNextPage, isInitialLoading, refetch } =
     useInfiniteQuery({
       queryKey: ['blocks', { did }],
       queryFn: async ({ pageParam }) => {
         const data = await listRecords(did, 'app.bsky.graph.block', {
           cursor: pageParam,
         })
-        const actors = data.records.map(
+
+        if (data.error) {
+          throw new Error(data.message || 'Error fetching blocks')
+        }
+
+        const actors = (data.records || []).map(
           (record) => record.value['subject'] as string,
         )
         if (!actors.length) {
@@ -38,6 +43,7 @@ export function Blocks({ did }: { did: string }) {
         }
       },
       getNextPageParam: (lastPage) => lastPage.cursor,
+      retry: 2,
     })
   const blockedAccounts = data?.pages.flatMap((page) => page.accounts) ?? []
 
@@ -62,6 +68,7 @@ export function Blocks({ did }: { did: string }) {
           { signal: abortController.current?.signal },
         )
 
+        console.log(data)
         await addItemsToWorkspace(
           data.records.map((record) => record.value['subject'] as string),
         )
@@ -128,9 +135,27 @@ export function Blocks({ did }: { did: string }) {
         </div>
       )}
 
+      {!!error && !isInitialLoading && (
+        <div className="flex flex-col items-center justify-center py-8 px-4">
+          <Alert
+            type="error"
+            title="Failed to load blocked accounts"
+            body={
+              <>
+                {error instanceof Error ? error.message : 'Unknown error'}
+                <button className="ml-1 underline" onClick={() => refetch()}>
+                  Click here
+                </button>{' '}
+                to retry.
+              </>
+            }
+          />
+        </div>
+      )}
+
       <AccountsGrid
         isLoading={isInitialLoading}
-        error={String(error ?? '')}
+        error={''}
         accounts={blockedAccounts}
       />
 
