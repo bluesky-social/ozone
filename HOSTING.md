@@ -25,13 +25,13 @@ Ensure that you can ssh to your server and have root access.
 
 **Server Recommendations**
 
-|                  |              |
-| ---------------- | ------------ |
-| Operating System | Ubuntu 22.04 |
-| Memory           | 2+ GB RAM    |
-| CPU              | 2+ Cores     |
-| Storage          | 40+ GB SSD   |
-| Architectures    | amd64, arm64 |
+|                  |                    |
+| ---------------- | ------------------ |
+| Operating System | Ubuntu 22.04/24.04 |
+| Memory           | 2+ GB RAM          |
+| CPU              | 2+ Cores           |
+| Storage          | 40+ GB SSD         |
+| Architectures    | amd64, arm64       |
 
 > [!TIP]
 > It is a good security practice to restrict inbound ssh access (port 22/tcp) to your own computer's public IP address. You can check your current public IP address using [ifconfig.me](https://ifconfig.me/).
@@ -78,7 +78,7 @@ Check the following:
 
 This should return your server's public IP.
 
-### Installing on Ubuntu 22.04
+### Installing on Ubuntu 22.04/24.04
 
 > [!TIP]
 > Ozone will run on other Linux distributions but will require different commands.
@@ -91,6 +91,9 @@ If your server is running a Linux firewall managed with `ufw`, you will need to 
 $ sudo ufw allow 80/tcp
 $ sudo ufw allow 443/tcp
 ```
+
+> **Note**
+> `ufw` is preinstalled on some Ubuntu distributions — don't skip this step!
 
 #### Install Docker
 
@@ -170,6 +173,9 @@ ozone.example.com {
 }
 CADDYFILE
 ```
+
+> **Note**
+> Caddy automatically configures HTTPS for you using LetsEncrypt, so you don't need to do anything else with TLS after verifying that your domain resolves to the right address.
 
 #### Create the Postgres env configuration file
 
