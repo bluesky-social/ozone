@@ -7,9 +7,12 @@ import {
   AppBskyEmbedVideo,
   AppBskyFeedDefs,
   AppBskyFeedPost,
+  asPredicate,
 } from '@atproto/api'
 
-export const isValidPostRecord = (record: unknown) => {
+export const isValidPostRecord = (
+  record: unknown,
+): record is AppBskyFeedPost.Record => {
   const result = AppBskyFeedPost.validateRecord(record)
   if (result.success) {
     return result.success
