@@ -10,7 +10,21 @@ import {
   asPredicate,
 } from '@atproto/api'
 
-export const isValidPostRecord = asPredicate(AppBskyFeedPost.validateRecord)
+export const isValidPostRecord = (
+  record: unknown,
+): record is AppBskyFeedPost.Record => {
+  const result = AppBskyFeedPost.validateRecord(record)
+  if (result.success) {
+    return result.success
+  }
+
+  // @TODO: Temp hack to bypass blob validation failing for valid records
+  if (result.error.message.includes('should be a blob ref')) {
+    return true
+  }
+
+  return false
+}
 
 export type KnownEmbedView =
   | $Typed<AppBskyEmbedExternal.View>
