@@ -6,20 +6,6 @@ import {
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 
-const getImageAlts = (embed: Record<string, unknown>) => {
-  const alts: string[] = []
-
-  if (Array.isArray(embed.images)) {
-    embed.images.forEach((img) => {
-      if ('alt' in img) {
-        alts.push(String(img.alt))
-      }
-    })
-  }
-
-  return alts
-}
-
 export const useCopyRecordDetails = ({
   record,
 }: {
