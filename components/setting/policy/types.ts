@@ -10,6 +10,10 @@ export type PolicyDetail = {
   name: string
   description: string
   url?: string
+  emailSummary?: string
+  emailBullets?: string
+  emailExtraNotes?: string
+  emailNeedsContentDetails?: boolean
   severityLevels?: Record<string, SeverityLevelConfig>
 }
 

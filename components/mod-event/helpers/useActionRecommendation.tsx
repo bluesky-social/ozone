@@ -36,6 +36,7 @@ export type ActionRecommendation = {
   needsReverseTakedown?: boolean
   adjustedTakedownDurationInHours?: number
   strikeData?: StrikeData
+  thresholdCrossed?: number
 }
 
 const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
@@ -461,6 +462,7 @@ export const useActionRecommendation = (
       actualStrikesToApply,
       message,
       strikeData,
+      thresholdCrossed: matchedThreshold || undefined,
     }
   }
 

@@ -91,14 +91,5 @@ export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
   )
 
 export const AUTOMATED_ACTION_EMAIL_IDS = {
-  warningWithTakedown:
-    process.env.NEXT_PUBLIC_WARNING_WITH_TAKEDOWN_EMAIL_TEMPLATE_ID,
-  suspensionWithTakedown:
-    process.env.NEXT_PUBLIC_SUSPENSION_WITH_TAKEDOWN_EMAIL_TEMPLATE_ID,
-  suspensionWithoutTakedown:
-    process.env.NEXT_PUBLIC_SUSPENSION_WITHOUT_TAKEDOWN_EMAIL_TEMPLATE_ID,
-  permanentTakedown:
-    process.env.NEXT_PUBLIC_PERMANENT_TAKEDOWN_EMAIL_TEMPLATE_ID,
-  takedownWithoutStrike:
-    process.env.NEXT_PUBLIC_TAKEDOWN_WITHOUT_STRIKE_EMAIL_TEMPLATE_ID,
+  strike: process.env.NEXT_PUBLIC_STRIKE_EMAIL_TEMPLATE_ID,
 }

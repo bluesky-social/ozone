@@ -40,10 +40,12 @@ import {
   getRecipientsLanguages,
 } from '@/email/Composer'
 import { useColorScheme } from '@/common/useColorScheme'
-import { compileTemplateContent, getTemplate } from '@/email/helpers'
 import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
+import { compileTakedownEmail } from './useTakedownEmail'
+import { format } from 'date-fns'
+import { getTemplate } from '@/email/helpers'
 
 export type QuickActionProps = {
   subject: string
@@ -249,41 +251,10 @@ export const useQuickAction = (
     enabled: needsAutomatedEmail,
   })
 
-  let automatedEmailTemplateId: string | undefined
-
-  if (isTakedownEvent && !isSubjectDid) {
-    if (
-      actionRecommendation?.suspensionDurationInHours &&
-      actionRecommendation?.suspensionDurationInHours > 0
-    ) {
-      automatedEmailTemplateId =
-        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithTakedown
-    } else if (actionRecommendation?.isPermanent) {
-      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
-    } else if (
-      actionRecommendation?.actualStrikesToApply &&
-      actionRecommendation?.actualStrikesToApply > 0
-    ) {
-      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.warningWithTakedown
-    } else {
-      automatedEmailTemplateId =
-        AUTOMATED_ACTION_EMAIL_IDS.takedownWithoutStrike
-    }
-  } else {
-    if (actionRecommendation?.isPermanent) {
-      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
-    }
-
-    if (
-      actionRecommendation?.suspensionDurationInHours &&
-      actionRecommendation?.suspensionDurationInHours > 0
-    ) {
-      automatedEmailTemplateId =
-        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithoutTakedown
-    }
-  }
-  const automatedEmailTemplate = automatedEmailTemplateId
-    ? communicationTemplates?.find((tpl) => tpl.id === automatedEmailTemplateId)
+  const automatedEmailTemplate = AUTOMATED_ACTION_EMAIL_IDS.strike
+    ? communicationTemplates?.find(
+        (tpl) => tpl.id === AUTOMATED_ACTION_EMAIL_IDS.strike,
+      )
     : undefined
 
   // Only check recipient status if we have automated email templates configured
@@ -739,31 +710,48 @@ export const useQuickAction = (
       getTemplate(templateName, communicationTemplates || []) ||
       communicationTemplates?.[0]
 
-    if (!template) {
-      return
-    }
-    const emailSubject = template.subject || ''
-    const templateData = {
+    const emailSubject = template?.subject || 'Your bluesky account behavior'
+
+    const policyKey = nameToKey(selectedPolicyName)
+    const policy = policyData?.value?.[policyKey]
+    const severityLevelKey = nameToKey(selectedSeverityLevelName)
+    const severityLevel = severityLevelData?.value?.[severityLevelKey]
+
+    const content = compileTakedownEmail({
       subjectName: isSubjectDid
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
-      handle:
-        repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
-      policyName: selectedPolicyName,
-      strikeCount: actionRecommendation?.actualStrikesToApply
-        ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
-        : undefined,
+      recordContent: record?.value?.text ? `${record.value.text}` : undefined,
+      handle: repo?.handle || subjectStatus?.subjectRepoHandle,
+      totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,
+      previousStrikes: currentStrikes,
       suspensionDuration: actionRecommendation?.suspensionDurationInHours
         ? pluralize(
             (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
             'day',
           )
         : undefined,
-    }
-    const content = compileTemplateContent(
-      template.contentMarkdown,
-      templateData,
-    )
+      suspensionEndDate: actionRecommendation?.suspensionDurationInHours
+        ? format(
+            new Date(
+              Date.now() +
+                actionRecommendation.suspensionDurationInHours * HOUR,
+            ),
+            'do MMM, yyyy',
+          )
+        : undefined,
+      isPermanent: actionRecommendation?.isPermanent,
+      policyConfig: policy ?? undefined,
+      severityLevelConfig: severityLevel,
+      thresholdCrossed: actionRecommendation?.thresholdCrossed,
+      // Only when we are applying a policy where strike will be applied on repeat occurrence
+      // but the current action is not applying any strikes
+      isFirstSev1ForPolicy:
+        !!severityLevel?.strikeCount &&
+        !!severityLevel?.strikeOnOccurrence &&
+        severityLevel.strikeOnOccurrence > 0 &&
+        !actionRecommendation?.totalStrikes,
+    })
 
     // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
     setEmailContent(content)
