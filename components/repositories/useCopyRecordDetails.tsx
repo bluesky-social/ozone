@@ -6,20 +6,6 @@ import {
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 
-const getImageAlts = (embed: Record<string, unknown>) => {
-  const alts: string[] = []
-
-  if (Array.isArray(embed.images)) {
-    embed.images.forEach((img) => {
-      if ('alt' in img) {
-        alts.push(String(img.alt))
-      }
-    })
-  }
-
-  return alts
-}
-
 export const useCopyRecordDetails = ({
   record,
 }: {
@@ -43,13 +29,6 @@ export const useCopyRecordDetails = ({
         record.value.embed.media.images.forEach((img, i) => {
           data += `Image ${i + 1} ALT: ${img.alt}\n`
         })
-      } else {
-        // @TODO: Temp fix to work around BlobRef lexicon validation failing
-        data += getImageAlts(
-          record.value.embed as unknown as Record<string, unknown>,
-        )
-          .map((alt, i) => `Image ${i + 1} ALT: ${alt}\n`)
-          .join('')
       }
     }
     copyToClipboard(data, 'record details')
