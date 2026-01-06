@@ -104,7 +104,7 @@ export const AccountHistory = ({ did }: { did: string }) => {
 
   if (isLoading) return <Loading />
 
-  if (!history) {
+  if (!history?.length) {
     return <h4 className="text-red-500 mb-3">No account history found!</h4>
   }
 

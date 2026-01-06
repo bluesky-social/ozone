@@ -116,7 +116,7 @@ export const useQuickAction = (
   const [selectedSeverityLevelName, setSelectedSeverityLevelName] =
     useState<string>('')
   const [targetServices, setTargetServices] = useState<TakedownTargetService[]>(
-    ['appview', 'pds'],
+    ['appview'],
   )
 
   const { data: policyData } = usePolicyListSetting()
@@ -157,8 +157,8 @@ export const useQuickAction = (
     if (configuredServices && configuredServices.length > 0) {
       setTargetServices(configuredServices)
     } else {
-      // Default to both if not configured
-      setTargetServices(['appview', 'pds'])
+      // Default to appview if not configured
+      setTargetServices(['appview'])
     }
   }
 

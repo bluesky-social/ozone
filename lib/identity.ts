@@ -96,5 +96,8 @@ export type DidDocData = {
   did: string
   alsoKnownAs: string[]
   verificationMethods: Record<string, string>
-  services: Record<string, { type: string; endpoint: string }>
+  services: Record<
+    string,
+    { type: string; serviceEndpoint?: string; endpoint?: string }
+  >
 }

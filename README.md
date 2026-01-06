@@ -16,44 +16,11 @@ Features:
 
 See [User Guide](./docs/userguide.md) for a quick introduction for users of the interface.
 
-## Docker Quickstart
+## Quickstart
 
-```bash
-# build image
-docker build -t ozone .
+You can self-host Ozone to run your own moderation service. Start with [HOSTING.md](./HOSTING.md). We This will produce a Dockerized setup for hosting the Ozone UI and backend together.
 
-# run the image
-docker run -p 3000:3000 ozone
-```
-
-## Development Quickstart
-
-We recommend [`nvm`](https://github.com/nvm-sh/nvm) for managing Node.js installs. This project requires Node.js version 20. `yarn` is used to manage dependencies. You can install it with `npm install --global yarn`.
-
-First, run the development server:
-
-```bash
-npm run dev
-# or
-yarn dev
-```
-
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
-
-See [HACKING](./HACKING.md) for other development tricks, like development with a local PDS instance, or working with un-released changes to the `@atproto/api` package.
-
-## Running your own Ozone labeler service
-
-> [!TIP]
-> There is a comprehensive guide for setting up your own Ozone labeler service within [HOSTING.md](./HOSTING.md).
-
-We offer a Dockerized setup for hosting both the Ozone UI and backend together. This allows you to run an Ozone labeler service on the network, which users of the Bluesky application can discover and opt into. There are a few requirements to get this setup:
-
-1. Create a "service account" for your labeler. This is the account that users will discover in the application, allowing them to subscribe to your labeler. You should _not_ use your personal account as an Ozone labeler service account. It can be created on [bsky.app](https://bsky.app) just like a typical account.
-2. Start running the Ozone UI and backend on the public internet. The service only relies on Postgres, and is generally quite cheap and easy to run. It should be served over https at a domain that you own.
-3. Associate your Ozone labeler service with your service account, and announce it to the network. Your Ozone UI will help you with this if you login to Ozone using your service account.
-
-This process is outlined in detail within [HOSTING.md](./HOSTING.md).
+See [HACKING.md](./HACKING.md) for local development requirements, like development with a local PDS instance, or working with un-released changes to the `@atproto/api` package.
 
 ## Contributions
 

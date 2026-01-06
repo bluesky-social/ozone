@@ -158,3 +158,15 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonCivicImpersonation',
   ],
 }
+
+export const getTagForReport = (reasonType: string) => {
+  const reasonWithoutPrefix = reasonType
+    .replace('com.atproto.moderation.defs#reason', '')
+    .replace('tools.ozone.report.defs#reason', '')
+
+  const kebabCase = reasonWithoutPrefix
+    .replace(/([a-z])([A-Z])/g, '$1-$2')
+    .toLowerCase()
+
+  return `report:${kebabCase}`
+}

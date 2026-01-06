@@ -54,6 +54,7 @@ import { Loading, LoadingFailed } from '../common/Loader'
 import { ReportPanel } from '../reports/ReportPanel'
 import { Blocks } from './Blocks'
 import { DidHistory } from './DidHistory'
+import { DidWebDetails } from './DidWebDetails'
 import { InviteCodeGenerationStatus } from './InviteCodeGenerationStatus'
 import { MuteReporting } from './MuteReporting'
 import { ProfileAvatar } from './ProfileAvatar'
@@ -510,6 +511,7 @@ function Details({
   const labels = getLabelsForSubject({ repo })
   const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
+  const isDidWeb = repo.did.startsWith('did:web')
   const deactivatedAt = repo.deactivatedAt
     ? dateFormatter.format(new Date(repo.deactivatedAt))
     : ''
@@ -678,6 +680,7 @@ function Details({
       </dl>
       <AccountHistory did={repo.did} />
       {canShowDidHistory && <DidHistory did={repo.did} />}
+      {isDidWeb && <DidWebDetails did={repo.did} />}
       {profile && (
         <Json
           className="mb-3"
