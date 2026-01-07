@@ -21,9 +21,13 @@ import {
   PopoverPanel,
 } from '@headlessui/react'
 import { ButtonGroup } from '@/common/buttons'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
+import { asPredicate, ToolsOzoneModerationDefs } from '@atproto/api'
 import { StatView } from './Summary'
-import { FlagIcon, ShieldExclamationIcon } from '@heroicons/react/24/solid'
+import {
+  FlagIcon,
+  ShieldExclamationIcon,
+  TrashIcon,
+} from '@heroicons/react/24/solid'
 import { PriorityScore } from './PriorityScore'
 import { AccountStrike } from './AccountStrike'
 
@@ -153,6 +157,26 @@ export const SubjectSummaryColumn = ({
   )
 }
 
+const HostingStateIcon = ({
+  hosting,
+}: {
+  hosting?: ToolsOzoneModerationDefs.SubjectStatusView['hosting']
+}) => {
+  if (!hosting) {
+    return null
+  }
+  if (
+    asPredicate(ToolsOzoneModerationDefs.validateRecordHosting)(hosting) ||
+    asPredicate(ToolsOzoneModerationDefs.validateAccountHosting)(hosting)
+  ) {
+    if (hosting.status === 'deleted') {
+      return (
+        <TrashIcon className="text-red-500 inline-block w-6 h-6 align-text-bottom" />
+      )
+    }
+  }
+}
+
 function SubjectRow({
   subjectStatus,
   ...others
@@ -207,6 +231,7 @@ function SubjectRow({
       </td>
       <td className="hidden text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <ReviewStateIcon subjectStatus={subjectStatus} className="h-5 w-5" />
+        <HostingStateIcon hosting={subjectStatus.hosting} />
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <SubjectOverview

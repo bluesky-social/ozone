@@ -20,7 +20,7 @@ export const QueueFilterAgeAssurance = () => {
 
   return (
     <div className="px-2 mt-4">
-      <h3 className="text-gray-900 dark:text-gray-200 mb-2">
+      <h3 className="text-gray-900 dark:text-gray-200 mb-1">
         <button
           type="button"
           className="flex flex-row items-center"

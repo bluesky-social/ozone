@@ -30,6 +30,9 @@ export const MOD_EVENTS = {
   SCHEDULE_TAKEDOWN: 'tools.ozone.moderation.defs#scheduleTakedownEvent',
   CANCEL_SCHEDULED_TAKEDOWN:
     'tools.ozone.moderation.defs#cancelScheduledTakedownEvent',
+  ACCOUNT: 'tools.ozone.moderation.defs#accountEvent',
+  RECORD: 'tools.ozone.moderation.defs#recordEvent',
+  IDENTITY: 'tools.ozone.moderation.defs#identityEvent',
 } as const
 
 export const MOD_EVENT_TITLES = {
