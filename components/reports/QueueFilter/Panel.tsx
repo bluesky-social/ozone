@@ -15,6 +15,7 @@ import { capitalize, classNames } from '@/lib/util'
 import { QueueFilterTags } from './Tag'
 import { QueueFilterStats } from './Stats'
 import { QueueFilterAgeAssurance } from './AgeAssurance'
+import { QueueFilterHostingStatus } from './HostingStatus'
 
 const buildTagFilterSummary = (tags: string[]) => {
   const filtered = tags.filter(Boolean)
@@ -49,14 +50,15 @@ const FilterSummary = ({
 }: {
   queueFilters: ToolsOzoneModerationQueryStatuses.QueryParams
 }) => {
-  const { tags, excludeTags, collections, subjectType, ageAssuranceState } =
+  const { tags, excludeTags, collections, subjectType, ageAssuranceState, hostingStatuses } =
     queueFilters
   if (
     !tags?.filter(Boolean).length &&
     !excludeTags?.length &&
     !collections?.length &&
     !subjectType &&
-    !ageAssuranceState
+    !ageAssuranceState &&
+    !hostingStatuses
   ) {
     return <>Filters</>
   }
@@ -78,6 +80,10 @@ const FilterSummary = ({
 
   if (ageAssuranceState) {
     inclusions.push(`Age: ${capitalize(ageAssuranceState)}`)
+  }
+
+  if (hostingStatuses?.includes('deleted')) {
+    inclusions.push('Deleted only')
   }
 
   excludeTags?.forEach((tag) => {
@@ -164,6 +170,7 @@ export const QueueFilterPanel = () => {
                 <QueueFilterTags />
                 <QueueFilterStats />
                 <QueueFilterAgeAssurance />
+                <QueueFilterHostingStatus />
               </div>
             </PopoverPanel>
           </Transition>

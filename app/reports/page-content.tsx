@@ -327,6 +327,7 @@ function useModerationQueueQuery() {
   const queueName = params.get('queueName')
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
+  const hostingStatuses = params.get('hostingStatuses')
   const minAccountSuspendCount = params.get('minAccountSuspendCount')
   const minReportedRecordsCount = params.get('minReportedRecordsCount')
   const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
@@ -361,6 +362,7 @@ function useModerationQueueQuery() {
         minTakendownRecordsCount,
         minPriorityScore,
         ageAssuranceState,
+        hostingStatuses,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -372,6 +374,9 @@ function useModerationQueueQuery() {
         queryParams.includeAllUserRecords = includeAllUserRecords
       }
 
+      if (hostingStatuses) {
+        queryParams.hostingStatuses = hostingStatuses.split(',')
+      }
       if (subject) {
         queryParams.subject = subject
       } else {
