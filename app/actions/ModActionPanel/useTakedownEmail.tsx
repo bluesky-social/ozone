@@ -22,15 +22,12 @@ export type CompileTemplateInput = {
     emailSummary?: string
     emailBullets?: string
     emailExtraNotes?: string
-    emailNeedsContentDetails?: boolean
   }
   severityLevelConfig?: {
     strikeCount?: number
     needsTakedown?: boolean
     accountEmailSummary?: string
-    accountEmailBullets?: string
     contentEmailSummary?: string
-    contentEmailBullets?: string
   }
 }
 
@@ -50,7 +47,6 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     policyConfig,
   } = input
 
-  console.log(input)
   const isAccountLevel = subjectName === 'account'
 
   const linkPolicy = policyConfig?.url
@@ -82,10 +78,9 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     }`
   })()
 
-  const postBlock =
-    recordContent && policyConfig?.emailNeedsContentDetails
-      ? `The following ${subjectName} was removed:\n\n> ${recordContent}`
-      : null
+  const postBlock = recordContent
+    ? `The following ${subjectName} was removed:\n\n> ${recordContent}`
+    : null
 
   // Strike logic (Section 2.5)
   const strikeInfo = (() => {
@@ -93,7 +88,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
       return `You will no longer be able to access this account.`
     }
 
-    if (severityLevelConfig?.strikeCount === 0) {
+    if (!severityLevelConfig?.strikeCount) {
       return `Your ${subjectName} was removed, but no new strikes have been applied to your account.`
     }
 
@@ -107,23 +102,22 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     }
 
     // Regular "You now have X strikes"
-    let out = `You now have ${totalStrikes} total strikes.`
+    let out = totalStrikes ? `You now have ${totalStrikes} total strikes.` : ''
+    const lineBreaks = out ? '\n\n' : ''
 
     // Threshold crossed → suspension triggered
-    if (thresholdCrossed && suspensionDuration && suspensionEndDate) {
-      out += `\n\nBecause you reached ${thresholdCrossed} strikes, your account has been suspended for ${suspensionDuration}. You will be able to access your account again on ${suspensionEndDate}.`
-      return out
+    const needsSuspensionCopy =
+      thresholdCrossed && suspensionDuration && suspensionEndDate
+    if (needsSuspensionCopy) {
+      out += `${lineBreaks}Because you reached ${thresholdCrossed} strikes, your account has been suspended for ${suspensionDuration}. You will be able to access your account again on ${suspensionEndDate}.`
     }
 
     // Approaching permanent ban (12–15)
     if (totalStrikes >= 12 && totalStrikes <= 15) {
-      out += `\n\n⚠️ **Warning:** You are approaching permanent account removal. At 16 strikes, your account will be permanently banned.`
-      return out
-    }
-
-    // No threshold crossed → next threshold message
-    if (nextThreshold) {
-      out += `\n\nPlease note that at ${nextThreshold} strikes, your account will be suspended for ${suspensionDuration}.`
+      out += `${lineBreaks}⚠️ **Warning:** You are approaching permanent account removal. At 16 strikes, your account will be permanently banned.`
+    } else if (nextThreshold && !needsSuspensionCopy) {
+      // No threshold crossed → next threshold message
+      out += `${lineBreaks}Please note that at ${nextThreshold} strikes, your account will be suspended for ${suspensionDuration}.`
       return out
     }
 
@@ -143,8 +137,9 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
         : '',
       postBlock,
       // Don't add severity text if the sev-level adds no strikes
-      severityLevelConfig?.strikeCount === 0 ? null : severityText,
-      strikeInfo,
+      [severityLevelConfig?.strikeCount === 0 ? null : severityText, strikeInfo]
+        .filter(Boolean)
+        .join(' '),
       policyConfig?.emailExtraNotes,
       outro,
     ),

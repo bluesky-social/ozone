@@ -37,6 +37,7 @@ export type ActionRecommendation = {
   adjustedTakedownDurationInHours?: number
   strikeData?: StrikeData
   thresholdCrossed?: number
+  nextThreshold?: number
 }
 
 const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
@@ -453,6 +454,22 @@ export const useActionRecommendation = (
     }
 
     const suspensionDurationInHours = isPermanent ? null : recommendedDuration
+    const thresholdCrossed =
+      matchedThreshold &&
+      (strikeData?.activeStrikeCount || 0) < matchedThreshold
+        ? matchedThreshold
+        : undefined
+
+    // Find the next threshold above thresholdCrossed, or use the first threshold if none exists
+    let nextThreshold: number | undefined = sortedThresholds[0]
+    if (totalStrikes) {
+      // Find next threshold above the crossed one
+      const higherThreshold = sortedThresholds.find(
+        (threshold) => threshold > totalStrikes,
+      )
+      // If no higher threshold exists, use the first threshold; otherwise use the found one
+      nextThreshold = higherThreshold ?? sortedThresholds[0]
+    }
 
     return {
       totalStrikes,
@@ -462,7 +479,8 @@ export const useActionRecommendation = (
       actualStrikesToApply,
       message,
       strikeData,
-      thresholdCrossed: matchedThreshold || undefined,
+      thresholdCrossed,
+      nextThreshold,
     }
   }
 
@@ -518,6 +536,6 @@ export const useActionRecommendation = (
     strikeDataError,
     getRecommendedAction,
     getLastContentTakedownDetails,
-    currentStrikes: strikeData?.totalStrikeCount || 0,
+    currentStrikes: strikeData?.activeStrikeCount || 0,
   }
 }

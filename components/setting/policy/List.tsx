@@ -103,13 +103,6 @@ export function PolicyList({
                           </p>
                         </div>
                       )}
-                      {policy.emailNeedsContentDetails && (
-                        <div className="mt-2">
-                          <p className="text-xs font-semibold text-green-700 dark:text-green-300">
-                            ✓ Includes content details in email
-                          </p>
-                        </div>
-                      )}
                     </div>
                     {canEdit && (
                       <div className="flex flex-row items-start gap-2 ml-4">

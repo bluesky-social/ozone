@@ -13,7 +13,6 @@ export type PolicyDetail = {
   emailSummary?: string
   emailBullets?: string
   emailExtraNotes?: string
-  emailNeedsContentDetails?: boolean
   severityLevels?: Record<string, SeverityLevelConfig>
 }
 

@@ -76,7 +76,6 @@ export const usePolicyListEditor = () => {
     const emailSummary = getTrimmedInput(formData.get('emailSummary'))
     const emailBullets = getTrimmedInput(formData.get('emailBullets'))
     const emailExtraNotes = getTrimmedInput(formData.get('emailExtraNotes'))
-    const emailNeedsContentDetails = formData.get('emailNeedsContentDetails') === 'true'
 
     const newSetting = { ...(initialSetting?.value ?? {}) }
 
@@ -93,7 +92,6 @@ export const usePolicyListEditor = () => {
       ...(emailSummary && { emailSummary }),
       ...(emailBullets && { emailBullets }),
       ...(emailExtraNotes && { emailExtraNotes }),
-      emailNeedsContentDetails,
       ...(severityLevels &&
         Object.keys(severityLevels).length > 0 && { severityLevels }),
     }

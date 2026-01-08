@@ -208,14 +208,6 @@ export const PolicyEditor = ({
           defaultValue={editingPolicy?.emailExtraNotes || ''}
         />
       </FormLabel>
-      <Checkbox
-        value="true"
-        id="emailNeedsContentDetails"
-        name="emailNeedsContentDetails"
-        className="mb-3 flex items-center"
-        label="Include content details in email"
-        defaultChecked={editingPolicy?.emailNeedsContentDetails || false}
-      />
       {!!availableSeverityLevels.length && (
         <FormLabel
           label="Severity Levels"

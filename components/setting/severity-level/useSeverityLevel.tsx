@@ -78,10 +78,12 @@ export const useSeverityLevelEditor = () => {
     )
     const expiryInDaysStr = getTrimmedInput(formData.get('expiryInDays'))
     const needsTakedown = formData.get('needsTakedown') === 'true'
-    const contentEmailSummary = getTrimmedInput(formData.get('contentEmailSummary'))
-    const contentEmailBullets = getTrimmedInput(formData.get('contentEmailBullets'))
-    const accountEmailSummary = getTrimmedInput(formData.get('accountEmailSummary'))
-    const accountEmailBullets = getTrimmedInput(formData.get('accountEmailBullets'))
+    const contentEmailSummary = getTrimmedInput(
+      formData.get('contentEmailSummary'),
+    )
+    const accountEmailSummary = getTrimmedInput(
+      formData.get('accountEmailSummary'),
+    )
 
     const newSetting = {
       ...(initialSetting?.value ?? {}),
@@ -98,9 +100,7 @@ export const useSeverityLevelEditor = () => {
         ...(expiryInDaysStr && { expiryInDays: parseInt(expiryInDaysStr, 10) }),
         needsTakedown,
         ...(contentEmailSummary && { contentEmailSummary }),
-        ...(contentEmailBullets && { contentEmailBullets }),
         ...(accountEmailSummary && { accountEmailSummary }),
-        ...(accountEmailBullets && { accountEmailBullets }),
       },
     }
     await mutation.mutateAsync(newSetting)

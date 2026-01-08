@@ -702,6 +702,7 @@ export const useQuickAction = (
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
     selectedPolicyName,
+    selectedSeverityLevelName,
   ])
 
   const onEmailTemplateSelect = (templateName: string) => {
@@ -744,6 +745,7 @@ export const useQuickAction = (
       policyConfig: policy ?? undefined,
       severityLevelConfig: severityLevel,
       thresholdCrossed: actionRecommendation?.thresholdCrossed,
+      nextThreshold: actionRecommendation?.nextThreshold,
       // Only when we are applying a policy where strike will be applied on repeat occurrence
       // but the current action is not applying any strikes
       isFirstSev1ForPolicy:
