@@ -43,7 +43,10 @@ import { useColorScheme } from '@/common/useColorScheme'
 import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
-import { compileTakedownEmail } from './useTakedownEmail'
+import {
+  compileTakedownEmail,
+  compileTakedownSubject,
+} from './useTakedownEmail'
 import { format } from 'date-fns'
 import { getTemplate } from '@/email/helpers'
 
@@ -446,6 +449,7 @@ export const useQuickAction = (
           ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
           !isSubjectDid &&
           actionRecommendation &&
+          actionRecommendation.thresholdCrossed &&
           (actionRecommendation.isPermanent ||
             actionRecommendation.suspensionDurationInHours !== null)
         ) {
@@ -711,27 +715,37 @@ export const useQuickAction = (
       getTemplate(templateName, communicationTemplates || []) ||
       communicationTemplates?.[0]
 
-    const emailSubject = template?.subject || 'Your bluesky account behavior'
-
     const policyKey = nameToKey(selectedPolicyName)
     const policy = policyData?.value?.[policyKey]
     const severityLevelKey = nameToKey(selectedSeverityLevelName)
     const severityLevel = severityLevelData?.value?.[severityLevelKey]
+    const suspensionDuration = actionRecommendation?.suspensionDurationInHours
+      ? pluralize(
+          (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
+          'day',
+        )
+      : undefined
+    const isFirstSev1ForPolicy =
+      !!severityLevel?.strikeCount &&
+      !!severityLevel?.strikeOnOccurrence &&
+      severityLevel.strikeOnOccurrence > 0 &&
+      !actionRecommendation?.actualStrikesToApply
 
+    const emailSubject = compileTakedownSubject({
+      suspensionDuration,
+      isFirstSev1ForPolicy,
+      thresholdCrossed: actionRecommendation?.thresholdCrossed,
+    })
     const content = compileTakedownEmail({
       subjectName: isSubjectDid
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
       recordContent: record?.value?.text ? `${record.value.text}` : undefined,
-      handle: repo?.handle || subjectStatus?.subjectRepoHandle,
+      handle:
+        repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
       totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,
       previousStrikes: currentStrikes,
-      suspensionDuration: actionRecommendation?.suspensionDurationInHours
-        ? pluralize(
-            (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
-            'day',
-          )
-        : undefined,
+      suspensionDuration,
       suspensionEndDate: actionRecommendation?.suspensionDurationInHours
         ? format(
             new Date(
@@ -748,11 +762,7 @@ export const useQuickAction = (
       nextThreshold: actionRecommendation?.nextThreshold,
       // Only when we are applying a policy where strike will be applied on repeat occurrence
       // but the current action is not applying any strikes
-      isFirstSev1ForPolicy:
-        !!severityLevel?.strikeCount &&
-        !!severityLevel?.strikeOnOccurrence &&
-        severityLevel.strikeOnOccurrence > 0 &&
-        !actionRecommendation?.totalStrikes,
+      isFirstSev1ForPolicy,
     })
 
     // TODO: typing here is super slow in the editor so we may need to debounce this somewhere

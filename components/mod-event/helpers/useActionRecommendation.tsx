@@ -150,11 +150,10 @@ const useStrikeEvents = (
           }
         }
 
+        totalStrikeCount += event.event.strikeCount
         // Only count strikes that haven't expired
         if (!isExpired) {
           activeStrikeCount += event.event.strikeCount
-        } else {
-          totalStrikeCount += event.event.strikeCount
         }
       }
 
@@ -439,26 +438,25 @@ export const useActionRecommendation = (
         strikeData,
       }
     }
+    const thresholdCrossed =
+      matchedThreshold &&
+      (strikeData?.activeStrikeCount || 0) < matchedThreshold
+        ? matchedThreshold
+        : undefined
+    const suspensionDurationInHours = isPermanent ? null : recommendedDuration
 
     if (actualStrikesToApply === 0 && strikeCount && strikeCount > 0) {
       // Strikes configured but not applied due to strikeOnOccurrence
       message = `${displayStrike} (no strikes added - occurrence threshold not met)`
     } else if (isPermanent) {
       message = `${displayStrike} - Account will be permanently taken down`
-    } else if (matchedThreshold !== null) {
+    } else if (thresholdCrossed) {
       message = `${displayStrike} - Account will be suspended for ${formatDurationInHours(
         recommendedDuration,
       )}`
     } else {
       message = `${displayStrike} - No suspension recommended`
     }
-
-    const suspensionDurationInHours = isPermanent ? null : recommendedDuration
-    const thresholdCrossed =
-      matchedThreshold &&
-      (strikeData?.activeStrikeCount || 0) < matchedThreshold
-        ? matchedThreshold
-        : undefined
 
     // Find the next threshold above thresholdCrossed, or use the first threshold if none exists
     let nextThreshold: number | undefined = sortedThresholds[0]

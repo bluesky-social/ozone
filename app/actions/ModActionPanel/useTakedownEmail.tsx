@@ -1,4 +1,5 @@
 import { compileTemplateContent } from '@/email/helpers'
+import { SeverityLevelDetail } from '@/setting/severity-level/types'
 
 export type CompileTemplateInput = {
   handle?: string
@@ -23,12 +24,27 @@ export type CompileTemplateInput = {
     emailBullets?: string
     emailExtraNotes?: string
   }
-  severityLevelConfig?: {
-    strikeCount?: number
-    needsTakedown?: boolean
-    accountEmailSummary?: string
-    contentEmailSummary?: string
+  severityLevelConfig?: SeverityLevelDetail
+}
+
+export function compileTakedownSubject({
+  thresholdCrossed,
+  suspensionDuration,
+  isFirstSev1ForPolicy,
+}: {
+  thresholdCrossed?: number
+  suspensionDuration?: string | null
+  isFirstSev1ForPolicy?: boolean
+}): string {
+  if (isFirstSev1ForPolicy) {
+    return `Bluesky Account Warning - Community Guidelines Violation`
   }
+
+  const applyingSuspension = thresholdCrossed && suspensionDuration
+  if (applyingSuspension) {
+    return `Bluesky Account Suspended - Community Guidelines Violation`
+  }
+  return `Bluesky Account Notice - Community Guidelines Violation`
 }
 
 export function compileTakedownEmail(input: CompileTemplateInput): string {
@@ -79,7 +95,9 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
   })()
 
   const postBlock = recordContent
-    ? `The following ${subjectName} was removed:\n\n> ${recordContent}`
+    ? `The following ${subjectName} was removed:\n\n> ${recordContent
+        .split('\n')
+        .join('\n> ')}`
     : null
 
   // Strike logic (Section 2.5)
@@ -136,8 +154,13 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
         ? `For example:\n ${policyConfig.emailBullets}`
         : '',
       postBlock,
-      // Don't add severity text if the sev-level adds no strikes
-      [severityLevelConfig?.strikeCount === 0 ? null : severityText, strikeInfo]
+      // Don't add severity text if the sev-level adds no strikes or this is the first offense on the sev-1 violation
+      [
+        severityLevelConfig?.strikeCount === 0 || isFirstSev1ForPolicy
+          ? null
+          : severityText,
+        strikeInfo,
+      ]
         .filter(Boolean)
         .join(' '),
       policyConfig?.emailExtraNotes,
