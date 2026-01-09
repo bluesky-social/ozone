@@ -68,7 +68,6 @@ export function Blocks({ did }: { did: string }) {
           { signal: abortController.current?.signal },
         )
 
-        console.log(data)
         await addItemsToWorkspace(
           data.records.map((record) => record.value['subject'] as string),
         )

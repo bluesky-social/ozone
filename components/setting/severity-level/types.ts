@@ -6,6 +6,8 @@ export type SeverityLevelDetail = {
   firstOccurrenceStrikeCount?: number
   needsTakedown?: boolean
   expiryInDays?: number
+  contentEmailSummary?: string
+  accountEmailSummary?: string
 }
 
 export type SeverityLevelListSetting = Record<string, SeverityLevelDetail>

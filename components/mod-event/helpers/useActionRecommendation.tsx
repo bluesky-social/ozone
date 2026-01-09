@@ -36,6 +36,8 @@ export type ActionRecommendation = {
   needsReverseTakedown?: boolean
   adjustedTakedownDurationInHours?: number
   strikeData?: StrikeData
+  thresholdCrossed?: number
+  nextThreshold?: number
 }
 
 const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
@@ -148,11 +150,10 @@ const useStrikeEvents = (
           }
         }
 
+        totalStrikeCount += event.event.strikeCount
         // Only count strikes that haven't expired
         if (!isExpired) {
           activeStrikeCount += event.event.strikeCount
-        } else {
-          totalStrikeCount += event.event.strikeCount
         }
       }
 
@@ -437,13 +438,19 @@ export const useActionRecommendation = (
         strikeData,
       }
     }
+    const thresholdCrossed =
+      matchedThreshold &&
+      (strikeData?.activeStrikeCount || 0) < matchedThreshold
+        ? matchedThreshold
+        : undefined
+    const suspensionDurationInHours = isPermanent ? null : recommendedDuration
 
     if (actualStrikesToApply === 0 && strikeCount && strikeCount > 0) {
       // Strikes configured but not applied due to strikeOnOccurrence
       message = `${displayStrike} (no strikes added - occurrence threshold not met)`
     } else if (isPermanent) {
       message = `${displayStrike} - Account will be permanently taken down`
-    } else if (matchedThreshold !== null) {
+    } else if (thresholdCrossed) {
       message = `${displayStrike} - Account will be suspended for ${formatDurationInHours(
         recommendedDuration,
       )}`
@@ -451,7 +458,16 @@ export const useActionRecommendation = (
       message = `${displayStrike} - No suspension recommended`
     }
 
-    const suspensionDurationInHours = isPermanent ? null : recommendedDuration
+    // Find the next threshold above thresholdCrossed, or use the first threshold if none exists
+    let nextThreshold: number | undefined = sortedThresholds[0]
+    if (totalStrikes) {
+      // Find next threshold above the crossed one
+      const higherThreshold = sortedThresholds.find(
+        (threshold) => threshold > totalStrikes,
+      )
+      // If no higher threshold exists, use the first threshold; otherwise use the found one
+      nextThreshold = higherThreshold ?? sortedThresholds[0]
+    }
 
     return {
       totalStrikes,
@@ -461,6 +477,8 @@ export const useActionRecommendation = (
       actualStrikesToApply,
       message,
       strikeData,
+      thresholdCrossed,
+      nextThreshold,
     }
   }
 
@@ -516,6 +534,6 @@ export const useActionRecommendation = (
     strikeDataError,
     getRecommendedAction,
     getLastContentTakedownDetails,
-    currentStrikes: strikeData?.totalStrikeCount || 0,
+    currentStrikes: strikeData?.activeStrikeCount || 0,
   }
 }

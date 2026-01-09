@@ -169,6 +169,45 @@ export const PolicyEditor = ({
           defaultValue={editingPolicy?.url || ''}
         />
       </FormLabel>
+      <FormLabel
+        label="Email summary"
+        htmlFor="emailSummary"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="emailSummary"
+          name="emailSummary"
+          className="block w-full"
+          placeholder="Email summary for this policy (optional)"
+          defaultValue={editingPolicy?.emailSummary || ''}
+        />
+      </FormLabel>
+      <FormLabel
+        label="Email bullets"
+        htmlFor="emailBullets"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="emailBullets"
+          name="emailBullets"
+          className="block w-full"
+          placeholder="Email bullet points for this policy (optional)"
+          defaultValue={editingPolicy?.emailBullets || ''}
+        />
+      </FormLabel>
+      <FormLabel
+        label="Email extra notes"
+        htmlFor="emailExtraNotes"
+        className="flex-1 mb-3"
+      >
+        <Textarea
+          id="emailExtraNotes"
+          name="emailExtraNotes"
+          className="block w-full"
+          placeholder="Additional email notes for this policy (optional)"
+          defaultValue={editingPolicy?.emailExtraNotes || ''}
+        />
+      </FormLabel>
       {!!availableSeverityLevels.length && (
         <FormLabel
           label="Severity Levels"
