@@ -97,6 +97,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
   const postBlock = recordContent
     ? `The following ${subjectName} was removed:\n\n> ${recordContent
         .split('\n')
+        .map((line) => `*${line}*`)
         .join('\n> ')}`
     : null
 
