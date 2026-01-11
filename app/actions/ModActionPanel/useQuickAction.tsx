@@ -48,7 +48,7 @@ import {
   compileTakedownSubject,
 } from './useTakedownEmail'
 import { format } from 'date-fns'
-import { getTemplate } from '@/email/helpers'
+import { compileTemplateContent, getTemplate } from '@/email/helpers'
 
 export type QuickActionProps = {
   subject: string
@@ -715,6 +715,20 @@ export const useQuickAction = (
       getTemplate(templateName, communicationTemplates || []) ||
       communicationTemplates?.[0]
 
+    // If the selected tpl is NOT the automated template, it usually means user wants to use a custom tpl
+    if (template?.id && template?.id !== automatedEmailTemplate?.id) {
+      const content = compileTemplateContent(template.contentMarkdown, {
+        handle:
+          repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
+      })
+      setEmailContent(content)
+      if (emailSubjectField.current) {
+        emailSubjectField.current.value =
+          template.subject || 'Bluesky Account Behavior'
+      }
+      return
+    }
+
     const policyKey = nameToKey(selectedPolicyName)
     const policy = policyData?.value?.[policyKey]
     const severityLevelKey = nameToKey(selectedSeverityLevelName)
@@ -767,8 +781,9 @@ export const useQuickAction = (
 
     // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
     setEmailContent(content)
-    if (emailSubjectField.current)
+    if (emailSubjectField.current) {
       emailSubjectField.current.value = emailSubject
+    }
   }
 
   return {
