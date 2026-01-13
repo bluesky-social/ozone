@@ -1,15 +1,19 @@
 'use client'
-import { useTitle } from 'react-use'
+import { Card } from '@/common/Card'
 import { Loading, LoadingFailed } from '@/common/Loader'
+import { ActionButton, LinkButton } from '@/common/buttons'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { ImportMacroModal } from '@/mod-event/ImportMacroModal'
+import { copyToClipboard } from '@/mod-event/helpers/macros'
 import {
   useFilterMacroList,
   useFilterMacroRemoveMutation,
 } from '@/mod-event/useFilterMacrosList'
-import { Card } from '@/common/Card'
-import { ActionButton, LinkButton } from '@/common/buttons'
+import { ClipboardIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline'
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
-import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useState } from 'react'
+import { toast } from 'react-toastify'
+import { useTitle } from 'react-use'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -24,6 +28,13 @@ export default function EventFiltersMacrosListPage() {
     error: removeMacroError,
     isLoading: removingMacroMacro,
   } = useFilterMacroRemoveMutation()
+
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false)
+
+  const copyMacro = async (name: string) => {
+    await copyToClipboard(name)
+    toast.success(`Copied "${name}" to clipboard`)
+  }
 
   useTitle('Moderation Filter Macros')
 
@@ -40,10 +51,20 @@ export default function EventFiltersMacrosListPage() {
 
   return (
     <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
-      <div className="flex flex-row justify-between items-center">
+      <div className="flex flex-row justify-between items-center gap-1">
         <h2 className="font-semibold text-gray-600 dark:text-gray-100 mb-3 mt-4">
           Event Filter Macros
         </h2>
+        <div className="flex-1" />
+        <ActionButton
+          appearance="outlined"
+          size="sm"
+          type="button"
+          onClick={() => setIsImportModalOpen(true)}
+        >
+          <FolderArrowDownIcon className="h-4 w-4 mr-1" />
+          Import Macro
+        </ActionButton>
         <LinkButton href="/events" appearance="primary" size="sm">
           <PlusIcon className="h-4 w-4 mr-1" />
           New Macro
@@ -60,6 +81,14 @@ export default function EventFiltersMacrosListPage() {
                 </p>
               </div>
               <div className="">
+                <ActionButton
+                  appearance="outlined"
+                  size="sm"
+                  type="button"
+                  onClick={() => copyMacro(name)}
+                >
+                  <ClipboardIcon className="h-3 w-3" />
+                </ActionButton>
                 <ActionButton
                   appearance="outlined"
                   size="sm"
@@ -99,6 +128,10 @@ export default function EventFiltersMacrosListPage() {
           </p>
         </div>
       )}
+      <ImportMacroModal
+        isOpen={isImportModalOpen}
+        setIsDialogOpen={setIsImportModalOpen}
+      />
     </div>
   )
 }
