@@ -343,6 +343,7 @@ export const useActionRecommendation = (
         recommendedDuration: 0,
         isPermanent: true,
         suspensionDurationInHours: null,
+        thresholdCrossed: Infinity,
         actualStrikesToApply: 0, // No strikes needed for immediate ban
         message: `${currentStrikes} previous strikes but account will be permanently taken down because severity level requires takedown`,
       }

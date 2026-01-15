@@ -3,9 +3,18 @@ import {
   AppBskyEmbedExternal,
   asPredicate,
   AppBskyActorStatus,
+  $Typed,
 } from '@atproto/api'
 import { EmbedRenderer } from '../posts/PostsFeed'
 import { useBlobUrl } from '../BlobListLightbox'
+
+// @TODO: cleanup
+const isValidEmbed = (
+  embed: AppBskyActorStatus.Main['embed'],
+): embed is $Typed<AppBskyEmbedExternal.Main> => {
+  const validation = AppBskyEmbedExternal.validateMain(embed)
+  return true
+}
 
 export function ProfileStatusCard({
   value,
@@ -45,7 +54,7 @@ export function ProfileStatusCard({
         )}
       </div>
 
-      {asPredicate(AppBskyEmbedExternal.validateMain)(value.embed) && (
+      {isValidEmbed(value.embed) && (
         <div className="mt-3 -ml-14">
           <EmbedRenderer
             embed={{
