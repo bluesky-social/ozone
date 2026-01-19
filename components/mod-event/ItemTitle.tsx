@@ -125,6 +125,15 @@ export const ItemTitle = ({
     eventColor = 'text-orange-700'
     eventTitle = 'Account credentials revoked'
   }
+  if (modEvent.event.$type === MOD_EVENTS.ACCOUNT) {
+    eventTitle = 'Account event'
+  }
+  if (modEvent.event.$type === MOD_EVENTS.RECORD) {
+    eventTitle = 'Record event'
+  }
+  if (modEvent.event.$type === MOD_EVENTS.IDENTITY) {
+    eventTitle = 'Identity event'
+  }
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus
     : modEvent.record

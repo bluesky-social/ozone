@@ -1,7 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
   $Typed,
-  AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -41,10 +40,15 @@ import {
   getRecipientsLanguages,
 } from '@/email/Composer'
 import { useColorScheme } from '@/common/useColorScheme'
-import { compileTemplateContent, getTemplate } from '@/email/helpers'
 import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
+import {
+  compileTakedownEmail,
+  compileTakedownSubject,
+} from './useTakedownEmail'
+import { format } from 'date-fns'
+import { compileTemplateContent, getTemplate } from '@/email/helpers'
 
 export type QuickActionProps = {
   subject: string
@@ -115,7 +119,7 @@ export const useQuickAction = (
   const [selectedSeverityLevelName, setSelectedSeverityLevelName] =
     useState<string>('')
   const [targetServices, setTargetServices] = useState<TakedownTargetService[]>(
-    ['appview', 'pds'],
+    ['appview'],
   )
 
   const { data: policyData } = usePolicyListSetting()
@@ -156,8 +160,8 @@ export const useQuickAction = (
     if (configuredServices && configuredServices.length > 0) {
       setTargetServices(configuredServices)
     } else {
-      // Default to both if not configured
-      setTargetServices(['appview', 'pds'])
+      // Default to appview if not configured
+      setTargetServices(['appview'])
     }
   }
 
@@ -250,41 +254,10 @@ export const useQuickAction = (
     enabled: needsAutomatedEmail,
   })
 
-  let automatedEmailTemplateId: string | undefined
-
-  if (isTakedownEvent && !isSubjectDid) {
-    if (
-      actionRecommendation?.suspensionDurationInHours &&
-      actionRecommendation?.suspensionDurationInHours > 0
-    ) {
-      automatedEmailTemplateId =
-        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithTakedown
-    } else if (actionRecommendation?.isPermanent) {
-      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
-    } else if (
-      actionRecommendation?.actualStrikesToApply &&
-      actionRecommendation?.actualStrikesToApply > 0
-    ) {
-      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.warningWithTakedown
-    } else {
-      automatedEmailTemplateId =
-        AUTOMATED_ACTION_EMAIL_IDS.takedownWithoutStrike
-    }
-  } else {
-    if (actionRecommendation?.isPermanent) {
-      automatedEmailTemplateId = AUTOMATED_ACTION_EMAIL_IDS.permanentTakedown
-    }
-
-    if (
-      actionRecommendation?.suspensionDurationInHours &&
-      actionRecommendation?.suspensionDurationInHours > 0
-    ) {
-      automatedEmailTemplateId =
-        AUTOMATED_ACTION_EMAIL_IDS.suspensionWithoutTakedown
-    }
-  }
-  const automatedEmailTemplate = automatedEmailTemplateId
-    ? communicationTemplates?.find((tpl) => tpl.id === automatedEmailTemplateId)
+  const automatedEmailTemplate = AUTOMATED_ACTION_EMAIL_IDS.strike
+    ? communicationTemplates?.find(
+        (tpl) => tpl.id === AUTOMATED_ACTION_EMAIL_IDS.strike,
+      )
     : undefined
 
   // Only check recipient status if we have automated email templates configured
@@ -476,6 +449,7 @@ export const useQuickAction = (
           ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
           !isSubjectDid &&
           actionRecommendation &&
+          actionRecommendation.thresholdCrossed &&
           (actionRecommendation.isPermanent ||
             actionRecommendation.suspensionDurationInHours !== null)
         ) {
@@ -501,17 +475,6 @@ export const useQuickAction = (
             accountEvent.targetServices = targetServices
           }
 
-          console.log(
-            {
-              subject: {
-                $type: 'com.atproto.admin.defs#repoRef',
-                did: subjectDid,
-              },
-              createdBy: accountDid,
-              event: accountEvent,
-            },
-            targetServices,
-          )
           await onSubmit({
             subject: {
               $type: 'com.atproto.admin.defs#repoRef',
@@ -743,6 +706,7 @@ export const useQuickAction = (
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
     selectedPolicyName,
+    selectedSeverityLevelName,
   ])
 
   const onEmailTemplateSelect = (templateName: string) => {
@@ -750,31 +714,76 @@ export const useQuickAction = (
     const template =
       getTemplate(templateName, communicationTemplates || []) ||
       communicationTemplates?.[0]
-    if (!template) {
+
+    // If the selected tpl is NOT the automated template, it usually means user wants to use a custom tpl
+    if (template?.id && template?.id !== automatedEmailTemplate?.id) {
+      const content = compileTemplateContent(template.contentMarkdown, {
+        handle:
+          repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
+      })
+      setEmailContent(content)
+      if (emailSubjectField.current) {
+        emailSubjectField.current.value =
+          template.subject || 'Bluesky Account Behavior'
+      }
       return
     }
-    const emailSubject = template.subject || ''
-    const content = compileTemplateContent(template.contentMarkdown, {
+
+    const policyKey = nameToKey(selectedPolicyName)
+    const policy = policyData?.value?.[policyKey]
+    const severityLevelKey = nameToKey(selectedSeverityLevelName)
+    const severityLevel = severityLevelData?.value?.[severityLevelKey]
+    const suspensionDuration = actionRecommendation?.suspensionDurationInHours
+      ? pluralize(
+          (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
+          'day',
+        )
+      : undefined
+    const isFirstSev1ForPolicy =
+      !!severityLevel?.strikeCount &&
+      !!severityLevel?.strikeOnOccurrence &&
+      severityLevel.strikeOnOccurrence > 0 &&
+      !actionRecommendation?.actualStrikesToApply
+
+    const emailSubject = compileTakedownSubject({
+      suspensionDuration,
+      isFirstSev1ForPolicy,
+      thresholdCrossed: actionRecommendation?.thresholdCrossed,
+    })
+    const content = compileTakedownEmail({
       subjectName: isSubjectDid
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
-      handle: repo?.handle || subjectStatus?.subjectRepoHandle,
-      policyName: selectedPolicyName,
-      strikeCount: actionRecommendation?.actualStrikesToApply
-        ? pluralize(actionRecommendation?.actualStrikesToApply, 'strike')
-        : undefined,
-      suspensionDuration: actionRecommendation?.suspensionDurationInHours
-        ? pluralize(
-            (actionRecommendation.suspensionDurationInHours * HOUR) / DAY,
-            'day',
+      recordContent: record?.value?.text ? `${record.value.text}` : undefined,
+      handle:
+        repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
+      totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,
+      previousStrikes: currentStrikes,
+      suspensionDuration,
+      suspensionEndDate: actionRecommendation?.suspensionDurationInHours
+        ? format(
+            new Date(
+              Date.now() +
+                actionRecommendation.suspensionDurationInHours * HOUR,
+            ),
+            'do MMM, yyyy',
           )
         : undefined,
+      isPermanent: actionRecommendation?.isPermanent,
+      policyConfig: policy ?? undefined,
+      severityLevelConfig: severityLevel,
+      thresholdCrossed: actionRecommendation?.thresholdCrossed,
+      nextThreshold: actionRecommendation?.nextThreshold,
+      // Only when we are applying a policy where strike will be applied on repeat occurrence
+      // but the current action is not applying any strikes
+      isFirstSev1ForPolicy,
     })
 
     // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
     setEmailContent(content)
-    if (emailSubjectField.current)
+    if (emailSubjectField.current) {
       emailSubjectField.current.value = emailSubject
+    }
   }
 
   return {

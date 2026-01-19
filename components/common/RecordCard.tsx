@@ -5,6 +5,7 @@ import {
   AppBskyActorDefs,
   ComAtprotoLabelDefs,
   asPredicate,
+  AppBskyActorStatus,
 } from '@atproto/api'
 import { buildBlueSkyAppUrl, parseAtUri, pluralize } from '@/lib/util'
 import { PostAsCard } from './posts/PostsFeed'
@@ -20,6 +21,7 @@ import {
   ShieldCheckIcon,
 } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
+import { ProfileStatusCard } from './profileStatus/ProfileStatusCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   getProfileFromRepo,
@@ -68,6 +70,25 @@ export function RecordCard(props: {
   }
   if (parsed.collection === CollectionId.StarterPack) {
     return <StarterPackRecordCard uri={uri} />
+  }
+  if (parsed.collection === CollectionId.ProfileStatus) {
+    return (
+      <BaseRecordCard
+        uri={uri}
+        renderRecord={(record) => {
+          console.log(record)
+          return (
+            <>
+              <RepoCard did={parsed.did} />
+              <ProfileStatusCard
+                value={record.value as unknown as AppBskyActorStatus.Main}
+                authorDid={parsed.did}
+              />
+            </>
+          )
+        }}
+      />
+    )
   }
   if (parsed?.collection === CollectionId.Profile) {
     return (
@@ -199,7 +220,7 @@ function BaseRecordCard({
     retry: false,
     queryKey: ['recordCard', { uri }],
     queryFn: async () => {
-      const { data } = await labelerAgent.api.tools.ozone.moderation.getRecord({
+      const { data } = await labelerAgent.tools.ozone.moderation.getRecord({
         uri,
       })
       return data

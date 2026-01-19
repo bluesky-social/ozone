@@ -4,19 +4,13 @@ import { useQueueFilter } from '../useQueueFilter'
 import { ActionButton } from '@/common/buttons'
 import Select from 'react-tailwindcss-select'
 import { useState } from 'react'
+import {
+  getTagForReport,
+  groupedReasonTypes,
+  reasonTypeOptions,
+} from '../helpers/getType'
 
 const availableTagOptions = {
-  report: {
-    text: 'Report Type',
-    options: [
-      { text: 'Spam', value: 'report:spam' },
-      { text: 'Rude', value: 'report:rude' },
-      { text: 'Other', value: 'report:other' },
-      { text: 'Violation', value: 'report:violation' },
-      { text: 'Misleading', value: 'report:misleading' },
-      { text: 'Sexual', value: 'report:sexual' },
-    ],
-  },
   embed: {
     text: 'Embedded Content',
     options: [
@@ -44,6 +38,16 @@ const availableTagOptions = {
     ],
   },
 }
+
+Object.entries(groupedReasonTypes).forEach(([groupKey, reportTypes]) => {
+  availableTagOptions[`reportGroup${groupKey}`] = {
+    text: `${groupKey} Report Types`,
+    options: reportTypes.map((type) => ({
+      text: reasonTypeOptions[type] || type,
+      value: getTagForReport(type),
+    })),
+  }
+})
 
 const getTagOptions = (subjectType?: string) => {
   const { embed, ...rest } = availableTagOptions

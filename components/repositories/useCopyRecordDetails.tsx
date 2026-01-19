@@ -20,8 +20,7 @@ export const useCopyRecordDetails = ({
         record.value.embed.images.forEach((img, i) => {
           data += `Image ${i + 1} ALT: ${img.alt}\n`
         })
-      }
-      if (
+      } else if (
         asPredicate(AppBskyEmbedRecordWithMedia.validateMain)(
           record.value.embed,
         ) &&

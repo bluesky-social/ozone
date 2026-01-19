@@ -143,6 +143,12 @@ export const useQueueFilter = () => {
     updateFilters({ ageAssuranceState })
   }
 
+  const toggleHostingStatus = () => {
+    const hostingStatuses =
+      queueFilters.hostingStatuses?.includes('deleted') ? undefined : ['deleted']
+    updateFilters({ hostingStatuses })
+  }
+
   return {
     queueFilters,
     updateTagExclusions,
@@ -156,5 +162,6 @@ export const useQueueFilter = () => {
     setMinTakendownRecordsCount,
     setMinPriorityScore,
     setAgeAssuranceState,
+    toggleHostingStatus,
   }
 }

@@ -46,7 +46,7 @@ const retry = (failureCount: number, error: unknown): boolean => {
       return false
     }
 
-    if (error.status === ResponseType.AuthRequired) {
+    if (error.status === ResponseType.AuthenticationRequired) {
       // User is logged in with a user that is not member of the labeler's
       // group.
       return false
