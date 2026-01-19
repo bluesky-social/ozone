@@ -56,8 +56,8 @@ import { SubjectTypeFilter } from '@/reports/QueueFilter/SubjectType'
 import { AgeAssuranceBadgeButton } from './AgeAssuranceStateBadge'
 import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
-import { ImportMacroModal } from './ImportMacroModal'
 import { ImportFilterModal } from './ImportFilterModal'
+import { copyFiltersToClipboard } from './helpers/macros'
 
 export const EventFilterPanel = ({
   limit,
@@ -115,7 +115,7 @@ export const EventFilterPanel = ({
 
   const [isImportOpen, setIsImportOpen] = useState(false)
   const handleCopy = async () => {
-    const filters = {
+    const filters: Partial<EventListState> = {
       types,
       reportTypes,
       addedLabels,
@@ -132,8 +132,7 @@ export const EventFilterPanel = ({
       ageAssuranceState,
       withStrike,
     }
-    const text = JSON.stringify(filters, null, 2)
-    await navigator.clipboard.writeText(text)
+    await copyFiltersToClipboard(filters)
     toast.success(`Copied to clipboard`)
   }
 

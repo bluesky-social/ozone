@@ -4,7 +4,7 @@ import { Loading, LoadingFailed } from '@/common/Loader'
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ImportMacroModal } from '@/mod-event/ImportMacroModal'
-import { copyToClipboard } from '@/mod-event/helpers/macros'
+import { copyMacroToClipboard } from '@/mod-event/helpers/macros'
 import {
   useFilterMacroList,
   useFilterMacroRemoveMutation,
@@ -32,7 +32,7 @@ export default function EventFiltersMacrosListPage() {
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
 
   const copyMacro = async (name: string) => {
-    await copyToClipboard(name)
+    await copyMacroToClipboard(name)
     toast.success(`Copied "${name}" to clipboard`)
   }
 

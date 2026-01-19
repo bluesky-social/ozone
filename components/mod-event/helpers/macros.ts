@@ -42,10 +42,16 @@ export const emptyList = () => {
   return []
 }
 
-export const copyToClipboard = async (name: string) => {
+export const copyMacroToClipboard = async (name: string) => {
   const list = getList()
   if (list[name]) {
-    const text = JSON.stringify(list[name].filters, null, 2)
-    await navigator.clipboard.writeText(text)
+    await copyFiltersToClipboard(list[name].filters)
   }
+}
+
+export const copyFiltersToClipboard = async (
+  filters: Partial<EventListState>,
+) => {
+  const text = JSON.stringify(filters, null, 2)
+  await navigator.clipboard.writeText(text)
 }
