@@ -42,9 +42,13 @@ export const emptyList = () => {
   return []
 }
 
+export const filtersToString = (filters: Partial<EventListState>) => {
+  return JSON.stringify(filters, null, 2)
+}
+
 export const copyFiltersToClipboard = async (
   filters: Partial<EventListState>,
 ) => {
-  const text = JSON.stringify(filters, null, 2)
+  const text = filtersToString(filters)
   await navigator.clipboard.writeText(text)
 }

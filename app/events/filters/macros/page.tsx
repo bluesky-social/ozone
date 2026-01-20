@@ -5,6 +5,7 @@ import { Loading, LoadingFailed } from '@/common/Loader'
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ImportMacroModal } from '@/mod-event/ImportMacroModal'
+import { filtersToString } from '@/mod-event/helpers/macros'
 import {
   useFilterMacroList,
   useFilterMacroRemoveMutation,
@@ -66,7 +67,7 @@ export default function EventFiltersMacrosListPage() {
       </div>
       {!!listItems.length ? (
         listItems.map(([name, item]) => {
-          const copyText = JSON.stringify(item.filters, null, 2)
+          const copyText = filtersToString(item.filters)
           return (
             <Card key={name} className="mb-3 flex justify-between">
               <div className="">
