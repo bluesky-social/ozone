@@ -58,6 +58,7 @@ import { toast } from 'react-toastify'
 import { ActionButton } from '@/common/buttons'
 import { ImportFilterModal } from './ImportFilterModal'
 import { copyFiltersToClipboard } from './helpers/macros'
+import { Tooltip } from '@/common/Tooltip'
 
 export const EventFilterPanel = ({
   limit,
@@ -388,7 +389,7 @@ export const EventFilterPanel = ({
               max={formatDateForInput(new Date())}
             />
           </FormLabel>
-          <div className="mt-5 flex gap-1">
+          <div className="mt-5 flex gap-1 items-center">
             <ActionButton
               appearance="outlined"
               size="sm"
@@ -407,6 +408,13 @@ export const EventFilterPanel = ({
               <FolderArrowDownIcon className="h-4 w-4 mr-1" />
               Import Filters
             </ActionButton>
+            <Tooltip
+              title="Filter Sharing"
+              description={`This is for sharing configs between team members.
+
+1. The sharer should click 'Copy Filters' and paste the output to their team member.
+2. The team member should click 'Import Filters' and paste the config.`}
+            />
           </div>
         </div>
       </div>
