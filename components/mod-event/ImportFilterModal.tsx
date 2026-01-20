@@ -31,6 +31,7 @@ export const ImportFilterModal = ({
       const items = formData.get('items') as string
       const filters = JSON.parse(items) as Partial<EventListState>
       onSubmit?.(filters)
+      toast.success('Filters imported successfully.')
       setIsDialogOpen(false)
     } catch (err) {
       console.error('Error importing filter:', err)
