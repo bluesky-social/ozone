@@ -42,13 +42,6 @@ export const emptyList = () => {
   return []
 }
 
-export const copyMacroToClipboard = async (name: string) => {
-  const list = getList()
-  if (list[name]) {
-    await copyFiltersToClipboard(list[name].filters)
-  }
-}
-
 export const copyFiltersToClipboard = async (
   filters: Partial<EventListState>,
 ) => {

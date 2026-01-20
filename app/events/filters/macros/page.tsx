@@ -1,18 +1,17 @@
 'use client'
 import { Card } from '@/common/Card'
+import { CopyButton } from '@/common/CopyButton'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { ActionButton, LinkButton } from '@/common/buttons'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ImportMacroModal } from '@/mod-event/ImportMacroModal'
-import { copyMacroToClipboard } from '@/mod-event/helpers/macros'
 import {
   useFilterMacroList,
   useFilterMacroRemoveMutation,
 } from '@/mod-event/useFilterMacrosList'
-import { ClipboardIcon, FolderArrowDownIcon } from '@heroicons/react/24/outline'
+import { FolderArrowDownIcon } from '@heroicons/react/24/outline'
 import { PlusIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { useState } from 'react'
-import { toast } from 'react-toastify'
 import { useTitle } from 'react-use'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
@@ -30,11 +29,6 @@ export default function EventFiltersMacrosListPage() {
   } = useFilterMacroRemoveMutation()
 
   const [isImportModalOpen, setIsImportModalOpen] = useState(false)
-
-  const copyMacro = async (name: string) => {
-    await copyMacroToClipboard(name)
-    toast.success(`Copied "${name}" to clipboard`)
-  }
 
   useTitle('Moderation Filter Macros')
 
@@ -72,6 +66,7 @@ export default function EventFiltersMacrosListPage() {
       </div>
       {!!listItems.length ? (
         listItems.map(([name, item]) => {
+          const copyText = JSON.stringify(item.filters, null, 2)
           return (
             <Card key={name} className="mb-3 flex justify-between">
               <div className="">
@@ -81,14 +76,12 @@ export default function EventFiltersMacrosListPage() {
                 </p>
               </div>
               <div className="">
-                <ActionButton
-                  appearance="outlined"
-                  size="sm"
-                  type="button"
-                  onClick={() => copyMacro(name)}
-                >
-                  <ClipboardIcon className="h-3 w-3" />
-                </ActionButton>
+                <CopyButton
+                  text={copyText}
+                  className="mr-1"
+                  labelText={`"${name}" macro `}
+                  title="Copy macro to clipboard"
+                />
                 <ActionButton
                   appearance="outlined"
                   size="sm"
