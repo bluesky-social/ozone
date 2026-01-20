@@ -1,15 +1,8 @@
-import {
-  Description,
-  Dialog,
-  DialogPanel,
-  DialogTitle,
-  TransitionChild,
-} from '@headlessui/react'
-import { Fragment, useState } from 'react'
+import { useState } from 'react'
 import { toast } from 'react-toastify'
 
-import { ActionButton } from '@/common/buttons'
-import { Input, Textarea } from '@/common/forms'
+import { Textarea } from '@/common/forms'
+import { ConfirmationModal } from '@/common/modals/confirmation'
 import { EventListState } from './useModEventList'
 
 export const ImportFilterModal = ({
@@ -22,17 +15,16 @@ export const ImportFilterModal = ({
   onSubmit?: (filters: Partial<EventListState>) => void
 }) => {
   const [isImporting, setIsImporting] = useState(false)
+  const [items, setItems] = useState('')
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleConfirm = async () => {
     try {
       setIsImporting(true)
-      e.preventDefault()
-      const formData = new FormData(e.currentTarget)
-      const items = formData.get('items') as string
       const filters = JSON.parse(items) as Partial<EventListState>
       onSubmit?.(filters)
-      toast.success('Filters imported successfully.')
+      toast.success('Filters imported.')
       setIsDialogOpen(false)
+      setItems('')
     } catch (err) {
       console.error('Error importing filter:', err)
       toast.error(
@@ -44,81 +36,22 @@ export const ImportFilterModal = ({
   }
 
   return (
-    <Dialog
-      as="div"
-      className="relative z-10"
-      open={isOpen}
-      onClose={() => setIsDialogOpen(false)}
+    <ConfirmationModal
+      isOpen={isOpen}
+      setIsOpen={setIsDialogOpen}
+      title="Import Filters"
+      onConfirm={handleConfirm}
+      confirmButtonDisabled={isImporting}
+      confirmButtonText="Import"
     >
-      <TransitionChild
-        as={Fragment}
-        enter="ease-out duration-300"
-        enterFrom="opacity-0"
-        enterTo="opacity-100"
-        leave="ease-in duration-200"
-        leaveFrom="opacity-100"
-        leaveTo="opacity-0"
-      >
-        <div className="fixed inset-0 bg-black bg-opacity-25" />
-      </TransitionChild>
-
-      <div className="fixed inset-0 overflow-y-auto">
-        <div className="flex min-h-full items-center justify-center p-4 text-center">
-          <TransitionChild
-            as={Fragment}
-            enter="ease-out duration-300"
-            enterFrom="opacity-0 scale-95"
-            enterTo="opacity-100 scale-100"
-            leave="ease-in duration-200"
-            leaveFrom="opacity-100 scale-100"
-            leaveTo="opacity-0 scale-95"
-          >
-            <DialogPanel className="w-full max-w-md transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl transition-all">
-              <DialogTitle
-                as="h3"
-                className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-50"
-              >
-                Import Filters
-              </DialogTitle>
-
-              <Description className="text-gray-600 dark:text-gray-50 mt-4">
-                <form
-                  onSubmit={handleSubmit}
-                  className="flex flex-col items-center gap-2"
-                >
-                  <Textarea
-                    disabled={isImporting}
-                    name="items"
-                    placeholder={`${JSON.stringify(
-                      { types: ['appeal'] },
-                      null,
-                      1,
-                    )}`}
-                    className={`block p-2 w-full`}
-                    rows={5}
-                  />
-                  <div>
-                    <ActionButton
-                      appearance="outlined"
-                      className="mr-2"
-                      onClick={() => setIsDialogOpen(false)}
-                    >
-                      Cancel
-                    </ActionButton>
-                    <ActionButton
-                      type="submit"
-                      appearance="primary"
-                      disabled={isImporting}
-                    >
-                      Import
-                    </ActionButton>
-                  </div>
-                </form>
-              </Description>
-            </DialogPanel>
-          </TransitionChild>
-        </div>
-      </div>
-    </Dialog>
+      <Textarea
+        disabled={isImporting}
+        value={items}
+        onChange={(e) => setItems(e.target.value)}
+        placeholder={JSON.stringify({ types: ['appeal'] }, null, 1)}
+        className="block p-2 w-full mt-4"
+        rows={5}
+      />
+    </ConfirmationModal>
   )
 }
