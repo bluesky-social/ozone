@@ -35,9 +35,10 @@ export const ImportFilterModal = ({
     }
   }
 
-  const explainer = `How to use:
-1. Click the 'Copy Filters' button in this page.
-2. Paste the results here. An example is below.`
+  const explainer = `This is for sharing configs between team members.
+
+1. The sharer should click 'Copy Filters' on this page and share the output with you.
+2. Paste the results here then click 'Import'.`
   const example = JSON.stringify(
     {
       types: [
@@ -68,7 +69,7 @@ export const ImportFilterModal = ({
       confirmButtonDisabled={isImporting}
       confirmButtonText="Import"
     >
-      <p className="mt-4 text-md font-light whitespace-pre text-gray-900 dark:text-gray-50">
+      <p className="mt-4 text-md font-light whitespace-pre-wrap text-gray-900 dark:text-gray-50">
         {explainer}
       </p>
       <Textarea
