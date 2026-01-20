@@ -202,7 +202,7 @@ export default function RecordViewPageContent({
           refetch()
         }}
       />
-      {data?.record && (
+      {data?.record ? (
         <RecordView
           list={data.listData?.list}
           record={data.record}
@@ -210,6 +210,8 @@ export default function RecordViewPageContent({
           onReport={setReportUri}
           onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
         />
+      ) : (
+        <LoadingFailed error={new Error('record not found')} />
       )}
     </>
   )
