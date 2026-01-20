@@ -35,6 +35,30 @@ export const ImportFilterModal = ({
     }
   }
 
+  const explainer = `How to use:
+1. Click the 'Copy Filters' button in this page.
+2. Paste the results here. An example is below.`
+  const example = JSON.stringify(
+    {
+      types: [
+        'appeal',
+        'tools.ozone.moderation.defs#modEventDivert',
+        'enableDms',
+      ],
+      reportTypes: [],
+      addedLabels: [],
+      removedLabels: [],
+      commentFilter: {
+        enabled: false,
+        keyword: '',
+      },
+      oldestFirst: false,
+      withStrike: false,
+    },
+    null,
+    4,
+  )
+
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -44,13 +68,16 @@ export const ImportFilterModal = ({
       confirmButtonDisabled={isImporting}
       confirmButtonText="Import"
     >
+      <p className="mt-4 text-md font-light whitespace-pre text-gray-900 dark:text-gray-50">
+        {explainer}
+      </p>
       <Textarea
         disabled={isImporting}
         value={items}
         onChange={(e) => setItems(e.target.value)}
-        placeholder={JSON.stringify({ types: ['appeal'] }, null, 1)}
-        className="block p-2 w-full mt-4"
-        rows={5}
+        placeholder={example}
+        className="block p-2 w-full mt-2"
+        rows={20}
       />
     </ConfirmationModal>
   )
