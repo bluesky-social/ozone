@@ -61,7 +61,7 @@ export function RecordView({
   onShowActionPanel,
 }: {
   list?: AppBskyGraphDefs.ListView
-  record: GetRecord.OutputSchema
+  record?: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
@@ -69,8 +69,8 @@ export function RecordView({
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const atUri = new AtUri(record.uri)
-  const isListRecord = atUri.collection === CollectionId.List
+  const atUri = record ? new AtUri(record.uri) : null
+  const isListRecord = atUri?.collection === CollectionId.List
 
   const currentView =
     TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
@@ -115,7 +115,7 @@ export function RecordView({
       {
         view: Views.Blobs,
         label: 'Blobs',
-        sublabel: String(record.blobs.length),
+        sublabel: String(record?.blobs.length || 0),
       },
       { view: Views.ModEvents, label: 'Mod Events' },
     )
@@ -132,69 +132,64 @@ export function RecordView({
               className="flex items-start px-4 py-3 sm:px-6 lg:px-8"
               aria-label="Breadcrumb"
             >
-              <Link
-                href={`/repositories/${record.repo.did}`}
-                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
-              >
-                <ChevronLeftIcon
-                  className="-ml-2 h-5 w-5 text-gray-400"
-                  aria-hidden="true"
-                />
-                <span>@{record.repo.handle}</span>
-              </Link>
+              {record && (
+                <Link
+                  href={`/repositories/${record.repo.did}`}
+                  className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
+                >
+                  <ChevronLeftIcon
+                    className="-ml-2 h-5 w-5 text-gray-400"
+                    aria-hidden="true"
+                  />
+                  <span>@{record.repo.handle}</span>
+                </Link>
+              )}
             </nav>
 
             <article>
-              <Header
-                record={record}
-                onReport={onReport}
-                onShowActionPanel={onShowActionPanel}
+              {record && (
+                <Header
+                  record={record}
+                  onReport={onReport}
+                  onShowActionPanel={onShowActionPanel}
+                />
+              )}
+              <Tabs
+                views={getTabViews()}
+                currentView={currentView}
+                onSetCurrentView={setCurrentView}
               />
-              {record ? (
-                <>
-                  <Tabs
-                    views={getTabViews()}
-                    currentView={currentView}
-                    onSetCurrentView={setCurrentView}
+              {currentView === Views.Details && record && (
+                <Details record={record} />
+              )}
+              {currentView === Views.Profiles && record && (
+                <ListAccounts uri={record.uri} />
+              )}
+              {currentView === Views.Likes &&
+                !!thread &&
+                AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
+                  <Likes
+                    uri={thread.thread.post.uri}
+                    cid={thread.thread.post.cid}
                   />
-                  {currentView === Views.Details && <Details record={record} />}
-                  {currentView === Views.Profiles && (
-                    <ListAccounts uri={record.uri} />
-                  )}
-                  {currentView === Views.Likes &&
-                    !!thread &&
-                    AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
-                      <Likes
-                        uri={thread.thread.post.uri}
-                        cid={thread.thread.post.cid}
-                      />
-                    )}
-                  {currentView === Views.Reposts &&
-                    !!thread &&
-                    AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
-                      <Reposts
-                        uri={thread.thread.post.uri}
-                        cid={thread.thread.post.cid}
-                      />
-                    )}
-                  {currentView === Views.Thread && thread && (
-                    <Thread thread={thread.thread} />
-                  )}
-                  {currentView === Views.Blobs && (
-                    <BlobsTable
-                      authorDid={record.repo.did}
-                      blobs={record.blobs}
-                    />
-                  )}
-                  {currentView === Views.ModEvents && (
-                    <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
-                      <ModEventList subject={record.uri} />
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
-                  Loading...
+                )}
+              {currentView === Views.Reposts &&
+                !!thread &&
+                AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
+                  <Reposts
+                    uri={thread.thread.post.uri}
+                    cid={thread.thread.post.cid}
+                  />
+                )}
+              {currentView === Views.Thread && thread && (
+                <Thread thread={thread.thread} />
+              )}
+              {currentView === Views.Blobs && record && (
+                <BlobsTable authorDid={record.repo.did} blobs={record.blobs} />
+              )}
+              {currentView === Views.ModEvents && record && (
+                <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
+                  <ModEventList subject={record.uri} />
                 </div>
               )}
             </article>

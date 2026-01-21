@@ -203,17 +203,13 @@ export default function RecordViewPageContent({
           refetch()
         }}
       />
-      {data?.record ? (
-        <RecordView
-          list={data.listData?.list}
-          record={data.record}
-          thread={data.thread}
-          onReport={setReportUri}
-          onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
-        />
-      ) : (
-        <LoadingFailed error={new Error('record not found')} />
-      )}
+      <RecordView
+        list={data?.listData?.list}
+        record={data?.record}
+        thread={data?.thread}
+        onReport={setReportUri}
+        onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
+      />
     </>
   )
 }
