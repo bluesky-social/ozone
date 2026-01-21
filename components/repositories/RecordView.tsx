@@ -292,6 +292,9 @@ function Details({
   const { collection, rkey } = record?.uri
     ? (parseAtUri(record.uri) ?? {})
     : (fallback ?? {})
+  const did = record?.repo?.did || fallback?.did || ''
+  const uri = record?.uri || fallback?.uri || ''
+  const value = record?.value || 'No record found'
   const labels = getLabelsForSubject({ record })
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
@@ -321,22 +324,19 @@ function Details({
             </Link>
           </DataField>
         )}
-        {record?.repo.did && (
-          <DataField label="DID" value={record.repo.did} showCopyButton>
-            <Link
-              href={`/repositories/${record.repo.did}`}
-              className="underline"
-            >
-              {record.repo.did}
+        {did && (
+          <DataField label="DID" value={did} showCopyButton>
+            <Link href={`/repositories/${did}`} className="underline">
+              {did}
             </Link>
           </DataField>
         )}
         {collection && <DataField label="Collection" value={collection} />}
         <DataField label="Rkey" value={rkey ?? ''} />
-        {record?.uri && (
+        {uri && (
           <DataField
             label="URI"
-            value={record.uri}
+            value={uri}
             showCopyButton
             shouldTruncateValue
           />
@@ -356,17 +356,13 @@ function Details({
               <ModerationLabel
                 label={label}
                 key={label.val}
-                recordAuthorDid={record?.repo.did}
+                recordAuthorDid={did}
               />
             ))}
           </LabelList>
         </DataField>
       </dl>
-      <Json
-        className="mb-3"
-        label="Contents"
-        value={record?.value || 'No record found'}
-      />
+      <Json className="mb-3" label="Contents" value={value} />
     </div>
   )
 }
