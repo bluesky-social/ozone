@@ -100,6 +100,7 @@ export default function RecordViewPageContent({
           return thread
         } catch (err) {
           if (err instanceof GetPostThread.NotFoundError) {
+            // Don't rethrow here so that the record view can still be shown.
             return undefined
           }
           throw err
