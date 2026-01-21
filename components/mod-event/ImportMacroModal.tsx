@@ -37,6 +37,31 @@ export const ImportMacroModal = ({
     }
   }
 
+  const explainer = `This is for sharing macros between team members.
+
+1. The sharer should click the copy button next to the macro and share the output with you.
+2. Fill in the macro name, paste the results in the text box, then click 'Import'.`
+  const example = JSON.stringify(
+    {
+      types: [
+        'appeal',
+        'tools.ozone.moderation.defs#modEventDivert',
+        'enableDms',
+      ],
+      reportTypes: [],
+      addedLabels: [],
+      removedLabels: [],
+      commentFilter: {
+        enabled: false,
+        keyword: '',
+      },
+      oldestFirst: false,
+      withStrike: false,
+    },
+    null,
+    4,
+  )
+
   return (
     <ConfirmationModal
       isOpen={isOpen}
@@ -47,22 +72,25 @@ export const ImportMacroModal = ({
       confirmButtonText="Import"
     >
       <div className="flex flex-col gap-2 mt-4">
+        <p className="mt-4 text-md font-light whitespace-pre-wrap text-gray-900 dark:text-gray-50">
+          {explainer}
+        </p>
         <Input
           autoFocus
           disabled={isImporting}
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Name"
-          className="block p-2 w-full"
+          className="mt-4 block p-2 w-full"
           type="text"
         />
         <Textarea
           disabled={isImporting}
           value={items}
           onChange={(e) => setItems(e.target.value)}
-          placeholder={`${JSON.stringify({ types: ['appeal'] }, null, 1)}`}
+          placeholder={example}
           className="block p-2 w-full"
-          rows={5}
+          rows={20}
         />
       </div>
     </ConfirmationModal>
