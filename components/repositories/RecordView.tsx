@@ -53,16 +53,27 @@ const TabKeys = {
   reposts: Views.Reposts,
 }
 
+/**
+ * Fallback is used when the record is not found
+ */
+export type RecordFallback = {
+  id: string
+  collection?: string
+  rkey?: string
+}
+
 export function RecordView({
   record,
   list,
   thread,
+  fallback,
   onReport,
   onShowActionPanel,
 }: {
   list?: AppBskyGraphDefs.ListView
   record?: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
+  fallback?: RecordFallback
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
@@ -159,8 +170,8 @@ export function RecordView({
                 currentView={currentView}
                 onSetCurrentView={setCurrentView}
               />
-              {currentView === Views.Details && record && (
-                <Details record={record} />
+              {currentView === Views.Details && (
+                <Details record={record} fallback={fallback} />
               )}
               {currentView === Views.Profiles && record && (
                 <ListAccounts uri={record.uri} />
@@ -261,51 +272,73 @@ function Header({
   )
 }
 
-function Details({ record }: { record: GetRecord.OutputSchema }) {
-  const { collection, rkey } = parseAtUri(record.uri) ?? {}
+function Details({
+  record,
+  fallback,
+}: {
+  record?: GetRecord.OutputSchema
+  fallback?: RecordFallback
+}) {
+  const { collection, rkey } = record?.uri
+    ? (parseAtUri(record.uri) ?? {})
+    : (fallback ?? {})
   const labels = getLabelsForSubject({ record })
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        {!!record.value?.['displayName'] && (
+        {!!record?.value?.['displayName'] && (
           <DataField
             label="Display Name"
             value={`${record.value['displayName']}`}
           />
         )}
-        {!!record.value?.['name'] && (
+        {!!record?.value?.['name'] && (
           <DataField label="Name" value={`${record.value['name']}`} />
         )}
-        {!!record.value?.['description'] && (
+        {!!record?.value?.['description'] && (
           <DataField
             label="Description"
             value={`${record.value['description']}`}
           />
         )}
-        <DataField label="Handle" value={record.repo.handle} showCopyButton>
-          <Link href={`/repositories/${record.repo.did}`} className="underline">
-            {record.repo.handle}
-          </Link>
-        </DataField>
-        <DataField label="DID" value={record.repo.did} showCopyButton>
-          <Link href={`/repositories/${record.repo.did}`} className="underline">
-            {record.repo.did}
-          </Link>
-        </DataField>
-        <DataField label="Collection" value={collection ?? ''} />
+        {record?.repo.handle && (
+          <DataField label="Handle" value={record.repo.handle} showCopyButton>
+            <Link
+              href={`/repositories/${record.repo.did}`}
+              className="underline"
+            >
+              {record.repo.handle}
+            </Link>
+          </DataField>
+        )}
+        {record?.repo.did && (
+          <DataField label="DID" value={record.repo.did} showCopyButton>
+            <Link
+              href={`/repositories/${record.repo.did}`}
+              className="underline"
+            >
+              {record.repo.did}
+            </Link>
+          </DataField>
+        )}
+        {collection && <DataField label="Collection" value={collection} />}
         <DataField label="Rkey" value={rkey ?? ''} />
-        <DataField
-          label="URI"
-          value={record.uri}
-          showCopyButton
-          shouldTruncateValue
-        />
-        <DataField
-          label="CID"
-          value={record.cid}
-          showCopyButton
-          shouldTruncateValue
-        />
+        {record?.uri && (
+          <DataField
+            label="URI"
+            value={record.uri}
+            showCopyButton
+            shouldTruncateValue
+          />
+        )}
+        {record?.cid && (
+          <DataField
+            label="CID"
+            value={record.cid}
+            showCopyButton
+            shouldTruncateValue
+          />
+        )}
         <DataField label="Labels">
           <LabelList>
             {!labels.length && <LabelListEmpty />}
@@ -313,13 +346,17 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
               <ModerationLabel
                 label={label}
                 key={label.val}
-                recordAuthorDid={record.repo.did}
+                recordAuthorDid={record?.repo.did}
               />
             ))}
           </LabelList>
         </DataField>
       </dl>
-      <Json className="mb-3" label="Contents" value={record.value} />
+      <Json
+        className="mb-3"
+        label="Contents"
+        value={record?.value || 'No record found'}
+      />
     </div>
   )
 }

@@ -207,6 +207,7 @@ export default function RecordViewPageContent({
         list={data?.listData?.list}
         record={data?.record}
         thread={data?.thread}
+        fallback={{ id, collection, rkey }}
         onReport={setReportUri}
         onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
       />
