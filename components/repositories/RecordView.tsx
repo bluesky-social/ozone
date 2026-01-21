@@ -81,7 +81,12 @@ export function RecordView({
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const atUri = record ? new AtUri(record.uri) : null
+  const uri = record?.uri || fallback?.uri
+  const atUri = uri ? new AtUri(uri) : null
+  const did = record?.repo?.did || fallback?.did || ''
+  const displayHandle = record?.repo?.handle
+    ? `@${record.repo.handle}`
+    : 'unknown'
   const isListRecord = atUri?.collection === CollectionId.List
 
   const currentView =
@@ -144,18 +149,16 @@ export function RecordView({
               className="flex items-start px-4 py-3 sm:px-6 lg:px-8"
               aria-label="Breadcrumb"
             >
-              {record && (
-                <Link
-                  href={`/repositories/${record.repo.did}`}
-                  className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
-                >
-                  <ChevronLeftIcon
-                    className="-ml-2 h-5 w-5 text-gray-400"
-                    aria-hidden="true"
-                  />
-                  <span>@{record.repo.handle}</span>
-                </Link>
-              )}
+              <Link
+                href={`/repositories/${did}`}
+                className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
+              >
+                <ChevronLeftIcon
+                  className="-ml-2 h-5 w-5 text-gray-400"
+                  aria-hidden="true"
+                />
+                <span>{displayHandle}</span>
+              </Link>
             </nav>
 
             <article>
@@ -173,8 +176,8 @@ export function RecordView({
               {currentView === Views.Details && (
                 <Details record={record} fallback={fallback} />
               )}
-              {currentView === Views.Profiles && record && (
-                <ListAccounts uri={record.uri} />
+              {currentView === Views.Profiles && uri && (
+                <ListAccounts uri={uri} />
               )}
               {currentView === Views.Likes &&
                 !!thread &&
@@ -195,12 +198,12 @@ export function RecordView({
               {currentView === Views.Thread && thread && (
                 <Thread thread={thread.thread} />
               )}
-              {currentView === Views.Blobs && record && (
-                <BlobsTable authorDid={record.repo.did} blobs={record.blobs} />
+              {currentView === Views.Blobs && (
+                <BlobsTable authorDid={did} blobs={record?.blobs || []} />
               )}
-              {currentView === Views.ModEvents && record && (
+              {currentView === Views.ModEvents && (
                 <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
-                  <ModEventList subject={record.uri} />
+                  <ModEventList subject={uri} />
                 </div>
               )}
             </article>
