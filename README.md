@@ -6,7 +6,7 @@ Ozone UI is a Next.js web application which talks directly to an Ozone "labeling
 
 Features:
 
-- viewing triaging, escalating, and actioning moderation reports
+- viewing, triaging, escalating, and actioning moderation reports
 - takedowns and suspension of content and accounts
 - creating and modifying labels on content and accounts
 - viewing invite trees and disabling invite generation
@@ -18,7 +18,7 @@ See [User Guide](./docs/userguide.md) for a quick introduction for users of the 
 
 ## Quickstart
 
-You can self-host Ozone to run your own moderation service. Start with [HOSTING.md](./HOSTING.md). We This will produce a Dockerized setup for hosting the Ozone UI and backend together.
+You can self-host Ozone to run your own moderation service. Start with [HOSTING.md](./HOSTING.md). This will produce a Dockerized setup for hosting the Ozone UI and backend together.
 
 See [HACKING.md](./HACKING.md) for local development requirements, like development with a local PDS instance, or working with un-released changes to the `@atproto/api` package.
 
@@ -56,7 +56,7 @@ If you discover any security issues, please send an email to security@bsky.app. 
 
 This project is dual-licensed under MIT and Apache 2.0 terms:
 
-- MIT license ([LICENSE-MIT](https://github.com/bluesky-social/ozone/blob/main/LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
+- MIT License ([LICENSE-MIT](https://github.com/bluesky-social/ozone/blob/main/LICENSE-MIT) or <http://opensource.org/licenses/MIT>)
 - Apache License, Version 2.0, ([LICENSE-APACHE](https://github.com/bluesky-social/ozone/blob/main/LICENSE-APACHE) or <http://www.apache.org/licenses/LICENSE-2.0>)
 
 Downstream projects and end users may chose either license individually, or both together, at their discretion. The motivation for this dual-licensing is the additional software patent assurance provided by Apache 2.0.
