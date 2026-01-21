@@ -124,6 +124,7 @@ export default function RecordViewPageContent({
         record: record.status === 'fulfilled' ? record.value : undefined,
         thread: thread.status === 'fulfilled' ? thread.value : undefined,
         listData: listData.status === 'fulfilled' ? listData.value : undefined,
+        fallback: { collection, rkey, did, uri },
       }
     },
   })
@@ -207,7 +208,7 @@ export default function RecordViewPageContent({
         list={data?.listData?.list}
         record={data?.record}
         thread={data?.thread}
-        fallback={{ id, collection, rkey }}
+        fallback={data?.fallback}
         onReport={setReportUri}
         onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
       />

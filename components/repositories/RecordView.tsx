@@ -57,9 +57,10 @@ const TabKeys = {
  * Fallback is used when the record is not found
  */
 export type RecordFallback = {
-  id: string
+  did?: string
   collection?: string
   rkey?: string
+  uri?: string
 }
 
 export function RecordView({
@@ -158,13 +159,12 @@ export function RecordView({
             </nav>
 
             <article>
-              {record && (
-                <Header
-                  record={record}
-                  onReport={onReport}
-                  onShowActionPanel={onShowActionPanel}
-                />
-              )}
+              <Header
+                record={record}
+                fallback={fallback}
+                onReport={onReport}
+                onShowActionPanel={onShowActionPanel}
+              />
               <Tabs
                 views={getTabViews()}
                 currentView={currentView}
@@ -213,25 +213,35 @@ export function RecordView({
 
 function Header({
   record,
+  fallback,
   onReport,
   onShowActionPanel,
 }: {
-  record: GetRecord.OutputSchema
+  record?: GetRecord.OutputSchema
+  fallback?: RecordFallback
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
-  const collection = parseAtUri(record.uri)?.collection ?? ''
+  const collection = record?.uri
+    ? (parseAtUri(record.uri)?.collection ?? '')
+    : (fallback?.collection ?? '')
   let shortCollection = collection
     .replace('app.bsky.feed.', '')
     .replace('app.bsky.graph.', '')
   if (shortCollection === 'generator') shortCollection = 'feed generator'
-  const { subjectStatus } = record.moderation
+  const subjectStatus = record?.moderation?.subjectStatus
+  const displayHandle = record?.repo?.handle
+    ? `@${record.repo.handle}`
+    : 'unknown'
+  const uri = record?.uri || fallback?.uri || ''
+  const did = record?.repo?.did || fallback?.did || ''
+
   const copyRecordDetails = useCopyRecordDetails({ record })
 
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8">
       <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-200">
-        {`${shortCollection} record by @${record.repo.handle}`}{' '}
+        {`${shortCollection} record by ${displayHandle}`}{' '}
         {!!subjectStatus && (
           <ReviewStateIconLink
             subjectStatus={subjectStatus}
@@ -245,15 +255,15 @@ function Header({
           items={[
             {
               text: `Report ${shortCollection || 'post'}`,
-              onClick: () => onReport(record.uri),
+              onClick: () => onReport(uri),
             },
             {
               text: `Report account`,
-              onClick: () => onReport(record.repo.did),
+              onClick: () => onReport(did),
             },
             {
               text: 'Show action panel',
-              onClick: () => onShowActionPanel(record.uri),
+              onClick: () => onShowActionPanel(uri),
             },
             {
               text: 'Copy info',
