@@ -15,6 +15,7 @@ import { HANDLE_RESOLVER_URL, PLC_DIRECTORY_URL } from '@/lib/constants'
 import { ConfigProvider } from '@/shell/ConfigContext'
 import { ConfigurationProvider } from '@/shell/ConfigurationContext'
 import { ExternalLabelersProvider } from '@/shell/ExternalLabelersContext'
+import { ModEventProvider } from '@/mod-event/ModEventContext'
 
 export default function RootLayout({
   children,
@@ -59,9 +60,11 @@ export default function RootLayout({
               <DefaultQueryClientProvider>
                 <ConfigurationProvider>
                   <ExternalLabelersProvider>
-                    <CommandPaletteRoot>
-                      <Shell>{children}</Shell>
-                    </CommandPaletteRoot>
+                    <ModEventProvider>
+                      <CommandPaletteRoot>
+                        <Shell>{children}</Shell>
+                      </CommandPaletteRoot>
+                    </ModEventProvider>
                   </ExternalLabelersProvider>
                 </ConfigurationProvider>
               </DefaultQueryClientProvider>
