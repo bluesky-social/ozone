@@ -33,9 +33,11 @@ export default function EventListPageContent() {
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   // Get subjects
-  const { modEvents } = useModEventContext()
+  const context = useModEventContext()
   const subjectOptions = unique(
-    modEvents.flatMap((events) => validSubjectString(events.subject) ?? []),
+    context?.modEvents.flatMap(
+      (events) => validSubjectString(events.subject) ?? [],
+    ) || [],
   )
 
   useTitle(`Moderation Events`)
