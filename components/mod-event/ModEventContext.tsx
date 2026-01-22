@@ -23,10 +23,5 @@ export const ModEventProvider = ({ children }: { children: ReactNode }) => {
 
 export const useModEventContext = () => {
   const context = useContext(ModEventContext)
-  if (context === undefined) {
-    throw new Error(
-      'useModEventContext must be used within a ModEventContextProvider',
-    )
-  }
   return context
 }

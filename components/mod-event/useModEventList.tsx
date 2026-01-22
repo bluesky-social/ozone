@@ -509,7 +509,7 @@ export const useModEventList = (
   )
   const context = useModEventContext()
   useEffect(() => {
-    if (props.global) context.setModEvents(modEvents)
+    if (props.global) context?.setModEvents(modEvents)
   }, [context, modEvents, props.global])
 
   const hasFilter =
