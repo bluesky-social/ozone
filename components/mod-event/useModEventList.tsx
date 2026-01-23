@@ -582,8 +582,15 @@ export const useModEventList = (
     },
     changeListFilter: (payload: EventListFilterPayload) =>
       dispatch({ type: 'SET_FILTER', payload }),
-    applyFilterMacro: (payload: Partial<EventListState>) =>
-      dispatch({ type: 'SET_FILTERS', payload }),
+    applyFilterMacro: (payload: Partial<EventListState>) => {
+      const {
+        // ommitted fields from macros
+        subject,
+        // fields that are passed through
+        ..._payload
+      } = payload
+      dispatch({ type: 'SET_FILTERS', payload: _payload })
+    },
     resetListFilters: () => dispatch({ type: 'RESET' }),
     toggleContentPreview: () => dispatch({ type: 'TOGGLE_CONTENT_PREVIEW' }),
 
