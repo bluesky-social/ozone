@@ -548,7 +548,6 @@ export const EventFilterPanel = ({
                   removedLabels,
                   commentFilter,
                   createdBy,
-                  subject,
                   batchId,
                   oldestFirst,
                   createdAfter,

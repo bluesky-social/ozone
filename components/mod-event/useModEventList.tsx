@@ -22,6 +22,7 @@ import {
 } from '@/lib/constants'
 import { chunkArray } from '@/lib/util'
 import { toast } from 'react-toastify'
+import { stateToMacro } from './helpers/macros'
 
 export type WorkspaceConfirmationOptions =
   | 'subjects'
@@ -583,12 +584,7 @@ export const useModEventList = (
     changeListFilter: (payload: EventListFilterPayload) =>
       dispatch({ type: 'SET_FILTER', payload }),
     applyFilterMacro: (payload: Partial<EventListState>) => {
-      const {
-        // ommitted fields from macros
-        subject,
-        // fields that are passed through
-        ..._payload
-      } = payload
+      const _payload = stateToMacro(payload)
       dispatch({ type: 'SET_FILTERS', payload: _payload })
     },
     resetListFilters: () => dispatch({ type: 'RESET' }),

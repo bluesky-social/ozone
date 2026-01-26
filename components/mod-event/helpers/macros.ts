@@ -10,13 +10,36 @@ export type FilterMacro = Record<
   }
 >
 
+/** Formats list state to a state suitable for macros. */
+export const stateToMacro = (
+  state: Partial<EventListState>,
+): Partial<EventListState> => {
+  return {
+    types: state.types,
+    reportTypes: state.reportTypes,
+    addedLabels: state.addedLabels,
+    removedLabels: state.removedLabels,
+    commentFilter: state.commentFilter,
+    createdBy: state.createdBy,
+    batchId: state.batchId,
+    oldestFirst: state.oldestFirst,
+    createdAfter: state.createdAfter,
+    createdBefore: state.createdBefore,
+    subjectType: state.subjectType,
+    selectedCollections: state.selectedCollections,
+    ageAssuranceState: state.ageAssuranceState,
+    withStrike: state.withStrike,
+  }
+}
+
 export const getList = (): FilterMacro => {
   const list = getLocalStorageData<FilterMacro>(FILTER_MACROS_LIST_KEY)
   if (!list) return {}
   return list
 }
 
-export const updateList = (name: string, filters: Partial<EventListState>) => {
+export const updateList = (name: string, state: Partial<EventListState>) => {
+  const filters = stateToMacro(state)
   const list = getList()
   if (!list[name]) {
     list[name] = { updatedAt: new Date(), filters }
