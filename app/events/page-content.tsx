@@ -1,15 +1,18 @@
-import { useTitle } from 'react-use'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { validSubjectString } from '@/lib/types'
+import { unique } from '@/lib/util'
 import { ModEventList } from '@/mod-event/EventList'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
+import { useModEventContext } from '@/mod-event/ModEventContext'
+import { WorkspacePanel } from '@/workspace/Panel'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { WorkspacePanel } from '@/workspace/Panel'
-import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { useTitle } from 'react-use'
 
 export default function EventListPageContent() {
   const emitEvent = useEmitEvent()
@@ -29,19 +32,27 @@ export default function EventListPageContent() {
 
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
+  // Get subjects
+  const context = useModEventContext()
+  const subjectOptions = unique(
+    context?.modEvents.flatMap(
+      (events) => validSubjectString(events.subject) ?? [],
+    ) || [],
+  )
+
   useTitle(`Moderation Events`)
 
   return (
     <div>
       <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
-        <ModEventList queryOptions={{ refetchInterval: 10 * 1000 }} />
+        <ModEventList queryOptions={{ refetchInterval: 10 * 1000 }} global={true} />
       </div>
       <ModActionPanelQuick
         open={!!quickOpenParam}
         onClose={() => setQuickActionPanelSubject('')}
         setSubject={setQuickActionPanelSubject}
         subject={quickOpenParam} // select first subject if there are multiple
-        subjectOptions={[quickOpenParam]}
+        subjectOptions={subjectOptions}
         isInitialLoading={false}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
