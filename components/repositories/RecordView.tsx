@@ -53,24 +53,41 @@ const TabKeys = {
   reposts: Views.Reposts,
 }
 
+/**
+ * Fallback is used when the record is not found
+ */
+export type RecordFallback = {
+  did?: string
+  collection?: string
+  rkey?: string
+  uri?: string
+}
+
 export function RecordView({
   record,
   list,
   thread,
+  fallback,
   onReport,
   onShowActionPanel,
 }: {
   list?: AppBskyGraphDefs.ListView
-  record: GetRecord.OutputSchema
+  record?: GetRecord.OutputSchema
   thread?: GetPostThread.OutputSchema
+  fallback?: RecordFallback
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
-  const atUri = new AtUri(record.uri)
-  const isListRecord = atUri.collection === CollectionId.List
+  const uri = record?.uri || fallback?.uri
+  const atUri = uri ? new AtUri(uri) : null
+  const did = record?.repo?.did || fallback?.did || ''
+  const displayHandle = record?.repo?.handle
+    ? `@${record.repo.handle}`
+    : 'unknown'
+  const isListRecord = atUri?.collection === CollectionId.List
 
   const currentView =
     TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
@@ -115,7 +132,7 @@ export function RecordView({
       {
         view: Views.Blobs,
         label: 'Blobs',
-        sublabel: String(record.blobs.length),
+        sublabel: String(record?.blobs.length || 0),
       },
       { view: Views.ModEvents, label: 'Mod Events' },
     )
@@ -133,68 +150,60 @@ export function RecordView({
               aria-label="Breadcrumb"
             >
               <Link
-                href={`/repositories/${record.repo.did}`}
+                href={`/repositories/${did}`}
                 className="inline-flex items-center space-x-3 text-sm font-medium text-gray-900 dark:text-gray-200"
               >
                 <ChevronLeftIcon
                   className="-ml-2 h-5 w-5 text-gray-400"
                   aria-hidden="true"
                 />
-                <span>@{record.repo.handle}</span>
+                <span>{displayHandle}</span>
               </Link>
             </nav>
 
             <article>
               <Header
                 record={record}
+                fallback={fallback}
                 onReport={onReport}
                 onShowActionPanel={onShowActionPanel}
               />
-              {record ? (
-                <>
-                  <Tabs
-                    views={getTabViews()}
-                    currentView={currentView}
-                    onSetCurrentView={setCurrentView}
+              <Tabs
+                views={getTabViews()}
+                currentView={currentView}
+                onSetCurrentView={setCurrentView}
+              />
+              {currentView === Views.Details && (
+                <Details record={record} fallback={fallback} />
+              )}
+              {currentView === Views.Profiles && uri && (
+                <ListAccounts uri={uri} />
+              )}
+              {currentView === Views.Likes &&
+                !!thread &&
+                AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
+                  <Likes
+                    uri={thread.thread.post.uri}
+                    cid={thread.thread.post.cid}
                   />
-                  {currentView === Views.Details && <Details record={record} />}
-                  {currentView === Views.Profiles && (
-                    <ListAccounts uri={record.uri} />
-                  )}
-                  {currentView === Views.Likes &&
-                    !!thread &&
-                    AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
-                      <Likes
-                        uri={thread.thread.post.uri}
-                        cid={thread.thread.post.cid}
-                      />
-                    )}
-                  {currentView === Views.Reposts &&
-                    !!thread &&
-                    AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
-                      <Reposts
-                        uri={thread.thread.post.uri}
-                        cid={thread.thread.post.cid}
-                      />
-                    )}
-                  {currentView === Views.Thread && thread && (
-                    <Thread thread={thread.thread} />
-                  )}
-                  {currentView === Views.Blobs && (
-                    <BlobsTable
-                      authorDid={record.repo.did}
-                      blobs={record.blobs}
-                    />
-                  )}
-                  {currentView === Views.ModEvents && (
-                    <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
-                      <ModEventList subject={record.uri} />
-                    </div>
-                  )}
-                </>
-              ) : (
-                <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
-                  Loading...
+                )}
+              {currentView === Views.Reposts &&
+                !!thread &&
+                AppBskyFeedDefs.isThreadViewPost(thread?.thread) && (
+                  <Reposts
+                    uri={thread.thread.post.uri}
+                    cid={thread.thread.post.cid}
+                  />
+                )}
+              {currentView === Views.Thread && thread && (
+                <Thread thread={thread.thread} />
+              )}
+              {currentView === Views.Blobs && (
+                <BlobsTable authorDid={did} blobs={record?.blobs || []} />
+              )}
+              {currentView === Views.ModEvents && (
+                <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
+                  <ModEventList subject={uri} />
                 </div>
               )}
             </article>
@@ -207,25 +216,35 @@ export function RecordView({
 
 function Header({
   record,
+  fallback,
   onReport,
   onShowActionPanel,
 }: {
-  record: GetRecord.OutputSchema
+  record?: GetRecord.OutputSchema
+  fallback?: RecordFallback
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
-  const collection = parseAtUri(record.uri)?.collection ?? ''
+  const collection = record?.uri
+    ? (parseAtUri(record.uri)?.collection ?? '')
+    : (fallback?.collection ?? '')
   let shortCollection = collection
     .replace('app.bsky.feed.', '')
     .replace('app.bsky.graph.', '')
   if (shortCollection === 'generator') shortCollection = 'feed generator'
-  const { subjectStatus } = record.moderation
+  const subjectStatus = record?.moderation?.subjectStatus
+  const displayHandle = record?.repo?.handle
+    ? `@${record.repo.handle}`
+    : 'unknown'
+  const uri = record?.uri || fallback?.uri || ''
+  const did = record?.repo?.did || fallback?.did || ''
+
   const copyRecordDetails = useCopyRecordDetails({ record })
 
   return (
     <div className="flex flex-col sm:flex-row mx-auto space-y-6 sm:space-x-4 sm:space-y-0 max-w-5xl px-4 sm:px-6 lg:px-8">
       <h1 className="flex-1 text-2xl font-bold text-gray-900 dark:text-gray-200">
-        {`${shortCollection} record by @${record.repo.handle}`}{' '}
+        {`${shortCollection} record by ${displayHandle}`}{' '}
         {!!subjectStatus && (
           <ReviewStateIconLink
             subjectStatus={subjectStatus}
@@ -239,15 +258,15 @@ function Header({
           items={[
             {
               text: `Report ${shortCollection || 'post'}`,
-              onClick: () => onReport(record.uri),
+              onClick: () => onReport(uri),
             },
             {
               text: `Report account`,
-              onClick: () => onReport(record.repo.did),
+              onClick: () => onReport(did),
             },
             {
               text: 'Show action panel',
-              onClick: () => onShowActionPanel(record.uri),
+              onClick: () => onShowActionPanel(uri),
             },
             {
               text: 'Copy info',
@@ -266,51 +285,73 @@ function Header({
   )
 }
 
-function Details({ record }: { record: GetRecord.OutputSchema }) {
-  const { collection, rkey } = parseAtUri(record.uri) ?? {}
+function Details({
+  record,
+  fallback,
+}: {
+  record?: GetRecord.OutputSchema
+  fallback?: RecordFallback
+}) {
+  const { collection, rkey } = record?.uri
+    ? (parseAtUri(record.uri) ?? {})
+    : (fallback ?? {})
+  const did = record?.repo?.did || fallback?.did || ''
+  const uri = record?.uri || fallback?.uri || ''
+  const value = record?.value || 'No record found'
   const labels = getLabelsForSubject({ record })
   return (
     <div className="mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8">
       <dl className="grid grid-cols-1 gap-x-4 gap-y-8 sm:grid-cols-2 mb-10">
-        {!!record.value?.['displayName'] && (
+        {!!record?.value?.['displayName'] && (
           <DataField
             label="Display Name"
             value={`${record.value['displayName']}`}
           />
         )}
-        {!!record.value?.['name'] && (
+        {!!record?.value?.['name'] && (
           <DataField label="Name" value={`${record.value['name']}`} />
         )}
-        {!!record.value?.['description'] && (
+        {!!record?.value?.['description'] && (
           <DataField
             label="Description"
             value={`${record.value['description']}`}
           />
         )}
-        <DataField label="Handle" value={record.repo.handle} showCopyButton>
-          <Link href={`/repositories/${record.repo.did}`} className="underline">
-            {record.repo.handle}
-          </Link>
-        </DataField>
-        <DataField label="DID" value={record.repo.did} showCopyButton>
-          <Link href={`/repositories/${record.repo.did}`} className="underline">
-            {record.repo.did}
-          </Link>
-        </DataField>
-        <DataField label="Collection" value={collection ?? ''} />
+        {record?.repo.handle && (
+          <DataField label="Handle" value={record.repo.handle} showCopyButton>
+            <Link
+              href={`/repositories/${record.repo.did}`}
+              className="underline"
+            >
+              {record.repo.handle}
+            </Link>
+          </DataField>
+        )}
+        {did && (
+          <DataField label="DID" value={did} showCopyButton>
+            <Link href={`/repositories/${did}`} className="underline">
+              {did}
+            </Link>
+          </DataField>
+        )}
+        {collection && <DataField label="Collection" value={collection} />}
         <DataField label="Rkey" value={rkey ?? ''} />
-        <DataField
-          label="URI"
-          value={record.uri}
-          showCopyButton
-          shouldTruncateValue
-        />
-        <DataField
-          label="CID"
-          value={record.cid}
-          showCopyButton
-          shouldTruncateValue
-        />
+        {uri && (
+          <DataField
+            label="URI"
+            value={uri}
+            showCopyButton
+            shouldTruncateValue
+          />
+        )}
+        {record?.cid && (
+          <DataField
+            label="CID"
+            value={record.cid}
+            showCopyButton
+            shouldTruncateValue
+          />
+        )}
         <DataField label="Labels">
           <LabelList>
             {!labels.length && <LabelListEmpty />}
@@ -318,13 +359,13 @@ function Details({ record }: { record: GetRecord.OutputSchema }) {
               <ModerationLabel
                 label={label}
                 key={label.val}
-                recordAuthorDid={record.repo.did}
+                recordAuthorDid={did}
               />
             ))}
           </LabelList>
         </DataField>
       </dl>
-      <Json className="mb-3" label="Contents" value={record.value} />
+      <Json className="mb-3" label="Contents" value={value} />
     </div>
   )
 }
