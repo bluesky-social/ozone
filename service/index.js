@@ -5,6 +5,7 @@ const {
   envToCfg,
   envToSecrets,
   OzoneService,
+  OzoneDaemon,
   Database,
 } = require('@atproto/ozone')
 const pkg = require('@atproto/ozone/package.json')
@@ -40,6 +41,14 @@ async function main() {
   /** @type {import('net').AddressInfo} */
   const addr = httpServer.address()
   httpLogger.info(`Ozone is running at http://localhost:${addr.port}`)
+
+  if (process.env.DAEMON_ENABLED) {
+    const daemon = await OzoneDaemon.create(config, secrets)
+    await daemon.start()
+    process.on('SIGTERM', async () => {
+      await daemon.destroy()
+    })
+  }
 }
 
 main().catch(console.error)
