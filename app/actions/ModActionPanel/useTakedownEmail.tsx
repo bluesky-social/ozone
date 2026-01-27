@@ -14,6 +14,7 @@ export type CompileTemplateInput = {
   previousStrikes: number // strikes before
   thresholdCrossed?: number
   nextThreshold?: number
+  nextThresholdSuspensionDuration?: string | null
   suspensionDuration?: string | null
   suspensionEndDate?: string | null
   isFirstSev1ForPolicy?: boolean
@@ -56,6 +57,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     totalStrikes,
     thresholdCrossed,
     nextThreshold,
+    nextThresholdSuspensionDuration,
     suspensionDuration,
     suspensionEndDate,
     isFirstSev1ForPolicy,
@@ -134,9 +136,13 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     // Approaching permanent ban (12–15)
     if (totalStrikes >= 12 && totalStrikes <= 15) {
       out += `${lineBreaks}⚠️ **Warning:** You are approaching permanent account removal. At 16 strikes, your account will be permanently banned.`
-    } else if (nextThreshold && !needsSuspensionCopy) {
+    } else if (
+      nextThreshold &&
+      nextThresholdSuspensionDuration &&
+      !needsSuspensionCopy
+    ) {
       // No threshold crossed → next threshold message
-      out += `${lineBreaks}Please note that at ${nextThreshold} strikes, your account will be suspended for ${suspensionDuration}.`
+      out += `${lineBreaks}Please note that at ${nextThreshold} strikes, your account will be suspended for ${nextThresholdSuspensionDuration}.`
       return out
     }
 
