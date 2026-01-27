@@ -139,6 +139,8 @@ export const ModEventList = (
       accountStats?: ToolsOzoneModerationDefs.AccountStats
       recordsStats?: ToolsOzoneModerationDefs.RecordsStats
     }
+    /** Enable syncing to global context */
+    global?: boolean
   } & ModEventListQueryOptions,
 ) => {
   const {

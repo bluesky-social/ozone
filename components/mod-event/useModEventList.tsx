@@ -10,18 +10,19 @@ import {
 } from '@atproto/api'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import { addDays } from 'date-fns'
-import { useEffect, useReducer, useRef, useState } from 'react'
+import { useEffect, useMemo, useReducer, useRef, useState } from 'react'
 
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
-import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import {
   DM_DISABLE_TAG,
   TRUSTED_VERIFIER_TAG,
   VIDEO_UPLOAD_DISABLE_TAG,
 } from '@/lib/constants'
 import { chunkArray } from '@/lib/util'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
+import { useModEventContext } from './ModEventContext'
+import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 import { stateToMacro } from './helpers/macros'
 
 export type WorkspaceConfirmationOptions =
@@ -405,6 +406,8 @@ export const useModEventList = (
     createdBy?: string
     eventType?: string
     batchId?: string
+    /** Enable syncing to global context */
+    global?: boolean
   } & ModEventListQueryOptions,
 ) => {
   const [showWorkspaceConfirmation, setShowWorkspaceConfirmation] =
@@ -501,7 +504,14 @@ export const useModEventList = (
     ...(props.queryOptions || {}),
   })
 
-  const modEvents = results.data?.pages.map((page) => page.events).flat() || []
+  const modEvents = useMemo(
+    () => results.data?.pages.map((page) => page.events).flat() || [],
+    [results.data?.pages],
+  )
+  const context = useModEventContext()
+  useEffect(() => {
+    if (props.global) context?.setModEvents(modEvents)
+  }, [context, modEvents, props.global])
 
   const hasFilter =
     (listState.types.length > 0 &&

@@ -64,3 +64,14 @@ export const emptyList = () => {
   setLocalStorageData(FILTER_MACROS_LIST_KEY, null)
   return []
 }
+
+export const filtersToString = (filters: Partial<EventListState>) => {
+  return JSON.stringify(filters, null, 2)
+}
+
+export const copyFiltersToClipboard = async (
+  filters: Partial<EventListState>,
+) => {
+  const text = filtersToString(filters)
+  await navigator.clipboard.writeText(text)
+}
