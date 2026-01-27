@@ -61,8 +61,8 @@
   },
   "resolutions": {
     "jackspeak": "2.1.1",
-    "@types/react": "19.1.2",
-    "@types/react-dom": "19.1.2"
+    "@types/react": "19.1.5",
+    "@types/react-dom": "19.1.5"
   },
   "volta": {
     "node": "20.9.0"
