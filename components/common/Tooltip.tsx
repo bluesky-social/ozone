@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { Fragment } from 'react'
 import {
   Popover,
   Transition,
@@ -6,19 +6,17 @@ import {
   PopoverPanel,
 } from '@headlessui/react'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/solid'
-import { AnchorProps } from '@headlessui/react/dist/internal/floating'
 
+type Align = 'start' | 'end'
+type Placement = 'top' | 'right' | 'bottom' | 'left'
+export type Anchor = `${Placement}` | `${Placement} ${Align}`
 export type TooltipProps = {
   title?: string
   description?: string
-  anchor?: AnchorProps
+  anchor?: Anchor
 }
 
-export const Tooltip = ({
-  title,
-  description,
-  anchor,
-}: TooltipProps) => {
+export const Tooltip = ({ title, description, anchor }: TooltipProps) => {
   return (
     <Popover className="relative">
       {() => (
