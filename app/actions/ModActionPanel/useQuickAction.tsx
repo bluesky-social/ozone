@@ -271,6 +271,10 @@ export const useQuickAction = (
     !!automatedEmailTemplate &&
     isTakedownEvent &&
     !emailRecipientStatus?.cantReceive
+  const showCantEmailError =
+    !!automatedEmailTemplate &&
+    isTakedownEvent &&
+    emailRecipientStatus?.cantReceive
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -850,6 +854,7 @@ export const useQuickAction = (
     communicationTemplates,
     theme,
     showAutomatedEmailComposer,
+    showCantEmailError,
     recipientLanguages,
     emailContent,
     setEmailContent,
