@@ -414,6 +414,7 @@ export const EventFilterPanel = ({
 
 1. The sharer should click 'Copy Filters' and paste the output to their team member.
 2. The team member should click 'Import Filters' and paste the config.`}
+              anchor="right start"
             />
           </div>
         </div>
