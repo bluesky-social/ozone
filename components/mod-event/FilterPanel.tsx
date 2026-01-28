@@ -123,7 +123,6 @@ export const EventFilterPanel = ({
       removedLabels,
       commentFilter,
       createdBy,
-      subject,
       batchId,
       oldestFirst,
       createdAfter,
@@ -132,6 +131,7 @@ export const EventFilterPanel = ({
       selectedCollections,
       ageAssuranceState,
       withStrike,
+      limit,
     }
     await copyFiltersToClipboard(filters)
     toast.success(`Copied to clipboard`)
@@ -616,6 +616,7 @@ export const EventFilterPanel = ({
                   selectedCollections,
                   ageAssuranceState,
                   withStrike,
+                  limit,
                 },
               })
               return true

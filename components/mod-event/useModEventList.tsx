@@ -23,7 +23,7 @@ import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
 import { useModEventContext } from './ModEventContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
-import { stateToMacro } from './helpers/macros'
+import { createShareableState } from './helpers/macros'
 
 export type WorkspaceConfirmationOptions =
   | 'subjects'
@@ -594,7 +594,7 @@ export const useModEventList = (
     changeListFilter: (payload: EventListFilterPayload) =>
       dispatch({ type: 'SET_FILTER', payload }),
     applyFilterMacro: (payload: Partial<EventListState>) => {
-      const _payload = stateToMacro(payload)
+      const _payload = createShareableState(payload)
       dispatch({ type: 'SET_FILTERS', payload: _payload })
     },
     resetListFilters: () => dispatch({ type: 'RESET' }),
