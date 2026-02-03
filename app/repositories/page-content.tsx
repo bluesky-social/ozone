@@ -26,10 +26,14 @@ import {
 } from '@/mod-event/helpers/emitEvent'
 
 export const isEmailSearch = (q: string) => q.startsWith('email:')
-export const getEmailFromSearch = (q: string) => {
-  if (!isEmailSearch(q)) return null
+export const isFullEmailSearch = (q: string) => {
+  if (!isEmailSearch(q)) return false
   const email = q.slice(6).trim() // slice 'email:' prefix
-  return email
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+/** Return email from search term if it is valid. */
+export const getEmailFromSearch = (q: string) => {
+  return isFullEmailSearch(q) ? q.slice(6).trim() : null
 }
 export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
