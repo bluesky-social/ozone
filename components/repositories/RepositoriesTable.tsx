@@ -11,6 +11,8 @@ import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { LabelChip } from '@/common/labels/List'
 import { SubjectSummaryColumn } from '@/subject/table'
 import { Country } from './Country'
+import { useSearchParams } from 'next/navigation'
+import { getEmailFromSearch } from 'app/repositories/page-content'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -74,6 +76,10 @@ export function RepositoriesTable(props: {
 
 function RepoRow(props: { repo: Repo; showEmail: boolean }) {
   const { repo, showEmail, ...others } = props
+
+  const searchParams = useSearchParams()
+  const q = searchParams.get('term') ?? ''
+
   const profile = getProfileFromRepo(repo.relatedRecords)
   const displayName = profile?.displayName
 
@@ -81,6 +87,9 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
     parseThreatSigs(repo.threatSignatures)
   const indexedAt = new Date(repo.indexedAt)
   const { subjectStatus } = repo.moderation
+
+  const searchedEmail = getEmailFromSearch(q)
+
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6">
@@ -131,6 +140,11 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
       {showEmail && (
         <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
           {repo.email}
+          {repo.email && (
+            <p>
+              {searchedEmail && repo.email === searchedEmail ? ' (match)' : ''}
+            </p>
+          )}
         </td>
       )}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
