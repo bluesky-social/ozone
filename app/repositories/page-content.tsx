@@ -25,8 +25,13 @@ import {
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
 
-const isEmailSearch = (q: string) => q.startsWith('email:')
-const isSignatureSearch = (q: string) => q.startsWith('sig:')
+export const isEmailSearch = (q: string) => q.startsWith('email:')
+export const getEmailFromSearch = (q: string) => {
+  if (!isEmailSearch(q)) return null
+  const email = q.slice(6).trim() // slice 'email:' prefix
+  return email
+}
+export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
