@@ -301,6 +301,7 @@ export default function RepositoriesListPage() {
       <RepositoriesTable
         repos={repos}
         showEmail={isEmailSearch(q) || isSignatureSearch(q)}
+        searchedEmail={getEmailFromSearch(q)}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
         isLoading={isLoading}
