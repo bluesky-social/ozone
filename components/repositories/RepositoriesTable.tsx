@@ -13,6 +13,7 @@ import { SubjectSummaryColumn } from '@/subject/table'
 import { Country } from './Country'
 import { useSearchParams } from 'next/navigation'
 import { getEmailFromSearch } from 'app/repositories/page-content'
+import { MatchIndicator } from './MatchIndicator'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -89,6 +90,8 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
   const { subjectStatus } = repo.moderation
 
   const searchedEmail = getEmailFromSearch(q)
+  const isExactEmailMatch =
+    searchedEmail !== null && repo.email === searchedEmail
 
   return (
     <tr {...others}>
@@ -139,12 +142,19 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
       </td>
       {showEmail && (
         <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
-          {repo.email}
-          {repo.email && (
-            <p>
-              {searchedEmail && repo.email === searchedEmail ? ' (match)' : ''}
-            </p>
-          )}
+          <div className="flex flex-row gap-1">
+            <p>{repo.email}</p>
+            {searchedEmail && repo.email && (
+              <MatchIndicator
+                exact={isExactEmailMatch}
+                description={
+                  isExactEmailMatch
+                    ? 'Exact match.'
+                    : 'Not an exact match. Verify before taking action.'
+                }
+              />
+            )}
+          </div>
         </td>
       )}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
