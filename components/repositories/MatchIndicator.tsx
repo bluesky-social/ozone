@@ -24,14 +24,16 @@ export const MatchIndicator = ({ description, exact }: MatchIndicatorProps) => {
 
   return (
     <Popover className="relative whitespace-pre-wrap">
-      <div
+      <PopoverButton
+        as="button"
+        type="button"
         onMouseEnter={() => setIsOpen(true)}
         onMouseLeave={() => setIsOpen(false)}
+        onFocus={() => setIsOpen(true)}
+        onBlur={() => setIsOpen(false)}
       >
-        <PopoverButton as="div">
-          <Icon className={`h-5 w-5 ${iconColor} cursor-help`} />
-        </PopoverButton>
-      </div>
+        <Icon className={`h-5 w-5 ${iconColor} cursor-help`} />
+      </PopoverButton>
       <Transition
         show={isOpen}
         as={Fragment}
