@@ -25,8 +25,17 @@ import {
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
 
-const isEmailSearch = (q: string) => q.startsWith('email:')
-const isSignatureSearch = (q: string) => q.startsWith('sig:')
+export const isEmailSearch = (q: string) => q.startsWith('email:')
+export const isFullEmailSearch = (q: string) => {
+  if (!isEmailSearch(q)) return false
+  const email = q.slice(6).trim() // slice 'email:' prefix
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+/** Return email from search term if it is valid. */
+export const getEmailFromSearch = (q: string) => {
+  return isFullEmailSearch(q) ? q.slice(6).trim() : null
+}
+export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
@@ -292,6 +301,7 @@ export default function RepositoriesListPage() {
       <RepositoriesTable
         repos={repos}
         showEmail={isEmailSearch(q) || isSignatureSearch(q)}
+        searchedEmail={getEmailFromSearch(q)}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
         isLoading={isLoading}

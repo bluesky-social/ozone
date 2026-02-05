@@ -1,21 +1,22 @@
-import { UserGroupIcon } from '@heroicons/react/20/solid'
-import { formatDistanceToNow } from 'date-fns'
-import { Repo } from '@/lib/types'
-import { LoadMoreButton } from '../common/LoadMoreButton'
-import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
-import { SubjectOverview } from '@/reports/SubjectOverview'
 import { Loading } from '@/common/Loader'
-import { getProfileFromRepo, obscureIp, parseThreatSigs } from './helpers'
-import Link from 'next/link'
-import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
-import { LabelChip } from '@/common/labels/List'
+import { Repo } from '@/lib/types'
+import { SubjectOverview } from '@/reports/SubjectOverview'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { SubjectSummaryColumn } from '@/subject/table'
+import { UserGroupIcon } from '@heroicons/react/20/solid'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
+import { formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
+import { LoadMoreButton } from '../common/LoadMoreButton'
 import { Country } from './Country'
+import { getProfileFromRepo, obscureIp, parseThreatSigs } from './helpers'
+import { MatchIndicator } from './MatchIndicator'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
   showLoadMore: boolean
   showEmail: boolean
+  searchedEmail: string | null
   isLoading: boolean
   showEmptySearch: boolean
   onLoadMore: () => void
@@ -38,7 +39,7 @@ export function RepositoriesTable(props: {
           <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
             {!!repos?.length ? (
               repos.map((repo) => (
-                <RepoRow showEmail={showEmail} key={repo.did} repo={repo} />
+                <RepoRow showEmail={showEmail} searchedEmail={props.searchedEmail} key={repo.did} repo={repo} />
               ))
             ) : (
               <tr>
@@ -72,8 +73,9 @@ export function RepositoriesTable(props: {
   )
 }
 
-function RepoRow(props: { repo: Repo; showEmail: boolean }) {
-  const { repo, showEmail, ...others } = props
+function RepoRow(props: { repo: Repo; showEmail: boolean; searchedEmail: string | null }) {
+  const { repo, showEmail, searchedEmail, ...others } = props
+
   const profile = getProfileFromRepo(repo.relatedRecords)
   const displayName = profile?.displayName
 
@@ -81,6 +83,10 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
     parseThreatSigs(repo.threatSignatures)
   const indexedAt = new Date(repo.indexedAt)
   const { subjectStatus } = repo.moderation
+
+  const isExactEmailMatch =
+    searchedEmail !== null && repo.email === searchedEmail
+
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6">
@@ -130,7 +136,19 @@ function RepoRow(props: { repo: Repo; showEmail: boolean }) {
       </td>
       {showEmail && (
         <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
-          {repo.email}
+          <div className="flex flex-row gap-1">
+            <p>{repo.email}</p>
+            {searchedEmail && repo.email && (
+              <MatchIndicator
+                exact={isExactEmailMatch}
+                description={
+                  isExactEmailMatch
+                    ? 'Exact Match'
+                    : 'Not an exact match. Verify before taking action.'
+                }
+              />
+            )}
+          </div>
         </td>
       )}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-50 lg:table-cell">
