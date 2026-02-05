@@ -4,23 +4,26 @@ import {
   PopoverPanel,
   Transition,
 } from '@headlessui/react'
-import {
-  ExclamationTriangleIcon,
-  MagnifyingGlassCircleIcon,
-} from '@heroicons/react/24/solid'
+import { ExclamationTriangleIcon } from '@heroicons/react/24/solid'
 import { Fragment, useState } from 'react'
 
 export type MatchIndicatorProps = {
-  description: string
   exact?: boolean
+  description?: string
 }
 
 export const MatchIndicator = ({ description, exact }: MatchIndicatorProps) => {
   const [isOpen, setIsOpen] = useState(false)
-  const Icon = exact ? MagnifyingGlassCircleIcon : ExclamationTriangleIcon
-  const iconColor = exact
-    ? 'text-blue-500 dark:text-blue-400'
-    : 'text-yellow-500 dark:text-yellow-400'
+
+  if (exact) {
+    return (
+      <Popover className="relative whitespace-pre-wrap">
+        <PopoverButton className="inline-flex items-center px-2 py-1 text-xs font-medium text-blue-700 bg-blue-100 rounded-md hover:bg-blue-200 dark:text-blue-400 dark:bg-blue-900 dark:hover:bg-blue-800">
+          {description}
+        </PopoverButton>
+      </Popover>
+    )
+  }
 
   return (
     <Popover className="relative whitespace-pre-wrap">
@@ -32,7 +35,7 @@ export const MatchIndicator = ({ description, exact }: MatchIndicatorProps) => {
         onFocus={() => setIsOpen(true)}
         onBlur={() => setIsOpen(false)}
       >
-        <Icon className={`h-5 w-5 ${iconColor} cursor-help`} />
+        <ExclamationTriangleIcon className="h-5 w-5 text-yellow-500 dark:text-yellow-400 cursor-help" />
       </PopoverButton>
       <Transition
         show={isOpen}

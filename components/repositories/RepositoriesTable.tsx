@@ -143,7 +143,7 @@ function RepoRow(props: { repo: Repo; showEmail: boolean; searchedEmail: string 
                 exact={isExactEmailMatch}
                 description={
                   isExactEmailMatch
-                    ? 'Exact match.'
+                    ? 'Exact Match'
                     : 'Not an exact match. Verify before taking action.'
                 }
               />
