@@ -10,8 +10,8 @@ export type FilterMacro = Record<
   }
 >
 
-/** Formats list state to a state suitable for macros. */
-export const stateToMacro = (
+/** Formats list state to a state suitable for sharing. */
+export const createShareableState = (
   state: Partial<EventListState>,
 ): Partial<EventListState> => {
   return {
@@ -29,6 +29,7 @@ export const stateToMacro = (
     selectedCollections: state.selectedCollections,
     ageAssuranceState: state.ageAssuranceState,
     withStrike: state.withStrike,
+    limit: state.limit,
   }
 }
 
@@ -39,7 +40,7 @@ export const getList = (): FilterMacro => {
 }
 
 export const updateList = (name: string, state: Partial<EventListState>) => {
-  const filters = stateToMacro(state)
+  const filters = createShareableState(state)
   const list = getList()
   if (!list[name]) {
     list[name] = { updatedAt: new Date(), filters }
@@ -66,7 +67,8 @@ export const emptyList = () => {
 }
 
 export const filtersToString = (filters: Partial<EventListState>) => {
-  return JSON.stringify(filters, null, 2)
+  const _filters = createShareableState(filters)
+  return JSON.stringify(_filters, null, 2)
 }
 
 export const copyFiltersToClipboard = async (
