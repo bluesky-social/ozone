@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useMemo } from 'react'
 import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   ChevronDownIcon,
@@ -112,6 +112,24 @@ const ListGroup = ({
     setLastCheckedIndex(index)
   }
 
+  /** Sort so that high profile accounts are listed first */
+  const sortedItems = useMemo(() => {
+    const sortedItems: string[] = []
+    items.forEach((item) => {
+      const profile = isValidProfileViewDetailed(listData[item]?.profile)
+        ? listData[item]?.profile
+        : undefined
+      const followerCount = profile?.followersCount || 0
+
+      if (followerCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD) {
+        sortedItems.unshift(item)
+      } else {
+        sortedItems.push(item)
+      }
+    })
+    return sortedItems
+  }, [items, listData])
+
   return (
     <div className="py-2">
       <div className="flex justify-between mb-1 mr-2">
@@ -139,7 +157,7 @@ const ListGroup = ({
           </ActionButton>
         </div>
       </div>
-      {items.map((item, index) => {
+      {sortedItems.map((item, index) => {
         const itemData = listData[item]
         return (
           <ListItem
