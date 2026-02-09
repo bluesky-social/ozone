@@ -43,7 +43,6 @@ import { findHighProfileCountInWorkspace } from './utils'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { numberFormatter } from '@/repositories/HighProfileWarning'
 import { ConfirmationModal } from '@/common/modals/confirmation'
-import { set } from 'cypress/types/lodash'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
