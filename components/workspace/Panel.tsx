@@ -555,7 +555,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         title="Confirm Action"
         description={
           <strong className="text-yellow-600 dark:text-yellow-400">
-            You are about to action{' '}
+            This action includes{' '}
             {pluralize(highProfileAccountSelectedCount, 'high profile account')}
             . Are you sure?
           </strong>
