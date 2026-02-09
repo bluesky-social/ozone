@@ -689,7 +689,7 @@ function Form(
                       <Alert
                         showIcon
                         type="warning"
-                        title="Can not send email to this user"
+                        title="Cannot send email to this user"
                         body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
                       />
                     </div>
