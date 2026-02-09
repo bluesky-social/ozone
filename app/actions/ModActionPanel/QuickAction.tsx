@@ -190,6 +190,7 @@ function Form(
     setTargetServices,
     config,
     showAutomatedEmailComposer,
+    showCantEmailError,
     automatedEmailTemplate,
     communicationTemplates,
     theme,
@@ -682,6 +683,16 @@ function Form(
                       isConfirmed={true}
                       toggleConfirmation={() => null}
                     />
+                  )}
+                  {showCantEmailError && (
+                    <div className="my-2">
+                      <Alert
+                        showIcon
+                        type="warning"
+                        title="Cannot send email to this user"
+                        body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
+                      />
+                    </div>
                   )}
 
                   {isCommentEvent && (
