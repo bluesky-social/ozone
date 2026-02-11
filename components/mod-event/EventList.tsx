@@ -242,6 +242,14 @@ export const ModEventList = (
     )
   }
 
+  const listState = modEventsError
+    ? 'error'
+    : isInitialLoadingModEvents
+      ? 'loading'
+      : noEvents
+        ? 'empty'
+        : 'loaded'
+
   return (
     <div className="mr-1">
       {!!props.stats && (
@@ -374,11 +382,11 @@ export const ModEventList = (
           }}
         />
       )}
-      {modEventsError ? (
+      {listState === 'error' && (
         <LoadingFailed error={'An error has occurred.'} />
-      ) : isInitialLoadingModEvents ? (
-        <Loading />
-      ) : noEvents ? (
+      )}
+      {listState === 'loading' && <Loading />}
+      {listState === 'empty' && (
         <div className="text-gray-500 text-center py-4 shadow rounded my-4 items-center justify-center flex flex-col">
           <ArchiveBoxXMarkIcon className="w-6 h-8" />
           No moderation events found.
@@ -395,7 +403,8 @@ export const ModEventList = (
             </p>
           )}
         </div>
-      ) : (
+      )}
+      {listState === 'loaded' && (
         <div>
           <ModToolProvider>
             {modEvents.map((modEvent) => {
