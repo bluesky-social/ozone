@@ -580,6 +580,7 @@ export const useModEventList = (
     hasMoreModEvents: results.hasNextPage,
     refetchModEvents: results.refetch,
     isInitialLoadingModEvents: results.isInitialLoading,
+    modEventsError: results.error,
 
     // Helper functions to mutate state
     toggleCommentFilter: () => {

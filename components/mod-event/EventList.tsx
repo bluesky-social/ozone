@@ -25,6 +25,7 @@ import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { SubjectSummary } from '@/subject/Summary'
 import { MOD_EVENTS } from './constants'
 import { ModToolProvider } from './ModToolContext'
+import { Loading, LoadingFailed } from '@/common/Loader'
 
 const getConfirmWorkspaceTitle = (
   showWorkspaceConfirmation: WorkspaceConfirmationOptions,
@@ -155,6 +156,7 @@ export const ModEventList = (
     modEvents,
     fetchMoreModEvents,
     hasMoreModEvents,
+    modEventsError,
     isInitialLoadingModEvents,
     hasFilter,
     commentFilter,
@@ -239,6 +241,14 @@ export const ModEventList = (
       },
     )
   }
+
+  const listState = modEventsError
+    ? 'error'
+    : isInitialLoadingModEvents
+      ? 'loading'
+      : noEvents
+        ? 'empty'
+        : 'loaded'
 
   return (
     <div className="mr-1">
@@ -372,25 +382,30 @@ export const ModEventList = (
           }}
         />
       )}
-      <div>
-        {noEvents ? (
-          <div className="text-gray-500 text-center py-4 shadow rounded my-4 items-center justify-center flex flex-col">
-            <ArchiveBoxXMarkIcon className="w-6 h-8" />
-            No moderation events found.
-            {!!types.length && (
-              <p className="text-xs italic pt-2">
-                <a
-                  className="underline"
-                  href="#"
-                  onClick={() => resetListFilters()}
-                >
-                  Clear all filters
-                </a>{' '}
-                to see all events
-              </p>
-            )}
-          </div>
-        ) : (
+      {listState === 'error' && (
+        <LoadingFailed error={'An error has occurred.'} />
+      )}
+      {listState === 'loading' && <Loading />}
+      {listState === 'empty' && (
+        <div className="text-gray-500 text-center py-4 shadow rounded my-4 items-center justify-center flex flex-col">
+          <ArchiveBoxXMarkIcon className="w-6 h-8" />
+          No moderation events found.
+          {!!types.length && (
+            <p className="text-xs italic pt-2">
+              <a
+                className="underline"
+                href="#"
+                onClick={() => resetListFilters()}
+              >
+                Clear all filters
+              </a>{' '}
+              to see all events
+            </p>
+          )}
+        </div>
+      )}
+      {listState === 'loaded' && (
+        <div>
           <ModToolProvider>
             {modEvents.map((modEvent) => {
               return (
@@ -412,11 +427,11 @@ export const ModEventList = (
               )
             })}
           </ModToolProvider>
-        )}
-      </div>
-      {hasMoreModEvents && (
-        <div className="pt-2">
-          <LoadMoreButton onClick={() => fetchMoreModEvents()} />
+          {hasMoreModEvents && (
+            <div className="pt-2">
+              <LoadMoreButton onClick={() => fetchMoreModEvents()} />
+            </div>
+          )}
         </div>
       )}
     </div>
