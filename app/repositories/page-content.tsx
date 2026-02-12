@@ -125,22 +125,28 @@ const getRepos =
     })
 
     if (enrich) {
-      for (const accounts of chunkArray(data.accounts, 100)) {
-        const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
-          { dids: accounts.map(({ did }) => did) },
-          options,
-        )
-        for (const repo of data.repos) {
-          if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
-            repoMap[repo.did] = { ...repoMap[repo.did], ...repo }
+      await Promise.all([
+        (async () => {
+          for (const accounts of chunkArray(data.accounts, 100)) {
+            const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
+              { dids: accounts.map(({ did }) => did) },
+              options,
+            )
+            for (const repo of data.repos) {
+              if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
+                repoMap[repo.did] = { ...repoMap[repo.did], ...repo }
+              }
+            }
           }
-        }
-      }
-      repos = Object.values(repoMap)
-      profiles = await getProfiles(
-        labelerAgent,
-        Object.values(repoMap).map((repo) => repo.did),
-      )
+          repos = Object.values(repoMap)
+        })(),
+        async () => {
+          profiles = await getProfiles(
+            labelerAgent,
+            data.accounts.map(({ did }) => did),
+          )
+        },
+      ])
     }
 
     return { repos, profiles, cursor: data.cursor }
