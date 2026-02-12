@@ -14,6 +14,7 @@ import { LoadMoreButton } from '../common/LoadMoreButton'
 import { Country } from './Country'
 import { obscureIp, parseThreatSigs } from './helpers'
 import { MatchIndicator } from './MatchIndicator'
+import { isHighProfileAccount } from '@/workspace/utils'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -84,19 +85,6 @@ export function RepositoriesTable(props: {
   )
 }
 
-function isHighProfileAccount(
-  profile?: AppBskyActorDefs.ProfileViewDetailed,
-): boolean {
-  if (!profile) return false
-  const { followersCount, verification, associated } = profile
-  if (followersCount && followersCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD)
-    return true
-  if (verification?.trustedVerifierStatus === 'valid') return true
-  if (verification?.verifiedStatus === 'valid') return true
-  if (associated?.labeler) return true
-  return false
-}
-
 function RepoRow(props: {
   repo: Repo
   showEmail: boolean
@@ -115,7 +103,7 @@ function RepoRow(props: {
   const isExactEmailMatch =
     searchedEmail !== null && repo.email === searchedEmail
 
-  const highProfile = isHighProfileAccount(profile)
+  const highProfile = isHighProfileAccount(profile?.followersCount)
 
   return (
     <tr {...others}>
