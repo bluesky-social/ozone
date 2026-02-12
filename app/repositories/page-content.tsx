@@ -24,6 +24,8 @@ import {
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
+import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
+import { getProfiles } from '@/repositories/api'
 
 export const isEmailSearch = (q: string) => q.startsWith('email:')
 export const isFullEmailSearch = (q: string) => {
@@ -46,8 +48,10 @@ type ReposData = (
   | ToolsOzoneModerationDefs.RepoViewDetail
   | ToolsOzoneModerationDefs.RepoView
 )[]
+type ProfilesData = Map<string, ProfileViewDetailed>
 type ReposResponse = {
   repos: ReposData
+  profiles?: ProfilesData
   cursor?: string
 }
 const getRepos =
@@ -60,6 +64,7 @@ const getRepos =
     // Return Values
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
     let repos: ReposData = []
+    let profiles: ProfilesData = new Map()
 
     // Inputs
     const limit = 25
@@ -131,9 +136,14 @@ const getRepos =
           }
         }
       }
+      repos = Object.values(repoMap)
+      profiles = await getProfiles(
+        labelerAgent,
+        Object.values(repoMap).map((repo) => repo.did),
+      )
     }
 
-    return { repos: Object.values(repoMap), cursor: data.cursor }
+    return { repos, profiles, cursor: data.cursor }
   }
 
 function useSearchResultsQuery(q: string) {
