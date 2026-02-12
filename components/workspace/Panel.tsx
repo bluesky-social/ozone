@@ -249,7 +249,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         // The Combobox component from headless ui does not support passing a `form` attribute to the hidden input
         // and since the input field is rendered outside of the main workspace form, we need to manually reach out
         // to the input field to get the selected value
-        const policies = formData.get('policies')
+        const policies = document?.querySelector<HTMLInputElement>(
+          'input[name="policies"]',
+        )?.value
 
         if (policies) {
           coreEvent.policies = [String(policies)]
