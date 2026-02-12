@@ -63,8 +63,10 @@ const getRepos =
 
     // Inputs
     const limit = 25
+    const isSigSearch = isSignatureSearch(q)
+    const isEmailSearchTerm = isEmailSearch(q)
 
-    if (isSignatureSearch(q)) {
+    if (isSigSearch) {
       const rawValue = q.slice(4)
       const values =
         rawValue.startsWith('["') && q.endsWith('"]')
@@ -76,7 +78,7 @@ const getRepos =
         cursor: pageParam,
       })
       data = res.data
-    } else if (isEmailSearch(q)) {
+    } else if (isEmailSearchTerm) {
       const email = q.slice(6).trim() // slice 'email:' prefix
       const res = await labelerAgent.com.atproto.admin.searchAccounts(
         {
