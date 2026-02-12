@@ -48,7 +48,7 @@ type ReposData = (
   | ToolsOzoneModerationDefs.RepoViewDetail
   | ToolsOzoneModerationDefs.RepoView
 )[]
-type ProfilesData = Map<string, ProfileViewDetailed>
+export type ProfilesData = Map<string, ProfileViewDetailed>
 type ReposResponse = {
   repos: ReposData
   profiles?: ProfilesData
@@ -168,6 +168,11 @@ function useSearchResultsQuery(q: string) {
       getNextPageParam: (lastPage) => lastPage.cursor,
     })
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
+  const profiles: ProfilesData = new Map(
+    data?.pages.flatMap((page) =>
+      page.profiles ? Array.from(page.profiles.entries()) : [],
+    ) ?? [],
+  )
 
   const confirmAddToWorkspace = async () => {
     // add items that are already loaded
@@ -218,6 +223,7 @@ function useSearchResultsQuery(q: string) {
 
   return {
     repos,
+    profiles,
     fetchNextPage,
     hasNextPage,
     isLoading,
@@ -249,6 +255,7 @@ export default function RepositoriesListPage() {
   }
   const {
     repos,
+    profiles,
     refetch,
     fetchNextPage,
     hasNextPage,
@@ -328,6 +335,7 @@ export default function RepositoriesListPage() {
         showLoadMore={!!hasNextPage}
         isLoading={isLoading}
         showEmptySearch={!q?.length && !repos.length}
+        profiles={profiles}
       />
       <WorkspacePanel
         open={isWorkspaceOpen}
