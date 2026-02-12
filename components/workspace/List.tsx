@@ -12,7 +12,7 @@ import {
 import { Checkbox } from '@/common/forms'
 import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
-import { groupSubjects } from './utils'
+import { groupSubjects, isHighProfileAccount } from './utils'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -121,7 +121,7 @@ const ListGroup = ({
         : undefined
       const followerCount = profile?.followersCount || 0
 
-      if (followerCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD) {
+      if (isHighProfileAccount(followerCount)) {
         sortedItems.unshift(item)
       } else {
         sortedItems.push(item)
