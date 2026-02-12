@@ -57,9 +57,13 @@ const getRepos =
     excludeRepo,
     options,
   }: ReposParams): Promise<ReposResponse> => {
+    // Return Values
+    let data: ComAtprotoAdminSearchAccounts.OutputSchema
+    let repos: ReposData = []
+
+    // Inputs
     const limit = 25
 
-    let data: ComAtprotoAdminSearchAccounts.OutputSchema
     if (isSignatureSearch(q)) {
       const rawValue = q.slice(4)
       const values =
@@ -97,12 +101,12 @@ const getRepos =
     }
 
     if (!data.accounts.length) {
-      return { repos: [], cursor: data.cursor }
+      return { repos, cursor: data.cursor }
     }
 
-    const repos: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
+    const repoMap: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
     data.accounts.forEach((account) => {
-      repos[account.did] = {
+      repoMap[account.did] = {
         ...account,
         $type: 'tools.ozone.moderation.defs#repoViewDetail',
         // Set placeholder properties that will be later filled in with data from ozone
@@ -121,13 +125,13 @@ const getRepos =
         )
         for (const repo of data.repos) {
           if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
-            repos[repo.did] = { ...repos[repo.did], ...repo }
+            repoMap[repo.did] = { ...repoMap[repo.did], ...repo }
           }
         }
       }
     }
 
-    return { repos: Object.values(repos), cursor: data.cursor }
+    return { repos: Object.values(repoMap), cursor: data.cursor }
   }
 
 function useSearchResultsQuery(q: string) {
