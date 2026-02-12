@@ -39,7 +39,7 @@ export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
 type ReposParams = {
   pageParam?: string
-  excludeRepo?: boolean
+  enrich?: boolean
   options?: { signal?: AbortSignal }
 }
 type ReposData = (
@@ -54,7 +54,7 @@ const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
   async ({
     pageParam,
-    excludeRepo,
+    enrich = true,
     options,
   }: ReposParams): Promise<ReposResponse> => {
     // Return Values
@@ -119,7 +119,7 @@ const getRepos =
       }
     })
 
-    if (!excludeRepo) {
+    if (enrich) {
       for (const accounts of chunkArray(data.accounts, 100)) {
         const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
           { dids: accounts.map(({ did }) => did) },
@@ -167,10 +167,10 @@ function useSearchResultsQuery(q: string) {
     try {
       let cursor = data.pageParams[0] as string | undefined
       do {
-        // When we just want the dids of the users, no need to do an extra fetch to include repos
+        // When we just want the dids of the users, dont enrich
         const nextPage = await getRepoPage({
           pageParam: cursor,
-          excludeRepo: true,
+          enrich: false,
           options: { signal: abortController.current?.signal },
         })
         const dids = nextPage.repos.map((f) => f.did)
