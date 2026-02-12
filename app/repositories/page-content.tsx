@@ -104,11 +104,18 @@ const getRepos =
         options,
       )
 
-      return res.data
+      if (enrich) {
+        profiles = await getProfiles(
+          labelerAgent,
+          res.data.repos.map((repo) => repo.did),
+        )
+      }
+
+      return { ...res.data, profiles }
     }
 
     if (!data.accounts.length) {
-      return { repos, cursor: data.cursor }
+      return { repos, profiles, cursor: data.cursor }
     }
 
     const repoMap: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
