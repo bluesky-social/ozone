@@ -37,24 +37,26 @@ export const getEmailFromSearch = (q: string) => {
 }
 export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
+type ReposParams = {
+  pageParam?: string
+  excludeRepo?: boolean
+  options?: { signal?: AbortSignal }
+}
+type ReposData = (
+  | ToolsOzoneModerationDefs.RepoViewDetail
+  | ToolsOzoneModerationDefs.RepoView
+)[]
+type ReposResponse = {
+  repos: ReposData
+  cursor?: string
+}
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
-  async (
-    {
-      pageParam,
-      excludeRepo,
-    }: {
-      pageParam?: string
-      excludeRepo?: boolean
-    },
-    options: { signal?: AbortSignal } = {},
-  ): Promise<{
-    repos: (
-      | ToolsOzoneModerationDefs.RepoViewDetail
-      | ToolsOzoneModerationDefs.RepoView
-    )[]
-    cursor?: string
-  }> => {
+  async ({
+    pageParam,
+    excludeRepo,
+    options,
+  }: ReposParams): Promise<ReposResponse> => {
     const limit = 25
 
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
@@ -160,13 +162,11 @@ function useSearchResultsQuery(q: string) {
       let cursor = data.pageParams[0] as string | undefined
       do {
         // When we just want the dids of the users, no need to do an extra fetch to include repos
-        const nextPage = await getRepoPage(
-          {
-            pageParam: cursor,
-            excludeRepo: true,
-          },
-          { signal: abortController.current?.signal },
-        )
+        const nextPage = await getRepoPage({
+          pageParam: cursor,
+          excludeRepo: true,
+          options: { signal: abortController.current?.signal },
+        })
         const dids = nextPage.repos.map((f) => f.did)
         if (dids.length) await addToWorkspace(dids)
         cursor = nextPage.cursor
