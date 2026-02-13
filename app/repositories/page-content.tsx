@@ -27,6 +27,7 @@ import {
 import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 import { getProfiles } from '@/repositories/api'
 import { Checkbox } from '@/common/forms'
+import { isHighProfileAccount } from '@/workspace/utils'
 
 export const isEmailSearch = (q: string) => q.startsWith('email:')
 export const isFullEmailSearch = (q: string) => {
@@ -179,34 +180,29 @@ function useSearchResultsQuery(q: string) {
     ) ?? [],
   )
 
-  const confirmAddToWorkspace = async ({
-    includeHighProfile,
-  }: {
-    includeHighProfile: boolean
-  }) => {
-    // add items that are already loaded
-    await addToWorkspace(repos.map((f) => f.did))
-    if (!data?.pageParams) {
-      setIsConfirmationOpen(false)
-      return
-    }
+  const confirmAddToWorkspace = async (includeHighProfile: boolean) => {
     setIsAdding(true)
     const newAbortController = new AbortController()
     abortController.current = newAbortController
 
     try {
-      let cursor = data.pageParams[0] as string | undefined
+      let cursor: string | undefined
       do {
-        // When we just want the dids of the users, dont enrich
-        const nextPage = await getRepoPage({
+        const page = await getRepoPage({
           pageParam: cursor,
-          enrich: false,
+          enrich: !includeHighProfile,
           options: { signal: abortController.current?.signal },
         })
-        const dids = nextPage.repos.map((f) => f.did)
-        if (dids.length) await addToWorkspace(dids)
-        cursor = nextPage.cursor
-        //   if the modal is closed, that means the user decided not to add any more user to workspace
+        let dids = page.repos.map((f) => f.did)
+        if (!includeHighProfile) {
+          dids = dids.filter((did) => {
+            const profile = page.profiles?.get(did)
+            return !isHighProfileAccount(profile?.followersCount)
+          })
+        }
+        if (dids.length) addToWorkspace(dids)
+        cursor = page.cursor
+        // if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
       if (abortController.current?.signal.reason === 'user-cancelled') {
@@ -215,6 +211,7 @@ function useSearchResultsQuery(q: string) {
         toast.error(`Something went wrong: ${(e as Error).message}`)
       }
     }
+
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
@@ -320,7 +317,7 @@ export default function RepositoriesListPage() {
                 return
               }
 
-              confirmAddToWorkspace({ includeHighProfile })
+              confirmAddToWorkspace(includeHighProfile)
             }}
             isOpen={isConfirmationOpen}
             setIsOpen={setIsConfirmationOpen}
