@@ -171,14 +171,20 @@ export const checkFilterMatchForWorkspaceItem = (
   }
 }
 
+export function isHighProfileAccount(followersCount?: number): boolean {
+  return (
+    followersCount !== undefined &&
+    followersCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD
+  )
+}
+
 export const findHighProfileCountInWorkspace = (list: WorkspaceListData) => {
   let total = 0
 
   for (const item of Object.values(list)) {
     if (
       isValidProfileViewDetailed(item.profile) &&
-      item.profile.followersCount &&
-      item.profile.followersCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD
+      isHighProfileAccount(item.profile.followersCount)
     ) {
       total++
     }
