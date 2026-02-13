@@ -1,29 +1,27 @@
-import React, { useState, useRef, useMemo } from 'react'
-import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
+import { ActionButton } from '@/common/buttons'
+import { Card } from '@/common/Card'
+import { Checkbox } from '@/common/forms'
+import { ModerationLabel } from '@/common/labels/List'
+import { PreviewCard } from '@/common/PreviewCard'
+import { capitalize } from '@/lib/util'
+import { SubjectOverview } from '@/reports/SubjectOverview'
+import { isValidProfileViewDetailed } from '@/repositories/helpers'
+import { HighProfileStatusBadge } from '@/subject/HighProfileStatusBadge'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   EnvelopeIcon,
   LockClosedIcon,
-  StarIcon,
   TrashIcon,
 } from '@heroicons/react/24/solid'
-
-import { Checkbox } from '@/common/forms'
-import { ActionButton } from '@/common/buttons'
-import { Card } from '@/common/Card'
-import { groupSubjects, isHighProfileAccount } from './utils'
-import { SubjectOverview } from '@/reports/SubjectOverview'
-import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
-import { PreviewCard } from '@/common/PreviewCard'
-import { WorkspaceListData } from './useWorkspaceListData'
 import { SubjectTag } from 'components/tags/SubjectTag'
-import { ModerationLabel } from '@/common/labels/List'
-import { WorkspaceExportPanel } from './ExportPanel'
-import { isValidProfileViewDetailed } from '@/repositories/helpers'
 import { VerificationBadge } from 'components/verification/Badge'
-import { capitalize } from '@/lib/util'
-import { HighProfileAccountBadge } from '@/subject/HighProfileAccountBadge'
+import React, { useMemo, useRef, useState } from 'react'
+import { WorkspaceExportPanel } from './ExportPanel'
+import { WorkspaceListData } from './useWorkspaceListData'
+import { groupSubjects, isHighProfileAccount } from './utils'
 
 interface WorkspaceListProps {
   list: string[]
@@ -210,13 +208,9 @@ const ListItem = <ItemType extends string>({
   const displayLabels = isSubjectRecord
     ? itemData?.record?.labels
     : itemData?.repo?.labels
-  
   const profileDetails = isValidProfileViewDetailed(itemData?.profile)
     ? itemData.profile
     : undefined
-  const isHighProfile = profileDetails
-    ? isHighProfileAccount(profileDetails.followersCount)
-    : false
 
   return (
     <Card key={item}>
@@ -245,11 +239,7 @@ const ListItem = <ItemType extends string>({
               />
               {profileDetails && (
                 <>
-                  {isHighProfile && (
-                    <HighProfileAccountBadge
-                      followersCount={profileDetails.followersCount}
-                    />
-                  )}
+                  <HighProfileStatusBadge profile={profileDetails} />
                   <VerificationBadge
                     profile={profileDetails}
                     className="ml-1"

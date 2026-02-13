@@ -41,12 +41,12 @@ export const getEmailFromSearch = (q: string) => {
 }
 export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
-type ReposParams = {
+export type ReposParams = {
   pageParam?: string
   enrich?: boolean
   options?: { signal?: AbortSignal }
 }
-type ReposData = (
+export type ReposData = (
   | ToolsOzoneModerationDefs.RepoViewDetail
   | ToolsOzoneModerationDefs.RepoView
 )[]
@@ -56,7 +56,7 @@ type ReposResponse = {
   profiles?: ProfilesData
   cursor?: string
 }
-const getRepos =
+export const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
   async ({
     pageParam,

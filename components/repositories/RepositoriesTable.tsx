@@ -1,7 +1,7 @@
 import { Loading } from '@/common/Loader'
 import { Repo } from '@/lib/types'
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { HighProfileAccountBadge } from '@/subject/HighProfileAccountBadge'
+import { HighProfileStatusBadge } from '@/subject/HighProfileStatusBadge'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { SubjectSummaryColumn } from '@/subject/table'
 import { AppBskyActorDefs } from '@atproto/api'
@@ -14,7 +14,6 @@ import { LoadMoreButton } from '../common/LoadMoreButton'
 import { Country } from './Country'
 import { obscureIp, parseThreatSigs } from './helpers'
 import { MatchIndicator } from './MatchIndicator'
-import { isHighProfileAccount } from '@/workspace/utils'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
@@ -103,8 +102,6 @@ function RepoRow(props: {
   const isExactEmailMatch =
     searchedEmail !== null && repo.email === searchedEmail
 
-  const highProfile = isHighProfileAccount(profile?.followersCount)
-
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6">
@@ -114,9 +111,7 @@ function RepoRow(props: {
             subjectRepoHandle={repo.handle}
             withTruncation={false}
           />
-          {highProfile && (
-            <HighProfileAccountBadge followersCount={profile?.followersCount} />
-          )}
+          <HighProfileStatusBadge profile={profile} />
           {subjectStatus && (
             <ReviewStateIcon
               subjectStatus={subjectStatus}
