@@ -51,12 +51,12 @@ export type ReposData = (
   | ToolsOzoneModerationDefs.RepoView
 )[]
 export type ProfilesData = Map<string, ProfileViewDetailed>
-type ReposResponse = {
+export type ReposResponse = {
   repos: ReposData
   profiles?: ProfilesData
   cursor?: string
 }
-export const getRepos =
+const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
   async ({
     pageParam,
