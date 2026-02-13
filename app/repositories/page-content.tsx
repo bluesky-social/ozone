@@ -275,6 +275,11 @@ export default function RepositoriesListPage() {
 
   const [includeHighProfile, setIncludeHighProfile] = useState(false)
 
+  const openConfirmation = () => {
+    setIncludeHighProfile(false) // reset to default value each time modal is opened
+    setIsConfirmationOpen(true)
+  }
+
   let pageTitle = `Repositories`
   if (q) {
     pageTitle += ` - ${q}`
@@ -305,7 +310,7 @@ export default function RepositoriesListPage() {
                 : 'All users will be added to workspace'
             }
             appearance={!!repos.length ? 'primary' : 'outlined'}
-            onClick={() => setIsConfirmationOpen(true)}
+            onClick={openConfirmation}
           >
             Add all to workspace
           </ActionButton>
