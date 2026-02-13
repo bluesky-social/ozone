@@ -1,12 +1,12 @@
 import { Loading } from '@/common/Loader'
-import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { Repo } from '@/lib/types'
 import { SubjectOverview } from '@/reports/SubjectOverview'
+import { HighProfileAccountBadge } from '@/subject/HighProfileAccountBadge'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { SubjectSummaryColumn } from '@/subject/table'
 import { AppBskyActorDefs } from '@atproto/api'
 import { UserGroupIcon } from '@heroicons/react/20/solid'
-import { MagnifyingGlassIcon, StarIcon } from '@heroicons/react/24/solid'
+import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { ProfilesData } from 'app/repositories/page-content'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
@@ -115,10 +115,7 @@ function RepoRow(props: {
             withTruncation={false}
           />
           {highProfile && (
-            <StarIcon
-              className="w-4 h-4 ml-1 text-orange-300"
-              title={`High profile account${profile?.followersCount ? ` with ${profile.followersCount} followers` : ''}`}
-            />
+            <HighProfileAccountBadge followersCount={profile?.followersCount} />
           )}
           {subjectStatus && (
             <ReviewStateIcon
