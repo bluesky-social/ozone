@@ -62,7 +62,7 @@ const getRepos =
     options,
   }: ReposParams): Promise<ReposResponse> => {
     const limit = 25
-    
+
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
     let repos: ReposData = []
     let profiles: ProfilesData = new Map()
@@ -129,7 +129,7 @@ const getRepos =
     })
 
     if (enrich) {
-      await Promise.all([
+      const results = await Promise.all([
         (async () => {
           for (const accounts of chunkArray(data.accounts, 100)) {
             const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
@@ -142,15 +142,15 @@ const getRepos =
               }
             }
           }
-          repos = Object.values(repoMap)
+          return Object.values(repoMap)
         })(),
-        async () => {
-          profiles = await getProfiles(
-            labelerAgent,
-            data.accounts.map(({ did }) => did),
-          )
-        },
+        getProfiles(
+          labelerAgent,
+          data.accounts.map(({ did }) => did),
+        ),
       ])
+      repos = results[0]
+      profiles = results[1]
     }
 
     return { repos, profiles, cursor: data.cursor }
