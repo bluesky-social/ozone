@@ -134,3 +134,53 @@ export const mockSafelinkUpdateRuleResponse = (response: {
     `${SERVER_URL}/tools.ozone.safelink.updateRule`,
     response,
   ).as('mockSafelinkUpdateRuleResponse')
+
+export const mockPolicyListResponse = () =>
+  cy
+    .intercept('GET', `${SERVER_URL}/tools.ozone.setting.listOptions*`, {
+      options: [
+        {
+          key: 'tools.ozone.setting.policyList',
+          value: {
+            'policy-one': {
+              name: 'Policy One',
+              description: 'Policy for handling user behavior',
+              severityLevels: {
+                'sev-1': {
+                  isDefault: true,
+                  description: 'Minor infraction',
+                },
+                'sev-2': {
+                  isDefault: false,
+                  description: 'Moderate infraction',
+                },
+              },
+            },
+            'policy-two': {
+              name: 'Policy Two',
+              description: 'Policy for handling user action',
+              severityLevels: {
+                'sev-4': {
+                  isDefault: false,
+                  description: 'Moderate infraction',
+                },
+                'sev-5': {
+                  isDefault: false,
+                  description: 'Severe infraction',
+                },
+              },
+            },
+          },
+          did: 'did:plc:tfeay256xpz3vf5v5d3cxykt',
+          scope: 'instance',
+          createdBy: 'did:plc:tfeay256xpz3vf5v5d3cxykt',
+          lastUpdatedBy: 'did:plc:tfeay256xpz3vf5v5d3cxykt',
+          managerRole: 'tools.ozone.team.defs#roleAdmin',
+          description: 'Moderation policies to be associated with actions',
+          createdAt: '2026-02-12T22:24:07.110Z',
+          updatedAt: '2026-02-12T22:24:07.110Z',
+        },
+      ],
+      cursor: '1',
+    })
+    .as('mockPolicyListResponse')
