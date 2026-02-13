@@ -61,17 +61,13 @@ const getRepos =
     enrich = true,
     options,
   }: ReposParams): Promise<ReposResponse> => {
-    // Return Values
+    const limit = 25
+    
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
     let repos: ReposData = []
     let profiles: ProfilesData = new Map()
 
-    // Inputs
-    const limit = 25
-    const isSigSearch = isSignatureSearch(q)
-    const isEmailSearchTerm = isEmailSearch(q)
-
-    if (isSigSearch) {
+    if (isSignatureSearch(q)) {
       const rawValue = q.slice(4)
       const values =
         rawValue.startsWith('["') && q.endsWith('"]')
@@ -83,7 +79,7 @@ const getRepos =
         cursor: pageParam,
       })
       data = res.data
-    } else if (isEmailSearchTerm) {
+    } else if (isEmailSearch(q)) {
       const email = q.slice(6).trim() // slice 'email:' prefix
       const res = await labelerAgent.com.atproto.admin.searchAccounts(
         {
@@ -104,6 +100,7 @@ const getRepos =
         options,
       )
 
+      // Still add profile data if doing generic search
       if (enrich) {
         profiles = await getProfiles(
           labelerAgent,
