@@ -26,6 +26,7 @@ import {
 } from '@/mod-event/helpers/emitEvent'
 import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 import { getProfiles } from '@/repositories/api'
+import { Checkbox } from '@/common/forms'
 
 export const isEmailSearch = (q: string) => q.startsWith('email:')
 export const isFullEmailSearch = (q: string) => {
@@ -178,7 +179,11 @@ function useSearchResultsQuery(q: string) {
     ) ?? [],
   )
 
-  const confirmAddToWorkspace = async () => {
+  const confirmAddToWorkspace = async ({
+    includeHighProfile,
+  }: {
+    includeHighProfile: boolean
+  }) => {
     // add items that are already loaded
     await addToWorkspace(repos.map((f) => f.did))
     if (!data?.pageParams) {
@@ -271,6 +276,8 @@ export default function RepositoriesListPage() {
     confirmAddToWorkspace,
   } = useSearchResultsQuery(q)
 
+  const [includeHighProfile, setIncludeHighProfile] = useState(false)
+
   let pageTitle = `Repositories`
   if (q) {
     pageTitle += ` - ${q}`
@@ -313,7 +320,7 @@ export default function RepositoriesListPage() {
                 return
               }
 
-              confirmAddToWorkspace()
+              confirmAddToWorkspace({ includeHighProfile })
             }}
             isOpen={isConfirmationOpen}
             setIsOpen={setIsConfirmationOpen}
@@ -327,7 +334,13 @@ export default function RepositoriesListPage() {
                 process and already added users will remain in the workspace.
               </>
             }
-          />
+          >
+            <Checkbox
+              label="Include high profile users"
+              checked={includeHighProfile}
+              onChange={(e) => setIncludeHighProfile(e.target.checked)}
+            />
+          </ConfirmationModal>
         </div>
       </SectionHeader>
 
