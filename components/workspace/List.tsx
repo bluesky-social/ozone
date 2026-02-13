@@ -20,10 +20,10 @@ import { WorkspaceListData } from './useWorkspaceListData'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { ModerationLabel } from '@/common/labels/List'
 import { WorkspaceExportPanel } from './ExportPanel'
-import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { isValidProfileViewDetailed } from '@/repositories/helpers'
 import { VerificationBadge } from 'components/verification/Badge'
 import { capitalize } from '@/lib/util'
+import { HighProfileAccountBadge } from '@/subject/HighProfileAccountBadge'
 
 interface WorkspaceListProps {
   list: string[]
@@ -210,7 +210,13 @@ const ListItem = <ItemType extends string>({
   const displayLabels = isSubjectRecord
     ? itemData?.record?.labels
     : itemData?.repo?.labels
-  const hasValidProfile = isValidProfileViewDetailed(itemData?.profile)
+  
+  const profileDetails = isValidProfileViewDetailed(itemData?.profile)
+    ? itemData.profile
+    : undefined
+  const isHighProfile = profileDetails
+    ? isHighProfileAccount(profileDetails.followersCount)
+    : false
 
   return (
     <Card key={item}>
@@ -237,17 +243,15 @@ const ListItem = <ItemType extends string>({
                 omitQueryParamsInLinks={['workspaceOpen']}
                 subjectRepoHandle={itemData.repo?.handle}
               />
-              {isValidProfileViewDetailed(itemData.profile) && (
+              {profileDetails && (
                 <>
-                  {(itemData.profile.followersCount || 0) >
-                    HIGH_PROFILE_FOLLOWER_THRESHOLD && (
-                    <StarIcon
-                      className="w-4 h-4 ml-1 text-orange-300"
-                      title={`High profile user with ${itemData.profile.followersCount} followers`}
+                  {isHighProfile && (
+                    <HighProfileAccountBadge
+                      followersCount={profileDetails.followersCount}
                     />
                   )}
                   <VerificationBadge
-                    profile={itemData.profile}
+                    profile={profileDetails}
                     className="ml-1"
                     size="sm"
                   />
