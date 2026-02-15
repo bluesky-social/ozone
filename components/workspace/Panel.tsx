@@ -21,7 +21,14 @@ import { DialogTitle } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import { createRef, FormEvent, useMemo, useRef, useState } from 'react'
+import {
+  createRef,
+  FormEvent,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { toast } from 'react-toastify'
 import { WORKSPACE_FORM_ID } from './constants'
 import {
@@ -94,12 +101,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           checkbox.dispatchEvent(new Event('mousedown'))
         }
       })
-  }
-
-  // form state
-  const [selectedItems, setSelectedItems] = useState<string[]>([])
-  const onChange = (e: FormEvent<HTMLFormElement>) => {
-    setSelectedItems(getSelectedItems())
   }
 
   // confirmation modal
@@ -212,15 +213,15 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       // Make sure we aren't constantly refreshing the data unless the panel is open
       enabled: props.open,
     })
-  const selectedWorkspaceListStatuses: WorkspaceListData = useMemo(() => {
-    if (!workspaceListStatuses) return {}
-    return Object.entries(workspaceListStatuses)
+  const getSelectedWorkspaceItems = useCallback(() => {
+    const selectedItems = getSelectedItems()
+    return Object.entries(workspaceListStatuses ?? {})
       .filter(([key]) => selectedItems.includes(key))
       .reduce((acc, [key, value]) => {
         acc[key] = value
         return acc
       }, {})
-  }, [selectedItems, workspaceListStatuses])
+  }, [workspaceListStatuses])
 
   // submission
   const onFormSubmit = async (
@@ -228,7 +229,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   ) => {
     ev.preventDefault()
     const formData = new FormData(ev.target)
-    if (highProfileAccountSelectedCount > 0) {
+    const selectedItems = getSelectedWorkspaceItems()
+    const count = findHighProfileCountInWorkspace(selectedItems)
+    if (count > 0) {
       setShowConfirmationModal(true)
     } else {
       await submit(formData)
@@ -363,12 +366,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     [workspaceListStatuses],
   )
 
-  /** Number of high profile accounts that are selected. */
-  const highProfileAccountSelectedCount = useMemo(() => {
-    const count = findHighProfileCountInWorkspace(selectedWorkspaceListStatuses)
-    return count
-  }, [selectedWorkspaceListStatuses])
-
   return (
     <FullScreenActionPanel
       title={
@@ -489,7 +486,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                   ref={formRef}
                   id={WORKSPACE_FORM_ID}
                   onSubmit={onFormSubmit}
-                  onChange={onChange}
                   // The overflow here allows dropdowns in the form filter to adjust height of the window accordingly
                   className="overflow-y-auto"
                 >
@@ -558,9 +554,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         title="Confirm Action"
         description={
           <strong className="text-yellow-600 dark:text-yellow-400">
-            This action includes{' '}
-            {pluralize(highProfileAccountSelectedCount, 'high profile account')}
-            . Are you sure?
+            This action includes at least 1 high profile account. Are you sure?
           </strong>
         }
         confirmButtonText={
