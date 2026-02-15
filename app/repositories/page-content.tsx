@@ -8,6 +8,7 @@ import {
   ToolsOzoneModerationDefs,
   ComAtprotoAdminSearchAccounts,
   ToolsOzoneModerationEmitEvent,
+  AppBskyActorDefs,
 } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
@@ -24,7 +25,6 @@ import {
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
-import { ProfileViewDetailed } from '@atproto/api/dist/client/types/app/bsky/actor/defs'
 import { getProfiles } from '@/repositories/api'
 import { Checkbox } from '@/common/forms'
 import { isHighProfileAccount } from '@/workspace/utils'
@@ -50,7 +50,7 @@ export type ReposData = (
   | ToolsOzoneModerationDefs.RepoViewDetail
   | ToolsOzoneModerationDefs.RepoView
 )[]
-export type ProfilesData = Map<string, ProfileViewDetailed>
+export type ProfilesData = Map<string, AppBskyActorDefs.ProfileViewDetailed>
 export type ReposResponse = {
   repos: ReposData
   profiles?: ProfilesData
