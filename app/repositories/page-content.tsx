@@ -113,6 +113,10 @@ const getRepos =
       return { ...res.data, profiles }
     }
 
+    if (!data.accounts.length) {
+      return { repos: [], cursor: data.cursor }
+    }
+
     data.accounts.forEach((account) => {
       repos[account.did] = {
         ...account,
