@@ -66,7 +66,7 @@ const getRepos =
     const limit = 25
 
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
-    let repos: ReposData = []
+    let repos: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
     let profiles: ProfilesData = new Map()
 
     if (isSignatureSearch(q)) {
@@ -113,13 +113,8 @@ const getRepos =
       return { ...res.data, profiles }
     }
 
-    if (!data.accounts.length) {
-      return { repos, profiles, cursor: data.cursor }
-    }
-
-    const repoMap: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
     data.accounts.forEach((account) => {
-      repoMap[account.did] = {
+      repos[account.did] = {
         ...account,
         $type: 'tools.ozone.moderation.defs#repoViewDetail',
         // Set placeholder properties that will be later filled in with data from ozone
@@ -140,11 +135,11 @@ const getRepos =
             )
             for (const repo of data.repos) {
               if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
-                repoMap[repo.did] = { ...repoMap[repo.did], ...repo }
+                repos[repo.did] = { ...repos[repo.did], ...repo }
               }
             }
           }
-          return Object.values(repoMap)
+          return repos
         })(),
         getProfiles(
           labelerAgent,
@@ -155,7 +150,7 @@ const getRepos =
       profiles = results[1]
     }
 
-    return { repos, profiles, cursor: data.cursor }
+    return { repos: Object.values(repos), profiles, cursor: data.cursor }
   }
 
 function useSearchResultsQuery(q: string) {
