@@ -231,6 +231,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     const formData = new FormData(ev.target)
     const selectedItems = getSelectedWorkspaceItems()
     const count = findHighProfileCountInWorkspace(selectedItems)
+    setHighProfileAccountSelectedCount(count)
     if (count > 0) {
       setShowConfirmationModal(true)
     } else {
@@ -365,6 +366,10 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         : 0,
     [workspaceListStatuses],
   )
+
+  /** Number of high profile accounts that are selected. */
+  const [highProfileAccountSelectedCount, setHighProfileAccountSelectedCount] =
+    useState(0)
 
   return (
     <FullScreenActionPanel
@@ -554,7 +559,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         title="Confirm Action"
         description={
           <strong className="text-yellow-600 dark:text-yellow-400">
-            This action includes at least 1 high profile account. Are you sure?
+            This action includes{' '}
+            {pluralize(highProfileAccountSelectedCount, 'high profile account')}
+            . Are you sure?
           </strong>
         }
         confirmButtonText={
