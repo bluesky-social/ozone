@@ -1,29 +1,27 @@
-import React, { useState, useRef, useMemo } from 'react'
-import { AppBskyActorDefs, ToolsOzoneModerationDefs } from '@atproto/api'
+import { ActionButton } from '@/common/buttons'
+import { Card } from '@/common/Card'
+import { Checkbox } from '@/common/forms'
+import { ModerationLabel } from '@/common/labels/List'
+import { PreviewCard } from '@/common/PreviewCard'
+import { capitalize } from '@/lib/util'
+import { SubjectOverview } from '@/reports/SubjectOverview'
+import { isValidProfileViewDetailed } from '@/repositories/helpers'
+import { HighProfileStatusBadge } from '@/subject/HighProfileStatusBadge'
+import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import {
   ChevronDownIcon,
   ChevronUpIcon,
   EnvelopeIcon,
   LockClosedIcon,
-  StarIcon,
   TrashIcon,
 } from '@heroicons/react/24/solid'
-
-import { Checkbox } from '@/common/forms'
-import { ActionButton } from '@/common/buttons'
-import { Card } from '@/common/Card'
-import { groupSubjects } from './utils'
-import { SubjectOverview } from '@/reports/SubjectOverview'
-import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
-import { PreviewCard } from '@/common/PreviewCard'
-import { WorkspaceListData } from './useWorkspaceListData'
 import { SubjectTag } from 'components/tags/SubjectTag'
-import { ModerationLabel } from '@/common/labels/List'
-import { WorkspaceExportPanel } from './ExportPanel'
-import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
-import { isValidProfileViewDetailed } from '@/repositories/helpers'
 import { VerificationBadge } from 'components/verification/Badge'
-import { capitalize } from '@/lib/util'
+import React, { useMemo, useRef, useState } from 'react'
+import { WorkspaceExportPanel } from './ExportPanel'
+import { WorkspaceListData } from './useWorkspaceListData'
+import { groupSubjects, isHighProfileAccount } from './utils'
 
 interface WorkspaceListProps {
   list: string[]
@@ -121,7 +119,7 @@ const ListGroup = ({
         : undefined
       const followerCount = profile?.followersCount || 0
 
-      if (followerCount >= HIGH_PROFILE_FOLLOWER_THRESHOLD) {
+      if (isHighProfileAccount(followerCount)) {
         sortedItems.unshift(item)
       } else {
         sortedItems.push(item)
@@ -210,7 +208,9 @@ const ListItem = <ItemType extends string>({
   const displayLabels = isSubjectRecord
     ? itemData?.record?.labels
     : itemData?.repo?.labels
-  const hasValidProfile = isValidProfileViewDetailed(itemData?.profile)
+  const profileDetails = isValidProfileViewDetailed(itemData?.profile)
+    ? itemData.profile
+    : undefined
 
   return (
     <Card key={item}>
@@ -237,17 +237,11 @@ const ListItem = <ItemType extends string>({
                 omitQueryParamsInLinks={['workspaceOpen']}
                 subjectRepoHandle={itemData.repo?.handle}
               />
-              {isValidProfileViewDetailed(itemData.profile) && (
+              {profileDetails && (
                 <>
-                  {(itemData.profile.followersCount || 0) >
-                    HIGH_PROFILE_FOLLOWER_THRESHOLD && (
-                    <StarIcon
-                      className="w-4 h-4 ml-1 text-orange-300"
-                      title={`High profile user with ${itemData.profile.followersCount} followers`}
-                    />
-                  )}
+                  <HighProfileStatusBadge profile={profileDetails} />
                   <VerificationBadge
-                    profile={itemData.profile}
+                    profile={profileDetails}
                     className="ml-1"
                     size="sm"
                   />

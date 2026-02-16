@@ -1,19 +1,23 @@
 import { Loading } from '@/common/Loader'
 import { Repo } from '@/lib/types'
 import { SubjectOverview } from '@/reports/SubjectOverview'
+import { HighProfileStatusBadge } from '@/subject/HighProfileStatusBadge'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { SubjectSummaryColumn } from '@/subject/table'
+import { AppBskyActorDefs } from '@atproto/api'
 import { UserGroupIcon } from '@heroicons/react/20/solid'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
+import { ProfilesData } from 'app/repositories/page-content'
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { Country } from './Country'
-import { getProfileFromRepo, obscureIp, parseThreatSigs } from './helpers'
+import { obscureIp, parseThreatSigs } from './helpers'
 import { MatchIndicator } from './MatchIndicator'
 
 export function RepositoriesTable(props: {
   repos: Repo[]
+  profiles: ProfilesData
   showLoadMore: boolean
   showEmail: boolean
   searchedEmail: string | null
@@ -23,6 +27,7 @@ export function RepositoriesTable(props: {
 }) {
   const {
     repos,
+    profiles,
     showEmail,
     showLoadMore,
     onLoadMore,
@@ -39,7 +44,13 @@ export function RepositoriesTable(props: {
           <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
             {!!repos?.length ? (
               repos.map((repo) => (
-                <RepoRow showEmail={showEmail} searchedEmail={props.searchedEmail} key={repo.did} repo={repo} />
+                <RepoRow
+                  showEmail={showEmail}
+                  searchedEmail={props.searchedEmail}
+                  key={repo.did}
+                  repo={repo}
+                  profile={profiles.get(repo.did)}
+                />
               ))
             ) : (
               <tr>
@@ -73,10 +84,14 @@ export function RepositoriesTable(props: {
   )
 }
 
-function RepoRow(props: { repo: Repo; showEmail: boolean; searchedEmail: string | null }) {
-  const { repo, showEmail, searchedEmail, ...others } = props
+function RepoRow(props: {
+  repo: Repo
+  showEmail: boolean
+  searchedEmail: string | null
+  profile?: AppBskyActorDefs.ProfileViewDetailed
+}) {
+  const { repo, showEmail, searchedEmail, profile, ...others } = props
 
-  const profile = getProfileFromRepo(repo.relatedRecords)
   const displayName = profile?.displayName
 
   const { registrationIp, lastSigninIp, ipCountry, lastSigninCountry } =
@@ -96,6 +111,7 @@ function RepoRow(props: { repo: Repo; showEmail: boolean; searchedEmail: string 
             subjectRepoHandle={repo.handle}
             withTruncation={false}
           />
+          <HighProfileStatusBadge profile={profile} />
           {subjectStatus && (
             <ReviewStateIcon
               subjectStatus={subjectStatus}
