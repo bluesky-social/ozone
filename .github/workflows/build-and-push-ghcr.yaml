@@ -5,6 +5,10 @@ on:
       - main
     tags:
       - v*
+  pull_request:
+    branches:
+      - main
+
 env:
   REGISTRY: ghcr.io
   USERNAME: ${{ github.actor }}
@@ -15,7 +19,6 @@ env:
 
 jobs:
   ozone-container-ghcr:
-    if: github.repository == 'bluesky-social/ozone'
     runs-on: ubuntu-latest
     permissions:
       contents: read
