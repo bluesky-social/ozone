@@ -63,7 +63,7 @@ export const useClaimReport = () => {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   return useMutation(
-    async (input: { reportId: number; queueId?: number; assign: boolean }) => {
+    async (input: { reportId: number; queueId: number; assign: boolean }) => {
       const { data } = await labelerAgent.call(
         'tools.ozone.report.claimReport',
         undefined,

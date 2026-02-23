@@ -30,7 +30,7 @@ export function ReportList() {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Report #{reportId}
             </span>
-            <ReportAssigneeStatus reportId={reportId} />
+            <ReportAssigneeStatus reportId={reportId} queueId={1} />
           </div>
         ))}
       </div>
