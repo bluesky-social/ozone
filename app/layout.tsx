@@ -32,7 +32,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`h-full bg-gray-50 dark:bg-slate-900 ${
-        isDarkModeEnabled() ? 'dark' : ''
+        isDarkModeEnabled() ? 'dark' : 'dark'
       }`}
     >
       <title>Ozone</title>
