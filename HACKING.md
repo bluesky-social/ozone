@@ -24,7 +24,7 @@ You can also test with different permission levels with the following credential
 - Triage: triage.test/triage-pass
 - Triage: admin-mod.test/admin-mod-pass
 
-### Working with unpublished changes to the `@atproto/api` package
+### Working with unpublished changes to `atproto`
 
 In the course of development there may be updates to the atproto client that are not yet published to npm, but you would like to use with Ozone. Here's the workflow for using unpublished changes to the @atproto/api package:
 
@@ -53,22 +53,43 @@ In the course of development there may be updates to the atproto client that are
    ~/Documents/bluesky/atproto
    ❯ yarn
    ```
-
-4. Update the package.json file in ozone/ to reference the local build of @atproto/api.
+4. Update `next.config.js` in this repo with webpack options for local linking.
+   ```diff
+   +  experimental: {
+   +    externalDir: true,
+   +  },
+   +  webpack: (config, { isServer }) => {
+   +    // Handle symlinked packages properly
+   +    config.resolve.symlinks = false
+   +    return config
+   +  },
+   ```
+5. Update the `dev` script in package.json to use webpack:
 
    ```diff
-      "dependencies": {
-   -    "@atproto/api": "^0.0.3",
-   +    "@atproto/api": "link:../atproto/packages/api/dist",
-        "@headlessui/react": "^1.7.7",
+   -    "dev": "next dev --turbopack",
+   +    "dev": "next dev",
+   ```
+6. Update package.json file in ozone/ to reference the local builds of @atproto.
+
+   ```diff
+   "dependencies": {
+   -    "@atproto/api": "0.18.9",
+   -    "@atproto/oauth-client-browser": "^0.3.38",
+   -    "@atproto/oauth-types": "^0.6.0",
+   -    "@atproto/xrpc": "^0.7.7",
+   +    "@atproto/api": "link:../atproto/packages/api",
+   +    "@atproto/oauth-client-browser": "link:../atproto/packages/oauth/oauth-client-browser",
+   +    "@atproto/oauth-types": "link:../atproto/packages/oauth/oauth-types",
+   +    "@atproto/xrpc": "link:../atproto/packages/xrpc",
    ```
 
-5. Ask yarn to reinstall, creating the link from ozone/ to the local build of @atproto/api.
+7. Ask yarn to reinstall, creating the link from ozone/ to the local build of @atproto/api.
    ```
    ~/Documents/bluesky/ozone
    ❯ yarn
    ```
-6. Take care not to check-in the changes to package.json and yarn.lock that came from the temporary linking. When you're done, you can reset everything with:
+8. Take care not to check-in the changes to package.json and yarn.lock that came from the temporary linking. When you're done, you can reset everything with:
    ```
    ~/Documents/bluesky/ozone
    ❯ git checkout package.json yarn.lock && yarn
