@@ -84,10 +84,10 @@ In the course of development there may be updates to the atproto client that are
    +    "@atproto/xrpc": "link:../atproto/packages/xrpc",
    ```
 
-7. Ask yarn to reinstall, creating the link from ozone/ to the local build of @atproto/api.
+7. Clear the Next.js cache and node_modules and re-install:
    ```
    ~/Documents/bluesky/ozone
-   ❯ yarn
+   ❯ rm -rf .next && yarn
    ```
 8. Take care not to check-in the changes to package.json and yarn.lock that came from the temporary linking. When you're done, you can reset everything with:
    ```
