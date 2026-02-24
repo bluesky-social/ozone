@@ -41,11 +41,8 @@ export const useAssignQueue = () => {
   const queryClient = useQueryClient()
   return useMutation(
     async (input: { did: string; queueId: number; assign: boolean }) => {
-      const { data } = await labelerAgent.call(
-        'tools.ozone.queue.assign',
-        undefined,
-        input,
-      )
+      const { data } =
+        await labelerAgent.tools.ozone.queue.assignModerator(input)
       return data as AssignmentView
     },
     {
@@ -64,11 +61,7 @@ export const useClaimReport = () => {
   const queryClient = useQueryClient()
   return useMutation(
     async (input: { reportId: number; queueId: number; assign: boolean }) => {
-      const { data } = await labelerAgent.call(
-        'tools.ozone.report.claimReport',
-        undefined,
-        input,
-      )
+      const { data } = await labelerAgent.tools.ozone.report.claimReport(input)
       return data as AssignmentView
     },
     {
