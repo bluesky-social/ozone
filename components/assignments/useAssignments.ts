@@ -1,7 +1,9 @@
+import { useEffect, useRef, useCallback } from 'react'
 import { displayError } from '@/common/Loader'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
+import { MINUTE } from '@/lib/util'
 
 const ASSIGNMENTS_QUERY_KEY = 'assignments'
 
@@ -73,4 +75,53 @@ export const useClaimReport = () => {
       },
     },
   )
+}
+
+const AUTO_CLAIM_INTERVAL_MS = 3 * MINUTE
+
+export const useAutoClaimReport = ({
+  reportId,
+  queueId,
+}: {
+  reportId: number
+  queueId: number
+}) => {
+  const labelerAgent = useLabelerAgent()
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  const claim = useCallback(async () => {
+    try {
+      await labelerAgent.tools.ozone.report.claimReport({
+        reportId,
+        queueId,
+        assign: true,
+      })
+    } catch (err) {
+      toast.error(displayError(err))
+    }
+  }, [labelerAgent, reportId, queueId])
+
+  const unclaim = useCallback(async () => {
+    try {
+      await labelerAgent.tools.ozone.report.claimReport({
+        reportId,
+        queueId,
+        assign: false,
+      })
+    } catch {
+      // best-effort unclaim on unmount
+    }
+  }, [labelerAgent, reportId, queueId])
+
+  useEffect(() => {
+    claim()
+    intervalRef.current = setInterval(claim, AUTO_CLAIM_INTERVAL_MS)
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current)
+      }
+      unclaim()
+    }
+  }, [claim, unclaim])
 }
