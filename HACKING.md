@@ -84,7 +84,7 @@ In the course of development there may be updates to the atproto client that are
    +    "@atproto/xrpc": "link:../atproto/packages/xrpc",
    ```
 
-7. Clear the Next.js cache and node_modules and re-install:
+7. Clear the Next.js cache and re-install:
    ```
    ~/Documents/bluesky/ozone
    ❯ rm -rf .next && yarn
