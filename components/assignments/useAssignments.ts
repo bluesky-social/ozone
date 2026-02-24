@@ -115,19 +115,11 @@ export const useAutoAssignReport = ({
         console.warn(`Auto-assign failed. `, err)
       }
     }
-    const unassign = async () => {
-      try {
-        await assignReport.mutateAsync({ reportId, queueId, assign: false })
-      } catch (err) {
-        console.warn(`Auto-unassign failed. `, err)
-      }
-    }
 
     assign()
     intervalRef.current = setInterval(assign, AUTO_ASSIGN_INTERVAL_MS)
 
     return () => {
-      unassign()
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
