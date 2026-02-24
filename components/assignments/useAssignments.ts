@@ -107,15 +107,15 @@ export const useAutoAssignReport = ({
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const assignReport = useAssignReport()
 
-  useEffect(() => {
-    const assign = async () => {
-      try {
-        await assignReport.mutateAsync({ reportId, queueId, assign: true })
-      } catch (err) {
-        console.warn(`Auto-assign failed. `, err)
-      }
+  const assign = useCallback(async () => {
+    try {
+      await assignReport.mutateAsync({ reportId, queueId, assign: true })
+    } catch (err) {
+      console.warn(`Auto-assign failed. `, err)
     }
+  }, [reportId, queueId, assignReport])
 
+  useEffect(() => {
     assign()
     intervalRef.current = setInterval(assign, AUTO_ASSIGN_INTERVAL_MS)
 
