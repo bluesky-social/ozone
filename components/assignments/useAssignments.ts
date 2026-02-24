@@ -29,7 +29,7 @@ export const useQueueAssignments = (params: {
         await labelerAgent.tools.ozone.queue.getAssignments(params)
       return (data as { assignments: AssignmentView[] }).assignments
     },
-    refetchInterval: 30_000,
+    refetchInterval: 5000,
     onError: (err) => {
       toast.error(`Failed to load assignments:\n${err}`)
     },
@@ -49,7 +49,7 @@ export const useReportAssignments = (params: {
         await labelerAgent.tools.ozone.report.getAssignments(params)
       return (data as { assignments: AssignmentView[] }).assignments
     },
-    refetchInterval: 5_000,
+    refetchInterval: 5000,
     onError: (err) => {
       toast.error(`Failed to load assignments:\n${err}`)
     },
@@ -76,7 +76,7 @@ export const useAssignQueue = () => {
   )
 }
 
-export const useClaimReport = () => {
+export const useAssignReport = () => {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   return useMutation(
@@ -96,51 +96,41 @@ export const useClaimReport = () => {
   )
 }
 
-const AUTO_CLAIM_INTERVAL_MS = 3 * MINUTE
-
-export const useAutoClaimReport = ({
+const AUTO_ASSIGN_INTERVAL_MS = 3 * MINUTE
+export const useAutoAssignReport = ({
   reportId,
   queueId,
 }: {
   reportId: number
   queueId?: number
 }) => {
-  const labelerAgent = useLabelerAgent()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const claim = useCallback(async () => {
-    try {
-      await labelerAgent.tools.ozone.report.assignModerator({
-        reportId,
-        queueId,
-        assign: true,
-      })
-    } catch (err) {
-      toast.error(displayError(err))
-    }
-  }, [labelerAgent, reportId, queueId])
-
-  const unclaim = useCallback(async () => {
-    try {
-      await labelerAgent.tools.ozone.report.assignModerator({
-        reportId,
-        queueId,
-        assign: false,
-      })
-    } catch {
-      // best-effort unclaim on unmount
-    }
-  }, [labelerAgent, reportId, queueId])
+  const assignReport = useAssignReport()
 
   useEffect(() => {
-    claim()
-    intervalRef.current = setInterval(claim, AUTO_CLAIM_INTERVAL_MS)
+    const assign = async () => {
+      try {
+        await assignReport.mutateAsync({ reportId, queueId, assign: true })
+      } catch (err) {
+        console.warn(`Auto-assign failed. `, err)
+      }
+    }
+    const unassign = async () => {
+      try {
+        await assignReport.mutateAsync({ reportId, queueId, assign: false })
+      } catch (err) {
+        console.warn(`Auto-unassign failed. `, err)
+      }
+    }
+
+    assign()
+    intervalRef.current = setInterval(assign, AUTO_ASSIGN_INTERVAL_MS)
 
     return () => {
+      unassign()
       if (intervalRef.current) {
         clearInterval(intervalRef.current)
       }
-      unclaim()
     }
-  }, [claim, unclaim])
+  }, [reportId, queueId])
 }

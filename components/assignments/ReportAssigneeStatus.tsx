@@ -1,7 +1,7 @@
 'use client'
 
 import { XMarkIcon } from '@heroicons/react/24/outline'
-import { useClaimReport, useReportAssignments } from './useAssignments'
+import { useAssignReport, useReportAssignments } from './useAssignments'
 
 interface ReportAssigneeStatusProps {
   reportId: number
@@ -16,16 +16,16 @@ export function ReportAssigneeStatus({
     onlyActiveAssignments: true,
     reportIds: [reportId],
   })
-  const { mutate: claimReport } = useClaimReport()
+  const { mutate: assignReport } = useAssignReport()
 
   const reportAssignment = assignments.find((a) => a.reportId === reportId)
 
-  const handleClaim = () => {
-    claimReport({ reportId, queueId, assign: true })
+  const handleAssign = () => {
+    assignReport({ reportId, queueId, assign: true })
   }
 
-  const handleRemove = () => {
-    claimReport({ reportId, queueId, assign: false })
+  const handleUnassign = () => {
+    assignReport({ reportId, queueId, assign: false })
   }
 
   return (
@@ -33,9 +33,9 @@ export function ReportAssigneeStatus({
       {reportAssignment ? (
         <span className="group inline-flex items-center gap-1 rounded bg-gray-100 dark:bg-slate-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200">
           {reportAssignment.did.slice(0, 20)}...
-          {handleRemove && (
+          {handleUnassign && (
             <button
-              onClick={handleRemove}
+              onClick={handleUnassign}
               className="hidden group-hover:inline-flex text-gray-400 hover:text-red-500"
               title="Remove assignee"
             >
@@ -45,7 +45,7 @@ export function ReportAssigneeStatus({
         </span>
       ) : (
         <button
-          onClick={handleClaim}
+          onClick={handleAssign}
           className="text-xs text-indigo-600 dark:text-teal-400 hover:underline"
         >
           Claim

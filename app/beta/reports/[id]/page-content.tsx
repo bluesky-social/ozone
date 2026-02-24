@@ -1,6 +1,6 @@
 import { useParams } from 'next/navigation'
 import { useTitle } from 'react-use'
-import { useAutoClaimReport } from '@/assignments/useAssignments'
+import { useAutoAssignReport } from '@/assignments/useAssignments'
 import { ReportAssigneeStatus } from '@/assignments/ReportAssigneeStatus'
 
 export default function ReportDetailContent() {
@@ -8,7 +8,7 @@ export default function ReportDetailContent() {
   const reportId = Number(id)
 
   useTitle(`Report #${reportId}`)
-  useAutoClaimReport({ reportId })
+  useAutoAssignReport({ reportId })
 
   return (
     <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
