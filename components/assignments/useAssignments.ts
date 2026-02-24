@@ -16,7 +16,7 @@ export interface AssignmentView {
   endAt: string
 }
 
-export const useAssignments = (params: {
+export const useQueueAssignments = (params: {
   onlyActiveAssignments?: boolean
   queueIds?: number[]
   dids?: string[]
@@ -25,13 +25,31 @@ export const useAssignments = (params: {
   return useQuery({
     queryKey: [ASSIGNMENTS_QUERY_KEY, params],
     queryFn: async () => {
-      const { data } = await labelerAgent.call(
-        'tools.ozone.queue.getAssignments',
-        params,
-      )
+      const { data } =
+        await labelerAgent.tools.ozone.queue.getAssignments(params)
       return (data as { assignments: AssignmentView[] }).assignments
     },
     refetchInterval: 30_000,
+    onError: (err) => {
+      toast.error(`Failed to load assignments:\n${err}`)
+    },
+  })
+}
+
+export const useReportAssignments = (params: {
+  reportIds: number[]
+  onlyActiveAssignments?: boolean
+  dids?: string[]
+}) => {
+  const labelerAgent = useLabelerAgent()
+  return useQuery({
+    queryKey: [ASSIGNMENTS_QUERY_KEY, params],
+    queryFn: async () => {
+      const { data } =
+        await labelerAgent.tools.ozone.report.getAssignments(params)
+      return (data as { assignments: AssignmentView[] }).assignments
+    },
+    refetchInterval: 5_000,
     onError: (err) => {
       toast.error(`Failed to load assignments:\n${err}`)
     },
@@ -62,8 +80,9 @@ export const useClaimReport = () => {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   return useMutation(
-    async (input: { reportId: number; queueId: number; assign: boolean }) => {
-      const { data } = await labelerAgent.tools.ozone.report.claimReport(input)
+    async (input: { reportId: number; queueId?: number; assign: boolean }) => {
+      const { data } =
+        await labelerAgent.tools.ozone.report.assignModerator(input)
       return data as AssignmentView
     },
     {
@@ -84,14 +103,14 @@ export const useAutoClaimReport = ({
   queueId,
 }: {
   reportId: number
-  queueId: number
+  queueId?: number
 }) => {
   const labelerAgent = useLabelerAgent()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const claim = useCallback(async () => {
     try {
-      await labelerAgent.tools.ozone.report.claimReport({
+      await labelerAgent.tools.ozone.report.assignModerator({
         reportId,
         queueId,
         assign: true,
@@ -103,7 +122,7 @@ export const useAutoClaimReport = ({
 
   const unclaim = useCallback(async () => {
     try {
-      await labelerAgent.tools.ozone.report.claimReport({
+      await labelerAgent.tools.ozone.report.assignModerator({
         reportId,
         queueId,
         assign: false,

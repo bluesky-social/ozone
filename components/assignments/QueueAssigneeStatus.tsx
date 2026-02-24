@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useAssignments, useAssignQueue } from './useAssignments'
+import { useQueueAssignments, useAssignQueue } from './useAssignments'
 import { QueueAssignee } from './QueueAssignee'
 import { MemberSearchPopover } from './MemberSearchPopover'
 
@@ -11,7 +11,7 @@ interface QueueAssigneeStatusProps {
 
 export function QueueAssigneeStatus({ queueId }: QueueAssigneeStatusProps) {
   const [isHovered, setIsHovered] = useState(false)
-  const { data: assignments = [] } = useAssignments({
+  const { data: assignments = [] } = useQueueAssignments({
     onlyActiveAssignments: true,
     queueIds: [queueId],
   })

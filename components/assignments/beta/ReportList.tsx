@@ -3,7 +3,6 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { ActionButton } from '@/common/buttons'
-import { ReportAssigneeStatus } from '../ReportAssigneeStatus'
 
 export function ReportList() {
   const [reports, setReports] = useState<number[]>([1])
@@ -32,7 +31,6 @@ export function ReportList() {
             <span className="text-sm font-medium text-gray-700 dark:text-gray-200">
               Report #{reportId}
             </span>
-            <ReportAssigneeStatus reportId={reportId} queueId={1} />
           </Link>
         ))}
       </div>
