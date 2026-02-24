@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useQueueAssignments, useAssignQueue } from './useAssignments'
-import { QueueAssignee } from './QueueAssignee'
+import { Assignee } from './Assignee'
 import { MemberSearchPopover } from './MemberSearchPopover'
 
 interface QueueAssigneeStatusProps {
@@ -19,7 +19,7 @@ export function QueueAssigneeStatus({ queueId }: QueueAssigneeStatusProps) {
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {assignments.map((a) => (
-        <QueueAssignee key={a.id} did={a.did} />
+        <Assignee key={a.id} did={a.did} />
       ))}
       <MemberSearchPopover
         onSelect={(did) => {

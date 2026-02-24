@@ -1,6 +1,6 @@
 'use client'
 
-import { XMarkIcon } from '@heroicons/react/24/outline'
+import { Assignee } from './Assignee'
 import { useAssignReport, useReportAssignments } from './useAssignments'
 
 interface ReportAssigneeStatusProps {
@@ -31,18 +31,7 @@ export function ReportAssigneeStatus({
   return (
     <div>
       {reportAssignment ? (
-        <span className="group inline-flex items-center gap-1 rounded bg-gray-100 dark:bg-slate-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200">
-          {reportAssignment.did.slice(0, 20)}...
-          {handleUnassign && (
-            <button
-              onClick={handleUnassign}
-              className="hidden group-hover:inline-flex text-gray-400 hover:text-red-500"
-              title="Remove assignee"
-            >
-              <XMarkIcon className="h-3 w-3" />
-            </button>
-          )}
-        </span>
+        <Assignee did={reportAssignment.did} onRemove={handleUnassign} />
       ) : (
         <button
           onClick={handleAssign}
