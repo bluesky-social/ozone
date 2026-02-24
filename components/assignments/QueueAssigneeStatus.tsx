@@ -10,37 +10,22 @@ interface QueueAssigneeStatusProps {
 }
 
 export function QueueAssigneeStatus({ queueId }: QueueAssigneeStatusProps) {
-  const [isHovered, setIsHovered] = useState(false)
   const { data: assignments = [] } = useQueueAssignments({
     onlyActiveAssignments: true,
     queueIds: [queueId],
   })
   const { mutate: assignQueue } = useAssignQueue()
 
-  const queueAssignments = assignments.filter((a) => !a.reportId)
-
-  const handleAdd = (did: string) => {
-    assignQueue({ did, queueId, assign: true })
-  }
-
   return (
-    <div
-      className="flex items-center gap-2 flex-wrap"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      {queueAssignments.map((a) => (
-        <QueueAssignee
-          key={a.id}
-          did={a.did}
-          onRemove={() => {
-            assignQueue({ did: a.did, queueId, assign: false })
-          }}
-        />
+    <div className="flex items-center gap-2 flex-wrap">
+      {assignments.map((a) => (
+        <QueueAssignee key={a.id} did={a.did} />
       ))}
-      {(queueAssignments.length === 0 || isHovered) && (
-        <MemberSearchPopover onSelect={handleAdd} />
-      )}
+      <MemberSearchPopover
+        onSelect={(did) => {
+          assignQueue({ did, queueId, assign: true })
+        }}
+      />
     </div>
   )
 }
