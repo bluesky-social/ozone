@@ -25,7 +25,12 @@ export function Assignee({ did, onRemove }: AssigneeProps) {
     profile?.displayName || profile?.handle || `${did.slice(0, 20)}...`
 
   return (
-    <span className="group inline-flex items-center gap-1 rounded bg-gray-100 dark:bg-slate-700 px-2 py-0.5 text-xs text-gray-700 dark:text-gray-200">
+    <span className="group inline-flex items-center gap-1 rounded bg-gray-100 dark:bg-slate-700 px-2 py-1 text-xs text-gray-700 dark:text-gray-200">
+      <img
+        className="h-4 w-4 rounded-full"
+        src={profile?.avatar || '/img/default-avatar.jpg'}
+        alt=""
+      />
       {displayLabel}
       {onRemove && (
         <button
