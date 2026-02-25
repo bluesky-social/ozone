@@ -19,6 +19,7 @@ export function Assignee({ did, onRemove }: AssigneeProps) {
       })
       return data
     },
+    refetchInterval: false,
   })
 
   const displayLabel =

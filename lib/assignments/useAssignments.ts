@@ -60,7 +60,7 @@ export const useAssignQueue = () => {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   return useMutation(
-    async (input: { did: string; queueId: number; assign: boolean }) => {
+    async (input: { did: string; queueId: number }) => {
       const { data } =
         await labelerAgent.tools.ozone.queue.assignModerator(input)
       return data as AssignmentView

@@ -36,11 +36,12 @@ export type ClientMessage =
   | { type: 'report:review:end'; reportId: number; queueId?: number }
   | { type: 'ping' }
 
-const PING_INTERVAL = 30_000
+const PING_INTERVAL = 25_000
 const RECONNECT_DELAY = 3_000
 
 export class AssignmentWsClient {
   private ws: WebSocket | null = null
+  private connecting = false
   private listeners = new Set<(msg: ServerMessage) => void>()
   private pendingMessages: ClientMessage[] = []
   private subscribedQueues = new Set<number>()
@@ -112,15 +113,21 @@ export class AssignmentWsClient {
   }
 
   private async connect() {
+    if (this.connecting || this.ws) return
     if (!this.getToken || !this.getWsUrl) return
+    this.connecting = true
     try {
       const token = await this.getToken()
       const wsUrl = this.getWsUrl(token)
-      if (!wsUrl) return
+      if (!wsUrl) {
+        this.connecting = false
+        return
+      }
 
       const ws = new WebSocket(wsUrl)
 
       ws.onopen = () => {
+        this.connecting = false
         this.ws = ws
 
         // Re-subscribe to queues on (re)connect
@@ -159,6 +166,7 @@ export class AssignmentWsClient {
 
       ws.onclose = () => {
         this.ws = null
+        this.connecting = false
         this.clearPing()
         if (this.refCount > 0) {
           this.reconnectTimeout = setTimeout(() => {
@@ -171,6 +179,7 @@ export class AssignmentWsClient {
         ws.close()
       }
     } catch (err) {
+      this.connecting = false
       console.error('Failed to connect assignment WS:', err)
       if (this.refCount > 0) {
         this.reconnectTimeout = setTimeout(() => {
@@ -181,6 +190,7 @@ export class AssignmentWsClient {
   }
 
   private disconnect() {
+    this.connecting = false
     this.clearPing()
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)

@@ -1,21 +1,19 @@
 'use client'
 
+import type { AssignmentView } from '../../lib/assignments/useAssignments'
+import { useAssignQueue } from '../../lib/assignments/useAssignments'
 import { Assignee } from './Assignee'
 import { MemberSearchPopover } from './MemberSearchPopover'
-import {
-  useAssignQueue,
-  useQueueAssignments,
-} from '../../lib/assignments/useAssignmentsRealtime'
 
 interface QueueAssigneeStatusProps {
   queueId: number
+  assignments: AssignmentView[]
 }
 
-export function QueueAssigneeStatus({ queueId }: QueueAssigneeStatusProps) {
-  const { data: assignments = [] } = useQueueAssignments({
-    onlyActiveAssignments: true,
-    queueIds: [queueId],
-  })
+export function QueueAssigneeStatus({
+  queueId,
+  assignments,
+}: QueueAssigneeStatusProps) {
   const { mutate: assignQueue } = useAssignQueue()
 
   return (
@@ -25,7 +23,7 @@ export function QueueAssigneeStatus({ queueId }: QueueAssigneeStatusProps) {
       ))}
       <MemberSearchPopover
         onSelect={(did) => {
-          assignQueue({ did, queueId, assign: true })
+          assignQueue({ did, queueId })
         }}
       />
     </div>

@@ -1,10 +1,27 @@
 'use client'
 
 import Link from 'next/link'
+import { useMemo } from 'react'
 import { QueueAssigneeStatus } from './QueueAssigneeStatus'
+import { useQueueAssignments } from '../../lib/assignments/useAssignmentsRealtime'
+import type { AssignmentView } from '../../lib/assignments/useAssignments'
 
 export function QueueList() {
   const queues = Array.from({ length: 10 }, (_, i) => i + 1)
+  const { data: allAssignments = [] } = useQueueAssignments({
+    onlyActiveAssignments: true,
+    queueIds: queues,
+  })
+
+  const assignmentsByQueue = useMemo(() => {
+    const map = new Map<number, AssignmentView[]>()
+    for (const a of allAssignments) {
+      const list = map.get(a.queueId) ?? []
+      list.push(a)
+      map.set(a.queueId, list)
+    }
+    return map
+  }, [allAssignments])
 
   return (
     <div>
@@ -24,7 +41,10 @@ export function QueueList() {
               Queue #{queueId}
             </span>
             <div onClick={(e) => e.preventDefault()}>
-              <QueueAssigneeStatus queueId={queueId} />
+              <QueueAssigneeStatus
+                queueId={queueId}
+                assignments={assignmentsByQueue.get(queueId) ?? []}
+              />
             </div>
           </Link>
         ))}

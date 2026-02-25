@@ -4,10 +4,7 @@ import { useCallback, useEffect, useRef } from 'react'
 import { useAuthContext } from '@/shell/AuthContext'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { getServiceUrlFromDoc, withDocAndMeta } from '@/lib/client-config'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { displayError } from '@/common/Loader'
-import { toast } from 'react-toastify'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { MINUTE } from '@/lib/util'
 import type { AssignmentView } from './useAssignments'
 import { assignmentWs } from './assignment-ws-client'
@@ -118,18 +115,15 @@ export const useQueueAssignments = (params: {
     ),
   )
 
-  const labelerAgent = useLabelerAgent()
-  return useQuery({
+  return useQuery<AssignmentView[]>({
     queryKey: [ASSIGNMENTS_QUERY_KEY, params],
-    queryFn: async () => {
-      const { data } =
-        await labelerAgent.tools.ozone.queue.getAssignments(params)
-      return (data as { assignments: AssignmentView[] }).assignments
-    },
+    queryFn: () =>
+      queryClient.getQueryData<AssignmentView[]>([
+        ASSIGNMENTS_QUERY_KEY,
+        params,
+      ]) ?? [],
     refetchInterval: false,
-    onError: (err) => {
-      toast.error(`Failed to load assignments:\n${err}`)
-    },
+    enabled: false,
   })
 }
 
@@ -180,59 +174,34 @@ export const useReportAssignments = (params: {
     ),
   )
 
-  const labelerAgent = useLabelerAgent()
-  return useQuery({
+  return useQuery<AssignmentView[]>({
     queryKey: [ASSIGNMENTS_QUERY_KEY, params],
-    queryFn: async () => {
-      const { data } =
-        await labelerAgent.tools.ozone.report.getAssignments(params)
-      return (data as { assignments: AssignmentView[] }).assignments
-    },
+    queryFn: () =>
+      queryClient.getQueryData<AssignmentView[]>([
+        ASSIGNMENTS_QUERY_KEY,
+        params,
+      ]) ?? [],
     refetchInterval: false,
-    onError: (err) => {
-      toast.error(`Failed to load assignments:\n${err}`)
-    },
+    enabled: false,
   })
 }
 
-export const useAssignQueue = () => {
-  const labelerAgent = useLabelerAgent()
-  const queryClient = useQueryClient()
-  return useMutation(
-    async (input: { did: string; queueId: number; assign: boolean }) => {
-      const { data } =
-        await labelerAgent.tools.ozone.queue.assignModerator(input)
-      return data as AssignmentView
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries([ASSIGNMENTS_QUERY_KEY])
-      },
-      onError: (err) => {
-        toast.error(displayError(err))
-      },
-    },
-  )
-}
-
 export const useAssignReport = () => {
-  const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
-  return useMutation(
-    async (input: { reportId: number; queueId?: number; assign: boolean }) => {
-      const { data } =
-        await labelerAgent.tools.ozone.report.assignModerator(input)
-      return data as AssignmentView
+  return {
+    mutate: (input: {
+      reportId: number
+      queueId?: number
+      assign: boolean
+    }) => {
+      assignmentWs.send({
+        type: input.assign ? 'report:review:start' : 'report:review:end',
+        reportId: input.reportId,
+        queueId: input.queueId,
+      })
+      queryClient.invalidateQueries([ASSIGNMENTS_QUERY_KEY])
     },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries([ASSIGNMENTS_QUERY_KEY])
-      },
-      onError: (err) => {
-        toast.error(displayError(err))
-      },
-    },
-  )
+  }
 }
 
 const AUTO_ASSIGN_INTERVAL_MS = 3 * MINUTE
