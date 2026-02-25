@@ -10,159 +10,10 @@ import { displayError } from '@/common/Loader'
 import { toast } from 'react-toastify'
 import { MINUTE } from '@/lib/util'
 import type { AssignmentView } from './useAssignments'
+import { assignmentWs } from './assignment-ws-client'
+import type { ServerMessage } from './assignment-ws-client'
 
-// ── Protocol types (matching backend assignment-ws.ts) ──
-
-type ServerMessage =
-  | { type: 'queue:snapshot'; events: AssignmentView[] }
-  | { type: 'report:snapshot'; events: AssignmentView[] }
-  | {
-      type: 'report:review:started'
-      reportId: number
-      moderator: { did: string }
-      queues: number[]
-    }
-  | {
-      type: 'report:review:ended'
-      reportId: number
-      moderator: { did: string }
-      queues: number[]
-    }
-  | {
-      type: 'report:actioned'
-      reportIds: number[]
-      actionEventId: number
-      moderator: { did: string }
-      queues: number[]
-    }
-  | { type: 'report:created'; reportId: number; queues: number[] }
-  | { type: 'queue:assigned'; queueId: number }
-  | { type: 'pong' }
-  | { type: 'error'; message: string }
-
-type ClientMessage =
-  | { type: 'subscribe'; queues: number[] }
-  | { type: 'unsubscribe'; queues: number[] }
-  | { type: 'report:review:start'; reportId: number; queueId?: number }
-  | { type: 'report:review:end'; reportId: number; queueId?: number }
-  | { type: 'ping' }
-
-// ── Shared WebSocket connection manager (singleton) ──
-
-const PING_INTERVAL = 30_000
-const RECONNECT_DELAY = 3_000
 const ASSIGNMENTS_QUERY_KEY = 'assignments-ws'
-
-let wsInstance: WebSocket | null = null
-const listeners = new Set<(msg: ServerMessage) => void>()
-let pingInterval: ReturnType<typeof setInterval> | null = null
-let reconnectTimeout: ReturnType<typeof setTimeout> | null = null
-let refCount = 0
-let subscribedQueues = new Set<number>()
-let getTokenFn: (() => Promise<string>) | null = null
-let getWsUrlFn: ((token: string) => string | null) | null = null
-
-function clearPing() {
-  if (pingInterval) {
-    clearInterval(pingInterval)
-    pingInterval = null
-  }
-}
-
-function send(message: ClientMessage) {
-  if (wsInstance?.readyState === WebSocket.OPEN) {
-    wsInstance.send(JSON.stringify(message))
-  }
-}
-
-function resubscribe() {
-  if (subscribedQueues.size > 0) {
-    send({ type: 'subscribe', queues: Array.from(subscribedQueues) })
-  }
-}
-
-async function connect() {
-  if (!getTokenFn || !getWsUrlFn) return
-  try {
-    const token = await getTokenFn()
-    const wsUrl = getWsUrlFn(token)
-    if (!wsUrl) return
-
-    const ws = new WebSocket(wsUrl)
-
-    ws.onopen = () => {
-      wsInstance = ws
-      resubscribe()
-      pingInterval = setInterval(() => {
-        if (ws.readyState === WebSocket.OPEN) {
-          ws.send(JSON.stringify({ type: 'ping' }))
-        }
-      }, PING_INTERVAL)
-    }
-
-    ws.onmessage = (event: MessageEvent) => {
-      let message: ServerMessage
-      try {
-        message = JSON.parse(event.data)
-      } catch {
-        return
-      }
-      for (const listener of listeners) {
-        listener(message)
-      }
-    }
-
-    ws.onclose = () => {
-      wsInstance = null
-      clearPing()
-      if (refCount > 0) {
-        reconnectTimeout = setTimeout(() => {
-          connect()
-        }, RECONNECT_DELAY)
-      }
-    }
-
-    ws.onerror = () => {
-      ws.close()
-    }
-  } catch (err) {
-    console.error('Failed to connect assignment WS:', err)
-    if (refCount > 0) {
-      reconnectTimeout = setTimeout(() => {
-        connect()
-      }, RECONNECT_DELAY)
-    }
-  }
-}
-
-function disconnect() {
-  clearPing()
-  if (reconnectTimeout) {
-    clearTimeout(reconnectTimeout)
-    reconnectTimeout = null
-  }
-  if (wsInstance) {
-    wsInstance.onclose = null
-    wsInstance.close()
-    wsInstance = null
-  }
-}
-
-function addRef() {
-  refCount++
-  if (refCount === 1) {
-    connect()
-  }
-}
-
-function removeRef() {
-  refCount--
-  if (refCount <= 0) {
-    refCount = 0
-    disconnect()
-    subscribedQueues.clear()
-  }
-}
 
 // ── Internal hooks ──
 
@@ -170,14 +21,14 @@ function useWsConnection() {
   const { pdsAgent } = useAuthContext()
   const { config } = useConfigurationContext()
 
-  getTokenFn = useCallback(async (): Promise<string> => {
+  const getToken = useCallback(async (): Promise<string> => {
     const { data } = await pdsAgent.com.atproto.server.getServiceAuth({
       aud: config.did,
     })
     return data.token
   }, [pdsAgent, config.did])
 
-  getWsUrlFn = useCallback(
+  const getWsUrl = useCallback(
     (token: string) => {
       const fullConfig = withDocAndMeta(config)
       const serviceUrl = getServiceUrlFromDoc(fullConfig.doc, 'atproto_labeler')
@@ -191,8 +42,12 @@ function useWsConnection() {
   )
 
   useEffect(() => {
-    addRef()
-    return () => removeRef()
+    assignmentWs.configure(getToken, getWsUrl)
+  }, [getToken, getWsUrl])
+
+  useEffect(() => {
+    assignmentWs.addRef()
+    return () => assignmentWs.removeRef()
   }, [])
 }
 
@@ -202,19 +57,11 @@ function useWsListener(onMessage: (msg: ServerMessage) => void) {
 
   useEffect(() => {
     const handler = (msg: ServerMessage) => callbackRef.current(msg)
-    listeners.add(handler)
+    assignmentWs.addListener(handler)
     return () => {
-      listeners.delete(handler)
+      assignmentWs.removeListener(handler)
     }
   }, [])
-}
-
-function subscribeQueues(queueIds: number[]) {
-  const newQueues = queueIds.filter((id) => !subscribedQueues.has(id))
-  for (const id of queueIds) subscribedQueues.add(id)
-  if (newQueues.length > 0) {
-    send({ type: 'subscribe', queues: Array.from(subscribedQueues) })
-  }
 }
 
 // ── Public hooks ──
@@ -235,7 +82,7 @@ export const useQueueAssignments = (params: {
 
   useEffect(() => {
     if (queueIds.length > 0) {
-      subscribeQueues(queueIds)
+      assignmentWs.subscribe(queueIds)
     }
   }, [JSON.stringify(queueIds)])
 
@@ -263,7 +110,7 @@ export const useQueueAssignments = (params: {
           msg.type === 'report:actioned'
         ) {
           if (queueIds.length > 0) {
-            send({ type: 'subscribe', queues: queueIds })
+            assignmentWs.send({ type: 'subscribe', queues: queueIds })
           }
         }
       },
@@ -325,7 +172,7 @@ export const useReportAssignments = (params: {
                 ? params.reportIds.includes(msg.reportId)
                 : true
           if (relevant) {
-            resubscribe()
+            assignmentWs.resubscribe()
           }
         }
       },
@@ -397,11 +244,11 @@ export const useAutoAssignReport = ({
   queueId?: number
 }) => {
   const assign = useCallback(() => {
-    send({ type: 'report:review:start', reportId, queueId })
+    assignmentWs.send({ type: 'report:review:start', reportId, queueId })
   }, [reportId, queueId])
 
   const unassign = useCallback(() => {
-    send({ type: 'report:review:end', reportId, queueId })
+    assignmentWs.send({ type: 'report:review:end', reportId, queueId })
   }, [reportId, queueId])
 
   useEffect(() => {

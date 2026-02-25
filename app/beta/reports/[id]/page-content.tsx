@@ -1,5 +1,6 @@
 import { ReportAssigneeStatus } from '@/assignments/ReportAssigneeStatus'
 import {
+  useAssignmentsUpgrade,
   useAutoAssignReport,
   useReportAssignments,
 } from '@/lib/assignments/useAssignmentsRealtime'
@@ -11,6 +12,7 @@ export default function ReportDetailContent() {
   const reportId = Number(id)
 
   useTitle(`Report #${reportId}`)
+  useAssignmentsUpgrade()
   useAutoAssignReport({ reportId })
 
   const { data: assignments = [] } = useReportAssignments({
