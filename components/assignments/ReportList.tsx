@@ -1,11 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { ReportAssigneeStatus } from '../ReportAssigneeStatus'
+import { ReportAssigneeStatus } from './ReportAssigneeStatus'
 import {
   useAssignmentsUpgrade,
   useReportAssignments,
-} from '../../../lib/assignments/useAssignmentsRealtime'
+} from '../../lib/assignments/useAssignmentsRealtime'
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { useMemo } from 'react'
 

@@ -1,6 +1,6 @@
 import { useParams } from 'next/navigation'
 import { useTitle } from 'react-use'
-import { ReportList } from '@/assignments/beta/ReportList'
+import { ReportList } from '@/assignments/ReportList'
 import { useAssignmentsUpgrade } from '@/lib/assignments/useAssignmentsRealtime'
 
 export default function QueueDetailContent() {

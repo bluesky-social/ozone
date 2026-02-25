@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { QueueAssigneeStatus } from '../QueueAssigneeStatus'
+import { QueueAssigneeStatus } from './QueueAssigneeStatus'
 
 export function QueueList() {
   const queues = Array.from({ length: 10 }, (_, i) => i + 1)

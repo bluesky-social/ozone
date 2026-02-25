@@ -1,5 +1,5 @@
 import { useTitle } from 'react-use'
-import { QueueList } from '@/assignments/beta/QueueList'
+import { QueueList } from '@/assignments/QueueList'
 import { useAssignmentsUpgrade } from '@/lib/assignments/useAssignmentsRealtime'
 
 export default function QueuesPageContent() {
