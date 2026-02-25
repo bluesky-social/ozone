@@ -2,9 +2,38 @@
 
 import Link from 'next/link'
 import { ReportAssigneeStatus } from '../ReportAssigneeStatus'
+import {
+  useAssignmentsUpgrade,
+  useReportAssignments,
+} from '../../../lib/assignments/useAssignmentsRealtime'
+import { ToolsOzoneReportDefs } from '@atproto/api'
+import { useMemo } from 'react'
 
-export function ReportList() {
-  const reports = Array.from({ length: 25 }, (_, i) => i + 1)
+const REPORTS_PER_QUEUE = 25
+
+export function ReportList({ queueId }: { queueId: number }) {
+  useAssignmentsUpgrade()
+  const startId = (queueId - 1) * REPORTS_PER_QUEUE + 1
+  const reports = Array.from(
+    { length: REPORTS_PER_QUEUE },
+    (_, i) => startId + i,
+  )
+  const { data: assignments = [] } = useReportAssignments({
+    onlyActiveAssignments: true,
+    reportIds: reports,
+  })
+
+  const assignmentMap: Map<
+    number,
+    ToolsOzoneReportDefs.AssignmentView | undefined
+  > = useMemo(() => {
+    const map = new Map()
+    reports.forEach((reportId) => {
+      const assignment = assignments.find((a) => a.reportId === reportId)
+      map.set(reportId, assignment)
+    })
+    return map
+  }, [assignments, reports])
 
   return (
     <div>
@@ -14,7 +43,12 @@ export function ReportList() {
         </h2>
       </div>
       <div className="space-y-3">
-        {reports.map((reportId) => (
+        {assignmentMap.size === 0 && (
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            No active assignments.
+          </p>
+        )}
+        {Array.from(assignmentMap.entries()).map(([reportId, assignment]) => (
           <div key={reportId}>
             <Link
               href={`/beta/reports/${reportId}`}
@@ -24,7 +58,9 @@ export function ReportList() {
                 Report #{reportId}
               </span>
               <div onClick={(e) => e.preventDefault()}>
-                <ReportAssigneeStatus reportId={reportId} />
+                <ReportAssigneeStatus
+                  assignment={{ ...assignment, reportId }}
+                />
               </div>
             </Link>
           </div>

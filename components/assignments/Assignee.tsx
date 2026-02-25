@@ -12,7 +12,7 @@ interface AssigneeProps {
 export function Assignee({ did, onRemove }: AssigneeProps) {
   const labelerAgent = useLabelerAgent()
   const { data: profile } = useQuery({
-    queryKey: ['profile', did],
+    queryKey: ['assignee', did],
     queryFn: async () => {
       const { data } = await labelerAgent.app.bsky.actor.getProfile({
         actor: did,

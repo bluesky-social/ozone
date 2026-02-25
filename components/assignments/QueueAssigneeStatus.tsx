@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { useQueueAssignments, useAssignQueue } from './useAssignments'
 import { Assignee } from './Assignee'
 import { MemberSearchPopover } from './MemberSearchPopover'
+import {
+  useAssignQueue,
+  useQueueAssignments,
+} from '../../lib/assignments/useAssignmentsRealtime'
 
 interface QueueAssigneeStatusProps {
   queueId: number

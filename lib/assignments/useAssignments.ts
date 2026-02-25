@@ -37,7 +37,7 @@ export const useQueueAssignments = (params: {
 }
 
 export const useReportAssignments = (params: {
-  reportIds: number[]
+  reportIds?: number[]
   onlyActiveAssignments?: boolean
   dids?: string[]
 }) => {
@@ -104,16 +104,20 @@ export const useAutoAssignReport = ({
   reportId: number
   queueId?: number
 }) => {
+  const labelerAgent = useLabelerAgent()
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  const assignReport = useAssignReport()
 
   const assign = useCallback(async () => {
     try {
-      await assignReport.mutateAsync({ reportId, queueId, assign: true })
+      await labelerAgent.tools.ozone.report.assignModerator({
+        reportId,
+        queueId,
+        assign: true,
+      })
     } catch (err) {
       console.warn(`Auto-assign failed. `, err)
     }
-  }, [reportId, queueId, assignReport])
+  }, [reportId, queueId, labelerAgent])
 
   useEffect(() => {
     assign()
