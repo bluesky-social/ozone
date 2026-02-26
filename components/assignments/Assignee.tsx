@@ -19,7 +19,9 @@ export function Assignee({ did, onRemove }: AssigneeProps) {
       })
       return data
     },
-    refetchInterval: false,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+    refetchInterval: 5 * 60 * 1000,
   })
 
   const displayLabel =
