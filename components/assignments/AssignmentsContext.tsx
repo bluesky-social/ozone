@@ -1,7 +1,10 @@
 'use client'
 
 import { AssignmentsState } from '@/lib/assignments/assignment.types'
-import { AssignmentWsClient } from '@/lib/assignments/ws/assignment-ws-client'
+import {
+  AssignmentWsClient,
+  ServerMessage,
+} from '@/lib/assignments/ws/assignment-ws-client'
 import { getServiceUrlFromDoc, withDocAndMeta } from '@/lib/client-config'
 import { MINUTE } from '@/lib/util'
 import { useAuthContext } from '@/shell/AuthContext'
@@ -12,6 +15,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from 'react'
 
@@ -33,24 +37,7 @@ export function AssignmentsProvider({
   const { pdsAgent } = useAuthContext()
   const { config } = useConfigurationContext()
 
-  // state
-  const [state, setState] = useState<AssignmentsState>({
-    queue: {
-      subscribed: [],
-      items: [],
-    },
-    reports: [],
-  })
-
-  const assignmentWs = useMemo(() => {
-    const client = new AssignmentWsClient()
-    client.addListener((newState) => {
-      setState(newState)
-    })
-    return client
-  }, [])
-
-  // auth
+  // ws client
   const getToken = useCallback(async (): Promise<string> => {
     const { data } = await pdsAgent.com.atproto.server.getServiceAuth({
       aud: config.did,
@@ -69,40 +56,119 @@ export function AssignmentsProvider({
     },
     [config],
   )
-
-  // lifecycle
+  const wsRef = useRef<AssignmentWsClient | null>(null)
+  if (!wsRef.current) {
+    wsRef.current = new AssignmentWsClient()
+  }
+  const ws = wsRef.current
   useEffect(() => {
-    assignmentWs.configure(getToken, getWsUrl)
-    assignmentWs.connect()
-    return () => {
-      assignmentWs.disconnect()
+    ws.configure(getToken, getWsUrl)
+    ws.connect()
+    return () => ws.disconnect()
+  }, [ws, getToken, getWsUrl])
+
+  // state
+  const [state, setState] = useState<AssignmentsState>({
+    queue: { items: [] },
+    reports: [],
+  })
+  useEffect(() => {
+    const listener = (message: ServerMessage) => {
+      switch (message.type) {
+        case 'queue:snapshot':
+          setState((s) => ({
+            ...s,
+            queue: { ...s.queue, items: message.events },
+          }))
+          break
+        case 'report:snapshot':
+          setState((s) => ({ ...s, reports: message.events }))
+          break
+        case 'queue:assigned':
+          setState((s) => {
+            const exists = s.queue.items.some(
+              (a) => a.queueId === message.queueId && a.did === message.did,
+            )
+            if (exists) return s
+            return {
+              ...s,
+              queue: {
+                ...s.queue,
+                items: [
+                  ...s.queue.items,
+                  {
+                    id: 0,
+                    queueId: message.queueId,
+                    did: message.did,
+                    startAt: new Date().toISOString(),
+                    endAt: '',
+                  },
+                ],
+              },
+            }
+          })
+          break
+        case 'report:review:started':
+          setState((s) => {
+            const exists = s.reports.some(
+              (a) =>
+                a.reportId === message.reportId &&
+                a.did === message.moderator.did,
+            )
+            if (exists) return s
+            return {
+              ...s,
+              reports: [
+                ...s.reports,
+                {
+                  id: 0,
+                  reportId: message.reportId,
+                  did: message.moderator.did,
+                  queueId: message.queues[0] ?? null,
+                  startAt: new Date().toISOString(),
+                  endAt: '',
+                },
+              ],
+            }
+          })
+          break
+        case 'report:review:ended':
+          setState((s) => {
+            const filtered = s.reports.filter(
+              (a) =>
+                !(
+                  a.reportId === message.reportId &&
+                  a.did === message.moderator.did
+                ),
+            )
+            if (filtered.length === s.reports.length) return s
+            return { ...s, reports: filtered }
+          })
+          break
+      }
     }
-  }, [assignmentWs, getToken, getWsUrl])
+    ws.addListener(listener)
+    return () => ws.removeListener(listener)
+  }, [ws])
 
   // interface
   const subscribe = useCallback(
-    (queueIds: number[]) => {
-      assignmentWs.subscribe(queueIds)
-    },
-    [assignmentWs],
+    (queueIds: number[]) => ws.subscribe(queueIds),
+    [ws],
   )
   const unsubscribe = useCallback(
-    (queueIds: number[]) => {
-      assignmentWs.unsubscribe(queueIds)
-    },
-    [assignmentWs],
+    (queueIds: number[]) => ws.unsubscribe(queueIds),
+    [ws],
   )
   const assignReportModerator = useCallback(
-    (reportId: number, queueId?: number) => {
-      assignmentWs.assignReportModerator(reportId, queueId)
-    },
-    [assignmentWs],
+    (reportId: number, queueId?: number) =>
+      ws.assignReportModerator(reportId, queueId),
+    [ws],
   )
   const unassignReportModerator = useCallback(
-    (reportId: number, queueId?: number) => {
-      assignmentWs.unassignReportModerator(reportId, queueId)
-    },
-    [assignmentWs],
+    (reportId: number, queueId?: number) =>
+      ws.unassignReportModerator(reportId, queueId),
+    [ws],
   )
 
   const value: AssignmentsContextValue = useMemo(
@@ -113,7 +179,13 @@ export function AssignmentsProvider({
       assignReportModerator,
       unassignReportModerator,
     }),
-    [state, subscribe, unsubscribe, assignReportModerator, unassignReportModerator],
+    [
+      state,
+      subscribe,
+      unsubscribe,
+      assignReportModerator,
+      unassignReportModerator,
+    ],
   )
 
   return (
@@ -154,18 +226,21 @@ export const useReportAssignments = (params: {
 }) => {
   const { state, subscribe, unsubscribe } = useAssignmentsContext()
   const queueIds = params.queueIds ?? []
+  const serializedQueueIds = JSON.stringify(queueIds)
 
   useEffect(() => {
-    if (queueIds.length > 0) {
-      subscribe(queueIds)
+    const ids: number[] = JSON.parse(serializedQueueIds)
+    if (ids.length > 0) {
+      subscribe(ids)
     }
     return () => {
-      if (queueIds.length > 0) {
-        unsubscribe(queueIds)
+      if (ids.length > 0) {
+        unsubscribe(ids)
       }
     }
-  }, [JSON.stringify(queueIds), subscribe, unsubscribe])
+  }, [serializedQueueIds, subscribe, unsubscribe])
 
+  const serializedParams = JSON.stringify(params)
   const data = useMemo(() => {
     let filtered = state.reports
     if (params.reportIds?.length) {
@@ -177,7 +252,8 @@ export const useReportAssignments = (params: {
       filtered = filtered.filter((a) => params.dids!.includes(a.did))
     }
     return filtered
-  }, [state.reports, JSON.stringify(params)])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.reports, serializedParams])
 
   return { data }
 }

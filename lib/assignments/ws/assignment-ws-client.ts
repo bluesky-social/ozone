@@ -1,10 +1,6 @@
-import {
-  AssignmentsState,
-  QueueAssignment,
-  ReportAssignment,
-} from '../assignment.types'
+import type { QueueAssignment, ReportAssignment } from '../assignment.types'
 
-type ServerMessage =
+export type ServerMessage =
   | { type: 'queue:snapshot'; events: QueueAssignment[] }
   | { type: 'report:snapshot'; events: ReportAssignment[] }
   | {
@@ -38,6 +34,8 @@ type ClientMessage =
   | { type: 'report:review:end'; reportId: number; queueId?: number }
   | { type: 'ping' }
 
+export type MessageListener = (message: ServerMessage) => void
+
 const PING_INTERVAL = 25_000
 const RECONNECT_DELAY = 3_000
 
@@ -53,16 +51,10 @@ export class AssignmentWsClient {
   private getWsUrl: ((token: string) => string | null) | null = null
 
   // listeners
-  private listeners: ((state: AssignmentsState) => void)[] = []
+  private listeners: MessageListener[] = []
 
-  // state
-  public state: AssignmentsState = {
-    queue: {
-      subscribed: [],
-      items: [],
-    },
-    reports: [],
-  }
+  // subscriptions (for re-subscribing on reconnect)
+  private subscribedQueues: number[] = []
 
   // config
   configure(
@@ -74,15 +66,13 @@ export class AssignmentWsClient {
   }
 
   // lifecycle
-  public async connect() {
+  async connect() {
     if (this.ws) return
     if (!this.getToken || !this.getWsUrl) return
     try {
       const token = await this.getToken()
       const wsUrl = this.getWsUrl(token)
-      if (!wsUrl) {
-        return
-      }
+      if (!wsUrl) return
       const ws = new WebSocket(wsUrl)
       ws.onopen = () => this.onOpen(ws)
       ws.onmessage = this.onMessage
@@ -93,7 +83,8 @@ export class AssignmentWsClient {
       this.onError()
     }
   }
-  public disconnect() {
+
+  disconnect() {
     this.clearPing()
     this.clearReconnect()
     this.setReconnect()
@@ -103,118 +94,52 @@ export class AssignmentWsClient {
       this.ws = null
     }
   }
-  public destroy() {
-    this.disconnect()
-    this.pendingMessages = []
-    this.state = {
-      queue: {
-        subscribed: [],
-        items: [],
-      },
-      reports: [],
+
+  destroy() {
+    this.clearPing()
+    this.clearReconnect()
+    if (this.ws) {
+      this.ws.onclose = null
+      this.ws.close()
+      this.ws = null
     }
+    this.pendingMessages = []
+    this.subscribedQueues = []
   }
 
   // events
   private onOpen(ws: WebSocket) {
     this.ws = ws
-    // flush
     for (const pending of this.pendingMessages) {
       this.send(pending)
     }
     this.pendingMessages = []
-    // subscriptions
-    if (this.state.queue.subscribed.length > 0) {
-      this.send({
-        type: 'subscribe',
-        queues: Array.from(this.state.queue.subscribed),
-      })
+    if (this.subscribedQueues.length > 0) {
+      this.send({ type: 'subscribe', queues: Array.from(this.subscribedQueues) })
     }
-    // ping
     this.clearPing()
     this.setPing()
   }
+
   private onMessage = (event: MessageEvent) => {
     let message: ServerMessage
     try {
       message = JSON.parse(event.data)
-      console.debug('[AssignmentWs] recv', message.type, message)
     } catch {
       return
     }
-    if (message.type === 'queue:snapshot') {
-      this.updateState((state) => ({
-        ...state,
-        queue: { ...state.queue, items: message.events },
-      }))
-    } else if (message.type === 'report:snapshot') {
-      this.updateState((state) => ({ ...state, reports: message.events }))
-    } else if (message.type === 'report:review:started') {
-      this.updateState((state) => {
-        const exists = state.reports.some(
-          (a) =>
-            a.reportId === message.reportId &&
-            a.did === message.moderator.did,
-        )
-        if (exists) return state
-        return {
-          ...state,
-          reports: [
-            ...state.reports,
-            {
-              id: 0,
-              reportId: message.reportId,
-              did: message.moderator.did,
-              queueId: message.queues[0] ?? null,
-              startAt: new Date().toISOString(),
-              endAt: '',
-            },
-          ],
-        }
-      })
-    } else if (message.type === 'report:review:ended') {
-      this.updateState((state) => {
-        const filtered = state.reports.filter(
-          (a) =>
-            !(
-              a.reportId === message.reportId &&
-              a.did === message.moderator.did
-            ),
-        )
-        if (filtered.length === state.reports.length) return state
-        return { ...state, reports: filtered }
-      })
-    } else if (message.type === 'queue:assigned') {
-      this.updateState((state) => {
-        const exists = state.queue.items.some(
-          (a) => a.queueId === message.queueId && a.did === message.did,
-        )
-        if (exists) return state
-        return {
-          ...state,
-          queue: {
-            ...state.queue,
-            items: [
-              ...state.queue.items,
-              {
-                id: 0,
-                queueId: message.queueId,
-                did: message.did,
-                startAt: new Date().toISOString(),
-                endAt: '',
-              },
-            ],
-          },
-        }
-      })
+    for (const listener of this.listeners) {
+      listener(message)
     }
   }
+
   private onClose = () => {
     this.ws = null
     this.clearPing()
     this.clearReconnect()
     this.setReconnect()
   }
+
   private onError = () => {
     this.clearPing()
     this.clearReconnect()
@@ -232,18 +157,22 @@ export class AssignmentWsClient {
       }
     }, PING_INTERVAL)
   }
+
   private clearPing() {
     if (this.pingInterval) {
       clearInterval(this.pingInterval)
       this.pingInterval = null
     }
   }
+
   private setReconnect() {
     if (this.reconnectTimeout) return
     this.reconnectTimeout = setTimeout(() => {
+      this.reconnectTimeout = null
       this.connect()
     }, RECONNECT_DELAY)
   }
+
   private clearReconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
@@ -252,10 +181,11 @@ export class AssignmentWsClient {
   }
 
   // listeners
-  addListener(fn: (state: AssignmentsState) => void) {
+  addListener(fn: MessageListener) {
     this.listeners.push(fn)
   }
-  removeListener(fn: (state: AssignmentsState) => void) {
+
+  removeListener(fn: MessageListener) {
     this.listeners = this.listeners.filter((f) => f !== fn)
   }
 
@@ -267,41 +197,26 @@ export class AssignmentWsClient {
       this.pendingMessages.push(message)
     }
   }
+
   subscribe(queueIds: number[]) {
-    const newSubscribed = Array.from(
-      new Set([...this.state.queue.subscribed, ...queueIds]),
+    this.subscribedQueues = Array.from(
+      new Set([...this.subscribedQueues, ...queueIds]),
     )
-    if (
-      newSubscribed.length !== this.state.queue.subscribed.length ||
-      !newSubscribed.every((id) => this.state.queue.subscribed.includes(id))
-    ) {
-      this.updateState((state) => ({
-        ...state,
-        queue: { ...state.queue, subscribed: newSubscribed },
-      }))
-    }
     this.send({ type: 'subscribe', queues: queueIds })
   }
+
   unsubscribe(queueIds: number[]) {
-    const newSubscribed = this.state.queue.subscribed.filter(
+    this.subscribedQueues = this.subscribedQueues.filter(
       (id) => !queueIds.includes(id),
     )
-    if (newSubscribed.length !== this.state.queue.subscribed.length) {
-      this.updateState((state) => ({
-        ...state,
-        queue: { ...state.queue, subscribed: newSubscribed },
-      }))
-    }
     this.send({ type: 'unsubscribe', queues: queueIds })
   }
+
   assignReportModerator(reportId: number, queueId?: number) {
     this.send({ type: 'report:review:start', reportId, queueId })
   }
+
   unassignReportModerator(reportId: number, queueId?: number) {
     this.send({ type: 'report:review:end', reportId, queueId })
-  }
-  private updateState(updater: (state: AssignmentsState) => AssignmentsState) {
-    this.state = updater(this.state)
-    this.listeners.forEach((fn) => fn(this.state))
   }
 }
