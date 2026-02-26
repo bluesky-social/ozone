@@ -1,9 +1,8 @@
-import { ReportAssigneeStatus } from '@/assignments/ReportAssigneeStatus'
 import {
-  useAssignmentsUpgrade,
   useAutoAssignReport,
   useReportAssignments,
-} from '@/lib/assignments/useAssignmentsRealtime'
+} from '@/assignments/AssignmentsContext'
+import { ReportAssigneeStatus } from '@/assignments/ReportAssigneeStatus'
 import { useParams } from 'next/navigation'
 import { useTitle } from 'react-use'
 
@@ -12,7 +11,6 @@ export default function ReportDetailContent() {
   const reportId = Number(id)
 
   useTitle(`Report #${reportId}`)
-  useAssignmentsUpgrade()
   useAutoAssignReport({ reportId })
 
   const { data: assignments = [] } = useReportAssignments({
@@ -26,7 +24,13 @@ export default function ReportDetailContent() {
       <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
         Report #{reportId}
       </h1>
-      <ReportAssigneeStatus assignment={{ ...assignment, reportId }} />
+      <ReportAssigneeStatus
+        assignment={{
+          ...assignment,
+          reportId,
+          queueId: assignment?.queueId ?? undefined,
+        }}
+      />
     </div>
   )
 }
