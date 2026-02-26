@@ -27,7 +27,7 @@ type ServerMessage =
       queues: number[]
     }
   | { type: 'report:created'; reportId: number; queues: number[] }
-  | { type: 'queue:assigned'; queueId: number }
+  | { type: 'queue:assigned'; queueId: number; did: string }
   | { type: 'pong' }
   | { type: 'error'; message: string }
 
@@ -51,6 +51,9 @@ export class AssignmentWsClient {
   // config
   private getToken: (() => Promise<string>) | null = null
   private getWsUrl: ((token: string) => string | null) | null = null
+
+  // listeners
+  private listeners: ((state: AssignmentsState) => void)[] = []
 
   // state
   public state: AssignmentsState = {
@@ -135,16 +138,75 @@ export class AssignmentWsClient {
     let message: ServerMessage
     try {
       message = JSON.parse(event.data)
+      console.debug('[AssignmentWs] recv', message.type, message)
     } catch {
       return
     }
     if (message.type === 'queue:snapshot') {
-      this.state = {
-        ...this.state,
-        queue: { ...this.state.queue, items: message.events },
-      }
+      this.updateState((state) => ({
+        ...state,
+        queue: { ...state.queue, items: message.events },
+      }))
     } else if (message.type === 'report:snapshot') {
-      this.state = { ...this.state, reports: message.events }
+      this.updateState((state) => ({ ...state, reports: message.events }))
+    } else if (message.type === 'report:review:started') {
+      this.updateState((state) => {
+        const exists = state.reports.some(
+          (a) =>
+            a.reportId === message.reportId &&
+            a.did === message.moderator.did,
+        )
+        if (exists) return state
+        return {
+          ...state,
+          reports: [
+            ...state.reports,
+            {
+              id: 0,
+              reportId: message.reportId,
+              did: message.moderator.did,
+              queueId: message.queues[0] ?? null,
+              startAt: new Date().toISOString(),
+              endAt: '',
+            },
+          ],
+        }
+      })
+    } else if (message.type === 'report:review:ended') {
+      this.updateState((state) => {
+        const filtered = state.reports.filter(
+          (a) =>
+            !(
+              a.reportId === message.reportId &&
+              a.did === message.moderator.did
+            ),
+        )
+        if (filtered.length === state.reports.length) return state
+        return { ...state, reports: filtered }
+      })
+    } else if (message.type === 'queue:assigned') {
+      this.updateState((state) => {
+        const exists = state.queue.items.some(
+          (a) => a.queueId === message.queueId && a.did === message.did,
+        )
+        if (exists) return state
+        return {
+          ...state,
+          queue: {
+            ...state.queue,
+            items: [
+              ...state.queue.items,
+              {
+                id: 0,
+                queueId: message.queueId,
+                did: message.did,
+                startAt: new Date().toISOString(),
+                endAt: '',
+              },
+            ],
+          },
+        }
+      })
     }
   }
   private onClose = () => {
@@ -189,6 +251,14 @@ export class AssignmentWsClient {
     }
   }
 
+  // listeners
+  addListener(fn: (state: AssignmentsState) => void) {
+    this.listeners.push(fn)
+  }
+  removeListener(fn: (state: AssignmentsState) => void) {
+    this.listeners = this.listeners.filter((f) => f !== fn)
+  }
+
   // messaging
   private send(message: ClientMessage) {
     if (this.ws?.readyState === WebSocket.OPEN) {
@@ -198,13 +268,30 @@ export class AssignmentWsClient {
     }
   }
   subscribe(queueIds: number[]) {
-    this.state.queue.subscribed = Array.from(new Set([...queueIds]))
+    const newSubscribed = Array.from(
+      new Set([...this.state.queue.subscribed, ...queueIds]),
+    )
+    if (
+      newSubscribed.length !== this.state.queue.subscribed.length ||
+      !newSubscribed.every((id) => this.state.queue.subscribed.includes(id))
+    ) {
+      this.updateState((state) => ({
+        ...state,
+        queue: { ...state.queue, subscribed: newSubscribed },
+      }))
+    }
     this.send({ type: 'subscribe', queues: queueIds })
   }
   unsubscribe(queueIds: number[]) {
-    this.state.queue.subscribed = this.state.queue.subscribed.filter(
+    const newSubscribed = this.state.queue.subscribed.filter(
       (id) => !queueIds.includes(id),
     )
+    if (newSubscribed.length !== this.state.queue.subscribed.length) {
+      this.updateState((state) => ({
+        ...state,
+        queue: { ...state.queue, subscribed: newSubscribed },
+      }))
+    }
     this.send({ type: 'unsubscribe', queues: queueIds })
   }
   assignReportModerator(reportId: number, queueId?: number) {
@@ -213,12 +300,8 @@ export class AssignmentWsClient {
   unassignReportModerator(reportId: number, queueId?: number) {
     this.send({ type: 'report:review:end', reportId, queueId })
   }
-
-  // state
-  getQueueAssignments(queueId: number) {
-    return this.state.queue.items.filter((a) => a.queueId === queueId)
-  }
-  getReportAssignment(reportId: number) {
-    return this.state.reports.find((a) => a.reportId === reportId)
+  private updateState(updater: (state: AssignmentsState) => AssignmentsState) {
+    this.state = updater(this.state)
+    this.listeners.forEach((fn) => fn(this.state))
   }
 }
