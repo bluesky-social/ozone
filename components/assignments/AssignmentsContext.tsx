@@ -69,7 +69,7 @@ export function AssignmentsProvider({
 
   // state
   const [state, setState] = useState<AssignmentsState>({
-    queue: { items: [] },
+    queue: { subscribed: [], items: [] },
     reports: [],
   })
   useEffect(() => {
@@ -153,11 +153,26 @@ export function AssignmentsProvider({
 
   // interface
   const subscribe = useCallback(
-    (queueIds: number[]) => ws.subscribe(queueIds),
+    (queueIds: number[]) => {
+      setState((s) => ({
+        ...s,
+        queue: { ...s.queue, subscribed: queueIds },
+      }))
+      ws.subscribe(queueIds)
+    },
     [ws],
   )
   const unsubscribe = useCallback(
-    (queueIds: number[]) => ws.unsubscribe(queueIds),
+    (queueIds: number[]) => {
+      setState((s) => ({
+        ...s,
+        queue: {
+          ...s.queue,
+          subscribed: s.queue.subscribed.filter((id) => !queueIds.includes(id)),
+        },
+      }))
+      ws.unsubscribe(queueIds)
+    },
     [ws],
   )
   const assignReportModerator = useCallback(
