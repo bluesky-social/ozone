@@ -53,9 +53,6 @@ export class AssignmentWsClient {
   // listeners
   private listeners: MessageListener[] = []
 
-  // subscriptions (for re-subscribing on reconnect)
-  private subscribedQueues: number[] = []
-
   // config
   configure(
     getToken: () => Promise<string>,
@@ -104,7 +101,6 @@ export class AssignmentWsClient {
       this.ws = null
     }
     this.pendingMessages = []
-    this.subscribedQueues = []
   }
 
   // events
@@ -114,9 +110,6 @@ export class AssignmentWsClient {
       this.send(pending)
     }
     this.pendingMessages = []
-    if (this.subscribedQueues.length > 0) {
-      this.send({ type: 'subscribe', queues: Array.from(this.subscribedQueues) })
-    }
     this.clearPing()
     this.setPing()
   }
@@ -157,14 +150,12 @@ export class AssignmentWsClient {
       }
     }, PING_INTERVAL)
   }
-
   private clearPing() {
     if (this.pingInterval) {
       clearInterval(this.pingInterval)
       this.pingInterval = null
     }
   }
-
   private setReconnect() {
     if (this.reconnectTimeout) return
     this.reconnectTimeout = setTimeout(() => {
@@ -172,7 +163,6 @@ export class AssignmentWsClient {
       this.connect()
     }, RECONNECT_DELAY)
   }
-
   private clearReconnect() {
     if (this.reconnectTimeout) {
       clearTimeout(this.reconnectTimeout)
@@ -184,7 +174,6 @@ export class AssignmentWsClient {
   addListener(fn: MessageListener) {
     this.listeners.push(fn)
   }
-
   removeListener(fn: MessageListener) {
     this.listeners = this.listeners.filter((f) => f !== fn)
   }
@@ -199,23 +188,14 @@ export class AssignmentWsClient {
   }
 
   subscribe(queueIds: number[]) {
-    this.subscribedQueues = Array.from(
-      new Set([...this.subscribedQueues, ...queueIds]),
-    )
     this.send({ type: 'subscribe', queues: queueIds })
   }
-
   unsubscribe(queueIds: number[]) {
-    this.subscribedQueues = this.subscribedQueues.filter(
-      (id) => !queueIds.includes(id),
-    )
     this.send({ type: 'unsubscribe', queues: queueIds })
   }
-
   assignReportModerator(reportId: number, queueId?: number) {
     this.send({ type: 'report:review:start', reportId, queueId })
   }
-
   unassignReportModerator(reportId: number, queueId?: number) {
     this.send({ type: 'report:review:end', reportId, queueId })
   }
