@@ -2,17 +2,13 @@
 
 import Link from 'next/link'
 import { ReportAssigneeStatus } from './ReportAssigneeStatus'
-import {
-  useAssignmentsUpgrade,
-  useReportAssignments,
-} from '../../lib/assignments/useAssignmentsRealtime'
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { useMemo } from 'react'
+import { useReportAssignments } from './AssignmentsContext'
 
 const REPORTS_PER_QUEUE = 25
 
 export function ReportList({ queueId }: { queueId: number }) {
-  useAssignmentsUpgrade()
   const startId = (queueId - 1) * REPORTS_PER_QUEUE + 1
   const reports = Array.from(
     { length: REPORTS_PER_QUEUE },
@@ -21,6 +17,7 @@ export function ReportList({ queueId }: { queueId: number }) {
   const { data: assignments = [] } = useReportAssignments({
     onlyActiveAssignments: true,
     reportIds: reports,
+    queueIds: [queueId],
   })
 
   const assignmentMap: Map<
@@ -59,7 +56,7 @@ export function ReportList({ queueId }: { queueId: number }) {
               </span>
               <div onClick={(e) => e.preventDefault()}>
                 <ReportAssigneeStatus
-                  assignment={{ ...assignment, reportId }}
+                  assignment={{ ...assignment, reportId, queueId }}
                 />
               </div>
             </Link>

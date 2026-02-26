@@ -3,25 +3,22 @@
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { QueueAssigneeStatus } from './QueueAssigneeStatus'
-import { useQueueAssignments } from '../../lib/assignments/useAssignmentsRealtime'
-import type { AssignmentView } from '../../lib/assignments/useAssignments'
+import type { AssignmentView } from './useAssignments'
+import { useQueueAssignments } from './AssignmentsContext'
 
 export function QueueList() {
   const queues = Array.from({ length: 10 }, (_, i) => i + 1)
-  const { data: allAssignments = [] } = useQueueAssignments({
-    onlyActiveAssignments: true,
-    queueIds: queues,
-  })
+  const assignments = useQueueAssignments(queues)
 
   const assignmentsByQueue = useMemo(() => {
     const map = new Map<number, AssignmentView[]>()
-    for (const a of allAssignments) {
+    for (const a of assignments) {
       const list = map.get(a.queueId) ?? []
       list.push(a)
       map.set(a.queueId, list)
     }
     return map
-  }, [allAssignments])
+  }, [assignments])
 
   return (
     <div>

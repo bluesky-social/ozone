@@ -1,7 +1,7 @@
 'use client'
 
-import type { AssignmentView } from '../../lib/assignments/useAssignments'
-import { useAssignQueue } from '../../lib/assignments/useAssignments'
+import type { AssignmentView } from './useAssignments'
+import { useAssignQueue } from './useAssignments'
 import { Assignee } from './Assignee'
 import { MemberSearchPopover } from './MemberSearchPopover'
 

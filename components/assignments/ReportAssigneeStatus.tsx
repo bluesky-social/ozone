@@ -1,8 +1,8 @@
 'use client'
 
 import { Assignee } from './Assignee'
-import { useAssignReport } from '../../lib/assignments/useAssignmentsRealtime'
 import { ToolsOzoneReportDefs } from '@atproto/api'
+import { useAssignReport } from './AssignmentsContext'
 
 interface ReportAssigneeStatusProps {
   assignment: Partial<ToolsOzoneReportDefs.AssignmentView> & {
@@ -13,22 +13,14 @@ interface ReportAssigneeStatusProps {
 export function ReportAssigneeStatus({
   assignment,
 }: ReportAssigneeStatusProps) {
-  const { mutate: assignReport } = useAssignReport()
+  const { assignReportModerator, unassignReportModerator } = useAssignReport()
 
   const handleAssign = () => {
-    assignReport({
-      reportId: assignment.reportId,
-      queueId: assignment.queueId,
-      assign: true,
-    })
+    assignReportModerator(assignment.reportId, assignment.queueId)
   }
 
   const handleUnassign = () => {
-    assignReport({
-      reportId: assignment.reportId,
-      queueId: assignment.queueId,
-      assign: false,
-    })
+    unassignReportModerator(assignment.reportId, assignment.queueId)
   }
 
   return (
@@ -40,7 +32,7 @@ export function ReportAssigneeStatus({
           onClick={handleAssign}
           className="text-xs text-indigo-600 dark:text-teal-400 hover:underline"
         >
-          Claim
+          Assign
         </button>
       )}
     </div>
