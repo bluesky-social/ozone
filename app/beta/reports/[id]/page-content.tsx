@@ -1,7 +1,7 @@
 import {
   useAutoAssignReport,
   useReportAssignments,
-} from '@/assignments/AssignmentsContext'
+} from '@/assignments/useAssignments'
 import { ReportAssigneeStatus } from '@/assignments/ReportAssigneeStatus'
 import { useParams } from 'next/navigation'
 import { useTitle } from 'react-use'

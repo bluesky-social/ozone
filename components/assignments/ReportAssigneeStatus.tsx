@@ -2,7 +2,7 @@
 
 import { Assignee } from './Assignee'
 import { ToolsOzoneReportDefs } from '@atproto/api'
-import { useAssignReport } from './AssignmentsContext'
+import { useAssignReport } from './useAssignments'
 
 interface ReportAssigneeStatusProps {
   assignment: Partial<ToolsOzoneReportDefs.AssignmentView> & {
@@ -13,14 +13,22 @@ interface ReportAssigneeStatusProps {
 export function ReportAssigneeStatus({
   assignment,
 }: ReportAssigneeStatusProps) {
-  const { assignReportModerator, unassignReportModerator } = useAssignReport()
+  const assignReport = useAssignReport()
 
   const handleAssign = () => {
-    assignReportModerator(assignment.reportId, assignment.queueId)
+    assignReport.mutate({
+      reportId: assignment.reportId,
+      queueId: assignment.queueId,
+      assign: true,
+    })
   }
 
   const handleUnassign = () => {
-    unassignReportModerator(assignment.reportId, assignment.queueId)
+    assignReport.mutate({
+      reportId: assignment.reportId,
+      queueId: assignment.queueId,
+      assign: false,
+    })
   }
 
   return (

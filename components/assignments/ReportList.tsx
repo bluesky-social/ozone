@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { ReportAssigneeStatus } from './ReportAssigneeStatus'
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { useMemo } from 'react'
-import { useReportAssignments } from './AssignmentsContext'
+import { useReportAssignments } from './useAssignments'
 
 const REPORTS_PER_QUEUE = 25
 
@@ -17,7 +17,6 @@ export function ReportList({ queueId }: { queueId: number }) {
   const { data: assignments = [] } = useReportAssignments({
     onlyActiveAssignments: true,
     reportIds: reports,
-    queueIds: [queueId],
   })
 
   const assignmentMap: Map<
