@@ -40,7 +40,10 @@ import {
   getRecipientsLanguages,
 } from '@/email/Composer'
 import { useColorScheme } from '@/common/useColorScheme'
-import { AUTOMATED_ACTION_EMAIL_IDS } from '@/lib/constants'
+import {
+  AUTOMATED_ACTION_EMAIL_IDS,
+  STRIKE_TO_SUSPENSION_DURATION_IN_HOURS,
+} from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
 import {
@@ -149,7 +152,7 @@ export const useQuickAction = (
     setSeverityLevelStrikeCount(
       level?.strikeCount !== undefined ||
         level?.firstOccurrenceStrikeCount !== undefined
-        ? level.strikeCount ?? 0
+        ? (level.strikeCount ?? 0)
         : null,
     )
     setSelectedSeverityLevelName(levelName)
@@ -268,6 +271,10 @@ export const useQuickAction = (
     !!automatedEmailTemplate &&
     isTakedownEvent &&
     !emailRecipientStatus?.cantReceive
+  const showCantEmailError =
+    !!automatedEmailTemplate &&
+    isTakedownEvent &&
+    emailRecipientStatus?.cantReceive
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -739,6 +746,16 @@ export const useQuickAction = (
           'day',
         )
       : undefined
+    const nextThresholdSuspensionDurationInHours =
+      actionRecommendation?.nextThreshold &&
+      STRIKE_TO_SUSPENSION_DURATION_IN_HOURS[actionRecommendation.nextThreshold]
+    const nextThresholdSuspensionDuration =
+      nextThresholdSuspensionDurationInHours
+        ? pluralize(
+            (nextThresholdSuspensionDurationInHours * HOUR) / DAY,
+            'day',
+          )
+        : undefined
     const isFirstSev1ForPolicy =
       !!severityLevel?.strikeCount &&
       !!severityLevel?.strikeOnOccurrence &&
@@ -774,6 +791,7 @@ export const useQuickAction = (
       severityLevelConfig: severityLevel,
       thresholdCrossed: actionRecommendation?.thresholdCrossed,
       nextThreshold: actionRecommendation?.nextThreshold,
+      nextThresholdSuspensionDuration,
       // Only when we are applying a policy where strike will be applied on repeat occurrence
       // but the current action is not applying any strikes
       isFirstSev1ForPolicy,
@@ -836,6 +854,7 @@ export const useQuickAction = (
     communicationTemplates,
     theme,
     showAutomatedEmailComposer,
+    showCantEmailError,
     recipientLanguages,
     emailContent,
     setEmailContent,

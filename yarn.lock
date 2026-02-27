@@ -710,10 +710,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@next/env@npm:15.2.7":
-  version: 15.2.7
-  resolution: "@next/env@npm:15.2.7"
-  checksum: 10c0/09138a221a257e1c0421f32e2b82ee12c089de93fa8492da8dea2e5c2023d24bc8880fd95e7a80a0e1e69d7fc7e634a82cc4290ddb72d4516867d1cd2982abb8
+"@next/env@npm:15.2.9":
+  version: 15.2.9
+  resolution: "@next/env@npm:15.2.9"
+  checksum: 10c0/00c71399a093b13f7a3883faf81782eeaea5541d1d5ca2dc2008d9cb832a00ed00e31caea462217de3f9c28920fc08515300832c9b46d47c9e7e5216a6427722
   languageName: node
   linkType: hard
 
@@ -1241,21 +1241,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react-dom@npm:19.1.2":
-  version: 19.1.2
-  resolution: "@types/react-dom@npm:19.1.2"
+"@types/react-dom@npm:19.1.5":
+  version: 19.1.5
+  resolution: "@types/react-dom@npm:19.1.5"
   peerDependencies:
     "@types/react": ^19.0.0
-  checksum: 10c0/100c341cacba9ec8ae1d47ee051072a3450e9573bf8eeb7262490e341cb246ea0f95a07a1f2077e61cf92648f812a0324c602fcd811bd87b7ce41db2811510cd
+  checksum: 10c0/2a29e77cf6bb6e9f57bcfa54509c216cad2e16e244f0bd56369966ec88c072b9c91f6011d14f9e18fbfe2b801b18b86f616de75e5c8aef0be73c1f74abb33b49
   languageName: node
   linkType: hard
 
-"@types/react@npm:19.1.2":
-  version: 19.1.2
-  resolution: "@types/react@npm:19.1.2"
+"@types/react@npm:19.1.5":
+  version: 19.1.5
+  resolution: "@types/react@npm:19.1.5"
   dependencies:
     csstype: "npm:^3.0.2"
-  checksum: 10c0/76ffe71395c713d4adc3c759465012d3c956db00af35ab7c6d0d91bd07b274b7ce69caa0478c0760311587bd1e38c78ffc9688ebc629f2b266682a19d8750947
+  checksum: 10c0/e0811aadc65cf4030e2418c7975b524f126db806bacb85cffdbe5e50c3606e9a5ffe89ffe6bf9c945e03f5e8d5ed992686bc6bb478db1f3127cc50933f648e1e
   languageName: node
   linkType: hard
 
@@ -6420,11 +6420,11 @@ __metadata:
   languageName: node
   linkType: hard
 
-"next@npm:15.2.7":
-  version: 15.2.7
-  resolution: "next@npm:15.2.7"
+"next@npm:15.2.9":
+  version: 15.2.9
+  resolution: "next@npm:15.2.9"
   dependencies:
-    "@next/env": "npm:15.2.7"
+    "@next/env": "npm:15.2.9"
     "@next/swc-darwin-arm64": "npm:15.2.5"
     "@next/swc-darwin-x64": "npm:15.2.5"
     "@next/swc-linux-arm64-gnu": "npm:15.2.5"
@@ -6477,7 +6477,7 @@ __metadata:
       optional: true
   bin:
     next: dist/bin/next
-  checksum: 10c0/6f9239bb8561b2aeca43a60b04d4564515343b2eea9152e4c6346c134e884ecf2128aaf9ab601c6029552d762e868be330e9e4342b93832d87b50c0e551519cf
+  checksum: 10c0/c51c8189a50be55a8729ecb7f8ba1cc01fae4675575e378f1681cab324c3d56a8d1ba37689542cf9a1a5db1dde4de78707f9722dad4a2469604a2ff86a35df3e
   languageName: node
   linkType: hard
 
@@ -6731,10 +6731,10 @@ __metadata:
     hls.js: "npm:^1.5.13"
     kbar: "npm:^0.1.0-beta.45"
     lande: "npm:^1.0.10"
-    next: "npm:15.2.7"
+    next: "npm:15.2.9"
     postcss: "npm:^8.4.20"
-    react: "npm:19.1.3"
-    react-dom: "npm:19.1.3"
+    react: "npm:19.1.5"
+    react-dom: "npm:19.1.5"
     react-dropzone: "npm:^14.3.5"
     react-json-view: "npm:1.21.3"
     react-tailwindcss-select: "npm:^1.8.5"
@@ -7162,14 +7162,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:19.1.3":
-  version: 19.1.3
-  resolution: "react-dom@npm:19.1.3"
+"react-dom@npm:19.1.5":
+  version: 19.1.5
+  resolution: "react-dom@npm:19.1.5"
   dependencies:
     scheduler: "npm:^0.26.0"
   peerDependencies:
-    react: ^19.1.3
-  checksum: 10c0/9bb3f5f6f98778aa620a3371f4240689de408efc5c4c6f2bbb969d50b4c797e6c30dc586e6f9641df163bf6892627cff8b8428b947e679358727da5dae236cec
+    react: ^19.1.5
+  checksum: 10c0/be5f1d6f6d865839c72ee0e45671221e6f6de9f13f0969c796b40c41b09dc580c9259ce3a95f22a20d45a6e10fcfb23cae06c6bd078ee299de5c086a4abf23b5
   languageName: node
   linkType: hard
 
@@ -7328,10 +7328,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:19.1.3":
-  version: 19.1.3
-  resolution: "react@npm:19.1.3"
-  checksum: 10c0/0f61ea94431d6a1a7d0fe73937ebbe75bf9a40fca690815ed5e8c913833b139e8b067bf8a476bad600682e4189817ec87b240989ede2296e1323a02fd072862d
+"react@npm:19.1.5":
+  version: 19.1.5
+  resolution: "react@npm:19.1.5"
+  checksum: 10c0/0c2351cc449294d20e120857515234c017288d0b15957550ed40ca8eb0aba19edda7682ebd3a1ce4e63eb53f5d2502d02e6be6fefe401574465e1f761bb56deb
   languageName: node
   linkType: hard
 

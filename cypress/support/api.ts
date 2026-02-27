@@ -134,3 +134,12 @@ export const mockSafelinkUpdateRuleResponse = (response: {
     `${SERVER_URL}/tools.ozone.safelink.updateRule`,
     response,
   ).as('mockSafelinkUpdateRuleResponse')
+
+export const mockPolicyListResponse = (response: Record<string, any>) =>
+  cy
+    .intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.setting.listOptions?scope=instance&keys=tools.ozone.setting.policyList`,
+      response,
+    )
+    .as('mockPolicyListResponse')

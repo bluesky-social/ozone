@@ -14,6 +14,7 @@ export type CompileTemplateInput = {
   previousStrikes: number // strikes before
   thresholdCrossed?: number
   nextThreshold?: number
+  nextThresholdSuspensionDuration?: string | null
   suspensionDuration?: string | null
   suspensionEndDate?: string | null
   isFirstSev1ForPolicy?: boolean
@@ -56,6 +57,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     totalStrikes,
     thresholdCrossed,
     nextThreshold,
+    nextThresholdSuspensionDuration,
     suspensionDuration,
     suspensionEndDate,
     isFirstSev1ForPolicy,
@@ -72,9 +74,14 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
   const joinParagraphs = (...parts: (string | null | undefined)[]) =>
     parts.filter(Boolean).join('\n\n')
 
+  // @NOTE: For content summary, we hardcode the text "post" but the content being actioned may be of any record type
+  // Ideally, we would want to use some kind of placeholder in the configured content so that we can replace it more reliably
   const severityText = isAccountLevel
     ? severityLevelConfig?.accountEmailSummary
-    : severityLevelConfig?.contentEmailSummary
+    : severityLevelConfig?.contentEmailSummary?.replace(
+        ' post ',
+        ` ${subjectName.toLowerCase()} `,
+      )
 
   const intro = (() => {
     if (severityLevelConfig?.strikeCount === 0) {
@@ -103,6 +110,11 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
 
   // Strike logic (Section 2.5)
   const strikeInfo = (() => {
+    // If 16 strikes => permanent ban
+    if (totalStrikes >= 16) {
+      return `Because you reached 16 strikes, your account has been permanently removed. You will no longer be able to access this account.`
+    }
+
     if (severityLevelConfig?.needsTakedown || isPermanent) {
       return `You will no longer be able to access this account.`
     }
@@ -113,11 +125,6 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
 
     if (isFirstSev1ForPolicy) {
       return `This is a warning. Future similar violations will result in strikes against your account.`
-    }
-
-    // If 16 strikes => permanent ban
-    if (totalStrikes >= 16) {
-      return `Because you reached 16 strikes, your account has been permanently removed. You will no longer be able to access this account.`
     }
 
     // Regular "You now have X strikes"
@@ -134,9 +141,13 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     // Approaching permanent ban (12–15)
     if (totalStrikes >= 12 && totalStrikes <= 15) {
       out += `${lineBreaks}⚠️ **Warning:** You are approaching permanent account removal. At 16 strikes, your account will be permanently banned.`
-    } else if (nextThreshold && !needsSuspensionCopy) {
+    } else if (
+      nextThreshold &&
+      nextThresholdSuspensionDuration &&
+      !needsSuspensionCopy
+    ) {
       // No threshold crossed → next threshold message
-      out += `${lineBreaks}Please note that at ${nextThreshold} strikes, your account will be suspended for ${suspensionDuration}.`
+      out += `${lineBreaks}Please note that at ${nextThreshold} strikes, your account will be suspended for ${nextThresholdSuspensionDuration}.`
       return out
     }
 
