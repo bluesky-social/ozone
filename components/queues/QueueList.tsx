@@ -2,6 +2,7 @@ import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { Card } from '@/common/Card'
 import { ActionButton } from '@/common/buttons'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { Loading } from '@/common/Loader'
 
 export function QueueList({
   queues,
@@ -14,15 +15,7 @@ export function QueueList({
   onEdit: (queue: ToolsOzoneQueueDefs.QueueView) => void
   onDelete: (queue: ToolsOzoneQueueDefs.QueueView) => void
 }) {
-  if (isLoading) {
-    return (
-      <div className="space-y-3">
-        {[1, 2, 3].map((i) => (
-          <Card key={i} className="animate-pulse h-32" />
-        ))}
-      </div>
-    )
-  }
+  if (isLoading) return <Loading />
 
   if (!queues.length) {
     return (

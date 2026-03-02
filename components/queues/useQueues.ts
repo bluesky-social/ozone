@@ -38,9 +38,7 @@ export const useCreateQueue = () => {
     },
     onError: (error) => {
       if (error instanceof ToolsOzoneQueueCreateQueue.ConflictingQueueError) {
-        toast.error(
-          `Queue configuration conflicts with an existing queue: ${error.message}`,
-        )
+        toast.error(error.message)
       } else {
         toast.error(`Failed to create queue: ${error?.['message']}`)
       }

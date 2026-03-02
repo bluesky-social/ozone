@@ -203,7 +203,7 @@ export function QueueForm({
             id="queue-report-types"
             value={reportTypesText}
             onChange={(e) => setReportTypesText(e.target.value)}
-            placeholder="com.atproto.moderation.defs#reasonSpam, com.atproto.moderation.defs#reasonOther"
+            placeholder="tools.ozone.report.defs#reasonSpam"
             className="block w-full"
             rows={3}
           />
