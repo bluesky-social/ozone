@@ -136,6 +136,7 @@ export function QueueDeleteDialog({
                     appearance="negative"
                     onClick={handleDelete}
                     disabled={deleteMutation.isLoading}
+                    data-cy="confirm-delete-queue-button"
                   >
                     {deleteMutation.isLoading ? 'Deleting...' : 'Delete Queue'}
                   </ActionButton>

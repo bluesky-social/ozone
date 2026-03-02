@@ -134,11 +134,7 @@ export function QueueForm({
         </FormLabel>
       )}
 
-      <FormLabel
-        label="Subject Types"
-        required={!isEditMode}
-        className="mb-3"
-      >
+      <FormLabel label="Subject Types" required={!isEditMode} className="mb-3">
         {isEditMode ? (
           <p className="text-sm text-gray-600 dark:text-gray-300">
             {queue?.subjectTypes.join(', ')}
@@ -218,6 +214,7 @@ export function QueueForm({
           appearance="primary"
           type="submit"
           disabled={isPending}
+          data-cy="submit-queue-button"
         >
           {isPending
             ? 'Saving...'
@@ -225,7 +222,11 @@ export function QueueForm({
               ? 'Save Changes'
               : 'Create Queue'}
         </ActionButton>
-        <ActionButton appearance="outlined" onClick={onCancel}>
+        <ActionButton
+          appearance="outlined"
+          onClick={onCancel}
+          data-cy="cancel-queue-button"
+        >
           Cancel
         </ActionButton>
       </div>

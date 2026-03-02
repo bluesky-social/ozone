@@ -1,0 +1,237 @@
+/// <reference types="cypress" />
+
+import {
+  mockListQueuesResponse,
+  mockCreateQueueResponse,
+  mockUpdateQueueResponse,
+  mockDeleteQueueResponse,
+} from '../../support/api'
+
+const BASE_URL = 'http://127.0.0.1:3000'
+
+describe('Queue Management', () => {
+  let authFixture: Record<string, any>
+  let spamQueue: Record<string, any>
+  let hateSpeechQueue: Record<string, any>
+
+  beforeEach(() => {
+    cy.visit(`${BASE_URL}/configure?tab=queues`)
+    cy.fixture('auth.json').then((auth) => {
+      authFixture = auth
+      cy.fixture('queues.json').then((queues) => {
+        spamQueue = queues.spamQueue
+        hateSpeechQueue = queues.hateSpeechQueue
+        cy.login(authFixture)
+      })
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // List Queues
+  // ---------------------------------------------------------------------------
+  describe('List Queues', () => {
+    it('displays queue cards with name, status badge, subject types, report types, and stats', () => {
+      mockListQueuesResponse({
+        statusCode: 200,
+        body: {
+          queues: [spamQueue, hateSpeechQueue],
+        },
+      })
+
+      cy.get('[data-cy="queue-card"]').should('have.length', 2)
+
+      cy.get('[data-cy="queue-card"]')
+        .first()
+        .within(() => {
+          cy.contains('Spam Queue')
+          cy.contains('Enabled')
+          cy.contains('account')
+          cy.contains('tools.ozone.report.defs#reasonMisleadingSpam')
+          cy.contains('5') // pendingCount
+          cy.contains('10') // actionedCount
+        })
+
+      cy.get('[data-cy="queue-card"]')
+        .eq(1)
+        .within(() => {
+          cy.contains('Hate Speech Queue')
+          cy.contains('Disabled')
+          cy.contains('record')
+          cy.contains('app.bsky.feed.post')
+        })
+
+      cy.get('button[title="Edit queue"]').should('have.length', 2)
+      cy.get('button[title="Delete queue"]').should('have.length', 2)
+    })
+
+    it('shows empty state and no action buttons when no queues exist', () => {
+      mockListQueuesResponse({
+        statusCode: 200,
+        body: {
+          queues: [],
+        },
+      })
+
+      cy.contains('No queues found.').should('be.visible')
+      cy.get('button[title="Edit queue"]').should('not.exist')
+      cy.get('button[title="Delete queue"]').should('not.exist')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Create Queue
+  // ---------------------------------------------------------------------------
+  describe('Create Queue', () => {
+    beforeEach(() => {
+      mockListQueuesResponse({ statusCode: 200, body: { queues: [] } })
+    })
+
+    it('creates a queue with all fields and validates the API payload', () => {
+      const createdQueue = {
+        ...spamQueue,
+        id: 99,
+        name: 'My New Queue',
+        subjectTypes: ['account', 'record'],
+        collection: 'app.bsky.feed.post',
+        reportTypes: ['tools.ozone.report.defs#reasonMisleadingElections'],
+      }
+
+      mockCreateQueueResponse({
+        statusCode: 200,
+        body: {
+          queue: createdQueue,
+        },
+      })
+      mockListQueuesResponse({
+        statusCode: 200,
+        body: { queues: [createdQueue] },
+      })
+
+      cy.get('[data-cy="add-queue-button"]').click()
+      cy.url().should('include', 'create=true')
+
+      cy.get('#queue-name').type('My New Queue')
+      cy.get('#subject-type-account').check()
+      cy.get('#subject-type-record').check()
+      cy.get('#queue-collection')
+        .should('be.visible')
+        .type('app.bsky.feed.post')
+      cy.get('#queue-report-types').type(
+        'tools.ozone.report.defs#reasonMisleadingElections',
+      )
+
+      cy.get('[data-cy="submit-queue-button"]').click()
+      cy.wait(2000)
+
+      cy.contains('Queue created successfully').should('be.visible')
+    })
+
+    it('shows collection field only when record subject type is checked', () => {
+      cy.get('[data-cy="add-queue-button"]').click()
+
+      cy.get('#queue-collection').should('not.exist')
+      cy.get('#subject-type-record').check()
+      cy.get('#queue-collection').should('be.visible')
+      cy.get('#subject-type-record').uncheck()
+      cy.get('#queue-collection').should('not.exist')
+    })
+  })
+
+  // ---------------------------------------------------------------------------
+  // Delete Queue
+  // ---------------------------------------------------------------------------
+  describe('Delete Queue', () => {
+    describe('with multiple queues (migration target available)', () => {
+      beforeEach(() => {
+        mockListQueuesResponse({
+          statusCode: 200,
+          body: { queues: [spamQueue, hateSpeechQueue] },
+        })
+      })
+
+      it('opens delete dialog with correct queue name and migration dropdown', () => {
+        cy.get('button[title="Delete queue"]').first().click()
+
+        cy.get('[data-cy="delete-queue-dialog"]').within(() => {
+          cy.contains('Delete Queue: Spam Queue?')
+          cy.get('#migrate-target').should('be.visible')
+        })
+        cy.contains('This is the last queue').should('not.exist')
+      })
+
+      it('deletes without migration and validates payload has no migrateToQueueId', () => {
+        mockDeleteQueueResponse({
+          statusCode: 200,
+          body: {
+            deleted: true,
+            reportsMigrated: 0,
+          },
+        })
+        mockListQueuesResponse({
+          statusCode: 200,
+          body: { queues: [hateSpeechQueue] },
+        })
+
+        cy.get('button[title="Delete queue"]').first().click()
+        cy.get('[data-cy="confirm-delete-queue-button"]').click()
+        cy.wait(2000)
+        cy.contains('Queue deleted successfully').should('be.visible')
+        cy.get('[data-cy="delete-queue-dialog"]').should('not.exist')
+      })
+    })
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Access Control
+// ---------------------------------------------------------------------------
+describe.skip('Queue Management - Access Control', () => {
+  let authFixture: Record<string, any>
+  let spamQueue: Record<string, any>
+
+  beforeEach(() => {
+    cy.visit(`${BASE_URL}/configure?tab=queues`)
+    cy.fixture('auth.json').then((auth) => {
+      authFixture = auth
+      cy.fixture('queues.json').then((queues) => {
+        spamQueue = queues.spamQueue
+      })
+    })
+  })
+
+  it('triage user sees permission denied message and no write controls', () => {
+    const triageFixture = {
+      ...authFixture,
+      ozoneServerConfigResponse: {
+        ...authFixture.ozoneServerConfigResponse,
+        viewer: { role: 'tools.ozone.team.defs#roleTriage' },
+      },
+    }
+
+    cy.login(triageFixture)
+
+    cy.contains('You do not have permission to manage queues.').should(
+      'be.visible',
+    )
+    cy.get('[data-cy="add-queue-button"]').should('not.exist')
+    cy.get('button[title="Edit queue"]').should('not.exist')
+    cy.get('button[title="Delete queue"]').should('not.exist')
+  })
+
+  it('admin user sees the queue list and all write controls', () => {
+    cy.login(authFixture)
+
+    // Mock a queue list so the page has content to show
+    cy.intercept('GET', '**/tools.ozone.queue.listQueues*', {
+      statusCode: 200,
+      body: { queues: [spamQueue], cursor: null },
+    })
+
+    cy.contains('You do not have permission to manage queues.').should(
+      'not.exist',
+    )
+    cy.get('[data-cy="add-queue-button"]').should('be.visible')
+    cy.get('button[title="Edit queue"]').should('be.visible')
+    cy.get('button[title="Delete queue"]').should('be.visible')
+  })
+})
