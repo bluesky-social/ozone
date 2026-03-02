@@ -112,7 +112,7 @@ export function QueueDeleteDialog({
                       </option>
                       {otherQueues.map((q) => (
                         <option key={q.id} value={q.id}>
-                          {q.name} (ID: {q.id})
+                          {q.name}
                         </option>
                       ))}
                     </Select>

@@ -45,16 +45,6 @@ export function QueuesConfig() {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
 
-  if (!canManageQueues) {
-    return (
-      <div className="pt-4">
-        <p className="text-gray-500 dark:text-gray-400">
-          You do not have permission to manage queues.
-        </p>
-      </div>
-    )
-  }
-
   const showEditor = showCreateForm || editingQueueId
 
   return (
@@ -87,7 +77,7 @@ export function QueuesConfig() {
             </Select>
           )}
         </div>
-        {!showEditor && (
+        {canManageQueues && !showEditor && (
           <ActionButton
             size="sm"
             appearance="primary"
@@ -100,7 +90,7 @@ export function QueuesConfig() {
         )}
       </div>
 
-      {showCreateForm && (
+      {canManageQueues && showCreateForm && (
         <div className="mb-4">
           <QueueForm
             onCancel={() => navigateTo({ create: null })}
@@ -109,7 +99,7 @@ export function QueuesConfig() {
         </div>
       )}
 
-      {editingQueueId && !showCreateForm && (
+      {canManageQueues && editingQueueId && !showCreateForm && (
         <div className="mb-4">
           {editingQueue ? (
             <QueueForm

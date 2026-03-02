@@ -3,6 +3,7 @@ import { Card } from '@/common/Card'
 import { ActionButton } from '@/common/buttons'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { Loading } from '@/common/Loader'
+import { usePermission } from '@/shell/ConfigurationContext'
 
 export function QueueList({
   queues,
@@ -15,6 +16,8 @@ export function QueueList({
   onEdit: (queue: ToolsOzoneQueueDefs.QueueView) => void
   onDelete: (queue: ToolsOzoneQueueDefs.QueueView) => void
 }) {
+  const canManage = usePermission('canManageQueues')
+
   if (isLoading) return <Loading />
 
   if (!queues.length) {
@@ -97,24 +100,26 @@ export function QueueList({
               </div>
             </div>
 
-            <div className="flex gap-1 ml-2 flex-shrink-0">
-              <ActionButton
-                size="xs"
-                appearance="outlined"
-                onClick={() => onEdit(queue)}
-                title="Edit queue"
-              >
-                <PencilIcon className="h-3 w-3" />
-              </ActionButton>
-              <ActionButton
-                size="xs"
-                appearance="outlined"
-                onClick={() => onDelete(queue)}
-                title="Delete queue"
-              >
-                <TrashIcon className="h-3 w-3" />
-              </ActionButton>
-            </div>
+            {canManage && (
+              <div className="flex gap-1 ml-2 flex-shrink-0">
+                <ActionButton
+                  size="xs"
+                  appearance="outlined"
+                  onClick={() => onEdit(queue)}
+                  title="Edit queue"
+                >
+                  <PencilIcon className="h-3 w-3" />
+                </ActionButton>
+                <ActionButton
+                  size="xs"
+                  appearance="outlined"
+                  onClick={() => onDelete(queue)}
+                  title="Delete queue"
+                >
+                  <TrashIcon className="h-3 w-3" />
+                </ActionButton>
+              </div>
+            )}
           </div>
         </Card>
       ))}
