@@ -78,14 +78,7 @@ export function QueueForm({
   const [reportTypesText, setReportTypesText] = useState(
     queue?.reportTypes.join(', ') ?? '',
   )
-
-  // errors
   const [errors, setErrors] = useState<Record<string, string>>({})
-  useEffect(() => {
-    if (!name.trim()) {
-      setErrors((prev) => ({ ...prev, name: 'Name is required' }))
-    }
-  }, [name])
 
   const toggleSubjectType = (type: string) => {
     setSubjectTypes((prev) => {
