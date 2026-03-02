@@ -1,10 +1,56 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { ActionButton } from '@/common/buttons'
 import { Input, Textarea, FormLabel, Checkbox } from '@/common/forms'
 import { useCreateQueue, useUpdateQueue } from './useQueues'
+import { StringList } from '@/common/StringList'
 
-const SUBJECT_TYPE_OPTIONS = ['account', 'record', 'message'] as const
+function MatchSummary({
+  subjectTypes,
+  collection,
+  reportTypesText,
+}: {
+  subjectTypes: Set<string>
+  collection: string | undefined
+  reportTypesText: string
+}) {
+  const reportTypes = reportTypesText
+    .split(',')
+    .map((s) => s.trim())
+    .filter(Boolean)
+
+  if (subjectTypes.size === 0 || reportTypes.length === 0)
+    return (
+      <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-sm text-yellow-900 dark:text-yellow-200">
+        No reports will match this queue.
+      </div>
+    )
+
+  const subjectList = Array.from(subjectTypes)
+  const _collection = collection?.trim() || undefined
+
+  return (
+    <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-900 dark:text-blue-200">
+      <p className="font-medium mb-2">
+        A report will be routed to this queue when <strong>all</strong> of the
+        following match:
+      </p>
+      <ul className="space-y-1 list-disc list-inside">
+        <li>
+          Subject type is <StringList items={subjectList} conjunction="or" />
+        </li>
+        {_collection && (
+          <li>
+            Collection is <strong>{_collection}</strong>
+          </li>
+        )}
+        <li>
+          Report type is <StringList items={reportTypes} conjunction="or" />
+        </li>
+      </ul>
+    </div>
+  )
+}
 
 export function QueueForm({
   queue,
@@ -20,16 +66,26 @@ export function QueueForm({
   const updateMutation = useUpdateQueue()
   const isPending = createMutation.isPending || updateMutation.isPending
 
+  // form
   const [name, setName] = useState(queue?.name ?? '')
   const [enabled, setEnabled] = useState(queue?.enabled ?? true)
   const [subjectTypes, setSubjectTypes] = useState<Set<string>>(
     new Set(queue?.subjectTypes ?? []),
   )
-  const [collection, setCollection] = useState(queue?.collection ?? '')
+  const [collection, setCollection] = useState<string | undefined>(
+    queue?.collection?.trim() || undefined,
+  )
   const [reportTypesText, setReportTypesText] = useState(
     queue?.reportTypes.join(', ') ?? '',
   )
+
+  // errors
   const [errors, setErrors] = useState<Record<string, string>>({})
+  useEffect(() => {
+    if (!name.trim()) {
+      setErrors((prev) => ({ ...prev, name: 'Name is required' }))
+    }
+  }, [name])
 
   const toggleSubjectType = (type: string) => {
     setSubjectTypes((prev) => {
@@ -88,15 +144,16 @@ export function QueueForm({
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
+      const _collection = subjectTypes.has('record')
+        ? collection?.trim()
+        : undefined
 
       await createMutation.mutateAsync(
         {
           name,
           subjectTypes: Array.from(subjectTypes),
           reportTypes,
-          ...(subjectTypes.has('record') && collection.trim()
-            ? { collection: collection.trim() }
-            : {}),
+          collection: _collection,
         },
         { onSuccess },
       )
@@ -105,10 +162,6 @@ export function QueueForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <h4 className="font-medium text-gray-700 dark:text-gray-100">
-        {isEditMode ? 'Edit Queue' : 'Create Queue'}
-      </h4>
-
       <FormLabel label="Name" htmlFor="queue-name" required className="mb-3">
         <Input
           type="text"
@@ -134,20 +187,51 @@ export function QueueForm({
 
       {!isEditMode && (
         <>
-          <FormLabel label="Subject Types" required className="mb-3">
-            <div className="flex gap-4">
-              {SUBJECT_TYPE_OPTIONS.map((type) => (
-                <Checkbox
-                  key={type}
-                  id={`subject-type-${type}`}
-                  checked={subjectTypes.has(type)}
-                  onChange={() => toggleSubjectType(type)}
-                  label={type}
-                />
-              ))}
+          <FormLabel label="Subject Type(s)" required>
+            <div className="flex flex-col gap-2">
+              <Checkbox
+                key="account"
+                id="subject-type-account"
+                checked={subjectTypes.has('account')}
+                onChange={() => toggleSubjectType('account')}
+                label="account"
+              />
+              <Checkbox
+                key="record"
+                id="subject-type-record"
+                checked={subjectTypes.has('record')}
+                onChange={() => toggleSubjectType('record')}
+                label="record"
+              />
+              <Checkbox
+                key="message"
+                id="subject-type-message"
+                checked={subjectTypes.has('message')}
+                onChange={() => toggleSubjectType('message')}
+                label="message"
+              />
             </div>
             {errors.subjectTypes && (
               <p className="text-red-500 text-xs mt-1">{errors.subjectTypes}</p>
+            )}
+          </FormLabel>
+
+          <FormLabel
+            label="Report Type(s)"
+            htmlFor="queue-report-types"
+            required
+            className="mb-3"
+          >
+            <Textarea
+              id="queue-report-types"
+              value={reportTypesText}
+              onChange={(e) => setReportTypesText(e.target.value)}
+              placeholder="tools.ozone.report.defs#reasonSpam"
+              className="block w-full"
+              rows={3}
+            />
+            {errors.reportTypes && (
+              <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
             )}
           </FormLabel>
 
@@ -167,28 +251,13 @@ export function QueueForm({
               />
             </FormLabel>
           )}
-
-          <FormLabel
-            label="Report Types"
-            htmlFor="queue-report-types"
-            required
-            className="mb-3"
-          >
-            <Textarea
-              id="queue-report-types"
-              value={reportTypesText}
-              onChange={(e) => setReportTypesText(e.target.value)}
-              placeholder="tools.ozone.report.defs#reasonSpam"
-              className="block w-full"
-              rows={3}
-            />
-            {errors.reportTypes && (
-              <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
-            )}
-          </FormLabel>
         </>
       )}
-
+      <MatchSummary
+        subjectTypes={subjectTypes}
+        collection={collection}
+        reportTypesText={reportTypesText}
+      />
       <div className="flex gap-2 pt-2">
         <ActionButton
           appearance="primary"
