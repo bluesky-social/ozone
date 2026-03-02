@@ -100,7 +100,7 @@ export default function ConfigurePageContent() {
     },
     {
       view: Views.Queues,
-      label: 'Queues (Beta)',
+      label: 'Queues',
     },
   ]
 
