@@ -15,7 +15,7 @@ function MatchSummary({
   reportTypesText: string
 }) {
   const reportTypes = reportTypesText
-    .split(',')
+    .split(/[\n,]/)
     .map((s) => s.trim())
     .filter(Boolean)
   const subjectList = Array.from(subjectTypes)
@@ -42,9 +42,7 @@ function MatchSummary({
           Collection is{' '}
           {collection !== undefined ? <strong>{collection}</strong> : 'empty'}
         </li>
-        <li>
-          Report type is <StringList items={reportTypes} conjunction="or" />
-        </li>
+        <li>Report type is one of: {reportTypes.join(', ')}</li>
       </ul>
     </div>
   )
@@ -78,7 +76,7 @@ export function QueueForm({
       ? collection?.trim()
       : undefined
   const [reportTypesText, setReportTypesText] = useState(
-    queue?.reportTypes.join(', ') ?? '',
+    queue?.reportTypes.join('\n') ?? '',
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -107,7 +105,7 @@ export function QueueForm({
       }
 
       const reportTypes = reportTypesText
-        .split(',')
+        .split(/[\n,]/)
         .map((s) => s.trim())
         .filter(Boolean)
       if (reportTypes.length === 0) {
@@ -136,7 +134,7 @@ export function QueueForm({
       )
     } else {
       const reportTypes = reportTypesText
-        .split(',')
+        .split(/[\n,]/)
         .map((s) => s.trim())
         .filter(Boolean)
 
@@ -218,7 +216,12 @@ export function QueueForm({
               id="queue-report-types"
               value={reportTypesText}
               onChange={(e) => setReportTypesText(e.target.value)}
-              placeholder="tools.ozone.report.defs#reasonSpam"
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') e.stopPropagation()
+              }}
+              placeholder={`tools.ozone.report.defs#reasonHarassmentTargeted
+tools.ozone.report.defs#reasonHarassmentHateSpeech
+tools.ozone.report.defs#reasonHarassmentDoxxing`}
               className="block w-full"
               rows={3}
             />
