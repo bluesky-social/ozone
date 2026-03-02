@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { ActionButton } from '@/common/buttons'
-import { Input, Textarea, FormLabel, Checkbox } from '@/common/forms'
-import { useCreateQueue, useUpdateQueue } from './useQueues'
+import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { StringList } from '@/common/StringList'
+import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { useState } from 'react'
+import { useCreateQueue, useUpdateQueue } from './useQueues'
 
 function MatchSummary({
   subjectTypes,
@@ -18,16 +18,15 @@ function MatchSummary({
     .split(',')
     .map((s) => s.trim())
     .filter(Boolean)
+  const subjectList = Array.from(subjectTypes)
 
-  if (subjectTypes.size === 0 || reportTypes.length === 0)
+  if (subjectTypes.size === 0 || reportTypes.length === 0) {
     return (
       <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-sm text-yellow-900 dark:text-yellow-200">
         No reports will match this queue.
       </div>
     )
-
-  const subjectList = Array.from(subjectTypes)
-  const _collection = collection?.trim() || undefined
+  }
 
   return (
     <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-900 dark:text-blue-200">
@@ -39,11 +38,10 @@ function MatchSummary({
         <li>
           Subject type is <StringList items={subjectList} conjunction="or" />
         </li>
-        {_collection && (
-          <li>
-            Collection is <strong>{_collection}</strong>
-          </li>
-        )}
+        <li>
+          Collection is{' '}
+          {collection !== undefined ? <strong>{collection}</strong> : 'empty'}
+        </li>
         <li>
           Report type is <StringList items={reportTypes} conjunction="or" />
         </li>
@@ -75,6 +73,10 @@ export function QueueForm({
   const [collection, setCollection] = useState<string | undefined>(
     queue?.collection?.trim() || undefined,
   )
+  const collectionSanitized =
+    subjectTypes.has('record') && collection?.trim()
+      ? collection?.trim()
+      : undefined
   const [reportTypesText, setReportTypesText] = useState(
     queue?.reportTypes.join(', ') ?? '',
   )
@@ -137,16 +139,13 @@ export function QueueForm({
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean)
-      const _collection = subjectTypes.has('record')
-        ? collection?.trim()
-        : undefined
 
       await createMutation.mutateAsync(
         {
           name,
           subjectTypes: Array.from(subjectTypes),
           reportTypes,
-          collection: _collection,
+          collection: collectionSanitized,
         },
         { onSuccess },
       )
@@ -248,7 +247,7 @@ export function QueueForm({
       )}
       <MatchSummary
         subjectTypes={subjectTypes}
-        collection={collection}
+        collection={collectionSanitized}
         reportTypesText={reportTypesText}
       />
       <div className="flex gap-2 pt-2">
