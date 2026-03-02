@@ -18,7 +18,7 @@ export function QueueForm({
   const isEditMode = !!queue
   const createMutation = useCreateQueue()
   const updateMutation = useUpdateQueue()
-  const isPending = createMutation.isLoading || updateMutation.isLoading
+  const isPending = createMutation.isPending || updateMutation.isPending
 
   const [name, setName] = useState(queue?.name ?? '')
   const [enabled, setEnabled] = useState(queue?.enabled ?? true)
@@ -124,90 +124,70 @@ export function QueueForm({
       </FormLabel>
 
       {isEditMode && (
-        <FormLabel label="Enabled" className="mb-3">
-          <Checkbox
-            id="queue-enabled"
-            checked={enabled}
-            onChange={(e) => setEnabled(e.target.checked)}
-            label={enabled ? 'Queue is enabled' : 'Queue is disabled'}
-          />
-        </FormLabel>
+        <Checkbox
+          id="queue-enabled"
+          checked={enabled}
+          onChange={(e) => setEnabled(e.target.checked)}
+          label={'Enable'}
+        />
       )}
 
-      <FormLabel label="Subject Types" required={!isEditMode} className="mb-3">
-        {isEditMode ? (
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {queue?.subjectTypes.join(', ')}
-          </p>
-        ) : (
-          <div className="flex gap-4">
-            {SUBJECT_TYPE_OPTIONS.map((type) => (
-              <Checkbox
-                key={type}
-                id={`subject-type-${type}`}
-                checked={subjectTypes.has(type)}
-                onChange={() => toggleSubjectType(type)}
-                label={type}
+      {!isEditMode && (
+        <>
+          <FormLabel label="Subject Types" required className="mb-3">
+            <div className="flex gap-4">
+              {SUBJECT_TYPE_OPTIONS.map((type) => (
+                <Checkbox
+                  key={type}
+                  id={`subject-type-${type}`}
+                  checked={subjectTypes.has(type)}
+                  onChange={() => toggleSubjectType(type)}
+                  label={type}
+                />
+              ))}
+            </div>
+            {errors.subjectTypes && (
+              <p className="text-red-500 text-xs mt-1">{errors.subjectTypes}</p>
+            )}
+          </FormLabel>
+
+          {subjectTypes.has('record') && (
+            <FormLabel
+              label="Collection"
+              htmlFor="queue-collection"
+              className="mb-3"
+            >
+              <Input
+                type="text"
+                id="queue-collection"
+                value={collection}
+                onChange={(e) => setCollection(e.target.value)}
+                placeholder="e.g. app.bsky.feed.post"
+                className="block w-full"
               />
-            ))}
-          </div>
-        )}
-        {errors.subjectTypes && (
-          <p className="text-red-500 text-xs mt-1">{errors.subjectTypes}</p>
-        )}
-      </FormLabel>
+            </FormLabel>
+          )}
 
-      {!isEditMode && subjectTypes.has('record') && (
-        <FormLabel
-          label="Collection"
-          htmlFor="queue-collection"
-          className="mb-3"
-        >
-          <Input
-            type="text"
-            id="queue-collection"
-            value={collection}
-            onChange={(e) => setCollection(e.target.value)}
-            placeholder="e.g. app.bsky.feed.post"
-            className="block w-full"
-          />
-        </FormLabel>
+          <FormLabel
+            label="Report Types"
+            htmlFor="queue-report-types"
+            required
+            className="mb-3"
+          >
+            <Textarea
+              id="queue-report-types"
+              value={reportTypesText}
+              onChange={(e) => setReportTypesText(e.target.value)}
+              placeholder="tools.ozone.report.defs#reasonSpam"
+              className="block w-full"
+              rows={3}
+            />
+            {errors.reportTypes && (
+              <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
+            )}
+          </FormLabel>
+        </>
       )}
-
-      {isEditMode && queue?.collection && (
-        <FormLabel label="Collection" className="mb-3">
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            <code className="text-xs bg-gray-100 dark:bg-gray-700 px-1 py-0.5 rounded">
-              {queue.collection}
-            </code>
-          </p>
-        </FormLabel>
-      )}
-
-      <FormLabel
-        label="Report Types"
-        htmlFor="queue-report-types"
-        required={!isEditMode}
-        className="mb-3"
-      >
-        {isEditMode ? (
-          <p className="text-sm text-gray-600 dark:text-gray-300">
-            {queue?.reportTypes.join(', ')}
-          </p>
-        ) : (
-          <Textarea
-            id="queue-report-types"
-            value={reportTypesText}
-            onChange={(e) => setReportTypesText(e.target.value)}
-            placeholder="tools.ozone.report.defs#reasonSpam"
-            className="block w-full"
-            rows={3}
-          />
-        )}
-        {errors.reportTypes && (
-          <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
-        )}
-      </FormLabel>
 
       <div className="flex gap-2 pt-2">
         <ActionButton
