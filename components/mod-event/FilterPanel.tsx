@@ -408,14 +408,16 @@ export const EventFilterPanel = ({
               <FolderArrowDownIcon className="h-4 w-4 mr-1" />
               Import Filters
             </ActionButton>
-            <Tooltip
-              title="Filter Sharing"
-              description={`This is for sharing configs between team members.
-
-1. The sharer should click 'Copy Filters' and paste the output to their team member.
-2. The team member should click 'Import Filters' and paste the config.`}
-              anchor="right start"
-            />
+            <Tooltip title="Filter Sharing" anchor="right start">
+              <p className="whitespace-pre-wrap">
+                This is for sharing configs between team members. <br />
+                <br />
+                1. The sharer should click 'Copy Filters' and paste the output
+                to their team member. <br />
+                2. The team member should click 'Import Filters' and paste the
+                config.
+              </p>
+            </Tooltip>
           </div>
         </div>
       </div>

@@ -10,15 +10,11 @@ import { AnchorProps } from '@headlessui/react/dist/internal/floating'
 
 export type TooltipProps = {
   title?: string
-  description?: string
+  children?: ReactNode
   anchor?: AnchorProps
 }
 
-export const Tooltip = ({
-  title,
-  description,
-  anchor,
-}: TooltipProps) => {
+export const Tooltip = ({ title, children, anchor }: TooltipProps) => {
   return (
     <Popover className="relative">
       {() => (
@@ -47,7 +43,7 @@ export const Tooltip = ({
                     </h3>
                   </div>
                   <div className="bg-gray-50 dark:bg-slate-600 px-4 py-3">
-                    <p className="whitespace-pre-wrap">{description}</p>
+                    {children}
                   </div>
                 </div>
               </div>
