@@ -93,14 +93,12 @@ describe('Queue Management', () => {
         name: 'My New Queue',
         subjectTypes: ['account', 'record'],
         collection: 'app.bsky.feed.post',
-        reportTypes: ['tools.ozone.report.defs#reasonMisleadingElections'],
+        reportTypes: ['tools.ozone.report.defs#reasonHarassmentHateSpeech'],
       }
 
       mockCreateQueueResponse({
         statusCode: 200,
-        body: {
-          queue: createdQueue,
-        },
+        body: { queue: createdQueue },
       })
       mockListQueuesResponse({
         statusCode: 200,
@@ -116,9 +114,10 @@ describe('Queue Management', () => {
       cy.get('#queue-collection')
         .should('be.visible')
         .type('app.bsky.feed.post')
-      cy.get('#queue-report-types').type(
-        'tools.ozone.report.defs#reasonMisleadingElections',
-      )
+
+      cy.get('[data-cy="report-types-input"]').type('hate speech')
+      cy.contains('Hate Speech').click()
+      cy.get('[data-cy="report-types-input"]').type('{esc}')
 
       cy.get('[data-cy="submit-queue-button"]').click()
       cy.wait(2000)

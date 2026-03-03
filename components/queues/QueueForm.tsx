@@ -1,22 +1,20 @@
 import { ActionButton } from '@/common/buttons'
-import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
+import { Checkbox, FormLabel, Input } from '@/common/forms'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
 import { useCreateQueue, useUpdateQueue } from './useQueues'
+import { ReportTypeCombobox } from '@/reports/ReportTypeCombobox'
+import { reasonTypeOptions } from '@/reports/helpers/getType'
 
 function MatchSummary({
   subjectTypes,
   collection,
-  reportTypesText,
+  reportTypes,
 }: {
   subjectTypes: Set<string>
   collection: string | undefined
-  reportTypesText: string
+  reportTypes: string[]
 }) {
-  const reportTypes = reportTypesText
-    .split('\n')
-    .map((s) => s.trim())
-    .filter(Boolean)
   const subjectList = Array.from(subjectTypes)
 
   if (subjectTypes.size === 0 || reportTypes.length === 0) {
@@ -36,18 +34,18 @@ function MatchSummary({
       <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-900 dark:text-blue-200">
         <div className="space-y-1">
           <div>
-            <span className="">Report reason</span> is one of:
+            <span>Report reason</span> is one of:
             <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
               {reportTypes.map((t) => (
                 <li key={t}>
-                  <strong>{t}</strong>
+                  <strong>{reasonTypeOptions[t] || t}</strong>
                 </li>
               ))}
             </ul>
           </div>
           <p className="pl-16 py-4 opacity-70">AND</p>
           <div>
-            <span className="">Subject</span> is one of:
+            <span>Subject</span> is one of:
             <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
               {nonRecordTypes.map((t) => (
                 <li key={t}>
@@ -63,7 +61,10 @@ function MatchSummary({
                       with collection <strong>{collection}</strong>
                     </span>
                   ) : (
-                    <span className="opacity-70"> (any collection)</span>
+                    <span className="opacity-70">
+                      {' '}
+                      (not matchable without a collection)
+                    </span>
                   )}
                 </li>
               )}
@@ -100,10 +101,10 @@ export function QueueForm({
   )
   const collectionSanitized =
     subjectTypes.has('record') && collection?.trim()
-      ? collection?.trim()
+      ? collection.trim()
       : undefined
-  const [reportTypesText, setReportTypesText] = useState(
-    queue?.reportTypes.join('\n') ?? '',
+  const [reportTypes, setReportTypes] = useState<string[]>(
+    queue?.reportTypes ?? [],
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -130,11 +131,6 @@ export function QueueForm({
       if (subjectTypes.size === 0) {
         newErrors.subjectTypes = 'At least one subject type is required'
       }
-
-      const reportTypes = reportTypesText
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean)
       if (reportTypes.length === 0) {
         newErrors.reportTypes = 'At least one report type is required'
       } else if (reportTypes.length > 25) {
@@ -160,11 +156,6 @@ export function QueueForm({
         { onSuccess },
       )
     } else {
-      const reportTypes = reportTypesText
-        .split('\n')
-        .map((s) => s.trim())
-        .filter(Boolean)
-
       await createMutation.mutateAsync(
         {
           name,
@@ -198,7 +189,7 @@ export function QueueForm({
           id="queue-enabled"
           checked={enabled}
           onChange={(e) => setEnabled(e.target.checked)}
-          label={'Enable'}
+          label="Enable"
         />
       )}
 
@@ -207,21 +198,18 @@ export function QueueForm({
           <FormLabel label="Subject Type(s)" required>
             <div className="flex flex-col gap-2">
               <Checkbox
-                key="account"
                 id="subject-type-account"
                 checked={subjectTypes.has('account')}
                 onChange={() => toggleSubjectType('account')}
                 label="account"
               />
               <Checkbox
-                key="record"
                 id="subject-type-record"
                 checked={subjectTypes.has('record')}
                 onChange={() => toggleSubjectType('record')}
                 label="record"
               />
               <Checkbox
-                key="message"
                 id="subject-type-message"
                 checked={subjectTypes.has('message')}
                 onChange={() => toggleSubjectType('message')}
@@ -233,24 +221,12 @@ export function QueueForm({
             )}
           </FormLabel>
 
-          <FormLabel
-            label="Report Type(s)"
-            htmlFor="queue-report-types"
-            required
-            className="mb-3"
-          >
-            <Textarea
-              id="queue-report-types"
-              value={reportTypesText}
-              onChange={(e) => setReportTypesText(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') e.stopPropagation()
-              }}
-              placeholder={`tools.ozone.report.defs#reasonHarassmentTargeted
-tools.ozone.report.defs#reasonHarassmentHateSpeech
-tools.ozone.report.defs#reasonHarassmentDoxxing`}
-              className="block w-full"
-              rows={3}
+          <FormLabel label="Report Type(s)" required className="mb-3">
+            <ReportTypeCombobox
+              multiple
+              value={reportTypes}
+              onChange={setReportTypes}
+              data-cy="report-types-input"
             />
             {errors.reportTypes && (
               <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
@@ -275,11 +251,13 @@ tools.ozone.report.defs#reasonHarassmentDoxxing`}
           )}
         </>
       )}
+
       <MatchSummary
         subjectTypes={subjectTypes}
         collection={collectionSanitized}
-        reportTypesText={reportTypesText}
+        reportTypes={reportTypes}
       />
+
       <div className="flex gap-2 pt-2">
         <ActionButton
           appearance="primary"
