@@ -1,6 +1,5 @@
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
-import { StringList } from '@/common/StringList'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
 import { useCreateQueue, useUpdateQueue } from './useQueues'
@@ -15,7 +14,7 @@ function MatchSummary({
   reportTypesText: string
 }) {
   const reportTypes = reportTypesText
-    .split(/[\n,]/)
+    .split('\n')
     .map((s) => s.trim())
     .filter(Boolean)
   const subjectList = Array.from(subjectTypes)
@@ -28,22 +27,50 @@ function MatchSummary({
     )
   }
 
+  const nonRecordTypes = subjectList.filter((t) => t !== 'record')
+
   return (
-    <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-900 dark:text-blue-200">
-      <p className="font-medium mb-2">
-        A report will be routed to this queue when <strong>all</strong> of the
-        following match:
-      </p>
-      <ul className="space-y-1 list-disc list-inside">
-        <li>
-          Subject type is <StringList items={subjectList} conjunction="or" />
-        </li>
-        <li>
-          Collection is{' '}
-          {collection !== undefined ? <strong>{collection}</strong> : 'empty'}
-        </li>
-        <li>Report type is one of: {reportTypes.join(', ')}</li>
-      </ul>
+    <div>
+      <h2 className="text-lg">Summary</h2>
+      <p className="mb-2 text-sm">How a report matches this queue:</p>
+      <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-900 dark:text-blue-200">
+        <div className="space-y-1">
+          <div>
+            <span className="">Report reason</span> is one of:
+            <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
+              {reportTypes.map((t) => (
+                <li key={t}>
+                  <strong>{t}</strong>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className="pl-16 py-4 opacity-70">AND</p>
+          <div>
+            <span className="">Subject</span> is one of:
+            <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
+              {nonRecordTypes.map((t) => (
+                <li key={t}>
+                  <strong>{t}</strong>
+                </li>
+              ))}
+              {subjectTypes.has('record') && (
+                <li>
+                  <strong>record</strong>
+                  {collection ? (
+                    <span>
+                      {' '}
+                      with collection <strong>{collection}</strong>
+                    </span>
+                  ) : (
+                    <span className="opacity-70"> (any collection)</span>
+                  )}
+                </li>
+              )}
+            </ul>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -105,7 +132,7 @@ export function QueueForm({
       }
 
       const reportTypes = reportTypesText
-        .split(/[\n,]/)
+        .split('\n')
         .map((s) => s.trim())
         .filter(Boolean)
       if (reportTypes.length === 0) {
@@ -134,7 +161,7 @@ export function QueueForm({
       )
     } else {
       const reportTypes = reportTypesText
-        .split(/[\n,]/)
+        .split('\n')
         .map((s) => s.trim())
         .filter(Boolean)
 
