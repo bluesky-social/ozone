@@ -203,12 +203,24 @@ export function QueueForm({
                 onChange={() => toggleSubjectType('account')}
                 label="account"
               />
-              <Checkbox
-                id="subject-type-record"
-                checked={subjectTypes.has('record')}
-                onChange={() => toggleSubjectType('record')}
-                label="record"
-              />
+              <div className="h-12 flex items-center gap-2">
+                <Checkbox
+                  id="subject-type-record"
+                  checked={subjectTypes.has('record')}
+                  onChange={() => toggleSubjectType('record')}
+                  label="record"
+                />
+                {subjectTypes.has('record') && (
+                  <Input
+                    type="text"
+                    id="queue-collection"
+                    value={collection}
+                    onChange={(e) => setCollection(e.target.value)}
+                    placeholder="e.g. app.bsky.feed.post"
+                    className="w-96 my-0"
+                  />
+                )}
+              </div>
               <Checkbox
                 id="subject-type-message"
                 checked={subjectTypes.has('message')}
@@ -232,23 +244,6 @@ export function QueueForm({
               <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
             )}
           </FormLabel>
-
-          {subjectTypes.has('record') && (
-            <FormLabel
-              label="Collection"
-              htmlFor="queue-collection"
-              className="mb-3"
-            >
-              <Input
-                type="text"
-                id="queue-collection"
-                value={collection}
-                onChange={(e) => setCollection(e.target.value)}
-                placeholder="e.g. app.bsky.feed.post"
-                className="block w-full"
-              />
-            </FormLabel>
-          )}
         </>
       )}
 
