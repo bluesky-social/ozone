@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { buildBlueSkyAppUrl } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { RecordWithSnapshots } from '@/common/snapshots/RecordWithSnapshots'
 
 export const ListRecordCard = ({ uri }: { uri: string }) => {
   const labelerAgent = useLabelerAgent()
@@ -25,7 +26,20 @@ export const ListRecordCard = ({ uri }: { uri: string }) => {
   }
 
   if (error) {
-    return <LoadingFailed error={error} />
+    return (
+      <RecordWithSnapshots uri={uri}>
+        {(selectedSnapshot) => {
+          if (selectedSnapshot?.value) {
+            return (
+              <pre className="text-xs overflow-auto max-h-36">
+                {JSON.stringify(selectedSnapshot.value, null, 2)}
+              </pre>
+            )
+          }
+          return <LoadingFailed error={error} />
+        }}
+      </RecordWithSnapshots>
+    )
   }
 
   if (!data) {

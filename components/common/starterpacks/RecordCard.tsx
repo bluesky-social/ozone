@@ -5,6 +5,7 @@ import { buildBlueSkyAppUrl, parseAtUri } from '@/lib/util'
 import { AppBskyGraphDefs } from '@atproto/api'
 import { SOCIAL_APP_URL, STARTER_PACK_OG_CARD_URL } from '@/lib/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { RecordWithSnapshots } from '@/common/snapshots/RecordWithSnapshots'
 
 export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
   const lablerAgent = useLabelerAgent()
@@ -24,7 +25,20 @@ export const StarterPackRecordCard = ({ uri }: { uri: string }) => {
   }
 
   if (error) {
-    return <LoadingFailed error={error} />
+    return (
+      <RecordWithSnapshots uri={uri}>
+        {(selectedSnapshot) => {
+          if (selectedSnapshot?.value) {
+            return (
+              <pre className="text-xs overflow-auto max-h-36">
+                {JSON.stringify(selectedSnapshot.value, null, 2)}
+              </pre>
+            )
+          }
+          return <LoadingFailed error={error} />
+        }}
+      </RecordWithSnapshots>
+    )
   }
 
   if (!data) {
