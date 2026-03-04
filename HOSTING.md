@@ -328,7 +328,14 @@ If you use use Docker `compose.yaml` file in this repo, Ozone will automatically
 
 **Pull the latest Ozone container image:**
 
+> [!IMPORTANT]
+> The `compose.yaml` file uses the `0.1` tag (which tracks the latest 0.1.x release). Make sure to pull the same tag that your compose file uses. You can also use `latest` which will always point to the newest release.
+
 ```bash
+# Pull the 0.1 tag (matches the default compose.yaml)
+sudo docker pull ghcr.io/bluesky-social/ozone:0.1
+
+# OR pull the latest tag (always the newest release)
 sudo docker pull ghcr.io/bluesky-social/ozone:latest
 ```
 
@@ -337,6 +344,9 @@ sudo docker pull ghcr.io/bluesky-social/ozone:latest
 ```bash
 sudo systemctl restart ozone
 ```
+
+> [!TIP]
+> If you want to use the `latest` tag instead of `0.1`, edit `/ozone/compose.yaml` and change `image: ghcr.io/bluesky-social/ozone:0.1` to `image: ghcr.io/bluesky-social/ozone:latest`, then restart the service.
 
 ## Ozone environment variables
 
