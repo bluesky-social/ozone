@@ -25,11 +25,17 @@ type ClientOptions = Partial<
   >
 >
 
-function useOAuthClient(options: ClientOptions) {
+function useOAuthClient(
+  options: ClientOptions,
+  onUpdate: (sub: string, client: BrowserOAuthClient) => void,
+  onDelete: (sub: string, cause: unknown) => void,
+) {
   const { clientId, handleResolver, responseMode, plcDirectoryUrl } = options
 
   const [client, setClient] = useState<null | BrowserOAuthClient>(null)
   const fetch = useCallbackRef(options.fetch || globalThis.fetch)
+  const onUpdateRef = useCallbackRef(onUpdate)
+  const onDeleteRef = useCallbackRef(onDelete)
 
   useSignaledEffect(
     (signal) => {
@@ -49,6 +55,8 @@ function useOAuthClient(options: ClientOptions) {
             plcDirectoryUrl,
             fetch,
             signal,
+            onUpdate: (sub) => onUpdateRef(sub, client),
+            onDelete: (sub, cause) => onDeleteRef(sub, cause),
           })
 
           if (signal.aborted) {
@@ -84,8 +92,6 @@ export function useOAuth(options: UseOAuthOptions) {
   const onSignedIn = useCallbackRef(options.onSignedIn)
   const onSignedOut = useCallbackRef(options.onSignedOut)
 
-  const clientForInit = useOAuthClient(options)
-
   const scopeRef = useValueRef(options.scope)
   const stateRef = useValueRef(options.state)
 
@@ -93,6 +99,27 @@ export function useOAuth(options: UseOAuthOptions) {
   const [client, setClient] = useState<BrowserOAuthClient | null>(null)
   const [isInitializing, setIsInitializing] = useState(true)
   const [isLoginPopup, setIsLoginPopup] = useState(false)
+
+  const sessionRef = useValueRef(session)
+
+  const handleUpdate = useCallbackRef(
+    (sub: string, client: BrowserOAuthClient) => {
+      if (!sessionRef.current || sessionRef.current.did !== sub) {
+        client.restore(sub, false).then((newSession) => {
+          setSession(newSession)
+        })
+      }
+    },
+  )
+
+  const handleDelete = useCallbackRef((sub: string) => {
+    if (sessionRef.current?.did === sub) {
+      setSession(null)
+      void onSignedOut()
+    }
+  })
+
+  const clientForInit = useOAuthClient(options, handleUpdate, handleDelete)
 
   const clientForInitRef = useRef<typeof clientForInit>(undefined)
   useEffect(() => {
@@ -126,9 +153,8 @@ export function useOAuth(options: UseOAuthOptions) {
         },
         async (err) => {
           if (clientForInitRef.current !== clientForInit) return
-          const { LoginContinuedInParentWindowError } = await import(
-            '@atproto/oauth-client-browser'
-          )
+          const { LoginContinuedInParentWindowError } =
+            await import('@atproto/oauth-client-browser')
           if (err instanceof LoginContinuedInParentWindowError) {
             setIsLoginPopup(true)
             return
@@ -146,43 +172,6 @@ export function useOAuth(options: UseOAuthOptions) {
         setIsInitializing(false)
       })
   }, [clientForInit, onSignedIn, onRestored])
-
-  useEffect(() => {
-    if (!client) return
-
-    const controller = new AbortController()
-    const { signal } = controller
-
-    client.addEventListener(
-      'updated',
-      ({ detail: { sub } }) => {
-        if (!session || session.did !== sub) {
-          setSession(null)
-          client.restore(sub, false).then((session) => {
-            if (!signal.aborted) setSession(session)
-          })
-        }
-      },
-      { signal },
-    )
-
-    if (session) {
-      client.addEventListener(
-        'deleted',
-        ({ detail: { sub } }) => {
-          if (session.did === sub) {
-            setSession(null)
-            void onSignedOut()
-          }
-        },
-        { signal },
-      )
-    }
-
-    return () => {
-      controller.abort()
-    }
-  }, [client, session, onSignedOut])
 
   // Memoize the return value to avoid re-renders in consumers
   return useMemo(
