@@ -32,7 +32,7 @@ export function QueuesConfig() {
   // page state
   const [pageState, setPageState] = useState<PageState>({ mode: 'list' })
   const showForm = pageState.mode === 'edit' || pageState.mode === 'create'
-  const slectedQueue =
+  const selectedQueue =
     pageState.mode === 'edit' || pageState.mode === 'delete'
       ? queues.find((q) => q.id === pageState.queueId)
       : undefined
@@ -89,9 +89,9 @@ export function QueuesConfig() {
 
       {canManageQueues && pageState.mode === 'edit' && (
         <div className="mb-4">
-          {slectedQueue ? (
+          {selectedQueue ? (
             <QueueForm
-              queue={pageState.mode === 'edit' ? slectedQueue : undefined}
+              queue={selectedQueue}
               onCancel={() => setPageState({ mode: 'list' })}
               onSuccess={() => setPageState({ mode: 'list' })}
             />
@@ -131,11 +131,13 @@ export function QueuesConfig() {
         />
       )}
 
-      <QueueDeleteDialog
-        queue={pageState.mode === 'delete' ? slectedQueue : undefined}
-        queues={queues}
-        onClose={() => setPageState({ mode: 'list' })}
-      />
+      {pageState.mode === 'delete' && (
+        <QueueDeleteDialog
+          queue={selectedQueue}
+          queues={queues}
+          onClose={() => setPageState({ mode: 'list' })}
+        />
+      )}
     </div>
   )
 }
