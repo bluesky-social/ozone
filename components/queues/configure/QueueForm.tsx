@@ -88,7 +88,7 @@ export function QueueForm({
   const isEditMode = !!queue
   const createMutation = useCreateQueue()
   const updateMutation = useUpdateQueue()
-  const isPending = createMutation.isPending || updateMutation.isPending
+  const isLoading = createMutation.isLoading || updateMutation.isLoading
 
   // form
   const [name, setName] = useState(queue?.name ?? '')
@@ -277,10 +277,10 @@ export function QueueForm({
         <ActionButton
           appearance="primary"
           type="submit"
-          disabled={isPending}
+          disabled={isLoading}
           data-cy="submit-queue-button"
         >
-          {isPending
+          {isLoading
             ? 'Saving...'
             : isEditMode
               ? 'Save Changes'
