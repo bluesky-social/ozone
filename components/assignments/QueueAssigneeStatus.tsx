@@ -1,13 +1,13 @@
 'use client'
 
-import type { AssignmentView } from './useAssignments'
 import { useAssignQueue } from './useAssignments'
 import { Assignee } from './Assignee'
 import { MemberSearchPopover } from './MemberSearchPopover'
+import { ToolsOzoneQueueDefs } from '@atproto/api'
 
 interface QueueAssigneeStatusProps {
   queueId: number
-  assignments: AssignmentView[]
+  assignments: ToolsOzoneQueueDefs.AssignmentView[]
 }
 
 export function QueueAssigneeStatus({

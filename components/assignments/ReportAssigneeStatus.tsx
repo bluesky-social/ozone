@@ -2,38 +2,36 @@
 
 import { Assignee } from './Assignee'
 import { ToolsOzoneReportDefs } from '@atproto/api'
-import { useAssignReport } from './useAssignments'
+import { useAssignReport, useUnassignReport } from './useAssignments'
 
 interface ReportAssigneeStatusProps {
-  assignment: Partial<ToolsOzoneReportDefs.AssignmentView> & {
-    reportId: number
-  }
+  assignment?: ToolsOzoneReportDefs.AssignmentView
 }
 
 export function ReportAssigneeStatus({
   assignment,
 }: ReportAssigneeStatusProps) {
   const assignReport = useAssignReport()
+  const unassignReport = useUnassignReport()
 
   const handleAssign = () => {
+    if (!assignment) return
     assignReport.mutate({
       reportId: assignment.reportId,
-      queueId: assignment.queueId,
-      assign: true,
+      queueId: assignment.queue?.id,
     })
   }
 
   const handleUnassign = () => {
-    assignReport.mutate({
+    if (!assignment) return
+    unassignReport.mutate({
       reportId: assignment.reportId,
-      queueId: assignment.queueId,
-      assign: false,
     })
   }
 
   return (
     <div>
-      {assignment.did ? (
+      {assignment?.did ? (
         <Assignee did={assignment.did} onRemove={handleUnassign} />
       ) : (
         <button

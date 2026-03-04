@@ -14,7 +14,7 @@ export default function ReportDetailContent() {
   useAutoAssignReport({ reportId })
 
   const { data: assignments = [] } = useReportAssignments({
-    onlyActiveAssignments: true,
+    onlyActive: true,
     reportIds: [reportId],
   })
   const assignment = assignments[0]
@@ -24,13 +24,7 @@ export default function ReportDetailContent() {
       <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
         Report #{reportId}
       </h1>
-      <ReportAssigneeStatus
-        assignment={{
-          ...assignment,
-          reportId,
-          queueId: assignment?.queueId ?? undefined,
-        }}
-      />
+      <ReportAssigneeStatus assignment={assignment} />
     </div>
   )
 }
