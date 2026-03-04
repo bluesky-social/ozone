@@ -12,9 +12,18 @@ The `pages/api` directory is mapped to `/api/*`. Files in this directory are tre
 Ozone requires a PDS service to talk to, and it is convenient to point it to a local `dev-env` instance for testing during development.
 
 1. In the separate [atproto project](https://github.com/bluesky-social/atproto), run the dev server using `yarn workspace @atproto/dev-env start`. This will run a PDS, seeded with some users and data for you.
-2. Run the development server for Ozone using `yarn dev`. This will start running the Ozone frontend at `http://localhost:3000`.
-3. Navigate to the login page in your browser, at [http://localhost:3000](http://localhost:3000).
-4. Login using the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would work are:
+2. Find the Ozone service DID in the dev-env startup output. Look for a line like:
+   ```
+   🗼 Ozone service DID did:plc:xxxxx
+   ```
+3. Create a `.env.local` file in the ozone project root with the DID from the previous step:
+   ```
+   NEXT_PUBLIC_OZONE_SERVICE_DID=did:plc:xxxxx
+   ```
+   Without this, the app will be stuck on the loading spinner.
+4. Run the development server for Ozone using `yarn dev`. This will start running the Ozone frontend at `http://localhost:3000`.
+5. Navigate to the login page in your browser, at [http://localhost:3000](http://localhost:3000).
+6. Login using the "Credentials" tab with the atproto dev-env credentials, which you can find [here](https://github.com/bluesky-social/atproto/blob/a1240f0a37030766dfe0a2ccfdc2810432520ae9/packages/dev-env/src/mock/index.ts#L59-L84). For development some example login credentials that would work are:
    - Service URL: http://localhost:2583
    - Account handle: mod.test
    - Password: mod-pass
