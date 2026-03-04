@@ -223,6 +223,7 @@ OZONE_DID_PLC_URL=https://plc.directory
 OZONE_APPVIEW_URL=https://api.bsky.app
 OZONE_APPVIEW_DID=did:web:api.bsky.app
 LOG_ENABLED=1
+DAEMON_ENABLED=1
 OZONE_CONFIG
 ```
 
@@ -355,6 +356,7 @@ You will need to customize various settings configured through the Ozone environ
 | `OZONE_APPVIEW_URL`     | `https://api.bsky.app`        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
 | `OZONE_APPVIEW_DID`     | `did:web:api.bsky.app`        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
 | `LOG_ENABLED`           | `1`                           | ❌             | Set to 0 if you would not like JSON log output from the Ozone              |
+| `DAEMON_ENABLED`        | `1`                           | ❌             | Set to 0 if you would not like scheduled actions to be run.              |
 
 There are additional environment variables that can be tweaked depending on how you're running your service, particularly if another service on the network allows delegates some control to your Ozone instance, e.g. to prompt them to purge certain content.
 
