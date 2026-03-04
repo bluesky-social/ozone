@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { Select } from '@/common/forms'
@@ -24,10 +23,11 @@ export function QueuesConfig() {
   )
 
   // data
-  const { data, isLoading, isError, refetch } = useQueueList(
-    enabledFilter !== undefined ? { enabled: enabledFilter } : undefined,
-  )
-  const queues = data?.queues ?? []
+  const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
+    useQueueList(
+      enabledFilter !== undefined ? { enabled: enabledFilter } : undefined,
+    )
+  const queues = data?.pages.flatMap((page) => page.queues) ?? []
 
   // page state
   const [pageState, setPageState] = useState<PageState>({ mode: 'list' })
@@ -122,6 +122,8 @@ export function QueuesConfig() {
         <QueueList
           queues={queues}
           isLoading={isLoading}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
           onEdit={(queue) => setPageState({ mode: 'edit', queueId: queue.id })}
           onDelete={(queue) =>
             setPageState({ mode: 'delete', queueId: queue.id })

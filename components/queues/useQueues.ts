@@ -1,5 +1,5 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import {
   ToolsOzoneQueueCreateQueue,
@@ -10,15 +10,17 @@ import {
 export const useQueueList = (filters?: { enabled?: boolean }) => {
   const labelerAgent = useLabelerAgent()
 
-  return useQuery({
+  return useInfiniteQuery({
     queryKey: ['queues', filters],
-    queryFn: async () => {
+    queryFn: async ({ pageParam }) => {
       const { data } = await labelerAgent.tools.ozone.queue.listQueues({
-        limit: 100,
+        limit: 25,
+        cursor: pageParam,
         ...(filters?.enabled !== undefined ? { enabled: filters.enabled } : {}),
       })
       return data
     },
+    getNextPageParam: (lastPage) => lastPage.cursor,
   })
 }
 

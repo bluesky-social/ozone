@@ -64,6 +64,30 @@ describe('Queue Management', () => {
       cy.get('button[title="Delete queue"]').should('have.length', 2)
     })
 
+    it('shows Load More button and loads next page', () => {
+      mockListQueuesResponse({
+        statusCode: 200,
+        body: {
+          queues: [spamQueue],
+          cursor: 'page2',
+        },
+      })
+
+      cy.get('[data-cy="queue-card"]').should('have.length', 1)
+      cy.contains('Load more').should('be.visible')
+
+      mockListQueuesResponse({
+        statusCode: 200,
+        body: {
+          queues: [hateSpeechQueue],
+        },
+      })
+
+      cy.contains('Load more').click()
+      cy.get('[data-cy="queue-card"]').should('have.length', 2)
+      cy.contains('Load more').should('not.exist')
+    })
+
     it('shows empty state and no action buttons when no queues exist', () => {
       mockListQueuesResponse({
         statusCode: 200,

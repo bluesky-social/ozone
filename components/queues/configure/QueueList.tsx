@@ -3,16 +3,21 @@ import { Card } from '@/common/Card'
 import { ActionButton } from '@/common/buttons'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { Loading } from '@/common/Loader'
+import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { usePermission } from '@/shell/ConfigurationContext'
 
 export function QueueList({
   queues,
   isLoading,
+  fetchNextPage,
+  hasNextPage,
   onEdit,
   onDelete,
 }: {
   queues: ToolsOzoneQueueDefs.QueueView[]
   isLoading: boolean
+  fetchNextPage: () => void
+  hasNextPage?: boolean
   onEdit: (queue: ToolsOzoneQueueDefs.QueueView) => void
   onDelete: (queue: ToolsOzoneQueueDefs.QueueView) => void
 }) {
@@ -29,6 +34,7 @@ export function QueueList({
   }
 
   return (
+    <>
     <div className="space-y-3">
       {queues.map((queue) => (
         <Card key={queue.id} data-cy="queue-card" className="p-4">
@@ -124,5 +130,11 @@ export function QueueList({
         </Card>
       ))}
     </div>
+    {!!queues.length && hasNextPage && (
+      <div className="flex justify-center pb-2">
+        <LoadMoreButton onClick={fetchNextPage} />
+      </div>
+    )}
+    </>
   )
 }
