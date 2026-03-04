@@ -109,6 +109,7 @@ describe('Queue Management', () => {
       cy.url().should('include', 'create=true')
 
       cy.get('#queue-name').type('My New Queue')
+      cy.get('#queue-description').type('A test queue for new reports')
       cy.get('#subject-type-account').check()
       cy.get('#subject-type-record').check()
       cy.get('#queue-collection')

@@ -1,5 +1,5 @@
 import { ActionButton } from '@/common/buttons'
-import { Checkbox, FormLabel, Input } from '@/common/forms'
+import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
 import { useCreateQueue, useUpdateQueue } from './useQueues'
@@ -92,6 +92,9 @@ export function QueueForm({
 
   // form
   const [name, setName] = useState(queue?.name ?? '')
+  const [description, setDescription] = useState<string | undefined>(
+    queue?.description,
+  )
   const [enabled, setEnabled] = useState(queue?.enabled ?? true)
   const [subjectTypes, setSubjectTypes] = useState<Set<string>>(
     new Set(queue?.subjectTypes ?? []),
@@ -150,8 +153,9 @@ export function QueueForm({
       await updateMutation.mutateAsync(
         {
           queueId: queue.id,
-          ...(name !== queue.name ? { name } : {}),
-          ...(enabled !== queue.enabled ? { enabled } : {}),
+          name,
+          description,
+          enabled,
         },
         { onSuccess },
       )
@@ -159,6 +163,7 @@ export function QueueForm({
       await createMutation.mutateAsync(
         {
           name,
+          description,
           subjectTypes: Array.from(subjectTypes),
           reportTypes,
           collection: collectionSanitized,
@@ -176,7 +181,7 @@ export function QueueForm({
           id="queue-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Queue name"
+          placeholder="Display name for the queue"
           className="block w-full"
         />
         {errors.name && (
@@ -192,6 +197,21 @@ export function QueueForm({
           label="Enable"
         />
       )}
+
+      <FormLabel
+        label="Description"
+        htmlFor="queue-description"
+        className="mb-3"
+      >
+        <Textarea
+          id="queue-description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Enter additional details for internal use."
+          className="block w-full"
+          rows={3}
+        />
+      </FormLabel>
 
       {!isEditMode && (
         <>

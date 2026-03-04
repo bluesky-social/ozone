@@ -2,6 +2,7 @@
   "spamQueue": {
     "id": 1,
     "name": "Spam Queue",
+    "description": "Handles spam and misleading content reports",
     "subjectTypes": ["account"],
     "reportTypes": ["tools.ozone.report.defs#reasonMisleadingSpam"],
     "createdBy": "did:plc:tfeay256xpz3vf5v5d3cxykt",
@@ -18,6 +19,7 @@
   "hateSpeechQueue": {
     "id": 2,
     "name": "Hate Speech Queue",
+    "description": "Handles hate speech and harassment reports on posts",
     "enabled": false,
     "subjectTypes": ["record"],
     "collection": "app.bsky.feed.post",
