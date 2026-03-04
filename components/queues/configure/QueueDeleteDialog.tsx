@@ -10,7 +10,7 @@ import {
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { ActionButton } from '@/common/buttons'
 import { Select, FormLabel } from '@/common/forms'
-import { useDeleteQueue } from './useQueues'
+import { useDeleteQueue } from '../useQueues'
 
 export function QueueDeleteDialog({
   queue,

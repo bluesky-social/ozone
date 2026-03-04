@@ -2,7 +2,7 @@ import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
-import { useCreateQueue, useUpdateQueue } from './useQueues'
+import { useCreateQueue, useUpdateQueue } from '../useQueues'
 import { ReportTypeCombobox } from '@/reports/ReportTypeCombobox'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
 

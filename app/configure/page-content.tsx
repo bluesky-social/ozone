@@ -18,7 +18,7 @@ import { SetsConfig } from '@/config/Sets'
 import { ProtectedTagsConfig } from '@/config/ProtectedTags'
 import { PoliciesConfig } from '@/config/Policies'
 import { SafelinkConfig } from '@/config/Safelink'
-import { QueuesConfig } from '@/queues/index'
+import { QueuesConfig } from '@/queues/configure/index'
 
 enum Views {
   Configure,
