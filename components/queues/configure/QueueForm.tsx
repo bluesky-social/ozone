@@ -3,7 +3,7 @@ import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
-import { ReportTypeCombobox } from '@/reports/ReportTypeCombobox'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
 
 function MatchSummary({
@@ -254,8 +254,7 @@ export function QueueForm({
           </FormLabel>
 
           <FormLabel label="Report Type(s)" required className="mb-3">
-            <ReportTypeCombobox
-              multiple
+            <ReportTypeMultiselect
               value={reportTypes}
               onChange={setReportTypes}
               data-cy="report-types-input"
