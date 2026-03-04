@@ -106,7 +106,7 @@ describe('Queue Management', () => {
       })
 
       cy.get('[data-cy="add-queue-button"]').click()
-      cy.url().should('include', 'create=true')
+      cy.get('#queue-name').should('be.visible')
 
       cy.get('#queue-name').type('My New Queue')
       cy.get('#queue-description').type('A test queue for new reports')

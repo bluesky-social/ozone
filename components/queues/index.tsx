@@ -1,5 +1,4 @@
 import { useState } from 'react'
-import { useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
@@ -10,42 +9,33 @@ import { QueueList } from './QueueList'
 import { QueueForm } from './QueueForm'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
 
+type PageState =
+  | { mode: 'list' }
+  | { mode: 'create' }
+  | { mode: 'edit'; queueId: number }
+  | { mode: 'delete'; queueId: number }
+
 export function QueuesConfig() {
   const canManageQueues = usePermission('canManageQueues')
-  const router = useRouter()
-  const searchParams = useSearchParams()
-  const pathname = usePathname()
 
+  // filters
   const [enabledFilter, setEnabledFilter] = useState<boolean | undefined>(
     undefined,
   )
+
+  // data
   const { data, isLoading, isError, refetch } = useQueueList(
     enabledFilter !== undefined ? { enabled: enabledFilter } : undefined,
   )
   const queues = data?.queues ?? []
 
-  const showCreateForm = searchParams.has('create')
-  const editingQueueId = searchParams.get('edit')
-  const editingQueue = editingQueueId
-    ? queues.find((q) => q.id === Number(editingQueueId))
-    : undefined
-
-  const [deletingQueue, setDeletingQueue] =
-    useState<ToolsOzoneQueueDefs.QueueView | null>(null)
-
-  const navigateTo = (params: Record<string, string | null>) => {
-    const newParams = new URLSearchParams(searchParams)
-    for (const [key, value] of Object.entries(params)) {
-      if (value === null) {
-        newParams.delete(key)
-      } else {
-        newParams.set(key, value)
-      }
-    }
-    router.push((pathname ?? '') + '?' + newParams.toString())
-  }
-
-  const showEditor = showCreateForm || editingQueueId
+  // page state
+  const [pageState, setPageState] = useState<PageState>({ mode: 'list' })
+  const showForm = pageState.mode === 'edit' || pageState.mode === 'create'
+  const slectedQueue =
+    pageState.mode === 'edit' || pageState.mode === 'delete'
+      ? queues.find((q) => q.id === pageState.queueId)
+      : undefined
 
   return (
     <div className="pt-4">
@@ -54,7 +44,7 @@ export function QueuesConfig() {
           <h4 className="font-medium text-gray-700 dark:text-gray-100">
             Manage Queues
           </h4>
-          {!showEditor && (
+          {!showForm && (
             <Select
               className="text-xs"
               value={
@@ -66,9 +56,7 @@ export function QueuesConfig() {
               }
               onChange={(e) => {
                 const val = e.target.value
-                setEnabledFilter(
-                  val === 'all' ? undefined : val === 'enabled',
-                )
+                setEnabledFilter(val === 'all' ? undefined : val === 'enabled')
               }}
             >
               <option value="all">All</option>
@@ -77,12 +65,12 @@ export function QueuesConfig() {
             </Select>
           )}
         </div>
-        {canManageQueues && !showEditor && (
+        {canManageQueues && !showForm && (
           <ActionButton
             size="sm"
             appearance="primary"
             data-cy="add-queue-button"
-            onClick={() => navigateTo({ create: 'true' })}
+            onClick={() => setPageState({ mode: 'create' })}
           >
             <PlusIcon className="h-3 w-3 mr-1" />
             <span className="text-xs">Add Queue</span>
@@ -90,29 +78,29 @@ export function QueuesConfig() {
         )}
       </div>
 
-      {canManageQueues && showCreateForm && (
+      {canManageQueues && pageState.mode === 'create' && (
         <div className="mb-4">
           <QueueForm
-            onCancel={() => navigateTo({ create: null })}
-            onSuccess={() => navigateTo({ create: null })}
+            onCancel={() => setPageState({ mode: 'list' })}
+            onSuccess={() => setPageState({ mode: 'list' })}
           />
         </div>
       )}
 
-      {canManageQueues && editingQueueId && !showCreateForm && (
+      {canManageQueues && pageState.mode === 'edit' && (
         <div className="mb-4">
-          {editingQueue ? (
+          {slectedQueue ? (
             <QueueForm
-              queue={editingQueue}
-              onCancel={() => navigateTo({ edit: null })}
-              onSuccess={() => navigateTo({ edit: null })}
+              queue={pageState.mode === 'edit' ? slectedQueue : undefined}
+              onCancel={() => setPageState({ mode: 'list' })}
+              onSuccess={() => setPageState({ mode: 'list' })}
             />
           ) : (
             <p className="text-red-500 text-sm">
               Queue not found.{' '}
               <button
                 className="underline"
-                onClick={() => navigateTo({ edit: null })}
+                onClick={() => setPageState({ mode: 'list' })}
               >
                 Back to list
               </button>
@@ -130,19 +118,21 @@ export function QueuesConfig() {
         </div>
       )}
 
-      {!showEditor && (
+      {!showForm && (
         <QueueList
           queues={queues}
           isLoading={isLoading}
-          onEdit={(queue) => navigateTo({ edit: String(queue.id) })}
-          onDelete={(queue) => setDeletingQueue(queue)}
+          onEdit={(queue) => setPageState({ mode: 'edit', queueId: queue.id })}
+          onDelete={(queue) =>
+            setPageState({ mode: 'delete', queueId: queue.id })
+          }
         />
       )}
 
       <QueueDeleteDialog
-        queue={deletingQueue}
+        queue={pageState.mode === 'delete' ? slectedQueue : undefined}
         queues={queues}
-        onClose={() => setDeletingQueue(null)}
+        onClose={() => setPageState({ mode: 'list' })}
       />
     </div>
   )
