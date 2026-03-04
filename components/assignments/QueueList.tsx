@@ -3,22 +3,22 @@
 import Link from 'next/link'
 import { useMemo } from 'react'
 import { QueueAssigneeStatus } from './QueueAssigneeStatus'
-import type { AssignmentView } from './useAssignments'
 import { useQueueAssignments } from './useAssignments'
+import { ToolsOzoneQueueDefs } from '@atproto/api'
 
 export function QueueList() {
   const queues = Array.from({ length: 10 }, (_, i) => i + 1)
   const { data: assignments } = useQueueAssignments({
-    onlyActiveAssignments: true,
+    onlyActive: true,
     queueIds: queues,
   })
 
   const assignmentsByQueue = useMemo(() => {
-    const map = new Map<number, AssignmentView[]>()
+    const map = new Map<number, ToolsOzoneQueueDefs.AssignmentView[]>()
     for (const a of assignments ?? []) {
-      const list = map.get(a.queueId) ?? []
+      const list = map.get(a.queue.id) ?? []
       list.push(a)
-      map.set(a.queueId, list)
+      map.set(a.queue.id, list)
     }
     return map
   }, [assignments])

@@ -15,7 +15,7 @@ export function ReportList({ queueId }: { queueId: number }) {
     (_, i) => startId + i,
   )
   const { data: assignments = [] } = useReportAssignments({
-    onlyActiveAssignments: true,
+    onlyActive: true,
     reportIds: reports,
   })
 
@@ -54,9 +54,7 @@ export function ReportList({ queueId }: { queueId: number }) {
                 Report #{reportId}
               </span>
               <div onClick={(e) => e.preventDefault()}>
-                <ReportAssigneeStatus
-                  assignment={{ ...assignment, reportId, queueId }}
-                />
+                <ReportAssigneeStatus assignment={assignment} />
               </div>
             </Link>
           </div>
