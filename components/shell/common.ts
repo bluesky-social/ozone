@@ -80,11 +80,6 @@ export const NAV_ITEMS: SidebarNavItem[] = [
     icon: 'verification',
   },
   {
-    name: 'Queues (Beta)',
-    href: '/beta/queues',
-    icon: 'queues',
-  },
-  {
     name: 'Theme',
     icon: 'sun',
     onClick: ({ toggleTheme }) => toggleTheme,
