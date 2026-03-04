@@ -18,6 +18,7 @@ import {
   HOUR,
   pluralize,
   takesKeyboardEvt,
+  unique,
 } from '@/lib/util'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import {
@@ -374,8 +375,10 @@ export const useQuickAction = (
       // left to be created/negated for the current CID, it emits the original event separate event for that.
       if (ToolsOzoneModerationDefs.isModEventLabel(coreEvent)) {
         const labels = diffLabels(
-          // Make sure we don't try to negate self labels
-          currentLabels.filter((label) => !isSelfLabel(label)),
+          // Make sure we don't try to negate self labels, and deduplicate
+          // by value to avoid sending duplicate negations for a given label when
+          // two labelers (e.g. own + external) have applied the same label value
+          unique(currentLabels.filter((label) => !isSelfLabel(label))),
           nextLabels,
         )
         coreEvent.createLabelVals = labels.createLabelVals
