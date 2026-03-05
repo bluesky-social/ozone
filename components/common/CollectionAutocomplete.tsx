@@ -27,12 +27,14 @@ const knownCollections = recordCollections.map((id) => ({
 export function CollectionAutocomplete({
   value,
   id,
+  name,
   placeholder,
   onChange,
   className,
 }: {
   value: string | undefined
   id?: string
+  name?: string
   placeholder?: string
   onChange?: (value: string | undefined) => void
   className?: string
@@ -63,6 +65,7 @@ export function CollectionAutocomplete({
           <div className="relative w-full">
             <ComboboxInput
               id={id}
+              name={name}
               aria-invalid={!!nsidError || undefined}
               className="w-full rounded-md dark:bg-slate-700 dark:shadow-slate-700 sm:text-sm dark:text-gray-100 border-gray-300 dark:border-teal-500 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 aria-[invalid]:border-amber-400 aria-[invalid]:dark:border-amber-500 aria-[invalid]:focus:border-amber-500 aria-[invalid]:focus:ring-amber-500"
               displayValue={(val: string) => val}

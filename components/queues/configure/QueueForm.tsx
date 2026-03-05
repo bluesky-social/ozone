@@ -200,10 +200,11 @@ export function QueueForm({
           and migrate reports to it.
         </p>
       )}
-      <FormLabel label="Name" htmlFor="queue-name" required className="mb-3">
+      <FormLabel label="Name" htmlFor="name" required className="mb-3">
         <Input
           type="text"
-          id="queue-name"
+          id="name"
+          name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Display name for the queue"
@@ -216,11 +217,12 @@ export function QueueForm({
 
       <FormLabel
         label="Description"
-        htmlFor="queue-description"
+        htmlFor="description"
         className="mb-3"
       >
         <Textarea
-          id="queue-description"
+          id="description"
+          name="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Enter additional details for internal use."
@@ -235,7 +237,8 @@ export function QueueForm({
             <div className="flex flex-col gap-5">
               <div className="h-8 flex items-center gap-1">
                 <Checkbox
-                  id="subject-type-account"
+                  id="subjectTypes-account"
+                  name="subjectTypes"
                   checked={subjectTypes.has('account')}
                   onChange={() => toggleSubjectType('account')}
                   label="account"
@@ -246,7 +249,8 @@ export function QueueForm({
               </div>
               <div className="h-8 flex items-start gap-1">
                 <Checkbox
-                  id="subject-type-record"
+                  id="subjectTypes-record"
+                  name="subjectTypes"
                   checked={subjectTypes.has('record')}
                   onChange={() => toggleSubjectType('record')}
                   label="record"
@@ -258,7 +262,8 @@ export function QueueForm({
                 {subjectTypes.has('record') && (
                   <CollectionAutocomplete
                     value={collection}
-                    id="queue-collection"
+                    id="collection"
+                    name="collection"
                     onChange={setCollection}
                     placeholder="Optional collection to use."
                     className="ml-6 w-96"
@@ -267,7 +272,8 @@ export function QueueForm({
               </div>
               <div className="h-6 flex items-center gap-1">
                 <Checkbox
-                  id="subject-type-message"
+                  id="subjectTypes-message"
+                  name="subjectTypes"
                   checked={subjectTypes.has('message')}
                   onChange={() => toggleSubjectType('message')}
                   label="message"

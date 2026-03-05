@@ -130,13 +130,13 @@ describe('Queue Management', () => {
       })
 
       cy.get('[data-cy="add-queue-button"]').click()
-      cy.get('#queue-name').should('be.visible')
+      cy.get('#name').should('be.visible')
 
-      cy.get('#queue-name').type('My New Queue')
-      cy.get('#queue-description').type('A test queue for new reports')
-      cy.get('#subject-type-account').check()
-      cy.get('#subject-type-record').check()
-      cy.get('#queue-collection')
+      cy.get('#name').type('My New Queue')
+      cy.get('#description').type('A test queue for new reports')
+      cy.get('#subjectTypes-account').check()
+      cy.get('#subjectTypes-record').check()
+      cy.get('#collection')
         .should('be.visible')
         .type('app.bsky.feed.post{esc}')
 
@@ -153,11 +153,11 @@ describe('Queue Management', () => {
     it('shows collection field only when record subject type is checked', () => {
       cy.get('[data-cy="add-queue-button"]').click()
 
-      cy.get('#queue-collection').should('not.exist')
-      cy.get('#subject-type-record').check()
-      cy.get('#queue-collection').should('be.visible')
-      cy.get('#subject-type-record').uncheck()
-      cy.get('#queue-collection').should('not.exist')
+      cy.get('#collection').should('not.exist')
+      cy.get('#subjectTypes-record').check()
+      cy.get('#collection').should('be.visible')
+      cy.get('#subjectTypes-record').uncheck()
+      cy.get('#collection').should('not.exist')
     })
   })
 
