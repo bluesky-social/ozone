@@ -41,10 +41,7 @@ export function QueuesConfig() {
   return (
     <div className="pt-4">
       <div className="flex flex-row justify-between mb-4">
-        <div className="flex flex-row items-center gap-2">
-          <h4 className="font-medium text-gray-700 dark:text-gray-100">
-            Manage Queues
-          </h4>
+        <div className="flex flex-row items-center gap-2 flex-1">
           {!showForm && (
             <>
               <Select
@@ -86,8 +83,8 @@ export function QueuesConfig() {
               </Select>
               <Input
                 type="text"
-                className="text-xs w-48"
-                placeholder="Collection filter"
+                className="w-64 text-xs"
+                placeholder="collection (e.g. app.bsky.feed.post)"
                 value={filters.collection ?? ''}
                 onChange={(e) =>
                   updateFilter('collection', e.target.value || undefined)
@@ -109,7 +106,7 @@ export function QueuesConfig() {
         )}
       </div>
       {!showForm && (
-        <div className="mb-4 max-w-md">
+        <div className="mb-4">
           <ReportTypeMultiselect
             value={filters.reportTypes ?? []}
             onChange={(val) => updateFilter('reportTypes', val)}
