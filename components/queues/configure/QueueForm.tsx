@@ -1,10 +1,11 @@
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
-import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { reasonTypeOptions } from '@/reports/helpers/getType'
 
 function MatchSummary({
   subjectTypes,
@@ -35,13 +36,11 @@ function MatchSummary({
         <div className="space-y-1">
           <div>
             <span>Report reason</span> is one of:
-            <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
+            <div className="flex flex-wrap gap-1 mt-1 pl-3">
               {reportTypes.map((t) => (
-                <li key={t}>
-                  <strong>{reasonTypeOptions[t] || t}</strong>
-                </li>
+                <ReasonBadge key={t} reasonType={t} />
               ))}
-            </ul>
+            </div>
           </div>
           <p className="pl-16 py-4 opacity-70">AND</p>
           <div>
@@ -94,7 +93,7 @@ export function QueueForm({
   const [description, setDescription] = useState<string | undefined>(
     queue?.description,
   )
-  const [enabled, setEnabled] = useState(queue?.enabled ?? true)
+  const [showToggleDialog, setShowToggleDialog] = useState(false)
   const [subjectTypes, setSubjectTypes] = useState<Set<string>>(
     new Set(queue?.subjectTypes ?? []),
   )
@@ -109,6 +108,24 @@ export function QueueForm({
     queue?.reportTypes ?? [],
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const handleToggleEnabled = async () => {
+    if (!queue) return
+    await updateMutation.mutateAsync(
+      {
+        queueId: queue.id,
+        name: queue.name,
+        description: queue.description,
+        enabled: !queue.enabled,
+      },
+      {
+        onSuccess: () => {
+          setShowToggleDialog(false)
+          onSuccess()
+        },
+      },
+    )
+  }
 
   const toggleSubjectType = (type: string) => {
     setSubjectTypes((prev) => {
@@ -154,7 +171,6 @@ export function QueueForm({
           queueId: queue.id,
           name,
           description,
-          enabled,
         },
         { onSuccess },
       )
@@ -176,7 +192,10 @@ export function QueueForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {!isEditMode && (
         <p className="text-sm text-gray-400">
-          Create a queue to route reports to. Only the name and description can be modified after creation. To change the filtering logic (subject types, report types, collection), you will need to create a new queue and migrate reports to it.
+          Create a queue to route reports to. Only the name and description can
+          be modified after creation. To change the filtering logic (subject
+          types, report types, collection), you will need to create a new queue
+          and migrate reports to it.
         </p>
       )}
       <FormLabel label="Name" htmlFor="queue-name" required className="mb-3">
@@ -192,15 +211,6 @@ export function QueueForm({
           <p className="text-red-500 text-xs mt-1">{errors.name}</p>
         )}
       </FormLabel>
-
-      {isEditMode && (
-        <Checkbox
-          id="queue-enabled"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          label="Enable"
-        />
-      )}
 
       <FormLabel
         label="Description"
@@ -289,6 +299,15 @@ export function QueueForm({
               ? 'Save Changes'
               : 'Create Queue'}
         </ActionButton>
+        {isEditMode && queue && (
+          <ActionButton
+            appearance={queue.enabled ? 'negative' : 'outlined'}
+            type="button"
+            onClick={() => setShowToggleDialog(true)}
+          >
+            {queue.enabled ? 'Disable Queue' : 'Enable Queue'}
+          </ActionButton>
+        )}
         <ActionButton
           appearance="outlined"
           onClick={onCancel}
@@ -297,6 +316,30 @@ export function QueueForm({
           Cancel
         </ActionButton>
       </div>
+
+      {isEditMode && queue && (
+        <ConfirmationModal
+          isOpen={showToggleDialog}
+          setIsOpen={setShowToggleDialog}
+          onConfirm={handleToggleEnabled}
+          title={`${queue.enabled ? 'Disable' : 'Enable'} '${queue.name}'?`}
+          confirmButtonText={queue.enabled ? 'Disable Queue' : 'Enable Queue'}
+          confirmButtonDisabled={isLoading}
+          description={
+            queue.enabled ? (
+              <span>
+                Disabling this queue means reports will instead be routed to
+                other queues. Reports already in this queue will remain.
+              </span>
+            ) : (
+              <span>
+                Re-enabling this queue will divert reports away from other
+                queues. Please proceed with caution.
+              </span>
+            )
+          }
+        />
+      )}
     </form>
   )
 }
