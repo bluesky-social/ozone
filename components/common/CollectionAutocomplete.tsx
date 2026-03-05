@@ -60,7 +60,7 @@ export function CollectionAutocomplete({
         immediate
       >
         <div className="relative">
-          <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left sm:text-sm">
+          <div className="relative w-full">
             <ComboboxInput
               id={id}
               aria-invalid={!!nsidError || undefined}
@@ -119,9 +119,11 @@ export function CollectionAutocomplete({
           </Transition>
         </div>
       </Combobox>
-      <p className="text-amber-500 dark:text-amber-400 text-xs mt-1">
-        {nsidError ?? '\u00A0'}
-      </p>
+      {nsidError && (
+        <p className="text-amber-500 dark:text-amber-400 text-xs mt-1">
+          {nsidError}
+        </p>
+      )}
     </div>
   )
 }

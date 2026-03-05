@@ -232,8 +232,8 @@ export function QueueForm({
       {!isEditMode && (
         <>
           <FormLabel label="Subject Type(s)" required>
-            <div className="flex flex-col gap-2">
-              <div className="flex items-center gap-1">
+            <div className="flex flex-col gap-5">
+              <div className="h-8 flex items-center gap-1">
                 <Checkbox
                   id="subject-type-account"
                   checked={subjectTypes.has('account')}
@@ -241,35 +241,31 @@ export function QueueForm({
                   label="account"
                 />
                 <Tooltip anchor="right start">
-                  <p>Reports against a user's account.</p>
+                  Reports against a user's account.
                 </Tooltip>
               </div>
-              <div className="h-12 flex items-center gap-1">
-                <div className="flex items-center gap-1">
-                  <Checkbox
-                    id="subject-type-record"
-                    checked={subjectTypes.has('record')}
-                    onChange={() => toggleSubjectType('record')}
-                    label="record"
-                  />
-                  <Tooltip anchor="right start">
-                    <p>
-                      Reports targeting a specific piece of content such as a
-                      post or reply. Optionally filter by collection.
-                    </p>
-                  </Tooltip>
-                </div>
+              <div className="h-8 flex items-start gap-1">
+                <Checkbox
+                  id="subject-type-record"
+                  checked={subjectTypes.has('record')}
+                  onChange={() => toggleSubjectType('record')}
+                  label="record"
+                />
+                <Tooltip anchor="right start">
+                  Reports targeting a specific piece of content such as a post
+                  or reply. Optionally filter by collection.
+                </Tooltip>
                 {subjectTypes.has('record') && (
                   <CollectionAutocomplete
                     value={collection}
                     id="queue-collection"
                     onChange={setCollection}
                     placeholder="Optional collection to use."
-                    className="w-96 my-0"
+                    className="ml-6 w-96"
                   />
                 )}
               </div>
-              <div className="flex items-center gap-1">
+              <div className="h-6 flex items-center gap-1">
                 <Checkbox
                   id="subject-type-message"
                   checked={subjectTypes.has('message')}
@@ -277,7 +273,7 @@ export function QueueForm({
                   label="message"
                 />
                 <Tooltip anchor="right start">
-                  <p>Reports against direct messages.</p>
+                  Reports against direct messages.
                 </Tooltip>
               </div>
             </div>
