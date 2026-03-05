@@ -174,6 +174,11 @@ export function QueueForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {!isEditMode && (
+        <p className="text-sm text-gray-400">
+          Create a queue to route reports to. Only the name and description can be modified after creation. To change the filtering logic (subject types, report types, collection), you will need to create a new queue and migrate reports to it.
+        </p>
+      )}
       <FormLabel label="Name" htmlFor="queue-name" required className="mb-3">
         <Input
           type="text"
