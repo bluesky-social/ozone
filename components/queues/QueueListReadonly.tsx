@@ -1,0 +1,42 @@
+import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { Card } from '@/common/Card'
+import { Loading } from '@/common/Loader'
+import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { QueueCard } from '@/queues/QueueCard'
+
+export function QueueListReadonly({
+  queues,
+  isLoading,
+  fetchNextPage,
+  hasNextPage,
+}: {
+  queues: ToolsOzoneQueueDefs.QueueView[]
+  isLoading: boolean
+  fetchNextPage: () => void
+  hasNextPage?: boolean
+}) {
+  if (isLoading) return <Loading />
+
+  if (!queues.length) {
+    return (
+      <Card className="text-center py-8">
+        <p className="text-gray-500 dark:text-gray-400">No queues found.</p>
+      </Card>
+    )
+  }
+
+  return (
+    <>
+      <div className="space-y-3">
+        {queues.map((queue) => (
+          <QueueCard key={queue.id} queue={queue} />
+        ))}
+      </div>
+      {!!queues.length && hasNextPage && (
+        <div className="mt-2 flex justify-center pb-2">
+          <LoadMoreButton onClick={fetchNextPage} />
+        </div>
+      )}
+    </>
+  )
+}
