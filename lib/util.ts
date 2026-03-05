@@ -202,7 +202,7 @@ const NSID_SEGMENT = /^[a-zA-Z][a-zA-Z0-9-]*$/
 export function validateNsid(value: string): string | null {
   const segments = value.split('.')
   if (segments.length < 3) {
-    return 'NSID must have at least 3 segments (e.g. app.bsky.feed.post)'
+    return 'NSID must have at least 3 segments'
   }
   for (const seg of segments) {
     if (!seg) return 'NSID segments cannot be empty'

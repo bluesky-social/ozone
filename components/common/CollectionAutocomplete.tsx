@@ -50,73 +50,78 @@ export function CollectionAutocomplete({
   const nsidError = value ? validateNsid(value) : null
 
   return (
-    <Combobox
-      value={value ?? ''}
-      onChange={(val) => {
-        onChange?.(val || undefined)
-        setQuery(val || '')
-      }}
-      immediate
-    >
-      <div className={`relative ${className ?? ''}`}>
-        <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left sm:text-sm">
-          <ComboboxInput
-            id={id}
-            className={`w-full rounded-md  dark:bg-slate-700 dark:shadow-slate-700  sm:text-sm dark:text-gray-100 ${nsidError ? 'border-orange-500 focus:border-orange-500' : 'border-gray-300 dark:border-teal-500'}`}
-            displayValue={(val: string) => val}
-            onChange={(e) => {
-              setQuery(e.target.value)
-              onChange?.(e.target.value || undefined)
-            }}
-            onBlur={(e) => {
-              const typed = e.target.value
-              onChange?.(typed || undefined)
-            }}
-            placeholder={placeholder}
-            autoComplete="off"
-          />
-          <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
-            <MagnifyingGlassIcon
-              className="h-5 w-5 text-gray-400"
-              aria-hidden="true"
+    <div className={className}>
+      <Combobox
+        value={value ?? ''}
+        onChange={(val) => {
+          onChange?.(val || undefined)
+          setQuery(val || '')
+        }}
+        immediate
+      >
+        <div className="relative">
+          <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left sm:text-sm">
+            <ComboboxInput
+              id={id}
+              aria-invalid={!!nsidError || undefined}
+              className="w-full rounded-md dark:bg-slate-700 dark:shadow-slate-700 sm:text-sm dark:text-gray-100 border-gray-300 dark:border-teal-500 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 aria-[invalid]:border-amber-400 aria-[invalid]:dark:border-amber-500 aria-[invalid]:focus:border-amber-500 aria-[invalid]:focus:ring-amber-500"
+              displayValue={(val: string) => val}
+              onChange={(e) => {
+                setQuery(e.target.value)
+                onChange?.(e.target.value || undefined)
+              }}
+              onBlur={(e) => {
+                const typed = e.target.value
+                onChange?.(typed || undefined)
+              }}
+              placeholder={placeholder}
+              autoComplete="off"
             />
-          </ComboboxButton>
-        </div>
-        <Transition
-          as={Fragment}
-          leave="transition ease-in duration-100"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-          afterLeave={() => setQuery('')}
-        >
-          <ComboboxOptions
-            className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
-            hidden={filtered.length === 0}
+            <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
+              <MagnifyingGlassIcon
+                className="h-5 w-5 text-gray-400"
+                aria-hidden="true"
+              />
+            </ComboboxButton>
+          </div>
+          <Transition
+            as={Fragment}
+            leave="transition ease-in duration-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+            afterLeave={() => setQuery('')}
           >
-            {filtered.map((c) => (
-              <ComboboxOption
-                key={c.value}
-                value={c.value}
-                className={({ focus }) =>
-                  `relative cursor-default select-none py-2 pl-4 pr-4 ${
-                    focus
-                      ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
-                      : 'text-gray-900 dark:text-gray-200'
-                  }`
-                }
-              >
-                <div className="flex justify-between items-center">
-                  <span className="block truncate text-sm">{c.label}</span>
-                  <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
-                    {c.value}
-                  </span>
-                </div>
-              </ComboboxOption>
-            ))}
-          </ComboboxOptions>
-        </Transition>
-      </div>
-      {nsidError && <p className="mt-1 text-sm text-orange-500">{nsidError}</p>}
-    </Combobox>
+            <ComboboxOptions
+              className="absolute z-20 mt-1 max-h-60 w-full overflow-auto rounded-md bg-white dark:bg-slate-700 py-1 text-base shadow-lg ring-1 ring-black/5 focus:outline-none sm:text-sm"
+              hidden={filtered.length === 0}
+            >
+              {filtered.map((c) => (
+                <ComboboxOption
+                  key={c.value}
+                  value={c.value}
+                  className={({ focus }) =>
+                    `relative cursor-default select-none py-2 pl-4 pr-4 ${
+                      focus
+                        ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
+                        : 'text-gray-900 dark:text-gray-200'
+                    }`
+                  }
+                >
+                  <div className="flex justify-between items-center">
+                    <span className="block truncate text-sm">{c.label}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 ml-2">
+                      {c.value}
+                    </span>
+                  </div>
+                </ComboboxOption>
+              ))}
+            </ComboboxOptions>
+          </Transition>
+        </div>
+      </Combobox>
+      <p className="text-amber-500 dark:text-amber-400 text-xs mt-1">
+        {nsidError ?? '\u00A0'}
+      </p>
+    </div>
   )
 }
