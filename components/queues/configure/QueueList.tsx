@@ -56,6 +56,12 @@ export function QueueList({
                   </span>
                 </div>
 
+                {queue.description && (
+                  <p className="text-sm text-gray-400 dark:text-gray-500 mb-2 truncate">
+                    {queue.description}
+                  </p>
+                )}
+
                 <div className="space-y-1 text-sm text-gray-600 dark:text-gray-300">
                   <div>
                     <span className="font-medium">Subject types:</span>{' '}
