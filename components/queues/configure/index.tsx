@@ -40,62 +40,60 @@ export function QueuesConfig() {
 
   return (
     <div className="pt-4">
-      <div className="flex flex-row justify-between mb-4">
-        <div className="flex flex-row items-center gap-2 flex-1">
-          {!showForm && (
-            <>
-              <Select
-                className="text-xs"
-                value={
-                  filters.enabled === undefined
-                    ? 'all'
-                    : filters.enabled
-                      ? 'enabled'
-                      : 'disabled'
-                }
-                onChange={(e) => {
-                  const val = e.target.value
-                  updateFilter(
-                    'enabled',
-                    val === 'all' ? undefined : val === 'enabled',
-                  )
-                }}
-              >
-                <option value="all">All</option>
-                <option value="enabled">Enabled</option>
-                <option value="disabled">Disabled</option>
-              </Select>
-              <Select
-                className="text-xs"
-                value={filters.subjectType ?? 'all'}
-                onChange={(e) => {
-                  const val = e.target.value
-                  updateFilter(
-                    'subjectType',
-                    val === 'all' ? undefined : val,
-                  )
-                }}
-              >
-                <option value="all">All subjects</option>
-                <option value="account">account</option>
-                <option value="record">record</option>
-                <option value="message">message</option>
-              </Select>
-              <Input
-                type="text"
-                className="w-64 text-xs"
-                placeholder="collection (e.g. app.bsky.feed.post)"
-                value={filters.collection ?? ''}
-                onChange={(e) =>
-                  updateFilter('collection', e.target.value || undefined)
-                }
-              />
-            </>
-          )}
-        </div>
+      <div className="flex flex-wrap items-center gap-2 mb-4">
+        {!showForm && (
+          <>
+            <Select
+              className="text-xs"
+              value={
+                filters.enabled === undefined
+                  ? 'all'
+                  : filters.enabled
+                    ? 'enabled'
+                    : 'disabled'
+              }
+              onChange={(e) => {
+                const val = e.target.value
+                updateFilter(
+                  'enabled',
+                  val === 'all' ? undefined : val === 'enabled',
+                )
+              }}
+            >
+              <option value="all">All</option>
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+            </Select>
+            <Select
+              className="text-xs"
+              value={filters.subjectType ?? 'all'}
+              onChange={(e) => {
+                const val = e.target.value
+                updateFilter(
+                  'subjectType',
+                  val === 'all' ? undefined : val,
+                )
+              }}
+            >
+              <option value="all">All subjects</option>
+              <option value="account">account</option>
+              <option value="record">record</option>
+              <option value="message">message</option>
+            </Select>
+            <Input
+              type="text"
+              className="min-w-[10rem] flex-1 text-sm"
+              placeholder="collection (e.g. app.bsky.feed.post)"
+              value={filters.collection ?? ''}
+              onChange={(e) =>
+                updateFilter('collection', e.target.value || undefined)
+              }
+            />
+          </>
+        )}
         {canManageQueues && !showForm && (
           <ActionButton
-            size="sm"
+            size="md"
             appearance="primary"
             data-cy="add-queue-button"
             onClick={() => setPageState({ mode: 'create' })}
