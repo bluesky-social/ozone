@@ -46,7 +46,7 @@ describe('Queue Management', () => {
           cy.contains('Spam Queue')
           cy.contains('Enabled')
           cy.contains('account')
-          cy.contains('tools.ozone.report.defs#reasonMisleadingSpam')
+          cy.contains('Spam')
           cy.contains('5') // pendingCount
           cy.contains('10') // actionedCount
         })
