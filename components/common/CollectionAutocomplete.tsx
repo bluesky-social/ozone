@@ -9,6 +9,7 @@ import {
 } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/24/solid'
 import { getCollectionName, CollectionId } from '@/reports/helpers/subject'
+import { validateNsid } from '@/lib/util'
 
 /** Collections that can be the subject of a report on a record. */
 const recordCollections: CollectionId[] = [
@@ -46,6 +47,8 @@ export function CollectionAutocomplete({
     )
   })
 
+  const nsidError = value ? validateNsid(value) : null
+
   return (
     <Combobox
       value={value ?? ''}
@@ -56,10 +59,10 @@ export function CollectionAutocomplete({
       immediate
     >
       <div className={`relative ${className ?? ''}`}>
-        <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm sm:text-sm">
+        <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left sm:text-sm">
           <ComboboxInput
             id={id}
-            className="w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100"
+            className={`w-full rounded-md  dark:bg-slate-700 dark:shadow-slate-700  sm:text-sm dark:text-gray-100 ${nsidError ? 'border-orange-500 focus:border-orange-500' : 'border-gray-300 dark:border-teal-500'}`}
             displayValue={(val: string) => val}
             onChange={(e) => {
               setQuery(e.target.value)
@@ -113,6 +116,7 @@ export function CollectionAutocomplete({
           </ComboboxOptions>
         </Transition>
       </div>
+      {nsidError && <p className="mt-1 text-sm text-orange-500">{nsidError}</p>}
     </Combobox>
   )
 }

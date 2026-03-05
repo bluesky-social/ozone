@@ -193,6 +193,26 @@ export function capitalize(str: string) {
   return str.charAt(0).toUpperCase() + str.slice(1)
 }
 
+/**
+ * Validate an NSID (Namespaced Identifier) string.
+ * Format: at least 3 dot-separated segments where each segment is alphanumeric/hyphen,
+ * e.g. "app.bsky.feed.post". Returns null if valid, or an error message string.
+ */
+const NSID_SEGMENT = /^[a-zA-Z][a-zA-Z0-9-]*$/
+export function validateNsid(value: string): string | null {
+  const segments = value.split('.')
+  if (segments.length < 3) {
+    return 'NSID must have at least 3 segments (e.g. app.bsky.feed.post)'
+  }
+  for (const seg of segments) {
+    if (!seg) return 'NSID segments cannot be empty'
+    if (!NSID_SEGMENT.test(seg)) {
+      return `Invalid segment "${seg}" — must start with a letter and contain only letters, digits, or hyphens`
+    }
+  }
+  return null
+}
+
 export interface BatchedOperationOptions<T, R> {
   items: T[]
   batchSize?: number
