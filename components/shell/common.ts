@@ -11,6 +11,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   InboxStackIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -28,6 +29,7 @@ export const ICONS = {
   verification: CheckCircleIcon,
   clock: ClockIcon,
   queues: InboxStackIcon,
+  document: DocumentTextIcon,
 }
 
 export type SidebarNavItem = {
