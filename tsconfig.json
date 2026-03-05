@@ -40,6 +40,7 @@
       "@/safelink/*": ["components/safelink/*"],
       "@/email/*": ["components/email/*"],
       "@/scheduled-actions/*": ["components/scheduled-actions/*"],
+      "@/queues/*": ["components/queues/*"],
     }
   },
   "include": [
