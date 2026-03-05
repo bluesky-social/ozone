@@ -54,16 +54,15 @@ function MatchSummary({
               ))}
               {subjectTypes.has('record') && (
                 <li>
-                  <strong>record</strong>
                   {collection ? (
                     <span>
                       {' '}
-                      with collection <strong>{collection}</strong>
+                      <strong>record</strong> with collection{' '}
+                      <strong>{collection}</strong>
                     </span>
                   ) : (
-                    <span className="opacity-70">
-                      {' '}
-                      (not matchable without a collection)
+                    <span>
+                      <strong>record</strong>
                     </span>
                   )}
                 </li>
