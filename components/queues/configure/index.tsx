@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { Input, Select } from '@/common/forms'
-import { PlusIcon } from '@heroicons/react/24/solid'
+import { PlusIcon, XMarkIcon } from '@heroicons/react/24/solid'
 import { useQueueList, QueueListFilters } from '../useQueues'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { QueueList } from './QueueList'
@@ -69,10 +69,7 @@ export function QueuesConfig() {
               value={filters.subjectType ?? 'all'}
               onChange={(e) => {
                 const val = e.target.value
-                updateFilter(
-                  'subjectType',
-                  val === 'all' ? undefined : val,
-                )
+                updateFilter('subjectType', val === 'all' ? undefined : val)
               }}
             >
               <option value="all">All subjects</option>
@@ -104,11 +101,21 @@ export function QueuesConfig() {
         )}
       </div>
       {!showForm && (
-        <div className="mb-4">
-          <ReportTypeMultiselect
-            value={filters.reportTypes ?? []}
-            onChange={(val) => updateFilter('reportTypes', val)}
-          />
+        <div className="mb-4 flex items-center gap-2">
+          <div className="flex-1">
+            <ReportTypeMultiselect
+              value={filters.reportTypes ?? []}
+              onChange={(val) => updateFilter('reportTypes', val)}
+            />
+          </div>
+          <ActionButton
+            type="button"
+            size="md"
+            appearance="outlined"
+            onClick={() => setFilters({})}
+          >
+            <p className="text-xs">Reset Filters</p>
+          </ActionButton>
         </div>
       )}
 
