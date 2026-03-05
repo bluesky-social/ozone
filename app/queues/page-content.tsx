@@ -1,6 +1,8 @@
 'use client'
 import { useState } from 'react'
+import Link from 'next/link'
 import { useTitle } from 'react-use'
+import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
 import { ActionButton } from '@/common/buttons'
 import { Input, Select } from '@/common/forms'
 import { useQueueList, QueueListFilters } from '@/queues/useQueues'
@@ -22,9 +24,17 @@ export function QueuesPageContent() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4">
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        Queues
-      </h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Queues
+        </h1>
+        <Link href="/configure?tab=queues">
+          <ActionButton size="sm" appearance="outlined">
+            <WrenchScrewdriverIcon className="h-4 w-4 mr-1" />
+            Configure
+          </ActionButton>
+        </Link>
+      </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-4">
         <Select
