@@ -5,6 +5,7 @@ import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
+import { Tooltip } from '@/common/Tooltip'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
 
 function MatchSummary({
@@ -231,36 +232,54 @@ export function QueueForm({
         <>
           <FormLabel label="Subject Type(s)" required>
             <div className="flex flex-col gap-2">
-              <Checkbox
-                id="subject-type-account"
-                checked={subjectTypes.has('account')}
-                onChange={() => toggleSubjectType('account')}
-                label="account"
-              />
-              <div className="h-12 flex items-center gap-2">
+              <div className="flex items-center gap-1">
                 <Checkbox
-                  id="subject-type-record"
-                  checked={subjectTypes.has('record')}
-                  onChange={() => toggleSubjectType('record')}
-                  label="record"
+                  id="subject-type-account"
+                  checked={subjectTypes.has('account')}
+                  onChange={() => toggleSubjectType('account')}
+                  label="account"
                 />
+                <Tooltip anchor="right start">
+                  <p>Reports against a user's account.</p>
+                </Tooltip>
+              </div>
+              <div className="h-12 flex items-center gap-1">
+                <div className="flex items-center gap-1">
+                  <Checkbox
+                    id="subject-type-record"
+                    checked={subjectTypes.has('record')}
+                    onChange={() => toggleSubjectType('record')}
+                    label="record"
+                  />
+                  <Tooltip anchor="right start">
+                    <p>
+                      Reports targeting a specific piece of content such as a
+                      post or reply. Optionally filter by collection.
+                    </p>
+                  </Tooltip>
+                </div>
                 {subjectTypes.has('record') && (
                   <Input
                     type="text"
                     id="queue-collection"
                     value={collection}
                     onChange={(e) => setCollection(e.target.value)}
-                    placeholder="e.g. app.bsky.feed.post"
+                    placeholder="Optional collection filter (e.g. app.bsky.feed.post)"
                     className="w-96 my-0"
                   />
                 )}
               </div>
-              <Checkbox
-                id="subject-type-message"
-                checked={subjectTypes.has('message')}
-                onChange={() => toggleSubjectType('message')}
-                label="message"
-              />
+              <div className="flex items-center gap-1">
+                <Checkbox
+                  id="subject-type-message"
+                  checked={subjectTypes.has('message')}
+                  onChange={() => toggleSubjectType('message')}
+                  label="message"
+                />
+                <Tooltip anchor="right start">
+                  <p>Reports against direct messages.</p>
+                </Tooltip>
+              </div>
             </div>
             {errors.subjectTypes && (
               <p className="text-red-500 text-xs mt-1">{errors.subjectTypes}</p>
