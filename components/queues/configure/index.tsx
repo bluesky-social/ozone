@@ -1,9 +1,10 @@
 import { useState } from 'react'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
-import { Select } from '@/common/forms'
+import { Input, Select } from '@/common/forms'
 import { PlusIcon } from '@heroicons/react/24/solid'
-import { useQueueList } from '../useQueues'
+import { useQueueList, QueueListFilters } from '../useQueues'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { QueueList } from './QueueList'
 import { QueueForm } from './QueueForm'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
@@ -18,15 +19,15 @@ export function QueuesConfig() {
   const canManageQueues = usePermission('canManageQueues')
 
   // filters
-  const [enabledFilter, setEnabledFilter] = useState<boolean | undefined>(
-    undefined,
-  )
+  const [filters, setFilters] = useState<QueueListFilters>({})
+  const updateFilter = <K extends keyof QueueListFilters>(
+    key: K,
+    value: QueueListFilters[K],
+  ) => setFilters((prev) => ({ ...prev, [key]: value }))
 
   // data
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
-    useQueueList(
-      enabledFilter !== undefined ? { enabled: enabledFilter } : undefined,
-    )
+    useQueueList(filters)
   const queues = data?.pages.flatMap((page) => page.queues) ?? []
 
   // page state
@@ -45,24 +46,54 @@ export function QueuesConfig() {
             Manage Queues
           </h4>
           {!showForm && (
-            <Select
-              className="text-xs"
-              value={
-                enabledFilter === undefined
-                  ? 'all'
-                  : enabledFilter
-                    ? 'enabled'
-                    : 'disabled'
-              }
-              onChange={(e) => {
-                const val = e.target.value
-                setEnabledFilter(val === 'all' ? undefined : val === 'enabled')
-              }}
-            >
-              <option value="all">All</option>
-              <option value="enabled">Enabled</option>
-              <option value="disabled">Disabled</option>
-            </Select>
+            <>
+              <Select
+                className="text-xs"
+                value={
+                  filters.enabled === undefined
+                    ? 'all'
+                    : filters.enabled
+                      ? 'enabled'
+                      : 'disabled'
+                }
+                onChange={(e) => {
+                  const val = e.target.value
+                  updateFilter(
+                    'enabled',
+                    val === 'all' ? undefined : val === 'enabled',
+                  )
+                }}
+              >
+                <option value="all">All</option>
+                <option value="enabled">Enabled</option>
+                <option value="disabled">Disabled</option>
+              </Select>
+              <Select
+                className="text-xs"
+                value={filters.subjectType ?? 'all'}
+                onChange={(e) => {
+                  const val = e.target.value
+                  updateFilter(
+                    'subjectType',
+                    val === 'all' ? undefined : val,
+                  )
+                }}
+              >
+                <option value="all">All subjects</option>
+                <option value="account">account</option>
+                <option value="record">record</option>
+                <option value="message">message</option>
+              </Select>
+              <Input
+                type="text"
+                className="text-xs w-48"
+                placeholder="Collection filter"
+                value={filters.collection ?? ''}
+                onChange={(e) =>
+                  updateFilter('collection', e.target.value || undefined)
+                }
+              />
+            </>
           )}
         </div>
         {canManageQueues && !showForm && (
@@ -77,6 +108,14 @@ export function QueuesConfig() {
           </ActionButton>
         )}
       </div>
+      {!showForm && (
+        <div className="mb-4 max-w-md">
+          <ReportTypeMultiselect
+            value={filters.reportTypes ?? []}
+            onChange={(val) => updateFilter('reportTypes', val)}
+          />
+        </div>
+      )}
 
       {canManageQueues && pageState.mode === 'create' && (
         <div className="mb-4">

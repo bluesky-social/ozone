@@ -7,7 +7,14 @@ import {
   ToolsOzoneQueueDeleteQueue,
 } from '@atproto/api'
 
-export const useQueueList = (filters?: { enabled?: boolean }) => {
+export type QueueListFilters = {
+  enabled?: boolean
+  subjectType?: string
+  collection?: string
+  reportTypes?: string[]
+}
+
+export const useQueueList = (filters?: QueueListFilters) => {
   const labelerAgent = useLabelerAgent()
 
   return useInfiniteQuery({
@@ -16,7 +23,7 @@ export const useQueueList = (filters?: { enabled?: boolean }) => {
       const { data } = await labelerAgent.tools.ozone.queue.listQueues({
         limit: 25,
         cursor: pageParam,
-        ...(filters?.enabled !== undefined ? { enabled: filters.enabled } : {}),
+        ...filters,
       })
       return data
     },
