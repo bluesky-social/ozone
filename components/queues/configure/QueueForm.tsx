@@ -1,5 +1,6 @@
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
+import { CollectionAutocomplete } from '../../common/CollectionAutocomplete'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
@@ -259,12 +260,11 @@ export function QueueForm({
                   </Tooltip>
                 </div>
                 {subjectTypes.has('record') && (
-                  <Input
-                    type="text"
-                    id="queue-collection"
+                  <CollectionAutocomplete
                     value={collection}
-                    onChange={(e) => setCollection(e.target.value)}
-                    placeholder="Optional collection filter (e.g. app.bsky.feed.post)"
+                    id="queue-collection"
+                    onChange={setCollection}
+                    placeholder="Optional collection to use."
                     className="w-96 my-0"
                   />
                 )}

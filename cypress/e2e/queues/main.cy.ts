@@ -138,9 +138,9 @@ describe('Queue Management', () => {
       cy.get('#subject-type-record').check()
       cy.get('#queue-collection')
         .should('be.visible')
-        .type('app.bsky.feed.post')
+        .type('app.bsky.feed.post{esc}')
 
-      cy.get('[data-cy="report-types-input"]').type('hate speech')
+      cy.get('[data-cy="report-types-input"]').scrollIntoView().type('hate speech')
       cy.contains('Hate Speech').click()
       cy.get('[data-cy="report-types-input"]').type('{esc}')
 
