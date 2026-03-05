@@ -130,7 +130,7 @@ export function QueueList({
         ))}
       </div>
       {!!queues.length && hasNextPage && (
-        <div className="flex justify-center pb-2">
+        <div className="mt-2 flex justify-center pb-2">
           <LoadMoreButton onClick={fetchNextPage} />
         </div>
       )}
