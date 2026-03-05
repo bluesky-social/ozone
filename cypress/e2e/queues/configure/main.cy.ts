@@ -5,7 +5,7 @@ import {
   mockCreateQueueResponse,
   mockUpdateQueueResponse,
   mockDeleteQueueResponse,
-} from '../../support/api'
+} from '../../../support/api'
 
 const BASE_URL = 'http://127.0.0.1:3000'
 
