@@ -4,7 +4,7 @@ import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { QueueCard } from '@/queues/QueueCard'
 
-export function QueueListReadonly({
+export function QueueList({
   queues,
   isLoading,
   fetchNextPage,

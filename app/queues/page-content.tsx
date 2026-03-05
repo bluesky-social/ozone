@@ -7,7 +7,7 @@ import { ActionButton } from '@/common/buttons'
 import { Input, Select } from '@/common/forms'
 import { useQueueList, QueueListFilters } from '@/queues/useQueues'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { QueueListReadonly } from '@/queues/QueueListReadonly'
+import { QueueList } from '@/queues/QueueList'
 
 export function QueuesPageContent() {
   useTitle('Queues')
@@ -108,7 +108,7 @@ export function QueuesPageContent() {
         </div>
       )}
 
-      <QueueListReadonly
+      <QueueList
         queues={queues}
         isLoading={isLoading}
         fetchNextPage={fetchNextPage}
