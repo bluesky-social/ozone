@@ -2,6 +2,8 @@ import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { Card } from '@/common/Card'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReactNode } from 'react'
+import { useQueueAssignments } from '@/assignments/useAssignments'
+import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 
 export function QueueCard({
   queue,
@@ -10,6 +12,12 @@ export function QueueCard({
   queue: ToolsOzoneQueueDefs.QueueView
   actions?: ReactNode
 }) {
+  const { data: assignments } = useQueueAssignments({
+    onlyActive: true,
+    queueIds: [queue.id],
+  })
+  const queueAssignments = assignments?.filter((a) => a.queue.id === queue.id) ?? []
+
   return (
     <Card data-cy="queue-card" className="p-4">
       <div className="flex items-start justify-between">
@@ -80,6 +88,13 @@ export function QueueCard({
             <div className="text-xs text-gray-400 dark:text-gray-500 pt-1">
               Created by {queue.createdBy} on{' '}
               {new Date(queue.createdAt).toLocaleDateString()}
+            </div>
+
+            <div className="pt-2" data-cy="queue-assignees">
+              <QueueAssigneeStatus
+                queueId={queue.id}
+                assignments={queueAssignments}
+              />
             </div>
           </div>
         </div>

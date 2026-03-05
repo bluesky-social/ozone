@@ -175,3 +175,15 @@ export const mockDeleteQueueResponse = (response: {
   cy
     .intercept('POST', `${SERVER_URL}/tools.ozone.queue.deleteQueue`, response)
     .as('mockDeleteQueueResponse')
+
+export const mockQueueGetAssignmentsResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy
+    .intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.queue.getAssignments*`,
+      response,
+    )
+    .as('mockQueueGetAssignmentsResponse')
