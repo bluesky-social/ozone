@@ -18,6 +18,7 @@ import { SetsConfig } from '@/config/Sets'
 import { ProtectedTagsConfig } from '@/config/ProtectedTags'
 import { PoliciesConfig } from '@/config/Policies'
 import { SafelinkConfig } from '@/config/Safelink'
+import { QueuesConfig } from '@/queues/configure/index'
 
 enum Views {
   Configure,
@@ -26,6 +27,7 @@ enum Views {
   Safelink,
   ProtectedTags,
   Policies,
+  Queues,
 }
 
 const TabKeys = {
@@ -35,6 +37,7 @@ const TabKeys = {
   safelink: Views.Safelink,
   protectedTags: Views.ProtectedTags,
   policies: Views.Policies,
+  queues: Views.Queues,
 }
 
 export default function ConfigurePageContent() {
@@ -95,6 +98,10 @@ export default function ConfigurePageContent() {
       view: Views.ProtectedTags,
       label: 'Protected Tags',
     },
+    {
+      view: Views.Queues,
+      label: 'Queues',
+    },
   ]
 
   return (
@@ -111,6 +118,7 @@ export default function ConfigurePageContent() {
       {currentView === Views.Safelink && <SafelinkConfig />}
       {currentView === Views.ProtectedTags && <ProtectedTagsConfig />}
       {currentView === Views.Policies && <PoliciesConfig />}
+      {currentView === Views.Queues && <QueuesConfig />}
 
       <ModActionPanelQuick
         open={!!quickOpenParam}
