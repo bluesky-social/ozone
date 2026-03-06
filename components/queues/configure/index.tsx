@@ -5,7 +5,7 @@ import { Input, Select } from '@/common/forms'
 import { PlusIcon, XMarkIcon } from '@heroicons/react/24/solid'
 import { useQueueList, QueueListFilters } from '../useQueues'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { QueueList } from './QueueConfigureList'
+import { QueueList } from './QueueList'
 import { QueueForm } from './QueueForm'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
 

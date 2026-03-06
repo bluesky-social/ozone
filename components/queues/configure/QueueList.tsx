@@ -5,7 +5,7 @@ import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { usePermission } from '@/shell/ConfigurationContext'
-import { QueueCard } from '@/queues/configure/QueueConfigureCard'
+import { QueueCard } from '@/queues/configure/QueueCard'
 
 export function QueueList({
   queues,
