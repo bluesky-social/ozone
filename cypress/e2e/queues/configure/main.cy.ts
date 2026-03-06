@@ -1,10 +1,9 @@
 /// <reference types="cypress" />
 
 import {
-  mockListQueuesResponse,
   mockCreateQueueResponse,
-  mockUpdateQueueResponse,
   mockDeleteQueueResponse,
+  mockListQueuesResponse
 } from '../../../support/api'
 
 const BASE_URL = 'http://127.0.0.1:3000'
@@ -26,9 +25,6 @@ describe('Queue Management', () => {
     })
   })
 
-  // ---------------------------------------------------------------------------
-  // List Queues
-  // ---------------------------------------------------------------------------
   describe('List Queues', () => {
     it('displays queue cards with name, status badge, subject types, report types, and stats', () => {
       mockListQueuesResponse({
@@ -102,9 +98,6 @@ describe('Queue Management', () => {
     })
   })
 
-  // ---------------------------------------------------------------------------
-  // Create Queue
-  // ---------------------------------------------------------------------------
   describe('Create Queue', () => {
     beforeEach(() => {
       mockListQueuesResponse({ statusCode: 200, body: { queues: [] } })
@@ -161,9 +154,6 @@ describe('Queue Management', () => {
     })
   })
 
-  // ---------------------------------------------------------------------------
-  // Delete Queue
-  // ---------------------------------------------------------------------------
   describe('Delete Queue', () => {
     describe('with multiple queues (migration target available)', () => {
       beforeEach(() => {
