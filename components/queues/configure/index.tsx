@@ -4,9 +4,9 @@ import { PlusIcon } from '@heroicons/react/24/solid'
 import { useState } from 'react'
 import { QueueListFilters, useQueueList } from '../useQueues'
 import { QueueFilters } from '../QueueFilters'
+import { QueueList } from '../QueueList'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
 import { QueueForm } from './QueueForm'
-import { QueueConfigureList } from './QueueConfigureList'
 
 type PageState =
   | { mode: 'list' }
@@ -86,7 +86,7 @@ export function QueuesConfig() {
 
       {/* list */}
       {!showForm && (
-        <QueueConfigureList
+        <QueueList
           queues={queues}
           isLoading={isLoading}
           fetchNextPage={fetchNextPage}

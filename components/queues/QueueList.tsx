@@ -1,20 +1,30 @@
-import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { QueueCard } from '@/queues/QueueCard'
+import { usePermission } from '@/shell/ConfigurationContext'
+import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
 
 export function QueueList({
   queues,
   isLoading,
   fetchNextPage,
   hasNextPage,
+  onEdit,
+  onDelete,
 }: {
   queues: ToolsOzoneQueueDefs.QueueView[]
   isLoading: boolean
   fetchNextPage: () => void
   hasNextPage?: boolean
+  onEdit?: (queue: ToolsOzoneQueueDefs.QueueView) => void
+  onDelete?: (queue: ToolsOzoneQueueDefs.QueueView) => void
 }) {
+  const canManage = usePermission('canManageQueues')
+  const showActions = canManage && (onEdit || onDelete)
+
   if (isLoading) return <Loading />
 
   if (!queues.length) {
@@ -29,7 +39,36 @@ export function QueueList({
     <>
       <div className="space-y-3">
         {queues.map((queue) => (
-          <QueueCard key={queue.id} queue={queue} />
+          <QueueCard
+            key={queue.id}
+            queue={queue}
+            actions={
+              showActions ? (
+                <>
+                  {onEdit && (
+                    <ActionButton
+                      size="xs"
+                      appearance="outlined"
+                      onClick={() => onEdit(queue)}
+                      title="Edit queue"
+                    >
+                      <PencilIcon className="h-3 w-3" />
+                    </ActionButton>
+                  )}
+                  {onDelete && (
+                    <ActionButton
+                      size="xs"
+                      appearance="outlined"
+                      onClick={() => onDelete(queue)}
+                      title="Delete queue"
+                    >
+                      <TrashIcon className="h-3 w-3" />
+                    </ActionButton>
+                  )}
+                </>
+              ) : undefined
+            }
+          />
         ))}
       </div>
       {!!queues.length && hasNextPage && (
