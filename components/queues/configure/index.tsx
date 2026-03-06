@@ -122,7 +122,7 @@ export function QueuesConfig() {
             type="button"
             size="md"
             appearance="outlined"
-            onClick={() => setFilters({})}
+            onClick={() => resetFilters()}
           >
             <p className="text-xs">Reset Filters</p>
           </ActionButton>
