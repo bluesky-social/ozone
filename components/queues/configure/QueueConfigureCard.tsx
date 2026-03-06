@@ -20,7 +20,7 @@ export function QueueConfigureCard({
     assignments?.filter((a) => a.queue.id === queue.id) ?? []
 
   return (
-    <Card data-cy="queue-card" className="p-4">
+    <Card data-cy="queue-configure-card" className="p-4">
       <div className="flex items-start justify-between">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">

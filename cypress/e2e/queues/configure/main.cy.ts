@@ -39,9 +39,9 @@ describe('Queue Management', () => {
         },
       })
 
-      cy.get('[data-cy="queue-card"]').should('have.length', 2)
+      cy.get('[data-cy="queue-configure-card"]').should('have.length', 2)
 
-      cy.get('[data-cy="queue-card"]')
+      cy.get('[data-cy="queue-configure-card"]')
         .first()
         .within(() => {
           cy.contains('Spam Queue')
@@ -52,7 +52,7 @@ describe('Queue Management', () => {
           cy.contains('10') // actionedCount
         })
 
-      cy.get('[data-cy="queue-card"]')
+      cy.get('[data-cy="queue-configure-card"]')
         .eq(1)
         .within(() => {
           cy.contains('Hate Speech Queue')
@@ -74,7 +74,7 @@ describe('Queue Management', () => {
         },
       })
 
-      cy.get('[data-cy="queue-card"]').should('have.length', 1)
+      cy.get('[data-cy="queue-configure-card"]').should('have.length', 1)
       cy.contains('Load more').should('be.visible')
 
       mockListQueuesResponse({
@@ -85,7 +85,7 @@ describe('Queue Management', () => {
       })
 
       cy.contains('Load more').click()
-      cy.get('[data-cy="queue-card"]').should('have.length', 2)
+      cy.get('[data-cy="queue-configure-card"]').should('have.length', 2)
       cy.contains('Load more').should('not.exist')
     })
 
