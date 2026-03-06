@@ -53,11 +53,12 @@ export function QueuesConfig() {
 
   return (
     <div className="pt-4">
-      <div className="flex flex-wrap items-center gap-2 mb-4">
+      {/* filters */}
+      <div className="flex flex-wrap gap-2">
         {!showForm && (
           <>
             <Select
-              className="text-xs"
+              className="h-fit text-xs"
               value={
                 filters.enabled === undefined
                   ? 'all'
@@ -78,7 +79,7 @@ export function QueuesConfig() {
               <option value="disabled">Disabled</option>
             </Select>
             <Select
-              className="text-xs"
+              className="h-fit text-xs"
               value={filters.subjectType ?? 'all'}
               onChange={(e) => {
                 const val = e.target.value
@@ -92,7 +93,6 @@ export function QueuesConfig() {
             </Select>
             <CollectionAutocomplete
               className="min-w-[10rem] flex-1"
-              placeholder="collection (e.g. app.bsky.feed.post)"
               value={collectionInput}
               onChange={(val) => setCollectionInput(val)}
             />
@@ -104,6 +104,7 @@ export function QueuesConfig() {
             appearance="primary"
             data-cy="add-queue-button"
             onClick={() => setPageState({ mode: 'create' })}
+            className="h-fit"
           >
             <PlusIcon className="h-3 w-3 mr-1" />
             <span className="text-xs">Add Queue</span>
@@ -111,7 +112,7 @@ export function QueuesConfig() {
         )}
       </div>
       {!showForm && (
-        <div className="mb-4 flex gap-2">
+        <div className="mb-6 flex gap-2">
           <div className="mt-1 flex-1">
             <ReportTypeMultiselect
               value={filters.reportTypes ?? []}
@@ -131,6 +132,7 @@ export function QueuesConfig() {
         </div>
       )}
 
+      {/* form */}
       {canManageQueues && pageState.mode === 'create' && (
         <div className="mb-4">
           <QueueForm
@@ -139,7 +141,6 @@ export function QueuesConfig() {
           />
         </div>
       )}
-
       {canManageQueues && pageState.mode === 'edit' && (
         <div className="mb-4">
           {selectedQueue ? (
@@ -162,15 +163,7 @@ export function QueuesConfig() {
         </div>
       )}
 
-      {isError && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded text-red-700 dark:text-red-300 text-sm">
-          Failed to load queues.{' '}
-          <button className="underline" onClick={() => refetch()}>
-            Retry
-          </button>
-        </div>
-      )}
-
+      {/* list */}
       {!showForm && (
         <QueueConfigureList
           queues={queues}
@@ -183,7 +176,16 @@ export function QueuesConfig() {
           }
         />
       )}
+      {isError && (
+        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded text-red-700 dark:text-red-300 text-sm">
+          Failed to load queues.{' '}
+          <button className="underline" onClick={() => refetch()}>
+            Retry
+          </button>
+        </div>
+      )}
 
+      {/* dialogs */}
       {pageState.mode === 'delete' && (
         <QueueDeleteDialog
           queue={selectedQueue}
