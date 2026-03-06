@@ -139,15 +139,17 @@ export function ReportTypeMultiselect({
         <div className="relative">
           <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none sm:text-sm">
             <ComboboxInput
-              className="w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100"
+              className={`w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100 ${limitWarning ? 'placeholder:text-yellow-600' : ''}`}
               data-cy={dataCy}
               onChange={(e) => setQuery(e.target.value)}
-              onBlur={() => setQuery('')}
+              onBlur={() => { setQuery(''); setLimitError(false) }}
               value={query}
               placeholder={
-                value.length
-                  ? `${value.length} selected — type to search`
-                  : 'Select reason types — type to search'
+                limitWarning
+                  ? `Maximum of ${limit} types allowed`
+                  : value.length
+                    ? `${value.length} selected — type to search`
+                    : 'Select reason types — type to search'
               }
             />
             <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -170,12 +172,6 @@ export function ReportTypeMultiselect({
           </Transition>
         </div>
       </Combobox>
-
-      {limitWarning && (
-        <p className="opacity-40 text-xs mt-1">
-          Maximum of {limit} types allowed.
-        </p>
-      )}
 
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
