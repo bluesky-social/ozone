@@ -207,7 +207,7 @@ export function validateNsid(value: string): string | null {
   for (const seg of segments) {
     if (!seg) return 'NSID segments cannot be empty'
     if (!NSID_SEGMENT.test(seg)) {
-      return `Invalid segment "${seg}" — must start with a letter and contain only letters, digits, or hyphens`
+      return `Invalid segment "${seg}"`
     }
   }
   return null
