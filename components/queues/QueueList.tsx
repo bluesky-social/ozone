@@ -44,7 +44,7 @@ export function QueueList({
             queue={queue}
             actions={
               showActions ? (
-                <>
+                <div className="flex flex-col">
                   {onEdit && (
                     <ActionButton
                       size="xs"
@@ -65,7 +65,7 @@ export function QueueList({
                       <TrashIcon className="h-3 w-3" />
                     </ActionButton>
                   )}
-                </>
+                </div>
               ) : undefined
             }
           />

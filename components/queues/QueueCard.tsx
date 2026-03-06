@@ -22,10 +22,8 @@ export function QueueCard({
 
   return (
     <Card data-cy="queue-card" className="relative px-4 py-3">
-      <div
-        className={`grid ${actions ? 'grid-cols-[1fr_1fr_1fr_auto]' : 'grid-cols-3'} gap-x-4 items-start text-sm`}
-      >
-        {/* Left column */}
+      <div className="grid grid-cols-[1fr_1fr_auto] lg:grid-cols-[1fr_1fr_1fr_auto] gap-x-4 items-start text-sm">
+        {/* Column 1 */}
         <div className="space-y-2 min-w-0">
           <div className="flex items-center gap-2">
             <h3 className="font-medium text-gray-900 dark:text-gray-100 truncate">
@@ -40,11 +38,6 @@ export function QueueCard({
             >
               {queue.enabled ? 'Enabled' : 'Disabled'}
             </span>
-            {queue.collection && (
-              <code className="shrink-0 text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded">
-                {queue.collection}
-              </code>
-            )}
           </div>
           <div className="flex flex-col gap-1">
             <p className="text-xs text-gray-400 dark:text-gray-500">
@@ -61,6 +54,16 @@ export function QueueCard({
               ))}
             </div>
           </div>
+          {queue.collection && (
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Collection
+              </p>
+              <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
+                {queue.collection}
+              </code>
+            </div>
+          )}
           <div className="flex flex-col gap-1">
             <p className="text-xs text-gray-400 dark:text-gray-500">
               Report Types
@@ -73,8 +76,8 @@ export function QueueCard({
           </div>
         </div>
 
-        {/* Center column */}
-        <div className="flex flex-col gap-1">
+        {/* Column 2 */}
+        <div className="hidden lg:flex flex-col gap-1">
           <p className="text-xs text-gray-400 dark:text-gray-500">Stats</p>
           <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
             <span>
@@ -89,7 +92,7 @@ export function QueueCard({
           </div>
         </div>
 
-        {/* Right column */}
+        {/* Column 3 */}
         <div className="space-y-2">
           <div className="flex flex-col gap-1">
             <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
