@@ -42,7 +42,7 @@ export function PreviewCard({
   if (subject.startsWith('at://')) {
     const displayTitle = title || getPreviewTitleForAtUri(subject)
     return (
-      <div className={classNames(`rounded p-2 pb-0 mb-3`, className)}>
+      <div className={classNames(`rounded pb-0 mb-3`, className)}>
         <p className="text-sm font-medium text-gray-500 dark:text-gray-50 mb-3">
           {displayTitle}
         </p>
