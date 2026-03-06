@@ -1,10 +1,13 @@
 import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
+import { CollectionAutocomplete } from '../../common/CollectionAutocomplete'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
+import { Tooltip } from '@/common/Tooltip'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
-import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { reasonTypeOptions } from '@/reports/helpers/getType'
 
 function MatchSummary({
   subjectTypes,
@@ -35,13 +38,11 @@ function MatchSummary({
         <div className="space-y-1">
           <div>
             <span>Report reason</span> is one of:
-            <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
+            <div className="flex flex-wrap gap-1 mt-1 pl-3">
               {reportTypes.map((t) => (
-                <li key={t}>
-                  <strong>{reasonTypeOptions[t] || t}</strong>
-                </li>
+                <ReasonBadge key={t} reasonType={t} />
               ))}
-            </ul>
+            </div>
           </div>
           <p className="pl-16 py-4 opacity-70">AND</p>
           <div>
@@ -54,16 +55,15 @@ function MatchSummary({
               ))}
               {subjectTypes.has('record') && (
                 <li>
-                  <strong>record</strong>
                   {collection ? (
                     <span>
                       {' '}
-                      with collection <strong>{collection}</strong>
+                      <strong>record</strong> with collection{' '}
+                      <strong>{collection}</strong>
                     </span>
                   ) : (
-                    <span className="opacity-70">
-                      {' '}
-                      (not matchable without a collection)
+                    <span>
+                      <strong>record</strong>
                     </span>
                   )}
                 </li>
@@ -95,7 +95,7 @@ export function QueueForm({
   const [description, setDescription] = useState<string | undefined>(
     queue?.description,
   )
-  const [enabled, setEnabled] = useState(queue?.enabled ?? true)
+  const [showToggleDialog, setShowToggleDialog] = useState(false)
   const [subjectTypes, setSubjectTypes] = useState<Set<string>>(
     new Set(queue?.subjectTypes ?? []),
   )
@@ -110,6 +110,24 @@ export function QueueForm({
     queue?.reportTypes ?? [],
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
+
+  const handleToggleEnabled = async () => {
+    if (!queue) return
+    await updateMutation.mutateAsync(
+      {
+        queueId: queue.id,
+        name: queue.name,
+        description: queue.description,
+        enabled: !queue.enabled,
+      },
+      {
+        onSuccess: () => {
+          setShowToggleDialog(false)
+          onSuccess()
+        },
+      },
+    )
+  }
 
   const toggleSubjectType = (type: string) => {
     setSubjectTypes((prev) => {
@@ -155,7 +173,6 @@ export function QueueForm({
           queueId: queue.id,
           name,
           description,
-          enabled,
         },
         { onSuccess },
       )
@@ -175,10 +192,19 @@ export function QueueForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <FormLabel label="Name" htmlFor="queue-name" required className="mb-3">
+      {!isEditMode && (
+        <p className="text-sm text-gray-400">
+          Create a queue to route reports to. Only the name and description can
+          be modified after creation. To change the filtering logic (subject
+          types, report types, collection), you will need to create a new queue
+          and migrate reports to it.
+        </p>
+      )}
+      <FormLabel label="Name" htmlFor="name" required className="mb-3">
         <Input
           type="text"
-          id="queue-name"
+          id="name"
+          name="name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="Display name for the queue"
@@ -189,22 +215,14 @@ export function QueueForm({
         )}
       </FormLabel>
 
-      {isEditMode && (
-        <Checkbox
-          id="queue-enabled"
-          checked={enabled}
-          onChange={(e) => setEnabled(e.target.checked)}
-          label="Enable"
-        />
-      )}
-
       <FormLabel
         label="Description"
-        htmlFor="queue-description"
+        htmlFor="description"
         className="mb-3"
       >
         <Textarea
-          id="queue-description"
+          id="description"
+          name="description"
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Enter additional details for internal use."
@@ -216,37 +234,54 @@ export function QueueForm({
       {!isEditMode && (
         <>
           <FormLabel label="Subject Type(s)" required>
-            <div className="flex flex-col gap-2">
-              <Checkbox
-                id="subject-type-account"
-                checked={subjectTypes.has('account')}
-                onChange={() => toggleSubjectType('account')}
-                label="account"
-              />
-              <div className="h-12 flex items-center gap-2">
+            <div className="flex flex-col gap-5">
+              <div className="h-8 flex items-center gap-1">
                 <Checkbox
-                  id="subject-type-record"
+                  id="subjectTypes-account"
+                  name="subjectTypes"
+                  checked={subjectTypes.has('account')}
+                  onChange={() => toggleSubjectType('account')}
+                  label="account"
+                />
+                <Tooltip anchor="right start">
+                  Reports against a user's account.
+                </Tooltip>
+              </div>
+              <div className="h-8 flex items-start gap-1">
+                <Checkbox
+                  id="subjectTypes-record"
+                  name="subjectTypes"
                   checked={subjectTypes.has('record')}
                   onChange={() => toggleSubjectType('record')}
                   label="record"
                 />
+                <Tooltip anchor="right start">
+                  Reports targeting a specific piece of content such as a post
+                  or reply. Optionally filter by collection.
+                </Tooltip>
                 {subjectTypes.has('record') && (
-                  <Input
-                    type="text"
-                    id="queue-collection"
+                  <CollectionAutocomplete
                     value={collection}
-                    onChange={(e) => setCollection(e.target.value)}
-                    placeholder="e.g. app.bsky.feed.post"
-                    className="w-96 my-0"
+                    id="collection"
+                    name="collection"
+                    onChange={setCollection}
+                    placeholder="Optional collection to use."
+                    className="ml-6 w-96"
                   />
                 )}
               </div>
-              <Checkbox
-                id="subject-type-message"
-                checked={subjectTypes.has('message')}
-                onChange={() => toggleSubjectType('message')}
-                label="message"
-              />
+              <div className="h-6 flex items-center gap-1">
+                <Checkbox
+                  id="subjectTypes-message"
+                  name="subjectTypes"
+                  checked={subjectTypes.has('message')}
+                  onChange={() => toggleSubjectType('message')}
+                  label="message"
+                />
+                <Tooltip anchor="right start">
+                  Reports against direct messages.
+                </Tooltip>
+              </div>
             </div>
             {errors.subjectTypes && (
               <p className="text-red-500 text-xs mt-1">{errors.subjectTypes}</p>
@@ -285,6 +320,15 @@ export function QueueForm({
               ? 'Save Changes'
               : 'Create Queue'}
         </ActionButton>
+        {isEditMode && queue && (
+          <ActionButton
+            appearance={queue.enabled ? 'negative' : 'outlined'}
+            type="button"
+            onClick={() => setShowToggleDialog(true)}
+          >
+            {queue.enabled ? 'Disable Queue' : 'Enable Queue'}
+          </ActionButton>
+        )}
         <ActionButton
           appearance="outlined"
           onClick={onCancel}
@@ -293,6 +337,30 @@ export function QueueForm({
           Cancel
         </ActionButton>
       </div>
+
+      {isEditMode && queue && (
+        <ConfirmationModal
+          isOpen={showToggleDialog}
+          setIsOpen={setShowToggleDialog}
+          onConfirm={handleToggleEnabled}
+          title={`${queue.enabled ? 'Disable' : 'Enable'} '${queue.name}'?`}
+          confirmButtonText={queue.enabled ? 'Disable Queue' : 'Enable Queue'}
+          confirmButtonDisabled={isLoading}
+          description={
+            queue.enabled ? (
+              <span>
+                Disabling this queue means reports will instead be routed to
+                other queues. Reports already in this queue will remain.
+              </span>
+            ) : (
+              <span>
+                Re-enabling this queue will divert reports away from other
+                queues. Please proceed with caution.
+              </span>
+            )
+          }
+        />
+      )}
     </form>
   )
 }

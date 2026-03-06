@@ -5,7 +5,7 @@ import {
   mockCreateQueueResponse,
   mockUpdateQueueResponse,
   mockDeleteQueueResponse,
-} from '../../support/api'
+} from '../../../support/api'
 
 const BASE_URL = 'http://127.0.0.1:3000'
 
@@ -46,7 +46,7 @@ describe('Queue Management', () => {
           cy.contains('Spam Queue')
           cy.contains('Enabled')
           cy.contains('account')
-          cy.contains('tools.ozone.report.defs#reasonMisleadingSpam')
+          cy.contains('Spam')
           cy.contains('5') // pendingCount
           cy.contains('10') // actionedCount
         })
@@ -130,17 +130,17 @@ describe('Queue Management', () => {
       })
 
       cy.get('[data-cy="add-queue-button"]').click()
-      cy.get('#queue-name').should('be.visible')
+      cy.get('#name').should('be.visible')
 
-      cy.get('#queue-name').type('My New Queue')
-      cy.get('#queue-description').type('A test queue for new reports')
-      cy.get('#subject-type-account').check()
-      cy.get('#subject-type-record').check()
-      cy.get('#queue-collection')
+      cy.get('#name').type('My New Queue')
+      cy.get('#description').type('A test queue for new reports')
+      cy.get('#subjectTypes-account').check()
+      cy.get('#subjectTypes-record').check()
+      cy.get('#collection')
         .should('be.visible')
-        .type('app.bsky.feed.post')
+        .type('app.bsky.feed.post{esc}')
 
-      cy.get('[data-cy="report-types-input"]').type('hate speech')
+      cy.get('[data-cy="report-types-input"]').scrollIntoView().type('hate speech')
       cy.contains('Hate Speech').click()
       cy.get('[data-cy="report-types-input"]').type('{esc}')
 
@@ -153,11 +153,11 @@ describe('Queue Management', () => {
     it('shows collection field only when record subject type is checked', () => {
       cy.get('[data-cy="add-queue-button"]').click()
 
-      cy.get('#queue-collection').should('not.exist')
-      cy.get('#subject-type-record').check()
-      cy.get('#queue-collection').should('be.visible')
-      cy.get('#subject-type-record').uncheck()
-      cy.get('#queue-collection').should('not.exist')
+      cy.get('#collection').should('not.exist')
+      cy.get('#subjectTypes-record').check()
+      cy.get('#collection').should('be.visible')
+      cy.get('#subjectTypes-record').uncheck()
+      cy.get('#collection').should('not.exist')
     })
   })
 
