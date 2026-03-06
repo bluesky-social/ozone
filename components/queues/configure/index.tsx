@@ -101,21 +101,23 @@ export function QueuesConfig() {
         )}
       </div>
       {!showForm && (
-        <div className="mb-4 flex items-center gap-2">
-          <div className="flex-1">
+        <div className="mb-4 flex gap-2">
+          <div className="flex-1 mt-1">
             <ReportTypeMultiselect
               value={filters.reportTypes ?? []}
               onChange={(val) => updateFilter('reportTypes', val)}
             />
           </div>
-          <ActionButton
-            type="button"
-            size="md"
-            appearance="outlined"
-            onClick={() => setFilters({})}
-          >
-            <p className="text-xs">Reset Filters</p>
-          </ActionButton>
+          <div className="mt-2">
+            <ActionButton
+              type="button"
+              size="md"
+              appearance="outlined"
+              onClick={() => setFilters({})}
+            >
+              <p className="text-xs">Reset Filters</p>
+            </ActionButton>
+          </div>
         </div>
       )}
 
