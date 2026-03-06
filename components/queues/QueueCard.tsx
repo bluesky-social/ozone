@@ -21,8 +21,10 @@ export function QueueCard({
     assignments?.filter((a) => a.queue.id === queue.id) ?? []
 
   return (
-    <Card data-cy="queue-card" className="px-4 py-3">
-      <div className="grid grid-cols-3 gap-x-4 items-start text-sm">
+    <Card data-cy="queue-card" className="relative px-4 py-3">
+      <div
+        className={`grid ${actions ? 'grid-cols-[1fr_1fr_1fr_auto]' : 'grid-cols-3'} gap-x-4 items-start text-sm`}
+      >
         {/* Left column */}
         <div className="space-y-2 min-w-0">
           <div className="flex items-center gap-2">
@@ -88,28 +90,26 @@ export function QueueCard({
         </div>
 
         {/* Right column */}
-        <div className="flex items-start gap-2">
-          <div className="space-y-2">
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-                Created By
-              </p>
-              <UserBadge did={queue.createdBy} />
-            </div>
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Assigned
-              </p>
-              <div data-cy="queue-assignees">
-                <QueueAssigneeStatus
-                  queueId={queue.id}
-                  assignments={queueAssignments}
-                />
-              </div>
+        <div className="space-y-2">
+          <div className="flex flex-col gap-1">
+            <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+              Created By
+            </p>
+            <UserBadge did={queue.createdBy} />
+          </div>
+          <div className="w-fit flex flex-col gap-1">
+            <p className="text-xs text-gray-400 dark:text-gray-500">Assigned</p>
+            <div data-cy="queue-assignees">
+              <QueueAssigneeStatus
+                queueId={queue.id}
+                assignments={queueAssignments}
+              />
             </div>
           </div>
-          {actions && <div className="flex flex-col gap-1 shrink-0">{actions}</div>}
         </div>
+
+        {/* Actions */}
+        {actions && <div className="w-fit">{actions}</div>}
       </div>
     </Card>
   )
