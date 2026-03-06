@@ -4,19 +4,14 @@ import Link from 'next/link'
 import { useTitle } from 'react-use'
 import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
 import { ActionButton } from '@/common/buttons'
-import { Input, Select } from '@/common/forms'
 import { useQueueList, QueueListFilters } from '@/queues/useQueues'
-import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { QueueFilters } from '@/queues/QueueFilters'
 import { QueueList } from '@/queues/QueueList'
 
 export function QueuesPageContent() {
   useTitle('Queues')
 
   const [filters, setFilters] = useState<QueueListFilters>({})
-  const updateFilter = <K extends keyof QueueListFilters>(
-    key: K,
-    value: QueueListFilters[K],
-  ) => setFilters((prev) => ({ ...prev, [key]: value }))
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
     useQueueList(filters)
@@ -39,67 +34,7 @@ export function QueuesPageContent() {
 
       {/* Filters */}
       <div className="w-full max-w-4xl mb-4">
-        <div className="flex items-center justify-between mb-2">
-          <div className="flex flex-wrap items-center gap-2">
-            <Select
-              className="text-xs"
-              value={
-                filters.enabled === undefined
-                  ? 'all'
-                  : filters.enabled
-                    ? 'enabled'
-                    : 'disabled'
-              }
-              onChange={(e) => {
-                const val = e.target.value
-                updateFilter(
-                  'enabled',
-                  val === 'all' ? undefined : val === 'enabled',
-                )
-              }}
-            >
-              <option value="all">All</option>
-              <option value="enabled">Enabled</option>
-              <option value="disabled">Disabled</option>
-            </Select>
-            <Select
-              className="text-xs"
-              value={filters.subjectType ?? 'all'}
-              onChange={(e) => {
-                const val = e.target.value
-                updateFilter('subjectType', val === 'all' ? undefined : val)
-              }}
-            >
-              <option value="all">All subjects</option>
-              <option value="account">account</option>
-              <option value="record">record</option>
-              <option value="message">message</option>
-            </Select>
-            <Input
-              type="text"
-              className="min-w-[10rem] max-w-xs text-sm"
-              placeholder="collection (e.g. app.bsky.feed.post)"
-              value={filters.collection ?? ''}
-              onChange={(e) =>
-                updateFilter('collection', e.target.value || undefined)
-              }
-            />
-          </div>
-          <ActionButton
-            type="button"
-            size="md"
-            appearance="outlined"
-            onClick={() => setFilters({})}
-          >
-            <p className="text-xs">Reset Filters</p>
-          </ActionButton>
-        </div>
-        <div className="">
-          <ReportTypeMultiselect
-            value={filters.reportTypes ?? []}
-            onChange={(val) => updateFilter('reportTypes', val)}
-          />
-        </div>
+        <QueueFilters filters={filters} onChange={setFilters} />
       </div>
 
       {/* Queue list */}

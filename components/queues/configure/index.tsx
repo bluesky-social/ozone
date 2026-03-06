@@ -1,12 +1,9 @@
 import { ActionButton } from '@/common/buttons'
-import { CollectionAutocomplete } from '@/common/CollectionAutocomplete'
-import { Select } from '@/common/forms'
-import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { PlusIcon } from '@heroicons/react/24/solid'
 import { useState } from 'react'
-import { useDebounce } from 'react-use'
 import { QueueListFilters, useQueueList } from '../useQueues'
+import { QueueFilters } from '../QueueFilters'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
 import { QueueForm } from './QueueForm'
 import { QueueConfigureList } from './QueueConfigureList'
@@ -22,21 +19,6 @@ export function QueuesConfig() {
 
   // filters
   const [filters, setFilters] = useState<QueueListFilters>({})
-  const updateFilter = <K extends keyof QueueListFilters>(
-    key: K,
-    value: QueueListFilters[K],
-  ) => setFilters((prev) => ({ ...prev, [key]: value }))
-  /// debounced collection field
-  const [collectionInput, setCollectionInput] = useState<string | undefined>()
-  useDebounce(
-    () => updateFilter('collection', collectionInput || undefined),
-    300,
-    [collectionInput],
-  )
-  const resetFilters = () => {
-    setFilters({})
-    setCollectionInput(undefined)
-  }
 
   // data
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
@@ -54,82 +36,21 @@ export function QueuesConfig() {
   return (
     <div className="pt-4">
       {/* filters */}
-      <div className="flex flex-wrap gap-2">
-        {!showForm && (
-          <>
-            <Select
-              className="h-fit text-xs"
-              value={
-                filters.enabled === undefined
-                  ? 'all'
-                  : filters.enabled
-                    ? 'enabled'
-                    : 'disabled'
-              }
-              onChange={(e) => {
-                const val = e.target.value
-                updateFilter(
-                  'enabled',
-                  val === 'all' ? undefined : val === 'enabled',
-                )
-              }}
-            >
-              <option value="all">All</option>
-              <option value="enabled">Enabled</option>
-              <option value="disabled">Disabled</option>
-            </Select>
-            <Select
-              className="h-fit text-xs"
-              value={filters.subjectType ?? 'all'}
-              onChange={(e) => {
-                const val = e.target.value
-                updateFilter('subjectType', val === 'all' ? undefined : val)
-              }}
-            >
-              <option value="all">All subjects</option>
-              <option value="account">account</option>
-              <option value="record">record</option>
-              <option value="message">message</option>
-            </Select>
-            <CollectionAutocomplete
-              className="min-w-[10rem] flex-1"
-              value={collectionInput}
-              onChange={(val) => setCollectionInput(val)}
-            />
-          </>
-        )}
-        {canManageQueues && !showForm && (
-          <ActionButton
-            size="md"
-            appearance="primary"
-            data-cy="add-queue-button"
-            onClick={() => setPageState({ mode: 'create' })}
-            className="h-fit"
-          >
-            <PlusIcon className="h-3 w-3 mr-1" />
-            <span className="text-xs">Add Queue</span>
-          </ActionButton>
-        )}
-      </div>
       {!showForm && (
-        <div className="mb-6 flex gap-2">
-          <div className="mt-1 flex-1">
-            <ReportTypeMultiselect
-              value={filters.reportTypes ?? []}
-              onChange={(val) => updateFilter('reportTypes', val)}
-            />
-          </div>
-          <div className="mt-2">
+        <QueueFilters filters={filters} onChange={setFilters}>
+          {canManageQueues && (
             <ActionButton
-              type="button"
               size="md"
-              appearance="outlined"
-              onClick={() => resetFilters()}
+              appearance="primary"
+              data-cy="add-queue-button"
+              onClick={() => setPageState({ mode: 'create' })}
+              className="h-fit"
             >
-              <p className="text-xs">Reset Filters</p>
+              <PlusIcon className="h-3 w-3 mr-1" />
+              <span className="text-xs">Add Queue</span>
             </ActionButton>
-          </div>
-        </div>
+          )}
+        </QueueFilters>
       )}
 
       {/* form */}
