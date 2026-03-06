@@ -1,13 +1,14 @@
-import { useState } from 'react'
-import { usePermission } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
 import { Input, Select } from '@/common/forms'
-import { PlusIcon, XMarkIcon } from '@heroicons/react/24/solid'
-import { useQueueList, QueueListFilters } from '../useQueues'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { QueueList } from './QueueList'
-import { QueueForm } from './QueueForm'
+import { usePermission } from '@/shell/ConfigurationContext'
+import { PlusIcon } from '@heroicons/react/24/solid'
+import { useState } from 'react'
+import { useDebounce } from 'react-use'
+import { QueueListFilters, useQueueList } from '../useQueues'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
+import { QueueForm } from './QueueForm'
+import { QueueList } from './QueueList'
 
 type PageState =
   | { mode: 'list' }
@@ -24,6 +25,17 @@ export function QueuesConfig() {
     key: K,
     value: QueueListFilters[K],
   ) => setFilters((prev) => ({ ...prev, [key]: value }))
+  /// debounced collection field
+  const [collectionInput, setCollectionInput] = useState<string | undefined>()
+  useDebounce(
+    () => updateFilter('collection', collectionInput || undefined),
+    300,
+    [collectionInput],
+  )
+  const resetFilters = () => {
+    setFilters({})
+    setCollectionInput(undefined)
+  }
 
   // data
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
@@ -81,10 +93,8 @@ export function QueuesConfig() {
               type="text"
               className="min-w-[10rem] flex-1 text-sm"
               placeholder="collection (e.g. app.bsky.feed.post)"
-              value={filters.collection ?? ''}
-              onChange={(e) =>
-                updateFilter('collection', e.target.value || undefined)
-              }
+              value={collectionInput}
+              onChange={(e) => setCollectionInput(e.target.value)}
             />
           </>
         )}
@@ -114,7 +124,7 @@ export function QueuesConfig() {
               type="button"
               size="md"
               appearance="outlined"
-              onClick={() => setFilters({})}
+              onClick={() => resetFilters()}
             >
               <p className="text-xs">Reset Filters</p>
             </ActionButton>
