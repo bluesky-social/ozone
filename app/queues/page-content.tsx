@@ -23,8 +23,9 @@ export function QueuesPageContent() {
   const queues = data?.pages.flatMap((page) => page.queues) ?? []
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4">
-      <div className="flex items-center justify-between mb-4">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 flex flex-col items-center">
+      {/* Header */}
+      <div className="w-full flex items-center justify-between mb-4">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Queues
         </h1>
@@ -36,84 +37,88 @@ export function QueuesPageContent() {
         </Link>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 mb-4">
-        <Select
-          className="text-xs"
-          value={
-            filters.enabled === undefined
-              ? 'all'
-              : filters.enabled
-                ? 'enabled'
-                : 'disabled'
-          }
-          onChange={(e) => {
-            const val = e.target.value
-            updateFilter(
-              'enabled',
-              val === 'all' ? undefined : val === 'enabled',
-            )
-          }}
-        >
-          <option value="all">All</option>
-          <option value="enabled">Enabled</option>
-          <option value="disabled">Disabled</option>
-        </Select>
-        <Select
-          className="text-xs"
-          value={filters.subjectType ?? 'all'}
-          onChange={(e) => {
-            const val = e.target.value
-            updateFilter('subjectType', val === 'all' ? undefined : val)
-          }}
-        >
-          <option value="all">All subjects</option>
-          <option value="account">account</option>
-          <option value="record">record</option>
-          <option value="message">message</option>
-        </Select>
-        <Input
-          type="text"
-          className="min-w-[10rem] flex-1 text-sm"
-          placeholder="collection (e.g. app.bsky.feed.post)"
-          value={filters.collection ?? ''}
-          onChange={(e) =>
-            updateFilter('collection', e.target.value || undefined)
-          }
-        />
-      </div>
-
-      <div className="mb-4 flex items-center gap-2">
-        <div className="flex-1">
+      {/* Filters */}
+      <div className="w-full max-w-4xl mb-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex flex-wrap items-center gap-2">
+            <Select
+              className="text-xs"
+              value={
+                filters.enabled === undefined
+                  ? 'all'
+                  : filters.enabled
+                    ? 'enabled'
+                    : 'disabled'
+              }
+              onChange={(e) => {
+                const val = e.target.value
+                updateFilter(
+                  'enabled',
+                  val === 'all' ? undefined : val === 'enabled',
+                )
+              }}
+            >
+              <option value="all">All</option>
+              <option value="enabled">Enabled</option>
+              <option value="disabled">Disabled</option>
+            </Select>
+            <Select
+              className="text-xs"
+              value={filters.subjectType ?? 'all'}
+              onChange={(e) => {
+                const val = e.target.value
+                updateFilter('subjectType', val === 'all' ? undefined : val)
+              }}
+            >
+              <option value="all">All subjects</option>
+              <option value="account">account</option>
+              <option value="record">record</option>
+              <option value="message">message</option>
+            </Select>
+            <Input
+              type="text"
+              className="min-w-[10rem] max-w-xs text-sm"
+              placeholder="collection (e.g. app.bsky.feed.post)"
+              value={filters.collection ?? ''}
+              onChange={(e) =>
+                updateFilter('collection', e.target.value || undefined)
+              }
+            />
+          </div>
+          <ActionButton
+            type="button"
+            size="md"
+            appearance="outlined"
+            onClick={() => setFilters({})}
+          >
+            <p className="text-xs">Reset Filters</p>
+          </ActionButton>
+        </div>
+        <div className="">
           <ReportTypeMultiselect
             value={filters.reportTypes ?? []}
             onChange={(val) => updateFilter('reportTypes', val)}
           />
         </div>
-        <ActionButton
-          type="button"
-          size="md"
-          appearance="outlined"
-          onClick={() => setFilters({})}
-        >
-          <p className="text-xs">Reset Filters</p>
-        </ActionButton>
       </div>
 
-      {isError && (
-        <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded text-red-700 dark:text-red-300 text-sm">
-          Failed to load queues.{' '}
-          <button className="underline" onClick={() => refetch()}>
-            Retry
-          </button>
-        </div>
-      )}
-
-      <QueueList
-        queues={queues}
-        isLoading={isLoading}
-        fetchNextPage={fetchNextPage}
-        hasNextPage={hasNextPage}
-      />
+      {/* Queue list */}
+      <div className="w-full max-w-4xl">
+        {isError && (
+          <div className="mb-4 p-3 bg-red-50 dark:bg-red-900/20 rounded text-red-700 dark:text-red-300 text-sm">
+            Failed to load queues.{' '}
+            <button className="underline" onClick={() => refetch()}>
+              Retry
+            </button>
+          </div>
+        )}
+        <QueueList
+          queues={queues}
+          isLoading={isLoading}
+          fetchNextPage={fetchNextPage}
+          hasNextPage={hasNextPage}
+        />
+      </div>
     </div>
   )
 }
