@@ -41,6 +41,7 @@
       "@/email/*": ["components/email/*"],
       "@/scheduled-actions/*": ["components/scheduled-actions/*"],
       "@/queues/*": ["components/queues/*"],
+      "@/assignments/*": ["components/assignments/*"],
     }
   },
   "include": [
