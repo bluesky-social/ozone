@@ -1,5 +1,6 @@
 import { ActionButton } from '@/common/buttons'
-import { Input, Select } from '@/common/forms'
+import { CollectionAutocomplete } from '@/common/CollectionAutocomplete'
+import { Select } from '@/common/forms'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { PlusIcon } from '@heroicons/react/24/solid'
@@ -89,12 +90,11 @@ export function QueuesConfig() {
               <option value="record">record</option>
               <option value="message">message</option>
             </Select>
-            <Input
-              type="text"
-              className="min-w-[10rem] flex-1 text-sm"
+            <CollectionAutocomplete
+              className="min-w-[10rem] flex-1"
               placeholder="collection (e.g. app.bsky.feed.post)"
               value={collectionInput}
-              onChange={(e) => setCollectionInput(e.target.value)}
+              onChange={(val) => setCollectionInput(val)}
             />
           </>
         )}
