@@ -7,8 +7,11 @@ import { ActionButton } from '@/common/buttons'
 import { useQueueList, QueueListFilters } from '@/queues/useQueues'
 import { QueueFilters } from '@/queues/QueueFilters'
 import { QueueList } from '@/queues/QueueList'
+import { usePermission } from '@/shell/ConfigurationContext'
 
 export function QueuesPageContent() {
+  const canManageQueues = usePermission('canManageQueues')
+  
   useTitle('Queues')
 
   const [filters, setFilters] = useState<QueueListFilters>({})
@@ -24,7 +27,7 @@ export function QueuesPageContent() {
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Queues
         </h1>
-        <Link href="/configure?tab=queues">
+        <Link href="/configure?tab=queues" hidden={!canManageQueues}>
           <ActionButton size="sm" appearance="outlined">
             <WrenchScrewdriverIcon className="h-4 w-4 mr-1" />
             Configure
