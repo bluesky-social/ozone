@@ -123,7 +123,7 @@ export function ReportTypeMultiselect({
 
   return (
     <div>
-      <Combobox value={value} onChange={onChange} multiple>
+      <Combobox value={value} onChange={(vals) => onChange(vals.slice(0, 10))} multiple>
         <div className="relative">
           <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none sm:text-sm">
             <ComboboxInput
