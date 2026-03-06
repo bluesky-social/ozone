@@ -112,18 +112,30 @@ function OptionList({
 export function ReportTypeMultiselect({
   value,
   onChange,
+  limit = 25,
   'data-cy': dataCy,
 }: {
   value: string[]
   onChange: (values: string[]) => void
+  limit?: number
   'data-cy'?: string
 }) {
   const [query, setQuery] = useState('')
+  const [limitWarning, setLimitError] = useState(false)
   const grouped = useReasonTypeSearch(query)
+
+  const handleChange = (vals: string[]) => {
+    if (vals.length > limit) {
+      setLimitError(true)
+      return
+    }
+    setLimitError(false)
+    onChange(vals)
+  }
 
   return (
     <div>
-      <Combobox value={value} onChange={(vals) => onChange(vals.slice(0, 10))} multiple>
+      <Combobox value={value} onChange={handleChange} multiple>
         <div className="relative">
           <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none sm:text-sm">
             <ComboboxInput
@@ -158,6 +170,12 @@ export function ReportTypeMultiselect({
           </Transition>
         </div>
       </Combobox>
+
+      {limitWarning && (
+        <p className="opacity-40 text-xs mt-1">
+          Maximum of {limit} types allowed.
+        </p>
+      )}
 
       {value.length > 0 && (
         <div className="flex flex-wrap gap-1 mt-2">
