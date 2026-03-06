@@ -215,11 +215,7 @@ export function QueueForm({
         )}
       </FormLabel>
 
-      <FormLabel
-        label="Description"
-        htmlFor="description"
-        className="mb-3"
-      >
+      <FormLabel label="Description" htmlFor="description" className="mb-3">
         <Textarea
           id="description"
           name="description"

@@ -6,6 +6,7 @@ import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { QueueCard } from '@/queues/configure/QueueCard'
+import { ReasonBadge } from '@/reports/ReasonBadge'
 
 export function QueueList({
   queues,
