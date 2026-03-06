@@ -8,7 +8,7 @@ import { useDebounce } from 'react-use'
 import { QueueListFilters, useQueueList } from '../useQueues'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
 import { QueueForm } from './QueueForm'
-import { QueueList } from './QueueList'
+import { QueueConfigureList } from './QueueConfigureList'
 
 type PageState =
   | { mode: 'list' }
@@ -170,7 +170,7 @@ export function QueuesConfig() {
       )}
 
       {!showForm && (
-        <QueueList
+        <QueueConfigureList
           queues={queues}
           isLoading={isLoading}
           fetchNextPage={fetchNextPage}

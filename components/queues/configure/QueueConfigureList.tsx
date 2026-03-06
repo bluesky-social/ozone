@@ -1,14 +1,13 @@
-import { ToolsOzoneQueueDefs } from '@atproto/api'
-import { Card } from '@/common/Card'
 import { ActionButton } from '@/common/buttons'
-import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
+import { Card } from '@/common/Card'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
+import { QueueConfigureCard } from '@/queues/configure/QueueConfigureCard'
 import { usePermission } from '@/shell/ConfigurationContext'
-import { QueueCard } from '@/queues/configure/QueueCard'
-import { ReasonBadge } from '@/reports/ReasonBadge'
+import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
 
-export function QueueList({
+export function QueueConfigureList({
   queues,
   isLoading,
   fetchNextPage,
@@ -39,7 +38,7 @@ export function QueueList({
     <>
       <div className="space-y-3">
         {queues.map((queue) => (
-          <QueueCard
+          <QueueConfigureCard
             key={queue.id}
             queue={queue}
             actions={

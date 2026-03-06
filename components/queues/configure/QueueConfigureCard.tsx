@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 
-export function QueueCard({
+export function QueueConfigureCard({
   queue,
   actions,
 }: {
@@ -16,7 +16,8 @@ export function QueueCard({
     onlyActive: true,
     queueIds: [queue.id],
   })
-  const queueAssignments = assignments?.filter((a) => a.queue.id === queue.id) ?? []
+  const queueAssignments =
+    assignments?.filter((a) => a.queue.id === queue.id) ?? []
 
   return (
     <Card data-cy="queue-card" className="p-4">
@@ -80,8 +81,7 @@ export function QueueCard({
                 Actioned: <strong>{queue.stats.actionedCount}</strong>
               </span>
               <span>
-                Escalated:{' '}
-                <strong>{queue.stats.escalatedPendingCount}</strong>
+                Escalated: <strong>{queue.stats.escalatedPendingCount}</strong>
               </span>
             </div>
 
