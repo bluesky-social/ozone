@@ -12,7 +12,7 @@ export interface UserBadgeProps {
     | AppBskyActorDefs.ProfileViewDetailed
 }
 
-/** Display a user. Attempts to enrich with profile data. */
+/** Display a user. Attempts to enrich with profile data if not provided. */
 export function UserBadge({ did, profile: profileProp }: UserBadgeProps) {
   const labelerAgent = useLabelerAgent()
   const { data: fetchedProfile } = useQuery({
