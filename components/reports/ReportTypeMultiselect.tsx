@@ -112,7 +112,7 @@ function OptionList({
 export function ReportTypeMultiselect({
   value,
   onChange,
-  limit = 10,
+  limit = 25,
   'data-cy': dataCy,
 }: {
   value: string[]

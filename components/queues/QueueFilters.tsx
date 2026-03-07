@@ -83,6 +83,7 @@ export function QueueFilters({
         <div className="mt-1 flex-1">
           <ReportTypeMultiselect
             value={filters.reportTypes ?? []}
+            limit={10}
             onChange={(val) => updateFilter('reportTypes', val)}
           />
         </div>

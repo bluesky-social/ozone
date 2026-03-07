@@ -287,6 +287,7 @@ export function QueueForm({
           <FormLabel label="Report Type(s)" required className="mb-3">
             <ReportTypeMultiselect
               value={reportTypes}
+              limit={25}
               onChange={setReportTypes}
               data-cy="report-types-input"
             />
