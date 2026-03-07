@@ -8,18 +8,15 @@ import {
 } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
-  Agent,
-  AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
-  ToolsOzoneModerationQueryStatuses,
+  ToolsOzoneReportQueryReports,
 } from '@atproto/api'
 import { SectionHeader } from '../../components/SectionHeader'
 import { ModActionIcon } from '@/common/ModActionIcon'
-import { validSubjectString } from '@/lib/types'
 import { ModActionPanelQuick } from '../actions/ModActionPanel/QuickAction'
 import { ButtonGroup } from '@/common/buttons'
-import { SubjectTable } from 'components/subject/table'
+import { ReportTable } from 'components/reports/table'
 import { useTitle } from 'react-use'
 import { QueueSelector } from '@/reports/QueueSelector'
 import { unique } from '@/lib/util'
@@ -34,69 +31,38 @@ import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useQueueSetting } from 'components/setting/useQueueSetting'
 import QueueFilterPanel from '@/reports/QueueFilter/Panel'
+import { ReportStatuses } from '@/reports/constants'
 
 const TABS = [
   {
     key: 'unresolved',
     name: 'Unresolved',
-    href: `/reports?reviewState=${encodeURIComponent(
-      ToolsOzoneModerationDefs.REVIEWOPEN,
-    )}`,
+    href: `/reports?reviewState=${encodeURIComponent(ReportStatuses.OPEN)}`,
   },
   {
     key: 'escalated',
     name: 'Escalated',
-    href: `/reports?reviewState=${encodeURIComponent(
-      ToolsOzoneModerationDefs.REVIEWESCALATED,
-    )}`,
+    href: `/reports?reviewState=${encodeURIComponent(ReportStatuses.ESCALATED)}`,
   },
   {
-    key: 'resolved',
-    name: 'Resolved',
-    href: `/reports?reviewState=${encodeURIComponent(
-      ToolsOzoneModerationDefs.REVIEWCLOSED,
-    )}`,
+    key: 'closed',
+    name: 'Closed',
+    href: `/reports?reviewState=${encodeURIComponent(ReportStatuses.CLOSED)}`,
   },
   {
-    key: 'noreview',
-    name: 'No review',
-    href: `/reports?reviewState=${encodeURIComponent(
-      ToolsOzoneModerationDefs.REVIEWNONE,
-    )}`,
+    key: 'assigned',
+    name: 'Assigned',
+    href: `/reports?reviewState=${encodeURIComponent(ReportStatuses.ASSIGNED)}`,
   },
   { key: 'all', name: 'All', href: '/reports' },
 ]
 
-const buildPageTitle = ({
-  currentTab,
-  takendown,
-  includeMuted,
-  appealed,
-}: {
-  currentTab: string
-  takendown: boolean
-  includeMuted: boolean
-  appealed: string | null
-}) => {
+const buildPageTitle = ({ currentTab }: { currentTab: string }) => {
   const titleFromTab =
     currentTab === 'all'
       ? `All subjects`
       : `${currentTab[0].toUpperCase()}${currentTab.slice(1)}`
   const additionalFragments: string[] = []
-
-  if (takendown) {
-    additionalFragments.push('Taken Down')
-  }
-
-  if (includeMuted) {
-    additionalFragments.push('Include Muted')
-  }
-
-  if (appealed === 'true') {
-    additionalFragments.push('Only Appeals')
-  } else if (appealed === 'false') {
-    additionalFragments.push('No Appeals')
-  }
 
   const additionalTitle = additionalFragments.length
     ? ` (${additionalFragments.join(', ')})`
@@ -146,8 +112,8 @@ const ResolvedFilters = () => {
             includeMuted === 'true'
               ? 'Include Muted'
               : onlyMuted === 'true'
-              ? 'Only Muted'
-              : 'Mutes',
+                ? 'Only Muted'
+                : 'Mutes',
           onClick: () => {
             // setting a param to it's current value toggles it off
             // so we toggle off includeMuted and toggle on onlyMuted
@@ -167,8 +133,8 @@ const ResolvedFilters = () => {
             appealed === 'true'
               ? 'Only Appeals'
               : appealed === 'false'
-              ? 'No Appeals'
-              : 'Appeals',
+                ? 'No Appeals'
+                : 'Appeals',
           onClick: () => {
             if (appealed === 'true') {
               updateParams({ appealed: false })
@@ -194,16 +160,8 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
     sortDirection = 'desc'
   }
 
-  if (
-    ![
-      'lastReportedAt',
-      'lastReviewedAt',
-      'reportedRecordsCount',
-      'takendownRecordsCount',
-      'priorityScore',
-    ].includes(sortField ?? '')
-  ) {
-    sortField = 'lastReportedAt'
+  if (!['createdAt', 'updatedAt'].includes(sortField ?? '')) {
+    sortField = 'createdAt'
   }
 
   return { sortField, sortDirection }
@@ -213,9 +171,6 @@ export const ReportsPageContent = () => {
   const emitEvent = useEmitEvent()
   const params = useSearchParams()
   const quickOpenParam = params.get('quickOpen') ?? ''
-  const takendown = !!params.get('takendown')
-  const includeMuted = !!params.get('includeMuted')
-  const appealed = params.get('appealed')
   const reviewState = params.get('reviewState')
   const router = useRouter()
   const pathname = usePathname()
@@ -233,20 +188,12 @@ export const ReportsPageContent = () => {
   const { data, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
     useModerationQueueQuery()
 
-  const subjectStatuses =
-    data?.pages.flatMap((page) => page.subjectStatuses) ?? []
+  const reports = data?.pages.flatMap((page) => page.reports) ?? []
   const currentTab = getTabFromParams({ reviewState })
-  const subjectOptions = unique(
-    subjectStatuses.flatMap(
-      (report) => validSubjectString(report.subject) ?? [],
-    ),
-  )
+  const subjectOptions = unique(reports.map((report) => report.subject.subject))
 
   const pageTitle = buildPageTitle({
     currentTab,
-    takendown,
-    includeMuted,
-    appealed,
   })
   useTitle(pageTitle)
 
@@ -269,8 +216,8 @@ export const ReportsPageContent = () => {
         </div>
         <ResolvedFilters />
       </div>
-      <SubjectTable
-        subjectStatuses={subjectStatuses}
+      <ReportTable
+        reports={reports}
         showLoadMore={!!hasNextPage}
         onLoadMore={fetchNextPage}
         isInitialLoading={isInitialLoading}
@@ -315,37 +262,27 @@ function getTabFromParams({ reviewState }: { reviewState?: string | null }) {
 function useModerationQueueQuery() {
   const labelerAgent = useLabelerAgent()
   const params = useSearchParams()
-  const { setting: queueSetting } = useQueueSetting()
+  useQueueSetting()
 
   const takendown = !!params.get('takendown')
-  const includeMuted = !!params.get('includeMuted')
-  const onlyMuted = !!params.get('onlyMuted')
   const appealed = params.get('appealed')
-  const reviewState = params.get('reviewState')
   const tags = params.get('tags')
   const excludeTags = params.get('excludeTags')
   const queueName = params.get('queueName')
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
-  const hostingStatuses = params.get('hostingStatuses')
-  const minAccountSuspendCount = params.get('minAccountSuspendCount')
-  const minReportedRecordsCount = params.get('minReportedRecordsCount')
-  const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
-  const minPriorityScore = params.get('minPriorityScore')
-  const ageAssuranceState = params.get('ageAssuranceState')
+  const status = params.get('status')
   const { sortField, sortDirection } = getSortParams(params)
-  const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
-    useFluentReportSearchParams()
+  const { lastReviewedBy, subject, reporters } = useFluentReportSearchParams()
 
   return useInfiniteQuery({
     queryKey: [
       'events',
       {
-        includeAllUserRecords,
         subject,
         sortField,
         sortDirection,
-        reviewState,
+        status,
         lastReviewedBy,
         reporters,
         takendown,
@@ -353,30 +290,15 @@ function useModerationQueueQuery() {
         tags,
         excludeTags,
         queueName,
-        includeMuted,
-        onlyMuted,
         subjectType,
         collections,
-        minAccountSuspendCount,
-        minReportedRecordsCount,
-        minTakendownRecordsCount,
-        minPriorityScore,
-        ageAssuranceState,
-        hostingStatuses,
       },
     ],
     queryFn: async ({ pageParam }) => {
-      const queryParams: ToolsOzoneModerationQueryStatuses.QueryParams = {
+      const queryParams: ToolsOzoneReportQueryReports.QueryParams = {
         cursor: pageParam,
       }
 
-      if (includeAllUserRecords) {
-        queryParams.includeAllUserRecords = includeAllUserRecords
-      }
-
-      if (hostingStatuses) {
-        queryParams.hostingStatuses = hostingStatuses.split(',')
-      }
       if (subject) {
         queryParams.subject = subject
       } else {
@@ -392,112 +314,42 @@ function useModerationQueueQuery() {
         }
       }
 
-      if (takendown) {
-        queryParams.takendown = takendown
-      }
+      // if (appealed === 'true') {
+      //   queryParams.appealed = true
+      // } else if (appealed === 'false') {
+      //   queryParams.appealed = false
+      // }
 
-      if (includeMuted) {
-        queryParams.includeMuted = includeMuted
-      }
+      // @TODO: We probably need tag based filtering
+      // if (tags) {
+      //   queryParams.tags = tags.split(',')
+      // }
 
-      if (onlyMuted) {
-        queryParams.onlyMuted = onlyMuted
-      }
-
-      if (appealed === 'true') {
-        queryParams.appealed = true
-      } else if (appealed === 'false') {
-        queryParams.appealed = false
-      }
-
-      if (tags) {
-        queryParams.tags = tags.split(',')
-      }
-
-      if (excludeTags) {
-        queryParams.excludeTags = excludeTags.split(',')
-      }
-
-      if (minAccountSuspendCount) {
-        queryParams.minAccountSuspendCount = Number(minAccountSuspendCount)
-      }
-
-      if (minReportedRecordsCount) {
-        queryParams.minReportedRecordsCount = Number(minReportedRecordsCount)
-      }
-
-      if (minTakendownRecordsCount) {
-        queryParams.minTakendownRecordsCount = Number(minTakendownRecordsCount)
-      }
-
-      if (minPriorityScore) {
-        queryParams.minPriorityScore = Number(minPriorityScore)
-      }
-
-      if (ageAssuranceState) {
-        queryParams.ageAssuranceState = ageAssuranceState
-      }
+      // if (excludeTags) {
+      //   queryParams.excludeTags = excludeTags.split(',')
+      // }
 
       // For these fields, we only want to add them to the filter if the values are set, otherwise, defaults will kick in
       Object.entries({
         sortField,
         sortDirection,
-        reviewState,
-        lastReviewedBy,
+        status,
+        reviewedBy: lastReviewedBy,
       }).forEach(([key, value]) => {
         if (value) {
           queryParams[key] = value
         }
       })
 
-      const queueParams = queueSetting.data
-        ? {
-            queueNames: queueSetting.data.queueNames,
-            queueSeed: queueSetting.data.queueSeed.setting,
-          }
-        : undefined
+      const pageSize = 100
 
-      // When viewing escalated items, use the escalation queue names
-      // so that the modulus can be applied against the right number of queues
-      // when escalation queue count and triage queue counts are different
-      if (
-        queueParams?.queueNames &&
-        queryParams.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED &&
-        queueSetting.data?.escalationQueueNames
-      ) {
-        queueParams.queueNames = queueSetting.data.escalationQueueNames
-      }
+      const { data } = await labelerAgent.tools.ozone.report.queryReports({
+        limit: pageSize,
+        ...queryParams,
+      })
 
-      return getQueueItems(labelerAgent, queryParams, queueName, queueParams)
+      return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
-}
-
-const getQueueItems = async (
-  labelerAgent: Agent,
-  queryParams: ToolsOzoneModerationQueryStatuses.QueryParams,
-  queueName: string | null,
-  queueSetting?: { queueNames: string[]; queueSeed: string },
-) => {
-  const pageSize = 100
-
-  if (queueName && queueSetting?.queueNames.length) {
-    const queueIndex = queueSetting.queueNames.indexOf(queueName)
-    // Only apply queue filters if the user is looking at a queue that exists in the list of queues
-    if (queueIndex >= 0) {
-      queryParams.queueIndex = queueIndex
-      queryParams.queueCount = queueSetting.queueNames.length
-      if (queueSetting.queueSeed) {
-        queryParams.queueSeed = queueSetting.queueSeed
-      }
-    }
-  }
-  const { data } = await labelerAgent.tools.ozone.moderation.queryStatuses({
-    limit: pageSize,
-    includeMuted: true,
-    ...queryParams,
-  })
-
-  return data
 }

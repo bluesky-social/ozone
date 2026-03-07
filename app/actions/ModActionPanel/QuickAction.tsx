@@ -280,7 +280,6 @@ function Form(
                   isAuthorTakendown={
                     !!record?.repo.moderation.subjectStatus?.takendown
                   }
-                  className="border-2 border-dashed border-gray-300"
                 >
                   {!isSubjectDid && record?.repo && (
                     <div className="-ml-1 my-2">
@@ -542,10 +541,10 @@ function Form(
                             isMuteEvent
                               ? 'Mute duration'
                               : isLabelEvent
-                              ? 'Label duration'
-                              : isPriorityScoreEvent
-                              ? 'Score duration'
-                              : ''
+                                ? 'Label duration'
+                                : isPriorityScoreEvent
+                                  ? 'Score duration'
+                                  : ''
                           }
                         />
                       </FormLabel>
