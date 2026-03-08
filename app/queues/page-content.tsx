@@ -14,7 +14,9 @@ export function QueuesPageContent() {
   
   useTitle('Queues')
 
-  const [filters, setFilters] = useState<QueueListFilters>({})
+  const [filters, setFilters] = useState<QueueListFilters>({
+    enabled: true,
+  })
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
     useQueueList(filters)
