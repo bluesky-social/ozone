@@ -27,7 +27,7 @@ export function QueuesConfig() {
 
   // page state
   const [pageState, setPageState] = useState<PageState>({ mode: 'list' })
-  const showForm = pageState.mode === 'edit' || pageState.mode === 'create'
+  const showForm = pageState.mode === 'create' || pageState.mode === 'edit'
   const selectedQueue =
     pageState.mode === 'edit' || pageState.mode === 'delete'
       ? queues.find((q) => q.id === pageState.queueId)
