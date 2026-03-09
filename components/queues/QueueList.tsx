@@ -14,6 +14,7 @@ export function QueueList({
   hasNextPage,
   onEdit,
   onDelete,
+  hiddenFields,
 }: {
   queues: ToolsOzoneQueueDefs.QueueView[]
   isLoading: boolean
@@ -21,6 +22,7 @@ export function QueueList({
   hasNextPage?: boolean
   onEdit?: (queue: ToolsOzoneQueueDefs.QueueView) => void
   onDelete?: (queue: ToolsOzoneQueueDefs.QueueView) => void
+  hiddenFields?: (keyof ToolsOzoneQueueDefs.QueueView)[]
 }) {
   const canManage = usePermission('canManageQueues')
   const showActions = canManage && (onEdit || onDelete)
@@ -42,6 +44,7 @@ export function QueueList({
           <QueueCard
             key={queue.id}
             queue={queue}
+            hiddenFields={hiddenFields}
             actions={
               showActions ? (
                 <div className="flex flex-col">

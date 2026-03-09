@@ -59,6 +59,7 @@ export function QueuesPageContent() {
           isLoading={isLoading}
           fetchNextPage={fetchNextPage}
           hasNextPage={hasNextPage}
+          hiddenFields={['enabled']}
         />
       </div>
     </div>
