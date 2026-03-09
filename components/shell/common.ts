@@ -49,6 +49,7 @@ export type SidebarNavItem = {
 
 export const NAV_ITEMS: SidebarNavItem[] = [
   { name: 'Reports', href: '/reports', icon: 'reports' },
+  { name: 'Queues', href: '/queues', icon: 'queues' },
   { name: 'Events', href: '/events', icon: 'events' },
   { name: 'Repositories', href: '/repositories', icon: 'repositories' },
   {
