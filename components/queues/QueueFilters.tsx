@@ -10,10 +10,12 @@ export function QueueFilters({
   filters,
   onChange,
   children,
+  hiddenFilters,
 }: {
   filters: QueueListFilters
   onChange: (filters: QueueListFilters) => void
   children?: React.ReactNode
+  hiddenFilters?: (keyof QueueListFilters)[]
 }) {
   const updateFilter = <K extends keyof QueueListFilters>(
     key: K,
@@ -40,6 +42,7 @@ export function QueueFilters({
       <div className="flex flex-wrap gap-2">
         <Select
           className="h-fit text-xs"
+          hidden={hiddenFilters?.includes('enabled')}
           value={
             filters.enabled === undefined
               ? 'all'
@@ -62,6 +65,7 @@ export function QueueFilters({
         <Select
           className="h-fit text-xs"
           value={filters.subjectType ?? 'all'}
+          hidden={hiddenFilters?.includes('subjectType')}
           onChange={(e) => {
             const val = e.target.value
             updateFilter('subjectType', val === 'all' ? undefined : val)
@@ -72,15 +76,20 @@ export function QueueFilters({
           <option value="record">record</option>
           <option value="message">message</option>
         </Select>
-        <CollectionAutocomplete
-          className="min-w-[10rem] flex-1"
-          value={collectionInput}
-          onChange={(val) => setCollectionInput(val)}
-        />
+        <div hidden={hiddenFilters?.includes('collection')} className="flex-1">
+          <CollectionAutocomplete
+            className="min-w-[10rem]"
+            value={collectionInput}
+            onChange={(val) => setCollectionInput(val)}
+          />
+        </div>
         {children}
       </div>
       <div className="mb-6 flex gap-2">
-        <div className="mt-1 flex-1">
+        <div
+          className="mt-1 flex-1"
+          hidden={hiddenFilters?.includes('reportTypes')}
+        >
           <ReportTypeMultiselect
             value={filters.reportTypes ?? []}
             limit={10}

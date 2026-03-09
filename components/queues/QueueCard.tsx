@@ -17,8 +17,6 @@ export function QueueCard({
     onlyActive: true,
     queueIds: [queue.id],
   })
-  const queueAssignments =
-    assignments?.filter((a) => a.queue.id === queue.id) ?? []
 
   return (
     <Card data-cy="queue-card" className="relative px-4 py-3">
@@ -105,7 +103,7 @@ export function QueueCard({
             <div data-cy="queue-assignees">
               <QueueAssigneeStatus
                 queueId={queue.id}
-                assignments={queueAssignments}
+                assignments={assignments ?? []}
               />
             </div>
           </div>
