@@ -14,9 +14,7 @@ export function QueuesPageContent() {
   
   useTitle('Queues')
 
-  const [filters, setFilters] = useState<QueueListFilters>({
-    enabled: true,
-  })
+  const [filters, setFilters] = useState<QueueListFilters>({ enabled: true })
 
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
     useQueueList(filters)
@@ -39,7 +37,11 @@ export function QueuesPageContent() {
 
       {/* Filters */}
       <div className="w-full max-w-4xl mb-4">
-        <QueueFilters filters={filters} onChange={setFilters} />
+        <QueueFilters
+          filters={filters}
+          onChange={setFilters}
+          hiddenFilters={['enabled']}
+        />
       </div>
 
       {/* Queue list */}
