@@ -106,7 +106,7 @@ export const useLatestReport = () => {
   return useQuery({
     queryKey: ['queues', 'latestReport'],
     queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.queue.getLatest()
+      const { data } = await labelerAgent.tools.ozone.report.getLatestReport()
       return data.report
     },
   })
