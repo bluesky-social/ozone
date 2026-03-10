@@ -1,39 +1,57 @@
-import { Fragment, useEffect, useState } from 'react'
+import { ActionButton } from '@/common/buttons'
 import {
   Dialog,
+  DialogPanel,
+  DialogTitle,
   Transition,
   TransitionChild,
-  DialogTitle,
-  Description,
-  DialogPanel,
 } from '@headlessui/react'
-import { ActionButton } from '@/common/buttons'
+import { Fragment, useEffect, useRef, useState } from 'react'
 import { useLatestReport, useRouteReports } from '../useQueues'
 
 const MAX_RANGE = 5000
+
+type LogEntry = {
+  timestamp: Date
+  message: string
+  state?: 'info' | 'error'
+}
 
 export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
   const { data: latestReport } = useLatestReport()
   const routeReports = useRouteReports()
 
   // form
-  const [startReportId, setStartReportId] = useState<string>('')
-  const [endReportId, setEndReportId] = useState<string>('')
+  const [startReportId, setStartReportId] = useState<number | undefined>()
+  const [endReportId, setEndReportId] = useState<number | undefined>()
+
+  // logging
+  const [log, setLog] = useState<LogEntry[]>([])
+  const logEndRef = useRef<HTMLDivElement>(null)
+  const appendLog = (entry: LogEntry) => {
+    setLog((prev) => [...prev, entry])
+    setTimeout(() => {
+      logEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+    }, 0)
+  }
+
   useEffect(() => {
     // autofill last report ID
-    if (latestReport) {
+    if (latestReport && !endReportId) {
       const end = latestReport.id
       const start = Math.max(1, end - MAX_RANGE + 1)
-      setEndReportId(String(end))
-      setStartReportId(String(start))
+      setEndReportId(end)
+      setStartReportId(start)
     }
-  }, [latestReport])
-  const rangeExceeded = Number(endReportId) - Number(startReportId) >= MAX_RANGE
+  }, [latestReport, endReportId])
+  const rangeExceeded = (endReportId ?? 0) - (startReportId ?? 0) > MAX_RANGE
   const isDisabled =
     routeReports.isLoading ||
-    !startReportId ||
-    !endReportId ||
-    Number(startReportId) > Number(endReportId) ||
+    startReportId === undefined ||
+    endReportId === undefined ||
+    (startReportId !== undefined &&
+      endReportId !== undefined &&
+      startReportId > endReportId) ||
     rangeExceeded
 
   const handleRouteReports = () => {
@@ -42,7 +60,21 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
     if (!start || !end || start > end || end - start >= MAX_RANGE) return
     routeReports.mutate(
       { startReportId: start, endReportId: end },
-      { onSuccess: onClose },
+      {
+        onSuccess: () => {
+          appendLog({
+            timestamp: new Date(),
+            message: `Successfully routed reports ${start} - ${end}`,
+          })
+        },
+        onError: (error) => {
+          appendLog({
+            timestamp: new Date(),
+            message: `Failed to route reports ${start} - ${end}`,
+            state: 'error',
+          })
+        },
+      },
     )
   }
 
@@ -72,7 +104,7 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
               leaveFrom="opacity-100 scale-100"
               leaveTo="opacity-0 scale-95"
             >
-              <DialogPanel className="w-full max-w-lg transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl transition-all">
+              <DialogPanel className="w-full max-w-3xl transform overflow-hidden rounded-2xl bg-white dark:bg-slate-800 p-6 text-left align-middle shadow-xl transition-all">
                 <DialogTitle
                   as="h3"
                   className="text-lg font-medium leading-6 text-gray-900 dark:text-gray-50"
@@ -88,25 +120,25 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                 <div className="mt-3 flex items-end gap-3">
                   <div>
                     <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      Start Report ID
+                      Start ID
                     </label>
                     <input
                       type="number"
                       min={1}
                       value={startReportId}
-                      onChange={(e) => setStartReportId(e.target.value)}
+                      onChange={(e) => setStartReportId(Number(e.target.value))}
                       className="w-32 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                     />
                   </div>
                   <div>
                     <label className="block text-xs text-gray-500 dark:text-gray-400 mb-1">
-                      End Report ID
+                      End ID
                     </label>
                     <input
                       type="number"
                       min={1}
                       value={endReportId}
-                      onChange={(e) => setEndReportId(e.target.value)}
+                      onChange={(e) => setEndReportId(Number(e.target.value))}
                       className="w-32 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                     />
                   </div>
@@ -122,10 +154,38 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
 
                 {rangeExceeded && (
                   <p className="text-xs text-red-500 mt-2">
-                    Range must be less than {MAX_RANGE.toLocaleString()}{' '}
-                    reports.
+                    Only up to {MAX_RANGE.toLocaleString()} reports can be
+                    routed at a time.
                   </p>
                 )}
+
+                {/* log */}
+                <div className="mt-4 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+                  <div className="h-64 overflow-y-auto">
+                    {log.map((entry, i) => (
+                      <div
+                        key={i}
+                        className={`px-3 py-1.5 text-xs border-t border-gray-100 dark:border-gray-700 first:border-t-0 font-mono ${
+                          entry.state === 'error'
+                            ? 'text-red-500'
+                            : 'text-gray-700 dark:text-gray-300'
+                        }`}
+                      >
+                        <span className="text-gray-400 dark:text-gray-500">
+                          {entry.timestamp.toLocaleTimeString()}
+                        </span>{' '}
+                        {entry.message}
+                      </div>
+                    ))}
+                    <div ref={logEndRef} />
+                  </div>
+                </div>
+                <button
+                  className="mt-2 text-xs text-gray-500 dark:text-gray-400 hover:underline"
+                  onClick={() => setLog([])}
+                >
+                  Clear log
+                </button>
 
                 <div className="mt-4 flex flex-row justify-end">
                   <ActionButton appearance="outlined" onClick={onClose}>

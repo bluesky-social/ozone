@@ -121,17 +121,5 @@ export const useRouteReports = () => {
       const { data } = await labelerAgent.tools.ozone.queue.routeReports(input)
       return data
     },
-    onSuccess: (data) => {
-      toast.success(
-        `Routed reports: ${data.assigned} assigned, ${data.unmatched} unmatched`,
-      )
-    },
-    onError: (error) => {
-      if (error instanceof ToolsOzoneQueueRouteReports.OutOfRangeError) {
-        toast.error(error.message)
-      } else {
-        toast.error(`Failed to route reports: ${error?.['message']}`)
-      }
-    },
   })
 }
