@@ -170,14 +170,6 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                   >
                     {routeReports.isLoading ? 'Routing...' : 'Route'}
                   </ActionButton>
-                  <ActionButton
-                    size="sm"
-                    appearance="outlined"
-                    onClick={resetRange}
-                    disabled={!latestReport}
-                  >
-                    Reset
-                  </ActionButton>
                 </div>
 
                 {rangeExceeded && (
