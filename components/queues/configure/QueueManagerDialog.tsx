@@ -21,9 +21,18 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
   const { data: latestReport } = useLatestReport()
   const routeReports = useRouteReports()
 
-  // form
+  // form state
   const [startReportId, setStartReportId] = useState<number | undefined>()
   const [endReportId, setEndReportId] = useState<number | undefined>()
+  const rangeExceeded = (endReportId ?? 0) - (startReportId ?? 0) > MAX_RANGE
+  const isDisabled =
+    routeReports.isLoading ||
+    startReportId === undefined ||
+    endReportId === undefined ||
+    (startReportId !== undefined &&
+      endReportId !== undefined &&
+      startReportId > endReportId) ||
+    rangeExceeded
 
   // logging
   const [log, setLog] = useState<LogEntry[]>([])
@@ -35,29 +44,39 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
     }, 0)
   }
 
+  // autofill
+  const resetRange = () => {
+    if (!latestReport) return
+    const end = latestReport.id
+    const start = Math.max(1, end - MAX_RANGE + 1)
+    setEndReportId(end)
+    setStartReportId(start)
+  }
+  const shiftRange = () => {
+    if (!startReportId || !endReportId) return
+    const blockSize = MAX_RANGE
+    const newEnd = startReportId - 1
+    const newStart = Math.max(1, newEnd - blockSize + 1)
+    setEndReportId(newEnd)
+    setStartReportId(newStart)
+  }
   useEffect(() => {
     // autofill last report ID
-    if (latestReport && !endReportId) {
-      const end = latestReport.id
-      const start = Math.max(1, end - MAX_RANGE + 1)
-      setEndReportId(end)
-      setStartReportId(start)
+    if (endReportId === undefined) {
+      resetRange()
     }
   }, [latestReport, endReportId])
-  const rangeExceeded = (endReportId ?? 0) - (startReportId ?? 0) > MAX_RANGE
-  const isDisabled =
-    routeReports.isLoading ||
-    startReportId === undefined ||
-    endReportId === undefined ||
-    (startReportId !== undefined &&
-      endReportId !== undefined &&
-      startReportId > endReportId) ||
-    rangeExceeded
 
+  // submission
   const handleRouteReports = () => {
     const start = Number(startReportId)
     const end = Number(endReportId)
     if (!start || !end || start > end || end - start >= MAX_RANGE) return
+    appendLog({
+      timestamp: new Date(),
+      message: `Routing reports ${start} - ${end}...`,
+      state: 'info',
+    })
     routeReports.mutate(
       { startReportId: start, endReportId: end },
       {
@@ -66,6 +85,7 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
             timestamp: new Date(),
             message: `Successfully routed reports ${start} - ${end}`,
           })
+          if (start > 1) shiftRange()
         },
         onError: (error) => {
           appendLog({
@@ -148,7 +168,15 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                     onClick={handleRouteReports}
                     disabled={isDisabled}
                   >
-                    {routeReports.isLoading ? 'Routing...' : 'Re-route'}
+                    {routeReports.isLoading ? 'Routing...' : 'Route'}
+                  </ActionButton>
+                  <ActionButton
+                    size="sm"
+                    appearance="outlined"
+                    onClick={resetRange}
+                    disabled={!latestReport}
+                  >
+                    Reset
                   </ActionButton>
                 </div>
 
