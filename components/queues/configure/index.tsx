@@ -1,18 +1,20 @@
 import { ActionButton } from '@/common/buttons'
 import { usePermission } from '@/shell/ConfigurationContext'
-import { PlusIcon } from '@heroicons/react/24/solid'
+import { Cog6ToothIcon, PlusIcon } from '@heroicons/react/24/solid'
 import { useState } from 'react'
 import { QueueListFilters, useQueueList } from '../useQueues'
 import { QueueFilters } from '../QueueFilters'
 import { QueueList } from '../QueueList'
 import { QueueDeleteDialog } from './QueueDeleteDialog'
 import { QueueForm } from './QueueForm'
+import { QueueManagerDialog } from './QueueManagerDialog'
 
 type PageState =
   | { mode: 'list' }
   | { mode: 'create' }
   | { mode: 'edit'; queueId: number }
   | { mode: 'delete'; queueId: number }
+  | { mode: 'manage' }
 
 export function QueuesConfig() {
   const canManageQueues = usePermission('canManageQueues')
@@ -39,16 +41,27 @@ export function QueuesConfig() {
       {!showForm && (
         <QueueFilters filters={filters} onChange={setFilters}>
           {canManageQueues && (
-            <ActionButton
-              size="md"
-              appearance="primary"
-              data-cy="add-queue-button"
-              onClick={() => setPageState({ mode: 'create' })}
-              className="h-fit"
-            >
-              <PlusIcon className="h-3 w-3 mr-1" />
-              <span className="text-xs">Add Queue</span>
-            </ActionButton>
+            <div className="flex gap-2">
+              <ActionButton
+                size="md"
+                appearance="primary"
+                data-cy="add-queue-button"
+                onClick={() => setPageState({ mode: 'create' })}
+                className="h-fit"
+              >
+                <PlusIcon className="h-3 w-3 mr-1" />
+                <span className="text-xs">Add Queue</span>
+              </ActionButton>
+              <ActionButton
+                size="md"
+                appearance="outlined"
+                onClick={() => setPageState({ mode: 'manage' })}
+                className="h-fit"
+              >
+                <Cog6ToothIcon className="h-3 w-3 mr-1" />
+                <span className="text-xs">Manage</span>
+              </ActionButton>
+            </div>
           )}
         </QueueFilters>
       )}
@@ -113,6 +126,9 @@ export function QueuesConfig() {
           queues={queues}
           onClose={() => setPageState({ mode: 'list' })}
         />
+      )}
+      {pageState.mode === 'manage' && (
+        <QueueManagerDialog onClose={() => setPageState({ mode: 'list' })} />
       )}
     </div>
   )
