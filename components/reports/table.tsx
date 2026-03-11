@@ -335,9 +335,9 @@ function ReportRow({
             <div className="flex items-center flex-row">
               <dt>Assigned:</dt>
               <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
-                {(report.assignment.profile as any).handle ??
-                  (report.assignment.profile as any).displayName ??
-                  'moderator'}{' '}
+                {report.assignment.moderator?.profile?.handle ??
+                  report.assignment.moderator?.profile?.displayName ??
+                  report.assignment.did}{' '}
                 {formatDistanceToNow(
                   new Date(report.assignment.assignedAt),
                   { addSuffix: true },
@@ -475,10 +475,9 @@ function ReportRow({
           <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
             <span title={`Assigned ${new Date(report.assignment.assignedAt).toLocaleString()}`}>
               Assigned to{' '}
-              {(report.assignment.profile as any).handle ??
-                (report.assignment.profile as any).displayName ??
-                (report.assignment.profile as any).did ??
-                'moderator'}{' '}
+              {report.assignment.moderator?.profile?.handle ??
+                report.assignment.moderator?.profile?.displayName ??
+                report.assignment.did}{' '}
               {formatDistanceToNow(new Date(report.assignment.assignedAt), {
                 addSuffix: true,
               })}

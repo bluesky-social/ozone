@@ -200,6 +200,7 @@ function PostCard({
       item={{ post: data.thread.post }}
       isAuthorTakendown={isAuthorTakendown}
       isAuthorDeactivated={isAuthorDeactivated}
+      className='p-2 rounded-sm'
       controls={['like', 'repost', 'workspace']}
     />
   )
@@ -395,7 +396,7 @@ export const RepoCardView = ({
   const takendown = isRepoView && !!repo?.moderation.subjectStatus?.takendown
 
   return (
-    <div className="bg-white dark:bg-slate-800">
+    <div className="bg-white dark:bg-slate-800 p-2 rounded-sm">
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
           <ProfileAvatar
