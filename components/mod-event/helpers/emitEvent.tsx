@@ -441,6 +441,7 @@ const eventTexts = {
   [MOD_EVENTS.EMAIL]: 'emailed',
   [MOD_EVENTS.AGE_ASSURANCE]: 'age assurance updated',
   [MOD_EVENTS.AGE_ASSURANCE_OVERRIDE]: 'age assurance overridden',
+  [MOD_EVENTS.AGE_ASSURANCE_PURGE]: 'age assurance events purged',
   [MOD_EVENTS.REVERSE_TAKEDOWN]: 'reinstated',
 }
 
@@ -601,6 +602,10 @@ export const getEventFromFormData = (
     const access = String(formData.get('ageAssuranceAccess')) || undefined
 
     return { $type, comment, status: ageAssuranceState, access }
+  }
+
+  if ($type === MOD_EVENTS.AGE_ASSURANCE_PURGE) {
+    return { $type, comment }
   }
 
   if ($type === MOD_EVENTS.APPEAL) {
