@@ -14,7 +14,6 @@ import { MessageContext } from '@/dms/MessageContext'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { ItemTitle } from './ItemTitle'
-import { MOD_EVENTS } from './constants'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventViewWithDetails } from './useModEventList'
 import {

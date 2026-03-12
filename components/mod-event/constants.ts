@@ -25,8 +25,7 @@ export const MOD_EVENTS = {
   AGE_ASSURANCE: 'tools.ozone.moderation.defs#ageAssuranceEvent',
   AGE_ASSURANCE_OVERRIDE:
     'tools.ozone.moderation.defs#ageAssuranceOverrideEvent',
-  AGE_ASSURANCE_PURGE:
-    'tools.ozone.moderation.defs#ageAssurancePurgeEvent',
+  AGE_ASSURANCE_PURGE: 'tools.ozone.moderation.defs#ageAssurancePurgeEvent',
   REVOKE_ACCOUNT_CREDENTIALS:
     'tools.ozone.moderation.defs#revokeAccountCredentialsEvent',
   SCHEDULE_TAKEDOWN: 'tools.ozone.moderation.defs#scheduleTakedownEvent',

@@ -44,8 +44,8 @@ export const ItemTitle = ({
     eventTitle = isAppeal
       ? 'Appealed'
       : isMessageReport
-      ? 'Message Reported'
-      : 'Reported'
+        ? 'Message Reported'
+        : 'Reported'
   }
   if (ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event)) {
     eventColor = 'text-blue-400'
@@ -141,8 +141,8 @@ export const ItemTitle = ({
   const subjectStatus = modEvent.repo
     ? modEvent.repo.moderation.subjectStatus
     : modEvent.record
-    ? modEvent.record.moderation.subjectStatus
-    : undefined
+      ? modEvent.record.moderation.subjectStatus
+      : undefined
 
   return (
     <div className="text-gray-500 dark:text-gray-50 flex flex-row justify-between">

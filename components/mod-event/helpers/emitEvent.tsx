@@ -75,9 +75,8 @@ export function useEmitEvent() {
 
       // Define the actual emit event function to reuse
       const emitModerationEventAsync = async () => {
-        const { data } = await labelerAgent.tools.ozone.moderation.emitEvent(
-          vals,
-        )
+        const { data } =
+          await labelerAgent.tools.ozone.moderation.emitEvent(vals)
         return data
       }
 
