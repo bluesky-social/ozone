@@ -143,3 +143,35 @@ export const mockPolicyListResponse = (response: Record<string, any>) =>
       response,
     )
     .as('mockPolicyListResponse')
+
+export const mockListQueuesResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy
+    .intercept('GET', `${SERVER_URL}/tools.ozone.queue.listQueues*`, response)
+    .as('mockListQueuesResponse')
+
+export const mockCreateQueueResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy
+    .intercept('POST', `${SERVER_URL}/tools.ozone.queue.createQueue`, response)
+    .as('mockCreateQueueResponse')
+
+export const mockUpdateQueueResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy
+    .intercept('POST', `${SERVER_URL}/tools.ozone.queue.updateQueue`, response)
+    .as('mockUpdateQueueResponse')
+
+export const mockDeleteQueueResponse = (response: {
+  statusCode: number
+  body: Record<string, any>
+}) =>
+  cy
+    .intercept('POST', `${SERVER_URL}/tools.ozone.queue.deleteQueue`, response)
+    .as('mockDeleteQueueResponse')
