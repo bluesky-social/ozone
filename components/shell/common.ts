@@ -10,6 +10,8 @@ import {
   MagnifyingGlassIcon,
   CheckCircleIcon,
   ClockIcon,
+  InboxStackIcon,
+  DocumentTextIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -26,6 +28,8 @@ export const ICONS = {
   search: MagnifyingGlassIcon,
   verification: CheckCircleIcon,
   clock: ClockIcon,
+  queues: InboxStackIcon,
+  document: DocumentTextIcon,
 }
 
 export type SidebarNavItem = {

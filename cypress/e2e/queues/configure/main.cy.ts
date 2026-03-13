@@ -1,10 +1,9 @@
 /// <reference types="cypress" />
 
 import {
-  mockListQueuesResponse,
   mockCreateQueueResponse,
-  mockUpdateQueueResponse,
   mockDeleteQueueResponse,
+  mockListQueuesResponse,
 } from '../../../support/api'
 
 const BASE_URL = 'http://127.0.0.1:3000'

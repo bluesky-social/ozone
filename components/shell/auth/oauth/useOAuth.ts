@@ -153,9 +153,8 @@ export function useOAuth(options: UseOAuthOptions) {
         },
         async (err) => {
           if (clientForInitRef.current !== clientForInit) return
-          const { LoginContinuedInParentWindowError } = await import(
-            '@atproto/oauth-client-browser'
-          )
+          const { LoginContinuedInParentWindowError } =
+            await import('@atproto/oauth-client-browser')
           if (err instanceof LoginContinuedInParentWindowError) {
             setIsLoginPopup(true)
             return
