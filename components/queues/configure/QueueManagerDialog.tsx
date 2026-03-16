@@ -1,5 +1,4 @@
 import { ActionButton } from '@/common/buttons'
-import { HoldButton } from '@/common/HoldButton'
 import {
   Dialog,
   DialogPanel,
@@ -163,17 +162,17 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                       className="w-32 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
                     />
                   </div>
-                  <HoldButton
+                  <ActionButton
                     size="sm"
                     appearance="primary"
-                    onHoldComplete={handleRouteReports}
+                    onClick={handleRouteReports}
                     disabled={isDisabled}
                     className="w-32 text-center"
                   >
                     <p className="w-full text-center">
                       {routeReports.isLoading ? 'Routing...' : 'Route Block'}
                     </p>
-                  </HoldButton>
+                  </ActionButton>
                 </div>
 
                 {rangeExceeded && (
