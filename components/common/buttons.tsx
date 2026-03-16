@@ -1,4 +1,12 @@
-import { ComponentProps, forwardRef, Ref, ReactElement } from 'react'
+import {
+  ComponentProps,
+  forwardRef,
+  Ref,
+  ReactElement,
+  useCallback,
+  useRef,
+  useState,
+} from 'react'
 import Link from 'next/link'
 
 import { classNames } from '../../lib/util'
@@ -133,5 +141,84 @@ export const ButtonGroup = ({
         </button>
       ))}
     </span>
+  )
+}
+
+const holdAppearanceClassNames = {
+  outlined:
+    'bg-transparent dark:bg-slate-800 disabled:bg-gray-300 text-black dark:text-gray-50 border-gray-700 dark:border-slate-600',
+  primary:
+    'bg-indigo-600 dark:bg-teal-600 disabled:bg-gray-400 text-white border-transparent',
+  negative:
+    'bg-red-600 dark:bg-red-700 disabled:bg-gray-400 text-white border-transparent',
+}
+
+const holdFillClassNames = {
+  outlined: 'bg-gray-500/50 dark:bg-slate-400/40',
+  primary: 'bg-white/30 dark:bg-white/20',
+  negative: 'bg-white/30 dark:bg-white/20',
+}
+
+type HoldButtonProps = Omit<ComponentProps<'button'>, 'onClick'> & {
+  appearance?: 'outlined' | 'primary' | 'negative'
+  size?: ButtonSize
+  onHoldComplete?: () => void
+  holdDuration?: number
+}
+
+export function HoldButton({
+  className = '',
+  appearance = 'primary',
+  size = 'md',
+  onHoldComplete,
+  holdDuration = 1000,
+  disabled,
+  children,
+  ...others
+}: HoldButtonProps) {
+  const [holding, setHolding] = useState(false)
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  const clear = useCallback(() => {
+    setHolding(false)
+    if (timerRef.current) {
+      clearTimeout(timerRef.current)
+      timerRef.current = null
+    }
+  }, [])
+
+  const start = useCallback(() => {
+    if (disabled) return
+    setHolding(true)
+    timerRef.current = setTimeout(() => {
+      setHolding(false)
+      timerRef.current = null
+      onHoldComplete?.()
+    }, holdDuration)
+  }, [disabled, holdDuration, onHoldComplete])
+
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      className={`relative overflow-hidden inline-flex items-center justify-center rounded border font-medium shadow-sm focus:outline-none select-none ${appearanceClassNames[appearance]} ${sizeClassNames[size]} ${className}`}
+      onMouseDown={start}
+      onMouseUp={clear}
+      onMouseLeave={clear}
+      onTouchStart={start}
+      onTouchEnd={clear}
+      onTouchCancel={clear}
+      {...others}
+    >
+      <div
+        className={`absolute inset-y-0 left-0 ${holdFillClassNames[appearance]} ${holding ? 'w-full' : 'w-0'}`}
+        style={{
+          transition: holding
+            ? `width ${holdDuration}ms linear`
+            : 'width 150ms ease-out',
+        }}
+      />
+      <span className="relative z-10">{children}</span>
+    </button>
   )
 }
