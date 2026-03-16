@@ -58,10 +58,21 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useAuthDid } from '@/shell/AuthContext'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import { useAssignModerator } from 'components/reports/hooks'
+import { ReportActionsBar, ActivityTimeline } from 'components/reports/ReportActions'
 import { MemberView } from 'components/reports/MemberView'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { MOD_EVENTS } from '@/mod-event/constants'
 
 const FORM_ID = 'report-detail-action-panel'
 const ASSIGNMENT_POLL_INTERVAL = 30_000
+
+const REPORT_STATUS_EVENT_TYPES = new Set([
+  MOD_EVENTS.ACKNOWLEDGE,
+  MOD_EVENTS.TAKEDOWN,
+  MOD_EVENTS.LABEL,
+  MOD_EVENTS.COMMENT,
+  MOD_EVENTS.ESCALATE,
+])
 
 function findAdjacentReportsInCache(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -482,6 +493,32 @@ function ReportDetailLayout(props: {
   const { report, subject, setSubject, onSubmit, onCancel, assignment, viewers } = props
   const subjectOptions = [subject]
 
+  const [reportActionScope, setReportActionScope] = useState<'current' | 'all' | 'types'>('current')
+  const [reportActionTypes, setReportActionTypes] = useState<string[]>(
+    report.reportType ? [report.reportType] : [],
+  )
+  const [reportActionNote, setReportActionNote] = useState('')
+  const [showReportActionNote, setShowReportActionNote] = useState(false)
+  const [showActionForm, setShowActionForm] = useState(false)
+
+  const wrappedOnSubmit = async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+    const eventType = (vals.event as any)?.$type as string | undefined
+    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+      const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+      if (reportActionScope === 'current') {
+        reportAction.ids = [report.id]
+      } else if (reportActionScope === 'all') {
+        reportAction.all = true
+      } else if (reportActionTypes.length > 0) {
+        reportAction.types = reportActionTypes
+      }
+      if (reportActionNote) reportAction.note = reportActionNote
+      await onSubmit({ ...vals, reportAction })
+    } else {
+      await onSubmit(vals)
+    }
+  }
+
   const {
     submission,
     onFormSubmit,
@@ -540,11 +577,13 @@ function ReportDetailLayout(props: {
     setSelectedAgeAssuranceState,
   } = useQuickAction({
     onCancel,
-    onSubmit,
+    onSubmit: wrappedOnSubmit,
     subject,
     setSubject,
     subjectOptions,
   })
+
+  const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(modEventType)
 
   let emailTemplateLabel = `Template`
   if (recipientLanguages.languages.length > 1) {
@@ -741,6 +780,13 @@ function ReportDetailLayout(props: {
             </div>
           )}
 
+        <ReportActionsBar
+          report={report}
+          showActionForm={showActionForm}
+          onToggleActionForm={() => setShowActionForm((v) => !v)}
+        />
+
+        <div className={showActionForm ? '' : 'hidden'}>
         <form id={FORM_ID} onSubmit={onFormSubmit}>
           <div className="relative flex flex-row gap-3 items-center mb-2">
             <ModEventSelectorButton
@@ -937,6 +983,60 @@ function ReportDetailLayout(props: {
             </div>
           )}
 
+          {showReportAction && (
+            <div className="mt-2 mb-3 space-y-2">
+              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
+                Close reports
+              </p>
+              <Select
+                className="w-full"
+                value={reportActionScope}
+                onChange={(e) =>
+                  setReportActionScope(
+                    e.target.value as 'current' | 'all' | 'types',
+                  )
+                }
+              >
+                <option value="current">This report only</option>
+                <option value="all">All open reports on subject</option>
+                <option value="types">Reports of specific types</option>
+              </Select>
+              {reportActionScope === 'types' && (
+                <ReportTypeMultiselect
+                  value={reportActionTypes}
+                  onChange={setReportActionTypes}
+                />
+              )}
+              {showReportActionNote ? (
+                <div className="space-y-1">
+                  <Textarea
+                    placeholder="Note to reporter (optional)"
+                    className="block w-full"
+                    rows={2}
+                    autoFocus
+                    value={reportActionNote}
+                    onChange={(e) => setReportActionNote(e.target.value)}
+                  />
+                  <button
+                    type="button"
+                    className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                    onClick={() => { setShowReportActionNote(false); setReportActionNote('') }}
+                  >
+                    Remove note
+                  </button>
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  onClick={() => setShowReportActionNote(true)}
+                >
+                  + Add note to reporter
+                </button>
+              )}
+            </div>
+          )}
+
           {showAutomatedEmailComposer && (
             <EmailComposerFields
               defaultTemplate={
@@ -1059,6 +1159,9 @@ function ReportDetailLayout(props: {
             <EmailComposer did={subject} handleSubmit={handleEmailSubmit} />
           </div>
         )}
+        </div>
+
+        <ActivityTimeline reportId={report.id} />
       </div>
     </div>
 
