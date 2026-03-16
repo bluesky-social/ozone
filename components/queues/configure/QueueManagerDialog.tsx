@@ -100,7 +100,13 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
 
   return (
     <Transition appear show={true} as={Fragment}>
-      <Dialog as="div" className="relative z-10" onClose={onClose}>
+      <Dialog
+        as="div"
+        className="relative z-10"
+        onClose={() => {
+          // Disable dismissing via outside clicks
+        }}
+      >
         <TransitionChild
           as={Fragment}
           enter="ease-out duration-300"
@@ -132,7 +138,9 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                   Queue Manager
                 </DialogTitle>
                 <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
-                  Re-route unassigned reports in the specified range. Up to{' '}
+                  Route unassigned reports between a starting and ending ID. The
+                  most recent block of reports is selected first. The previous
+                  block will be autofilled after a block is routed. Up to{' '}
                   {MAX_RANGE.toLocaleString()} reports can be routed at a time.
                 </p>
 
@@ -170,7 +178,7 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                     className="w-32 text-center"
                   >
                     <p className="w-full text-center">
-                      {routeReports.isLoading ? 'Routing...' : 'Route Block'}
+                      {routeReports.isLoading ? 'Routing...' : 'Route'}
                     </p>
                   </ActionButton>
                 </div>
