@@ -45,12 +45,18 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
   }
 
   // autofill
+  const [highlighted, setHighlighted] = useState(false)
+  const flashFields = () => {
+    setHighlighted(true)
+    setTimeout(() => setHighlighted(false), 600)
+  }
   const resetRange = () => {
     if (!latestReport) return
     const end = latestReport.id
     const start = Math.max(1, end - MAX_RANGE + 1)
     setEndReportId(end)
     setStartReportId(start)
+    flashFields()
   }
   const shiftRange = () => {
     if (!startReportId || !endReportId) return
@@ -59,6 +65,7 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
     const newStart = Math.max(1, newEnd - blockSize + 1)
     setEndReportId(newEnd)
     setStartReportId(newStart)
+    flashFields()
   }
   useEffect(() => {
     // autofill last report ID
@@ -155,7 +162,7 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                       min={1}
                       value={startReportId}
                       onChange={(e) => setStartReportId(Number(e.target.value))}
-                      className="w-32 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                      className={`w-32 px-2 py-1 text-sm border rounded transition-colors duration-500 ${highlighted ? 'bg-slate-200 dark:bg-slate-600' : 'dark:bg-gray-700'} dark:border-gray-600 dark:text-gray-200`}
                     />
                   </div>
                   <div>
@@ -167,7 +174,7 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
                       min={1}
                       value={endReportId}
                       onChange={(e) => setEndReportId(Number(e.target.value))}
-                      className="w-32 px-2 py-1 text-sm border rounded dark:bg-gray-700 dark:border-gray-600 dark:text-gray-200"
+                      className={`w-32 px-2 py-1 text-sm border rounded transition-colors duration-500 ${highlighted ? 'bg-slate-200 dark:bg-slate-600' : 'dark:bg-gray-700'} dark:border-gray-600 dark:text-gray-200`}
                     />
                   </div>
                   <ActionButton
@@ -185,8 +192,8 @@ export function QueueManagerDialog({ onClose }: { onClose: () => void }) {
 
                 {rangeExceeded && (
                   <p className="text-xs text-red-500 mt-2">
-                    Only up to {MAX_RANGE.toLocaleString()} reports can be
-                    routed at a time.
+                    Up to {MAX_RANGE.toLocaleString()} reports can be routed at
+                    a time.
                   </p>
                 )}
 
