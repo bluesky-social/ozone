@@ -3,7 +3,8 @@
 import {
   mockCreateQueueResponse,
   mockDeleteQueueResponse,
-  mockListQueuesResponse
+  mockListQueuesResponse,
+  mockQueueGetAssignmentsResponse
 } from '../../../support/api'
 
 const BASE_URL = 'http://127.0.0.1:3000'
@@ -20,6 +21,10 @@ describe('Queue Management', () => {
       cy.fixture('queues.json').then((queues) => {
         spamQueue = queues.spamQueue
         hateSpeechQueue = queues.hateSpeechQueue
+        mockQueueGetAssignmentsResponse({
+          statusCode: 200,
+          body: { assignments: [] },
+        })
         cy.login(authFixture)
       })
     })
