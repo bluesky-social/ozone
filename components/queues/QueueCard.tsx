@@ -4,7 +4,7 @@ import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReactNode } from 'react'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
-import { UserBadge } from '@/common/profileStatus/UserBadge'
+import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 
 export function QueueCard({
   queue,
@@ -120,7 +120,7 @@ export function QueueCard({
             <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
               Created By
             </p>
-            <UserBadge did={queue.createdBy} />
+            <ModeratorBadge did={queue.createdBy} />
           </div>
           <div className="w-fit flex flex-col gap-1">
             <p className="text-xs text-gray-400 dark:text-gray-500">Assigned</p>

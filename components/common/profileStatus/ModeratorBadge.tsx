@@ -4,7 +4,7 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { AppBskyActorDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
 
-export interface UserBadgeProps {
+export interface ModeratorBadgeProps {
   did: string
   profile?:
     | AppBskyActorDefs.ProfileView
@@ -13,7 +13,7 @@ export interface UserBadgeProps {
 }
 
 /** Display a user. Attempts to enrich with profile data if not provided. */
-export function UserBadge({ did, profile: profileProp }: UserBadgeProps) {
+export function ModeratorBadge({ did, profile: profileProp }: ModeratorBadgeProps) {
   const labelerAgent = useLabelerAgent()
   const { data: fetchedProfile } = useQuery({
     queryKey: ['user', did],
