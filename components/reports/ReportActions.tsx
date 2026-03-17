@@ -8,7 +8,6 @@ import {
   ChevronUpIcon,
   ArrowRightIcon,
   CpuChipIcon,
-  XMarkIcon,
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
 import { ToolsOzoneReportDefs } from '@atproto/api'
@@ -51,10 +50,10 @@ function StatusChip({ status }: { status: string }) {
 // ── Transition action config ────────────────────────────────────────────────
 type ActionType = 'escalate' | 'reopen' | 'no-action'
 
-const ACTION_CONFIG: Record<ActionType, { toState: string; label: string; confirmLabel: string }> = {
-  escalate: { toState: 'escalated', label: 'Escalate', confirmLabel: 'Escalate report' },
-  reopen: { toState: 'open', label: 'Re-open', confirmLabel: 'Re-open report' },
-  'no-action': { toState: 'closed', label: 'No-action', confirmLabel: 'Close as no-action' },
+const ACTION_CONFIG: Record<ActionType, { activityType: string; label: string; confirmLabel: string }> = {
+  escalate: { activityType: 'tools.ozone.report.defs#escalationActivity', label: 'Escalate', confirmLabel: 'Escalate report' },
+  reopen: { activityType: 'tools.ozone.report.defs#reopenActivity', label: 'Re-open', confirmLabel: 'Re-open report' },
+  'no-action': { activityType: 'tools.ozone.report.defs#closeActivity', label: 'No-action', confirmLabel: 'Close as no-action' },
 }
 
 // ── Inline transition confirm panel ────────────────────────────────────────
@@ -69,11 +68,15 @@ function TransitionConfirmPanel({
 }) {
   const [note, setNote] = useState('')
   const createActivity = useCreateActivity()
-  const { toState, confirmLabel } = ACTION_CONFIG[action]
+  const { activityType, confirmLabel } = ACTION_CONFIG[action]
 
   const handleConfirm = () => {
     createActivity.mutate(
-      { reportId, action: 'status_change', toState, note: note.trim() || undefined },
+      {
+        reportId,
+        activity: { $type: activityType as Parameters<typeof createActivity.mutate>[0]['activity']['$type'] },
+        internalNote: note.trim() || undefined,
+      },
       { onSuccess: onDone },
     )
   }
@@ -111,14 +114,31 @@ function TransitionConfirmPanel({
 }
 
 // ── Standalone note composer ────────────────────────────────────────────────
-function NoteComposer({ reportId, onDone }: { reportId: number; onDone: () => void }) {
+function NoteComposer({
+  reportId,
+  noteType,
+  onDone,
+}: {
+  reportId: number
+  noteType: 'internal' | 'public'
+  onDone: () => void
+}) {
   const [text, setText] = useState('')
   const createActivity = useCreateActivity()
 
   const handleSubmit = () => {
     if (!text.trim()) return
+    const isInternal = noteType === 'internal'
     createActivity.mutate(
-      { reportId, action: 'note', note: text.trim() },
+      {
+        reportId,
+        activity: {
+          $type: isInternal
+            ? 'tools.ozone.report.defs#internalNoteActivity'
+            : 'tools.ozone.report.defs#publicNoteActivity',
+        },
+        ...(isInternal ? { internalNote: text.trim() } : { publicNote: text.trim() }),
+      },
       { onSuccess: () => { setText(''); onDone() } },
     )
   }
@@ -127,7 +147,7 @@ function NoteComposer({ reportId, onDone }: { reportId: number; onDone: () => vo
     <div className="mt-2 space-y-1.5">
       <Textarea
         rows={2}
-        placeholder="Add a note…"
+        placeholder={noteType === 'internal' ? 'Internal note (moderators only)…' : 'Public note (visible to reporter)…'}
         className="block w-full text-xs"
         autoFocus
         value={text}
@@ -147,7 +167,7 @@ function NoteComposer({ reportId, onDone }: { reportId: number; onDone: () => vo
           disabled={createActivity.isPending || !text.trim()}
           onClick={handleSubmit}
         >
-          Save note
+          Save {noteType} note
         </ActionButton>
       </div>
     </div>
@@ -165,7 +185,7 @@ export function ReportActionsBar({
   onToggleActionForm: () => void
 }) {
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
-  const [showNote, setShowNote] = useState(false)
+  const [showNote, setShowNote] = useState<'internal' | 'public' | false>(false)
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
@@ -178,9 +198,9 @@ export function ReportActionsBar({
     setPendingAction((prev) => (prev === action ? null : action))
   }
 
-  const handleNoteClick = () => {
+  const handleNoteClick = (type: 'internal' | 'public') => {
     setPendingAction(null)
-    setShowNote((v) => !v)
+    setShowNote((v) => (v === type ? false : type))
   }
 
   return (
@@ -230,13 +250,21 @@ export function ReportActionsBar({
 
         <button
           type="button"
-          className="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-          onClick={handleNoteClick}
+          className={`inline-flex items-center gap-1 text-xs px-1 ${showNote === 'internal' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+          onClick={() => handleNoteClick('internal')}
+          title="Internal note (moderators only)"
         >
-          {showNote
-            ? <><XMarkIcon className="h-3.5 w-3.5" />Cancel note</>
-            : <><ChatBubbleLeftIcon className="h-3.5 w-3.5" />Add note</>
-          }
+          <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
+          Note
+        </button>
+        <button
+          type="button"
+          className={`inline-flex items-center gap-1 text-xs px-1 ${showNote === 'public' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+          onClick={() => handleNoteClick('public')}
+          title="Public note (visible to reporter)"
+        >
+          <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
+          Public
         </button>
       </div>
 
@@ -249,26 +277,44 @@ export function ReportActionsBar({
       )}
 
       {showNote && !pendingAction && (
-        <NoteComposer reportId={report.id} onDone={() => setShowNote(false)} />
+        <NoteComposer reportId={report.id} noteType={showNote} onDone={() => setShowNote(false)} />
       )}
     </div>
   )
 }
 
+// Maps activity $type to the implied new status for state-change activities
+const ACTIVITY_TO_STATUS: Record<string, string> = {
+  'tools.ozone.report.defs#queueActivity': 'queued',
+  'tools.ozone.report.defs#assignmentActivity': 'assigned',
+  'tools.ozone.report.defs#escalationActivity': 'escalated',
+  'tools.ozone.report.defs#closeActivity': 'closed',
+  'tools.ozone.report.defs#reopenActivity': 'open',
+}
+
+type ActivityPayload = { $type: string; previousStatus?: string }
+
 // ── Activity Timeline ───────────────────────────────────────────────────────
 function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActivityView }) {
-  const isStatusChange = activity.action === 'status_change'
+  const payload = (activity as unknown as { activity: ActivityPayload }).activity
+  const activityType = payload?.$type ?? ''
+  const toStatus = ACTIVITY_TO_STATUS[activityType]
+  const isStateChange = !!toStatus
+  const isPublicNote = activityType === 'tools.ozone.report.defs#publicNoteActivity'
+  const noteText = isPublicNote
+    ? (activity as unknown as { publicNote?: string }).publicNote
+    : (activity as unknown as { internalNote?: string }).internalNote
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })
 
   return (
     <div className="relative flex gap-3">
       <div className="flex flex-col items-center">
         <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-          isStatusChange
+          isStateChange
             ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
             : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
         }`}>
-          {isStatusChange
+          {isStateChange
             ? <ArrowRightIcon className="h-3.5 w-3.5" />
             : <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
           }
@@ -277,15 +323,21 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
 
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {isStatusChange && activity.fromState && activity.toState && (
+          {isStateChange && (
             <>
-              <StatusChip status={activity.fromState} />
-              <ArrowRightIcon className="h-3 w-3 text-gray-400 shrink-0" />
-              <StatusChip status={activity.toState} />
+              {payload.previousStatus && (
+                <>
+                  <StatusChip status={payload.previousStatus} />
+                  <ArrowRightIcon className="h-3 w-3 text-gray-400 shrink-0" />
+                </>
+              )}
+              <StatusChip status={toStatus} />
             </>
           )}
-          {!isStatusChange && (
-            <span className="text-gray-500 dark:text-gray-400 font-medium">Note</span>
+          {!isStateChange && (
+            <span className="text-gray-500 dark:text-gray-400 font-medium">
+              {isPublicNote ? 'Public note' : 'Note'}
+            </span>
           )}
           {activity.isAutomated && (
             <span className="inline-flex items-center gap-0.5 rounded bg-slate-200 dark:bg-slate-700 px-1.5 py-0.5 text-[10px] text-slate-500 dark:text-slate-400">
@@ -295,9 +347,9 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
           )}
         </div>
 
-        {activity.note && (
+        {noteText && (
           <p className="mt-0.5 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
-            {activity.note}
+            {noteText}
           </p>
         )}
 

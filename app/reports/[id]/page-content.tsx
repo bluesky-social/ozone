@@ -429,7 +429,7 @@ export function ReportDetailPageContent() {
         <ActionButton
           size="xs"
           appearance="primary"
-          onClick={() => router.push('/reports')}
+          onClick={() => router.push('/reports/beta')}
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
           Reports

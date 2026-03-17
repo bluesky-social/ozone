@@ -38,12 +38,19 @@ export function useCreateActivity(options?: {
   return useMutation({
     mutationFn: async (input: {
       reportId: number
-      action: 'status_change' | 'note'
-      toState?: string
-      note?: string
-      updateStatus?: boolean
+      activity:
+        | { $type: 'tools.ozone.report.defs#queueActivity' }
+        | { $type: 'tools.ozone.report.defs#assignmentActivity' }
+        | { $type: 'tools.ozone.report.defs#escalationActivity' }
+        | { $type: 'tools.ozone.report.defs#closeActivity' }
+        | { $type: 'tools.ozone.report.defs#reopenActivity' }
+        | { $type: 'tools.ozone.report.defs#internalNoteActivity' }
+        | { $type: 'tools.ozone.report.defs#publicNoteActivity' }
+      internalNote?: string
+      publicNote?: string
+      isAutomated?: boolean
     }) => {
-      const { data } = await labelerAgent.tools.ozone.report.createActivity(input)
+      const { data } = await labelerAgent.tools.ozone.report.createActivity(input as Parameters<typeof labelerAgent.tools.ozone.report.createActivity>[0])
       return data.activity
     },
     onSuccess: (data) => {
