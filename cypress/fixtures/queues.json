@@ -1,0 +1,37 @@
+{
+  "spamQueue": {
+    "id": 1,
+    "name": "Spam Queue",
+    "description": "Handles spam and misleading content reports",
+    "subjectTypes": ["account"],
+    "reportTypes": ["tools.ozone.report.defs#reasonMisleadingSpam"],
+    "createdBy": "did:plc:tfeay256xpz3vf5v5d3cxykt",
+    "createdAt": "2026-03-02T15:49:30.681Z",
+    "updatedAt": "2026-03-02T15:49:30.681Z",
+    "enabled": true,
+    "stats": {
+      "pendingCount": 5,
+      "actionedCount": 10,
+      "escalatedPendingCount": 0,
+      "lastUpdated": "2026-03-02T15:49:30.681Z"
+    }
+  },
+  "hateSpeechQueue": {
+    "id": 2,
+    "name": "Hate Speech Queue",
+    "description": "Handles hate speech and harassment reports on posts",
+    "enabled": false,
+    "subjectTypes": ["record"],
+    "collection": "app.bsky.feed.post",
+    "reportTypes": ["tools.ozone.report.defs#reasonHarassmentHateSpeech"],
+    "createdBy": "did:plc:tfeay256xpz3vf5v5d3cxykt",
+    "createdAt": "2026-03-02T15:49:30.681Z",
+    "updatedAt": "2026-03-02T15:49:30.681Z",
+    "stats": {
+      "pendingCount": 12,
+      "actionedCount": 45,
+      "escalatedPendingCount": 3,
+      "lastUpdated": "2026-03-02T15:49:30.681Z"
+    }
+  }
+}
