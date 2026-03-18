@@ -132,11 +132,7 @@ function NoteComposer({
     createActivity.mutate(
       {
         reportId,
-        activity: {
-          $type: isInternal
-            ? 'tools.ozone.report.defs#internalNoteActivity'
-            : 'tools.ozone.report.defs#publicNoteActivity',
-        },
+        activity: { $type: 'tools.ozone.report.defs#noteActivity' },
         ...(isInternal ? { internalNote: text.trim() } : { publicNote: text.trim() }),
       },
       { onSuccess: () => { setText(''); onDone() } },
@@ -300,11 +296,13 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
   const activityType = payload?.$type ?? ''
   const toStatus = ACTIVITY_TO_STATUS[activityType]
   const isStateChange = !!toStatus
-  const isPublicNote = activityType === 'tools.ozone.report.defs#publicNoteActivity'
-  const noteText = isPublicNote
-    ? (activity as unknown as { publicNote?: string }).publicNote
-    : (activity as unknown as { internalNote?: string }).internalNote
+  const internalNote = (activity as unknown as { internalNote?: string }).internalNote
+  const publicNote = (activity as unknown as { publicNote?: string }).publicNote
+  const isPublicNote = !internalNote && !!publicNote
+  const noteText = publicNote ?? internalNote
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })
+  const moderator = (activity as unknown as { moderator?: { profile?: { handle?: string; displayName?: string } } }).moderator
+  const displayName = moderator?.profile?.handle || activity.createdBy
 
   return (
     <div className="relative flex gap-3">
@@ -359,7 +357,7 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
             className="font-mono hover:text-blue-500 truncate max-w-[180px]"
             title={activity.createdBy}
           >
-            {activity.createdBy}
+            {displayName}
           </a>
           <span>·</span>
           <span>{timeAgo}</span>

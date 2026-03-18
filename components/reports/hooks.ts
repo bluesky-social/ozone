@@ -44,8 +44,7 @@ export function useCreateActivity(options?: {
         | { $type: 'tools.ozone.report.defs#escalationActivity' }
         | { $type: 'tools.ozone.report.defs#closeActivity' }
         | { $type: 'tools.ozone.report.defs#reopenActivity' }
-        | { $type: 'tools.ozone.report.defs#internalNoteActivity' }
-        | { $type: 'tools.ozone.report.defs#publicNoteActivity' }
+        | { $type: 'tools.ozone.report.defs#noteActivity' }
       internalNote?: string
       publicNote?: string
       isAutomated?: boolean
