@@ -58,10 +58,11 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useAuthDid } from '@/shell/AuthContext'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import { useAssignModerator } from 'components/reports/hooks'
-import { ReportActionsBar, ActivityTimeline } from 'components/reports/ReportActions'
+import { ReportActionsBar, ActivityTimeline, ReportActionType } from 'components/reports/ReportActions'
 import { MemberView } from 'components/reports/MemberView'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { ActionForm } from '@/reports/ModerationForm/ActionForm'
 
 const FORM_ID = 'report-detail-action-panel'
 const ASSIGNMENT_POLL_INTERVAL = 30_000
@@ -499,7 +500,7 @@ function ReportDetailLayout(props: {
   )
   const [reportActionNote, setReportActionNote] = useState('')
   const [showReportActionNote, setShowReportActionNote] = useState(false)
-  const [showActionForm, setShowActionForm] = useState(false)
+  const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
 
   const wrappedOnSubmit = async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
     const eventType = (vals.event as any)?.$type as string | undefined
@@ -514,10 +515,24 @@ function ReportDetailLayout(props: {
       }
       if (reportActionNote) reportAction.note = reportActionNote
       await onSubmit({ ...vals, reportAction })
+      setSelectedAction(null) // Reset after successful submission
     } else {
       await onSubmit(vals)
     }
   }
+
+  const handleCancelAction = () => {
+    setSelectedAction(null)
+  }
+
+  // Sync selectedAction with modEventType
+  useEffect(() => {
+    if (selectedAction === 'label') {
+      setModEventType(MOD_EVENTS.LABEL)
+    } else if (selectedAction === 'takedown') {
+      setModEventType(MOD_EVENTS.TAKEDOWN)
+    }
+  }, [selectedAction])
 
   const {
     submission,
@@ -782,24 +797,19 @@ function ReportDetailLayout(props: {
 
         <ReportActionsBar
           report={report}
-          showActionForm={showActionForm}
-          onToggleActionForm={() => setShowActionForm((v) => !v)}
+          selectedAction={selectedAction}
+          onActionSelect={setSelectedAction}
         />
 
-        <div className={showActionForm ? '' : 'hidden'}>
+        <div className={selectedAction ? '' : 'hidden'}>
         <form id={FORM_ID} onSubmit={onFormSubmit}>
-          <div className="relative flex flex-row gap-3 items-center mb-2">
-            <ModEventSelectorButton
-              isSubjectDid={isSubjectDid}
-              subjectStatus={subjectStatus}
-              selectedAction={modEventType}
-              hasBlobs={!!record?.blobs?.length}
-              setSelectedAction={(action) => setModEventType(action)}
-            />
+          <div className="relative flex flex-row gap-3 items-center mb-3">
+            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800">
+              <span className="text-sm font-medium text-teal-700 dark:text-teal-300">
+                {selectedAction === 'label' ? 'Label' : selectedAction === 'takedown' ? 'Takedown' : 'Action'}
+              </span>
+            </div>
             <ModEventDetailsPopover modEventType={modEventType} />
-            {isSubjectDid && profile && (
-              <VerificationActionButton did={subject} profile={profile} />
-            )}
           </div>
 
           {isTakedownEvent && (
@@ -1137,7 +1147,7 @@ function ReportDetailLayout(props: {
               <ButtonSecondary
                 className="px-4"
                 disabled={submission.isSubmitting}
-                onClick={onCancel}
+                onClick={handleCancelAction}
               >
                 Cancel
               </ButtonSecondary>

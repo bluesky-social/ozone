@@ -14,7 +14,10 @@ import { ToolsOzoneReportDefs } from '@atproto/api'
 import { formatDistanceToNow } from 'date-fns'
 import { ActionButton } from '@/common/buttons'
 import { Textarea } from '@/common/forms'
+import { Dropdown } from '@/common/Dropdown'
 import { useCreateActivity, useListActivities } from './hooks'
+
+export type ReportActionType = 'label' | 'takedown' | null
 
 // Mirror of backend VALID_TRANSITIONS in packages/ozone/src/report/activity.ts
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -173,12 +176,12 @@ function NoteComposer({
 // ── Report Actions Bar ──────────────────────────────────────────────────────
 export function ReportActionsBar({
   report,
-  showActionForm,
-  onToggleActionForm,
+  selectedAction,
+  onActionSelect,
 }: {
   report: ToolsOzoneReportDefs.ReportView
-  showActionForm: boolean
-  onToggleActionForm: () => void
+  selectedAction: ReportActionType
+  onActionSelect: (action: ReportActionType) => void
 }) {
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState<'internal' | 'public' | false>(false)
@@ -198,6 +201,16 @@ export function ReportActionsBar({
     setPendingAction(null)
     setShowNote((v) => (v === type ? false : type))
   }
+
+  const handleReportActionSelect = (action: ReportActionType) => {
+    setPendingAction(null)
+    setShowNote(false)
+    onActionSelect(action)
+  }
+
+  const actionButtonText = selectedAction
+    ? selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1)
+    : 'Action'
 
   return (
     <div className="mb-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900 px-3 py-2">
@@ -223,13 +236,26 @@ export function ReportActionsBar({
           </ActionButton>
         )}
         {canAction && (
-          <ActionButton
-            appearance={showActionForm ? 'primary' : 'outlined'}
-            size="sm"
-            onClick={onToggleActionForm}
+          <Dropdown
+            items={[
+              {
+                text: 'Label',
+                onClick: () => handleReportActionSelect('label'),
+              },
+              {
+                text: 'Takedown',
+                onClick: () => handleReportActionSelect('takedown'),
+              },
+            ]}
+            className={`inline-flex justify-center items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm ${
+              selectedAction
+                ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300'
+                : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-slate-700'
+            }`}
           >
-            Action
-          </ActionButton>
+            {actionButtonText}
+            <ChevronDownIcon className="h-4 w-4" />
+          </Dropdown>
         )}
         {canReopen && (
           <ActionButton
