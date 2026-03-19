@@ -100,13 +100,17 @@ export function QueueCard({
           <p className="text-xs text-gray-400 dark:text-gray-500">Stats</p>
           <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
             <span>
+              <strong>{queue.stats.inboundCount}</strong> inbound
+            </span>
+            <span>
               <strong>{queue.stats.pendingCount}</strong> pending
             </span>
             <span>
-              <strong>{queue.stats.actionedCount}</strong> actioned
+              <strong>{queue.stats.escalatedPendingCount}</strong> escalated
             </span>
             <span>
-              <strong>{queue.stats.escalatedPendingCount}</strong> escalated
+              <strong>{queue.stats.actionedCount}</strong> actioned (
+              {queue.stats.actionRate}%)
             </span>
           </div>
         </div>
