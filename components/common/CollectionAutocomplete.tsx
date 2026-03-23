@@ -77,7 +77,9 @@ export function CollectionAutocomplete({
                 const typed = e.target.value
                 onChange?.(typed || undefined)
               }}
-              placeholder={placeholder}
+              placeholder={
+                placeholder ?? 'collection (e.g. app.bsky.feed.post)'
+              }
               autoComplete="off"
             />
             <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">
@@ -122,11 +124,10 @@ export function CollectionAutocomplete({
           </Transition>
         </div>
       </Combobox>
-      {nsidError && (
-        <p className="text-amber-500 dark:text-amber-400 text-xs mt-1">
-          {nsidError}
-        </p>
-      )}
+      <p className="text-amber-500 dark:text-amber-400 text-xs mt-1">
+        {/* show a space so this element maintains its height */}
+        {nsidError ?? '\u00A0'}
+      </p>
     </div>
   )
 }
