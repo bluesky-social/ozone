@@ -5,6 +5,7 @@ import { useTitle } from 'react-use'
 import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
 import { ActionButton } from '@/common/buttons'
 import { useQueueList, QueueListFilters } from '@/queues/useQueues'
+import { QueueStats } from '@/queues/QueueStats'
 import { QueueFilters } from '@/queues/QueueFilters'
 import { QueueList } from '@/queues/QueueList'
 import { usePermission } from '@/shell/ConfigurationContext'
@@ -36,12 +37,17 @@ export function QueuesPageContent() {
       </div>
 
       {/* Filters */}
-      <div className="w-full max-w-4xl mb-4">
+      <div className="w-full max-w-4xl">
         <QueueFilters
           filters={filters}
           onChange={setFilters}
           hiddenFilters={['enabled']}
         />
+      </div>
+
+      {/* Stats */}
+      <div className="w-full max-w-4xl mb-4">
+        <QueueStats />
       </div>
 
       {/* Queue list */}

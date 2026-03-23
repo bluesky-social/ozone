@@ -42,86 +42,80 @@ export function QueueCard({
               {queue.enabled ? 'Enabled' : 'Disabled'}
             </span>
           </div>
-          <div className="flex flex-col gap-1">
-            <p
-              className="text-xs text-gray-400 dark:text-gray-500"
-              hidden={hiddenFields?.includes('subjectTypes')}
-            >
-              Subject Types
-            </p>
-            <div
-              className="flex items-center gap-1"
-              hidden={hiddenFields?.includes('subjectTypes')}
-            >
-              {queue.subjectTypes.map((type) => (
-                <span
-                  key={type}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                >
-                  {type}
-                </span>
-              ))}
+          {!hiddenFields?.includes('subjectTypes') && (
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Subject Types
+              </p>
+              <div className="flex items-center gap-1">
+                {queue.subjectTypes.map((type) => (
+                  <span
+                    key={type}
+                    className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+                  >
+                    {type}
+                  </span>
+                ))}
+              </div>
             </div>
-          </div>
-          <div
-            className="flex flex-col gap-1"
-            hidden={
-              queue.collection === undefined ||
-              hiddenFields?.includes('collection')
-            }
-          >
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Collection
-            </p>
-            <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-              {queue.collection}
-            </code>
-          </div>
-          <div
-            className="flex flex-col gap-1"
-            hidden={hiddenFields?.includes('reportTypes')}
-          >
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Report Types
-            </p>
-            <div className="flex flex-wrap items-center gap-1">
-              {queue.reportTypes.map((type) => (
-                <ReasonBadge key={type} reasonType={type} />
-              ))}
+          )}
+          {queue.collection !== undefined &&
+            !hiddenFields?.includes('collection') && (
+              <div className="flex flex-col gap-1">
+                <p className="text-xs text-gray-400 dark:text-gray-500">
+                  Collection
+                </p>
+                <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
+                  {queue.collection}
+                </code>
+              </div>
+            )}
+          {!hiddenFields?.includes('reportTypes') && (
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Report Types
+              </p>
+              <div className="flex flex-wrap items-center gap-1">
+                {queue.reportTypes.map((type) => (
+                  <ReasonBadge key={type} reasonType={type} />
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Column 2 */}
-        <div
-          className="hidden lg:flex flex-col gap-1"
-          hidden={hiddenFields?.includes('stats')}
-        >
-          <p className="text-xs text-gray-400 dark:text-gray-500">Stats</p>
-          <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
-            <span>
-              <strong>{queue.stats.pendingCount}</strong> pending
-            </span>
-            <span>
-              <strong>{queue.stats.actionedCount}</strong> actioned
-            </span>
-            <span>
-              <strong>{queue.stats.escalatedPendingCount}</strong> escalated
-            </span>
+        {!hiddenFields?.includes('stats') && (
+          <div className="lg:flex flex-col gap-1">
+            <p className="text-xs text-gray-400 dark:text-gray-500">Stats</p>
+            <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
+              <span>
+                <strong>{queue.stats.inboundCount}</strong> inbound
+              </span>
+              <span>
+                <strong>{queue.stats.pendingCount}</strong> pending
+              </span>
+              <span>
+                <strong>{queue.stats.escalatedPendingCount}</strong> escalated
+              </span>
+              <span>
+                <strong>{queue.stats.actionedCount}</strong> actioned (
+                {queue.stats.actionRate}%)
+              </span>
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Column 3 */}
         <div className="space-y-2">
-          <div
-            className="flex flex-col gap-1"
-            hidden={hiddenFields?.includes('createdBy')}
-          >
-            <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
-              Created By
-            </p>
-            <ModeratorBadge did={queue.createdBy} />
-          </div>
+          {!hiddenFields?.includes('createdBy') && (
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500 whitespace-nowrap">
+                Created By
+              </p>
+              <ModeratorBadge did={queue.createdBy} />
+            </div>
+          )}
           <div className="w-fit flex flex-col gap-1">
             <p className="text-xs text-gray-400 dark:text-gray-500">Assigned</p>
             <div data-cy="queue-assignees">
