@@ -6,6 +6,7 @@ import {
   ToolsOzoneQueueUpdateQueue,
   ToolsOzoneQueueDeleteQueue,
   ToolsOzoneQueueRouteReports,
+  ToolsOzoneQueueGetLiveStats,
 } from '@atproto/api'
 
 export type QueueListFilters = {
@@ -96,6 +97,20 @@ export const useDeleteQueue = () => {
     },
     onError: (error) => {
       toast.error(`Failed to delete queue: ${error?.['message']}`)
+    },
+  })
+}
+
+export const useLiveStats = (
+  params: ToolsOzoneQueueGetLiveStats.QueryParams,
+) => {
+  const labelerAgent = useLabelerAgent()
+
+  return useQuery({
+    queryKey: ['queues', 'getLiveStats', params?.queueId],
+    queryFn: async () => {
+      const { data } = await labelerAgent.tools.ozone.queue.getLiveStats(params)
+      return data.stats
     },
   })
 }
