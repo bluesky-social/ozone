@@ -101,9 +101,7 @@ export const useDeleteQueue = () => {
   })
 }
 
-export const useLiveStats = (
-  params: ToolsOzoneQueueGetLiveStats.QueryParams,
-) => {
+export const useLiveStats = (params?: ToolsOzoneQueueGetLiveStats.QueryParams) => {
   const labelerAgent = useLabelerAgent()
 
   return useQuery({
