@@ -24,7 +24,7 @@ const VALID_TRANSITIONS: Record<string, string[]> = {
   open: ['closed', 'escalated', 'queued', 'assigned'],
   closed: ['open'],
   escalated: ['open', 'closed'],
-  queued: ['assigned', 'open'],
+  queued: ['assigned', 'open', 'escalated'],
   assigned: ['open', 'closed', 'escalated'],
 }
 

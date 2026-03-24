@@ -1,4 +1,5 @@
 import { ToolsOzoneQueueDefs } from '@atproto/api'
+import Link from 'next/link'
 import { Card } from '@/common/Card'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReactNode } from 'react'
@@ -10,10 +11,12 @@ export function QueueCard({
   queue,
   actions,
   hiddenFields,
+  hideViewReports,
 }: {
   queue: ToolsOzoneQueueDefs.QueueView
   actions?: ReactNode
   hiddenFields?: (keyof ToolsOzoneQueueDefs.QueueView)[]
+  hideViewReports?: boolean
 }) {
   const { data: assignments } = useQueueAssignments({
     onlyActive: true,
@@ -30,7 +33,12 @@ export function QueueCard({
               className="font-medium text-gray-900 dark:text-gray-100 truncate"
               hidden={hiddenFields?.includes('name')}
             >
-              {queue.name}
+              <Link
+                href={`/reports/beta?queueId=${queue.id}`}
+                className="hover:underline"
+              >
+                {queue.name}
+              </Link>
             </h3>
             <span
               className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
@@ -109,6 +117,14 @@ export function QueueCard({
               <strong>{queue.stats.escalatedPendingCount}</strong> escalated
             </span>
           </div>
+          {!hideViewReports && (
+            <Link
+              href={`/reports/beta?queueId=${queue.id}`}
+              className="text-xs text-blue-600 dark:text-blue-400 hover:underline mt-1"
+            >
+              View Reports &rarr;
+            </Link>
+          )}
         </div>
 
         {/* Column 3 */}

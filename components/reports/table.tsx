@@ -80,12 +80,12 @@ export function ReportTable(
   } = props
   return (
     <div className={classNames('px-4 sm:px-6 lg:px-8', className)} {...rest}>
-      <div className="-mx-4 overflow-hidden border border-gray-300 sm:-mx-6 md:mx-0 md:rounded-lg">
-        <table className="min-w-full divide-y divide-gray-300">
+      <div className="-mx-4 overflow-hidden border border-gray-200 dark:border-gray-700 sm:-mx-6 md:mx-0 md:rounded-md">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-white dark:bg-slate-800">
             <ReportRowHead />
           </thead>
-          <tbody className="divide-y divide-gray-200 bg-white dark:bg-slate-800">
+          <tbody className="divide-y divide-gray-200 dark:divide-gray-700 bg-white dark:bg-slate-800">
             {!reports.length && (
               <EmptyRows
                 isInitialLoading={isInitialLoading}

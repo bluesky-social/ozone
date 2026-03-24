@@ -9,7 +9,13 @@ import {
 } from '@atproto/api'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'react-toastify'
-import { ArrowLeftIcon, ChevronDownIcon, ChevronUpIcon, ChevronLeftIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
+import {
+  ArrowLeftIcon,
+  ChevronDownIcon,
+  ChevronUpIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline'
 import { ActionButton, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
 import { PreviewCard } from '@/common/PreviewCard'
@@ -21,7 +27,7 @@ import {
 } from '@/common/labels/List'
 import { isSelfLabel } from '@/common/labels/util'
 import { LabelSelector } from '@/common/labels/Selector'
-import { capitalize } from '@/lib/util'
+import { capitalize, getDidFromUri } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
@@ -58,7 +64,11 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useAuthDid } from '@/shell/AuthContext'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import { useAssignModerator } from 'components/reports/hooks'
-import { ReportActionsBar, ActivityTimeline, ReportActionType } from 'components/reports/ReportActions'
+import {
+  ReportActionsBar,
+  ActivityTimeline,
+  ReportActionType,
+} from 'components/reports/ReportActions'
 import { MemberView } from 'components/reports/MemberView'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
@@ -75,21 +85,30 @@ const REPORT_STATUS_EVENT_TYPES = new Set([
   MOD_EVENTS.ESCALATE,
 ])
 
+function getReportsFromCache(
+  queryClient: ReturnType<typeof useQueryClient>,
+): ToolsOzoneReportDefs.ReportView[] {
+  const allReports: ToolsOzoneReportDefs.ReportView[] = []
+  for (const key of ['events', 'betaReports']) {
+    const allQueriesData = queryClient.getQueriesData<
+      InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
+    >({ queryKey: [key] })
+
+    for (const [, data] of allQueriesData) {
+      if (!data?.pages) continue
+      for (const page of data.pages) {
+        if (page.reports) allReports.push(...page.reports)
+      }
+    }
+  }
+  return allReports
+}
+
 function findAdjacentReportsInCache(
   queryClient: ReturnType<typeof useQueryClient>,
   reportId: number,
 ): { prevId: number | null; nextId: number | null } {
-  const allQueriesData = queryClient.getQueriesData<
-    InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
-  >({ queryKey: ['events'] })
-
-  const allReports: ToolsOzoneReportDefs.ReportView[] = []
-  for (const [, data] of allQueriesData) {
-    if (!data?.pages) continue
-    for (const page of data.pages) {
-      if (page.reports) allReports.push(...page.reports)
-    }
-  }
+  const allReports = getReportsFromCache(queryClient)
 
   if (allReports.length === 0) return { prevId: null, nextId: null }
 
@@ -106,18 +125,8 @@ function findReportInCache(
   queryClient: ReturnType<typeof useQueryClient>,
   reportId: number,
 ): ToolsOzoneReportDefs.ReportView | null {
-  const allQueriesData = queryClient.getQueriesData<
-    InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
-  >({ queryKey: ['events'] })
-
-  for (const [, data] of allQueriesData) {
-    if (!data?.pages) continue
-    for (const page of data.pages) {
-      const found = page.reports?.find((r) => r.id === reportId)
-      if (found) return found
-    }
-  }
-  return null
+  const allReports = getReportsFromCache(queryClient)
+  return allReports.find((r) => r.id === reportId) ?? null
 }
 
 const statusColors: Record<string, string> = {
@@ -179,7 +188,10 @@ function ViewersIndicator({
                 sinceLabel="Viewing since"
               />
             ) : (
-              <div key={v.did} className="text-sm text-gray-500 dark:text-gray-400">
+              <div
+                key={v.did}
+                className="text-sm text-gray-500 dark:text-gray-400"
+              >
                 {v.did}
               </div>
             ),
@@ -197,7 +209,11 @@ function ReportInfoPanel({
   report: ToolsOzoneReportDefs.ReportView
   assignment?: ToolsOzoneReportDefs.ReportAssignment
 }) {
-  const { mutate: assignToMe, isPending, error } = useAssignModerator({
+  const {
+    mutate: assignToMe,
+    isPending,
+    error,
+  } = useAssignModerator({
     onSuccess: () => toast.success('Report assigned to you'),
   })
 
@@ -305,7 +321,9 @@ export function ReportDetailPageContent() {
 
   // Register this session as a viewer (temporary, non-permanent assignment).
   useEffect(() => {
-    labelerAgent.tools.ozone.report.assignModerator({ reportId }).catch(() => {})
+    labelerAgent.tools.ozone.report
+      .assignModerator({ reportId })
+      .catch(() => {})
   }, [reportId]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // If no cached report exists, getReport will be called and returns fresh assignment data.
@@ -371,9 +389,7 @@ export function ReportDetailPageContent() {
   useEffect(() => {
     if (!assignmentResponse) return
 
-    const allForReport = (
-      (assignmentResponse as any).assignments ?? []
-    ).filter(
+    const allForReport = ((assignmentResponse as any).assignments ?? []).filter(
       (a: AssignmentViewWithModerator) => a.reportId === reportId,
     ) as AssignmentViewWithModerator[]
 
@@ -444,7 +460,9 @@ export function ReportDetailPageContent() {
               size="xs"
               appearance="primary"
               disabled={prevId === null}
-              onClick={() => prevId !== null && router.push(`/reports/${prevId}`)}
+              onClick={() =>
+                prevId !== null && router.push(`/reports/${prevId}`)
+              }
             >
               <ChevronLeftIcon className="h-4 w-4" />
               Prev
@@ -453,7 +471,9 @@ export function ReportDetailPageContent() {
               size="xs"
               appearance="primary"
               disabled={nextId === null}
-              onClick={() => nextId !== null && router.push(`/reports/${nextId}`)}
+              onClick={() =>
+                nextId !== null && router.push(`/reports/${nextId}`)
+              }
             >
               Next
               <ChevronRightIcon className="h-4 w-4" />
@@ -491,19 +511,49 @@ function ReportDetailLayout(props: {
   assignment?: ToolsOzoneReportDefs.ReportAssignment
   viewers: AssignmentViewWithModerator[]
 }) {
-  const { report, subject, setSubject, onSubmit, onCancel, assignment, viewers } = props
+  const {
+    report,
+    subject,
+    setSubject,
+    onSubmit,
+    onCancel,
+    assignment,
+    viewers,
+  } = props
   const subjectOptions = [subject]
 
-  const [reportActionScope, setReportActionScope] = useState<'current' | 'all' | 'types'>('current')
+  const [reportActionScope, setReportActionScope] = useState<
+    'current' | 'all' | 'types'
+  >('current')
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(
     report.reportType ? [report.reportType] : [],
   )
   const [reportActionNote, setReportActionNote] = useState('')
   const [showReportActionNote, setShowReportActionNote] = useState(false)
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
+  const [applyToAccount, setApplyToAccount] = useState(false)
+  const isSubjectRecord = subject.startsWith('at://')
 
-  const wrappedOnSubmit = async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-    const eventType = (vals.event as any)?.$type as string | undefined
+  const wrappedOnSubmit = async (
+    vals: ToolsOzoneModerationEmitEvent.InputSchema,
+  ) => {
+    let finalVals = vals
+
+    // When "Apply action to account" is checked, override the subject to be account-level
+    if (applyToAccount && isSubjectRecord) {
+      const did = getDidFromUri(subject)
+      if (did) {
+        finalVals = {
+          ...vals,
+          subject: {
+            $type: 'com.atproto.admin.defs#repoRef',
+            did,
+          },
+        }
+      }
+    }
+
+    const eventType = (finalVals.event as any)?.$type as string | undefined
     if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
       const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
       if (reportActionScope === 'current') {
@@ -514,10 +564,10 @@ function ReportDetailLayout(props: {
         reportAction.types = reportActionTypes
       }
       if (reportActionNote) reportAction.note = reportActionNote
-      await onSubmit({ ...vals, reportAction })
+      await onSubmit({ ...finalVals, reportAction })
       setSelectedAction(null) // Reset after successful submission
     } else {
-      await onSubmit(vals)
+      await onSubmit(finalVals)
     }
   }
 
@@ -598,7 +648,9 @@ function ReportDetailLayout(props: {
     subjectOptions,
   })
 
-  const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(modEventType)
+  const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
+    modEventType,
+  )
 
   let emailTemplateLabel = `Template`
   if (recipientLanguages.languages.length > 1) {
@@ -607,314 +659,313 @@ function ReportDetailLayout(props: {
 
   return (
     <div className="dark:text-gray-50">
-    <div className="flex flex-col lg:flex-row gap-6">
-      {/* Left col */}
-      <div className="flex-1 min-w-0">
-        {/* Subject preview */}
-        <div className="max-w-xl mb-3">
-          <PreviewCard
-            subject={subject}
-            isAuthorDeactivated={!!record?.repo.deactivatedAt}
-            isAuthorTakendown={
-              !!record?.repo.moderation.subjectStatus?.takendown
-            }
-          >
-            {!isSubjectDid && record?.repo && (
-              <div className="-ml-1 my-2">
-                <RecordAuthorStatus repo={record.repo} profile={profile} />
-              </div>
-            )}
-          </PreviewCard>
-        </div>
-
-        {/* Subject status */}
-        {!!subjectStatus && (
-          <div className="pb-4">
-            <p className="flex flex-row items-center">
-              {!!subjectStatus.priorityScore && (
-                <PriorityScore priorityScore={subjectStatus.priorityScore} />
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left col */}
+        <div className="flex-1 min-w-0">
+          {/* Subject preview */}
+          <div className="max-w-xl mb-3">
+            <PreviewCard
+              subject={subject}
+              isAuthorDeactivated={!!record?.repo.deactivatedAt}
+              isAuthorTakendown={
+                !!record?.repo.moderation.subjectStatus?.takendown
+              }
+            >
+              {!isSubjectDid && record?.repo && (
+                <div className="-ml-1 my-2">
+                  <RecordAuthorStatus repo={record.repo} profile={profile} />
+                </div>
               )}
-              {!!subjectStatus.ageAssuranceState &&
-                subjectStatus.ageAssuranceState !== 'unknown' && (
-                  <AgeAssuranceBadge
-                    ageAssuranceState={subjectStatus.ageAssuranceState}
-                    className="mr-1"
-                  />
+            </PreviewCard>
+          </div>
+
+          {/* Subject status */}
+          {!!subjectStatus && (
+            <div className="pb-4">
+              <p className="flex flex-row items-center">
+                {!!subjectStatus.priorityScore && (
+                  <PriorityScore priorityScore={subjectStatus.priorityScore} />
                 )}
-              <SubjectReviewStateBadge subjectStatus={subjectStatus} />
-              <LastReviewedTimestamp subjectStatus={subjectStatus} />
-            </p>
-            {!!subjectStatus.comment && (
-              <div className="mt-2">
-                <Alert
-                  type="info"
-                  title="Note"
-                  body={<TextWithLinks text={subjectStatus.comment} />}
-                />
-              </div>
-            )}
-            {!!record?.repo.moderation.subjectStatus?.comment && (
-              <div className="mt-2">
-                <Alert
-                  type="info"
-                  title="Account Note"
-                  body={
-                    <TextWithLinks
-                      text={record.repo.moderation.subjectStatus.comment}
+                {!!subjectStatus.ageAssuranceState &&
+                  subjectStatus.ageAssuranceState !== 'unknown' && (
+                    <AgeAssuranceBadge
+                      ageAssuranceState={subjectStatus.ageAssuranceState}
+                      className="mr-1"
                     />
-                  }
-                />
-              </div>
-            )}
-          </div>
-        )}
+                  )}
+                <SubjectReviewStateBadge subjectStatus={subjectStatus} />
+                <LastReviewedTimestamp subjectStatus={subjectStatus} />
+              </p>
+              {!!subjectStatus.comment && (
+                <div className="mt-2">
+                  <Alert
+                    type="info"
+                    title="Note"
+                    body={<TextWithLinks text={subjectStatus.comment} />}
+                  />
+                </div>
+              )}
+              {!!record?.repo.moderation.subjectStatus?.comment && (
+                <div className="mt-2">
+                  <Alert
+                    type="info"
+                    title="Account Note"
+                    body={
+                      <TextWithLinks
+                        text={record.repo.moderation.subjectStatus.comment}
+                      />
+                    }
+                  />
+                </div>
+              )}
+            </div>
+          )}
 
-        {/* Blobs */}
-        {!!record?.blobs?.length && (
-          <BlobListFormField
-            blobs={record.blobs}
-            authorDid={record.repo.did}
-            className="mb-2"
-          />
-        )}
+          {/* Blobs */}
+          {!!record?.blobs?.length && (
+            <BlobListFormField
+              blobs={record.blobs}
+              authorDid={record.repo.did}
+              className="mb-2"
+            />
+          )}
 
-        {/* DM meta */}
-        {isSubjectDid && canManageChat && (
-          <div className="mb-2">
-            <MessageActorMeta did={subject} />
-          </div>
-        )}
+          {/* DM meta */}
+          {isSubjectDid && canManageChat && (
+            <div className="mb-2">
+              <MessageActorMeta did={subject} />
+            </div>
+          )}
 
-        {/* Labels */}
-        <div className="mb-2">
-          <FormLabel
-            label="Labels"
-            className="flex flex-row items-center gap-2"
-          >
-            <LabelList className="-ml-1 -mt-1 flex-wrap">
-              {!currentLabels.length && <LabelListEmpty className="ml-1" />}
-              {allLabels.map((label) => (
-                <ModerationLabel
-                  key={label.val}
-                  label={label}
-                  recordAuthorDid={`${repo?.did || record?.repo.did}`}
-                />
-              ))}
-            </LabelList>
-          </FormLabel>
-        </div>
-
-        {/* Subject tags */}
-        {!!subjectStatus?.tags?.length && (
+          {/* Labels */}
           <div className="mb-2">
             <FormLabel
-              label="Tags"
+              label="Labels"
               className="flex flex-row items-center gap-2"
             >
-              <LabelList className="-mt-1 -ml-1 flex-wrap gap-1">
-                {subjectStatus.tags.sort().map((tag) => (
-                  <SubjectTag key={tag} tag={tag} />
+              <LabelList className="-ml-1 -mt-1 flex-wrap">
+                {!currentLabels.length && <LabelListEmpty className="ml-1" />}
+                {allLabels.map((label) => (
+                  <ModerationLabel
+                    key={label.val}
+                    label={label}
+                    recordAuthorDid={`${repo?.did || record?.repo.did}`}
+                  />
                 ))}
               </LabelList>
             </FormLabel>
           </div>
-        )}
 
-        {/* Account labels (records only) */}
-        {!isSubjectDid && !!profile?.labels?.length && (
-          <div className="mb-2 flex flex-row items-center">
-            <div className="mr-1">Account Labels</div>
-            {profile.labels.map((label) => (
-              <ModerationLabel
-                label={label}
-                key={label.val}
-                recordAuthorDid={profile.did}
-              />
-            ))}
-          </div>
-        )}
-
-        {/* Account tags (records only) */}
-        {!!record?.repo.moderation.subjectStatus?.tags?.length && (
-          <div className="mb-2 flex flex-row items-center">
-            <div className="mr-2">Account Tags</div>
-            <LabelList className="-ml-1 flex-wrap gap-1">
-              {record.repo.moderation.subjectStatus.tags.sort().map((tag) => (
-                <SubjectTag key={tag} tag={tag} />
-              ))}
-            </LabelList>
-          </div>
-        )}
-
-        {/* Event stream */}
-        <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-          <ModEventList
-            subject={subject}
-            stats={{
-              accountStrike: subjectStatus?.accountStrike ?? strikeData,
-              accountStats: subjectStatus?.accountStats,
-              recordsStats: subjectStatus?.recordsStats,
-            }}
-          />
-        </div>
-      </div>
-
-      {/* Right col */}
-      <div className="w-full lg:w-1/2 shrink-0">
-        <ReportInfoPanel report={report} assignment={assignment} />
-
-        <ViewersIndicator viewers={viewers} />
-
-        {profile && (
-          <div className="mb-3">
-            <HighProfileWarning profile={profile} />
-          </div>
-        )}
-
-        {/* Strike data error - unlikely to happen */}
-        {!!strikeDataError &&
-          (isTakedownEvent || isEmailEvent || isReverseTakedownEvent) && (
-            <div className="mb-3">
-              <Alert
-                type="error"
-                title="Error loading strike data!"
-                body={
-                  <>
-                    Please be cautious when taking actions that require
-                    up-to-date strike info.{' '}
-                    <button
-                      className="underline"
-                      onClick={() => window.location.reload()}
-                    >
-                      Click here
-                    </button>{' '}
-                    to reload strike data for this account.
-                  </>
-                }
-              />
-            </div>
-          )}
-
-        <ReportActionsBar
-          report={report}
-          selectedAction={selectedAction}
-          onActionSelect={setSelectedAction}
-        />
-
-        <div className={selectedAction ? '' : 'hidden'}>
-        <form id={FORM_ID} onSubmit={onFormSubmit}>
-          <div className="relative flex flex-row gap-3 items-center mb-3">
-            <div className="inline-flex items-center gap-2 px-3 py-2 rounded-md bg-teal-50 dark:bg-teal-900/20 border border-teal-200 dark:border-teal-800">
-              <span className="text-sm font-medium text-teal-700 dark:text-teal-300">
-                {selectedAction === 'label' ? 'Label' : selectedAction === 'takedown' ? 'Takedown' : 'Action'}
-              </span>
-            </div>
-            <ModEventDetailsPopover modEventType={modEventType} />
-          </div>
-
-          {isTakedownEvent && (
-            <PolicySeveritySelector
-              defaultPolicy={selectedPolicyName}
-              policyDetails={policyDetails}
-              handlePolicySelect={handlePolicySelect}
-              handleSeverityLevelSelect={handleSeverityLevelSelect}
-              severityLevelStrikeCount={severityLevelStrikeCount}
-              defaultSeverityLevel={selectedSeverityLevelName}
-              currentStrikes={currentStrikes}
-              actionRecommendation={actionRecommendation}
-              variant="takedown"
-              targetServices={targetServices}
-              setTargetServices={setTargetServices}
-              isSubjectDid={isSubjectDid}
-            />
-          )}
-
-          {shouldShowDurationInHoursField && (
-            <div className="flex flex-row gap-2">
-              {isPriorityScoreEvent && (
-                <FormLabel
-                  label=""
-                  className="mt-2 w-1/2"
-                  htmlFor="priorityScore"
-                >
-                  <Input
-                    type="number"
-                    id="priorityScore"
-                    name="priorityScore"
-                    className="block w-full"
-                    placeholder="Score between 0-100"
-                    autoFocus
-                    min={0}
-                    max={100}
-                    step={1}
-                    required
-                  />
-                </FormLabel>
-              )}
+          {/* Subject tags */}
+          {!!subjectStatus?.tags?.length && (
+            <div className="mb-2">
               <FormLabel
-                label=""
-                htmlFor="durationInHours"
-                className="mb-1 mt-2"
+                label="Tags"
+                className="flex flex-row items-center gap-2"
               >
-                <ActionDurationSelector
-                  ref={durationSelectorRef}
-                  action={modEventType}
-                  required={isLabelEvent ? false : true}
-                  showPermanent={!isMuteEvent}
-                  defaultValue={!isMuteEvent ? 0 : 6}
-                  onChange={(e) => {
-                    if (e.target.value === '0' && isTakedownEvent) {
-                      const ackAllCheckbox =
-                        document.querySelector<HTMLInputElement>(
-                          'input[name="acknowledgeAccountSubjects"]',
-                        )
-                      if (ackAllCheckbox && !ackAllCheckbox.checked) {
-                        ackAllCheckbox.checked = true
-                      }
-                    }
-                  }}
-                  labelText={
-                    isMuteEvent
-                      ? 'Mute duration'
-                      : isLabelEvent
-                        ? 'Label duration'
-                        : isPriorityScoreEvent
-                          ? 'Score duration'
-                          : ''
-                  }
-                />
+                <LabelList className="-mt-1 -ml-1 flex-wrap gap-1">
+                  {subjectStatus.tags.sort().map((tag) => (
+                    <SubjectTag key={tag} tag={tag} />
+                  ))}
+                </LabelList>
               </FormLabel>
             </div>
           )}
 
-          {isAgeAssuranceOverrideEvent && (
-            <>
-              <div className="mt-2">
-                <Select
-                  id="ageAssuranceState"
-                  name="ageAssuranceState"
-                  required
-                  onChange={(e) => setSelectedAgeAssuranceState(e.target.value)}
-                >
-                  <option value="">Select status...</option>
-                  {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map((state) => (
-                    <option key={state} value={state}>
-                      {capitalize(state)}
-                    </option>
-                  ))}
-                </Select>
+          {/* Account labels (records only) */}
+          {!isSubjectDid && !!profile?.labels?.length && (
+            <div className="mb-2 flex flex-row items-center">
+              <div className="mr-1">Account Labels</div>
+              {profile.labels.map((label) => (
+                <ModerationLabel
+                  label={label}
+                  key={label.val}
+                  recordAuthorDid={profile.did}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Account tags (records only) */}
+          {!!record?.repo.moderation.subjectStatus?.tags?.length && (
+            <div className="mb-2 flex flex-row items-center">
+              <div className="mr-2">Account Tags</div>
+              <LabelList className="-ml-1 flex-wrap gap-1">
+                {record.repo.moderation.subjectStatus.tags.sort().map((tag) => (
+                  <SubjectTag key={tag} tag={tag} />
+                ))}
+              </LabelList>
+            </div>
+          )}
+
+          {/* Event stream */}
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <ModEventList
+              subject={subject}
+              stats={{
+                accountStrike: subjectStatus?.accountStrike ?? strikeData,
+                accountStats: subjectStatus?.accountStats,
+                recordsStats: subjectStatus?.recordsStats,
+              }}
+            />
+          </div>
+        </div>
+
+        {/* Right col */}
+        <div className="w-full lg:w-1/2 shrink-0">
+          <ReportInfoPanel report={report} assignment={assignment} />
+
+          <ViewersIndicator viewers={viewers} />
+
+          {profile && (
+            <div className="mb-3">
+              <HighProfileWarning profile={profile} />
+            </div>
+          )}
+
+          {/* Strike data error - unlikely to happen */}
+          {!!strikeDataError &&
+            (isTakedownEvent || isEmailEvent || isReverseTakedownEvent) && (
+              <div className="mb-3">
+                <Alert
+                  type="error"
+                  title="Error loading strike data!"
+                  body={
+                    <>
+                      Please be cautious when taking actions that require
+                      up-to-date strike info.{' '}
+                      <button
+                        className="underline"
+                        onClick={() => window.location.reload()}
+                      >
+                        Click here
+                      </button>{' '}
+                      to reload strike data for this account.
+                    </>
+                  }
+                />
               </div>
-              {selectedAgeAssuranceState &&
-                selectedAgeAssuranceState !==
-                  AGE_ASSURANCE_OVERRIDE_STATES.RESET && (
+            )}
+
+          <ReportActionsBar
+            report={report}
+            selectedAction={selectedAction}
+            onActionSelect={setSelectedAction}
+          />
+
+          <div className={selectedAction ? '' : 'hidden'}>
+            <form id={FORM_ID} onSubmit={onFormSubmit}>
+              <div className="relative flex flex-row gap-3 items-center mb-3">
+                <span className="text-sm font-medium text-teal-700 dark:text-teal-300">
+                  {selectedAction === 'label'
+                    ? 'Label'
+                    : selectedAction === 'takedown'
+                      ? 'Takedown'
+                      : 'Action'}
+                </span>
+                <ModEventDetailsPopover modEventType={modEventType} />
+              </div>
+
+              {isSubjectRecord && (
+                <Checkbox
+                  value="true"
+                  id="applyToAccount"
+                  name="applyToAccount"
+                  className="mb-3 flex items-center"
+                  checked={applyToAccount}
+                  onChange={(e) => setApplyToAccount(e.target.checked)}
+                  label="Apply action to account"
+                />
+              )}
+
+              {isTakedownEvent && (
+                <PolicySeveritySelector
+                  defaultPolicy={selectedPolicyName}
+                  policyDetails={policyDetails}
+                  handlePolicySelect={handlePolicySelect}
+                  handleSeverityLevelSelect={handleSeverityLevelSelect}
+                  severityLevelStrikeCount={severityLevelStrikeCount}
+                  defaultSeverityLevel={selectedSeverityLevelName}
+                  currentStrikes={currentStrikes}
+                  actionRecommendation={actionRecommendation}
+                  variant="takedown"
+                  targetServices={targetServices}
+                  setTargetServices={setTargetServices}
+                  isSubjectDid={isSubjectDid}
+                />
+              )}
+
+              {shouldShowDurationInHoursField && (
+                <div className="flex flex-row gap-2">
+                  {isPriorityScoreEvent && (
+                    <FormLabel
+                      label=""
+                      className="mt-2 w-1/2"
+                      htmlFor="priorityScore"
+                    >
+                      <Input
+                        type="number"
+                        id="priorityScore"
+                        name="priorityScore"
+                        className="block w-full"
+                        placeholder="Score between 0-100"
+                        autoFocus
+                        min={0}
+                        max={100}
+                        step={1}
+                        required
+                      />
+                    </FormLabel>
+                  )}
+                  <FormLabel
+                    label=""
+                    htmlFor="durationInHours"
+                    className="mb-1 mt-2"
+                  >
+                    <ActionDurationSelector
+                      ref={durationSelectorRef}
+                      action={modEventType}
+                      required={isLabelEvent ? false : true}
+                      showPermanent={!isMuteEvent}
+                      defaultValue={!isMuteEvent ? 0 : 6}
+                      onChange={(e) => {
+                        if (e.target.value === '0' && isTakedownEvent) {
+                          const ackAllCheckbox =
+                            document.querySelector<HTMLInputElement>(
+                              'input[name="acknowledgeAccountSubjects"]',
+                            )
+                          if (ackAllCheckbox && !ackAllCheckbox.checked) {
+                            ackAllCheckbox.checked = true
+                          }
+                        }
+                      }}
+                      labelText={
+                        isMuteEvent
+                          ? 'Mute duration'
+                          : isLabelEvent
+                            ? 'Label duration'
+                            : isPriorityScoreEvent
+                              ? 'Score duration'
+                              : ''
+                      }
+                    />
+                  </FormLabel>
+                </div>
+              )}
+
+              {isAgeAssuranceOverrideEvent && (
+                <>
                   <div className="mt-2">
                     <Select
-                      id="ageAssuranceAccess"
-                      name="ageAssuranceAccess"
+                      id="ageAssuranceState"
+                      name="ageAssuranceState"
                       required
+                      onChange={(e) =>
+                        setSelectedAgeAssuranceState(e.target.value)
+                      }
                     >
-                      <option value="">Select access...</option>
-                      {Object.values(AGE_ASSURANCE_ACCESS_STATES).map(
+                      <option value="">Select status...</option>
+                      {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
                         (state) => (
                           <option key={state} value={state}>
                             {capitalize(state)}
@@ -923,258 +974,281 @@ function ReportDetailLayout(props: {
                       )}
                     </Select>
                   </div>
-                )}
-            </>
-          )}
+                  {selectedAgeAssuranceState &&
+                    selectedAgeAssuranceState !==
+                      AGE_ASSURANCE_OVERRIDE_STATES.RESET && (
+                      <div className="mt-2">
+                        <Select
+                          id="ageAssuranceAccess"
+                          name="ageAssuranceAccess"
+                          required
+                        >
+                          <option value="">Select access...</option>
+                          {Object.values(AGE_ASSURANCE_ACCESS_STATES).map(
+                            (state) => (
+                              <option key={state} value={state}>
+                                {capitalize(state)}
+                              </option>
+                            ),
+                          )}
+                        </Select>
+                      </div>
+                    )}
+                </>
+              )}
 
-          {isMuteReporterEvent && (
-            <p className="text-xs my-3">
-              When a reporter is muted, that account will still be able to
-              report and their reports will show up in the event log. However,
-              their reports {"won't"} change moderation review state of the
-              subject {"they're"} reporting
-            </p>
-          )}
+              {isMuteReporterEvent && (
+                <p className="text-xs my-3">
+                  When a reporter is muted, that account will still be able to
+                  report and their reports will show up in the event log.
+                  However, their reports {"won't"} change moderation review
+                  state of the subject {"they're"} reporting
+                </p>
+              )}
 
-          {isLabelEvent && (
-            <div className="mt-2">
-              <LabelSelector
-                id="labels"
-                name="labels"
-                form={FORM_ID}
-                defaultLabels={currentLabels.filter((label) => {
-                  const isEditableLabel = allLabels.some(
-                    (l) => l.val === label && l.src === config.did,
-                  )
-                  return !isSelfLabel(label) && isEditableLabel
-                })}
-              />
-            </div>
-          )}
+              {isLabelEvent && (
+                <div className="mt-2">
+                  <LabelSelector
+                    id="labels"
+                    name="labels"
+                    form={FORM_ID}
+                    defaultLabels={currentLabels.filter((label) => {
+                      const isEditableLabel = allLabels.some(
+                        (l) => l.val === label && l.src === config.did,
+                      )
+                      return !isSelfLabel(label) && isEditableLabel
+                    })}
+                  />
+                </div>
+              )}
 
-          {isTagEvent && (
-            <FormLabel label="Tags" className="mt-2">
-              <Input
-                type="text"
-                id="tags"
-                name="tags"
-                className="block w-full"
-                placeholder="Comma separated tags"
-                defaultValue={subjectStatus?.tags?.join(',') || ''}
-              />
-            </FormLabel>
-          )}
+              {isTagEvent && (
+                <FormLabel label="Tags" className="mt-2">
+                  <Input
+                    type="text"
+                    id="tags"
+                    name="tags"
+                    className="block w-full"
+                    placeholder="Comma separated tags"
+                    defaultValue={subjectStatus?.tags?.join(',') || ''}
+                  />
+                </FormLabel>
+              )}
 
-          {(isEmailEvent || isReverseTakedownEvent) && (
-            <PolicySeveritySelector
-              policyDetails={policyDetails}
-              handlePolicySelect={handlePolicySelect}
-              handleSeverityLevelSelect={handleSeverityLevelSelect}
-              severityLevelStrikeCount={severityLevelStrikeCount}
-              currentStrikes={currentStrikes}
-              actionRecommendation={actionRecommendation}
-              targetServices={targetServices}
-              setTargetServices={setTargetServices}
-              selectedSeverityLevel={selectedSeverityLevelName}
-              defaultSeverityLevel={selectedSeverityLevelName}
-              defaultPolicy={selectedPolicyName}
-              isSubjectDid={isSubjectDid}
-              variant={isEmailEvent ? 'email' : 'reverse-takedown'}
-            />
-          )}
-
-          {!isEmailEvent && (
-            <div className="mt-2">
-              <Textarea
-                name="comment"
-                placeholder="Reason for action (optional)"
-                className="block w-full mb-3"
-              />
-            </div>
-          )}
-
-          {showReportAction && (
-            <div className="mt-2 mb-3 space-y-2">
-              <p className="text-xs font-medium text-gray-500 dark:text-gray-400">
-                Close reports
-              </p>
-              <Select
-                className="w-full"
-                value={reportActionScope}
-                onChange={(e) =>
-                  setReportActionScope(
-                    e.target.value as 'current' | 'all' | 'types',
-                  )
-                }
-              >
-                <option value="current">This report only</option>
-                <option value="all">All open reports on subject</option>
-                <option value="types">Reports of specific types</option>
-              </Select>
-              {reportActionScope === 'types' && (
-                <ReportTypeMultiselect
-                  value={reportActionTypes}
-                  onChange={setReportActionTypes}
+              {(isEmailEvent || isReverseTakedownEvent) && (
+                <PolicySeveritySelector
+                  policyDetails={policyDetails}
+                  handlePolicySelect={handlePolicySelect}
+                  handleSeverityLevelSelect={handleSeverityLevelSelect}
+                  severityLevelStrikeCount={severityLevelStrikeCount}
+                  currentStrikes={currentStrikes}
+                  actionRecommendation={actionRecommendation}
+                  targetServices={targetServices}
+                  setTargetServices={setTargetServices}
+                  selectedSeverityLevel={selectedSeverityLevelName}
+                  defaultSeverityLevel={selectedSeverityLevelName}
+                  defaultPolicy={selectedPolicyName}
+                  isSubjectDid={isSubjectDid}
+                  variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                 />
               )}
-              {showReportActionNote ? (
-                <div className="space-y-1">
+
+              {!isEmailEvent && (
+                <div className="mt-2">
                   <Textarea
-                    placeholder="Note to reporter (optional)"
-                    className="block w-full"
-                    rows={2}
-                    autoFocus
-                    value={reportActionNote}
-                    onChange={(e) => setReportActionNote(e.target.value)}
+                    name="comment"
+                    placeholder="Reason for action (optional)"
+                    className="block w-full mb-3"
                   />
-                  <button
-                    type="button"
-                    className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                    onClick={() => { setShowReportActionNote(false); setReportActionNote('') }}
-                  >
-                    Remove note
-                  </button>
                 </div>
-              ) : (
-                <button
-                  type="button"
-                  className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                  onClick={() => setShowReportActionNote(true)}
-                >
-                  + Add note to reporter
-                </button>
               )}
-            </div>
-          )}
 
-          {showAutomatedEmailComposer && (
-            <EmailComposerFields
-              defaultTemplate={
-                !!actionRecommendation
-                  ? automatedEmailTemplate?.name
-                  : undefined
-              }
-              templateLabel={emailTemplateLabel}
-              onTemplateSelect={onEmailTemplateSelect}
-              communicationTemplates={communicationTemplates}
-              recipientLanguages={recipientLanguages}
-              subjectField={emailSubjectField}
-              content={emailContent || ''}
-              setContent={setEmailContent}
-              theme={theme}
-              isSending={submission.isSubmitting}
-              requiresConfirmation={false}
-              isConfirmed={true}
-              toggleConfirmation={() => null}
-            />
-          )}
+              {showReportAction && (
+                <div className="mt-2 mb-3 space-y-2">
+                  <Select
+                    className="w-full"
+                    value={reportActionScope}
+                    onChange={(e) =>
+                      setReportActionScope(
+                        e.target.value as 'current' | 'all' | 'types',
+                      )
+                    }
+                  >
+                    <option value="current">Close this report only</option>
+                    <option value="all">
+                      Close all open reports on subject
+                    </option>
+                    <option value="types">
+                      Close reports of specific types
+                    </option>
+                  </Select>
+                  {reportActionScope === 'types' && (
+                    <ReportTypeMultiselect
+                      value={reportActionTypes}
+                      onChange={setReportActionTypes}
+                    />
+                  )}
+                  {showReportActionNote ? (
+                    <div className="space-y-1">
+                      <Textarea
+                        placeholder="Note to reporter (optional)"
+                        className="block w-full"
+                        rows={2}
+                        autoFocus
+                        value={reportActionNote}
+                        onChange={(e) => setReportActionNote(e.target.value)}
+                      />
+                      <button
+                        type="button"
+                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                        onClick={() => {
+                          setShowReportActionNote(false)
+                          setReportActionNote('')
+                        }}
+                      >
+                        Remove note
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                      onClick={() => setShowReportActionNote(true)}
+                    >
+                      + Add note to reporter
+                    </button>
+                  )}
+                </div>
+              )}
 
-          {showCantEmailError && (
-            <div className="my-2">
-              <Alert
-                showIcon
-                type="warning"
-                title="Cannot send email to this user"
-                body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
-              />
-            </div>
-          )}
+              {showAutomatedEmailComposer && (
+                <EmailComposerFields
+                  defaultTemplate={
+                    !!actionRecommendation
+                      ? automatedEmailTemplate?.name
+                      : undefined
+                  }
+                  templateLabel={emailTemplateLabel}
+                  onTemplateSelect={onEmailTemplateSelect}
+                  communicationTemplates={communicationTemplates}
+                  recipientLanguages={recipientLanguages}
+                  subjectField={emailSubjectField}
+                  content={emailContent || ''}
+                  setContent={setEmailContent}
+                  theme={theme}
+                  isSending={submission.isSubmitting}
+                  requiresConfirmation={false}
+                  isConfirmed={true}
+                  toggleConfirmation={() => null}
+                />
+              )}
 
-          {isCommentEvent && (
-            <Checkbox
-              value="true"
-              id="sticky"
-              name="sticky"
-              className="mb-3 flex items-center"
-              label="Update the subject's persistent note with this comment"
-            />
-          )}
+              {showCantEmailError && (
+                <div className="my-2">
+                  <Alert
+                    showIcon
+                    type="warning"
+                    title="Cannot send email to this user"
+                    body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
+                  />
+                </div>
+              )}
 
+              {isCommentEvent && (
+                <Checkbox
+                  value="true"
+                  id="sticky"
+                  name="sticky"
+                  className="mb-3 flex items-center"
+                  label="Update the subject's persistent note with this comment"
+                />
+              )}
 
-          {(isLabelEvent || isTagEvent) && !isReviewClosed && (
-            <Checkbox
-              value="true"
-              defaultChecked
-              id="additionalAcknowledgeEvent"
-              name="additionalAcknowledgeEvent"
-              className="mb-3 flex items-center leading-3"
-              label={
-                <span className="leading-4">
-                  {isEscalated
-                    ? `De-escalate the subject and acknowledge all open reports after this action`
-                    : `Acknowledge all open reports after this action`}
-                </span>
-              }
-            />
-          )}
+              {(isLabelEvent || isTagEvent) && !isReviewClosed && (
+                <Checkbox
+                  value="true"
+                  defaultChecked
+                  id="additionalAcknowledgeEvent"
+                  name="additionalAcknowledgeEvent"
+                  className="mb-3 flex items-center leading-3"
+                  label={
+                    <span className="leading-4">
+                      {isEscalated
+                        ? `De-escalate the subject and acknowledge all open reports after this action`
+                        : `Acknowledge all open reports after this action`}
+                    </span>
+                  }
+                />
+              )}
 
-          {(isTakedownEvent || isAckEvent) && isSubjectDid && (
-            <Checkbox
-              value="true"
-              id="acknowledgeAccountSubjects"
-              name="acknowledgeAccountSubjects"
-              className="mb-3 flex items-center leading-3"
-              label={
-                <span className="leading-4">
-                  Acknowledge all open/escalated/appealed reports on subjects
-                  created by this user
-                </span>
-              }
-            />
-          )}
+              {(isTakedownEvent || isAckEvent) && isSubjectDid && (
+                <Checkbox
+                  value="true"
+                  id="acknowledgeAccountSubjects"
+                  name="acknowledgeAccountSubjects"
+                  className="mb-3 flex items-center leading-3"
+                  label={
+                    <span className="leading-4">
+                      Acknowledge all open/escalated/appealed reports on
+                      subjects created by this user
+                    </span>
+                  }
+                />
+              )}
 
-          {isAckEvent && isAppealed && (
-            <Checkbox
-              defaultChecked
-              value="true"
-              id="additionalResolveAppealEvent"
-              name="additionalResolveAppealEvent"
-              className="mb-3 flex items-center leading-3"
-              label={
-                <span className="leading-4">Resolve appeal from the user</span>
-              }
-            />
-          )}
+              {isAckEvent && isAppealed && (
+                <Checkbox
+                  defaultChecked
+                  value="true"
+                  id="additionalResolveAppealEvent"
+                  name="additionalResolveAppealEvent"
+                  className="mb-3 flex items-center leading-3"
+                  label={
+                    <span className="leading-4">
+                      Resolve appeal from the user
+                    </span>
+                  }
+                />
+              )}
 
-          {submission.error && (
-            <div className="my-2">
-              <ActionError error={submission.error} />
-            </div>
-          )}
+              {submission.error && (
+                <div className="my-2">
+                  <ActionError error={submission.error} />
+                </div>
+              )}
 
-          {!isEmailEvent && (
-            <div className="mt-4 flex flex-row justify-between">
-              <ButtonSecondary
-                className="px-4"
-                disabled={submission.isSubmitting}
-                onClick={handleCancelAction}
-              >
-                Cancel
-              </ButtonSecondary>
-              <ButtonPrimary
-                ref={submitButton}
-                type="submit"
-                disabled={submission.isSubmitting}
-                className="px-4"
-              >
-                Submit
-              </ButtonPrimary>
-            </div>
-          )}
-        </form>
+              {!isEmailEvent && (
+                <div className="mt-4 flex flex-row justify-between">
+                  <ButtonSecondary
+                    className="px-4"
+                    disabled={submission.isSubmitting}
+                    onClick={handleCancelAction}
+                  >
+                    Cancel
+                  </ButtonSecondary>
+                  <ButtonPrimary
+                    ref={submitButton}
+                    type="submit"
+                    disabled={submission.isSubmitting}
+                    className="px-4"
+                  >
+                    Submit
+                  </ButtonPrimary>
+                </div>
+              )}
+            </form>
 
-        {/* Email composer lives outside the form since it has separate, self-contained submit handler */}
-        {isEmailEvent && isSubjectDid && (
-          <div className="mt-2">
-            <EmailComposer did={subject} handleSubmit={handleEmailSubmit} />
+            {/* Email composer lives outside the form since it has separate, self-contained submit handler */}
+            {isEmailEvent && isSubjectDid && (
+              <div className="mt-2">
+                <EmailComposer did={subject} handleSubmit={handleEmailSubmit} />
+              </div>
+            )}
           </div>
-        )}
+
+          <ActivityTimeline reportId={report.id} />
         </div>
-
-        <ActivityTimeline reportId={report.id} />
       </div>
-    </div>
-
     </div>
   )
 }
