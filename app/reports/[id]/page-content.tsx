@@ -1,23 +1,20 @@
 'use client'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useQuery, useQueryClient, InfiniteData } from '@tanstack/react-query'
 import {
   ToolsOzoneReportDefs,
   ToolsOzoneModerationEmitEvent,
-  ToolsOzoneTeamDefs,
 } from '@atproto/api'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'react-toastify'
 import {
   ArrowLeftIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
 import { ActionButton, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
-import { Checkbox, FormLabel, Input, Select, Textarea } from '@/common/forms'
+import { Checkbox, FormLabel, Select, Textarea } from '@/common/forms'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventList } from '@/mod-event/EventList'
 import {
@@ -27,15 +24,10 @@ import {
 } from '@/common/labels/List'
 import { isSelfLabel } from '@/common/labels/util'
 import { LabelSelector } from '@/common/labels/Selector'
-import { capitalize, getDidFromUri } from '@/lib/util'
+import { getDidFromUri } from '@/lib/util'
 import { Loading } from '@/common/Loader'
 import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import {
-  AGE_ASSURANCE_OVERRIDE_STATES,
-  AGE_ASSURANCE_ACCESS_STATES,
-} from '@/mod-event/constants'
-import { ModEventSelectorButton } from '@/mod-event/SelectorButton'
 import {
   ReviewStateIcon,
   SubjectReviewStateBadge,
@@ -47,11 +39,9 @@ import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
-import { EmailComposer, EmailComposerFields } from 'components/email/Composer'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { Alert } from '@/common/Alert'
 import { TextWithLinks } from '@/common/TextWithLinks'
-import { VerificationActionButton } from 'components/verification/ActionButton'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
 import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
@@ -61,7 +51,6 @@ import {
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useAuthDid } from '@/shell/AuthContext'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import { useAssignModerator } from 'components/reports/hooks'
 import {
@@ -72,10 +61,12 @@ import {
 import { MemberView } from 'components/reports/MemberView'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
-import { ActionForm } from '@/reports/ModerationForm/ActionForm'
+import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
+import { ViewersIndicator, AssignmentViewWithModerator } from 'components/reports/ViewersIndicator'
+import { getHandleFromSubjectView } from 'components/reports/utils'
+import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 
 const FORM_ID = 'report-detail-action-panel'
-const ASSIGNMENT_POLL_INTERVAL = 30_000
 
 const REPORT_STATUS_EVENT_TYPES = new Set([
   MOD_EVENTS.ACKNOWLEDGE,
@@ -129,78 +120,7 @@ function findReportInCache(
   return allReports.find((r) => r.id === reportId) ?? null
 }
 
-const statusColors: Record<string, string> = {
-  open: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
-  closed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-  escalated:
-    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  assigned: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
-}
 
-function ReportStatusBadge({ status }: { status: string }) {
-  const color = statusColors[status] ?? statusColors.open
-  return (
-    <span
-      className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium capitalize`}
-    >
-      {status}
-    </span>
-  )
-}
-
-type AssignmentViewWithModerator = ToolsOzoneReportDefs.AssignmentView & {
-  moderator?: ToolsOzoneTeamDefs.Member
-}
-
-function ViewersIndicator({
-  viewers,
-}: {
-  viewers: AssignmentViewWithModerator[]
-}) {
-  const [expanded, setExpanded] = useState(false)
-  if (viewers.length === 0) return null
-
-  return (
-    <div className="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900 px-4 py-2">
-      <button
-        className="flex w-full flex-row items-center justify-between text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-gray-100"
-        onClick={() => setExpanded((v) => !v)}
-      >
-        <span>
-          {viewers.length === 1
-            ? '1 moderator viewing'
-            : `${viewers.length} moderators viewing`}
-        </span>
-        {expanded ? (
-          <ChevronUpIcon className="h-4 w-4 shrink-0" />
-        ) : (
-          <ChevronDownIcon className="h-4 w-4 shrink-0" />
-        )}
-      </button>
-      {expanded && (
-        <div className="mt-3 flex flex-col gap-3 pt-3 border-t border-gray-200 dark:border-gray-700">
-          {viewers.map((v) =>
-            v.moderator ? (
-              <MemberView
-                key={v.did}
-                member={v.moderator}
-                assignedAt={v.startAt}
-                sinceLabel="Viewing since"
-              />
-            ) : (
-              <div
-                key={v.did}
-                className="text-sm text-gray-500 dark:text-gray-400"
-              >
-                {v.did}
-              </div>
-            ),
-          )}
-        </div>
-      )}
-    </div>
-  )
-}
 
 function ReportInfoPanel({
   report,
@@ -217,8 +137,7 @@ function ReportInfoPanel({
     onSuccess: () => toast.success('Report assigned to you'),
   })
 
-  const reporterHandle =
-    report.reporter.status?.subjectRepoHandle ?? report.reporter.repo?.handle
+  const reporterHandle = getHandleFromSubjectView(report.reporter)
   const createdAt = new Date(report.createdAt)
 
   const moderator = assignment?.moderator
@@ -281,13 +200,14 @@ function ReportInfoPanel({
             <span className="text-sm text-gray-400 dark:text-gray-500">
               Unassigned
             </span>
-            <ButtonSecondary
-              className="text-sm py-1"
+            <ActionButton
+              size="sm"
+              appearance="outlined"
               disabled={isPending}
               onClick={() => assignToMe(report.id)}
             >
               {isPending ? 'Assigning…' : 'Assign to me'}
-            </ButtonSecondary>
+            </ActionButton>
             {!!error && (
               <span className="text-xs text-red-500 dark:text-red-400">
                 {(error as any)?.message ?? 'Failed to assign'}
@@ -307,7 +227,6 @@ export function ReportDetailPageContent() {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   const emitEvent = useEmitEvent()
-  const currentUserDid = useAuthDid()
 
   const cachedReport = useMemo(
     () => findReportInCache(queryClient, reportId),
@@ -324,7 +243,7 @@ export function ReportDetailPageContent() {
     labelerAgent.tools.ozone.report
       .assignModerator({ reportId })
       .catch(() => {})
-  }, [reportId]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reportId])
 
   // If no cached report exists, getReport will be called and returns fresh assignment data.
   // In that case we skip the initial assignment poll and start it after the first interval.
@@ -343,83 +262,19 @@ export function ReportDetailPageContent() {
 
   const [subject, setSubject] = useState(report?.subject.subject ?? '')
 
+  const reportSubject = report?.subject.subject
   useEffect(() => {
-    if (report?.subject.subject && !subject) {
-      setSubject(report.subject.subject)
+    if (reportSubject && !subject) {
+      setSubject(reportSubject)
     }
-  }, [report, subject])
+  }, [reportSubject, subject])
 
-  // --- Assignment polling ---
-
-  // Track the permanent-assignment DID for change detection across polls.
-  // Initialized from the report data; once the first poll fires it takes over
-  // as the sole source of truth so report re-fetches can't interfere.
-  const lastKnownAssigneeDid = useRef<string | undefined>(
-    report?.assignment?.did,
-  )
-  const hasPolledOnce = useRef(false)
-
-  // Delay enabling the poll when getReport was already called (data is fresh).
-  const [pollEnabled, setPollEnabled] = useState(!calledGetReport)
-  useEffect(() => {
-    if (calledGetReport) {
-      const timer = setTimeout(
-        () => setPollEnabled(true),
-        ASSIGNMENT_POLL_INTERVAL,
-      )
-      return () => clearTimeout(timer)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Moderators currently viewing this report (temporary assignments, i.e. have endAt).
-  const [viewers, setViewers] = useState<AssignmentViewWithModerator[]>([])
-
-  const { data: assignmentResponse } = useQuery({
-    queryKey: ['report-assignments', reportId],
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.report.getAssignments({
-        reportIds: [reportId],
-      })
-      return data
-    },
-    enabled: !!report && pollEnabled,
-    refetchInterval: ASSIGNMENT_POLL_INTERVAL,
+  const { viewers } = useAssignmentPolling({
+    reportId,
+    hasReport: !!report,
+    initialAssigneeDid: report?.assignment?.did,
+    skipInitialPoll: calledGetReport,
   })
-
-  useEffect(() => {
-    if (!assignmentResponse) return
-
-    const allForReport = ((assignmentResponse as any).assignments ?? []).filter(
-      (a: AssignmentViewWithModerator) => a.reportId === reportId,
-    ) as AssignmentViewWithModerator[]
-
-    // Permanent assignment = no endAt; viewers = has endAt, excluding the current user.
-    const permanentAssignment = allForReport.find((a) => !a.endAt)
-    const currentViewers = allForReport.filter(
-      (a) => !!a.endAt && a.did !== currentUserDid,
-    )
-
-    setViewers(currentViewers)
-
-    const newDid = permanentAssignment?.did
-
-    if (!hasPolledOnce.current) {
-      // First poll: establish baseline from actual poll data, no toast.
-      lastKnownAssigneeDid.current = newDid
-      hasPolledOnce.current = true
-    } else if (newDid !== lastKnownAssigneeDid.current) {
-      // Permanent assignment changed since last poll — notify and re-fetch.
-      if (permanentAssignment) {
-        toast.info('This report has been assigned to another moderator')
-      } else {
-        toast.info('This report has been unassigned')
-      }
-      queryClient.invalidateQueries({ queryKey: ['report', reportId] })
-      lastKnownAssigneeDid.current = newDid
-    }
-  }, [assignmentResponse, reportId]) // eslint-disable-line react-hooks/exhaustive-deps
-
-  // --- End assignment polling ---
 
   if (!report && isLoading) {
     return (
@@ -599,47 +454,22 @@ function ReportDetailLayout(props: {
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
-    isMuteEvent,
     isTakedownEvent,
-    isPriorityScoreEvent,
     setModEventType,
     policyDetails,
     strikeData,
     strikeDataError,
     currentStrikes,
     actionRecommendation,
-    isAgeAssuranceOverrideEvent,
     severityLevelStrikeCount,
-    isMuteReporterEvent,
-    isAppealed,
-    isTagEvent,
-    isEmailEvent,
-    isReverseTakedownEvent,
-    isCommentEvent,
-    isReviewClosed,
-    isEscalated,
-    isAckEvent,
     selectedPolicyName,
     durationSelectorRef,
     submitButton,
-    handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
     targetServices,
     setTargetServices,
     config,
-    showAutomatedEmailComposer,
-    showCantEmailError,
-    automatedEmailTemplate,
-    communicationTemplates,
-    theme,
-    recipientLanguages,
-    emailContent,
-    setEmailContent,
-    onEmailTemplateSelect,
-    emailSubjectField,
-    selectedAgeAssuranceState,
-    setSelectedAgeAssuranceState,
   } = useQuickAction({
     onCancel,
     onSubmit: wrappedOnSubmit,
@@ -651,11 +481,6 @@ function ReportDetailLayout(props: {
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
   )
-
-  let emailTemplateLabel = `Template`
-  if (recipientLanguages.languages.length > 1) {
-    emailTemplateLabel = `Template (account languages: ${recipientLanguages.languages.join(', ')})`
-  }
 
   return (
     <div className="dark:text-gray-50">
@@ -824,8 +649,7 @@ function ReportDetailLayout(props: {
           )}
 
           {/* Strike data error - unlikely to happen */}
-          {!!strikeDataError &&
-            (isTakedownEvent || isEmailEvent || isReverseTakedownEvent) && (
+          {!!strikeDataError && isTakedownEvent && (
               <div className="mb-3">
                 <Alert
                   type="error"
@@ -897,26 +721,6 @@ function ReportDetailLayout(props: {
 
               {shouldShowDurationInHoursField && (
                 <div className="flex flex-row gap-2">
-                  {isPriorityScoreEvent && (
-                    <FormLabel
-                      label=""
-                      className="mt-2 w-1/2"
-                      htmlFor="priorityScore"
-                    >
-                      <Input
-                        type="number"
-                        id="priorityScore"
-                        name="priorityScore"
-                        className="block w-full"
-                        placeholder="Score between 0-100"
-                        autoFocus
-                        min={0}
-                        max={100}
-                        step={1}
-                        required
-                      />
-                    </FormLabel>
-                  )}
                   <FormLabel
                     label=""
                     htmlFor="durationInHours"
@@ -925,85 +729,13 @@ function ReportDetailLayout(props: {
                     <ActionDurationSelector
                       ref={durationSelectorRef}
                       action={modEventType}
-                      required={isLabelEvent ? false : true}
-                      showPermanent={!isMuteEvent}
-                      defaultValue={!isMuteEvent ? 0 : 6}
-                      onChange={(e) => {
-                        if (e.target.value === '0' && isTakedownEvent) {
-                          const ackAllCheckbox =
-                            document.querySelector<HTMLInputElement>(
-                              'input[name="acknowledgeAccountSubjects"]',
-                            )
-                          if (ackAllCheckbox && !ackAllCheckbox.checked) {
-                            ackAllCheckbox.checked = true
-                          }
-                        }
-                      }}
-                      labelText={
-                        isMuteEvent
-                          ? 'Mute duration'
-                          : isLabelEvent
-                            ? 'Label duration'
-                            : isPriorityScoreEvent
-                              ? 'Score duration'
-                              : ''
-                      }
+                      required={!isLabelEvent}
+                      showPermanent
+                      defaultValue={0}
+                      labelText={isLabelEvent ? 'Label duration' : ''}
                     />
                   </FormLabel>
                 </div>
-              )}
-
-              {isAgeAssuranceOverrideEvent && (
-                <>
-                  <div className="mt-2">
-                    <Select
-                      id="ageAssuranceState"
-                      name="ageAssuranceState"
-                      required
-                      onChange={(e) =>
-                        setSelectedAgeAssuranceState(e.target.value)
-                      }
-                    >
-                      <option value="">Select status...</option>
-                      {Object.values(AGE_ASSURANCE_OVERRIDE_STATES).map(
-                        (state) => (
-                          <option key={state} value={state}>
-                            {capitalize(state)}
-                          </option>
-                        ),
-                      )}
-                    </Select>
-                  </div>
-                  {selectedAgeAssuranceState &&
-                    selectedAgeAssuranceState !==
-                      AGE_ASSURANCE_OVERRIDE_STATES.RESET && (
-                      <div className="mt-2">
-                        <Select
-                          id="ageAssuranceAccess"
-                          name="ageAssuranceAccess"
-                          required
-                        >
-                          <option value="">Select access...</option>
-                          {Object.values(AGE_ASSURANCE_ACCESS_STATES).map(
-                            (state) => (
-                              <option key={state} value={state}>
-                                {capitalize(state)}
-                              </option>
-                            ),
-                          )}
-                        </Select>
-                      </div>
-                    )}
-                </>
-              )}
-
-              {isMuteReporterEvent && (
-                <p className="text-xs my-3">
-                  When a reporter is muted, that account will still be able to
-                  report and their reports will show up in the event log.
-                  However, their reports {"won't"} change moderation review
-                  state of the subject {"they're"} reporting
-                </p>
               )}
 
               {isLabelEvent && (
@@ -1022,46 +754,13 @@ function ReportDetailLayout(props: {
                 </div>
               )}
 
-              {isTagEvent && (
-                <FormLabel label="Tags" className="mt-2">
-                  <Input
-                    type="text"
-                    id="tags"
-                    name="tags"
-                    className="block w-full"
-                    placeholder="Comma separated tags"
-                    defaultValue={subjectStatus?.tags?.join(',') || ''}
-                  />
-                </FormLabel>
-              )}
-
-              {(isEmailEvent || isReverseTakedownEvent) && (
-                <PolicySeveritySelector
-                  policyDetails={policyDetails}
-                  handlePolicySelect={handlePolicySelect}
-                  handleSeverityLevelSelect={handleSeverityLevelSelect}
-                  severityLevelStrikeCount={severityLevelStrikeCount}
-                  currentStrikes={currentStrikes}
-                  actionRecommendation={actionRecommendation}
-                  targetServices={targetServices}
-                  setTargetServices={setTargetServices}
-                  selectedSeverityLevel={selectedSeverityLevelName}
-                  defaultSeverityLevel={selectedSeverityLevelName}
-                  defaultPolicy={selectedPolicyName}
-                  isSubjectDid={isSubjectDid}
-                  variant={isEmailEvent ? 'email' : 'reverse-takedown'}
+              <div className="mt-2">
+                <Textarea
+                  name="comment"
+                  placeholder="Reason for action (optional)"
+                  className="block w-full mb-3"
                 />
-              )}
-
-              {!isEmailEvent && (
-                <div className="mt-2">
-                  <Textarea
-                    name="comment"
-                    placeholder="Reason for action (optional)"
-                    className="block w-full mb-3"
-                  />
-                </div>
-              )}
+              </div>
 
               {showReportAction && (
                 <div className="mt-2 mb-3 space-y-2">
@@ -1121,129 +820,30 @@ function ReportDetailLayout(props: {
                 </div>
               )}
 
-              {showAutomatedEmailComposer && (
-                <EmailComposerFields
-                  defaultTemplate={
-                    !!actionRecommendation
-                      ? automatedEmailTemplate?.name
-                      : undefined
-                  }
-                  templateLabel={emailTemplateLabel}
-                  onTemplateSelect={onEmailTemplateSelect}
-                  communicationTemplates={communicationTemplates}
-                  recipientLanguages={recipientLanguages}
-                  subjectField={emailSubjectField}
-                  content={emailContent || ''}
-                  setContent={setEmailContent}
-                  theme={theme}
-                  isSending={submission.isSubmitting}
-                  requiresConfirmation={false}
-                  isConfirmed={true}
-                  toggleConfirmation={() => null}
-                />
-              )}
-
-              {showCantEmailError && (
-                <div className="my-2">
-                  <Alert
-                    showIcon
-                    type="warning"
-                    title="Cannot send email to this user"
-                    body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
-                  />
-                </div>
-              )}
-
-              {isCommentEvent && (
-                <Checkbox
-                  value="true"
-                  id="sticky"
-                  name="sticky"
-                  className="mb-3 flex items-center"
-                  label="Update the subject's persistent note with this comment"
-                />
-              )}
-
-              {(isLabelEvent || isTagEvent) && !isReviewClosed && (
-                <Checkbox
-                  value="true"
-                  defaultChecked
-                  id="additionalAcknowledgeEvent"
-                  name="additionalAcknowledgeEvent"
-                  className="mb-3 flex items-center leading-3"
-                  label={
-                    <span className="leading-4">
-                      {isEscalated
-                        ? `De-escalate the subject and acknowledge all open reports after this action`
-                        : `Acknowledge all open reports after this action`}
-                    </span>
-                  }
-                />
-              )}
-
-              {(isTakedownEvent || isAckEvent) && isSubjectDid && (
-                <Checkbox
-                  value="true"
-                  id="acknowledgeAccountSubjects"
-                  name="acknowledgeAccountSubjects"
-                  className="mb-3 flex items-center leading-3"
-                  label={
-                    <span className="leading-4">
-                      Acknowledge all open/escalated/appealed reports on
-                      subjects created by this user
-                    </span>
-                  }
-                />
-              )}
-
-              {isAckEvent && isAppealed && (
-                <Checkbox
-                  defaultChecked
-                  value="true"
-                  id="additionalResolveAppealEvent"
-                  name="additionalResolveAppealEvent"
-                  className="mb-3 flex items-center leading-3"
-                  label={
-                    <span className="leading-4">
-                      Resolve appeal from the user
-                    </span>
-                  }
-                />
-              )}
-
               {submission.error && (
                 <div className="my-2">
                   <ActionError error={submission.error} />
                 </div>
               )}
 
-              {!isEmailEvent && (
-                <div className="mt-4 flex flex-row justify-between">
-                  <ButtonSecondary
-                    className="px-4"
-                    disabled={submission.isSubmitting}
-                    onClick={handleCancelAction}
-                  >
-                    Cancel
-                  </ButtonSecondary>
-                  <ButtonPrimary
-                    ref={submitButton}
-                    type="submit"
-                    disabled={submission.isSubmitting}
-                    className="px-4"
-                  >
-                    Submit
-                  </ButtonPrimary>
-                </div>
-              )}
-            </form>
-
-            {/* Email composer lives outside the form since it has separate, self-contained submit handler */}
-            {isEmailEvent && isSubjectDid && (
-              <div className="mt-2">
-                <EmailComposer did={subject} handleSubmit={handleEmailSubmit} />
+              <div className="mt-4 flex flex-row justify-between">
+                <ButtonSecondary
+                  className="px-4"
+                  disabled={submission.isSubmitting}
+                  onClick={handleCancelAction}
+                >
+                  Cancel
+                </ButtonSecondary>
+                <ButtonPrimary
+                  ref={submitButton}
+                  type="submit"
+                  disabled={submission.isSubmitting}
+                  className="px-4"
+                >
+                  Submit
+                </ButtonPrimary>
               </div>
-            )}
+            </form>
           </div>
 
           <ActivityTimeline reportId={report.id} />

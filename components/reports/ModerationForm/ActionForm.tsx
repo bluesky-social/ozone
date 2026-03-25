@@ -1,8 +1,8 @@
 'use client'
-import { useState, useRef, FormEvent } from 'react'
+import { useRef, FormEvent } from 'react'
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
-import { Checkbox, Textarea } from '@/common/forms'
+import { Textarea } from '@/common/forms'
 import { LabelSelector } from '@/common/labels/Selector'
 import { isSelfLabel } from '@/common/labels/util'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
@@ -17,11 +17,9 @@ interface ActionFormProps {
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
   onCancel: () => void
   formId: string
-  // Label-specific props
   currentLabels?: string[]
   allLabels?: any[]
   configDid?: string
-  // Takedown-specific props
   policyDetails?: any
   handlePolicySelect?: (policy: string) => void
   handleSeverityLevelSelect?: (level: string) => void
@@ -33,9 +31,6 @@ interface ActionFormProps {
   targetServices?: string[]
   setTargetServices?: (services: string[]) => void
   isSubjectDid?: boolean
-  // Common props
-  isReviewClosed?: boolean
-  isEscalated?: boolean
   submissionError?: Error | null
   isSubmitting?: boolean
 }
@@ -59,8 +54,6 @@ export function ActionForm({
   targetServices = [],
   setTargetServices,
   isSubjectDid = false,
-  isReviewClosed = false,
-  isEscalated = false,
   submissionError,
   isSubmitting = false,
 }: ActionFormProps) {
@@ -113,19 +106,10 @@ export function ActionForm({
       }
     }
 
-    // Handle acknowledge checkbox
-    const additionalAcknowledgeEvent = formData.get('additionalAcknowledgeEvent')
-    const acknowledgeAccountSubjects = formData.get('acknowledgeAccountSubjects')
-
     const vals: ToolsOzoneModerationEmitEvent.InputSchema = {
       event,
       subject: { $type: 'com.atproto.admin.defs#repoRef', did: '' }, // Will be filled by parent
       createdBy: '', // Will be filled by parent
-    }
-
-    // Add additional events if checkboxes are checked
-    if (additionalAcknowledgeEvent === 'true' || acknowledgeAccountSubjects === 'true') {
-      // Parent component will handle this based on form data
     }
 
     await onSubmit(vals)
@@ -156,21 +140,9 @@ export function ActionForm({
             ref={durationSelectorRef}
             action={isLabelAction ? MOD_EVENTS.LABEL : MOD_EVENTS.TAKEDOWN}
             required={!isLabelAction}
-            showPermanent={true}
+            showPermanent
             defaultValue={0}
-            onChange={(e) => {
-              if (e.target.value === '0' && isTakedownAction) {
-                const ackAllCheckbox = document.querySelector<HTMLInputElement>(
-                  'input[name="acknowledgeAccountSubjects"]',
-                )
-                if (ackAllCheckbox && !ackAllCheckbox.checked) {
-                  ackAllCheckbox.checked = true
-                }
-              }
-            }}
-            labelText={
-              isLabelAction ? 'Label duration' : ''
-            }
+            labelText={isLabelAction ? 'Label duration' : ''}
           />
         </div>
       </div>
@@ -198,38 +170,6 @@ export function ActionForm({
           className="block w-full mb-3"
         />
       </div>
-
-      {isLabelAction && !isReviewClosed && (
-        <Checkbox
-          value="true"
-          defaultChecked
-          id="additionalAcknowledgeEvent"
-          name="additionalAcknowledgeEvent"
-          className="mb-3 flex items-center leading-3"
-          label={
-            <span className="leading-4">
-              {isEscalated
-                ? `De-escalate the subject and acknowledge all open reports after this action`
-                : `Acknowledge all open reports after this action`}
-            </span>
-          }
-        />
-      )}
-
-      {isTakedownAction && isSubjectDid && (
-        <Checkbox
-          value="true"
-          id="acknowledgeAccountSubjects"
-          name="acknowledgeAccountSubjects"
-          className="mb-3 flex items-center leading-3"
-          label={
-            <span className="leading-4">
-              Acknowledge all open/escalated/appealed reports on subjects
-              created by this user
-            </span>
-          }
-        />
-      )}
 
       {submissionError && (
         <div className="my-2">

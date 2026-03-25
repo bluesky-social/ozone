@@ -229,11 +229,7 @@ const subjectStringToObject = (
   return undefined
 }
 
-// SubjectView has repo (for accounts) and record (for records) directly.
-const getHandleFromSubjectView = (
-  sv: ToolsOzoneModerationDefs.SubjectView,
-): string | undefined =>
-  sv.status?.subjectRepoHandle ?? sv.repo?.handle ?? sv.record?.repo?.handle
+import { getHandleFromSubjectView } from 'components/reports/utils'
 
 function ReportRow({
   report,

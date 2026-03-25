@@ -32,7 +32,6 @@ function canTransitionTo(fromState: string, toState: string): boolean {
   return VALID_TRANSITIONS[fromState]?.includes(toState) ?? false
 }
 
-// ── Status badge colours ────────────────────────────────────────────────────
 const statusColors: Record<string, string> = {
   open: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   closed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
@@ -50,7 +49,6 @@ function StatusChip({ status }: { status: string }) {
   )
 }
 
-// ── Transition action config ────────────────────────────────────────────────
 type ActionType = 'escalate' | 'reopen' | 'no-action'
 
 const ACTION_CONFIG: Record<ActionType, { activityType: string; label: string; confirmLabel: string }> = {
@@ -59,7 +57,6 @@ const ACTION_CONFIG: Record<ActionType, { activityType: string; label: string; c
   'no-action': { activityType: 'tools.ozone.report.defs#closeActivity', label: 'No-action', confirmLabel: 'Close as no-action' },
 }
 
-// ── Inline transition confirm panel ────────────────────────────────────────
 function TransitionConfirmPanel({
   action,
   reportId,
@@ -116,7 +113,6 @@ function TransitionConfirmPanel({
   )
 }
 
-// ── Standalone note composer ────────────────────────────────────────────────
 function NoteComposer({
   reportId,
   noteType,
@@ -173,7 +169,6 @@ function NoteComposer({
   )
 }
 
-// ── Report Actions Bar ──────────────────────────────────────────────────────
 export function ReportActionsBar({
   report,
   selectedAction,
@@ -316,7 +311,6 @@ const ACTIVITY_TO_STATUS: Record<string, string> = {
 
 type ActivityPayload = { $type: string; previousStatus?: string }
 
-// ── Activity Timeline ───────────────────────────────────────────────────────
 function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActivityView }) {
   const payload = (activity as unknown as { activity: ActivityPayload }).activity
   const activityType = payload?.$type ?? ''
