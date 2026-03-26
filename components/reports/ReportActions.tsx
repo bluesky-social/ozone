@@ -149,6 +149,11 @@ function NoteComposer({
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
+      {noteType === 'public' && (
+        <p className="text-[11px] text-amber-600 dark:text-amber-400">
+          This note will be visible to the reporter.
+        </p>
+      )}
       <div className="flex justify-end gap-1.5">
         <button
           type="button"
