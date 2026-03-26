@@ -21,6 +21,12 @@ const STATUS_OPTIONS = [
   },
 ]
 
+const MUTED_OPTIONS = [
+  { id: 'unmuted', text: 'Unmuted', value: 'false' },
+  { id: 'muted', text: 'Muted', value: 'true' },
+  { id: 'all', text: 'All', value: '' },
+]
+
 const SUBJECT_TYPE_OPTIONS = [
   { id: 'all', text: 'All', value: '' },
   { id: 'account', text: 'Account', value: 'account' },
@@ -56,12 +62,16 @@ export function BetaReportsFilters() {
   const params = useSearchParams()
   const updateParam = useFiltersUpdater()
 
+  const isMuted = params.get('isMuted') ?? ''
   const status = params.get('status') ?? ''
   const subjectType = params.get('subjectType') ?? ''
   const collections =
     params.get('collections')?.split(',').filter(Boolean) ?? []
   const reportTypes =
     params.get('reportTypes')?.split(',').filter(Boolean) ?? []
+
+  const setIsMuted = (value: string) =>
+    updateParam({ isMuted: value || undefined })
 
   const setStatus = (value: string) =>
     updateParam({ status: value || undefined })
@@ -105,6 +115,23 @@ export function BetaReportsFilters() {
               text: opt.text,
               isActive: status === opt.value,
               onClick: () => setStatus(opt.value),
+            }))}
+          />
+        </div>
+
+        {/* Muted */}
+        <div className="flex items-center gap-1.5">
+          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
+            Muted
+          </span>
+          <ButtonGroup
+            size="xs"
+            appearance="primary"
+            items={MUTED_OPTIONS.map((opt) => ({
+              id: opt.id,
+              text: opt.text,
+              isActive: (isMuted || 'false') === opt.value,
+              onClick: () => setIsMuted(opt.value),
             }))}
           />
         </div>
