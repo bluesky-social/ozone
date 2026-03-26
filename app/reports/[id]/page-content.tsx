@@ -62,6 +62,7 @@ import { MemberView } from 'components/reports/MemberView'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
+import { MutedBadge } from 'components/reports/MutedBadge'
 import {
   ViewersIndicator,
   AssignmentViewWithModerator,
@@ -149,6 +150,7 @@ function ReportInfoPanel({
       <div className="flex flex-row flex-wrap items-center gap-2 mb-3">
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
+        <MutedBadge isMuted={report.isMuted} />
         <span
           className="text-xs text-gray-500 dark:text-gray-400"
           title={createdAt.toLocaleString()}
