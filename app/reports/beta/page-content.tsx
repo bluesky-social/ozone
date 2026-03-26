@@ -122,6 +122,7 @@ function useBetaReportsQuery() {
   const status = params.get('status')
   const reportTypes = params.get('reportTypes')
   // queueId is read from the URL to support queue-based filtering later
+  const isMuted = params.get('isMuted')
   const queueId = params.get('queueId')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject } = useFluentReportSearchParams()
@@ -139,6 +140,7 @@ function useBetaReportsQuery() {
         subjectType,
         collections,
         queueId,
+        isMuted,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -179,6 +181,13 @@ function useBetaReportsQuery() {
           queryParams[key] = value
         }
       })
+
+      // Default to unmuted-only; "true" for muted-only; omit for all
+      if (isMuted === 'true') {
+        queryParams.isMuted = true
+      } else if (isMuted !== '') {
+        queryParams.isMuted = false
+      }
 
       const { data } = await labelerAgent.tools.ozone.report.queryReports({
         limit: 100,
