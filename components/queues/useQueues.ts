@@ -29,7 +29,26 @@ export const useQueueList = (filters?: QueueListFilters) => {
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
+    staleTime: 10 * 60 * 1000, // 10 minutes
   })
+}
+
+export const useQueueById = (id: number | null) => {
+  const { data, isLoading } = useQueueList()
+
+  if (id === null || isNaN(id)) {
+    return { queue: undefined, isLoading: false, notFound: false }
+  }
+
+  const queue = data?.pages
+    .flatMap((page) => page.queues)
+    .find((q) => q.id === id)
+
+  return {
+    queue,
+    isLoading,
+    notFound: !isLoading && !queue,
+  }
 }
 
 export const useCreateQueue = () => {
