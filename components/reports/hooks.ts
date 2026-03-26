@@ -19,6 +19,7 @@ export function useAssignModerator(options?: {
     },
     onSuccess: (data, reportId) => {
       queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+      queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
       queryClient.invalidateQueries({ queryKey: ['events'] })
       options?.onSuccess?.(data, reportId)
     },

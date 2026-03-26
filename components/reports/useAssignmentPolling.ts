@@ -58,9 +58,15 @@ export function useAssignmentPolling({
     ) as AssignmentViewWithModerator[]
 
     const permanentAssignment = allForReport.find((a) => !a.endAt)
-    const currentViewers = allForReport.filter(
-      (a) => !!a.endAt && a.did !== currentUserDid,
-    )
+    const viewersByDid = new Map<string, AssignmentViewWithModerator>()
+    for (const a of allForReport) {
+      if (!a.endAt || a.did === currentUserDid) continue
+      const existing = viewersByDid.get(a.did)
+      if (!existing || a.startAt > existing.startAt) {
+        viewersByDid.set(a.did, a)
+      }
+    }
+    const currentViewers = Array.from(viewersByDid.values())
 
     setViewers(currentViewers)
 
@@ -70,9 +76,9 @@ export function useAssignmentPolling({
       lastKnownAssigneeDid.current = newDid
       hasPolledOnce.current = true
     } else if (newDid !== lastKnownAssigneeDid.current) {
-      if (permanentAssignment) {
+      if (permanentAssignment && newDid !== currentUserDid) {
         toast.info('This report has been assigned to another moderator')
-      } else {
+      } else if (!permanentAssignment) {
         toast.info('This report has been unassigned')
       }
       queryClient.invalidateQueries({ queryKey: ['report', reportId] })

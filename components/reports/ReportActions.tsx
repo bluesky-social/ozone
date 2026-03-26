@@ -11,6 +11,7 @@ import {
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
 import { ToolsOzoneReportDefs } from '@atproto/api'
+import { usePermission } from '@/shell/ConfigurationContext'
 import { formatDistanceToNow } from 'date-fns'
 import { ActionButton } from '@/common/buttons'
 import { Textarea } from '@/common/forms'
@@ -181,10 +182,13 @@ export function ReportActionsBar({
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState<'internal' | 'public' | false>(false)
 
+  const canLabel = usePermission('canLabel')
+  const canTakedown = usePermission('canTakedown')
+
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
   const canReopen = status === 'closed' && canTransitionTo(status, 'open')
-  const canNoAction = (status === 'assigned' || status === 'escalated') && canTransitionTo(status, 'closed')
+  const canNoAction = (status === 'open' || status === 'assigned' || status === 'escalated') && canTransitionTo(status, 'closed')
   const canAction = status === 'open' || status === 'assigned' || status === 'escalated'
 
   const handleActionClick = (action: ActionType) => {
@@ -230,17 +234,17 @@ export function ReportActionsBar({
             No-action
           </ActionButton>
         )}
-        {canAction && (
+        {canAction && (canLabel || canTakedown) && (
           <Dropdown
             items={[
-              {
+              ...(canLabel ? [{
                 text: 'Label',
                 onClick: () => handleReportActionSelect('label'),
-              },
-              {
+              }] : []),
+              ...(canTakedown ? [{
                 text: 'Takedown',
                 onClick: () => handleReportActionSelect('takedown'),
-              },
+              }] : []),
             ]}
             className={`inline-flex justify-center items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm ${
               selectedAction

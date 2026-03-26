@@ -35,6 +35,7 @@ import {
 import { PriorityScore } from '../subject/PriorityScore'
 import { AccountStrike } from '../subject/AccountStrike'
 import { ReasonBadge } from '../reports/ReasonBadge'
+import { ReportStatusBadge } from '../reports/ReportStatusBadge'
 import { TextWithLinks } from '../common/TextWithLinks'
 import { LabelList, ModerationLabel } from '../common/labels/List'
 import { SubjectTag } from '../tags/SubjectTag'
@@ -353,13 +354,14 @@ function ReportRow({
       </td>
       {/* Report column (first): reason type + comment + timestamp + reporter */}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-xs">
-        {report.reportType && (
-          <div className="mb-1">
+        <div className="mb-1 flex flex-row items-center gap-1">
+          {report.reportType && (
             <Link href={reportUrl}>
               <ReasonBadge reasonType={report.reportType} />
             </Link>
-          </div>
-        )}
+          )}
+          <ReportStatusBadge status={report.status} />
+        </div>
         {!!report.comment && (
           <div
             className="mb-1 cursor-pointer"

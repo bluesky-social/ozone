@@ -71,20 +71,16 @@ export function QueueCard({
               ))}
             </div>
           </div>
-          <div
-            className="flex flex-col gap-1"
-            hidden={
-              queue.collection === undefined ||
-              hiddenFields?.includes('collection')
-            }
-          >
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Collection
-            </p>
-            <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-              {queue.collection}
-            </code>
-          </div>
+          {!!queue.collection && !hiddenFields?.includes('collection') && (
+            <div className="flex flex-col gap-1">
+              <p className="text-xs text-gray-400 dark:text-gray-500">
+                Collection
+              </p>
+              <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
+                {queue.collection}
+              </code>
+            </div>
+          )}
           <div
             className="flex flex-col gap-1"
             hidden={hiddenFields?.includes('reportTypes')}

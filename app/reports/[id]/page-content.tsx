@@ -62,7 +62,10 @@ import { MemberView } from 'components/reports/MemberView'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
-import { ViewersIndicator, AssignmentViewWithModerator } from 'components/reports/ViewersIndicator'
+import {
+  ViewersIndicator,
+  AssignmentViewWithModerator,
+} from 'components/reports/ViewersIndicator'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 
@@ -119,8 +122,6 @@ function findReportInCache(
   const allReports = getReportsFromCache(queryClient)
   return allReports.find((r) => r.id === reportId) ?? null
 }
-
-
 
 function ReportInfoPanel({
   report,
@@ -197,9 +198,6 @@ function ReportInfoPanel({
           )
         ) : (
           <div className="flex flex-row items-center gap-3">
-            <span className="text-sm text-gray-400 dark:text-gray-500">
-              Unassigned
-            </span>
             <ActionButton
               size="sm"
               appearance="outlined"
@@ -650,26 +648,26 @@ function ReportDetailLayout(props: {
 
           {/* Strike data error - unlikely to happen */}
           {!!strikeDataError && isTakedownEvent && (
-              <div className="mb-3">
-                <Alert
-                  type="error"
-                  title="Error loading strike data!"
-                  body={
-                    <>
-                      Please be cautious when taking actions that require
-                      up-to-date strike info.{' '}
-                      <button
-                        className="underline"
-                        onClick={() => window.location.reload()}
-                      >
-                        Click here
-                      </button>{' '}
-                      to reload strike data for this account.
-                    </>
-                  }
-                />
-              </div>
-            )}
+            <div className="mb-3">
+              <Alert
+                type="error"
+                title="Error loading strike data!"
+                body={
+                  <>
+                    Please be cautious when taking actions that require
+                    up-to-date strike info.{' '}
+                    <button
+                      className="underline"
+                      onClick={() => window.location.reload()}
+                    >
+                      Click here
+                    </button>{' '}
+                    to reload strike data for this account.
+                  </>
+                }
+              />
+            </div>
+          )}
 
           <ReportActionsBar
             report={report}
