@@ -1,6 +1,6 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useQuery, useQueryClient, InfiniteData } from '@tanstack/react-query'
 import {
   ToolsOzoneReportDefs,
@@ -69,6 +69,9 @@ import {
 } from 'components/reports/ViewersIndicator'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { WorkspacePanel } from 'components/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const FORM_ID = 'report-detail-action-panel'
 
@@ -127,9 +130,11 @@ function findReportInCache(
 function ReportInfoPanel({
   report,
   assignment,
+  onClickDid,
 }: {
   report: ToolsOzoneReportDefs.ReportView
   assignment?: ToolsOzoneReportDefs.ReportAssignment
+  onClickDid?: (did: string) => void
 }) {
   const {
     mutate: assignToMe,
@@ -170,9 +175,19 @@ function ReportInfoPanel({
             className="h-4 w-4 shrink-0"
           />
         )}
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-          {reporterHandle ? `@${reporterHandle}` : report.reporter.subject}
-        </span>
+        {onClickDid ? (
+          <button
+            type="button"
+            className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+            onClick={() => onClickDid(report.reporter.subject)}
+          >
+            {reporterHandle ? `@${reporterHandle}` : report.reporter.subject}
+          </button>
+        ) : (
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+            {reporterHandle ? `@${reporterHandle}` : report.reporter.subject}
+          </span>
+        )}
       </div>
 
       {/* Comment */}
@@ -192,10 +207,21 @@ function ReportInfoPanel({
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
         {assignment ? (
           moderator ? (
-            <MemberView member={moderator} assignedAt={assignment.assignedAt} />
+            <MemberView member={moderator} assignedAt={assignment.assignedAt} onClickDid={onClickDid} />
           ) : (
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Assigned to {assignment.did}
+              Assigned to{' '}
+              {onClickDid ? (
+                <button
+                  type="button"
+                  className="hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+                  onClick={() => onClickDid(assignment.did)}
+                >
+                  {assignment.did}
+                </button>
+              ) : (
+                assignment.did
+              )}
             </div>
           )
         ) : (
@@ -223,10 +249,24 @@ function ReportInfoPanel({
 export function ReportDetailPageContent() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const reportId = Number(params.id)
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   const emitEvent = useEmitEvent()
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
+
+  const quickOpenParam = searchParams.get('quickOpen') ?? ''
+  const setQuickActionPanelSubject = (subject: string) => {
+    const nextParams = new URLSearchParams(searchParams)
+    if (!subject) {
+      nextParams.delete('quickOpen')
+    } else {
+      nextParams.set('quickOpen', subject)
+    }
+    router.push((pathname ?? '') + '?' + nextParams.toString())
+  }
 
   const cachedReport = useMemo(
     () => findReportInCache(queryClient, reportId),
@@ -351,8 +391,27 @@ export function ReportDetailPageContent() {
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
           }}
           onCancel={() => router.push('/reports')}
+          onClickDid={setQuickActionPanelSubject}
         />
       )}
+      <ModActionPanelQuick
+        open={!!quickOpenParam}
+        onClose={() => setQuickActionPanelSubject('')}
+        setSubject={setQuickActionPanelSubject}
+        subject={quickOpenParam}
+        subjectOptions={subject ? [subject] : [quickOpenParam]}
+        isInitialLoading={isLoading}
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+          )
+          queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+        }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
+      />
     </div>
   )
 }
@@ -365,6 +424,7 @@ function ReportDetailLayout(props: {
   onCancel: () => void
   assignment?: ToolsOzoneReportDefs.ReportAssignment
   viewers: AssignmentViewWithModerator[]
+  onClickDid?: (did: string) => void
 }) {
   const {
     report,
@@ -374,6 +434,7 @@ function ReportDetailLayout(props: {
     onCancel,
     assignment,
     viewers,
+    onClickDid,
   } = props
   const subjectOptions = [subject]
 
@@ -638,9 +699,9 @@ function ReportDetailLayout(props: {
 
         {/* Right col */}
         <div className="w-full lg:w-1/2 shrink-0">
-          <ReportInfoPanel report={report} assignment={assignment} />
+          <ReportInfoPanel report={report} assignment={assignment} onClickDid={onClickDid} />
 
-          <ViewersIndicator viewers={viewers} />
+          <ViewersIndicator viewers={viewers} onClickDid={onClickDid} />
 
           {profile && (
             <div className="mb-3">
