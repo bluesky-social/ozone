@@ -122,7 +122,7 @@ function useBetaReportsQuery() {
   const status = params.get('status')
   const reportTypes = params.get('reportTypes')
   // queueId is read from the URL to support queue-based filtering later
-  const isMuted = params.get('isMuted')
+  const mute = params.get('mute')
   const queueId = params.get('queueId')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject } = useFluentReportSearchParams()
@@ -140,7 +140,7 @@ function useBetaReportsQuery() {
         subjectType,
         collections,
         queueId,
-        isMuted,
+        mute,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -182,10 +182,10 @@ function useBetaReportsQuery() {
         }
       })
 
-      // Default to unmuted-only; "true" for muted-only; omit for all
-      if (isMuted === 'true') {
+      // mute=isMuted → only muted; mute=all → both; absent → only unmuted
+      if (mute === 'isMuted') {
         queryParams.isMuted = true
-      } else if (isMuted !== '') {
+      } else if (mute !== 'all') {
         queryParams.isMuted = false
       }
 
