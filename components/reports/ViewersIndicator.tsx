@@ -17,8 +17,10 @@ export type AssignmentViewWithModerator = ToolsOzoneReportDefs.AssignmentView & 
 
 export function ViewersIndicator({
   viewers,
+  onClickDid,
 }: {
   viewers: AssignmentViewWithModerator[]
+  onClickDid?: (did: string) => void
 }) {
   const [expanded, setExpanded] = useState(false)
   if (viewers.length === 0) return null
@@ -47,13 +49,24 @@ export function ViewersIndicator({
                 member={v.moderator}
                 assignedAt={v.startAt}
                 sinceLabel="Viewing since"
+                onClickDid={onClickDid}
               />
             ) : (
               <div
                 key={v.did}
                 className="text-sm text-gray-500 dark:text-gray-400"
               >
-                {v.did}
+                {onClickDid ? (
+                  <button
+                    type="button"
+                    className="hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+                    onClick={() => onClickDid(v.did)}
+                  >
+                    {v.did}
+                  </button>
+                ) : (
+                  v.did
+                )}
               </div>
             ),
           )}

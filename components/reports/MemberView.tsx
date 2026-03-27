@@ -37,10 +37,12 @@ export function MemberView({
   member,
   assignedAt,
   sinceLabel = 'Assigned',
+  onClickDid,
 }: {
   member: ToolsOzoneTeamDefs.Member
   assignedAt?: string
   sinceLabel?: string
+  onClickDid?: (did: string) => void
 }) {
   const profile = member.profile
   const handle = profile?.handle
@@ -65,9 +67,19 @@ export function MemberView({
       )}
       <div className="min-w-0 flex-1">
         <div className="flex flex-row items-center gap-1.5 flex-wrap">
-          <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-            {displayName ?? (handle ? `@${handle}` : member.did)}
-          </p>
+          {onClickDid ? (
+            <button
+              type="button"
+              className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+              onClick={() => onClickDid(member.did)}
+            >
+              {displayName ?? (handle ? `@${handle}` : member.did)}
+            </button>
+          ) : (
+            <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
+              {displayName ?? (handle ? `@${handle}` : member.did)}
+            </p>
+          )}
           <RoleBadge role={member.role} />
           {member.disabled && (
             <span className="inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium bg-gray-200 text-gray-600 dark:bg-gray-600 dark:text-gray-300">

@@ -36,6 +36,7 @@ import { PriorityScore } from '../subject/PriorityScore'
 import { AccountStrike } from '../subject/AccountStrike'
 import { ReasonBadge } from '../reports/ReasonBadge'
 import { ReportStatusBadge } from '../reports/ReportStatusBadge'
+import { MutedBadge } from './MutedBadge'
 import { TextWithLinks } from '../common/TextWithLinks'
 import { LabelList, ModerationLabel } from '../common/labels/List'
 import { SubjectTag } from '../tags/SubjectTag'
@@ -290,6 +291,14 @@ function ReportRow({
               {report.status}
             </dd>
           </div>
+          {report.isMuted && (
+            <div className="flex items-center flex-row">
+              <dt>Muted:</dt>
+              <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
+                Yes
+              </dd>
+            </div>
+          )}
           <div className="flex items-center flex-row gap-1">
             <dt>Reporter:</dt>
             <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
@@ -361,6 +370,7 @@ function ReportRow({
             </Link>
           )}
           <ReportStatusBadge status={report.status} />
+          <MutedBadge isMuted={report.isMuted} />
         </div>
         {!!report.comment && (
           <div
