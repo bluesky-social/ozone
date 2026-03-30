@@ -197,6 +197,10 @@ export function ReportActionsBar({
 
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
+  const isAppeal =
+    report.reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
+    report.reportType === 'tools.ozone.report.defs#reasonAppeal'
+  const isSubjectTakendown = !!subjectStatus?.takendown
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
@@ -247,7 +251,29 @@ export function ReportActionsBar({
             No-action
           </ActionButton>
         )}
-        {canAction && (canLabel || canTakedown) && (
+        {canAction && isAppeal && (
+          <>
+            {isSubjectTakendown && canTakedown && (
+              <ActionButton
+                appearance={selectedAction === 'revert-takedown' ? 'primary' : 'outlined'}
+                size="sm"
+                onClick={() => handleReportActionSelect('revert-takedown')}
+              >
+                Revert Takedown
+              </ActionButton>
+            )}
+            {canLabel && (
+              <ActionButton
+                appearance={selectedAction === 'label' ? 'primary' : 'outlined'}
+                size="sm"
+                onClick={() => handleReportActionSelect('label')}
+              >
+                Label
+              </ActionButton>
+            )}
+          </>
+        )}
+        {canAction && !isAppeal && (canLabel || canTakedown) && (
           <Dropdown
             items={[
               ...(canLabel ? [{
