@@ -5,6 +5,7 @@ import { useQuery, useQueryClient, InfiniteData } from '@tanstack/react-query'
 import {
   ToolsOzoneReportDefs,
   ToolsOzoneModerationEmitEvent,
+  ComAtprotoModerationDefs,
 } from '@atproto/api'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'react-toastify'
@@ -81,7 +82,16 @@ const REPORT_STATUS_EVENT_TYPES = new Set([
   MOD_EVENTS.LABEL,
   MOD_EVENTS.COMMENT,
   MOD_EVENTS.ESCALATE,
+  MOD_EVENTS.REVERSE_TAKEDOWN,
+  MOD_EVENTS.RESOLVE_APPEAL,
 ])
+
+function isAppealReport(reportType?: string): boolean {
+  return (
+    reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
+    reportType === 'tools.ozone.report.defs#reasonAppeal'
+  )
+}
 
 function getReportsFromCache(
   queryClient: ReturnType<typeof useQueryClient>,
