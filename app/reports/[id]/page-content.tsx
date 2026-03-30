@@ -507,6 +507,8 @@ function ReportDetailLayout(props: {
       setModEventType(MOD_EVENTS.LABEL)
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
+    } else if (selectedAction === 'revert-takedown') {
+      setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
     }
   }, [selectedAction])
 
@@ -526,6 +528,7 @@ function ReportDetailLayout(props: {
     shouldShowDurationInHoursField,
     isLabelEvent,
     isTakedownEvent,
+    isReverseTakedownEvent,
     setModEventType,
     policyDetails,
     strikeData,
@@ -720,7 +723,7 @@ function ReportDetailLayout(props: {
           )}
 
           {/* Strike data error - unlikely to happen */}
-          {!!strikeDataError && isTakedownEvent && (
+          {!!strikeDataError && (isTakedownEvent || isReverseTakedownEvent) && (
             <div className="mb-3">
               <Alert
                 type="error"
@@ -746,6 +749,23 @@ function ReportDetailLayout(props: {
             report={report}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
+            subjectStatus={subjectStatus}
+            onResolveAppeal={
+              isAppealReport(report.reportType)
+                ? async () => {
+                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = { ids: [report.id] }
+                    await onSubmit({
+                      subject: { $type: 'com.atproto.admin.defs#repoRef', did: subject.startsWith('at://') ? getDidFromUri(subject)! : subject },
+                      createdBy: config.did,
+                      event: {
+                        $type: MOD_EVENTS.RESOLVE_APPEAL,
+                        comment: '[RESOLVING_APPEAL]',
+                      },
+                      reportAction,
+                    })
+                  }
+                : undefined
+            }
           />
 
           <div className={selectedAction ? '' : 'hidden'}>
@@ -756,7 +776,9 @@ function ReportDetailLayout(props: {
                     ? 'Label'
                     : selectedAction === 'takedown'
                       ? 'Takedown'
-                      : 'Action'}
+                      : selectedAction === 'revert-takedown'
+                        ? 'Revert Takedown'
+                        : 'Action'}
                 </span>
                 <ModEventDetailsPopover modEventType={modEventType} />
               </div>
@@ -773,7 +795,7 @@ function ReportDetailLayout(props: {
                 />
               )}
 
-              {isTakedownEvent && (
+              {(isTakedownEvent || isReverseTakedownEvent) && (
                 <PolicySeveritySelector
                   defaultPolicy={selectedPolicyName}
                   policyDetails={policyDetails}
@@ -783,7 +805,7 @@ function ReportDetailLayout(props: {
                   defaultSeverityLevel={selectedSeverityLevelName}
                   currentStrikes={currentStrikes}
                   actionRecommendation={actionRecommendation}
-                  variant="takedown"
+                  variant={isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'}
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
                   isSubjectDid={isSubjectDid}
