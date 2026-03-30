@@ -10,7 +10,11 @@ import {
   CpuChipIcon,
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
-import { ToolsOzoneReportDefs } from '@atproto/api'
+import {
+  ToolsOzoneReportDefs,
+  ToolsOzoneModerationDefs,
+  ComAtprotoModerationDefs,
+} from '@atproto/api'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { formatDistanceToNow } from 'date-fns'
 import { ActionButton } from '@/common/buttons'
@@ -18,7 +22,7 @@ import { Textarea } from '@/common/forms'
 import { Dropdown } from '@/common/Dropdown'
 import { useCreateActivity, useListActivities } from './hooks'
 
-export type ReportActionType = 'label' | 'takedown' | null
+export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
 // Mirror of backend VALID_TRANSITIONS in packages/ozone/src/report/activity.ts
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -179,10 +183,14 @@ export function ReportActionsBar({
   report,
   selectedAction,
   onActionSelect,
+  subjectStatus,
+  onResolveAppeal,
 }: {
   report: ToolsOzoneReportDefs.ReportView
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
+  subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
+  onResolveAppeal?: () => Promise<void>
 }) {
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState<'internal' | 'public' | false>(false)
