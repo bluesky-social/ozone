@@ -66,10 +66,12 @@ function TransitionConfirmPanel({
   action,
   reportId,
   onDone,
+  onResolveAppeal,
 }: {
   action: ActionType
   reportId: number
   onDone: () => void
+  onResolveAppeal?: () => Promise<void>
 }) {
   const [note, setNote] = useState('')
   const createActivity = useCreateActivity()
@@ -82,7 +84,14 @@ function TransitionConfirmPanel({
         activity: { $type: activityType as Parameters<typeof createActivity.mutate>[0]['activity']['$type'] },
         internalNote: note.trim() || undefined,
       },
-      { onSuccess: onDone },
+      {
+        onSuccess: async () => {
+          if (action === 'no-action' && onResolveAppeal) {
+            await onResolveAppeal()
+          }
+          onDone()
+        },
+      },
     )
   }
 
@@ -333,6 +342,7 @@ export function ReportActionsBar({
           action={pendingAction}
           reportId={report.id}
           onDone={() => setPendingAction(null)}
+          onResolveAppeal={isAppeal ? onResolveAppeal : undefined}
         />
       )}
 
