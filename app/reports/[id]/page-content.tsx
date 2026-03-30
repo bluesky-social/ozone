@@ -491,6 +491,22 @@ function ReportDetailLayout(props: {
       }
       if (reportActionNote) reportAction.note = reportActionNote
       await onSubmit({ ...finalVals, reportAction })
+
+      // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
+      if (
+        isAppealReport(report.reportType) &&
+        eventType !== MOD_EVENTS.RESOLVE_APPEAL
+      ) {
+        await onSubmit({
+          ...finalVals,
+          event: {
+            $type: MOD_EVENTS.RESOLVE_APPEAL,
+            comment: '[RESOLVING_APPEAL]',
+          },
+          reportAction: { ids: [report.id] },
+        })
+      }
+
       setSelectedAction(null) // Reset after successful submission
     } else {
       await onSubmit(finalVals)
