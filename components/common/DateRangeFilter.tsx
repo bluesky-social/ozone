@@ -18,7 +18,7 @@ function formatDateForInput(date: Date) {
   return date.toISOString().split('T')[0]
 }
 
-function computeDatesForPreset(preset: DateRangePreset): {
+export function computeDatesForPreset(preset: DateRangePreset): {
   startDate?: string
   endDate?: string
 } {

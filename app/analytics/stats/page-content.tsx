@@ -1,5 +1,9 @@
 'use client'
-import { getDefaultDateRange } from '@/common/DateRangeFilter'
+import {
+  DateRangePreset,
+  computeDatesForPreset,
+  getDefaultDateRange,
+} from '@/common/DateRangeFilter'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsPanel } from '@/reports/stats/LiveStatsPanel'
 import { categoryToReportTypes } from '@/reports/ReportCategorySelect'
@@ -35,10 +39,20 @@ function parseFiltersFromParams(
     }
   }
 
-  const dateRange = getDefaultDateRange()
+  const presetParam = searchParams.get('preset')
+  const validPresets: DateRangePreset[] = ['7d', '30d', '90d', 'custom']
+  const preset =
+    presetParam && validPresets.includes(presetParam as DateRangePreset)
+      ? (presetParam as DateRangePreset)
+      : startDateParam || endDateParam
+        ? 'custom'
+        : undefined
+
+  const dateRange = preset
+    ? { ...computeDatesForPreset(preset), preset }
+    : getDefaultDateRange()
   if (startDateParam) dateRange.startDate = startDateParam
   if (endDateParam) dateRange.endDate = endDateParam
-  if (startDateParam || endDateParam) dateRange.preset = 'custom'
 
   return {
     queueId: queueIdParam ? Number(queueIdParam) : undefined,
@@ -60,6 +74,7 @@ function filtersToParams(filters: StatsFilterState): URLSearchParams {
   if (filters.queueId != null) {
     params.set('queueId', String(filters.queueId))
   }
+  params.set('preset', filters.dateRange.preset)
   if (filters.dateRange.startDate && filters.dateRange.preset === 'custom') {
     params.set('startDate', filters.dateRange.startDate)
   }
@@ -74,11 +89,7 @@ export function StatsDetailPageContent() {
   const searchParams = useSearchParams()
   const router = useRouter()
 
-  const initialFilters = useMemo(
-    () => parseFiltersFromParams(searchParams),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
-  )
+  const initialFilters = useMemo(() => parseFiltersFromParams(searchParams), [searchParams])
 
   const [filters, setFilters] = useState<StatsFilterState>(initialFilters)
   const categoryTitle = filters.category
