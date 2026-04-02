@@ -61,6 +61,7 @@ export function StatsFilters({
         <DateRangeFilter
           value={value.dateRange}
           onChange={(dateRange) => onChange({ ...value, dateRange })}
+          limit={100}
         />
       </div>
     </div>

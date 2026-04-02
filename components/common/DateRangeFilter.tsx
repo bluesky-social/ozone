@@ -1,4 +1,4 @@
-import { subDays } from 'date-fns'
+import { differenceInDays, subDays } from 'date-fns'
 
 export type DateRangePreset = '7d' | '30d' | '90d' | 'custom'
 
@@ -6,12 +6,12 @@ export type DateRangeValue = {
   startDate?: string
   endDate?: string
   preset: DateRangePreset
-  limit?: number
 }
 
 const PRESETS: { key: DateRangePreset; label: string; days: number }[] = [
   { key: '7d', label: '7 days', days: 7 },
   { key: '30d', label: '30 days', days: 30 },
+  { key: '90d', label: '90 days', days: 90 },
 ]
 
 function formatDateForInput(date: Date) {
@@ -38,10 +38,20 @@ export function getDefaultDateRange(): DateRangeValue {
 export function DateRangeFilter({
   value,
   onChange,
+  limit,
 }: {
   value: DateRangeValue
   onChange: (value: DateRangeValue) => void
+  limit?: number
 }) {
+  const exceedsMax =
+    limit !== undefined
+      ? value.startDate && value.endDate
+        ? differenceInDays(new Date(value.endDate), new Date(value.startDate)) >
+          limit
+        : false
+      : false
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       {PRESETS.map((preset) => (
@@ -108,6 +118,11 @@ export function DateRangeFilter({
             }
           />
         </div>
+      )}
+      {exceedsMax && (
+        <p className="text-xs text-red-600 dark:text-red-400">
+          Date range cannot exceed {limit} days
+        </p>
       )}
     </div>
   )
