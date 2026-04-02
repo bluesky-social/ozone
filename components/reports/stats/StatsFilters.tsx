@@ -1,6 +1,7 @@
 import { ActionButton } from '@/common/buttons'
 import { useQueueList } from '@/queues/useQueues'
 import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
+import { useMemberList } from '@/team/useMemberList'
 import {
   computeDatesForPreset,
   DateRangeFilter,
@@ -14,6 +15,7 @@ import { REPORT_CATEGORIES } from '.'
 export type StatsFilterState = {
   queueId?: number
   category?: string
+  moderatorDid?: string
   dateRange: DateRangeValue
 }
 
@@ -22,6 +24,7 @@ function parseFiltersFromParams(
 ): StatsFilterState {
   const reportTypesParam = searchParams.get('reportTypes')
   const categoryParam = searchParams.get('category')
+  const moderatorDidParam = searchParams.get('moderatorDid')
   const queueIdParam = searchParams.get('queueId')
   const startDateParam = searchParams.get('startDate')
   const endDateParam = searchParams.get('endDate')
@@ -60,6 +63,7 @@ function parseFiltersFromParams(
   return {
     queueId: queueIdParam ? Number(queueIdParam) : undefined,
     category,
+    moderatorDid: moderatorDidParam || undefined,
     dateRange,
   }
 }
@@ -72,6 +76,9 @@ function filtersToParams(filters: StatsFilterState): URLSearchParams {
   }
   if (filters.queueId != null) {
     params.set('queueId', String(filters.queueId))
+  }
+  if (filters.moderatorDid) {
+    params.set('moderatorDid', filters.moderatorDid)
   }
   params.set('preset', filters.dateRange.preset)
   if (filters.dateRange.startDate && filters.dateRange.preset === 'custom') {
@@ -135,6 +142,8 @@ export function StatsFilters({
 }) {
   const { data: queuesData } = useQueueList()
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
+  const { data: membersData } = useMemberList()
+  const members = membersData?.pages?.flatMap((page) => page.members) ?? []
 
   return (
     <div className="mb-4">
@@ -150,6 +159,7 @@ export function StatsFilters({
                 ...value,
                 queueId: e.target.value ? Number(e.target.value) : undefined,
                 category: e.target.value ? undefined : value.category,
+                moderatorDid: e.target.value ? undefined : value.moderatorDid,
               })
             }
             className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
@@ -174,9 +184,35 @@ export function StatsFilters({
                 ...value,
                 category,
                 queueId: category ? undefined : value.queueId,
+                moderatorDid: category ? undefined : value.moderatorDid,
               })
             }
           />
+        </div>
+
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Moderator
+          </label>
+          <select
+            value={value.moderatorDid ?? ''}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                moderatorDid: e.target.value || undefined,
+                queueId: e.target.value ? undefined : value.queueId,
+                category: e.target.value ? undefined : value.category,
+              })
+            }
+            className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
+          >
+            <option value="">All Moderators</option>
+            {members.map((m) => (
+              <option key={m.did} value={m.did}>
+                {m.profile?.displayName || m.profile?.handle || m.did}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>
@@ -202,6 +238,7 @@ export function StatsFilters({
               onChange({
                 queueId: undefined,
                 category: undefined,
+                moderatorDid: undefined,
                 dateRange: value.dateRange,
               })
             }
