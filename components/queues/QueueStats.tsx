@@ -1,4 +1,4 @@
-import { useLiveStats } from '@/queues/useQueues'
+import { useLiveStats } from '@/reports/stats/useMockReportStats'
 
 export function QueueStats() {
   const { data: stats } = useLiveStats()

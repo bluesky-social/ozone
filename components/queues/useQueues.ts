@@ -1,13 +1,12 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
 import {
   ToolsOzoneQueueCreateQueue,
-  ToolsOzoneQueueUpdateQueue,
   ToolsOzoneQueueDeleteQueue,
   ToolsOzoneQueueRouteReports,
-  ToolsOzoneQueueGetLiveStats,
+  ToolsOzoneQueueUpdateQueue,
 } from '@atproto/api'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 
 export type QueueListFilters = {
   enabled?: boolean
@@ -97,18 +96,6 @@ export const useDeleteQueue = () => {
     },
     onError: (error) => {
       toast.error(`Failed to delete queue: ${error?.['message']}`)
-    },
-  })
-}
-
-export const useLiveStats = (params?: ToolsOzoneQueueGetLiveStats.QueryParams) => {
-  const labelerAgent = useLabelerAgent()
-
-  return useQuery({
-    queryKey: ['queues', 'getLiveStats', params?.queueId],
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.queue.getLiveStats(params)
-      return data.stats
     },
   })
 }
