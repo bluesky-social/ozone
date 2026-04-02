@@ -13,7 +13,7 @@ import {
 import { PlusIcon } from '@heroicons/react/24/outline'
 import { useMemberList } from '@/team/useMemberList'
 
-interface MemberSearchPopoverProps {
+interface AssigneeSearchPopoverProps {
   onSelect: (did: string) => void
   buttonLabel?: string
   className?: string
@@ -23,7 +23,7 @@ export function AssigneeSearchPopover({
   onSelect,
   buttonLabel = 'Add Assignee',
   className,
-}: MemberSearchPopoverProps) {
+}: AssigneeSearchPopoverProps) {
   const [query, setQuery] = useState('')
   const { data } = useMemberList(query)
   const members = data?.pages?.flatMap((page) => page.members) ?? []
@@ -51,10 +51,7 @@ export function AssigneeSearchPopover({
               onChange={(e) => setQuery(e.target.value)}
               value={query}
             />
-            <ComboboxOptions
-              static
-              className="mt-1 max-h-48 overflow-auto"
-            >
+            <ComboboxOptions static className="mt-1 max-h-48 overflow-auto">
               {members.map((member) => (
                 <ComboboxOption
                   key={member.did}

@@ -1,7 +1,7 @@
 import { ActionButton } from '@/common/buttons'
 import { useQueueList } from '@/queues/useQueues'
 import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
-import { useMemberList } from '@/team/useMemberList'
+import { MemberSingleSelect } from '@/team/MemberSingleSelect'
 import {
   computeDatesForPreset,
   DateRangeFilter,
@@ -142,8 +142,6 @@ export function StatsFilters({
 }) {
   const { data: queuesData } = useQueueList()
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
-  const { data: membersData } = useMemberList()
-  const members = membersData?.pages?.flatMap((page) => page.members) ?? []
 
   return (
     <div className="mb-4">
@@ -194,25 +192,17 @@ export function StatsFilters({
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Moderator
           </label>
-          <select
-            value={value.moderatorDid ?? ''}
-            onChange={(e) =>
+          <MemberSingleSelect
+            value={value.moderatorDid}
+            onChange={(moderatorDid) =>
               onChange({
                 ...value,
-                moderatorDid: e.target.value || undefined,
-                queueId: e.target.value ? undefined : value.queueId,
-                category: e.target.value ? undefined : value.category,
+                moderatorDid,
+                queueId: moderatorDid ? undefined : value.queueId,
+                category: moderatorDid ? undefined : value.category,
               })
             }
-            className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
-          >
-            <option value="">All Moderators</option>
-            {members.map((m) => (
-              <option key={m.did} value={m.did}>
-                {m.profile?.displayName || m.profile?.handle || m.did}
-              </option>
-            ))}
-          </select>
+          />
         </div>
 
         <div>
