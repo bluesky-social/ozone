@@ -14,10 +14,6 @@ const PRESETS: { key: DateRangePreset; label: string; days: number }[] = [
   { key: '90d', label: '90 days', days: 90 },
 ]
 
-function formatDateForInput(date: Date) {
-  return date.toISOString().split('T')[0]
-}
-
 export function computeDatesForPreset(preset: DateRangePreset): {
   startDate?: string
   endDate?: string
@@ -28,11 +24,6 @@ export function computeDatesForPreset(preset: DateRangePreset): {
     startDate: subDays(new Date(), presetConfig.days).toISOString(),
     endDate: new Date().toISOString(),
   }
-}
-
-export function getDefaultDateRange(): DateRangeValue {
-  const dates = computeDatesForPreset('30d')
-  return { ...dates, preset: '30d' }
 }
 
 export function DateRangeFilter({
@@ -53,7 +44,7 @@ export function DateRangeFilter({
       : false
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex flex-wrap items-center gap-2 min-h-[38px]">
       {PRESETS.map((preset) => (
         <button
           key={preset.key}
@@ -87,11 +78,7 @@ export function DateRangeFilter({
           <input
             type="date"
             className="block w-auto text-xs rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200 dark:[color-scheme:dark]"
-            value={
-              value.startDate
-                ? formatDateForInput(new Date(value.startDate))
-                : ''
-            }
+            value={value.startDate ? value.startDate.split('T')[0] : ''}
             onChange={(e) =>
               onChange({
                 ...value,
@@ -105,9 +92,7 @@ export function DateRangeFilter({
           <input
             type="date"
             className="block w-auto text-xs rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200 dark:[color-scheme:dark]"
-            value={
-              value.endDate ? formatDateForInput(new Date(value.endDate)) : ''
-            }
+            value={value.endDate ? value.endDate.split('T')[0] : ''}
             onChange={(e) =>
               onChange({
                 ...value,

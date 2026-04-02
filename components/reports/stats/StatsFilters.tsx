@@ -6,7 +6,6 @@ import {
   DateRangeFilter,
   DateRangePreset,
   DateRangeValue,
-  getDefaultDateRange,
 } from '../../common/DateRangeFilter'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -47,11 +46,14 @@ function parseFiltersFromParams(
       ? (presetParam as DateRangePreset)
       : startDateParam || endDateParam
         ? 'custom'
-        : undefined
+        : '30d'
 
-  const dateRange = preset
-    ? { ...computeDatesForPreset(preset), preset }
-    : getDefaultDateRange()
+  const dates = computeDatesForPreset(preset)
+  const dateRange = {
+    startDate: dates.startDate,
+    endDate: dates.endDate,
+    preset,
+  }
   if (startDateParam) dateRange.startDate = startDateParam
   if (endDateParam) dateRange.endDate = endDateParam
 
@@ -102,7 +104,20 @@ export const useStatsFilters = () => {
     [router],
   )
 
-  // Sync URL changes
+  // Populate URL with default filters on initial load
+  useEffect(() => {
+    const params = filtersToParams(initialFilters)
+    const qs = params.toString()
+    const currentQs = searchParams.toString()
+    if (qs !== currentQs) {
+      router.replace(`/analytics/stats${qs ? `?${qs}` : ''}`, {
+        scroll: false,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // Sync URL changes (e.g. browser back/forward)
   useEffect(() => {
     const newFilters = parseFiltersFromParams(searchParams)
     setFilters(newFilters)
@@ -122,73 +137,78 @@ export function StatsFilters({
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
 
   return (
-    <div className="flex flex-wrap items-start gap-3 mb-4">
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          Queue
-        </label>
-        <select
-          value={value.queueId ?? ''}
-          onChange={(e) =>
-            onChange({
-              ...value,
-              queueId: e.target.value ? Number(e.target.value) : undefined,
-              category: e.target.value ? undefined : value.category,
-            })
-          }
-          className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
-        >
-          <option value="">All Queues</option>
-          {queues.map((q) => (
-            <option key={q.id} value={q.id}>
-              {q.name}
-            </option>
-          ))}
-        </select>
-      </div>
+    <div className="mb-4">
+      <div className="flex flex-wrap items-start gap-3">
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Queue
+          </label>
+          <select
+            value={value.queueId ?? ''}
+            onChange={(e) =>
+              onChange({
+                ...value,
+                queueId: e.target.value ? Number(e.target.value) : undefined,
+                category: e.target.value ? undefined : value.category,
+              })
+            }
+            className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
+          >
+            <option value="">All Queues</option>
+            {queues.map((q) => (
+              <option key={q.id} value={q.id}>
+                {q.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          Category
-        </label>
-        <ReportCategorySelect
-          value={value.category}
-          onChange={(category) =>
-            onChange({
-              ...value,
-              category,
-              queueId: category ? undefined : value.queueId,
-            })
-          }
-        />
-      </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Category
+          </label>
+          <ReportCategorySelect
+            value={value.category}
+            onChange={(category) =>
+              onChange({
+                ...value,
+                category,
+                queueId: category ? undefined : value.queueId,
+              })
+            }
+          />
+        </div>
 
-      <div className="flex flex-col gap-1">
-        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
-          Date Range
-        </label>
-        <DateRangeFilter
-          value={value.dateRange}
-          onChange={(dateRange) => onChange({ ...value, dateRange })}
-          limit={100}
-        />
-      </div>
+        <div>
+          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+            Date Range
+          </label>
+          <DateRangeFilter
+            value={value.dateRange}
+            onChange={(dateRange) => onChange({ ...value, dateRange })}
+            limit={100}
+          />
+        </div>
 
-      <div className="flex flex-col gap-1 justify-end">
-        <ActionButton
-          type="button"
-          size="md"
-          appearance="outlined"
-          onClick={() =>
-            onChange({
-              queueId: undefined,
-              category: undefined,
-              dateRange: value.dateRange,
-            })
-          }
-        >
-          <p className="text-xs">Reset Filters</p>
-        </ActionButton>
+        <div>
+          <label className="block text-xs font-medium text-transparent mb-1">
+            &nbsp;
+          </label>
+          <ActionButton
+            type="button"
+            size="md"
+            appearance="outlined"
+            onClick={() =>
+              onChange({
+                queueId: undefined,
+                category: undefined,
+                dateRange: value.dateRange,
+              })
+            }
+          >
+            <p className="text-xs">Reset</p>
+          </ActionButton>
+        </div>
       </div>
     </div>
   )

@@ -12,7 +12,7 @@ export interface StatGroup {
 export function getHrefFromGroup(group: StatGroup): string {
   const params = new URLSearchParams()
   if (group.key) {
-    params.set('reportCategory', group.key)
+    params.set('category', group.key)
   }
   if (group.queueId != null) {
     params.set('queueId', String(group.queueId))

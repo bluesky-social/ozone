@@ -14,7 +14,10 @@ function AggregateStatsCard() {
   const { data: stats, isLoading } = useLiveStats()
 
   return (
-    <div className="shrink-0 w-64 rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700">
+    <a
+      href="/analytics/stats"
+      className="shrink-0 w-64 rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700"
+    >
       <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
         All Queues
       </h3>
@@ -57,7 +60,7 @@ function AggregateStatsCard() {
           )}
         </div>
       )}
-    </div>
+    </a>
   )
 }
 
