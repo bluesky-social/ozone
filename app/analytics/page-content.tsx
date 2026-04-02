@@ -31,7 +31,6 @@ export function AnalyticsPageContent() {
         <div className="flex gap-4 overflow-x-auto pb-2">
           <StatsCard
             group={{
-              key: 'aggregate',
               title: 'Aggregate',
             }}
           />
@@ -39,7 +38,6 @@ export function AnalyticsPageContent() {
             <StatsCard
               key={queue.id}
               group={{
-                key: `${i}`,
                 title: queue.name,
                 queueId: queue.id,
               }}

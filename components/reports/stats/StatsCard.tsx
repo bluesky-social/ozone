@@ -4,10 +4,13 @@ import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { subDays } from 'date-fns'
 import { getHrefFromGroup, StatGroup } from '.'
 import { useLiveStats, useHistoricalStats } from './useMockReportStats'
+import { groupedReasonTypes } from '../helpers/getType'
 
 export function StatsCard({ group }: { group: StatGroup }) {
   const filterParams = {
-    reportTypes: group.reportTypes,
+    reportTypes: group.category
+      ? groupedReasonTypes[group.category]
+      : undefined,
     queueId: group.queueId,
     moderatorDid: group.moderatorDid,
   }

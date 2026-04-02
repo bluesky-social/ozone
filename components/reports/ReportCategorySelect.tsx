@@ -15,7 +15,7 @@ export function ReportCategorySelect({
     >
       <option value="">All Categories</option>
       {REPORT_CATEGORIES.map((cat) => (
-        <option key={cat.key} value={cat.key}>
+        <option key={cat.category} value={cat.category}>
           {cat.title}
         </option>
       ))}

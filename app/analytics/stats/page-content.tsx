@@ -1,6 +1,6 @@
 'use client'
 
-import { categoryToReportTypes } from '@/reports/stats'
+import { groupedReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsPanel } from '@/reports/stats/LiveStatsPanel'
 import { StatsFilters, useStatsFilters } from '@/reports/stats/StatsFilters'
@@ -15,7 +15,9 @@ import Link from 'next/link'
 export function StatsDetailPageContent() {
   const { filters, handleFilterChange } = useStatsFilters()
 
-  const reportTypes = categoryToReportTypes(filters.category)
+  const reportTypes = filters.category
+    ? groupedReasonTypes[filters.category]
+    : []
   const live: LiveStatsParams = {
     reportTypes,
     queueId: filters.queueId,

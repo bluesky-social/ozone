@@ -1,16 +1,14 @@
-import { ActionButton } from '@/common/buttons'
 import { useQueueList } from '@/queues/useQueues'
 import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
 import { MemberSingleSelect } from '@/team/MemberSingleSelect'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   computeDatesForPreset,
   DateRangeFilter,
   DateRangePreset,
   DateRangeValue,
 } from '../../common/DateRangeFilter'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useMemo, useState } from 'react'
-import { REPORT_CATEGORIES } from '.'
 
 export type StatsFilterState = {
   queueId?: number
@@ -22,27 +20,13 @@ export type StatsFilterState = {
 function parseFiltersFromParams(
   searchParams: URLSearchParams,
 ): StatsFilterState {
-  const reportTypesParam = searchParams.get('reportTypes')
   const categoryParam = searchParams.get('category')
   const moderatorDidParam = searchParams.get('moderatorDid')
   const queueIdParam = searchParams.get('queueId')
   const startDateParam = searchParams.get('startDate')
   const endDateParam = searchParams.get('endDate')
-
-  const category = categoryParam || undefined
-
-  let reportTypes: string[] = []
-  if (reportTypesParam) {
-    const group = REPORT_CATEGORIES.find((g) => g.key === reportTypesParam)
-    const resolved = group?.reportTypes
-    if (resolved) {
-      reportTypes = resolved
-    } else {
-      reportTypes = reportTypesParam.split(',').filter(Boolean)
-    }
-  }
-
   const presetParam = searchParams.get('preset')
+
   const validPresets: DateRangePreset[] = ['7d', '30d', '90d', 'custom']
   const preset =
     presetParam && validPresets.includes(presetParam as DateRangePreset)
@@ -62,7 +46,7 @@ function parseFiltersFromParams(
 
   return {
     queueId: queueIdParam ? Number(queueIdParam) : undefined,
-    category,
+    category: categoryParam ?? undefined,
     moderatorDid: moderatorDidParam || undefined,
     dateRange,
   }
@@ -133,6 +117,20 @@ export const useStatsFilters = () => {
   return { filters, handleFilterChange }
 }
 
+type ViewMode = 'queue' | 'category' | 'moderator'
+
+function getViewMode(value: StatsFilterState): ViewMode {
+  if (value.category) return 'category'
+  if (value.moderatorDid) return 'moderator'
+  return 'queue'
+}
+
+const VIEW_MODES: { key: ViewMode; label: string }[] = [
+  { key: 'queue', label: 'By Queue' },
+  { key: 'category', label: 'By Category' },
+  { key: 'moderator', label: 'By Moderator' },
+]
+
 export function StatsFilters({
   value,
   onChange,
@@ -142,10 +140,43 @@ export function StatsFilters({
 }) {
   const { data: queuesData } = useQueueList()
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
+  const [viewMode, setViewMode] = useState<ViewMode>(() => getViewMode(value))
+
+  // Sync viewMode when value changes externally (e.g. URL navigation)
+  useEffect(() => {
+    setViewMode(getViewMode(value))
+  }, [value.queueId, value.category, value.moderatorDid])
+
+  const handleViewModeChange = (mode: ViewMode) => {
+    setViewMode(mode)
+    onChange({
+      queueId: undefined,
+      category: undefined,
+      moderatorDid: undefined,
+      dateRange: value.dateRange,
+    })
+  }
 
   return (
-    <div className="mb-4">
-      <div className="flex flex-wrap items-start gap-3">
+    <div className="mb-4 flex flex-wrap items-start gap-3">
+      <div>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          Grouping
+        </label>
+        <select
+          value={viewMode}
+          onChange={(e) => handleViewModeChange(e.target.value as ViewMode)}
+          className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
+        >
+          {VIEW_MODES.map((mode) => (
+            <option key={mode.key} value={mode.key}>
+              {mode.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {viewMode === 'queue' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Queue
@@ -156,8 +187,8 @@ export function StatsFilters({
               onChange({
                 ...value,
                 queueId: e.target.value ? Number(e.target.value) : undefined,
-                category: e.target.value ? undefined : value.category,
-                moderatorDid: e.target.value ? undefined : value.moderatorDid,
+                category: undefined,
+                moderatorDid: undefined,
               })
             }
             className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
@@ -170,7 +201,9 @@ export function StatsFilters({
             ))}
           </select>
         </div>
+      )}
 
+      {viewMode === 'category' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Category
@@ -181,13 +214,15 @@ export function StatsFilters({
               onChange({
                 ...value,
                 category,
-                queueId: category ? undefined : value.queueId,
-                moderatorDid: category ? undefined : value.moderatorDid,
+                queueId: undefined,
+                moderatorDid: undefined,
               })
             }
           />
         </div>
+      )}
 
+      {viewMode === 'moderator' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Moderator
@@ -199,44 +234,23 @@ export function StatsFilters({
               onChange({
                 ...value,
                 moderatorDid,
-                queueId: moderatorDid ? undefined : value.queueId,
-                category: moderatorDid ? undefined : value.category,
-              })
-            }
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Date Range
-          </label>
-          <DateRangeFilter
-            value={value.dateRange}
-            onChange={(dateRange) => onChange({ ...value, dateRange })}
-            limit={100}
-          />
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-transparent mb-1">
-            &nbsp;
-          </label>
-          <ActionButton
-            type="button"
-            size="md"
-            appearance="outlined"
-            onClick={() =>
-              onChange({
                 queueId: undefined,
                 category: undefined,
-                moderatorDid: undefined,
-                dateRange: value.dateRange,
               })
             }
-          >
-            <p className="text-xs">Reset</p>
-          </ActionButton>
+          />
         </div>
+      )}
+
+      <div>
+        <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+          Date Range
+        </label>
+        <DateRangeFilter
+          value={value.dateRange}
+          onChange={(dateRange) => onChange({ ...value, dateRange })}
+          limit={100}
+        />
       </div>
     </div>
   )
