@@ -9,6 +9,8 @@ import {
   LiveStatsParams,
   useHistoricalStats,
 } from '@/reports/stats/useMockReportStats'
+import { ArrowLeftIcon } from '@heroicons/react/24/solid'
+import Link from 'next/link'
 import { useTitle } from 'react-use'
 
 export function StatsDetailPageContent() {
@@ -46,9 +48,14 @@ export function StatsDetailPageContent() {
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4">
-      <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
-        {pageTitle}
-      </h1>
+      <div className="flex items-center gap-4 mb-4">
+        <Link href="/analytics" className="text-gray-700 dark:text-gray-100">
+          <ArrowLeftIcon className="h-4 w-4" />
+        </Link>
+        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          {pageTitle}
+        </h1>
+      </div>
 
       <StatsFilters value={filters} onChange={handleFilterChange} />
 
