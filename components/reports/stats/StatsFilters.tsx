@@ -17,9 +17,7 @@ export type StatsFilterState = {
   dateRange: DateRangeValue
 }
 
-function parseFiltersFromParams(
-  searchParams: URLSearchParams,
-): StatsFilterState {
+function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   const categoryParam = searchParams.get('category')
   const moderatorDidParam = searchParams.get('moderatorDid')
   const queueIdParam = searchParams.get('queueId')
@@ -27,13 +25,11 @@ function parseFiltersFromParams(
   const endDateParam = searchParams.get('endDate')
   const presetParam = searchParams.get('preset')
 
-  const validPresets: DateRangePreset[] = ['7d', '30d', '90d', 'custom']
-  const preset =
-    presetParam && validPresets.includes(presetParam as DateRangePreset)
-      ? (presetParam as DateRangePreset)
-      : startDateParam || endDateParam
-        ? 'custom'
-        : '30d'
+  const preset = ['7d', '30d', '90d', 'custom'].includes(presetParam!)
+    ? (presetParam as DateRangePreset)
+    : startDateParam || endDateParam
+      ? 'custom'
+      : '30d'
 
   const dates = computeDatesForPreset(preset)
   const dateRange = {
@@ -80,7 +76,7 @@ export const useStatsFilters = () => {
   const router = useRouter()
 
   const initialFilters = useMemo(
-    () => parseFiltersFromParams(searchParams),
+    () => filtersFromParams(searchParams),
     [searchParams],
   )
   const [filters, setFilters] = useState<StatsFilterState>(initialFilters)
@@ -101,16 +97,14 @@ export const useStatsFilters = () => {
     const qs = params.toString()
     const currentQs = searchParams.toString()
     if (qs !== currentQs) {
-      router.replace(`/analytics/stats${qs ? `?${qs}` : ''}`, {
-        scroll: false,
-      })
+      router.replace(`/analytics/stats${qs ? `?${qs}` : ''}`)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Sync URL changes (e.g. browser back/forward)
   useEffect(() => {
-    const newFilters = parseFiltersFromParams(searchParams)
+    const newFilters = filtersFromParams(searchParams)
     setFilters(newFilters)
   }, [searchParams])
 
