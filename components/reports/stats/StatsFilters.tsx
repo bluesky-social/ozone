@@ -193,6 +193,7 @@ export function StatsFilters({
             Moderator
           </label>
           <MemberSingleSelect
+            className="py-[8px] w-56"
             value={value.moderatorDid}
             onChange={(moderatorDid) =>
               onChange({
