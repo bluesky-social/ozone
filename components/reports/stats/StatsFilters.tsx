@@ -10,7 +10,10 @@ import {
   DateRangeValue,
 } from '../../common/DateRangeFilter'
 
+export type Grouping = 'queue' | 'category' | 'moderator'
+
 export type StatsFilterState = {
+  grouping: Grouping
   queueId?: number
   category?: string
   moderatorDid?: string
@@ -18,6 +21,7 @@ export type StatsFilterState = {
 }
 
 function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
+  const groupingParam = searchParams.get('grouping')
   const categoryParam = searchParams.get('category')
   const moderatorDidParam = searchParams.get('moderatorDid')
   const queueIdParam = searchParams.get('queueId')
@@ -40,7 +44,18 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   if (startDateParam) dateRange.startDate = startDateParam
   if (endDateParam) dateRange.endDate = endDateParam
 
+  const validGroupings: Grouping[] = ['queue', 'category', 'moderator']
+  const grouping: Grouping =
+    groupingParam && validGroupings.includes(groupingParam as Grouping)
+      ? (groupingParam as Grouping)
+      : categoryParam
+        ? 'category'
+        : moderatorDidParam
+          ? 'moderator'
+          : 'queue'
+
   return {
+    grouping,
     queueId: queueIdParam ? Number(queueIdParam) : undefined,
     category: categoryParam ?? undefined,
     moderatorDid: moderatorDidParam || undefined,
@@ -51,6 +66,7 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
 function filtersToParams(filters: StatsFilterState): URLSearchParams {
   const params = new URLSearchParams()
 
+  params.set('grouping', filters.grouping)
   if (filters.category) {
     params.set('category', filters.category)
   }
@@ -111,15 +127,7 @@ export const useStatsFilters = () => {
   return { filters, handleFilterChange }
 }
 
-type ViewMode = 'queue' | 'category' | 'moderator'
-
-function getViewMode(value: StatsFilterState): ViewMode {
-  if (value.category) return 'category'
-  if (value.moderatorDid) return 'moderator'
-  return 'queue'
-}
-
-const VIEW_MODES: { key: ViewMode; label: string }[] = [
+const GROUPINGS: { key: Grouping; label: string }[] = [
   { key: 'queue', label: 'By Queue' },
   { key: 'category', label: 'By Category' },
   { key: 'moderator', label: 'By Moderator' },
@@ -134,16 +142,10 @@ export function StatsFilters({
 }) {
   const { data: queuesData } = useQueueList()
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
-  const [viewMode, setViewMode] = useState<ViewMode>(() => getViewMode(value))
 
-  // Sync viewMode when value changes externally (e.g. URL navigation)
-  useEffect(() => {
-    setViewMode(getViewMode(value))
-  }, [value.queueId, value.category, value.moderatorDid])
-
-  const handleViewModeChange = (mode: ViewMode) => {
-    setViewMode(mode)
+  const handleGroupingChange = (grouping: Grouping) => {
     onChange({
+      grouping,
       queueId: undefined,
       category: undefined,
       moderatorDid: undefined,
@@ -158,11 +160,11 @@ export function StatsFilters({
           Grouping
         </label>
         <select
-          value={viewMode}
-          onChange={(e) => handleViewModeChange(e.target.value as ViewMode)}
+          value={value.grouping}
+          onChange={(e) => handleGroupingChange(e.target.value as Grouping)}
           className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
         >
-          {VIEW_MODES.map((mode) => (
+          {GROUPINGS.map((mode) => (
             <option key={mode.key} value={mode.key}>
               {mode.label}
             </option>
@@ -170,7 +172,7 @@ export function StatsFilters({
         </select>
       </div>
 
-      {viewMode === 'queue' && (
+      {value.grouping === 'queue' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Queue
@@ -197,7 +199,7 @@ export function StatsFilters({
         </div>
       )}
 
-      {viewMode === 'category' && (
+      {value.grouping === 'category' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Category
@@ -216,7 +218,7 @@ export function StatsFilters({
         </div>
       )}
 
-      {viewMode === 'moderator' && (
+      {value.grouping === 'moderator' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Moderator
