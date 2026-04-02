@@ -1,12 +1,11 @@
 'use client'
-import { formatDuration } from '@/lib/util'
-import { QueueStatsCard } from '@/queues/QueueStatsCard'
 import { useQueueList } from '@/queues/useQueues'
+import { REPORT_CATEGORIES } from '@/reports/stats'
 import { StatValue } from '@/reports/stats/StatValue'
 import { StatsCard } from '@/reports/stats/StatsCard'
-import { getHrefFromGroup, REPORT_CATEGORIES } from '@/reports/stats'
 import { useLiveStats } from '@/reports/stats/useMockReportStats'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { formatDuration } from 'date-fns'
 import { useMemo } from 'react'
 import { useTitle } from 'react-use'
 
@@ -51,12 +50,15 @@ function AggregateStatsCard() {
             }
           />
           {stats.avgHandlingTimeSec != null && (
-            <StatValue
-              label="Avg Handle Time"
-              value={undefined}
-              className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200"
-              suffix={formatDuration(stats.avgHandlingTimeSec)}
-            />
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+              Avg Handling Time:{' '}
+              <strong>
+                {formatDuration(
+                  { seconds: stats.avgHandlingTimeSec },
+                  { format: ['hours', 'minutes', 'seconds'] },
+                )}
+              </strong>
+            </span>
           )}
         </div>
       )}
@@ -87,16 +89,20 @@ export function AnalyticsPageContent() {
 
       <div className="mb-6">
         <div className="flex gap-4 overflow-x-auto pb-2">
-          <AggregateStatsCard />
+          <StatsCard
+            group={{
+              key: 'aggregate',
+              title: 'Aggregate',
+            }}
+          />
           {sortedQueues.map((queue, i) => (
-            <QueueStatsCard
+            <StatsCard
               key={queue.id}
-              queue={queue}
-              href={getHrefFromGroup({
+              group={{
                 key: `${i}`,
                 title: queue.name,
                 queueId: queue.id,
-              })}
+              }}
             />
           ))}
         </div>

@@ -1,5 +1,6 @@
 import { useLiveStats, LiveStatsParams } from './useMockReportStats'
 import { formatDuration } from '@/lib/util'
+import { StatValue } from './StatValue'
 
 export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
   const { data: stats, isLoading, isError, refetch } = useLiveStats(params)
@@ -64,17 +65,10 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
   return (
     <div className="flex flex-wrap items-center gap-2">
       {items.map((item) => (
-        <span
-          key={item.label}
-          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium ${item.className}`}
-        >
-          <strong>{item.value ?? 0}</strong>
-          {item.label}
-          {'suffix' in item && item.suffix}
-        </span>
+        <StatValue key={item.label} {...item} />
       ))}
       {stats.avgHandlingTimeSec != null && (
-        <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
           Avg Handling Time:{' '}
           <strong>{formatDuration(stats.avgHandlingTimeSec)}</strong>
         </span>
