@@ -2,7 +2,7 @@
 
 import { useAssignQueue } from './useAssignments'
 import { Assignee } from './Assignee'
-import { MemberSearchPopover } from './MemberSearchPopover'
+import { AssigneeSearchPopover } from './AssigneeSearchPopover'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 
 interface QueueAssigneeStatusProps {
@@ -21,7 +21,7 @@ export function QueueAssigneeStatus({
       {assignments.map((a) => (
         <Assignee key={a.id} did={a.did} />
       ))}
-      <MemberSearchPopover
+      <AssigneeSearchPopover
         onSelect={(did) => {
           assignQueue({ did, queueId })
         }}

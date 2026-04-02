@@ -19,7 +19,7 @@ interface MemberSearchPopoverProps {
   className?: string
 }
 
-export function MemberSearchPopover({
+export function AssigneeSearchPopover({
   onSelect,
   buttonLabel = 'Add Assignee',
   className,
