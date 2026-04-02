@@ -40,7 +40,7 @@ function makeLiveStats(
 function makeHistoricalStats(
   params?: Omit<HistoricalStatsParams, 'cursor'>,
 ): ToolsOzoneReportDefs.HistoricalStats[] {
-  const limit = params?.limit ?? 30
+  const limit = params?.limit ?? 100
   const end = params?.endDate ? new Date(params.endDate) : new Date()
   const start = params?.startDate
     ? new Date(params.startDate)
