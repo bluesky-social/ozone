@@ -1,3 +1,4 @@
+import { ActionButton } from '@/common/buttons'
 import { useQueueList } from '@/queues/useQueues'
 import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
 import {
@@ -14,7 +15,6 @@ import { REPORT_CATEGORIES } from '.'
 export type StatsFilterState = {
   queueId?: number
   category?: string
-  reportTypes: string[]
   dateRange: DateRangeValue
 }
 
@@ -58,7 +58,6 @@ function parseFiltersFromParams(
   return {
     queueId: queueIdParam ? Number(queueIdParam) : undefined,
     category,
-    reportTypes,
     dateRange,
   }
 }
@@ -68,9 +67,6 @@ function filtersToParams(filters: StatsFilterState): URLSearchParams {
 
   if (filters.category) {
     params.set('category', filters.category)
-  }
-  if (filters.reportTypes.length > 0) {
-    params.set('reportTypes', filters.reportTypes.join(','))
   }
   if (filters.queueId != null) {
     params.set('queueId', String(filters.queueId))
@@ -176,6 +172,23 @@ export function StatsFilters({
           onChange={(dateRange) => onChange({ ...value, dateRange })}
           limit={100}
         />
+      </div>
+
+      <div className="flex flex-col gap-1 justify-end">
+        <ActionButton
+          type="button"
+          size="md"
+          appearance="outlined"
+          onClick={() =>
+            onChange({
+              queueId: undefined,
+              category: undefined,
+              dateRange: value.dateRange,
+            })
+          }
+        >
+          <p className="text-xs">Reset Filters</p>
+        </ActionButton>
       </div>
     </div>
   )
