@@ -31,6 +31,7 @@ export function StatsFilters({
             onChange({
               ...value,
               queueId: e.target.value ? Number(e.target.value) : undefined,
+              category: e.target.value ? undefined : value.category,
             })
           }
           className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
@@ -50,7 +51,13 @@ export function StatsFilters({
         </label>
         <ReportCategorySelect
           value={value.category}
-          onChange={(category) => onChange({ ...value, category })}
+          onChange={(category) =>
+            onChange({
+              ...value,
+              category,
+              queueId: category ? undefined : value.queueId,
+            })
+          }
         />
       </div>
 
