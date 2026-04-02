@@ -1,5 +1,6 @@
 'use client'
-import { categoryToReportTypes } from '@/reports/ReportCategorySelect'
+
+import { categoryToReportTypes } from '@/reports/stats'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsPanel } from '@/reports/stats/LiveStatsPanel'
 import { StatsFilters, useStatsFilters } from '@/reports/stats/StatsFilters'
@@ -44,14 +45,14 @@ export function StatsDetailPageContent() {
         </h1>
       </div>
 
+      <StatsFilters value={filters} onChange={handleFilterChange} />
+
       <div className="mb-6">
         <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
           Last 24 hours
         </h2>
         <LiveStatsPanel params={live} />
       </div>
-
-      <StatsFilters value={filters} onChange={handleFilterChange} />
 
       <div className="rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700">
         <HistoricalGraph

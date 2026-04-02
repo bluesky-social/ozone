@@ -22,12 +22,3 @@ export function ReportCategorySelect({
     </select>
   )
 }
-
-/** Resolve a category key to its constituent report types */
-export function categoryToReportTypes(
-  categoryKey: string | undefined,
-): string[] {
-  if (!categoryKey) return []
-  const cat = REPORT_CATEGORIES.find((c) => c.key === categoryKey)
-  return cat?.reportTypes ?? []
-}

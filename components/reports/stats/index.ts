@@ -72,3 +72,11 @@ export const REPORT_CATEGORIES: StatGroup[] = [
     reportTypes: groupedReasonTypes.Appeal,
   },
 ]
+
+export function categoryToReportTypes(
+  categoryKey: string | undefined,
+): string[] {
+  if (!categoryKey) return []
+  const cat = REPORT_CATEGORIES.find((c) => c.key === categoryKey)
+  return cat?.reportTypes ?? []
+}

@@ -44,68 +44,70 @@ export function DateRangeFilter({
       : false
 
   return (
-    <div className="flex flex-wrap items-center gap-2 min-h-[38px]">
-      {PRESETS.map((preset) => (
+    <div>
+      <div className="flex flex-wrap items-center gap-2 min-h-[38px]">
+        {PRESETS.map((preset) => (
+          <button
+            key={preset.key}
+            onClick={() =>
+              onChange({
+                ...computeDatesForPreset(preset.key),
+                preset: preset.key,
+              })
+            }
+            className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
+              value.preset === preset.key
+                ? 'bg-blue-600 text-white'
+                : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
+            }`}
+          >
+            {preset.label}
+          </button>
+        ))}
         <button
-          key={preset.key}
-          onClick={() =>
-            onChange({
-              ...computeDatesForPreset(preset.key),
-              preset: preset.key,
-            })
-          }
+          onClick={() => onChange({ ...value, preset: 'custom' })}
           className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
-            value.preset === preset.key
+            value.preset === 'custom'
               ? 'bg-blue-600 text-white'
               : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
           }`}
         >
-          {preset.label}
+          Custom
         </button>
-      ))}
-      <button
-        onClick={() => onChange({ ...value, preset: 'custom' })}
-        className={`px-3 py-1 text-xs rounded-full font-medium transition-colors ${
-          value.preset === 'custom'
-            ? 'bg-blue-600 text-white'
-            : 'bg-gray-100 text-gray-700 hover:bg-gray-200 dark:bg-slate-700 dark:text-gray-300 dark:hover:bg-slate-600'
-        }`}
-      >
-        Custom
-      </button>
-      {value.preset === 'custom' && (
-        <div className="flex items-center gap-2">
-          <input
-            type="date"
-            className="block w-auto text-xs rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200 dark:[color-scheme:dark]"
-            value={value.startDate ? value.startDate.split('T')[0] : ''}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                startDate: e.target.value
-                  ? new Date(e.target.value).toISOString()
-                  : undefined,
-              })
-            }
-          />
-          <span className="text-xs text-gray-500">to</span>
-          <input
-            type="date"
-            className="block w-auto text-xs rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200 dark:[color-scheme:dark]"
-            value={value.endDate ? value.endDate.split('T')[0] : ''}
-            onChange={(e) =>
-              onChange({
-                ...value,
-                endDate: e.target.value
-                  ? new Date(e.target.value).toISOString()
-                  : undefined,
-              })
-            }
-          />
-        </div>
-      )}
+        {value.preset === 'custom' && (
+          <div className="flex items-center gap-2">
+            <input
+              type="date"
+              className="block w-auto text-xs rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200 dark:[color-scheme:dark]"
+              value={value.startDate ? value.startDate.split('T')[0] : ''}
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  startDate: e.target.value
+                    ? new Date(e.target.value).toISOString()
+                    : undefined,
+                })
+              }
+            />
+            <span className="text-xs text-gray-500">to</span>
+            <input
+              type="date"
+              className="block w-auto text-xs rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200 dark:[color-scheme:dark]"
+              value={value.endDate ? value.endDate.split('T')[0] : ''}
+              onChange={(e) =>
+                onChange({
+                  ...value,
+                  endDate: e.target.value
+                    ? new Date(e.target.value).toISOString()
+                    : undefined,
+                })
+              }
+            />
+          </div>
+        )}
+      </div>
       {exceedsMax && (
-        <p className="text-xs text-red-600 dark:text-red-400">
+        <p className="text-xs text-red-600 dark:text-red-400 mt-1">
           Date range cannot exceed {limit} days
         </p>
       )}
