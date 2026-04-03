@@ -178,7 +178,7 @@ export function StatsFilters({
       </div>
 
       {value.grouping === 'queue' && (
-        <div>
+        <div className="w-56">
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Queue
           </label>
