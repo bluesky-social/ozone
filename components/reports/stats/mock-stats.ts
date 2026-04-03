@@ -1,12 +1,9 @@
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { subDays, subHours } from 'date-fns'
 import type { LiveStatsParams, HistoricalStatsParams } from './useReportStats'
+import { randomInt } from '@/lib/util'
 
-function randomInt(min: number, max: number) {
-  return Math.floor(Math.random() * (max - min + 1)) + min
-}
-
-function makeLiveStats(
+export function makeLiveStats(
   params?: LiveStatsParams,
 ): ToolsOzoneReportDefs.LiveStats {
   // Vary the ranges based on whether params filter to a subset
@@ -35,9 +32,7 @@ function makeLiveStats(
   }
 }
 
-function makeHistoricalStats(
-  params?: Omit<HistoricalStatsParams, 'cursor'>,
-): ToolsOzoneReportDefs.HistoricalStats[] {
+export function makeHistoricalStats(params?: HistoricalStatsParams) {
   const limit = params?.limit ?? 100
   const end = params?.endDate ? new Date(params.endDate) : new Date()
   const start = params?.startDate
@@ -81,41 +76,8 @@ function makeHistoricalStats(
     })
   }
 
-  return stats
-}
-
-type QueryResult<T> = {
-  data: T | undefined
-  isLoading: boolean
-  isError: boolean
-  refetch: () => void
-}
-
-export const useLiveStats = (params?: LiveStatsParams): QueryResult<ToolsOzoneReportDefs.LiveStats> => {
   return {
-    data: makeLiveStats(params),
-    isLoading: false,
-    isError: false,
-    refetch: () => {},
-  }
-}
-
-export const useHistoricalStats = (
-  params?: HistoricalStatsParams,
-): QueryResult<{
-  stats: ToolsOzoneReportDefs.HistoricalStats[]
-  cursor: string | undefined
-}> => {
-  if (params === undefined) {
-    return { data: undefined, isLoading: false, isError: false, refetch: () => {} }
-  }
-  return {
-    data: {
-      stats: makeHistoricalStats(params),
-      cursor: undefined,
-    },
-    isLoading: false,
-    isError: false,
-    refetch: () => {},
+    stats,
+    cursor: undefined,
   }
 }

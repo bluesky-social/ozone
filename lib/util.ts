@@ -438,3 +438,7 @@ export const numberToString = (value: number | string | undefined) => {
   }
   return value.toString()
 }
+
+export function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}
