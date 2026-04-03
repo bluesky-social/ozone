@@ -240,7 +240,7 @@ export function QueueForm({
                   label="account"
                 />
                 <Tooltip anchor="right start">
-                  Reports against a user's account.
+                  Reports against a user&apos;s account.
                 </Tooltip>
               </div>
               <div className="h-8 flex items-start gap-1">

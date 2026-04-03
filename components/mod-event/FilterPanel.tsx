@@ -412,9 +412,9 @@ export const EventFilterPanel = ({
               <p className="whitespace-pre-wrap">
                 This is for sharing configs between team members. <br />
                 <br />
-                1. The sharer should click 'Copy Filters' and paste the output
+                1. The sharer should click &apos;Copy Filters&apos; and paste the output
                 to their team member. <br />
-                2. The team member should click 'Import Filters' and paste the
+                2. The team member should click &apos;Import Filters&apos; and paste the
                 config.
               </p>
             </Tooltip>
