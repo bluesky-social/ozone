@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { getHrefFromGroup, StatGroup } from '.'
 import { groupedReasonTypes } from '../helpers/getType'
-import { useHistoricalStats, useLiveStats } from './useMockReportStats'
+import { useHistoricalStats, useLiveStats } from './useReportStats'
 import { LiveStatsParams } from './useReportStats'
 
 export function StatsCard({ group }: { group: StatGroup }) {
@@ -37,6 +37,8 @@ export function StatsCard({ group }: { group: StatGroup }) {
         new Date(a.computedAt).getTime() - new Date(b.computedAt).getTime(),
     )
     .map((s) => ({ value: s.inboundCount ?? 0 }))
+
+  const showGraph = sparklineData && sparklineData.length > 1
 
   if (isError) {
     return (
@@ -93,8 +95,8 @@ export function StatsCard({ group }: { group: StatGroup }) {
             </span>
           </div>
 
-          {sparklineData && sparklineData.length > 1 && (
-            <div className="h-[60px] w-full">
+          <div className="h-32 w-full">
+            {showGraph ? (
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={sparklineData}>
                   <Line
@@ -106,8 +108,14 @@ export function StatsCard({ group }: { group: StatGroup }) {
                   />
                 </LineChart>
               </ResponsiveContainer>
-            </div>
-          )}
+            ) : (
+              <div className="w-full h-full flex justify-center items-center">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  No data to show
+                </p>
+              </div>
+            )}
+          </div>
         </>
       )}
     </Link>

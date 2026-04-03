@@ -102,7 +102,7 @@ export const useStatsFilters = () => {
       setFilters(newFilters)
       const params = filtersToParams(newFilters)
       const qs = params.toString()
-      router.push(`/analytics/stats${qs ? `?${qs}` : ''}`, { scroll: false })
+      router.push(`/analytics/detail${qs ? `?${qs}` : ''}`, { scroll: false })
     },
     [router],
   )
@@ -113,7 +113,7 @@ export const useStatsFilters = () => {
     const qs = params.toString()
     const currentQs = searchParams.toString()
     if (qs !== currentQs) {
-      router.replace(`/analytics/stats${qs ? `?${qs}` : ''}`)
+      router.replace(`/analytics/detail${qs ? `?${qs}` : ''}`)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
