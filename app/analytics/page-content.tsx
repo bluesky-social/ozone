@@ -1,25 +1,11 @@
 'use client'
-import { useQueueList } from '@/queues/useQueues'
 import { REPORT_CATEGORIES } from '@/reports/stats'
-import { StatsCard } from '@/reports/stats/StatsCard'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
-import { useMemo } from 'react'
+import { LiveStatsCards } from '@/reports/stats/LiveStats'
+import { StatsCard } from '@/reports/stats/Stats'
 import { useTitle } from 'react-use'
 
 export function AnalyticsPageContent() {
   useTitle('Analytics')
-
-  const { data: queuePages } = useQueueList({ limit: 100 })
-
-  const sortedQueues = useMemo(() => {
-    const queues = queuePages?.pages.flatMap((p) => p.queues) as
-      | ToolsOzoneQueueDefs.QueueView[]
-      | undefined
-    if (!queues) return []
-    return [...queues].sort(
-      (a, b) => (b.stats.pendingCount ?? 0) - (a.stats.pendingCount ?? 0),
-    )
-  }, [queuePages])
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4">
@@ -28,22 +14,7 @@ export function AnalyticsPageContent() {
       </h1>
 
       <div className="mb-6">
-        <div className="lg:flex space-y-3 lg:space-y-0 gap-4 overflow-x-auto pb-2">
-          <StatsCard
-            group={{
-              title: 'Aggregate',
-            }}
-          />
-          {sortedQueues.map((queue, i) => (
-            <StatsCard
-              key={queue.id}
-              group={{
-                title: queue.name,
-                queueId: queue.id,
-              }}
-            />
-          ))}
-        </div>
+        <LiveStatsCards />
       </div>
 
       <div className="mb-6">
@@ -52,7 +23,7 @@ export function AnalyticsPageContent() {
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
           {REPORT_CATEGORIES.map((group) => (
-            <StatsCard group={group} />
+            <StatsCard key={group.title} group={group} />
           ))}
         </div>
       </div>

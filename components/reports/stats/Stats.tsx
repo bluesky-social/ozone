@@ -1,12 +1,87 @@
-'use client'
-import { subDays } from 'date-fns'
-import Link from 'next/link'
+import { numberToString } from '@/lib/util'
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
+import { twMerge } from 'tailwind-merge'
 import { getHrefFromGroup, StatGroup } from '.'
-import { StatValue } from './StatValue'
+import Link from 'next/link'
+import {
+  LiveStatsParams,
+  useHistoricalStats,
+  useLiveStats,
+} from './useReportStats'
+import { subDays } from 'date-fns'
 import { groupedReasonTypes } from '../helpers/getType'
-import { useHistoricalStats, useLiveStats } from './useReportStats'
-import { LiveStatsParams } from './useReportStats'
+
+export const STATS_PRESETS = {
+  inbound: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
+  pending:
+    'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  escalated: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300',
+  actioned:
+    'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
+  avgHandlingTime:
+    'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300',
+}
+
+export type StatsValuePreset = keyof typeof STATS_PRESETS
+
+export function StatValue({
+  label,
+  value,
+  classNamePreset,
+  className,
+  suffix,
+}: {
+  label: string
+  value: string | number | undefined
+  classNamePreset?: StatsValuePreset
+  className?: string
+  suffix?: string
+}) {
+  const displayValue = typeof value !== 'string' ? numberToString(value) : value
+
+  return (
+    <span
+      className={twMerge(
+        'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium',
+        classNamePreset && STATS_PRESETS[classNamePreset],
+        className,
+      )}
+    >
+      <strong>{displayValue}</strong>
+      {label}
+      {suffix}
+    </span>
+  )
+}
+
+export function StatCard({
+  label,
+  value,
+  suffix,
+  classNamePreset,
+}: {
+  label: string
+  value: string | number | undefined
+  suffix?: string
+  classNamePreset?: StatsValuePreset
+}) {
+  const displayValue = typeof value !== 'string' ? numberToString(value) : value
+
+  return (
+    <div
+      className={twMerge(
+        'rounded-lg px-4 py-3 flex flex-col gap-1',
+        classNamePreset ? STATS_PRESETS[classNamePreset] : '',
+      )}
+    >
+      <span className="text-xs font-medium opacity-80">{label}</span>
+      <span className="text-2xl font-bold leading-tight">
+        {displayValue}
+        {suffix && <span className="text-sm font-medium ml-1">{suffix}</span>}
+      </span>
+    </div>
+  )
+}
 
 export function StatsCard({ group }: { group: StatGroup }) {
   const filterParams: LiveStatsParams = {

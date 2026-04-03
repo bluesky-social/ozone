@@ -5,7 +5,7 @@ import { ReactNode } from 'react'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
-import { StatValue } from '@/reports/stats/StatValue'
+import { StatValue } from '@/reports/stats/Stats'
 
 export function QueueCard({
   queue,

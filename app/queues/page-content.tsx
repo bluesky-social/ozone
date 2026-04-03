@@ -8,7 +8,7 @@ import { useQueueList, QueueListFilters } from '@/queues/useQueues'
 import { QueueFilters } from '@/queues/QueueFilters'
 import { QueueList } from '@/queues/QueueList'
 import { usePermission } from '@/shell/ConfigurationContext'
-import { LiveStatsPanel } from '@/reports/stats/LiveStatsPanel'
+import { LiveStatsPanel } from '@/reports/stats/LiveStats'
 
 export function QueuesPageContent() {
   const canManageQueues = usePermission('canManageQueues')

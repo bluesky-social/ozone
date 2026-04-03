@@ -2,7 +2,7 @@
 
 import { groupedReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
-import { LiveStatsPanel } from '@/reports/stats/LiveStatsPanel'
+import { LiveStatsPanel } from '@/reports/stats/LiveStats'
 import {
   StatsFilters,
   useParamStatsFilters,
