@@ -3,6 +3,7 @@ import { subDays } from 'date-fns'
 import Link from 'next/link'
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { getHrefFromGroup, StatGroup } from '.'
+import { StatValue } from './StatValue'
 import { groupedReasonTypes } from '../helpers/getType'
 import { useHistoricalStats, useLiveStats } from './useReportStats'
 import { LiveStatsParams } from './useReportStats'
@@ -67,9 +68,9 @@ export function StatsCard({ group }: { group: StatGroup }) {
       href={getHrefFromGroup(group)}
       className="block rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700 hover:shadow-md transition-shadow"
     >
-      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-1">
+      <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
         {group.title}
-      </h3>
+      </h2>
       {group.description && (
         <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
           {group.description}
@@ -83,16 +84,29 @@ export function StatsCard({ group }: { group: StatGroup }) {
       ) : (
         <>
           <div className="flex flex-wrap gap-2 mb-3">
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-              <strong>{stats.inboundCount ?? 0}</strong> Inbound
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
-              <strong>{stats.pendingCount ?? 0}</strong> Pending
-            </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200">
-              <strong>{stats.actionedCount ?? 0}</strong> Actioned
-              {stats.actionRate != null && ` (${stats.actionRate}%)`}
-            </span>
+            <StatValue
+              label="Inbound"
+              value={stats.inboundCount ?? 0}
+              classNamePreset="inbound"
+            />
+            <StatValue
+              label="Pending"
+              value={stats.pendingCount ?? 0}
+              classNamePreset="pending"
+            />
+            <StatValue
+              label="Escalated"
+              value={stats.escalatedPendingCount ?? 0}
+              classNamePreset="escalated"
+            />
+            <StatValue
+              label="Actioned"
+              value={stats.actionedCount ?? 0}
+              classNamePreset="actioned"
+              suffix={
+                stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
+              }
+            />
           </div>
 
           <div className="h-32 w-full">

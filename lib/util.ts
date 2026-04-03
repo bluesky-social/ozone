@@ -430,3 +430,11 @@ export function formatDuration(seconds: number): string {
   const mins = Math.round((seconds % 3600) / 60)
   return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
 }
+
+export const numberToString = (value: number | string | undefined) => {
+  if (value === undefined) return '-'
+  if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
+    return '-'
+  }
+  return value.toString()
+}

@@ -1,5 +1,5 @@
 import { useLiveStats, LiveStatsParams } from './useReportStats'
-import { formatDuration } from '@/lib/util'
+import { formatDuration, numberToString } from '@/lib/util'
 import { StatValue } from './StatValue'
 
 export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
@@ -39,39 +39,57 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
     {
       label: 'Inbound',
       value: stats.inboundCount,
-      className:
-        'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
+      classNamePreset: 'inbound',
     },
     {
       label: 'Pending',
       value: stats.pendingCount,
-      className:
-        'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
+      classNamePreset: 'pending',
     },
     {
       label: 'Escalated',
       value: stats.escalatedPendingCount,
-      className: 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200',
+      classNamePreset: 'escalated',
     },
     {
       label: 'Actioned',
       value: stats.actionedCount,
       suffix: stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined,
-      className:
-        'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
+      classNamePreset: 'actioned',
     },
   ]
 
   return (
     <div className="flex flex-wrap items-center gap-2">
-      {items.map((item) => (
-        <StatValue key={item.label} {...item} />
-      ))}
+      <StatValue
+        label="Inbound"
+        value={stats.inboundCount}
+        classNamePreset="inbound"
+      />
+      <StatValue
+        label="Pending"
+        value={stats.pendingCount}
+        classNamePreset="pending"
+      />
+      <StatValue
+        label="Escalated"
+        value={stats.escalatedPendingCount}
+        classNamePreset="escalated"
+      />
+      <StatValue
+        label="Actioned"
+        value={stats.actionedCount}
+        classNamePreset="actioned"
+        suffix={
+          stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
+        }
+      />
       {stats.avgHandlingTimeSec != null && (
-        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-          Avg Handling Time:{' '}
-          <strong>{formatDuration(stats.avgHandlingTimeSec)}</strong>
-        </span>
+        <StatValue
+          label="Avg Handling Time"
+          value={formatDuration(stats.avgHandlingTimeSec)}
+          classNamePreset="avgHandlingTime"
+        />
       )}
       <span className="text-xs text-gray-400 dark:text-gray-500">
         Updated {new Date(stats.lastUpdated).toLocaleTimeString()}

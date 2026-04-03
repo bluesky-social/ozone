@@ -5,6 +5,7 @@ import { ReactNode } from 'react'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
+import { StatValue } from '@/reports/stats/StatValue'
 
 export function QueueCard({
   queue,
@@ -87,21 +88,32 @@ export function QueueCard({
         {/* Column 2 */}
         {!hiddenFields?.includes('stats') && (
           <div className="lg:flex flex-col gap-1">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Stats</p>
-            <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
-              <span>
-                <strong>{queue.stats.inboundCount}</strong> inbound
-              </span>
-              <span>
-                <strong>{queue.stats.pendingCount}</strong> pending
-              </span>
-              <span>
-                <strong>{queue.stats.escalatedPendingCount}</strong> escalated
-              </span>
-              <span>
-                <strong>{queue.stats.actionedCount}</strong> actioned (
-                {queue.stats.actionRate}%)
-              </span>
+            <div className="lg:flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+              <StatValue
+                label="Inbound"
+                value={queue.stats.inboundCount}
+                classNamePreset="inbound"
+              />
+              <StatValue
+                label="Pending"
+                value={queue.stats.pendingCount}
+                classNamePreset="pending"
+              />
+              <StatValue
+                label="Escalated"
+                value={queue.stats.escalatedPendingCount}
+                classNamePreset="escalated"
+              />
+              <StatValue
+                label="Actioned"
+                value={queue.stats.actionedCount}
+                classNamePreset="actioned"
+                suffix={
+                  queue.stats.actionRate != null
+                    ? ` (${queue.stats.actionRate}%)`
+                    : undefined
+                }
+              />
             </div>
           </div>
         )}
