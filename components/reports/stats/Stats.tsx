@@ -99,7 +99,7 @@ export function StatsCard({ group }: { group: StatGroup }) {
     refetch,
   } = useLiveStats(filterParams)
 
-  const startDate = subDays(new Date(), 7).toISOString()
+  const startDate = subDays(new Date(), 7).toISOString().split('T')[0]
   const { data: historical } = useHistoricalStats({
     ...filterParams,
     startDate,
