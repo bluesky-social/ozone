@@ -1,3 +1,4 @@
+import { PaginatedSelect } from '@/common/PaginatedSelect'
 import { useQueueList } from '@/queues/useQueues'
 import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
 import { MemberSingleSelect } from '@/team/MemberSingleSelect'
@@ -140,7 +141,11 @@ export function StatsFilters({
   value: StatsFilterState
   onChange: (value: StatsFilterState) => void
 }) {
-  const { data: queuesData } = useQueueList({ limit: 100 })
+  const {
+    data: queuesData,
+    hasNextPage,
+    fetchNextPage,
+  } = useQueueList()
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
 
   const handleGroupingChange = (grouping: Grouping) => {
@@ -177,25 +182,24 @@ export function StatsFilters({
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Queue
           </label>
-          <select
-            value={value.queueId ?? ''}
-            onChange={(e) =>
+          <PaginatedSelect
+            value={value.queueId != null ? String(value.queueId) : ''}
+            onChange={(val) =>
               onChange({
                 ...value,
-                queueId: e.target.value ? Number(e.target.value) : undefined,
+                queueId: val ? Number(val) : undefined,
                 category: undefined,
                 moderatorDid: undefined,
               })
             }
-            className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
-          >
-            <option value="">All Queues</option>
-            {queues.map((q) => (
-              <option key={q.id} value={q.id}>
-                {q.name}
-              </option>
-            ))}
-          </select>
+            options={queues.map((q) => ({
+              value: String(q.id),
+              label: q.name,
+            }))}
+            placeholder="All Queues"
+            hasNextPage={hasNextPage}
+            fetchNextPage={fetchNextPage}
+          />
         </div>
       )}
 
