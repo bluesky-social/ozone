@@ -1,13 +1,14 @@
 'use client'
-import Link from 'next/link'
-import { LineChart, Line, ResponsiveContainer } from 'recharts'
 import { subDays } from 'date-fns'
+import Link from 'next/link'
+import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { getHrefFromGroup, StatGroup } from '.'
-import { useLiveStats, useHistoricalStats } from './useMockReportStats'
 import { groupedReasonTypes } from '../helpers/getType'
+import { useHistoricalStats, useLiveStats } from './useMockReportStats'
+import { LiveStatsParams } from './useReportStats'
 
 export function StatsCard({ group }: { group: StatGroup }) {
-  const filterParams = {
+  const filterParams: LiveStatsParams = {
     reportTypes: group.category
       ? groupedReasonTypes[group.category]
       : undefined,

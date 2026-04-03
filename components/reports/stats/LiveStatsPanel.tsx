@@ -1,4 +1,4 @@
-import { useLiveStats, LiveStatsParams } from './useMockReportStats'
+import { useLiveStats, LiveStatsParams } from './useReportStats'
 import { formatDuration } from '@/lib/util'
 import { StatValue } from './StatValue'
 

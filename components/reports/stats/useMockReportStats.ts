@@ -1,7 +1,5 @@
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { subDays, subHours } from 'date-fns'
-
-export type { LiveStatsParams, HistoricalStatsParams } from './useReportStats'
 import type { LiveStatsParams, HistoricalStatsParams } from './useReportStats'
 
 function randomInt(min: number, max: number) {
