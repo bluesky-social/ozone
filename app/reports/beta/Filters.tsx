@@ -4,10 +4,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { ButtonGroup } from '@/common/buttons'
 import { Checkbox } from '@/common/forms'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import {
-  CollectionId,
-  getCollectionName,
-} from '@/reports/helpers/subject'
+import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { ReportStatuses } from '@/reports/constants'
 
 const STATUS_OPTIONS = [
@@ -19,6 +16,12 @@ const STATUS_OPTIONS = [
     text: 'Escalated',
     value: ReportStatuses.ESCALATED,
   },
+]
+
+const MUTED_OPTIONS = [
+  { id: 'unmuted', text: 'Unmuted', value: '' },
+  { id: 'muted', text: 'Muted', value: 'isMuted' },
+  { id: 'all', text: 'All', value: 'all' },
 ]
 
 const SUBJECT_TYPE_OPTIONS = [
@@ -36,7 +39,10 @@ function useFiltersUpdater() {
     (updates: Record<string, string | string[] | undefined>) => {
       const nextParams = new URLSearchParams(params)
       Object.entries(updates).forEach(([key, value]) => {
-        if (value === undefined || (Array.isArray(value) && value.length === 0)) {
+        if (
+          value === undefined ||
+          (Array.isArray(value) && value.length === 0)
+        ) {
           nextParams.delete(key)
         } else if (Array.isArray(value)) {
           nextParams.set(key, value.join(','))
@@ -56,12 +62,15 @@ export function BetaReportsFilters() {
   const params = useSearchParams()
   const updateParam = useFiltersUpdater()
 
+  const mute = params.get('mute') ?? ''
   const status = params.get('status') ?? ''
   const subjectType = params.get('subjectType') ?? ''
   const collections =
     params.get('collections')?.split(',').filter(Boolean) ?? []
   const reportTypes =
     params.get('reportTypes')?.split(',').filter(Boolean) ?? []
+
+  const setMute = (value: string) => updateParam({ mute: value || undefined })
 
   const setStatus = (value: string) =>
     updateParam({ status: value || undefined })
@@ -109,6 +118,19 @@ export function BetaReportsFilters() {
           />
         </div>
 
+        {/* Muted */}
+        <select
+          className="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1"
+          value={mute}
+          onChange={(e) => setMute(e.target.value)}
+        >
+          {MUTED_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.value}>
+              {opt.text}
+            </option>
+          ))}
+        </select>
+
         {/* Subject type */}
         <div className="flex items-center gap-1.5">
           <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
@@ -128,9 +150,6 @@ export function BetaReportsFilters() {
 
         {/* Report types */}
         <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-            Report Types
-          </span>
           <div className="w-56">
             <ReportTypeMultiselect
               value={reportTypes}
