@@ -3,7 +3,10 @@
 import { groupedReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsPanel } from '@/reports/stats/LiveStatsPanel'
-import { StatsFilters, useStatsFilters } from '@/reports/stats/StatsFilters'
+import {
+  StatsFilters,
+  useParamStatsFilters,
+} from '@/reports/stats/StatsFilters'
 import {
   HistoricalStatsParams,
   LiveStatsParams,
@@ -13,7 +16,7 @@ import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 
 export function StatsDetailPageContent() {
-  const { filters, handleFilterChange } = useStatsFilters()
+  const { filters, handleFilterChange } = useParamStatsFilters()
 
   const reportTypes = filters.category
     ? groupedReasonTypes[filters.category]

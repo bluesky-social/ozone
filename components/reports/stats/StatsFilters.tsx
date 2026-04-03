@@ -87,7 +87,7 @@ function filtersToParams(filters: StatsFilterState): URLSearchParams {
   return params
 }
 
-export const useStatsFilters = () => {
+export const useParamStatsFilters = () => {
   const searchParams = useSearchParams()
   const router = useRouter()
 
