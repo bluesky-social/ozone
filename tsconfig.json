@@ -42,6 +42,7 @@
       "@/scheduled-actions/*": ["components/scheduled-actions/*"],
       "@/queues/*": ["components/queues/*"],
       "@/assignments/*": ["components/assignments/*"],
+      "@/analytics/*": ["components/reports/stats/*"],
     }
   },
   "include": [

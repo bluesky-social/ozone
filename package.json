@@ -45,8 +45,10 @@
     "react-tetris": "^0.3.0",
     "react-toastify": "^11.0.5",
     "react-use": "^17.4.0",
+    "recharts": "^2.15.3",
     "remark": "^14.0.3",
     "remark-html": "^15.0.2",
+    "tailwind-merge": "^3.5.0",
     "typescript": "^5.4.5",
     "yet-another-react-lightbox": "^3.20.0"
   },
