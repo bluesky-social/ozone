@@ -28,7 +28,7 @@ export function AnalyticsPageContent() {
       </h1>
 
       <div className="mb-6">
-        <div className="flex gap-4 overflow-x-auto pb-2">
+        <div className="lg:flex space-y-3 lg:space-y-0 gap-4 overflow-x-auto pb-2">
           <StatsCard
             group={{
               title: 'Aggregate',
@@ -47,7 +47,7 @@ export function AnalyticsPageContent() {
       </div>
 
       <div className="mb-6">
-        <h2 className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-2">
+        <h2 className="font-medium text-gray-500 dark:text-gray-400 mb-2">
           Categories
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
