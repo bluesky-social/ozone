@@ -13,6 +13,7 @@ export type QueueListFilters = {
   subjectType?: string
   collection?: string
   reportTypes?: string[]
+  limit?: number
 }
 
 export const useQueueList = (filters?: QueueListFilters) => {
@@ -22,7 +23,7 @@ export const useQueueList = (filters?: QueueListFilters) => {
     queryKey: ['queues', filters],
     queryFn: async ({ pageParam }) => {
       const { data } = await labelerAgent.tools.ozone.queue.listQueues({
-        limit: 100,
+        limit: 25,
         cursor: pageParam,
         ...filters,
       })

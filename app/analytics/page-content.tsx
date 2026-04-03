@@ -9,7 +9,7 @@ import { useTitle } from 'react-use'
 export function AnalyticsPageContent() {
   useTitle('Analytics')
 
-  const { data: queuePages } = useQueueList()
+  const { data: queuePages } = useQueueList({ limit: 100 })
 
   const sortedQueues = useMemo(() => {
     const queues = queuePages?.pages.flatMap((p) => p.queues) as

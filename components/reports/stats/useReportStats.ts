@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query'
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { makeHistoricalStats, makeLiveStats } from './mock-stats'
 
-const USE_MOCKS = true
+const USE_MOCKS = false
 
 export type LiveStatsParams = {
   queueId?: number

@@ -140,7 +140,7 @@ export function StatsFilters({
   value: StatsFilterState
   onChange: (value: StatsFilterState) => void
 }) {
-  const { data: queuesData } = useQueueList()
+  const { data: queuesData } = useQueueList({ limit: 100 })
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
 
   const handleGroupingChange = (grouping: Grouping) => {
