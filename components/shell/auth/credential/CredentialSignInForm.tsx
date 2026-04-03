@@ -25,9 +25,9 @@ export function CredentialSignInForm({
   const [error, setError] = useState<string | null>(null)
   const [isValidatingAuth, setIsValidatingAuth] = useState(false)
 
-  const [handle, setHandle] = useState('admin-mod.test')
-  const [password, setPassword] = useState('admin-mod-pass')
-  const [service, setService] = useState('http://localhost:2583')
+  const [handle, setHandle] = useState('')
+  const [password, setPassword] = useState('')
+  const [service, setService] = useState('https://bsky.social')
   const [authFactor, setAuthFactor] = useState<{
     token: string
     isInvalid: boolean
