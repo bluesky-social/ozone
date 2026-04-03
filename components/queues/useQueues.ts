@@ -22,7 +22,7 @@ export const useQueueList = (filters?: QueueListFilters) => {
     queryKey: ['queues', filters],
     queryFn: async ({ pageParam }) => {
       const { data } = await labelerAgent.tools.ozone.queue.listQueues({
-        limit: 25,
+        limit: 100,
         cursor: pageParam,
         ...filters,
       })
