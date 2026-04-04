@@ -195,10 +195,13 @@ export function StatsFilters({
                 moderatorDid: undefined,
               })
             }
-            options={queues.map((q) => ({
-              value: String(q.id),
-              label: q.name,
-            }))}
+            options={[
+              { value: '-1', label: 'Unqueued' },
+              ...queues.map((q) => ({
+                value: String(q.id),
+                label: q.name,
+              })),
+            ]}
             placeholder="All Queues"
             hasNextPage={hasNextPage}
             fetchNextPage={fetchNextPage}
