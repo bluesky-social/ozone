@@ -9,6 +9,7 @@ import {
   useLiveStats,
 } from './useReportStats'
 import { subDays } from 'date-fns'
+import { useMemo } from 'react'
 import { groupedReasonTypes } from '../helpers/getType'
 
 export const STATS_PRESETS = {
@@ -99,7 +100,7 @@ export function StatsCard({ group }: { group: StatGroup }) {
     refetch,
   } = useLiveStats(filterParams)
 
-  const startDate = subDays(new Date(), 7).toISOString().split('T')[0]
+  const startDate = useMemo(() => subDays(new Date(), 7).toISOString(), [])
   const { data: historical } = useHistoricalStats({
     ...filterParams,
     startDate,
