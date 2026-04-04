@@ -18,19 +18,29 @@ import Link from 'next/link'
 export function StatsDetailPageContent() {
   const { filters, handleFilterChange } = useParamStatsFilters()
 
+  const isAggregate = filters.grouping === 'aggregate'
   const reportTypes = filters.category
     ? groupedReasonTypes[filters.category]
     : []
-  const live: LiveStatsParams = {
-    reportTypes,
-    queueId: filters.queueId,
-  }
-  const historical: HistoricalStatsParams = {
-    reportTypes,
-    queueId: filters.queueId,
-    startDate: filters.dateRange.startDate,
-    endDate: filters.dateRange.endDate,
-  }
+  const live: LiveStatsParams = isAggregate
+    ? {}
+    : {
+        reportTypes,
+        queueId: filters.queueId,
+        moderatorDid: filters.moderatorDid,
+      }
+  const historical: HistoricalStatsParams = isAggregate
+    ? {
+        startDate: filters.dateRange.startDate,
+        endDate: filters.dateRange.endDate,
+      }
+    : {
+        reportTypes,
+        queueId: filters.queueId,
+        moderatorDid: filters.moderatorDid,
+        startDate: filters.dateRange.startDate,
+        endDate: filters.dateRange.endDate,
+      }
 
   const {
     data: historicalStats,

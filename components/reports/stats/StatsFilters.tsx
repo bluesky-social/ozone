@@ -11,7 +11,7 @@ import {
   DateRangeValue,
 } from '../../common/DateRangeFilter'
 
-export type Grouping = 'queue' | 'category' | 'moderator'
+export type Grouping = 'aggregate' | 'queue' | 'category' | 'moderator'
 
 export type StatsFilterState = {
   grouping: Grouping
@@ -45,7 +45,7 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   if (startDateParam) dateRange.startDate = startDateParam
   if (endDateParam) dateRange.endDate = endDateParam
 
-  const validGroupings: Grouping[] = ['queue', 'category', 'moderator']
+  const validGroupings: Grouping[] = ['aggregate', 'queue', 'category', 'moderator']
   const grouping: Grouping =
     groupingParam && validGroupings.includes(groupingParam as Grouping)
       ? (groupingParam as Grouping)
@@ -53,7 +53,9 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
         ? 'category'
         : moderatorDidParam
           ? 'moderator'
-          : 'queue'
+          : queueIdParam
+            ? 'queue'
+            : 'aggregate'
 
   return {
     grouping,
@@ -129,6 +131,7 @@ export const useParamStatsFilters = () => {
 }
 
 const GROUPINGS: { key: Grouping; label: string }[] = [
+  { key: 'aggregate', label: 'Aggregate' },
   { key: 'queue', label: 'By Queue' },
   { key: 'category', label: 'By Category' },
   { key: 'moderator', label: 'By Moderator' },
