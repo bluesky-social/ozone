@@ -10,7 +10,11 @@ import {
   CpuChipIcon,
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
-import { ToolsOzoneReportDefs } from '@atproto/api'
+import {
+  ToolsOzoneReportDefs,
+  ToolsOzoneModerationDefs,
+  ComAtprotoModerationDefs,
+} from '@atproto/api'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { formatDistanceToNow } from 'date-fns'
 import { ActionButton } from '@/common/buttons'
@@ -18,7 +22,7 @@ import { Textarea } from '@/common/forms'
 import { Dropdown } from '@/common/Dropdown'
 import { useCreateActivity, useListActivities } from './hooks'
 
-export type ReportActionType = 'label' | 'takedown' | null
+export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
 // Mirror of backend VALID_TRANSITIONS in packages/ozone/src/report/activity.ts
 const VALID_TRANSITIONS: Record<string, string[]> = {
@@ -62,10 +66,12 @@ function TransitionConfirmPanel({
   action,
   reportId,
   onDone,
+  onResolveAppeal,
 }: {
   action: ActionType
   reportId: number
   onDone: () => void
+  onResolveAppeal?: () => Promise<void>
 }) {
   const [note, setNote] = useState('')
   const createActivity = useCreateActivity()
@@ -78,7 +84,14 @@ function TransitionConfirmPanel({
         activity: { $type: activityType as Parameters<typeof createActivity.mutate>[0]['activity']['$type'] },
         internalNote: note.trim() || undefined,
       },
-      { onSuccess: onDone },
+      {
+        onSuccess: async () => {
+          if (action === 'no-action' && onResolveAppeal) {
+            await onResolveAppeal()
+          }
+          onDone()
+        },
+      },
     )
   }
 
@@ -179,16 +192,24 @@ export function ReportActionsBar({
   report,
   selectedAction,
   onActionSelect,
+  subjectStatus,
+  onResolveAppeal,
 }: {
   report: ToolsOzoneReportDefs.ReportView
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
+  subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
+  onResolveAppeal?: () => Promise<void>
 }) {
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState<'internal' | 'public' | false>(false)
 
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
+  const isAppeal =
+    report.reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
+    report.reportType === 'tools.ozone.report.defs#reasonAppeal'
+  const isSubjectTakendown = !!subjectStatus?.takendown
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
@@ -239,7 +260,29 @@ export function ReportActionsBar({
             No-action
           </ActionButton>
         )}
-        {canAction && (canLabel || canTakedown) && (
+        {canAction && isAppeal && (
+          <>
+            {isSubjectTakendown && canTakedown && (
+              <ActionButton
+                appearance={selectedAction === 'revert-takedown' ? 'primary' : 'outlined'}
+                size="sm"
+                onClick={() => handleReportActionSelect('revert-takedown')}
+              >
+                Revert Takedown
+              </ActionButton>
+            )}
+            {canLabel && (
+              <ActionButton
+                appearance={selectedAction === 'label' ? 'primary' : 'outlined'}
+                size="sm"
+                onClick={() => handleReportActionSelect('label')}
+              >
+                Label
+              </ActionButton>
+            )}
+          </>
+        )}
+        {canAction && !isAppeal && (canLabel || canTakedown) && (
           <Dropdown
             items={[
               ...(canLabel ? [{
@@ -299,6 +342,7 @@ export function ReportActionsBar({
           action={pendingAction}
           reportId={report.id}
           onDone={() => setPendingAction(null)}
+          onResolveAppeal={isAppeal ? onResolveAppeal : undefined}
         />
       )}
 

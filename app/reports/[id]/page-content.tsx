@@ -1,10 +1,11 @@
 'use client'
 import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter } from 'next/navigation'
+import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
 import { useQuery, useQueryClient, InfiniteData } from '@tanstack/react-query'
 import {
   ToolsOzoneReportDefs,
   ToolsOzoneModerationEmitEvent,
+  ComAtprotoModerationDefs,
 } from '@atproto/api'
 import { formatDistanceToNow } from 'date-fns'
 import { toast } from 'react-toastify'
@@ -62,12 +63,16 @@ import { MemberView } from 'components/reports/MemberView'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
+import { MutedBadge } from 'components/reports/MutedBadge'
 import {
   ViewersIndicator,
   AssignmentViewWithModerator,
 } from 'components/reports/ViewersIndicator'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { WorkspacePanel } from 'components/workspace/Panel'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 
 const FORM_ID = 'report-detail-action-panel'
 
@@ -77,7 +82,16 @@ const REPORT_STATUS_EVENT_TYPES = new Set([
   MOD_EVENTS.LABEL,
   MOD_EVENTS.COMMENT,
   MOD_EVENTS.ESCALATE,
+  MOD_EVENTS.REVERSE_TAKEDOWN,
+  MOD_EVENTS.RESOLVE_APPEAL,
 ])
+
+function isAppealReport(reportType?: string): boolean {
+  return (
+    reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
+    reportType === 'tools.ozone.report.defs#reasonAppeal'
+  )
+}
 
 function getReportsFromCache(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -126,9 +140,11 @@ function findReportInCache(
 function ReportInfoPanel({
   report,
   assignment,
+  onClickDid,
 }: {
   report: ToolsOzoneReportDefs.ReportView
   assignment?: ToolsOzoneReportDefs.ReportAssignment
+  onClickDid?: (did: string) => void
 }) {
   const {
     mutate: assignToMe,
@@ -149,6 +165,7 @@ function ReportInfoPanel({
       <div className="flex flex-row flex-wrap items-center gap-2 mb-3">
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
+        <MutedBadge isMuted={report.isMuted} />
         <span
           className="text-xs text-gray-500 dark:text-gray-400"
           title={createdAt.toLocaleString()}
@@ -168,9 +185,19 @@ function ReportInfoPanel({
             className="h-4 w-4 shrink-0"
           />
         )}
-        <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
-          {reporterHandle ? `@${reporterHandle}` : report.reporter.subject}
-        </span>
+        {onClickDid ? (
+          <button
+            type="button"
+            className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+            onClick={() => onClickDid(report.reporter.subject)}
+          >
+            {reporterHandle ? `@${reporterHandle}` : report.reporter.subject}
+          </button>
+        ) : (
+          <span className="text-sm font-medium text-gray-700 dark:text-gray-200 truncate">
+            {reporterHandle ? `@${reporterHandle}` : report.reporter.subject}
+          </span>
+        )}
       </div>
 
       {/* Comment */}
@@ -190,10 +217,21 @@ function ReportInfoPanel({
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
         {assignment ? (
           moderator ? (
-            <MemberView member={moderator} assignedAt={assignment.assignedAt} />
+            <MemberView member={moderator} assignedAt={assignment.assignedAt} onClickDid={onClickDid} />
           ) : (
             <div className="text-sm text-gray-500 dark:text-gray-400">
-              Assigned to {assignment.did}
+              Assigned to{' '}
+              {onClickDid ? (
+                <button
+                  type="button"
+                  className="hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+                  onClick={() => onClickDid(assignment.did)}
+                >
+                  {assignment.did}
+                </button>
+              ) : (
+                assignment.did
+              )}
             </div>
           )
         ) : (
@@ -221,10 +259,24 @@ function ReportInfoPanel({
 export function ReportDetailPageContent() {
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const pathname = usePathname()
   const reportId = Number(params.id)
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   const emitEvent = useEmitEvent()
+  const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
+
+  const quickOpenParam = searchParams.get('quickOpen') ?? ''
+  const setQuickActionPanelSubject = (subject: string) => {
+    const nextParams = new URLSearchParams(searchParams)
+    if (!subject) {
+      nextParams.delete('quickOpen')
+    } else {
+      nextParams.set('quickOpen', subject)
+    }
+    router.push((pathname ?? '') + '?' + nextParams.toString())
+  }
 
   const cachedReport = useMemo(
     () => findReportInCache(queryClient, reportId),
@@ -299,7 +351,10 @@ export function ReportDetailPageContent() {
         <ActionButton
           size="xs"
           appearance="primary"
-          onClick={() => router.push('/reports/beta')}
+          onClick={() => {
+            const savedUrl = sessionStorage.getItem('ozone:reportsListUrl')
+            router.push(savedUrl ?? '/reports/beta')
+          }}
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
           Reports
@@ -347,10 +402,31 @@ export function ReportDetailPageContent() {
               hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
             )
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+            queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
           }}
           onCancel={() => router.push('/reports')}
+          onClickDid={setQuickActionPanelSubject}
         />
       )}
+      <ModActionPanelQuick
+        open={!!quickOpenParam}
+        onClose={() => setQuickActionPanelSubject('')}
+        setSubject={setQuickActionPanelSubject}
+        subject={quickOpenParam}
+        subjectOptions={subject ? [subject] : [quickOpenParam]}
+        isInitialLoading={isLoading}
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+          )
+          queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+          queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
+        }}
+      />
+      <WorkspacePanel
+        open={isWorkspaceOpen}
+        onClose={() => toggleWorkspacePanel()}
+      />
     </div>
   )
 }
@@ -363,6 +439,7 @@ function ReportDetailLayout(props: {
   onCancel: () => void
   assignment?: ToolsOzoneReportDefs.ReportAssignment
   viewers: AssignmentViewWithModerator[]
+  onClickDid?: (did: string) => void
 }) {
   const {
     report,
@@ -372,6 +449,7 @@ function ReportDetailLayout(props: {
     onCancel,
     assignment,
     viewers,
+    onClickDid,
   } = props
   const subjectOptions = [subject]
 
@@ -418,6 +496,22 @@ function ReportDetailLayout(props: {
       }
       if (reportActionNote) reportAction.note = reportActionNote
       await onSubmit({ ...finalVals, reportAction })
+
+      // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
+      if (
+        isAppealReport(report.reportType) &&
+        eventType !== MOD_EVENTS.RESOLVE_APPEAL
+      ) {
+        await onSubmit({
+          ...finalVals,
+          event: {
+            $type: MOD_EVENTS.RESOLVE_APPEAL,
+            comment: '[RESOLVING_APPEAL]',
+          },
+          reportAction: { ids: [report.id] },
+        })
+      }
+
       setSelectedAction(null) // Reset after successful submission
     } else {
       await onSubmit(finalVals)
@@ -434,6 +528,8 @@ function ReportDetailLayout(props: {
       setModEventType(MOD_EVENTS.LABEL)
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
+    } else if (selectedAction === 'revert-takedown') {
+      setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
     }
   }, [selectedAction])
 
@@ -453,6 +549,7 @@ function ReportDetailLayout(props: {
     shouldShowDurationInHoursField,
     isLabelEvent,
     isTakedownEvent,
+    isReverseTakedownEvent,
     setModEventType,
     policyDetails,
     strikeData,
@@ -636,9 +733,9 @@ function ReportDetailLayout(props: {
 
         {/* Right col */}
         <div className="w-full lg:w-1/2 shrink-0">
-          <ReportInfoPanel report={report} assignment={assignment} />
+          <ReportInfoPanel report={report} assignment={assignment} onClickDid={onClickDid} />
 
-          <ViewersIndicator viewers={viewers} />
+          <ViewersIndicator viewers={viewers} onClickDid={onClickDid} />
 
           {profile && (
             <div className="mb-3">
@@ -647,7 +744,7 @@ function ReportDetailLayout(props: {
           )}
 
           {/* Strike data error - unlikely to happen */}
-          {!!strikeDataError && isTakedownEvent && (
+          {!!strikeDataError && (isTakedownEvent || isReverseTakedownEvent) && (
             <div className="mb-3">
               <Alert
                 type="error"
@@ -673,6 +770,23 @@ function ReportDetailLayout(props: {
             report={report}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
+            subjectStatus={subjectStatus}
+            onResolveAppeal={
+              isAppealReport(report.reportType)
+                ? async () => {
+                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = { ids: [report.id] }
+                    await onSubmit({
+                      subject: { $type: 'com.atproto.admin.defs#repoRef', did: subject.startsWith('at://') ? getDidFromUri(subject)! : subject },
+                      createdBy: config.did,
+                      event: {
+                        $type: MOD_EVENTS.RESOLVE_APPEAL,
+                        comment: '[RESOLVING_APPEAL]',
+                      },
+                      reportAction,
+                    })
+                  }
+                : undefined
+            }
           />
 
           <div className={selectedAction ? '' : 'hidden'}>
@@ -683,7 +797,9 @@ function ReportDetailLayout(props: {
                     ? 'Label'
                     : selectedAction === 'takedown'
                       ? 'Takedown'
-                      : 'Action'}
+                      : selectedAction === 'revert-takedown'
+                        ? 'Revert Takedown'
+                        : 'Action'}
                 </span>
                 <ModEventDetailsPopover modEventType={modEventType} />
               </div>
@@ -700,7 +816,7 @@ function ReportDetailLayout(props: {
                 />
               )}
 
-              {isTakedownEvent && (
+              {(isTakedownEvent || isReverseTakedownEvent) && (
                 <PolicySeveritySelector
                   defaultPolicy={selectedPolicyName}
                   policyDetails={policyDetails}
@@ -710,7 +826,7 @@ function ReportDetailLayout(props: {
                   defaultSeverityLevel={selectedSeverityLevelName}
                   currentStrikes={currentStrikes}
                   actionRecommendation={actionRecommendation}
-                  variant="takedown"
+                  variant={isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'}
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
                   isSubjectDid={isSubjectDid}
