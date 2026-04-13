@@ -1,4 +1,5 @@
 'use client'
+import { useEffect } from 'react'
 import {
   ReadonlyURLSearchParams,
   useSearchParams,
@@ -42,12 +43,20 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
   return { sortField, sortDirection }
 }
 
+const REPORTS_LIST_URL_KEY = 'ozone:reportsListUrl'
+
 export const BetaReportsPageContent = () => {
   const emitEvent = useEmitEvent()
   const params = useSearchParams()
   const quickOpenParam = params.get('quickOpen') ?? ''
   const router = useRouter()
   const pathname = usePathname()
+
+  // Store current list URL so the detail page back button can return here
+  useEffect(() => {
+    const url = pathname + (params.toString() ? `?${params.toString()}` : '')
+    sessionStorage.setItem(REPORTS_LIST_URL_KEY, url)
+  }, [pathname, params])
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const rawQueueId = params.get('queueId')
@@ -124,6 +133,7 @@ function useBetaReportsQuery() {
   // queueId is read from the URL to support queue-based filtering later
   const mute = params.get('mute')
   const queueId = params.get('queueId')
+  const assignedTo = params.get('assignedTo')
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject } = useFluentReportSearchParams()
 
@@ -141,6 +151,7 @@ function useBetaReportsQuery() {
         collections,
         queueId,
         mute,
+        assignedTo,
       },
     ],
     queryFn: async ({ pageParam }) => {
@@ -181,6 +192,10 @@ function useBetaReportsQuery() {
           queryParams[key] = value
         }
       })
+
+      if (assignedTo) {
+        queryParams.assignedTo = assignedTo
+      }
 
       // mute=isMuted → only muted; mute=all → both; absent → only unmuted
       if (mute === 'isMuted') {

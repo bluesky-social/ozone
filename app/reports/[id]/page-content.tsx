@@ -351,7 +351,10 @@ export function ReportDetailPageContent() {
         <ActionButton
           size="xs"
           appearance="primary"
-          onClick={() => router.push('/reports/beta')}
+          onClick={() => {
+            const savedUrl = sessionStorage.getItem('ozone:reportsListUrl')
+            router.push(savedUrl ?? '/reports/beta')
+          }}
         >
           <ArrowLeftIcon className="h-4 w-4 mr-1" />
           Reports
@@ -399,6 +402,7 @@ export function ReportDetailPageContent() {
               hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
             )
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+            queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
           }}
           onCancel={() => router.push('/reports')}
           onClickDid={setQuickActionPanelSubject}
@@ -416,6 +420,7 @@ export function ReportDetailPageContent() {
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+          queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
         }}
       />
       <WorkspacePanel

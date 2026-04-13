@@ -5,6 +5,7 @@ import { Checkbox } from '@/common/forms'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { ReportStatuses } from '@/reports/constants'
+import { useAuthDid } from '@/shell/AuthContext'
 
 const STATUS_OPTIONS = [
   { id: 'all', text: 'All Statuses', value: '' },
@@ -101,6 +102,12 @@ export function BetaReportsFilters() {
   const setReportTypes = (values: string[]) =>
     updateParam({ reportTypes: values.length > 0 ? values : undefined })
 
+  const currentUserDid = useAuthDid()
+  const assignedTo = params.get('assignedTo') ?? ''
+
+  const toggleMyAssignments = () =>
+    updateParam({ assignedTo: assignedTo ? undefined : currentUserDid })
+
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-2.5 space-y-2">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
@@ -142,6 +149,15 @@ export function BetaReportsFilters() {
             </option>
           ))}
         </select>
+
+        {/* My Assignments */}
+        <button
+          type="button"
+          className={`${selectBase} ${assignedTo ? selectActive : selectDefault}`}
+          onClick={toggleMyAssignments}
+        >
+          My Assignments
+        </button>
 
         {/* Report types */}
         <div className="flex items-center gap-1.5">
