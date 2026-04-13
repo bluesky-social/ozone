@@ -119,7 +119,7 @@ function useBetaReportsQuery() {
 
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
-  const status = params.get('status')
+  const status = params.get('status') ?? 'queued'
   const reportTypes = params.get('reportTypes')
   // queueId is read from the URL to support queue-based filtering later
   const mute = params.get('mute')

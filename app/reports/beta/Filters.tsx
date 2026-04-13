@@ -1,21 +1,18 @@
 'use client'
 import { useCallback } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { ButtonGroup } from '@/common/buttons'
 import { Checkbox } from '@/common/forms'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
 import { ReportStatuses } from '@/reports/constants'
 
 const STATUS_OPTIONS = [
-  { id: 'all', text: 'All', value: '' },
+  { id: 'all', text: 'All Statuses', value: '' },
   { id: ReportStatuses.OPEN, text: 'Open', value: ReportStatuses.OPEN },
   { id: ReportStatuses.CLOSED, text: 'Closed', value: ReportStatuses.CLOSED },
-  {
-    id: ReportStatuses.ESCALATED,
-    text: 'Escalated',
-    value: ReportStatuses.ESCALATED,
-  },
+  { id: ReportStatuses.ESCALATED, text: 'Escalated', value: ReportStatuses.ESCALATED },
+  { id: ReportStatuses.QUEUED, text: 'Queued', value: ReportStatuses.QUEUED },
+  { id: ReportStatuses.ASSIGNED, text: 'Assigned', value: ReportStatuses.ASSIGNED },
 ]
 
 const MUTED_OPTIONS = [
@@ -25,7 +22,7 @@ const MUTED_OPTIONS = [
 ]
 
 const SUBJECT_TYPE_OPTIONS = [
-  { id: 'all', text: 'All', value: '' },
+  { id: 'all', text: 'All Subject Types', value: '' },
   { id: 'account', text: 'Account', value: 'account' },
   { id: 'record', text: 'Record', value: 'record' },
 ]
@@ -63,7 +60,13 @@ export function BetaReportsFilters() {
   const updateParam = useFiltersUpdater()
 
   const mute = params.get('mute') ?? ''
-  const status = params.get('status') ?? ''
+
+  const selectBase =
+    'text-xs rounded border border-gray-300 dark:border-gray-600 px-2 py-1 appearance-none cursor-pointer'
+  const selectDefault = 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+  const selectActive =
+    'bg-rose-50 dark:bg-teal-900/40 text-rose-700 dark:text-teal-200 font-medium'
+  const status = params.get('status') ?? ReportStatuses.QUEUED
   const subjectType = params.get('subjectType') ?? ''
   const collections =
     params.get('collections')?.split(',').filter(Boolean) ?? []
@@ -73,7 +76,7 @@ export function BetaReportsFilters() {
   const setMute = (value: string) => updateParam({ mute: value || undefined })
 
   const setStatus = (value: string) =>
-    updateParam({ status: value || undefined })
+    updateParam({ status: value === ReportStatuses.QUEUED ? undefined : value })
 
   const setSubjectType = (value: string) => {
     if (value === subjectType) {
@@ -102,25 +105,21 @@ export function BetaReportsFilters() {
     <div className="px-4 sm:px-6 lg:px-8 py-2.5 space-y-2">
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         {/* Status */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-            Status
-          </span>
-          <ButtonGroup
-            size="xs"
-            appearance="primary"
-            items={STATUS_OPTIONS.map((opt) => ({
-              id: opt.id,
-              text: opt.text,
-              isActive: status === opt.value,
-              onClick: () => setStatus(opt.value),
-            }))}
-          />
-        </div>
+        <select
+          className={`${selectBase} ${status !== ReportStatuses.QUEUED ? selectActive : selectDefault}`}
+          value={status}
+          onChange={(e) => setStatus(e.target.value)}
+        >
+          {STATUS_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.value}>
+              {opt.text}
+            </option>
+          ))}
+        </select>
 
         {/* Muted */}
         <select
-          className="text-xs rounded border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 px-2 py-1"
+          className={`${selectBase} ${mute !== '' ? selectActive : selectDefault}`}
           value={mute}
           onChange={(e) => setMute(e.target.value)}
         >
@@ -132,21 +131,17 @@ export function BetaReportsFilters() {
         </select>
 
         {/* Subject type */}
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
-            Subject
-          </span>
-          <ButtonGroup
-            size="xs"
-            appearance="primary"
-            items={SUBJECT_TYPE_OPTIONS.map((opt) => ({
-              id: opt.id,
-              text: opt.text,
-              isActive: subjectType === opt.value,
-              onClick: () => setSubjectType(opt.value),
-            }))}
-          />
-        </div>
+        <select
+          className={`${selectBase} ${subjectType !== '' ? selectActive : selectDefault}`}
+          value={subjectType}
+          onChange={(e) => setSubjectType(e.target.value)}
+        >
+          {SUBJECT_TYPE_OPTIONS.map((opt) => (
+            <option key={opt.id} value={opt.value}>
+              {opt.text}
+            </option>
+          ))}
+        </select>
 
         {/* Report types */}
         <div className="flex items-center gap-1.5">
