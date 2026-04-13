@@ -21,7 +21,14 @@ import { DialogTitle } from '@headlessui/react'
 import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { CheckCircleIcon } from '@heroicons/react/24/outline'
 import Link from 'next/link'
-import { createRef, FormEvent, useMemo, useRef, useState } from 'react'
+import {
+  createRef,
+  FormEvent,
+  useCallback,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { toast } from 'react-toastify'
 import { WORKSPACE_FORM_ID } from './constants'
 import {
@@ -34,7 +41,7 @@ import WorkspaceItemCreator from './ItemCreator'
 import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
-import { useWorkspaceListData } from './useWorkspaceListData'
+import { useWorkspaceListData, WorkspaceListData } from './useWorkspaceListData'
 import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
@@ -42,6 +49,7 @@ import { RevokeCredentials } from 'components/repositories/RevokeCredential'
 import { findHighProfileCountInWorkspace } from './utils'
 import { HIGH_PROFILE_FOLLOWER_THRESHOLD } from '@/lib/constants'
 import { numberFormatter } from '@/repositories/HighProfileWarning'
+import { ConfirmationModal } from '@/common/modals/confirmation'
 
 export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const { onClose, ...others } = props
@@ -94,6 +102,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         }
       })
   }
+
+  // confirmation modal
+  const [showConfirmationModal, setShowConfirmationModal] = useState(false)
 
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
@@ -202,15 +213,39 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       // Make sure we aren't constantly refreshing the data unless the panel is open
       enabled: props.open,
     })
+  const getSelectedWorkspaceItems = useCallback(() => {
+    const selectedItems = getSelectedItems()
+    return Object.entries(workspaceListStatuses ?? {})
+      .filter(([key]) => selectedItems.includes(key))
+      .reduce((acc, [key, value]) => {
+        acc[key] = value
+        return acc
+      }, {})
+  }, [workspaceListStatuses])
 
-  // on form submit
+  // submission
   const onFormSubmit = async (
     ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
   ) => {
     ev.preventDefault()
+    const formData = new FormData(ev.target)
+    const selectedItems = getSelectedWorkspaceItems()
+    const count = findHighProfileCountInWorkspace(selectedItems)
+    setHighProfileAccountSelectedCount(count)
+    if (count > 0) {
+      setShowConfirmationModal(true)
+    } else {
+      await submit(formData)
+    }
+  }
+  const onConfirm = async () => {
+    const formData = new FormData(formRef.current || undefined)
+    await submit(formData)
+  }
+  const submit = async (formData: FormData) => {
     try {
+      setShowConfirmationModal(false)
       setSubmission({ isSubmitting: true, error: '' })
-      const formData = new FormData(ev.currentTarget)
       const labels = String(formData.get('labels'))?.split(',')
       const coreEvent = getEventFromFormData(modEventType, formData)
 
@@ -219,7 +254,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         // and since the input field is rendered outside of the main workspace form, we need to manually reach out
         // to the input field to get the selected value
         const policies =
-          ev.currentTarget.parentNode?.querySelector<HTMLInputElement>(
+          formRef?.current?.parentNode?.querySelector<HTMLInputElement>(
             'input[name="policies"]',
           )?.value
 
@@ -238,7 +273,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         // By default, when there are no reference subject stats, the event builder returns all selected tags to be added
         // If the user wants to remove tags, we need to swap the add and remove properties
         if (formData.get('removeTags')) {
-          coreEvent.remove = coreEvent.add 
+          coreEvent.remove = coreEvent.add
           coreEvent.add = []
         }
       }
@@ -281,7 +316,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       )
 
       // After successful submission, reset the form state to clear inputs for previous submission
-      ev.target.reset()
+      formRef.current?.reset()
 
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
@@ -323,6 +358,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     }
   }
 
+  /** Number of high profile accounts in workspace. */
   const highProfileAccountCount = useMemo(
     () =>
       workspaceListStatuses
@@ -330,6 +366,10 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         : 0,
     [workspaceListStatuses],
   )
+
+  /** Number of high profile accounts that are selected. */
+  const [highProfileAccountSelectedCount, setHighProfileAccountSelectedCount] =
+    useState(0)
 
   return (
     <FullScreenActionPanel
@@ -512,6 +552,25 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           </div>
         )}
       </Dropzone>
+
+      <ConfirmationModal
+        isOpen={showConfirmationModal}
+        setIsOpen={setShowConfirmationModal}
+        title="Confirm Action"
+        description={
+          <strong className="text-yellow-600 dark:text-yellow-400">
+            This action includes{' '}
+            {pluralize(highProfileAccountSelectedCount, 'high profile account')}
+            . Are you sure?
+          </strong>
+        }
+        confirmButtonText={
+          submission.isSubmitting ? 'Processing...' : 'Yes, Proceed'
+        }
+        confirmButtonDisabled={submission.isSubmitting}
+        onConfirm={onConfirm}
+        error={submission.error}
+      />
     </FullScreenActionPanel>
   )
 }

@@ -80,6 +80,10 @@ const actions = [
     text: 'Override Age Assurance',
     key: MOD_EVENTS.AGE_ASSURANCE_OVERRIDE,
   },
+  {
+    text: 'Purge Age Assurance Events',
+    key: MOD_EVENTS.AGE_ASSURANCE_PURGE,
+  },
 ]
 const actionsByKey = actions.reduce((acc, action) => {
   acc[action.key] = action.text
@@ -106,6 +110,7 @@ export const ModEventSelectorButton = ({
   const canManageChat = usePermission('canManageChat')
   const canSendEmail = usePermission('canSendEmail')
   const canVerify = usePermission('canVerify')
+  const canPurgeAgeAssurance = usePermission('canPurgeAgeAssurance')
   const { takendown, reviewState, appealed, tags } = subjectStatus || {}
   const isMutedSubject = isSubjectMuted(subjectStatus)
   const isMutedReporter = isReporterMuted(subjectStatus)
@@ -235,6 +240,14 @@ export const ModEventSelectorButton = ({
         return false
       }
 
+      // Don't show age assurance purge for non-moderators or non-DID subjects
+      if (
+        key === MOD_EVENTS.AGE_ASSURANCE_PURGE &&
+        (!isSubjectDid || !canPurgeAgeAssurance)
+      ) {
+        return false
+      }
+
       return true
     })
   }, [
@@ -251,6 +264,7 @@ export const ModEventSelectorButton = ({
     canDivertBlob,
     canSendEmail,
     canVerify,
+    canPurgeAgeAssurance,
     forceDisplayActions,
   ])
 

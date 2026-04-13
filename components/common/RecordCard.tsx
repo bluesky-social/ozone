@@ -35,6 +35,7 @@ import {
 
 import type { JSX } from 'react'
 import { VerificationBadge } from 'components/verification/Badge'
+import { RecordWithSnapshots } from './snapshots/RecordWithSnapshots'
 
 export function RecordCard(props: {
   uri: string
@@ -73,29 +74,50 @@ export function RecordCard(props: {
   }
   if (parsed.collection === CollectionId.ProfileStatus) {
     return (
-      <BaseRecordCard
-        uri={uri}
-        renderRecord={(record) => {
-          console.log(record)
-          return (
-            <>
-              <RepoCard did={parsed.did} />
-              <ProfileStatusCard
-                value={record.value as unknown as AppBskyActorStatus.Main}
-                authorDid={parsed.did}
-              />
-            </>
-          )
-        }}
-      />
+      <RecordWithSnapshots uri={uri} className="pl-0">
+        {(selectedSnapshot) => (
+          <BaseRecordCard
+            uri={uri}
+            fallbackRecord={
+              selectedSnapshot
+                ? (selectedSnapshot as unknown as ToolsOzoneModerationDefs.RecordViewDetail)
+                : undefined
+            }
+            renderRecord={(record) => {
+              const value = selectedSnapshot
+                ? (selectedSnapshot.value as unknown as AppBskyActorStatus.Main)
+                : (record.value as unknown as AppBskyActorStatus.Main)
+
+              return (
+                <>
+                  <RepoCard did={parsed.did} />
+                  <ProfileStatusCard value={value} authorDid={parsed.did} />
+                </>
+              )
+            }}
+          />
+        )}
+      </RecordWithSnapshots>
     )
   }
   if (parsed?.collection === CollectionId.Profile) {
     return (
-      <BaseRecordCard
-        uri={uri}
-        renderRecord={(record) => <RepoCard did={parsed.did} />}
-      />
+      <RecordWithSnapshots uri={uri}>
+        {(selectedSnapshot) => {
+          const snapshotProfile = selectedSnapshot?.ozoneValue?.handle
+            ? (selectedSnapshot.ozoneValue as unknown as AppBskyActorDefs.ProfileViewDetailed)
+            : undefined
+          if (snapshotProfile) {
+            return <RepoCardView did={parsed.did} profile={snapshotProfile} />
+          }
+          return (
+            <BaseRecordCard
+              uri={uri}
+              renderRecord={(_record) => <RepoCard did={parsed.did} />}
+            />
+          )
+        }}
+      </RecordWithSnapshots>
     )
   }
   return (
@@ -134,13 +156,43 @@ function PostCard({
       return post
     },
   })
+
   if (error) {
     // Temp fallback for taken-down posts, re: TODO above
     return (
-      <BaseRecordCard
-        uri={uri}
-        renderRecord={(record) => <GenericRecordCard {...{ record }} />}
-      />
+      <RecordWithSnapshots uri={uri}>
+        {(selectedSnapshot) => {
+          if (selectedSnapshot?.ozoneValue?.thread?.post) {
+            return (
+              <PostAsCard
+                dense
+                showLabels={showLabels}
+                parent={selectedSnapshot.ozoneValue.thread.parent}
+                item={{ post: selectedSnapshot.ozoneValue.thread.post }}
+                isAuthorTakendown={isAuthorTakendown}
+                isAuthorDeactivated={isAuthorDeactivated}
+                controls={['like', 'repost', 'workspace']}
+              />
+            )
+          }
+          if (selectedSnapshot?.value) {
+            return (
+              <GenericRecordCard
+                record={
+                  selectedSnapshot.value as unknown as ToolsOzoneModerationDefs.RecordViewDetail
+                }
+              />
+            )
+          }
+          return (
+            <LoadingFailedDense
+              className="text-gray-600 mb-2"
+              error={error}
+              noPadding
+            />
+          )
+        }}
+      </RecordWithSnapshots>
     )
   }
 
@@ -192,27 +244,49 @@ function PostCard({
   if (!data || !AppBskyFeedDefs.isThreadViewPost(data.thread)) {
     return null
   }
+
+  const thread = data.thread
+
   return (
-    <PostAsCard
-      dense
-      showLabels={showLabels}
-      parent={data.thread.parent}
-      item={{ post: data.thread.post }}
-      isAuthorTakendown={isAuthorTakendown}
-      isAuthorDeactivated={isAuthorDeactivated}
-      controls={['like', 'repost', 'workspace']}
-    />
+    <RecordWithSnapshots uri={uri}>
+      {(selectedSnapshot) => {
+        // If a snapshot is selected, modify the post data to show the snapshot
+        const postItem = selectedSnapshot
+          ? {
+              post: {
+                ...thread.post,
+                cid: selectedSnapshot.cid,
+                record: selectedSnapshot.value,
+              },
+            }
+          : { post: thread.post }
+
+        return (
+          <PostAsCard
+            dense
+            showLabels={showLabels}
+            parent={thread.parent}
+            item={postItem}
+            isAuthorTakendown={isAuthorTakendown}
+            isAuthorDeactivated={isAuthorDeactivated}
+            controls={['like', 'repost', 'workspace']}
+          />
+        )
+      }}
+    </RecordWithSnapshots>
   )
 }
 
 function BaseRecordCard({
   uri,
   renderRecord,
+  fallbackRecord,
 }: {
   uri: string
   renderRecord: (
     record: ToolsOzoneModerationDefs.RecordViewDetail,
   ) => JSX.Element
+  fallbackRecord?: ToolsOzoneModerationDefs.RecordViewDetail
 }) {
   const labelerAgent = useLabelerAgent()
 
@@ -227,11 +301,15 @@ function BaseRecordCard({
     },
   })
   if (error) {
+    // If we have a fallback record (e.g., from snapshot), use it instead of showing error
+    if (fallbackRecord) {
+      return renderRecord(fallbackRecord)
+    }
     return (
       <LoadingFailedDense
         className="text-gray-600 mb-2"
-        noPadding
         error={error}
+        noPadding
       />
     )
   }
@@ -363,12 +441,25 @@ export function RepoCard(props: { did: string }) {
   const { data: { repo, profile } = {}, error } = useRepoAndProfile({ did })
 
   if (error) {
+    const profileUri = `at://${did}/app.bsky.actor.profile/self`
     return (
-      <LoadingFailedDense
-        className="text-gray-600 mb-2"
-        noPadding
-        error={error}
-      />
+      <RecordWithSnapshots uri={profileUri}>
+        {(selectedSnapshot) => {
+          const snapshotProfile = selectedSnapshot?.ozoneValue?.handle
+            ? (selectedSnapshot.ozoneValue as unknown as AppBskyActorDefs.ProfileViewDetailed)
+            : undefined
+          if (snapshotProfile) {
+            return <RepoCardView did={did} profile={snapshotProfile} />
+          }
+          return (
+            <LoadingFailedDense
+              className="text-gray-600 mb-2"
+              noPadding
+              error={error}
+            />
+          )
+        }}
+      </RecordWithSnapshots>
     )
   }
   if (!repo) {
@@ -417,9 +508,9 @@ export const RepoCardView = ({
                   <span className="font-bold">{profile.displayName}</span>
                   <span
                     className="ml-1 text-gray-500 dark:text-gray-50"
-                    title={`@${repo?.handle || did}`}
+                    title={`@${repo?.handle || profile.handle || did}`}
                   >
-                    @{repo?.handle || did}
+                    @{repo?.handle || profile.handle || did}
                   </span>
                   <VerificationBadge
                     className="ml-0.5"

@@ -8,6 +8,7 @@ import {
   ToolsOzoneModerationDefs,
   ComAtprotoAdminSearchAccounts,
   ToolsOzoneModerationEmitEvent,
+  AppBskyActorDefs,
 } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ActionButton } from '@/common/buttons'
@@ -24,31 +25,50 @@ import {
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
+import { getProfiles } from '@/repositories/api'
+import { Checkbox } from '@/common/forms'
+import { isHighProfileAccount } from '@/workspace/utils'
 
-const isEmailSearch = (q: string) => q.startsWith('email:')
-const isSignatureSearch = (q: string) => q.startsWith('sig:')
+export const isEmailSearch = (q: string) => q.startsWith('email:')
+export const isFullEmailSearch = (q: string) => {
+  if (!isEmailSearch(q)) return false
+  const email = q.slice(6).trim() // slice 'email:' prefix
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
+}
+/** Return email from search term if it is valid. */
+export const getEmailFromSearch = (q: string) => {
+  return isFullEmailSearch(q) ? q.slice(6).trim() : null
+}
+export const isSignatureSearch = (q: string) => q.startsWith('sig:')
 
+export type ReposParams = {
+  pageParam?: string
+  enrich?: boolean
+  options?: { signal?: AbortSignal }
+}
+export type ReposData = (
+  | ToolsOzoneModerationDefs.RepoViewDetail
+  | ToolsOzoneModerationDefs.RepoView
+)[]
+export type ProfilesData = Map<string, AppBskyActorDefs.ProfileViewDetailed>
+export type ReposResponse = {
+  repos: ReposData
+  profiles?: ProfilesData
+  cursor?: string
+}
 const getRepos =
   ({ q, labelerAgent }: { q: string; labelerAgent: Agent }) =>
-  async (
-    {
-      pageParam,
-      excludeRepo,
-    }: {
-      pageParam?: string
-      excludeRepo?: boolean
-    },
-    options: { signal?: AbortSignal } = {},
-  ): Promise<{
-    repos: (
-      | ToolsOzoneModerationDefs.RepoViewDetail
-      | ToolsOzoneModerationDefs.RepoView
-    )[]
-    cursor?: string
-  }> => {
+  async ({
+    pageParam,
+    enrich = true,
+    options,
+  }: ReposParams): Promise<ReposResponse> => {
     const limit = 25
 
     let data: ComAtprotoAdminSearchAccounts.OutputSchema
+    let repos: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
+    let profiles: ProfilesData = new Map()
+
     if (isSignatureSearch(q)) {
       const rawValue = q.slice(4)
       const values =
@@ -82,14 +102,21 @@ const getRepos =
         options,
       )
 
-      return res.data
+      // Still add profile data if doing generic search
+      if (enrich) {
+        profiles = await getProfiles(
+          labelerAgent,
+          res.data.repos.map((repo) => repo.did),
+        )
+      }
+
+      return { ...res.data, profiles }
     }
 
     if (!data.accounts.length) {
       return { repos: [], cursor: data.cursor }
     }
 
-    const repos: Record<string, ToolsOzoneModerationDefs.RepoViewDetail> = {}
     data.accounts.forEach((account) => {
       repos[account.did] = {
         ...account,
@@ -102,21 +129,32 @@ const getRepos =
       }
     })
 
-    if (!excludeRepo) {
-      for (const accounts of chunkArray(data.accounts, 100)) {
-        const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
-          { dids: accounts.map(({ did }) => did) },
-          options,
-        )
-        for (const repo of data.repos) {
-          if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
-            repos[repo.did] = { ...repos[repo.did], ...repo }
+    if (enrich) {
+      const results = await Promise.all([
+        (async () => {
+          for (const accounts of chunkArray(data.accounts, 100)) {
+            const { data } = await labelerAgent.tools.ozone.moderation.getRepos(
+              { dids: accounts.map(({ did }) => did) },
+              options,
+            )
+            for (const repo of data.repos) {
+              if (ToolsOzoneModerationDefs.isRepoViewDetail(repo)) {
+                repos[repo.did] = { ...repos[repo.did], ...repo }
+              }
+            }
           }
-        }
-      }
+          return repos
+        })(),
+        getProfiles(
+          labelerAgent,
+          data.accounts.map(({ did }) => did),
+        ),
+      ])
+      repos = results[0]
+      profiles = results[1]
     }
 
-    return { repos: Object.values(repos), cursor: data.cursor }
+    return { repos: Object.values(repos), profiles, cursor: data.cursor }
   }
 
 function useSearchResultsQuery(q: string) {
@@ -135,33 +173,35 @@ function useSearchResultsQuery(q: string) {
       getNextPageParam: (lastPage) => lastPage.cursor,
     })
   const repos = data?.pages.flatMap((page) => page.repos) ?? []
+  const profiles: ProfilesData = new Map(
+    data?.pages.flatMap((page) =>
+      page.profiles ? Array.from(page.profiles.entries()) : [],
+    ) ?? [],
+  )
 
-  const confirmAddToWorkspace = async () => {
-    // add items that are already loaded
-    await addToWorkspace(repos.map((f) => f.did))
-    if (!data?.pageParams) {
-      setIsConfirmationOpen(false)
-      return
-    }
+  const confirmAddToWorkspace = async (includeHighProfile: boolean) => {
     setIsAdding(true)
     const newAbortController = new AbortController()
     abortController.current = newAbortController
 
     try {
-      let cursor = data.pageParams[0] as string | undefined
+      let cursor: string | undefined
       do {
-        // When we just want the dids of the users, no need to do an extra fetch to include repos
-        const nextPage = await getRepoPage(
-          {
-            pageParam: cursor,
-            excludeRepo: true,
-          },
-          { signal: abortController.current?.signal },
-        )
-        const dids = nextPage.repos.map((f) => f.did)
-        if (dids.length) await addToWorkspace(dids)
-        cursor = nextPage.cursor
-        //   if the modal is closed, that means the user decided not to add any more user to workspace
+        const page = await getRepoPage({
+          pageParam: cursor,
+          enrich: !includeHighProfile,
+          options: { signal: abortController.current?.signal },
+        })
+        let dids = page.repos.map((f) => f.did)
+        if (!includeHighProfile) {
+          dids = dids.filter((did) => {
+            const profile = page.profiles?.get(did)
+            return !isHighProfileAccount(profile?.followersCount)
+          })
+        }
+        if (dids.length) addToWorkspace(dids)
+        cursor = page.cursor
+        // if the modal is closed, that means the user decided not to add any more user to workspace
       } while (cursor && isConfirmationOpen)
     } catch (e) {
       if (abortController.current?.signal.reason === 'user-cancelled') {
@@ -170,6 +210,7 @@ function useSearchResultsQuery(q: string) {
         toast.error(`Something went wrong: ${(e as Error).message}`)
       }
     }
+
     setIsAdding(false)
     setIsConfirmationOpen(false)
   }
@@ -187,6 +228,7 @@ function useSearchResultsQuery(q: string) {
 
   return {
     repos,
+    profiles,
     fetchNextPage,
     hasNextPage,
     isLoading,
@@ -218,6 +260,7 @@ export default function RepositoriesListPage() {
   }
   const {
     repos,
+    profiles,
     refetch,
     fetchNextPage,
     hasNextPage,
@@ -228,6 +271,13 @@ export default function RepositoriesListPage() {
     isConfirmationOpen,
     confirmAddToWorkspace,
   } = useSearchResultsQuery(q)
+
+  const [includeHighProfile, setIncludeHighProfile] = useState(false)
+
+  const openConfirmation = () => {
+    setIncludeHighProfile(false) // reset to default value each time modal is opened
+    setIsConfirmationOpen(true)
+  }
 
   let pageTitle = `Repositories`
   if (q) {
@@ -259,7 +309,7 @@ export default function RepositoriesListPage() {
                 : 'All users will be added to workspace'
             }
             appearance={!!repos.length ? 'primary' : 'outlined'}
-            onClick={() => setIsConfirmationOpen(true)}
+            onClick={openConfirmation}
           >
             Add all to workspace
           </ActionButton>
@@ -271,7 +321,7 @@ export default function RepositoriesListPage() {
                 return
               }
 
-              confirmAddToWorkspace()
+              confirmAddToWorkspace(includeHighProfile)
             }}
             isOpen={isConfirmationOpen}
             setIsOpen={setIsConfirmationOpen}
@@ -285,17 +335,25 @@ export default function RepositoriesListPage() {
                 process and already added users will remain in the workspace.
               </>
             }
-          />
+          >
+            <Checkbox
+              label="Include high profile users"
+              checked={includeHighProfile}
+              onChange={(e) => setIncludeHighProfile(e.target.checked)}
+            />
+          </ConfirmationModal>
         </div>
       </SectionHeader>
 
       <RepositoriesTable
         repos={repos}
         showEmail={isEmailSearch(q) || isSignatureSearch(q)}
+        searchedEmail={getEmailFromSearch(q)}
         onLoadMore={fetchNextPage}
         showLoadMore={!!hasNextPage}
         isLoading={isLoading}
         showEmptySearch={!q?.length && !repos.length}
+        profiles={profiles}
       />
       <WorkspacePanel
         open={isWorkspaceOpen}

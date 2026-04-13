@@ -190,6 +190,7 @@ function Form(
     setTargetServices,
     config,
     showAutomatedEmailComposer,
+    showCantEmailError,
     automatedEmailTemplate,
     communicationTemplates,
     theme,
@@ -492,28 +493,29 @@ function Form(
                     />
                   )}
 
+                  {isPriorityScoreEvent && (
+                    <FormLabel
+                      label=""
+                      className="mt-2 w-1/2"
+                      htmlFor="priorityScore"
+                    >
+                      <Input
+                        type="number"
+                        id="priorityScore"
+                        name="priorityScore"
+                        className="block w-full"
+                        placeholder="Score between 0-100"
+                        autoFocus
+                        min={0}
+                        max={100}
+                        step={1}
+                        required
+                      />
+                    </FormLabel>
+                  )}
+                  
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
-                      {isPriorityScoreEvent && (
-                        <FormLabel
-                          label=""
-                          className="mt-2 w-1/2"
-                          htmlFor="priorityScore"
-                        >
-                          <Input
-                            type="number"
-                            id="priorityScore"
-                            name="priorityScore"
-                            className="block w-full"
-                            placeholder="Score between 0-100"
-                            autoFocus
-                            min={0}
-                            max={100}
-                            step={1}
-                            required
-                          />
-                        </FormLabel>
-                      )}
                       <FormLabel
                         label=""
                         htmlFor="durationInHours"
@@ -541,10 +543,10 @@ function Form(
                             isMuteEvent
                               ? 'Mute duration'
                               : isLabelEvent
-                              ? 'Label duration'
-                              : isPriorityScoreEvent
-                              ? 'Score duration'
-                              : ''
+                                ? 'Label duration'
+                                : isPriorityScoreEvent
+                                  ? 'Score duration'
+                                  : ''
                           }
                         />
                       </FormLabel>
@@ -682,6 +684,16 @@ function Form(
                       isConfirmed={true}
                       toggleConfirmation={() => null}
                     />
+                  )}
+                  {showCantEmailError && (
+                    <div className="my-2">
+                      <Alert
+                        showIcon
+                        type="warning"
+                        title="Cannot send email to this user"
+                        body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
+                      />
+                    </div>
                   )}
 
                   {isCommentEvent && (

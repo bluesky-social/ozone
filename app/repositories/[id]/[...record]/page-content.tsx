@@ -100,6 +100,7 @@ export default function RecordViewPageContent({
           return thread
         } catch (err) {
           if (err instanceof GetPostThread.NotFoundError) {
+            // Don't rethrow here so that the record view can still be shown.
             return undefined
           }
           throw err
@@ -123,6 +124,7 @@ export default function RecordViewPageContent({
         record: record.status === 'fulfilled' ? record.value : undefined,
         thread: thread.status === 'fulfilled' ? thread.value : undefined,
         listData: listData.status === 'fulfilled' ? listData.value : undefined,
+        fallback: { collection, rkey, did, uri },
       }
     },
   })
@@ -202,15 +204,14 @@ export default function RecordViewPageContent({
           refetch()
         }}
       />
-      {data?.record && (
-        <RecordView
-          list={data.listData?.list}
-          record={data.record}
-          thread={data.thread}
-          onReport={setReportUri}
-          onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
-        />
-      )}
+      <RecordView
+        list={data?.listData?.list}
+        record={data?.record}
+        thread={data?.thread}
+        fallback={data?.fallback}
+        onReport={setReportUri}
+        onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
+      />
     </>
   )
 }

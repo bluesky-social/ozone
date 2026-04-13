@@ -326,8 +326,8 @@ export const useActionRecommendation = (
           newDuration === Infinity
             ? null
             : newDuration === 0
-            ? null
-            : newDuration / HOUR,
+              ? null
+              : newDuration / HOUR,
         actualStrikesToApply: negativeStrikeCount,
         message,
         needsReverseTakedown,
@@ -407,6 +407,17 @@ export const useActionRecommendation = (
       }
     }
 
+    // Find the next threshold above thresholdCrossed, or use the first threshold if none exists
+    let nextThreshold: number | undefined = sortedThresholds[0]
+    if (totalStrikes) {
+      // Find next threshold above the crossed one
+      const higherThreshold = sortedThresholds.find(
+        (threshold) => threshold > totalStrikes,
+      )
+      // If no higher threshold exists, use the first threshold; otherwise use the found one
+      nextThreshold = higherThreshold ?? sortedThresholds[0]
+    }
+
     let message: string
     const displayStrike = pluralize(totalStrikes, 'total strike')
     if (matchedThreshold === null) {
@@ -437,6 +448,7 @@ export const useActionRecommendation = (
         suspensionDurationInHours: null,
         actualStrikesToApply,
         strikeData,
+        nextThreshold,
       }
     }
     const thresholdCrossed =
@@ -457,17 +469,6 @@ export const useActionRecommendation = (
       )}`
     } else {
       message = `${displayStrike} - No suspension recommended`
-    }
-
-    // Find the next threshold above thresholdCrossed, or use the first threshold if none exists
-    let nextThreshold: number | undefined = sortedThresholds[0]
-    if (totalStrikes) {
-      // Find next threshold above the crossed one
-      const higherThreshold = sortedThresholds.find(
-        (threshold) => threshold > totalStrikes,
-      )
-      // If no higher threshold exists, use the first threshold; otherwise use the found one
-      nextThreshold = higherThreshold ?? sortedThresholds[0]
     }
 
     return {

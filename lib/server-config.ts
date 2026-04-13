@@ -18,6 +18,7 @@ export type ServerConfig = {
     canDivertBlob: boolean
     canManageSets: boolean
     canVerify: boolean
+    canPurgeAgeAssurance: boolean
   }
 }
 
@@ -50,6 +51,7 @@ export const parseServerConfig = (
       canManageSets: isAdmin,
       canDivertBlob: !!config.blobDivert?.url && isModerator,
       canVerify: !!config.verifierDid && isVerifier,
+      canPurgeAgeAssurance: isModerator,
     },
   }
 }
