@@ -223,7 +223,6 @@ OZONE_DID_PLC_URL=https://plc.directory
 OZONE_APPVIEW_URL=https://api.bsky.app
 OZONE_APPVIEW_DID=did:web:api.bsky.app
 LOG_ENABLED=1
-DAEMON_ENABLED=1
 OZONE_CONFIG
 ```
 
@@ -234,6 +233,7 @@ OZONE_CONFIG
 Download the `compose.yaml` to run your Ozone instance, which includes the following containers:
 
 - `ozone` Node Ozone server—both UI and backend—running on http://localhost:3000
+- `ozone-daemon` Background daemon for scheduled actions (event pushing, blob diverting, etc.)
 - `postgres` Postgres database used by the Ozone backend
 - `caddy` HTTP reverse proxy handling TLS and proxying requests to Ozone
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
@@ -241,6 +241,9 @@ Download the `compose.yaml` to run your Ozone instance, which includes the follo
 ```bash
 curl https://raw.githubusercontent.com/bluesky-social/ozone/main/service/compose.yaml | sudo tee /ozone/compose.yaml
 ```
+
+> [!TIP]
+> The `--profile daemon` flag in the systemd service below enables the background daemon container for scheduled actions. If you do not want the daemon, remove `--profile daemon` from both the `ExecStart` and `ExecStop` commands.
 
 ##### Create the systemd service
 
@@ -256,8 +259,8 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/ozone
-ExecStart=/usr/bin/docker compose --file /ozone/compose.yaml up --detach
-ExecStop=/usr/bin/docker compose --file /ozone/compose.yaml down
+ExecStart=/usr/bin/docker compose --file /ozone/compose.yaml --profile daemon up --detach
+ExecStop=/usr/bin/docker compose --file /ozone/compose.yaml --profile daemon down
 
 [Install]
 WantedBy=default.target
@@ -356,7 +359,6 @@ You will need to customize various settings configured through the Ozone environ
 | `OZONE_APPVIEW_URL`     | `https://api.bsky.app`        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
 | `OZONE_APPVIEW_DID`     | `did:web:api.bsky.app`        | ❌             | Used to communicate with the appview and receive content from Bluesky      |
 | `LOG_ENABLED`           | `1`                           | ❌             | Set to 0 if you would not like JSON log output from the Ozone              |
-| `DAEMON_ENABLED`        | `1`                           | ❌             | Set to 0 if you would not like scheduled actions to be run.              |
 
 There are additional environment variables that can be tweaked depending on how you're running your service, particularly if another service on the network allows delegates some control to your Ozone instance, e.g. to prompt them to purge certain content.
 
