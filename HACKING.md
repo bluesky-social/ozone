@@ -53,44 +53,19 @@ In the course of development there may be updates to the atproto client that are
    ~/Documents/bluesky/atproto
    ❯ yarn
    ```
-4. Update `next.config.js` in this repo with webpack options for local linking.
-   ```diff
-   +  experimental: {
-   +    externalDir: true,
-   +  },
-   +  webpack: (config, { isServer }) => {
-   +    // Handle symlinked packages properly
-   +    config.resolve.symlinks = false
-   +    return config
-   +  },
-   ```
-5. Update the `dev` script in package.json to use webpack:
-
-   ```diff
-   -    "dev": "next dev --turbopack",
-   +    "dev": "next dev",
-   ```
-6. Update package.json file in ozone/ to reference the local builds of @atproto.
-
-   ```diff
-   "dependencies": {
-   -    "@atproto/api": "0.18.9",
-   -    "@atproto/oauth-client-browser": "^0.3.38",
-   -    "@atproto/oauth-types": "^0.6.0",
-   -    "@atproto/xrpc": "^0.7.7",
-   +    "@atproto/api": "link:../atproto/packages/api",
-   +    "@atproto/oauth-client-browser": "link:../atproto/packages/oauth/oauth-client-browser",
-   +    "@atproto/oauth-types": "link:../atproto/packages/oauth/oauth-types",
-   +    "@atproto/xrpc": "link:../atproto/packages/xrpc",
-   ```
-
-7. Clear the Next.js cache and re-install:
+4. Link local atproto packages by running:
    ```
    ~/Documents/bluesky/ozone
-   ❯ rm -rf .next && yarn
+   ❯ yarn link-atproto
    ```
-8. Take care not to check-in the changes to package.json and yarn.lock that came from the temporary linking. When you're done, you can reset everything with:
+   This automatically patches `next.config.js`, `package.json`, clears the Next.js cache, and re-installs dependencies. If your atproto directory is not at `../atproto`, you can specify a custom path:
+   ```
+   ❯ ATPROTO_PATH=../path/to/atproto yarn link-atproto
+   ```
+
+5. When you're done, revert back to the published packages by running:
    ```
    ~/Documents/bluesky/ozone
-   ❯ git checkout package.json yarn.lock && yarn
+   ❯ yarn unlink-atproto
    ```
+   Take care not to check-in any changes to `next.config.js`, `package.json`, or `yarn.lock` that came from the temporary linking.

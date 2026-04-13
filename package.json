@@ -15,7 +15,9 @@
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "cypress": "cypress open",
-    "e2e:run": "$(yarn bin)/cypress run --browser chrome"
+    "e2e:run": "$(yarn bin)/cypress run --browser chrome",
+    "link-atproto": "node scripts/toggle-atproto.js --link",
+    "unlink-atproto": "node scripts/toggle-atproto.js --unlink"
   },
   "dependencies": {
     "@atproto/api": "0.18.9",
