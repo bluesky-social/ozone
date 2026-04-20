@@ -63,7 +63,7 @@ export function StatsDetailPageContent() {
       <StatsFilters value={filters} onChange={handleFilterChange} />
 
       <div className="mb-6 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <h2 className="mb-2">Last 24 hours</h2>
+        <h2 className="mb-2">Today</h2>
         <LiveStatsPanel params={live} />
       </div>
 
