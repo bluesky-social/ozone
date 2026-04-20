@@ -12,7 +12,7 @@
     "stats": {
       "pendingCount": 5,
       "actionedCount": 10,
-      "escalatedPendingCount": 0,
+      "escalatedCount": 0,
       "lastUpdated": "2026-03-02T15:49:30.681Z"
     }
   },
@@ -30,7 +30,7 @@
     "stats": {
       "pendingCount": 12,
       "actionedCount": 45,
-      "escalatedPendingCount": 3,
+      "escalatedCount": 3,
       "lastUpdated": "2026-03-02T15:49:30.681Z"
     }
   }
