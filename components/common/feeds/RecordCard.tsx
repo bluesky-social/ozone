@@ -51,7 +51,7 @@ export const FeedGeneratorRecordCard = ({ uri }: { uri: string }) => {
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800">
+    <div className="bg-white dark:bg-slate-800 p-2 rounded-sm">
       <div className="flex w-full space-x-4">
         <div className="flex-shrink-0">
           <img

@@ -142,14 +142,17 @@ export function ReportTypeMultiselect({
               className={`w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100 ${limitWarning ? 'placeholder:text-yellow-600' : ''}`}
               data-cy={dataCy}
               onChange={(e) => setQuery(e.target.value)}
-              onBlur={() => { setQuery(''); setLimitError(false) }}
+              onBlur={() => {
+                setQuery('')
+                setLimitError(false)
+              }}
               value={query}
               placeholder={
                 limitWarning
                   ? `Maximum of ${limit} types allowed`
                   : value.length
                     ? `${value.length} selected — type to search`
-                    : 'Select reason types — type to search'
+                    : 'Select report types — type to search'
               }
             />
             <ComboboxButton className="absolute inset-y-0 right-0 flex items-center pr-2">

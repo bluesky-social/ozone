@@ -9,7 +9,6 @@ import {
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
   Agent,
-  AtUri,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneModerationQueryStatuses,

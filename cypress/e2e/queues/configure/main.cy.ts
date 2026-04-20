@@ -4,7 +4,7 @@ import {
   mockCreateQueueResponse,
   mockDeleteQueueResponse,
   mockListQueuesResponse,
-  mockQueueGetAssignmentsResponse
+  mockQueueGetAssignmentsResponse,
 } from '../../../support/api'
 
 const BASE_URL = 'http://127.0.0.1:3000'
@@ -134,11 +134,11 @@ describe('Queue Management', () => {
       cy.get('#description').type('A test queue for new reports')
       cy.get('#subjectTypes-account').check()
       cy.get('#subjectTypes-record').check()
-      cy.get('#collection')
-        .should('be.visible')
-        .type('app.bsky.feed.post{esc}')
+      cy.get('#collection').should('be.visible').type('app.bsky.feed.post{esc}')
 
-      cy.get('[data-cy="report-types-input"]').scrollIntoView().type('hate speech')
+      cy.get('[data-cy="report-types-input"]')
+        .scrollIntoView()
+        .type('hate speech')
       cy.contains('Hate Speech').click()
       cy.get('[data-cy="report-types-input"]').type('{esc}')
 
