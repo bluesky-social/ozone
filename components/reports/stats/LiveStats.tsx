@@ -48,7 +48,7 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
     },
     {
       label: 'Escalated',
-      value: stats.escalatedPendingCount,
+      value: stats.escalatedCount,
       classNamePreset: 'escalated',
     },
     {
@@ -73,7 +73,7 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
       />
       <StatValue
         label="Escalated"
-        value={stats.escalatedPendingCount}
+        value={stats.escalatedCount}
         classNamePreset="escalated"
       />
       <StatValue
@@ -146,7 +146,7 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
         />
         <StatCard
           label="Escalated"
-          value={stats.escalatedPendingCount}
+          value={stats.escalatedCount}
           classNamePreset="escalated"
         />
         <StatCard

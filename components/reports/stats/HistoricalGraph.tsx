@@ -16,7 +16,7 @@ import { isDarkModeEnabled } from '@/common/useColorScheme'
 const SERIES = [
   { key: 'inboundCount', name: 'Inbound', color: '#3b82f6' },
   { key: 'pendingCount', name: 'Pending', color: '#eab308' },
-  { key: 'escalatedPendingCount', name: 'Escalated', color: '#ef4444' },
+  { key: 'escalatedCount', name: 'Escalated', color: '#ef4444' },
   { key: 'actionedCount', name: 'Actioned', color: '#22c55e' },
 ] as const
 
@@ -65,16 +65,13 @@ export function HistoricalGraph({
 
   const data = stats
     .slice()
-    .sort(
-      (a, b) =>
-        new Date(a.computedAt).getTime() - new Date(b.computedAt).getTime(),
-    )
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((s) => ({
-      date: format(new Date(s.computedAt), 'MMM d'),
+      date: format(new Date(s.date), 'MMM d'),
       inboundCount: s.inboundCount ?? 0,
       actionedCount: s.actionedCount ?? 0,
       pendingCount: s.pendingCount ?? 0,
-      escalatedPendingCount: s.escalatedPendingCount ?? 0,
+      escalatedCount: s.escalatedCount ?? 0,
     }))
 
   const dark = isDarkModeEnabled()

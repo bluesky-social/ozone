@@ -101,7 +101,7 @@ export function QueueCard({
               />
               <StatValue
                 label="Escalated"
-                value={queue.stats.escalatedPendingCount}
+                value={queue.stats.escalatedCount}
                 classNamePreset="escalated"
               />
               <StatValue

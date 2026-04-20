@@ -109,10 +109,7 @@ export function StatsCard({ group }: { group: StatGroup }) {
 
   const sparklineData = historical?.stats
     ?.slice()
-    .sort(
-      (a, b) =>
-        new Date(a.computedAt).getTime() - new Date(b.computedAt).getTime(),
-    )
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((s) => ({ value: s.inboundCount ?? 0 }))
 
   const showGraph = sparklineData && sparklineData.length > 1
@@ -172,7 +169,7 @@ export function StatsCard({ group }: { group: StatGroup }) {
             />
             <StatValue
               label="Escalated"
-              value={stats.escalatedPendingCount ?? 0}
+              value={stats.escalatedCount ?? 0}
               classNamePreset="escalated"
             />
             <StatValue
