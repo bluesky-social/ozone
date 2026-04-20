@@ -62,8 +62,8 @@ export function StatsDetailPageContent() {
 
       <StatsFilters value={filters} onChange={handleFilterChange} />
 
-      <div className="mb-6 text-sm font-medium text-gray-500 dark:text-gray-400">
-        <h2 className="mb-2">Today</h2>
+      <div className="mb-6 flex items-center gap-2">
+        <h2 className="text-gray-500 dark:text-gray-400">Today</h2>
         <LiveStatsPanel params={live} />
       </div>
 
