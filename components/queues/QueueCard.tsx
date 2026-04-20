@@ -88,7 +88,7 @@ export function QueueCard({
         {/* Column 2 */}
         {!hiddenFields?.includes('stats') && (
           <div className="lg:flex flex-col gap-1">
-            <div className="lg:flex flex-col gap-1 text-xs text-gray-500 dark:text-gray-400">
+            <div className="flex flex-wrap items-center gap-2">
               <StatValue
                 label="Inbound"
                 value={queue.stats.inboundCount}
