@@ -5,5 +5,4 @@ export const getHandleFromSubjectView = (
 ): string | undefined =>
   sv.status?.subjectRepoHandle ??
   sv.repo?.handle ??
-  sv.record?.repo?.handle ??
-  sv.profile?.handle
+  sv.record?.repo?.handle
