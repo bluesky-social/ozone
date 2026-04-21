@@ -8,6 +8,7 @@ import { useQueueList, QueueListFilters } from '@/queues/useQueues'
 import { QueueFilters } from '@/queues/QueueFilters'
 import { QueueList } from '@/queues/QueueList'
 import { usePermission } from '@/shell/ConfigurationContext'
+import { LiveStatsPanel } from '@/reports/stats/LiveStats'
 
 export function QueuesPageContent() {
   const canManageQueues = usePermission('canManageQueues')
@@ -36,12 +37,17 @@ export function QueuesPageContent() {
       </div>
 
       {/* Filters */}
-      <div className="w-full max-w-4xl mb-4">
+      <div className="w-full max-w-4xl">
         <QueueFilters
           filters={filters}
           onChange={setFilters}
           hiddenFilters={['enabled']}
         />
+      </div>
+
+      {/* Stats */}
+      <div className="w-full max-w-4xl mb-4">
+        <LiveStatsPanel />
       </div>
 
       {/* Queue list */}

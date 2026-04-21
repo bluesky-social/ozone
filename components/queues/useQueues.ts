@@ -1,18 +1,19 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { toast } from 'react-toastify'
 import {
   ToolsOzoneQueueCreateQueue,
-  ToolsOzoneQueueUpdateQueue,
   ToolsOzoneQueueDeleteQueue,
   ToolsOzoneQueueRouteReports,
+  ToolsOzoneQueueUpdateQueue,
 } from '@atproto/api'
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { toast } from 'react-toastify'
 
 export type QueueListFilters = {
   enabled?: boolean
   subjectType?: string
   collection?: string
   reportTypes?: string[]
+  limit?: number
 }
 
 export const useQueueList = (filters?: QueueListFilters) => {

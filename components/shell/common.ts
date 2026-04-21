@@ -12,6 +12,7 @@ import {
   ClockIcon,
   InboxStackIcon,
   DocumentTextIcon,
+  ChartBarIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
 import { MouseEventHandler } from 'react'
@@ -30,6 +31,7 @@ export const ICONS = {
   clock: ClockIcon,
   queues: InboxStackIcon,
   document: DocumentTextIcon,
+  analytics: ChartBarIcon,
 }
 
 export type SidebarNavItem = {
@@ -51,6 +53,7 @@ export const NAV_ITEMS: SidebarNavItem[] = [
   { name: 'Reports', href: '/reports', icon: 'reports' },
   { name: 'Queues', href: '/queues', icon: 'queues' },
   { name: 'Events', href: '/events', icon: 'events' },
+  { name: 'Analytics', href: '/analytics', icon: 'analytics' },
   { name: 'Repositories', href: '/repositories', icon: 'repositories' },
   {
     name: 'Ctrl Panel',

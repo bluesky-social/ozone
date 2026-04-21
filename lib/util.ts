@@ -422,3 +422,23 @@ export function getReadableTextColor(backgroundColor: string) {
 export const MINUTE = 60 * 1000
 export const HOUR = 60 * MINUTE
 export const DAY = 24 * HOUR
+
+export function formatDuration(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`
+  if (seconds < 3600) return `${Math.round(seconds / 60)}m`
+  const hours = Math.floor(seconds / 3600)
+  const mins = Math.round((seconds % 3600) / 60)
+  return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`
+}
+
+export const numberToString = (value: number | string | undefined) => {
+  if (value === undefined) return '-'
+  if (typeof value === 'number' && (isNaN(value) || !isFinite(value))) {
+    return '-'
+  }
+  return value.toString()
+}
+
+export function randomInt(min: number, max: number) {
+  return Math.floor(Math.random() * (max - min + 1)) + min
+}

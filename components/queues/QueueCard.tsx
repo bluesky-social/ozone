@@ -6,6 +6,7 @@ import { ReactNode } from 'react'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
+import { StatValue } from '@/reports/stats/Stats'
 
 export function QueueCard({
   queue,
@@ -97,22 +98,36 @@ export function QueueCard({
         </div>
 
         {/* Column 2 */}
-        <div
-          className="hidden lg:flex flex-col gap-1"
-          hidden={hiddenFields?.includes('stats')}
-        >
-          <p className="text-xs text-gray-400 dark:text-gray-500">Stats</p>
-          <div className="flex flex-col text-xs text-gray-500 dark:text-gray-400">
-            <span>
-              <strong>{queue.stats.pendingCount}</strong> pending
-            </span>
-            <span>
-              <strong>{queue.stats.actionedCount}</strong> actioned
-            </span>
-            <span>
-              <strong>{queue.stats.escalatedPendingCount}</strong> escalated
-            </span>
-          </div>
+        <div className="flex-col gap-1">
+          {!hiddenFields?.includes('stats') && (
+            <div className="flex flex-wrap items-center gap-2">
+              <StatValue
+                label="Inbound"
+                value={queue.stats.inboundCount}
+                classNamePreset="inbound"
+              />
+              <StatValue
+                label="Pending"
+                value={queue.stats.pendingCount}
+                classNamePreset="pending"
+              />
+              <StatValue
+                label="Escalated"
+                value={queue.stats.escalatedCount}
+                classNamePreset="escalated"
+              />
+              <StatValue
+                label="Actioned"
+                value={queue.stats.actionedCount}
+                classNamePreset="actioned"
+                suffix={
+                  queue.stats.actionRate != null
+                    ? ` (${queue.stats.actionRate}%)`
+                    : undefined
+                }
+              />
+            </div>
+          )}
           {!hideViewReports && (
             <Link
               href={`/reports/beta?queueId=${queue.id}`}
