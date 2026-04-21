@@ -68,10 +68,10 @@ export function HistoricalGraph({
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((s) => ({
       date: format(new Date(s.date), 'MMM d'),
-      inboundCount: s.inboundCount ?? 0,
-      actionedCount: s.actionedCount ?? 0,
-      pendingCount: s.pendingCount ?? 0,
-      escalatedCount: s.escalatedCount ?? 0,
+      inboundCount: s.inboundCount,
+      actionedCount: s.actionedCount,
+      pendingCount: s.pendingCount,
+      escalatedCount: s.escalatedCount,
     }))
 
   const dark = isDarkModeEnabled()

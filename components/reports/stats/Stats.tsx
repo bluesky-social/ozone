@@ -110,7 +110,7 @@ export function StatsCard({ group }: { group: StatGroup }) {
   const sparklineData = historical?.stats
     ?.slice()
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((s) => ({ value: s.inboundCount ?? 0 }))
+    .map((s) => ({ value: s.inboundCount }))
 
   const showGraph = sparklineData && sparklineData.length > 1
 
@@ -159,22 +159,22 @@ export function StatsCard({ group }: { group: StatGroup }) {
           <div className="flex flex-wrap gap-2 mb-3">
             <StatValue
               label="Inbound"
-              value={stats.inboundCount ?? 0}
+              value={stats.inboundCount}
               classNamePreset="inbound"
             />
             <StatValue
               label="Pending"
-              value={stats.pendingCount ?? 0}
+              value={stats.pendingCount}
               classNamePreset="pending"
             />
             <StatValue
               label="Escalated"
-              value={stats.escalatedCount ?? 0}
+              value={stats.escalatedCount}
               classNamePreset="escalated"
             />
             <StatValue
               label="Actioned"
-              value={stats.actionedCount ?? 0}
+              value={stats.actionedCount}
               classNamePreset="actioned"
               suffix={
                 stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
