@@ -1,4 +1,5 @@
 # @NOTE: this compose file is intended to accompany the guide found in HOSTING.md
+version: '3.9'
 services:
   caddy:
     container_name: caddy
@@ -34,7 +35,7 @@ services:
     network_mode: host
     restart: unless-stopped
     depends_on:
-      postgres:
+      ozone:
         condition: service_healthy
     env_file:
       - /ozone/ozone.env
