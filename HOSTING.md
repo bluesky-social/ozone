@@ -245,7 +245,7 @@ curl https://raw.githubusercontent.com/bluesky-social/ozone/main/service/compose
 ##### Create the systemd service
 
 > [!TIP]
-> The `--profile daemon` flag in the systemd service below enables the [ozone's background daemon](https://github.com/bluesky-social/atproto/tree/main/packages/ozone/src/daemon) to run. This is not to be confused with the systemd daemon that manages the ozone application. This enables certain features such as temporary takedowns. If you do not want the daemon, remove `--profile daemon` from both the `ExecStart` and `ExecStop` commands.
+> The `--profile daemon` flag in the systemd service below enables the [ozone's background daemon](https://github.com/bluesky-social/atproto/tree/main/packages/ozone/src/daemon) to run. This enables certain features such as temporary takedowns. If you do not want the daemon, remove `--profile daemon` from both the `ExecStart` and `ExecStop` commands.
 
 ```bash
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/ozone.service
