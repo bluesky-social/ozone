@@ -81,7 +81,7 @@ export function StatValues({
   className?: string
 }) {
   const from = new Date()
-  from.setUTCHours(0, 0, 0, 0)
+  from.setUTCHours(0, 0, 0, 0) // assume stats were calculated from UTC midnight
   const to = stats.lastUpdated ? new Date(stats.lastUpdated) : null
   const windowHours = to
     ? Math.max(1, Math.round((to.getTime() - from.getTime()) / 3600000))
