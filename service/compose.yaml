@@ -29,6 +29,21 @@ services:
       - /ozone/ozone.env
     labels:
       - 'com.centurylinklabs.watchtower.enable=true'
+  ozone-daemon:
+    container_name: ozone-daemon
+    image: ghcr.io/bluesky-social/ozone:0.1
+    network_mode: host
+    restart: unless-stopped
+    depends_on:
+      ozone:
+        condition: service_healthy
+    env_file:
+      - /ozone/ozone.env
+    command: ["node", "./service/daemon.js"]
+    profiles:
+      - daemon
+    labels:
+      - 'com.centurylinklabs.watchtower.enable=true'
   postgres:
     container_name: postgres
     image: postgres:14.11-bookworm
