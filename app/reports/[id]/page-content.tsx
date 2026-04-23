@@ -18,6 +18,8 @@ import { ActionButton, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Select, Textarea } from '@/common/forms'
 import { PreviewCard } from '@/common/PreviewCard'
 import { ModEventList } from '@/mod-event/EventList'
+import { ModEventItem } from '@/mod-event/EventItem'
+import { ModToolProvider } from '@/mod-event/ModToolContext'
 import {
   LabelList,
   LabelListEmpty,
@@ -959,6 +961,25 @@ function ReportDetailLayout(props: {
               </div>
             </form>
           </div>
+
+          {!!report.actions?.length && (
+            <div className="mb-4">
+              <h4 className="text-sm font-medium text-gray-700 dark:text-gray-100 mb-2 pb-2 border-b border-gray-200 dark:border-gray-700">
+                Actions on this report
+              </h4>
+              <ModToolProvider>
+                {report.actions.map((modEvent) => (
+                  <ModEventItem
+                    key={modEvent.id}
+                    modEvent={modEvent}
+                    showContentAuthor={false}
+                    showContentPreview={false}
+                    showContentDetails={false}
+                  />
+                ))}
+              </ModToolProvider>
+            </div>
+          )}
 
           <ActivityTimeline reportId={report.id} />
         </div>
