@@ -19,6 +19,7 @@ export type ServerConfig = {
     canManageSets: boolean
     canVerify: boolean
     canManageQueues: boolean
+    canAssignOthers: boolean
   }
 }
 
@@ -52,6 +53,7 @@ export const parseServerConfig = (
       canDivertBlob: !!config.blobDivert?.url && isModerator,
       canVerify: !!config.verifierDid && isVerifier,
       canManageQueues: isModerator,
+      canAssignOthers: isAdmin,
     },
   }
 }
