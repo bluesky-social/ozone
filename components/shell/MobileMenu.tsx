@@ -48,7 +48,7 @@ export function MobileMenuBtn() {
   )
 }
 
-export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
+export function MobileMenu() {
   const pathname = usePathname() || '/'
   const mobileMenuOpen = useContext(MobileMenuOpenCtx)
   const kbar = useKBar()
@@ -122,18 +122,80 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                     <div className="space-y-1">
                       {NAV_ITEMS.map((item) => {
                         const Icon = ICONS[item.icon]
+                        const active = isCurrent(pathname, item)
+                        const activeClass = active
+                          ? 'bg-rose-800 dark:bg-teal-800 text-white'
+                          : 'text-rose-100 dark:text-teal-100 hover:bg-rose-800 dark:hover:bg-teal-800 hover:text-white'
+                        const iconEl = (
+                          <Icon
+                            className={classNames(
+                              active
+                                ? 'text-white'
+                                : 'text-rose-300 dark:text-teal-300 group-hover:text-white',
+                              'mr-3 h-6 w-6',
+                            )}
+                            aria-hidden="true"
+                          />
+                        )
+
+                        if ('children' in item) {
+                          return (
+                            <div key={item.name}>
+                              <div
+                                className={classNames(
+                                  activeClass,
+                                  'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
+                                )}
+                              >
+                                {iconEl}
+                                <span>{item.name}</span>
+                              </div>
+                              <div className="mt-1 space-y-1">
+                                {item.children.map((child) => {
+                                  const ChildIcon = ICONS[child.icon]
+                                  const childActive = isCurrent(pathname, child)
+                                  return (
+                                    <Link
+                                      key={child.name}
+                                      href={child.href}
+                                      onClick={() => mobileMenuOpen.set(false)}
+                                      className={classNames(
+                                        childActive
+                                          ? 'bg-rose-800 dark:bg-teal-800 text-white'
+                                          : 'text-rose-100 dark:text-teal-100 hover:bg-rose-800 dark:hover:bg-teal-800 hover:text-white',
+                                        'group py-2 pl-10 pr-3 rounded-md flex items-center text-sm font-medium',
+                                      )}
+                                      aria-current={
+                                        childActive ? 'page' : undefined
+                                      }
+                                    >
+                                      <ChildIcon
+                                        className={classNames(
+                                          childActive
+                                            ? 'text-white'
+                                            : 'text-rose-300 dark:text-teal-300 group-hover:text-white',
+                                          'mr-3 h-5 w-5',
+                                        )}
+                                        aria-hidden="true"
+                                      />
+                                      <span>{child.name}</span>
+                                    </Link>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )
+                        }
+
                         const children = (
                           <>
-                            <Icon
-                              className={classNames(
-                                isCurrent(pathname, item)
-                                  ? 'text-white'
-                                  : 'text-rose-300 dark:text-teal-300 group-hover:text-white',
-                                'mr-3 h-6 w-6',
-                              )}
-                              aria-hidden="true"
-                            />
+                            {iconEl}
                             <span>{item.name}</span>
+                            {item.badge && (
+                              <span className="ml-2 rounded-full bg-yellow-400 px-1.5 py-px text-[10px] font-semibold uppercase leading-none text-yellow-900">
+                                {item.badge}
+                              </span>
+                            )}
                           </>
                         )
                         if ('href' in item) {
@@ -141,15 +203,12 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                             <Link
                               key={item.name}
                               href={item.href}
+                              onClick={() => mobileMenuOpen.set(false)}
                               className={classNames(
-                                isCurrent(pathname, item)
-                                  ? 'bg-rose-800 dark:bg-teal-800 text-white'
-                                  : 'text-rose-100 dark:text-teal-100 hover:bg-rose-800 dark:hover:bg-teal-800 hover:text-white',
+                                activeClass,
                                 'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
                               )}
-                              aria-current={
-                                isCurrent(pathname, item) ? 'page' : undefined
-                              }
+                              aria-current={active ? 'page' : undefined}
                             >
                               {children}
                             </Link>
@@ -160,15 +219,14 @@ export function MobileMenu({ toggleTheme }: { toggleTheme: () => void }) {
                           <button
                             key={item.name}
                             className={classNames(
-                              isCurrent(pathname, item)
+                              active
                                 ? 'bg-rose-800 text-white'
                                 : 'text-rose-100 hover:bg-rose-800 hover:text-white',
                               'group py-2 px-3 rounded-md flex items-center text-sm font-medium',
                             )}
                             onClick={(e) => {
                               mobileMenuOpen.set(false)
-                              if ('onClick' in item)
-                                item.onClick({ kbar, toggleTheme })?.(e)
+                              if ('onClick' in item) item.onClick({ kbar })?.(e)
                             }}
                           >
                             {children}
