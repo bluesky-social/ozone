@@ -65,10 +65,10 @@ export const NAV_ITEMS: SidebarNavItem[] = [
   { name: 'Analytics', href: '/analytics', icon: 'analytics' },
   {
     name: 'Search',
-    icon: 'repositories',
+    icon: 'search',
     children: [
       { name: 'Repositories', href: '/repositories', icon: 'repositories' },
-      { name: 'Content', href: '/search', icon: 'search' },
+      { name: 'Content', href: '/search', icon: 'document' },
     ],
   },
   {
