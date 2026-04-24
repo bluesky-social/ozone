@@ -50,7 +50,7 @@ export function StatsDetailPageContent() {
   } = useHistoricalStats(historical)
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 space-y-4">
       <div className="flex items-center gap-4 mb-4">
         <Link href="/analytics" className="text-gray-700 dark:text-gray-100">
           <ArrowLeftIcon className="h-4 w-4" />
@@ -62,10 +62,7 @@ export function StatsDetailPageContent() {
 
       <StatsFilters value={filters} onChange={handleFilterChange} />
 
-      <div className="mb-6 flex items-center gap-2">
-        <h2 className="text-gray-500 dark:text-gray-400">Today</h2>
-        <LiveStatsPanel params={live} />
-      </div>
+      <LiveStatsPanel params={live} />
 
       <div className="rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700">
         <HistoricalGraph
