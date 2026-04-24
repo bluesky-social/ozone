@@ -39,7 +39,7 @@ export function QueuesConfig() {
     <div className="pt-4">
       {/* filters */}
       {!showForm && (
-        <QueueFilters filters={filters} onChange={setFilters}>
+        <QueueFilters className="mb-6" filters={filters} onChange={setFilters}>
           {canManageQueues && (
             <div className="flex gap-2">
               <ActionButton

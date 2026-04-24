@@ -11,11 +11,13 @@ export function QueueFilters({
   onChange,
   children,
   hiddenFilters,
+  className,
 }: {
   filters: QueueListFilters
   onChange: (filters: QueueListFilters) => void
   children?: React.ReactNode
   hiddenFilters?: (keyof QueueListFilters)[]
+  className?: string
 }) {
   const updateFilter = <K extends keyof QueueListFilters>(
     key: K,
@@ -38,7 +40,7 @@ export function QueueFilters({
   }
 
   return (
-    <>
+    <div className={className}>
       <div className="flex flex-wrap gap-2">
         <Select
           className="h-fit text-xs"
@@ -85,7 +87,7 @@ export function QueueFilters({
         </div>
         {children}
       </div>
-      <div className="mb-6 flex gap-2">
+      <div className="flex gap-2">
         <div
           className="mt-1 flex-1"
           hidden={hiddenFilters?.includes('reportTypes')}
@@ -107,6 +109,6 @@ export function QueueFilters({
           </ActionButton>
         </div>
       </div>
-    </>
+    </div>
   )
 }
