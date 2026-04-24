@@ -42,7 +42,9 @@ export function QueueFilterBar({
             <button
               onClick={() => setIsExpanded(!isExpanded)}
               className="p-0.5 rounded text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
-              title={isExpanded ? 'Collapse queue details' : 'Expand queue details'}
+              title={
+                isExpanded ? 'Collapse queue details' : 'Expand queue details'
+              }
             >
               {isExpanded ? (
                 <ChevronUpIcon className="h-4 w-4" />
@@ -62,9 +64,11 @@ export function QueueFilterBar({
             >
               {queue.enabled ? 'Enabled' : 'Disabled'}
             </span>
-            <span className="text-xs text-gray-500 dark:text-gray-400">
-              <strong>{queue.stats.pendingCount}</strong> pending
-            </span>
+            {queue.stats.pendingCount !== undefined && (
+              <span className="text-xs text-gray-500 dark:text-gray-400">
+                <strong>{queue.stats.pendingCount}</strong> pending
+              </span>
+            )}
             <div className="ml-auto">
               <button
                 onClick={onClear}
@@ -77,7 +81,11 @@ export function QueueFilterBar({
           </div>
           {isExpanded && (
             <div className="border-t border-gray-200 dark:border-gray-700">
-              <QueueCard queue={queue} hiddenFields={['name', 'enabled']} hideViewReports />
+              <QueueCard
+                queue={queue}
+                hiddenFields={['name', 'enabled']}
+                hideViewReports
+              />
             </div>
           )}
         </div>
