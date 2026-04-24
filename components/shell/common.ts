@@ -67,7 +67,7 @@ export const NAV_ITEMS: SidebarNavItem[] = [
     name: 'Search',
     icon: 'search',
     children: [
-      { name: 'Repositories', href: '/repositories', icon: 'repositories' },
+      { name: 'Users', href: '/repositories', icon: 'repositories' },
       { name: 'Content', href: '/search', icon: 'document' },
     ],
   },
