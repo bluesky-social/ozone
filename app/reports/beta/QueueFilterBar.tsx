@@ -1,41 +1,20 @@
-'use client'
-import { useState } from 'react'
-import Link from 'next/link'
+import { QueueCard } from '@/queues/QueueCard'
+import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { XMarkIcon } from '@heroicons/react/24/outline'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
-import { QueueCard } from '@/queues/QueueCard'
-import { useQueueById } from '@/queues/useQueues'
+import { useState } from 'react'
 
 export function QueueFilterBar({
-  queueId,
+  queue,
   onClear,
 }: {
-  queueId: number
+  queue: ToolsOzoneQueueDefs.QueueView
   onClear: () => void
 }) {
-  const { queue, isLoading, notFound } = useQueueById(queueId)
   const [isExpanded, setIsExpanded] = useState(false)
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 pt-4">
-      {isLoading && (
-        <div className="text-sm text-gray-500 dark:text-gray-400 py-2">
-          Loading queue...
-        </div>
-      )}
-      {notFound && (
-        <div className="rounded-md bg-red-50 dark:bg-red-900/20 p-4">
-          <p className="text-sm text-red-700 dark:text-red-400">
-            Queue not found.{' '}
-            <Link
-              href="/queues"
-              className="underline hover:text-red-800 dark:hover:text-red-300"
-            >
-              Back to queues
-            </Link>
-          </p>
-        </div>
-      )}
       {queue && (
         <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800">
           <div className="flex items-center gap-3 px-4 py-2.5">
