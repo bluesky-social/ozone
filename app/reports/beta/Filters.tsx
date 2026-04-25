@@ -160,14 +160,11 @@ export function BetaReportsFilters() {
         </button>
 
         {/* Report types */}
-        <div className="flex items-center gap-1.5">
-          <div className="w-56">
-            <ReportTypeMultiselect
-              value={reportTypes}
-              onChange={setReportTypes}
-            />
-          </div>
-        </div>
+        <ReportTypeMultiselect
+          value={reportTypes}
+          onChange={setReportTypes}
+          className="w-fit flex items-start gap-3"
+        />
       </div>
 
       {/* Collections row — only when subject type is record */}

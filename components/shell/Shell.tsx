@@ -10,11 +10,9 @@ import { useFluentReportSearchUpdate } from '@/reports/useFluentReportSearch'
 import { useSyncedState } from '@/lib/useSyncedState'
 import Image from 'next/image'
 import { Suspense } from 'react'
-import { useColorScheme } from '@/common/useColorScheme'
 
 export function Shell({ children }: React.PropsWithChildren) {
   useCommandPaletteAsyncSearch()
-  const { theme, toggleTheme } = useColorScheme()
 
   return (
     <MobileMenuProvider>
@@ -32,12 +30,12 @@ export function Shell({ children }: React.PropsWithChildren) {
                 title="Icon from Flaticon: https://www.flaticon.com/free-icons/lifeguard-tower"
               />
             </div>
-            <SidebarNav {...{ theme, toggleTheme }} />
+            <SidebarNav />
           </div>
         </div>
 
         {/* Mobile menu */}
-        <MobileMenu toggleTheme={toggleTheme} />
+        <MobileMenu />
 
         {/* Content area */}
         <div className="flex flex-1 flex-col overflow-hidden">

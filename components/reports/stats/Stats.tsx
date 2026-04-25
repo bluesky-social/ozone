@@ -1,16 +1,17 @@
 import { numberToString } from '@/lib/util'
+import { ClockIcon } from '@heroicons/react/24/outline'
+import { formatDistanceToNow, subDays } from 'date-fns'
+import Link from 'next/link'
+import { useMemo } from 'react'
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { twMerge } from 'tailwind-merge'
 import { getHrefFromGroup, StatGroup } from '.'
-import Link from 'next/link'
+import { groupedReasonTypes } from '../helpers/getType'
 import {
   LiveStatsParams,
   useHistoricalStats,
   useLiveStats,
 } from './useReportStats'
-import { subDays } from 'date-fns'
-import { useMemo } from 'react'
-import { groupedReasonTypes } from '../helpers/getType'
 
 export const STATS_PRESETS = {
   inbound: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
@@ -52,6 +53,83 @@ export function StatValue({
       {label}
       {suffix}
     </span>
+  )
+}
+
+export interface ReportStats {
+  /** Number of reports in 'open' status */
+  pendingCount?: number
+  /** Number of reports in 'closed' status */
+  actionedCount?: number
+  /** Number of reports in 'escalated' status */
+  escalatedCount?: number
+  /** Reports received in this queue in the last 24 hours. */
+  inboundCount?: number
+  /** Percentage of reports actioned (actionedCount / inboundCount * 100), rounded to nearest integer. Absent when inboundCount is 0. */
+  actionRate?: number
+  /** Average time in seconds from report creation to close, for reports closed in this period. */
+  avgHandlingTimeSec?: number
+  /** When these statistics were last computed */
+  lastUpdated?: string
+}
+
+export function StatValues({
+  stats,
+  className,
+}: {
+  stats: ReportStats
+  className?: string
+}) {
+  const from = new Date()
+  from.setUTCHours(0, 0, 0, 0) // stats are calculated from UTC midnight
+  const to = stats.lastUpdated ? new Date(stats.lastUpdated) : null
+  const windowHours = to
+    ? Math.max(1, Math.round((to.getTime() - from.getTime()) / 3600000))
+    : null
+
+  return (
+    <div className={twMerge('flex items-center gap-1 mb-3', className)}>
+      <div className="flex flex-wrap items-center gap-2">
+        <StatValue
+          label="Inbound"
+          value={stats.inboundCount}
+          classNamePreset="inbound"
+        />
+        <StatValue
+          label="Pending"
+          value={stats.pendingCount}
+          classNamePreset="pending"
+        />
+        <StatValue
+          label="Escalated"
+          value={stats.escalatedCount}
+          classNamePreset="escalated"
+        />
+        <StatValue
+          label="Actioned"
+          value={stats.actionedCount}
+          classNamePreset="actioned"
+          suffix={
+            stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
+          }
+        />
+      </div>
+      {windowHours && (
+        <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+          <span>
+            Stats from last {windowHours} hour
+            {windowHours === 1 ? '' : 's'}{' '}
+          </span>
+          {to && (
+            <span
+              title={`Updated ${formatDistanceToNow(to, { addSuffix: true })}`}
+            >
+              <ClockIcon className="h-3.5 w-3.5" />
+            </span>
+          )}
+        </div>
+      )}
+    </div>
   )
 }
 

@@ -1,12 +1,12 @@
+import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
+import { useQueueAssignments } from '@/assignments/useAssignments'
+import { Card } from '@/common/Card'
+import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
+import { ReasonBadge } from '@/reports/ReasonBadge'
+import { StatValues } from '@/reports/stats/Stats'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import Link from 'next/link'
-import { Card } from '@/common/Card'
-import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReactNode } from 'react'
-import { useQueueAssignments } from '@/assignments/useAssignments'
-import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
-import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
-import { StatValue } from '@/reports/stats/Stats'
 
 export function QueueCard({
   queue,
@@ -98,35 +98,9 @@ export function QueueCard({
         </div>
 
         {/* Column 2 */}
-        <div className="flex-col gap-1">
+        <div className="flex flex-col">
           {!hiddenFields?.includes('stats') && (
-            <div className="flex flex-wrap items-center gap-2">
-              <StatValue
-                label="Inbound"
-                value={queue.stats.inboundCount}
-                classNamePreset="inbound"
-              />
-              <StatValue
-                label="Pending"
-                value={queue.stats.pendingCount}
-                classNamePreset="pending"
-              />
-              <StatValue
-                label="Escalated"
-                value={queue.stats.escalatedCount}
-                classNamePreset="escalated"
-              />
-              <StatValue
-                label="Actioned"
-                value={queue.stats.actionedCount}
-                classNamePreset="actioned"
-                suffix={
-                  queue.stats.actionRate != null
-                    ? ` (${queue.stats.actionRate}%)`
-                    : undefined
-                }
-              />
-            </div>
+            <StatValues stats={queue.stats} className="flex-col items-start" />
           )}
           {!hideViewReports && (
             <Link

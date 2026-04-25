@@ -37,7 +37,7 @@ export function QueuesPageContent() {
       </div>
 
       {/* Filters */}
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-4xl mb-3">
         <QueueFilters
           filters={filters}
           onChange={setFilters}
@@ -46,7 +46,7 @@ export function QueuesPageContent() {
       </div>
 
       {/* Stats */}
-      <div className="w-full max-w-4xl mb-4">
+      <div className="w-full max-w-4xl mb-3">
         <LiveStatsPanel />
       </div>
 

@@ -90,8 +90,8 @@ export const BetaReportsPageContent = () => {
 
   return (
     <>
-      {queueId !== null && (
-        <QueueFilterBar queueId={queueId} onClear={clearQueueFilter} />
+      {queue && (
+        <QueueFilterBar queue={queue} onClear={clearQueueFilter} />
       )}
       <BetaReportsFilters />
       <ReportTable

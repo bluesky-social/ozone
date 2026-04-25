@@ -113,11 +113,13 @@ export function ReportTypeMultiselect({
   value,
   onChange,
   limit = 25,
+  className,
   'data-cy': dataCy,
 }: {
   value: string[]
   onChange: (values: string[]) => void
   limit?: number
+  className?: string
   'data-cy'?: string
 }) {
   const [query, setQuery] = useState('')
@@ -134,10 +136,10 @@ export function ReportTypeMultiselect({
   }
 
   return (
-    <div>
+    <div className={className}>
       <Combobox value={value} onChange={handleChange} multiple>
         <div className="relative">
-          <div className="relative w-full cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none sm:text-sm">
+          <div className="relative w-full min-w-56 cursor-default overflow-hidden rounded-md bg-white dark:bg-slate-700 text-left shadow-sm focus:outline-none sm:text-sm">
             <ComboboxInput
               className={`w-full rounded-md border-gray-300 dark:border-teal-500 dark:bg-slate-700 shadow-sm dark:shadow-slate-700 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 sm:text-sm dark:text-gray-100 ${limitWarning ? 'placeholder:text-yellow-600' : ''}`}
               data-cy={dataCy}

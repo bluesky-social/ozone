@@ -34,9 +34,16 @@ export const ICONS = {
   analytics: ChartBarIcon,
 }
 
+export type SidebarNavChild = {
+  name: string
+  href: string
+  icon: keyof typeof ICONS
+}
+
 export type SidebarNavItem = {
   name: string
   icon: keyof typeof ICONS
+  badge?: string
 } & (
   | {
       href: string
@@ -44,17 +51,26 @@ export type SidebarNavItem = {
   | {
       onClick: (context: {
         kbar: ReturnType<typeof useKBar>
-        toggleTheme: () => void
       }) => MouseEventHandler<HTMLButtonElement> | undefined
+    }
+  | {
+      children: SidebarNavChild[]
     }
 )
 
 export const NAV_ITEMS: SidebarNavItem[] = [
   { name: 'Reports', href: '/reports', icon: 'reports' },
-  { name: 'Queues', href: '/queues', icon: 'queues' },
+  { name: 'Queues', href: '/queues', icon: 'queues', badge: 'Beta' },
   { name: 'Events', href: '/events', icon: 'events' },
   { name: 'Analytics', href: '/analytics', icon: 'analytics' },
-  { name: 'Repositories', href: '/repositories', icon: 'repositories' },
+  {
+    name: 'Search',
+    icon: 'search',
+    children: [
+      { name: 'Users', href: '/repositories', icon: 'repositories' },
+      { name: 'Content', href: '/search', icon: 'document' },
+    ],
+  },
   {
     name: 'Ctrl Panel',
     icon: 'command',
@@ -64,36 +80,19 @@ export const NAV_ITEMS: SidebarNavItem[] = [
         kbar.query.toggle(),
   },
   {
-    name: 'Search',
-    href: '/search',
-    icon: 'search',
-  },
-  {
     name: 'Configure',
     href: '/configure',
     icon: 'configure',
-  },
-  {
-    name: 'Schedule',
-    href: '/scheduled-actions',
-    icon: 'clock',
-  },
-  {
-    name: 'Verification',
-    href: '/verification',
-    icon: 'verification',
-  },
-  {
-    name: 'Theme',
-    icon: 'sun',
-    onClick: ({ toggleTheme }) => toggleTheme,
   },
 ]
 
 export function isCurrent(
   currentPathname: string,
-  item: SidebarNavItem,
+  item: SidebarNavItem | SidebarNavChild,
 ): boolean {
+  if ('children' in item) {
+    return item.children.some((child) => isCurrent(currentPathname, child))
+  }
   if (!('href' in item)) return false
   if (item.href === '/') {
     return currentPathname === item.href

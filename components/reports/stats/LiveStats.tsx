@@ -1,6 +1,6 @@
-import { useLiveStats, LiveStatsParams } from './useReportStats'
 import { formatDuration } from '@/lib/util'
-import { StatCard, StatValue } from './Stats'
+import { StatCard, StatValues } from './Stats'
+import { LiveStatsParams, useLiveStats } from './useReportStats'
 
 export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
   const { data: stats, isLoading, isError, refetch } = useLiveStats(params)
@@ -35,67 +35,7 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
     )
   }
 
-  const items = [
-    {
-      label: 'Inbound',
-      value: stats.inboundCount,
-      classNamePreset: 'inbound',
-    },
-    {
-      label: 'Pending',
-      value: stats.pendingCount,
-      classNamePreset: 'pending',
-    },
-    {
-      label: 'Escalated',
-      value: stats.escalatedCount,
-      classNamePreset: 'escalated',
-    },
-    {
-      label: 'Actioned',
-      value: stats.actionedCount,
-      suffix: stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined,
-      classNamePreset: 'actioned',
-    },
-  ]
-
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      <StatValue
-        label="Inbound"
-        value={stats.inboundCount}
-        classNamePreset="inbound"
-      />
-      <StatValue
-        label="Pending"
-        value={stats.pendingCount}
-        classNamePreset="pending"
-      />
-      <StatValue
-        label="Escalated"
-        value={stats.escalatedCount}
-        classNamePreset="escalated"
-      />
-      <StatValue
-        label="Actioned"
-        value={stats.actionedCount}
-        classNamePreset="actioned"
-        suffix={
-          stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
-        }
-      />
-      {stats.avgHandlingTimeSec != null && (
-        <StatValue
-          label="Avg Handling Time"
-          value={formatDuration(stats.avgHandlingTimeSec)}
-          classNamePreset="avgHandlingTime"
-        />
-      )}
-      <span className="text-xs text-gray-400 dark:text-gray-500">
-        Updated {new Date(stats.lastUpdated).toLocaleTimeString()}
-      </span>
-    </div>
-  )
+  return <StatValues stats={stats} />
 }
 
 export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
