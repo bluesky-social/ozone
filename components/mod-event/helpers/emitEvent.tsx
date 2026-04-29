@@ -585,7 +585,11 @@ export const getEventFromFormData = (
         .split(',')
         .map((tag) => tag.trim()),
     )
-    return { $type, add, remove, comment }
+    const event: any = { $type, add, remove, comment }
+    if (durationInHours > 0 && add.length > 0) {
+      event.durationInHours = durationInHours
+    }
+    return event
   }
 
   if ($type === MOD_EVENTS.DIVERT) {

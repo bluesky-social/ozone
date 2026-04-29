@@ -524,7 +524,7 @@ function Form(
                         <ActionDurationSelector
                           ref={durationSelectorRef}
                           action={modEventType}
-                          required={isLabelEvent ? false : true}
+                          required={isLabelEvent || isTagEvent ? false : true}
                           showPermanent={!isMuteEvent}
                           defaultValue={!isMuteEvent ? 0 : 6}
                           onChange={(e) => {
@@ -544,9 +544,11 @@ function Form(
                               ? 'Mute duration'
                               : isLabelEvent
                                 ? 'Label duration'
-                                : isPriorityScoreEvent
-                                  ? 'Score duration'
-                                  : ''
+                                : isTagEvent
+                                  ? 'Tag duration'
+                                  : isPriorityScoreEvent
+                                    ? 'Score duration'
+                                    : ''
                           }
                         />
                       </FormLabel>

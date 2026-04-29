@@ -41,7 +41,9 @@ export const WorkspacePanelActionForm = ({
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
-  const shouldShowDurationInHoursField = isMuteEvent || isLabelEvent
+  const [removeTags, setRemoveTags] = useState(false)
+  const shouldShowDurationInHoursField =
+    isMuteEvent || isLabelEvent || (isTagEvent && !removeTags)
 
   return (
     <div className="mb-4 w-1/2">
@@ -97,11 +99,15 @@ export const WorkspacePanelActionForm = ({
                   action={modEventType}
                   showPermanent
                   form={WORKSPACE_FORM_ID}
+                  required={!isTagEvent}
+                  defaultValue={isTagEvent ? 0 : undefined}
                   labelText={
                     isMuteEvent
                       ? 'Mute duration'
                       : isLabelEvent
                       ? 'Label duration'
+                      : isTagEvent
+                      ? 'Tag duration'
                       : ''
                   }
                 />
@@ -158,6 +164,10 @@ export const WorkspacePanelActionForm = ({
                 name="removeTags"
                 className="my-3 flex items-center"
                 form={WORKSPACE_FORM_ID}
+                checked={removeTags}
+                onChange={(e) =>
+                  setRemoveTags((e.target as HTMLInputElement).checked)
+                }
                 label="Remove selected tags from the subjects"
               />
             </FormLabel>
