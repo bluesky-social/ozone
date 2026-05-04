@@ -77,6 +77,39 @@ export const buildBlueSkyAppUrl = (
   return url
 }
 
+/**
+ * Format an AT-URI for the bluesky app. Handles mapping collections to app-specific short names.
+ */
+export const formatAndBuildBlueSkyAppUrl = (
+  params: { did: string } & ({ collection: string; rkey: string } | {}),
+) => {
+  // profile
+  if (!('collection' in params) || params.collection === CollectionId.Profile) {
+    return buildBlueSkyAppUrl({ did: params.did })
+  }
+
+  // starter pack
+  if (params.collection === CollectionId.StarterPack) {
+    return `${SOCIAL_APP_URL}/starter-pack/${params.did}/${params.rkey}`
+  }
+
+  // other
+  const map: Record<string, string> = {
+    [CollectionId.Post]: 'post',
+    [CollectionId.List]: 'lists',
+    [CollectionId.FeedGenerator]: 'feed',
+  }
+  const shortName =
+    params.collection in map
+      ? map[params.collection]
+      : params.collection.split('.').pop() || params.collection
+  return buildBlueSkyAppUrl({
+    did: params.did,
+    collection: shortName,
+    rkey: params.rkey,
+  })
+}
+
 type BlueSkyAppUrlFragments = {
   did?: string
   handle?: string
