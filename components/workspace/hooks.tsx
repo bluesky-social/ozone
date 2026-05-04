@@ -5,7 +5,12 @@ import {
   processFileForWorkspaceImport,
 } from '@/lib/csv'
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
-import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
+import {
+  formatAndBuildBlueSkyAppUrl,
+  buildBlueSkyAppUrl,
+  isNonNullable,
+  pluralize,
+} from '@/lib/util'
 import { regenerateBatchId } from '@/lib/batchId'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
@@ -237,9 +242,9 @@ const getExportFieldsFromWorkspaceListItem = (
         embeds: item.record.value.embed
           ? getEmbedValues(item.record.value.embed)
           : '',
-        bskyUrl: buildBlueSkyAppUrl({
+        bskyUrl: formatAndBuildBlueSkyAppUrl({
           did: record.host,
-          collection: record.collection.split('.').pop(),
+          collection: record.collection,
           rkey: record.rkey,
         }),
         ozoneUrl: buildOzoneUrl(item.record.uri),
