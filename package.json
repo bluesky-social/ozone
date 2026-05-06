@@ -18,9 +18,9 @@
     "e2e:run": "$(yarn bin)/cypress run --browser chrome"
   },
   "dependencies": {
-    "@atproto/api": "0.19.4",
-    "@atproto/oauth-client-browser": "^0.3.38",
-    "@atproto/oauth-types": "^0.6.0",
+    "@atproto/api": "^0.19.13",
+    "@atproto/oauth-client-browser": "^0.3.42",
+    "@atproto/oauth-types": "^0.6.3",
     "@atproto/xrpc": "^0.7.7",
     "@headlessui/react": "^2.2.1",
     "@heroicons/react": "^2.0.13",
