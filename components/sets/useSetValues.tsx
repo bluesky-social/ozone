@@ -32,7 +32,7 @@ export const useSetValueEditor = (name: string) => {
       return labelerAgent.tools.ozone.set.addValues({ name, values })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['setValues', { name }])
+      queryClient.invalidateQueries({ queryKey: ['setValues', { name }] })
     },
     onError: (err) => {
       toast.error(`Error adding values: ${(err as Error).message}`)
@@ -49,7 +49,7 @@ export const useSetValueRemover = (name: string) => {
       return labelerAgent.tools.ozone.set.deleteValues({ name, values })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['setValues', { name }])
+      queryClient.invalidateQueries({ queryKey: ['setValues', { name }] })
       toast.success('Removed value from set')
     },
     onError: (err) => {

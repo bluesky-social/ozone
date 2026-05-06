@@ -53,7 +53,7 @@ const useSetEditor = ({ onSuccess }: { onSuccess: () => void }) => {
           },
         },
       )
-      queryClient.invalidateQueries(['setList'])
+      queryClient.invalidateQueries({ queryKey: ['setList'] })
       setSubmission({ isSubmitting: false, error: '' })
       ev.target.reset()
       onSuccess()

@@ -22,7 +22,7 @@ export const useVerifier = () => {
           })
 
         data.verifications.forEach((v) => {
-          queryClient.invalidateQueries(['modActionSubject', v.subject])
+          queryClient.invalidateQueries({ queryKey: ['modActionSubject', v.subject] })
         })
 
         verified += data.verifications.length
@@ -62,10 +62,9 @@ export const useVerifier = () => {
             uris: chunk,
           })
         chunkData.revokedVerifications.forEach((uri) => {
-          queryClient.invalidateQueries([
-            'modActionSubject',
-            getDidFromUri(uri),
-          ])
+          queryClient.invalidateQueries({
+            queryKey: ['modActionSubject', getDidFromUri(uri)],
+          })
           data.revokedVerifications.push(uri)
         })
         data.failedRevocations.push(

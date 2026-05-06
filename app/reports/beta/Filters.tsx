@@ -11,9 +11,17 @@ const STATUS_OPTIONS = [
   { id: 'all', text: 'All Statuses', value: '' },
   { id: ReportStatuses.OPEN, text: 'Open', value: ReportStatuses.OPEN },
   { id: ReportStatuses.CLOSED, text: 'Closed', value: ReportStatuses.CLOSED },
-  { id: ReportStatuses.ESCALATED, text: 'Escalated', value: ReportStatuses.ESCALATED },
+  {
+    id: ReportStatuses.ESCALATED,
+    text: 'Escalated',
+    value: ReportStatuses.ESCALATED,
+  },
   { id: ReportStatuses.QUEUED, text: 'Queued', value: ReportStatuses.QUEUED },
-  { id: ReportStatuses.ASSIGNED, text: 'Assigned', value: ReportStatuses.ASSIGNED },
+  {
+    id: ReportStatuses.ASSIGNED,
+    text: 'Assigned',
+    value: ReportStatuses.ASSIGNED,
+  },
 ]
 
 const MUTED_OPTIONS = [
@@ -64,7 +72,8 @@ export function BetaReportsFilters() {
 
   const selectBase =
     'text-xs rounded border border-gray-300 dark:border-gray-600 px-2 py-1 appearance-none cursor-pointer'
-  const selectDefault = 'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+  const selectDefault =
+    'bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200'
   const selectActive =
     'bg-rose-50 dark:bg-teal-900/40 text-rose-700 dark:text-teal-200 font-medium'
   const status = params.get('status') ?? ReportStatuses.QUEUED
@@ -106,7 +115,10 @@ export function BetaReportsFilters() {
   const assignedTo = params.get('assignedTo') ?? ''
 
   const toggleMyAssignments = () =>
-    updateParam({ assignedTo: assignedTo ? undefined : currentUserDid })
+    updateParam({
+      assignedTo: assignedTo ? undefined : currentUserDid,
+      status: 'assigned',
+    })
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-2.5 space-y-2">

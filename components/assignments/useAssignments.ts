@@ -8,10 +8,8 @@ import {
   ToolsOzoneQueueAssignModerator,
   ToolsOzoneQueueDefs,
   ToolsOzoneQueueGetAssignments,
-  ToolsOzoneReportAssignModerator,
   ToolsOzoneReportDefs,
   ToolsOzoneReportGetAssignments,
-  ToolsOzoneReportUnassignModerator,
 } from '@atproto/api'
 
 const ASSIGNMENTS_QUERY_KEY = 'assignments'
@@ -42,11 +40,11 @@ export const useAssignQueue = () => {
     async (input: ToolsOzoneQueueAssignModerator.InputSchema) => {
       const { data } =
         await labelerAgent.tools.ozone.queue.assignModerator(input)
-      return data as ToolsOzoneQueueDefs.AssignmentView
+      return data
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries([ASSIGNMENTS_QUERY_KEY])
+        queryClient.invalidateQueries({ queryKey: [ASSIGNMENTS_QUERY_KEY] })
       },
       onError: (err) => {
         toast.error(displayError(err))
@@ -72,46 +70,6 @@ export const useReportAssignments = (
       toast.error(`Failed to load assignments:\n${err}`)
     },
   })
-}
-
-export const useAssignReport = () => {
-  const labelerAgent = useLabelerAgent()
-  const queryClient = useQueryClient()
-  return useMutation(
-    async (input: ToolsOzoneReportAssignModerator.InputSchema) => {
-      const { data } =
-        await labelerAgent.tools.ozone.report.assignModerator(input)
-      return data as ToolsOzoneReportDefs.AssignmentView
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries([ASSIGNMENTS_QUERY_KEY])
-      },
-      onError: (err) => {
-        toast.error(displayError(err))
-      },
-    },
-  )
-}
-
-export const useUnassignReport = () => {
-  const labelerAgent = useLabelerAgent()
-  const queryClient = useQueryClient()
-  return useMutation(
-    async (input: ToolsOzoneReportUnassignModerator.InputSchema) => {
-      const { data } =
-        await labelerAgent.tools.ozone.report.unassignModerator(input)
-      return data as ToolsOzoneReportDefs.AssignmentView
-    },
-    {
-      onSuccess: () => {
-        queryClient.invalidateQueries([ASSIGNMENTS_QUERY_KEY])
-      },
-      onError: (err) => {
-        toast.error(displayError(err))
-      },
-    },
-  )
 }
 
 const AUTO_ASSIGN_INTERVAL_MS = 3 * MINUTE

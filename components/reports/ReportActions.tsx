@@ -129,11 +129,9 @@ function TransitionConfirmPanel({
 
 function NoteComposer({
   reportId,
-  noteType,
   onDone,
 }: {
   reportId: number
-  noteType: 'internal' | 'public'
   onDone: () => void
 }) {
   const [text, setText] = useState('')
@@ -141,12 +139,11 @@ function NoteComposer({
 
   const handleSubmit = () => {
     if (!text.trim()) return
-    const isInternal = noteType === 'internal'
     createActivity.mutate(
       {
         reportId,
         activity: { $type: 'tools.ozone.report.defs#noteActivity' },
-        ...(isInternal ? { internalNote: text.trim() } : { publicNote: text.trim() }),
+        internalNote: text.trim(),
       },
       { onSuccess: () => { setText(''); onDone() } },
     )
@@ -156,17 +153,12 @@ function NoteComposer({
     <div className="mt-2 space-y-1.5">
       <Textarea
         rows={2}
-        placeholder={noteType === 'internal' ? 'Internal note (moderators only)…' : 'Public note (visible to reporter)…'}
+        placeholder="Internal note (moderators only)…"
         className="block w-full text-xs"
         autoFocus
         value={text}
         onChange={(e) => setText(e.target.value)}
       />
-      {noteType === 'public' && (
-        <p className="text-[11px] text-amber-600 dark:text-amber-400">
-          This note will be visible to the reporter.
-        </p>
-      )}
       <div className="flex justify-end gap-1.5">
         <button
           type="button"
@@ -181,7 +173,7 @@ function NoteComposer({
           disabled={createActivity.isPending || !text.trim()}
           onClick={handleSubmit}
         >
-          Save {noteType} note
+          Save note
         </ActionButton>
       </div>
     </div>
@@ -202,7 +194,7 @@ export function ReportActionsBar({
   onResolveAppeal?: () => Promise<void>
 }) {
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
-  const [showNote, setShowNote] = useState<'internal' | 'public' | false>(false)
+  const [showNote, setShowNote] = useState(false)
 
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
@@ -222,9 +214,9 @@ export function ReportActionsBar({
     setPendingAction((prev) => (prev === action ? null : action))
   }
 
-  const handleNoteClick = (type: 'internal' | 'public') => {
+  const handleNoteClick = () => {
     setPendingAction(null)
-    setShowNote((v) => (v === type ? false : type))
+    setShowNote((v) => !v)
   }
 
   const handleReportActionSelect = (action: ReportActionType) => {
@@ -319,21 +311,12 @@ export function ReportActionsBar({
 
         <button
           type="button"
-          className={`inline-flex items-center gap-1 text-xs px-1 ${showNote === 'internal' ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-          onClick={() => handleNoteClick('internal')}
+          className={`inline-flex items-center gap-1 text-xs px-1 ${showNote ? 'text-gray-600 dark:text-gray-300' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
+          onClick={handleNoteClick}
           title="Internal note (moderators only)"
         >
           <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
           Note
-        </button>
-        <button
-          type="button"
-          className={`inline-flex items-center gap-1 text-xs px-1 ${showNote === 'public' ? 'text-blue-600 dark:text-blue-400' : 'text-gray-400 hover:text-gray-600 dark:hover:text-gray-300'}`}
-          onClick={() => handleNoteClick('public')}
-          title="Public note (visible to reporter)"
-        >
-          <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
-          Public
         </button>
       </div>
 
@@ -347,7 +330,7 @@ export function ReportActionsBar({
       )}
 
       {showNote && !pendingAction && (
-        <NoteComposer reportId={report.id} noteType={showNote} onDone={() => setShowNote(false)} />
+        <NoteComposer reportId={report.id} onDone={() => setShowNote(false)} />
       )}
     </div>
   )
@@ -369,10 +352,7 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
   const activityType = payload?.$type ?? ''
   const toStatus = ACTIVITY_TO_STATUS[activityType]
   const isStateChange = !!toStatus
-  const internalNote = (activity as unknown as { internalNote?: string }).internalNote
-  const publicNote = (activity as unknown as { publicNote?: string }).publicNote
-  const isPublicNote = !internalNote && !!publicNote
-  const noteText = publicNote ?? internalNote
+  const noteText = (activity as unknown as { internalNote?: string }).internalNote
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })
   const moderator = (activity as unknown as { moderator?: { profile?: { handle?: string; displayName?: string } } }).moderator
   const displayName = moderator?.profile?.handle || activity.createdBy
@@ -407,7 +387,7 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
           )}
           {!isStateChange && (
             <span className="text-gray-500 dark:text-gray-400 font-medium">
-              {isPublicNote ? 'Public note' : 'Note'}
+              Note
             </span>
           )}
           {activity.isAutomated && (

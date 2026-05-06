@@ -34,7 +34,7 @@ export const useFilterMacroUpsertMutation = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries([FILTER_MACRO_LIST_QUERY_KEY])
+        queryClient.invalidateQueries({ queryKey: [FILTER_MACRO_LIST_QUERY_KEY] })
         toast.success('Filter macro saved')
       },
     },
@@ -51,7 +51,7 @@ export const useFilterMacroRemoveMutation = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries([FILTER_MACRO_LIST_QUERY_KEY])
+        queryClient.invalidateQueries({ queryKey: [FILTER_MACRO_LIST_QUERY_KEY] })
         toast.success('Filter macro removed')
       },
     },
@@ -68,7 +68,7 @@ export const useFilterMacroEmptyMutation = () => {
     },
     {
       onSuccess: () => {
-        queryClient.invalidateQueries([FILTER_MACRO_LIST_QUERY_KEY])
+        queryClient.invalidateQueries({ queryKey: [FILTER_MACRO_LIST_QUERY_KEY] })
         toast.success('Removed all filter macros')
       },
     },

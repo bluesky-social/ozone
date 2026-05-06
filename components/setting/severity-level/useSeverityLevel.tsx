@@ -55,7 +55,7 @@ export const useSeverityLevelEditor = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries(['severity-level'])
+      queryClient.invalidateQueries({ queryKey: ['severity-level'] })
       toast.success('Severity level list updated')
     },
 
