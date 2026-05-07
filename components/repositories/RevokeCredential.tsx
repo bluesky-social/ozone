@@ -285,7 +285,7 @@ export const RevokeCredentialsForm = ({
         revoke all app passwords and force password reset for {accountText}.
       </p>
 
-      <FormLabel label="Reason (optional)" htmlFor="comment" className="mb-3">
+      <FormLabel label="Reason" htmlFor="comment" className="mb-3" required>
         <Input
           autoFocus
           type="text"
@@ -294,6 +294,7 @@ export const RevokeCredentialsForm = ({
           className="block w-full"
           onChange={(e) => setComment(e.target.value)}
           placeholder="Account was compromised/User contacted support etc."
+          required
         />
       </FormLabel>
 
@@ -350,7 +351,7 @@ export const RevokeCredentialsForm = ({
         appearance="primary"
         size="sm"
         onClick={() => setIsRevokeModalOpen(true)}
-        disabled={isLoading}
+        disabled={isLoading || !comment.trim()}
       >
         <LockClosedIcon className="h-3 w-3 mr-1" />
         {isLoading ? 'Revoking...' : 'Revoke Credentials'}
