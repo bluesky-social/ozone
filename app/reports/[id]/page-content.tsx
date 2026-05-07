@@ -517,8 +517,6 @@ function ReportDetailLayout(props: {
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(
     report.reportType ? [report.reportType] : [],
   )
-  const [reportActionNote, setReportActionNote] = useState('')
-  const [showReportActionNote, setShowReportActionNote] = useState(false)
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const [applyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
@@ -552,7 +550,6 @@ function ReportDetailLayout(props: {
       } else if (reportActionTypes.length > 0) {
         reportAction.types = reportActionTypes
       }
-      if (reportActionNote) reportAction.note = reportActionNote
       await onSubmit({ ...finalVals, reportAction })
 
       // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
@@ -1006,36 +1003,6 @@ function ReportDetailLayout(props: {
                       value={reportActionTypes}
                       onChange={setReportActionTypes}
                     />
-                  )}
-                  {showReportActionNote ? (
-                    <div className="space-y-1">
-                      <Textarea
-                        placeholder="Note to reporter (optional)"
-                        className="block w-full"
-                        rows={2}
-                        autoFocus
-                        value={reportActionNote}
-                        onChange={(e) => setReportActionNote(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        onClick={() => {
-                          setShowReportActionNote(false)
-                          setReportActionNote('')
-                        }}
-                      >
-                        Remove note
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                      onClick={() => setShowReportActionNote(true)}
-                    >
-                      + Add note to reporter
-                    </button>
                   )}
                 </div>
               )}

@@ -8,6 +8,7 @@ import {
   ToolsOzoneQueueAssignModerator,
   ToolsOzoneQueueDefs,
   ToolsOzoneQueueGetAssignments,
+  ToolsOzoneQueueUnassignModerator,
   ToolsOzoneReportDefs,
   ToolsOzoneReportGetAssignments,
 } from '@atproto/api'
@@ -48,6 +49,28 @@ export const useAssignQueue = () => {
       },
       onError: (err) => {
         toast.error(displayError(err))
+      },
+    },
+  )
+}
+
+export const useUnassignQueue = (options?: {
+  onSuccess?: () => void
+  onError?: (err: unknown) => void
+}) => {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+  return useMutation(
+    async (input: ToolsOzoneQueueUnassignModerator.InputSchema) => {
+      await labelerAgent.tools.ozone.queue.unassignModerator(input)
+    },
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: [ASSIGNMENTS_QUERY_KEY] })
+        options?.onSuccess?.()
+      },
+      onError: (err) => {
+        options?.onError?.(err)
       },
     },
   )

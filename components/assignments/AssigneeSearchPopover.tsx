@@ -11,22 +11,33 @@ import {
   ComboboxOption,
 } from '@headlessui/react'
 import { PlusIcon } from '@heroicons/react/24/outline'
+import { ToolsOzoneTeamDefs } from '@atproto/api'
 import { useMemberList } from '@/team/useMemberList'
+import { useServerConfig } from '@/shell/ConfigurationContext'
 
 interface AssigneeSearchPopoverProps {
   onSelect: (did: string) => void
   buttonLabel?: string
   className?: string
+  excludeDids?: string[]
 }
 
 export function AssigneeSearchPopover({
   onSelect,
   buttonLabel = 'Add Assignee',
   className,
+  excludeDids,
 }: AssigneeSearchPopoverProps) {
   const [query, setQuery] = useState('')
+  const { role } = useServerConfig()
+  const isAdmin = role === ToolsOzoneTeamDefs.ROLEADMIN
   const { data } = useMemberList(query)
-  const members = data?.pages?.flatMap((page) => page.members) ?? []
+  const excluded = new Set(excludeDids ?? [])
+  const members = (data?.pages?.flatMap((page) => page.members) ?? []).filter(
+    (m) => !excluded.has(m.did),
+  )
+
+  if (!isAdmin) return null
 
   return (
     <Popover className={`relative ${className ?? ''}`}>
