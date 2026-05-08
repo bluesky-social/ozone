@@ -157,6 +157,7 @@ function useBetaReportsQuery() {
     queryFn: async ({ pageParam }) => {
       const queryParams: ToolsOzoneReportQueryReports.QueryParams = {
         cursor: pageParam,
+        status,
       }
 
       if (subject) {
