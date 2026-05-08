@@ -86,7 +86,7 @@ export const useProtectedTagEditor = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries([ProtectedTagSettingKey])
+      queryClient.invalidateQueries({ queryKey: [ProtectedTagSettingKey] })
       toast.success('Protected tags saved')
     },
 

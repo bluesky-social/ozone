@@ -98,7 +98,7 @@ export const useQueueSetting = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries(['queue-setting'])
+      queryClient.invalidateQueries({ queryKey: ['queue-setting'] })
       toast.success('Queue setting saved')
     },
 

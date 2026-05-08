@@ -29,6 +29,32 @@ export function useAssignModerator(options?: {
   })
 }
 
+export function useUnassignModerator(options?: {
+  onSuccess?: (data: ToolsOzoneReportDefs.AssignmentView, reportId: number) => void
+  onError?: (error: unknown, reportId: number) => void
+}) {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (reportId: number) => {
+      const { data } = await labelerAgent.tools.ozone.report.unassignModerator({
+        reportId,
+      })
+      return data
+    },
+    onSuccess: (data, reportId) => {
+      queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+      queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      options?.onSuccess?.(data, reportId)
+    },
+    onError: (error, reportId) => {
+      options?.onError?.(error, reportId)
+    },
+  })
+}
+
 export function useCreateActivity(options?: {
   onSuccess?: (data: ToolsOzoneReportDefs.ReportActivityView) => void
   onError?: (error: unknown) => void
@@ -47,7 +73,6 @@ export function useCreateActivity(options?: {
         | { $type: 'tools.ozone.report.defs#reopenActivity' }
         | { $type: 'tools.ozone.report.defs#noteActivity' }
       internalNote?: string
-      publicNote?: string
       isAutomated?: boolean
     }) => {
       const { data } = await labelerAgent.tools.ozone.report.createActivity(input as Parameters<typeof labelerAgent.tools.ozone.report.createActivity>[0])

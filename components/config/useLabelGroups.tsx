@@ -57,7 +57,7 @@ export const useLabelGroupsData = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries(['label-groups-setting'])
+      queryClient.invalidateQueries({ queryKey: ['label-groups-setting'] })
       toast.success('Label groups saved')
     },
 

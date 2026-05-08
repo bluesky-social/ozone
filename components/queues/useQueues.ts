@@ -63,7 +63,7 @@ export const useCreateQueue = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['queues'])
+      queryClient.invalidateQueries({ queryKey: ['queues'] })
       toast.success('Queue created successfully')
     },
     onError: (error) => {
@@ -87,7 +87,7 @@ export const useUpdateQueue = () => {
       return data
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['queues'])
+      queryClient.invalidateQueries({ queryKey: ['queues'] })
       toast.success('Queue updated successfully')
     },
     onError: (error) => {
@@ -107,7 +107,7 @@ export const useDeleteQueue = () => {
       return data
     },
     onSuccess: (data) => {
-      queryClient.invalidateQueries(['queues'])
+      queryClient.invalidateQueries({ queryKey: ['queues'] })
       const migrationMsg =
         data.reportsMigrated !== undefined
           ? ` (${data.reportsMigrated} reports migrated)`

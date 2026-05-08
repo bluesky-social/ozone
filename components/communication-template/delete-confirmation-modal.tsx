@@ -35,7 +35,7 @@ export const CommunicationTemplateDeleteConfirmationModal = ({
         id: templateId,
       })
       toast.success('Template deleted')
-      queryClient.invalidateQueries(['communicationTemplateList'])
+      queryClient.invalidateQueries({ queryKey: ['communicationTemplateList'] })
       setIsDeleting(false)
       setIsDialogOpen(false)
     } catch (err: any) {

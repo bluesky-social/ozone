@@ -95,7 +95,7 @@ const useMemberEditor = ({
           },
         },
       })
-      queryClient.invalidateQueries(['memberList'])
+      queryClient.invalidateQueries({ queryKey: ['memberList'] })
       setSubmission({ isSubmitting: false, error: '' })
       ev.target.reset()
       onSuccess()

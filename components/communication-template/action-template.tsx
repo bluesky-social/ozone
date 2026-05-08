@@ -51,7 +51,7 @@ export const useActionCommunicationTemplatesMutation = () => {
       })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['action-communication-templates'])
+      queryClient.invalidateQueries({ queryKey: ['action-communication-templates'] })
       toast.success('Action templates updated successfully')
     },
     onError: (error: any) => {
