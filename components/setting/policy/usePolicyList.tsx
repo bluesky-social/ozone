@@ -55,7 +55,7 @@ export const usePolicyListEditor = () => {
     },
 
     onSuccess: () => {
-      queryClient.invalidateQueries(['policy-list'])
+      queryClient.invalidateQueries({ queryKey: ['policy-list'] })
       toast.success('Policy list updated')
     },
 

@@ -587,7 +587,7 @@ export const useQuickAction = (
 
       refetchSubjectStatus()
       refetchSubject()
-      queryClient.invalidateQueries(['modEventList'])
+      queryClient.invalidateQueries({ queryKey: ['modEventList'] })
 
       // After successful submission, reset the form state to clear inputs for previous submission
       ev.target.reset()
@@ -644,7 +644,7 @@ export const useQuickAction = (
         createdBy: accountDid,
       })
       // email event does not change the subject status so only need to refetch mod event list
-      queryClient.invalidateQueries(['modEventList'])
+      queryClient.invalidateQueries({ queryKey: ['modEventList'] })
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ isSubmitting: false, error: '' })
     } catch (err) {

@@ -31,7 +31,7 @@ export const useSetRemove = (name: string) => {
       await labelerAgent.tools.ozone.set.deleteSet({ name })
     },
     onSuccess: () => {
-      queryClient.invalidateQueries(['setList'])
+      queryClient.invalidateQueries({ queryKey: ['setList'] })
       toast.success(`Set ${name} removed!`)
     },
     onError: (err) => {

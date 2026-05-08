@@ -119,10 +119,9 @@ export function useEmitEvent() {
       // Define the query invalidation to reuse
       const invalidateQueries = () => {
         if (ComAtprotoAdminDefs.isRepoRef(vals?.subject)) {
-          queryClient.invalidateQueries([
-            'accountView',
-            { id: vals?.subject.did },
-          ])
+          queryClient.invalidateQueries({
+            queryKey: ['accountView', { id: vals?.subject.did }],
+          })
         }
       }
 

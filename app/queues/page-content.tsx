@@ -1,48 +1,48 @@
 'use client'
-import { useState } from 'react'
 import Link from 'next/link'
 import { useTitle } from 'react-use'
-import { WrenchScrewdriverIcon } from '@heroicons/react/24/outline'
+import {
+  ChartBarIcon,
+  WrenchScrewdriverIcon,
+} from '@heroicons/react/24/outline'
 import { ActionButton } from '@/common/buttons'
-import { useQueueList, QueueListFilters } from '@/queues/useQueues'
-import { QueueFilters } from '@/queues/QueueFilters'
+import { useQueueList } from '@/queues/useQueues'
 import { QueueList } from '@/queues/QueueList'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { LiveStatsPanel } from '@/reports/stats/LiveStats'
 
 export function QueuesPageContent() {
   const canManageQueues = usePermission('canManageQueues')
-  
+
   useTitle('Queues')
 
-  const [filters, setFilters] = useState<QueueListFilters>({ enabled: true })
-
   const { data, isLoading, isError, refetch, fetchNextPage, hasNextPage } =
-    useQueueList(filters)
+    useQueueList({ enabled: true })
   const queues = data?.pages.flatMap((page) => page.queues) ?? []
 
   return (
     <div className="px-4 sm:px-6 lg:px-8 py-4 flex flex-col items-center">
       {/* Header */}
-      <div className="w-full flex items-center justify-between mb-4">
-        <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
-          Queues
-        </h1>
-        <Link href="/configure?tab=queues" hidden={!canManageQueues}>
-          <ActionButton size="sm" appearance="outlined">
-            <WrenchScrewdriverIcon className="h-4 w-4 mr-1" />
-            Configure
-          </ActionButton>
-        </Link>
-      </div>
-
-      {/* Filters */}
-      <div className="w-full max-w-4xl mb-3">
-        <QueueFilters
-          filters={filters}
-          onChange={setFilters}
-          hiddenFilters={['enabled']}
-        />
+      <div className="w-full max-w-4xl mb-3 border-b border-gray-200 dark:border-gray-700 pb-3">
+        <div className="w-full flex items-center justify-between">
+          <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            Queues
+          </h1>
+          <div className="flex items-center gap-2">
+            <Link href="/analytics">
+              <ActionButton size="sm" appearance="outlined">
+                <ChartBarIcon className="h-4 w-4 mr-1" />
+                Analytics
+              </ActionButton>
+            </Link>
+            <Link href="/configure?tab=queues" hidden={!canManageQueues}>
+              <ActionButton size="sm" appearance="outlined">
+                <WrenchScrewdriverIcon className="h-4 w-4 mr-1" />
+                Configure
+              </ActionButton>
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}

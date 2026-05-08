@@ -48,6 +48,7 @@ import { TextWithLinks } from '@/common/TextWithLinks'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
 import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
+import { EmailComposerFields } from 'components/email/Composer'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
@@ -55,7 +56,8 @@ import {
 } from '@/mod-event/helpers/emitEvent'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
-import { useAssignModerator } from 'components/reports/hooks'
+import { useAssignModerator, useUnassignModerator } from 'components/reports/hooks'
+import { ConfirmationModal } from '@/common/modals/confirmation'
 import {
   ReportActionsBar,
   ActivityTimeline,
@@ -149,6 +151,9 @@ function ReportInfoPanel({
   assignment?: ToolsOzoneReportDefs.ReportAssignment
   onClickDid?: (did: string) => void
 }) {
+  const labelerAgent = useLabelerAgent()
+  const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
+
   const {
     mutate: assignToMe,
     isPending,
@@ -157,10 +162,22 @@ function ReportInfoPanel({
     onSuccess: () => toast.success('Report assigned to you'),
   })
 
+  const {
+    mutate: unassignFromMe,
+    isPending: isUnassigning,
+    error: unassignError,
+  } = useUnassignModerator({
+    onSuccess: () => {
+      toast.success('You have been unassigned from this report')
+      setUnassignConfirmOpen(false)
+    },
+  })
+
   const reporterHandle = getHandleFromSubjectView(report.reporter)
   const createdAt = new Date(report.createdAt)
 
   const moderator = assignment?.moderator
+  const isAssignedToMe = !!assignment && assignment.did === labelerAgent.did
 
   return (
     <div className="mb-4 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900 p-4">
@@ -220,24 +237,41 @@ function ReportInfoPanel({
       {/* Assignment */}
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
         {assignment ? (
-          moderator ? (
-            <MemberView member={moderator} assignedAt={assignment.assignedAt} onClickDid={onClickDid} />
-          ) : (
-            <div className="text-sm text-gray-500 dark:text-gray-400">
-              Assigned to{' '}
-              {onClickDid ? (
-                <button
-                  type="button"
-                  className="hover:underline hover:text-blue-600 dark:hover:text-blue-400"
-                  onClick={() => onClickDid(assignment.did)}
-                >
-                  {assignment.did}
-                </button>
+          <div className="flex flex-row items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              {moderator ? (
+                <MemberView
+                  member={moderator}
+                  assignedAt={assignment.assignedAt}
+                  onClickDid={onClickDid}
+                />
               ) : (
-                assignment.did
+                <div className="text-sm text-gray-500 dark:text-gray-400">
+                  Assigned to{' '}
+                  {onClickDid ? (
+                    <button
+                      type="button"
+                      className="hover:underline hover:text-blue-600 dark:hover:text-blue-400"
+                      onClick={() => onClickDid(assignment.did)}
+                    >
+                      {assignment.did}
+                    </button>
+                  ) : (
+                    assignment.did
+                  )}
+                </div>
               )}
             </div>
-          )
+            {isAssignedToMe && (
+              <ActionButton
+                size="sm"
+                appearance="outlined"
+                onClick={() => setUnassignConfirmOpen(true)}
+              >
+                Unassign
+              </ActionButton>
+            )}
+          </div>
         ) : (
           <div className="flex flex-row items-center gap-3">
             <ActionButton
@@ -256,6 +290,26 @@ function ReportInfoPanel({
           </div>
         )}
       </div>
+
+      <ConfirmationModal
+        isOpen={unassignConfirmOpen}
+        setIsOpen={setUnassignConfirmOpen}
+        title="Unassign yourself?"
+        description={
+          <>
+            Are you sure you want to unassign yourself from this report? You
+            will no longer be the moderator handling it.
+          </>
+        }
+        confirmButtonText={isUnassigning ? 'Unassigning…' : 'Unassign'}
+        confirmButtonDisabled={isUnassigning}
+        error={
+          unassignError
+            ? (unassignError as any)?.message ?? 'Failed to unassign'
+            : undefined
+        }
+        onConfirm={() => unassignFromMe(report.id)}
+      />
     </div>
   )
 }
@@ -463,8 +517,6 @@ function ReportDetailLayout(props: {
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(
     report.reportType ? [report.reportType] : [],
   )
-  const [reportActionNote, setReportActionNote] = useState('')
-  const [showReportActionNote, setShowReportActionNote] = useState(false)
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const [applyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
@@ -498,7 +550,6 @@ function ReportDetailLayout(props: {
       } else if (reportActionTypes.length > 0) {
         reportAction.types = reportActionTypes
       }
-      if (reportActionNote) reportAction.note = reportActionNote
       await onSubmit({ ...finalVals, reportAction })
 
       // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
@@ -569,6 +620,16 @@ function ReportDetailLayout(props: {
     targetServices,
     setTargetServices,
     config,
+    showAutomatedEmailComposer,
+    showCantEmailError,
+    automatedEmailTemplate,
+    communicationTemplates,
+    theme,
+    recipientLanguages,
+    emailContent,
+    setEmailContent,
+    onEmailTemplateSelect,
+    emailSubjectField,
   } = useQuickAction({
     onCancel,
     onSubmit: wrappedOnSubmit,
@@ -880,6 +941,44 @@ function ReportDetailLayout(props: {
                 />
               </div>
 
+              {showAutomatedEmailComposer && (
+                <EmailComposerFields
+                  defaultTemplate={
+                    actionRecommendation
+                      ? automatedEmailTemplate?.name
+                      : undefined
+                  }
+                  templateLabel={
+                    recipientLanguages.languages.length > 1
+                      ? `Template (account languages: ${recipientLanguages.languages.join(
+                          ', ',
+                        )})`
+                      : 'Template'
+                  }
+                  onTemplateSelect={onEmailTemplateSelect}
+                  communicationTemplates={communicationTemplates}
+                  recipientLanguages={recipientLanguages}
+                  subjectField={emailSubjectField}
+                  content={emailContent || ''}
+                  setContent={setEmailContent}
+                  theme={theme}
+                  isSending={submission.isSubmitting}
+                  requiresConfirmation={false}
+                  isConfirmed={true}
+                  toggleConfirmation={() => null}
+                />
+              )}
+              {showCantEmailError && (
+                <div className="my-2">
+                  <Alert
+                    showIcon
+                    type="warning"
+                    title="Cannot send email to this user"
+                    body="This user's account is hosted on PDS that does not allow sending emails. Please check the PDS of the user to verify."
+                  />
+                </div>
+              )}
+
               {showReportAction && (
                 <div className="mt-2 mb-3 space-y-2">
                   <Select
@@ -904,36 +1003,6 @@ function ReportDetailLayout(props: {
                       value={reportActionTypes}
                       onChange={setReportActionTypes}
                     />
-                  )}
-                  {showReportActionNote ? (
-                    <div className="space-y-1">
-                      <Textarea
-                        placeholder="Note to reporter (optional)"
-                        className="block w-full"
-                        rows={2}
-                        autoFocus
-                        value={reportActionNote}
-                        onChange={(e) => setReportActionNote(e.target.value)}
-                      />
-                      <button
-                        type="button"
-                        className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                        onClick={() => {
-                          setShowReportActionNote(false)
-                          setReportActionNote('')
-                        }}
-                      >
-                        Remove note
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      type="button"
-                      className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
-                      onClick={() => setShowReportActionNote(true)}
-                    >
-                      + Add note to reporter
-                    </button>
                   )}
                 </div>
               )}
