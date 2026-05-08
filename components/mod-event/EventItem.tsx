@@ -288,6 +288,33 @@ const AgeAssurance = ({
   )
 }
 
+const AgeAssurancePurge = ({
+  modEvent,
+}: {
+  modEvent: ToolsOzoneModerationDefs.ModEventView & {
+    event: { $type: string; comment?: string }
+  }
+}) => {
+  return (
+    <>
+      <div className="flex justify-between items-center">
+        <span>
+          By{' '}
+          <LinkToAuthor
+            createdBy={modEvent.createdBy}
+            creatorHandle={modEvent.creatorHandle}
+          />
+        </span>
+      </div>
+      {modEvent.event.comment && (
+        <div className="mt-2">
+          <TextWithLinks text={modEvent.event.comment} />
+        </div>
+      )}
+    </>
+  )
+}
+
 const AgeAssuranceOverride = ({
   modEvent,
 }: {
@@ -949,6 +976,15 @@ export const ModEventItem = ({
     )
   }
   if (
+    asPredicate(ToolsOzoneModerationDefs.validateAgeAssurancePurgeEvent)(
+      modEvent.event,
+    )
+  ) {
+    eventItem = (
+      <AgeAssurancePurge modEvent={{ ...modEvent, event: modEvent.event }} />
+    )
+  }
+  if (
     asPredicate(ToolsOzoneModerationDefs.validateScheduleTakedownEvent)(
       modEvent.event,
     )
@@ -971,9 +1007,9 @@ export const ModEventItem = ({
   const previewSubject = ComAtprotoRepoStrongRef.isMain(modEvent.subject)
     ? modEvent.subject.uri
     : ComAtprotoAdminDefs.isRepoRef(modEvent.subject) ||
-      ChatBskyConvoDefs.isMessageRef(modEvent.subject)
-    ? modEvent.subject.did
-    : undefined
+        ChatBskyConvoDefs.isMessageRef(modEvent.subject)
+      ? modEvent.subject.did
+      : undefined
 
   return (
     <div className="mt-4">

@@ -111,6 +111,24 @@ describe('<RevokeCredentialsForm />', () => {
     )
   })
 
+  it('requires comment field before allowing revocation', () => {
+    cy.mount(<RevokeCredentialsForm {...mockProps} />)
+
+    // Button should be disabled when comment is empty
+    cy.contains('Revoke Credentials').should('be.disabled')
+
+    // Type and clear - button should still be disabled
+    cy.get('input[name="comment"]').type('Test').clear()
+    cy.contains('Revoke Credentials').should('be.disabled')
+
+    // Enter valid comment - button should be enabled
+    cy.get('input[name="comment"]').type('Valid reason')
+    cy.contains('Revoke Credentials').should('not.be.disabled')
+
+    // Verify the input has required attribute
+    cy.get('input[name="comment"]').should('have.attr', 'required')
+  })
+
   it('handles loading states and error conditions', () => {
     const loadingProps = {
       ...mockProps,
@@ -129,6 +147,7 @@ describe('<RevokeCredentialsForm />', () => {
 
     cy.mount(<RevokeCredentialsForm {...errorProps} />)
 
+    cy.get('input[name="comment"]').type('Test comment')
     cy.contains('Revoke Credentials').click()
     cy.contains('Network timeout occurred')
   })

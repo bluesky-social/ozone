@@ -20,6 +20,7 @@ export type ServerConfig = {
     canVerify: boolean
     canManageQueues: boolean
     canAssignOthers: boolean
+    canPurgeAgeAssurance: boolean
   }
 }
 
@@ -54,6 +55,7 @@ export const parseServerConfig = (
       canVerify: !!config.verifierDid && isVerifier,
       canManageQueues: isModerator,
       canAssignOthers: isAdmin,
+      canPurgeAgeAssurance: isModerator,
     },
   }
 }

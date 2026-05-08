@@ -233,6 +233,7 @@ OZONE_CONFIG
 Download the `compose.yaml` to run your Ozone instance, which includes the following containers:
 
 - `ozone` Node Ozone server—both UI and backend—running on http://localhost:3000
+- `ozone-daemon` Background daemon for scheduled actions (event pushing, blob diverting, etc.)
 - `postgres` Postgres database used by the Ozone backend
 - `caddy` HTTP reverse proxy handling TLS and proxying requests to Ozone
 - `watchtower` Daemon responsible for auto-updating containers to keep the server secure and current
@@ -242,6 +243,9 @@ curl https://raw.githubusercontent.com/bluesky-social/ozone/main/service/compose
 ```
 
 ##### Create the systemd service
+
+> [!TIP]
+> The `--profile daemon` flag below will start [ozone's daemon](https://github.com/bluesky-social/atproto/tree/main/packages/ozone/src/daemon). This enables certain features such as temporary takedowns. If you do not want the daemon, remove `--profile daemon` from both the `ExecStart` and `ExecStop` commands.
 
 ```bash
 cat <<SYSTEMD_UNIT_FILE | sudo tee /etc/systemd/system/ozone.service
@@ -255,8 +259,8 @@ After=docker.service
 Type=oneshot
 RemainAfterExit=yes
 WorkingDirectory=/ozone
-ExecStart=/usr/bin/docker compose --file /ozone/compose.yaml up --detach
-ExecStop=/usr/bin/docker compose --file /ozone/compose.yaml down
+ExecStart=/usr/bin/docker compose --file /ozone/compose.yaml --profile daemon up --detach
+ExecStop=/usr/bin/docker compose --file /ozone/compose.yaml --profile daemon down
 
 [Install]
 WantedBy=default.target

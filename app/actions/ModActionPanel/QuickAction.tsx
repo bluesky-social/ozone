@@ -492,28 +492,29 @@ function Form(
                     />
                   )}
 
+                  {isPriorityScoreEvent && (
+                    <FormLabel
+                      label=""
+                      className="mt-2 w-1/2"
+                      htmlFor="priorityScore"
+                    >
+                      <Input
+                        type="number"
+                        id="priorityScore"
+                        name="priorityScore"
+                        className="block w-full"
+                        placeholder="Score between 0-100"
+                        autoFocus
+                        min={0}
+                        max={100}
+                        step={1}
+                        required
+                      />
+                    </FormLabel>
+                  )}
+                  
                   {shouldShowDurationInHoursField && (
                     <div className="flex flex-row gap-2">
-                      {isPriorityScoreEvent && (
-                        <FormLabel
-                          label=""
-                          className="mt-2 w-1/2"
-                          htmlFor="priorityScore"
-                        >
-                          <Input
-                            type="number"
-                            id="priorityScore"
-                            name="priorityScore"
-                            className="block w-full"
-                            placeholder="Score between 0-100"
-                            autoFocus
-                            min={0}
-                            max={100}
-                            step={1}
-                            required
-                          />
-                        </FormLabel>
-                      )}
                       <FormLabel
                         label=""
                         htmlFor="durationInHours"
