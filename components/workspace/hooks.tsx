@@ -5,7 +5,12 @@ import {
   processFileForWorkspaceImport,
 } from '@/lib/csv'
 import { getLocalStorageData, setLocalStorageData } from '@/lib/local-storage'
-import { buildBlueSkyAppUrl, isNonNullable, pluralize } from '@/lib/util'
+import {
+  formatAndBuildBlueSkyAppUrl,
+  buildBlueSkyAppUrl,
+  isNonNullable,
+  pluralize,
+} from '@/lib/util'
 import { regenerateBatchId } from '@/lib/batchId'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
@@ -125,6 +130,7 @@ export const WORKSPACE_EXPORT_FIELDS = [
   'labels',
   'tags',
   'bskyUrl',
+  'ozoneUrl',
   'createdAt',
   'text',
   'langs',
@@ -145,6 +151,15 @@ const filterExportFields = (fields: string[], isAdmin: boolean) => {
 const ifString = (val: unknown): string | undefined =>
   typeof val === 'string' ? val : undefined
 
+/**
+ * Build an Ozone URL that opens the quick action panel for a subject
+ * @param uri - AT-URI or DID of the subject
+ */
+const buildOzoneUrl = (uri: string): string => {
+  const baseUrl = typeof window !== 'undefined' ? window.location.origin : ''
+  return `${baseUrl}/reports?quickOpen=${encodeURIComponent(uri)}`
+}
+
 type ExportableObject = {
   did: string
   uri: string
@@ -155,6 +170,7 @@ type ExportableObject = {
   labels: string
   tags: string | undefined
   bskyUrl: string
+  ozoneUrl: string
   relatedRecords?: any[]
   createdAt?: string
   text?: string
@@ -178,6 +194,7 @@ const getExportFieldsFromWorkspaceListItem = (
       name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|') || 'Unknown',
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
+      ozoneUrl: buildOzoneUrl(repo.did),
       // @ts-expect-error - Un-spec'd field returned by PDS
       ip: ifString(repo.ip) ?? 'Unknown',
       labels: repo.labels?.map(({ val }) => val).join('|') || 'Unknown',
@@ -187,13 +204,14 @@ const getExportFieldsFromWorkspaceListItem = (
     const did = ComAtprotoRepoStrongRef.isMain(item.status.subject)
       ? new AtUri(item.status.subject.uri).host
       : ComAtprotoAdminDefs.isRepoRef(item.status.subject)
-      ? item.status.subject.did
-      : ''
+        ? item.status.subject.did
+        : ''
+    const uri = ComAtprotoRepoStrongRef.isMain(item.status.subject)
+      ? item.status.subject.uri
+      : did
     exportableObject = {
       did,
-      uri: ComAtprotoRepoStrongRef.isMain(item.status.subject)
-        ? item.status.subject.uri
-        : did,
+      uri,
       handle: item.status.subjectRepoHandle,
       relatedRecords: [] as {}[],
       email: 'Unknown',
@@ -202,27 +220,41 @@ const getExportFieldsFromWorkspaceListItem = (
       name: 'Unknown',
       tags: item.status.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did }),
+      ozoneUrl: buildOzoneUrl(uri),
     }
   }
 
   if (item.record && exportableObject) {
-    const recordData = {
-      uri: item.record.uri,
-      tags: item.record.moderation.subjectStatus?.tags?.join('|') || 'Unknown',
-      labels: item.record.labels?.map(({ val }) => val).join('|') || 'Unknown',
-      text: ifString(item.record.value.text) ?? '',
-      langs: Array.isArray(item.record.value.langs)
-        ? item.record.value.langs.join('|')
-        : '',
-      createdAt:
-        ifString(item.record.value.createdAt || item.record.indexedAt) ?? '',
-      embeds: item.record.value.embed
-        ? getEmbedValues(item.record.value.embed)
-        : '',
-    }
-    exportableObject = {
-      ...exportableObject,
-      ...recordData,
+    try {
+      const record = new AtUri(item.record.uri)
+      const recordData = {
+        uri: item.record.uri,
+        tags:
+          item.record.moderation.subjectStatus?.tags?.join('|') || 'Unknown',
+        labels:
+          item.record.labels?.map(({ val }) => val).join('|') || 'Unknown',
+        text: ifString(item.record.value.text) ?? '',
+        langs: Array.isArray(item.record.value.langs)
+          ? item.record.value.langs.join('|')
+          : '',
+        createdAt:
+          ifString(item.record.value.createdAt || item.record.indexedAt) ?? '',
+        embeds: item.record.value.embed
+          ? getEmbedValues(item.record.value.embed)
+          : '',
+        bskyUrl: formatAndBuildBlueSkyAppUrl({
+          did: record.host,
+          collection: record.collection,
+          rkey: record.rkey,
+        }),
+        ozoneUrl: buildOzoneUrl(item.record.uri),
+      }
+      exportableObject = {
+        ...exportableObject,
+        ...recordData,
+      }
+    } catch (e) {
+      console.error('Error processing record for export:', e)
     }
   }
 

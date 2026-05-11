@@ -140,6 +140,22 @@ export function PolicyList({
                                 )}
                                 <span className="font-medium">{levelName}</span>
                               </span>
+                              {config.targetServices?.map((service) => {
+                                const colorClass =
+                                  service === 'pds'
+                                    ? 'bg-red-100 dark:bg-red-900/40 text-red-800 dark:text-red-200'
+                                    : service === 'appview'
+                                      ? 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-800 dark:text-yellow-200'
+                                      : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200'
+                                return (
+                                  <span
+                                    key={service}
+                                    className={`ml-1 px-2 py-0.5 rounded text-xs ${colorClass}`}
+                                  >
+                                    {service} takedown
+                                  </span>
+                                )
+                              })}
                               {config.description && (
                                 <TextWithLinks
                                   className="text-xs italic text-gray-500 dark:text-gray-400"

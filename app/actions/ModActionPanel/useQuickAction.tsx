@@ -212,7 +212,11 @@ export const useQuickAction = (
   const isAgeAssuranceOverrideEvent =
     modEventType === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE
   const shouldShowDurationInHoursField =
-    isTakedownEvent || isMuteEvent || isMuteReporterEvent || isLabelEvent
+    isTakedownEvent ||
+    isMuteEvent ||
+    isMuteReporterEvent ||
+    isLabelEvent ||
+    isTagEvent
   const canManageChat = usePermission('canManageChat')
   const canTakedown = usePermission('canTakedown')
   const canSendEmail = usePermission('canSendEmail')

@@ -620,16 +620,36 @@ const Tag = ({
 }: {
   modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventTag>
 }) => {
+  // @ts-expect-error durationInHours will be added in a future @atproto/api release
+  const durationInHours: number | undefined = modEvent.event.durationInHours
+  const hasAdds = modEvent.event.add.length > 0
+  let expiresAt: Date | null = null
+  if (durationInHours && hasAdds) {
+    const d = new Date(modEvent.createdAt)
+    d.setHours(d.getHours() + Number(durationInHours))
+    expiresAt = d
+  }
   return (
     <>
-      <p>
+      <div className="flex justify-between text-gray-500">
         <span>
           By{' '}
           {modEvent.creatorHandle
             ? `@${modEvent.creatorHandle}`
             : modEvent.createdBy}
         </span>
-      </p>{' '}
+        {!!durationInHours && hasAdds && (
+          <span className="bg-gray-100 text-gray-800 inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium">
+            {formatSuspensionDuration(durationInHours)}
+          </span>
+        )}
+      </div>
+      {expiresAt && (
+        <p className="mt-1 flex flex-row items-center">
+          <ClockIcon className="h-3 w-3 inline-block mr-1" />
+          Until {dateFormatter.format(expiresAt)}
+        </p>
+      )}
       {modEvent.event.comment ? (
         <p className="pb-1">{`${modEvent.event.comment}`}</p>
       ) : null}
