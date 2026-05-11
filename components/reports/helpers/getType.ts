@@ -103,7 +103,6 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonViolenceAnimalWelfare',
     'tools.ozone.report.defs#reasonViolenceThreats',
     'tools.ozone.report.defs#reasonViolenceGraphicContent',
-    'tools.ozone.report.defs#reasonViolenceSelfHarm',
     'tools.ozone.report.defs#reasonViolenceGlorification',
     'tools.ozone.report.defs#reasonViolenceExtremistContent',
     'tools.ozone.report.defs#reasonViolenceTrafficking',
@@ -156,6 +155,13 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonCivicInterference',
     'tools.ozone.report.defs#reasonCivicMisinformation',
     'tools.ozone.report.defs#reasonCivicImpersonation',
+  ],
+  'Self Harm': [
+    'tools.ozone.report.defs#reasonSelfHarmContent',
+    'tools.ozone.report.defs#reasonSelfHarmED',
+    'tools.ozone.report.defs#reasonSelfHarmStunts',
+    'tools.ozone.report.defs#reasonSelfHarmSubstances',
+    'tools.ozone.report.defs#reasonSelfHarmOther',
   ],
 }
 
