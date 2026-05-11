@@ -620,7 +620,6 @@ const Tag = ({
 }: {
   modEvent: ModEventType<ToolsOzoneModerationDefs.ModEventTag>
 }) => {
-  // @ts-expect-error durationInHours will be added in a future @atproto/api release
   const durationInHours: number | undefined = modEvent.event.durationInHours
   const hasAdds = modEvent.event.add.length > 0
   let expiresAt: Date | null = null
