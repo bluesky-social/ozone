@@ -514,9 +514,14 @@ function ReportDetailLayout(props: {
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
   >('current')
-  const [reportActionTypes, setReportActionTypes] = useState<string[]>(
-    report.reportType ? [report.reportType] : [],
-  )
+  const [reportActionTypes, setReportActionTypes] = useState<string[]>(() => {
+    // If the queue has report types, default to those
+    if (report.queue?.reportTypes && report.queue.reportTypes.length > 0) {
+      return report.queue.reportTypes
+    }
+    // Otherwise, fall back to the current report's type
+    return report.reportType ? [report.reportType] : []
+  })
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const [applyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
