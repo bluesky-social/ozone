@@ -86,6 +86,13 @@ export const reasonTypeOptions = {
   'tools.ozone.report.defs#reasonCivicInterference': 'Civic Interference',
   'tools.ozone.report.defs#reasonCivicMisinformation': 'Civic Misinformation',
   'tools.ozone.report.defs#reasonCivicImpersonation': 'Civic Impersonation',
+
+  // Self Harm
+  'tools.ozone.report.defs#reasonSelfHarmContent': 'Self Harm Content',
+  'tools.ozone.report.defs#reasonSelfHarmED': 'Eating Disorder Content',
+  'tools.ozone.report.defs#reasonSelfHarmStunts': 'Self Harm Stunts',
+  'tools.ozone.report.defs#reasonSelfHarmSubstances': 'Self Harm Substances',
+  'tools.ozone.report.defs#reasonSelfHarmOther': 'Other Self Harm Content',
 }
 
 export const groupedReasonTypes = {
