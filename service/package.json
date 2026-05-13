@@ -4,7 +4,7 @@
   "main": "index.js",
   "dependencies": {
     "@atproto/ozone": "0.1.167",
-    "next": "15.2.9",
+    "next": "15.5.18",
     "react": "19.2.5"
   }
 }
