@@ -62,7 +62,7 @@ export function MemberView({
         />
       ) : (
         <div className="h-7 w-7 rounded-full bg-gray-200 dark:bg-gray-700 shrink-0 flex items-center justify-center text-gray-500 dark:text-gray-400 text-xs font-semibold">
-          {(displayName ?? handle ?? '?')[0].toUpperCase()}
+          {(displayName || handle || '?')[0].toUpperCase()}
         </div>
       )}
       <div className="min-w-0 flex-1">
