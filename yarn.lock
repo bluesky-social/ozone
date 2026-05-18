@@ -476,9 +476,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@headlessui/react@npm:^2.2.1":
-  version: 2.2.9
-  resolution: "@headlessui/react@npm:2.2.9"
+"@headlessui/react@npm:^2.2.10":
+  version: 2.2.10
+  resolution: "@headlessui/react@npm:2.2.10"
   dependencies:
     "@floating-ui/react": "npm:^0.26.16"
     "@react-aria/focus": "npm:^3.20.2"
@@ -488,7 +488,7 @@ __metadata:
   peerDependencies:
     react: ^18 || ^19 || ^19.0.0-rc
     react-dom: ^18 || ^19 || ^19.0.0-rc
-  checksum: 10c0/a1bc4c473d4f58757e2bbc3b4302704030d9d56427a101bbe698b33b6b379885dd0177e5c0862d801117afa3b0a0b858be7685f1cfda5fb3ed3ede53eb24e987
+  checksum: 10c0/e4c61f0246549d4f9b42cb2b5e3fcb30661f2ad733753ba3d5cd25b987e5155e8b7c725048956de93cef09a7fc3b15bb5aaf23ecf96f3430ff1b143b3fae35a8
   languageName: node
   linkType: hard
 
@@ -1425,12 +1425,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@types/react@npm:19.2.5":
-  version: 19.2.5
-  resolution: "@types/react@npm:19.2.5"
+"@types/react@npm:19.2.14":
+  version: 19.2.14
+  resolution: "@types/react@npm:19.2.14"
   dependencies:
-    csstype: "npm:^3.0.2"
-  checksum: 10c0/1f9a92c73a5ea5b167f59cd0b5b9460fde65bd22b63b6d23bfaace8ad38537df127c97657418b4912a7a03a66e6451e82a41b84718d638ec1c8e4f0515d94793
+    csstype: "npm:^3.2.2"
+  checksum: 10c0/7d25bf41b57719452d86d2ac0570b659210402707313a36ee612666bf11275a1c69824f8c3ee1fdca077ccfe15452f6da8f1224529b917050eb2d861e52b59b7
   languageName: node
   linkType: hard
 
@@ -1613,17 +1613,17 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@uiw/react-markdown-preview@npm:^5.0.6":
-  version: 5.1.5
-  resolution: "@uiw/react-markdown-preview@npm:5.1.5"
+"@uiw/react-markdown-preview@npm:^5.2.0":
+  version: 5.2.0
+  resolution: "@uiw/react-markdown-preview@npm:5.2.0"
   dependencies:
     "@babel/runtime": "npm:^7.17.2"
     "@uiw/copy-to-clipboard": "npm:~1.0.12"
-    react-markdown: "npm:~9.0.1"
-    rehype-attr: "npm:~3.0.1"
+    react-markdown: "npm:~10.1.0"
+    rehype-attr: "npm:~4.0.0"
     rehype-autolink-headings: "npm:~7.1.0"
     rehype-ignore: "npm:^2.0.0"
-    rehype-prism-plus: "npm:2.0.0"
+    rehype-prism-plus: "npm:~2.0.0"
     rehype-raw: "npm:^7.0.0"
     rehype-rewrite: "npm:~4.0.0"
     rehype-slug: "npm:~6.0.0"
@@ -1633,22 +1633,22 @@ __metadata:
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10c0/604fcc07e10e289857d6e50d02fe15549a6d52f0ac55cbc18517aea06ee55893f98ff75f6c90933e0e4e0d29037990ff77d0f99628ece7513526aa729eb23945
+  checksum: 10c0/7bafa9b9e11cb0744ba68b8aa296905c3937aafc9a4f0d4f22fe3fffe7fb1845e78d8723bfc1191adb09dd92be7e46fe3aa48bba0c1a71c8d48881c393668357
   languageName: node
   linkType: hard
 
-"@uiw/react-md-editor@npm:^4.0.5":
-  version: 4.0.11
-  resolution: "@uiw/react-md-editor@npm:4.0.11"
+"@uiw/react-md-editor@npm:^4.1.0":
+  version: 4.1.0
+  resolution: "@uiw/react-md-editor@npm:4.1.0"
   dependencies:
     "@babel/runtime": "npm:^7.14.6"
-    "@uiw/react-markdown-preview": "npm:^5.0.6"
+    "@uiw/react-markdown-preview": "npm:^5.2.0"
     rehype: "npm:~13.0.0"
     rehype-prism-plus: "npm:~2.0.0"
   peerDependencies:
     react: ">=16.8.0"
     react-dom: ">=16.8.0"
-  checksum: 10c0/337ad6c3e064bb63c52c8abc1b163d81b0499541f5f20ffcd1797fcfab51697c02492b53b85474c3fc31493e05cb3e3e58be4f60d445b89c5ddbb5b80b6161d5
+  checksum: 10c0/4b492182cce05842c0293bd50a688ebbf24ef41fa9ec06cdef68181098c894c3eddd79a24110238238e59c5d054a4315b6298b0cbd50bca0f07ddc280c2eeec3
   languageName: node
   linkType: hard
 
@@ -2697,7 +2697,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"csstype@npm:^3.0.2, csstype@npm:^3.1.2":
+"csstype@npm:^3.0.2, csstype@npm:^3.1.2, csstype@npm:^3.2.2":
   version: 3.2.3
   resolution: "csstype@npm:3.2.3"
   checksum: 10c0/cd29c51e70fa822f1cecd8641a1445bed7063697469d35633b516e60fe8c1bde04b08f6c5b6022136bb669b64c63d4173af54864510fbb4ee23281801841a3ce
@@ -4610,10 +4610,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"hls.js@npm:^1.5.13":
-  version: 1.6.15
-  resolution: "hls.js@npm:1.6.15"
-  checksum: 10c0/a3558909506b9d93420b395b1d9508df364f911ebc19b315f98bd4c1b94973ed996a95fe8662756a3fca96b762af741d13df81987bc68322f473acacbecbc6d9
+"hls.js@npm:^1.6.16":
+  version: 1.6.16
+  resolution: "hls.js@npm:1.6.16"
+  checksum: 10c0/dedf0255fdea857f29e46caab990b2bbdfde9410e64932466e03fc95018238b94486ce57e4b6a96aa4d0e8f9fd26c877e3905951f900fd58437f5eab2b284722
   languageName: node
   linkType: hard
 
@@ -6980,15 +6980,15 @@ __metadata:
     "@atproto/oauth-client-browser": "npm:^0.3.42"
     "@atproto/oauth-types": "npm:^0.6.3"
     "@atproto/xrpc": "npm:^0.7.7"
-    "@headlessui/react": "npm:^2.2.1"
+    "@headlessui/react": "npm:^2.2.10"
     "@heroicons/react": "npm:^2.0.13"
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/typography": "npm:^0.5.8"
     "@tanstack/react-query": "npm:^4.22.0"
     "@types/node": "npm:18.11.17"
-    "@types/react": "npm:19.2.5"
+    "@types/react": "npm:19.2.14"
     "@types/react-dom": "npm:19.2.3"
-    "@uiw/react-md-editor": "npm:^4.0.5"
+    "@uiw/react-md-editor": "npm:^4.1.0"
     autoprefixer: "npm:^10.4.13"
     bcp-47-match: "npm:^2.0.3"
     cypress: "npm:^14.3.0"
@@ -6996,26 +6996,26 @@ __metadata:
     eslint: "npm:^8.57.0"
     eslint-config-next: "npm:15.2.4"
     eslint-plugin-cypress: "npm:^4.2.1"
-    hls.js: "npm:^1.5.13"
+    hls.js: "npm:^1.6.16"
     kbar: "npm:^0.1.0-beta.45"
     lande: "npm:^1.0.10"
     next: "npm:15.5.18"
     postcss: "npm:^8.4.20"
-    react: "npm:19.2.5"
-    react-dom: "npm:19.2.5"
+    react: "npm:19.2.6"
+    react-dom: "npm:19.2.6"
     react-dropzone: "npm:^14.3.5"
     react-json-view: "npm:1.21.3"
     react-tailwindcss-select: "npm:^1.8.5"
-    react-tetris: "npm:^0.3.0"
-    react-toastify: "npm:^11.0.5"
+    react-tetris: "npm:^0.4.0"
+    react-toastify: "npm:^11.1.0"
     react-use: "npm:^17.4.0"
     recharts: "npm:^2.15.3"
     remark: "npm:^14.0.3"
     remark-html: "npm:^15.0.2"
-    tailwind-merge: "npm:^3.5.0"
+    tailwind-merge: "npm:^3.6.0"
     tailwindcss: "npm:^3.2.4"
     typescript: "npm:^5.4.5"
-    yet-another-react-lightbox: "npm:^3.20.0"
+    yet-another-react-lightbox: "npm:^3.32.0"
   languageName: unknown
   linkType: soft
 
@@ -7432,14 +7432,14 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-dom@npm:19.2.5":
-  version: 19.2.5
-  resolution: "react-dom@npm:19.2.5"
+"react-dom@npm:19.2.6":
+  version: 19.2.6
+  resolution: "react-dom@npm:19.2.6"
   dependencies:
     scheduler: "npm:^0.27.0"
   peerDependencies:
-    react: ^19.2.5
-  checksum: 10c0/8067606e9f58e4c2e8cb5f09570217dbc71c4843ebcaa20ae2085912d3e3a351f17d8f7c1713313cdda7f272840c8c34ff6c860fcb840862071bceea218e0c63
+    react: ^19.2.6
+  checksum: 10c0/dbf2aef67857c03a612bc9316a4562e5066f43fa04bf28f7f0734963fc1350da2c9f8eb973930655453281079f30cc8222bab383dbec4b5097084e2c081e3334
   languageName: node
   linkType: hard
 
@@ -7492,11 +7492,12 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-markdown@npm:~9.0.1":
-  version: 9.0.3
-  resolution: "react-markdown@npm:9.0.3"
+"react-markdown@npm:~10.1.0":
+  version: 10.1.0
+  resolution: "react-markdown@npm:10.1.0"
   dependencies:
     "@types/hast": "npm:^3.0.0"
+    "@types/mdast": "npm:^4.0.0"
     devlop: "npm:^1.0.0"
     hast-util-to-jsx-runtime: "npm:^2.0.0"
     html-url-attributes: "npm:^3.0.0"
@@ -7509,7 +7510,7 @@ __metadata:
   peerDependencies:
     "@types/react": ">=18"
     react: ">=18"
-  checksum: 10c0/7f1aef171b49af9b84896917c033cbc0f45d0d2b4a5db5a339bf96977a143ae19f21cb7a69a6878b718d5578db021e96372fa33621b79bf57a87efb9b3c84166
+  checksum: 10c0/4a5dc7d15ca6d05e9ee95318c1904f83b111a76f7588c44f50f1d54d4c97193b84e4f64c4b592057c989228238a2590306cedd0c4d398e75da49262b2b5ae1bf
   languageName: node
   linkType: hard
 
@@ -7536,15 +7537,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-tetris@npm:^0.3.0":
-  version: 0.3.0
-  resolution: "react-tetris@npm:0.3.0"
+"react-tetris@npm:^0.4.0":
+  version: 0.4.0
+  resolution: "react-tetris@npm:0.4.0"
   dependencies:
     keymaster: "npm:1.6.2"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0
-    react-dom: ^16.8.0 || ^17.0.0
-  checksum: 10c0/f7de9d8e93b2c0c3fa288011eab963c805474a479e9a3cd48ec39ca9fdfe51a530ff744cc950ddff10406f86285a5fbea81a588a439ababed8595afd4b91c741
+    react: ^16.8.0 || ^18.0.0
+    react-dom: ^16.8.0 || ^18.0.0
+  checksum: 10c0/b0c8131b4a85e8344c47c762a6a3fcec2d08627620caf3986514362c6d6708fb13339c9b506152e5bb319f9ba0b2412b4a73f32a0ffcf43738c987fef29cdd26
   languageName: node
   linkType: hard
 
@@ -7561,15 +7562,15 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react-toastify@npm:^11.0.5":
-  version: 11.0.5
-  resolution: "react-toastify@npm:11.0.5"
+"react-toastify@npm:^11.1.0":
+  version: 11.1.0
+  resolution: "react-toastify@npm:11.1.0"
   dependencies:
     clsx: "npm:^2.1.1"
   peerDependencies:
     react: ^18 || ^19
     react-dom: ^18 || ^19
-  checksum: 10c0/50f5b81323ebb1957b2efd0963fac24aa1407155d16ab756ffd6d0f42f8af17e796b3958a9fce13e9d1b945d6c3a5a9ebf13529478474d8a2af4bf1dd0db67d2
+  checksum: 10c0/b621b8272bb9287ec19914b773d91c2f7741eedba253f2986150716d30c82ff069ba9780a7ab4cbb511175b3aeb6e35f003aef3f04742d77df79fb8f4c1c3c98
   languageName: node
   linkType: hard
 
@@ -7634,10 +7635,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"react@npm:19.2.5":
-  version: 19.2.5
-  resolution: "react@npm:19.2.5"
-  checksum: 10c0/4b5f231dbef92886f602533c9ce3bde04d99f0e71dfb5d794c43e02726efaad0421c08688f75fc98a6d6e1dc017372e1af7abbfecdc86a79968f461675931a7a
+"react@npm:19.2.6":
+  version: 19.2.6
+  resolution: "react@npm:19.2.6"
+  checksum: 10c0/66afde33b9a9ee87b1e1cae39d8e7e040d1262e719524fd70660c4d4ce79929c532ac19fc3df5a911edaf02768fdf2c49de4ede1ba99bc6aad72796e0e26e798
   languageName: node
   linkType: hard
 
@@ -7729,13 +7730,13 @@ __metadata:
   languageName: node
   linkType: hard
 
-"rehype-attr@npm:~3.0.1":
-  version: 3.0.3
-  resolution: "rehype-attr@npm:3.0.3"
+"rehype-attr@npm:~4.0.0":
+  version: 4.0.2
+  resolution: "rehype-attr@npm:4.0.2"
   dependencies:
     unified: "npm:~11.0.0"
     unist-util-visit: "npm:~5.0.0"
-  checksum: 10c0/52093e5bf510943ed710d73ce01cede040e3c2201844cb5dcc615f775b50ce76eb6e1a71bd8d9c11a4cc44fa26be6bf2d2f4522c39efc3c7d238e6be55f03d9a
+  checksum: 10c0/08d883b2ab65097a963280f666e85d88d25cabfe71ce4559c9ffa81e08abdaed67d3d9644def9f5dfdfd5ba783c7fc44ec5f3e0f02d1fa1a89e757718ea528d0
   languageName: node
   linkType: hard
 
@@ -7772,20 +7773,6 @@ __metadata:
     hast-util-from-html: "npm:^2.0.0"
     unified: "npm:^11.0.0"
   checksum: 10c0/efa9ca17673fe70e2d322a1d262796bbed5f6a89382f8f8393352bbd6f6bbf1d4d1d050984b86ff9cb6c0fa2535175ab0829e53c94b1e38fc3c158e6c0ad90bc
-  languageName: node
-  linkType: hard
-
-"rehype-prism-plus@npm:2.0.0":
-  version: 2.0.0
-  resolution: "rehype-prism-plus@npm:2.0.0"
-  dependencies:
-    hast-util-to-string: "npm:^3.0.0"
-    parse-numeric-range: "npm:^1.3.0"
-    refractor: "npm:^4.8.0"
-    rehype-parse: "npm:^9.0.0"
-    unist-util-filter: "npm:^5.0.0"
-    unist-util-visit: "npm:^5.0.0"
-  checksum: 10c0/c8b284de7ee884d11dca3aae1119658a333cc10ccda1b33019dc9503411883e6379207df502e7524a81e05ac1db0e846e9e3f73b2a62b22eb581e2094d42070e
   languageName: node
   linkType: hard
 
@@ -8806,10 +8793,10 @@ __metadata:
   languageName: node
   linkType: hard
 
-"tailwind-merge@npm:^3.5.0":
-  version: 3.5.0
-  resolution: "tailwind-merge@npm:3.5.0"
-  checksum: 10c0/4dc588f5b5296ba3f38e1ebb41f02b6d24a8c5bb45e44b33748c118fb4b5767dd0efc464431ca3e75404056b618b5f67bec3708158baa65fed8a2fc9201e0c53
+"tailwind-merge@npm:^3.6.0":
+  version: 3.6.0
+  resolution: "tailwind-merge@npm:3.6.0"
+  checksum: 10c0/a728d929f4786bcb48641db4228cc8c006a7545491783a658fb4d24d177dab960620991d17805a047309228de50ab949ca8d9e112c30183da0432367796ae186
   languageName: node
   linkType: hard
 
@@ -9828,9 +9815,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"yet-another-react-lightbox@npm:^3.20.0":
-  version: 3.26.0
-  resolution: "yet-another-react-lightbox@npm:3.26.0"
+"yet-another-react-lightbox@npm:^3.32.0":
+  version: 3.32.0
+  resolution: "yet-another-react-lightbox@npm:3.32.0"
   peerDependencies:
     "@types/react": ^16 || ^17 || ^18 || ^19
     "@types/react-dom": ^16 || ^17 || ^18 || ^19
@@ -9841,7 +9828,7 @@ __metadata:
       optional: true
     "@types/react-dom":
       optional: true
-  checksum: 10c0/cbd37ee2be5e59adceb24546198eb86a0571a44cc1091f6635864750e49d7e03afc34fd84240bec0137e713dcfc00a9b775316df08a4666638780d3046752a5f
+  checksum: 10c0/b130f530c7ac236b8b23d29c5906b7c17de81eae5d2778f7e1d8ed6f48518c4f41157f5d5a561372c6d18266cd4113454ffd42a4173517a1d53b35c583f190e2
   languageName: node
   linkType: hard
 
