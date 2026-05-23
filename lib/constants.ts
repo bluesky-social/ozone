@@ -28,6 +28,9 @@ export const HANDLE_RESOLVER_URL =
     ? 'http://localhost:2584'
     : 'https://api.bsky.app')
 
+export const DEFAULT_LOGIN_SERVICE_URL =
+  process.env.NEXT_PUBLIC_DEFAULT_LOGIN_SERVICE_URL || 'https://bsky.social'
+
 export const DM_DISABLE_TAG = 'chat-disabled'
 export const VIDEO_UPLOAD_DISABLE_TAG = 'video-upload-disabled'
 export const TRUSTED_VERIFIER_TAG = 'trusted-verifier'
