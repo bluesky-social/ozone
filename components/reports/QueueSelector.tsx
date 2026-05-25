@@ -1,5 +1,5 @@
 import { Dropdown } from '@/common/Dropdown'
-import { ToolsOzoneModerationDefs } from '@atproto/api/'
+import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
 import { useQueueSetting } from 'components/setting/useQueueSetting'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'

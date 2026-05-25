@@ -48,7 +48,6 @@ const nextConfig = {
     externalDir: true,
   },
   webpack: (config, { isServer }) => {
-    config.resolve.symlinks = false
     return config
   },
 }
