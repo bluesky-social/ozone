@@ -34,10 +34,10 @@ const AccountHistoryDetails = ({ details }) => {
           {details.email && details.handle
             ? `${details.email} / ${details.handle}`
             : details.email
-            ? details.email
-            : details.handle
-            ? details.handle
-            : 'No details available'}
+              ? details.email
+              : details.handle
+                ? details.handle
+                : 'No details available'}
         </td>
       </>
     )
@@ -133,17 +133,7 @@ export const AccountHistory = ({ did }: { did: string }) => {
                 {dateFormatter.format(new Date(item.createdAt))}
               </td>
               <td className="px-2 py-2">
-                {item.createdBy === did ? (
-                  'User'
-                ) : (
-                  <a
-                    href={`/repositories/${did}`}
-                    target="_blank"
-                    className="underline"
-                  >
-                    {did}
-                  </a>
-                )}
+                {item.createdBy === did ? 'User' : item.createdBy}
               </td>
               <AccountHistoryDetails details={item.details} />
             </tr>
