@@ -133,7 +133,19 @@ export const AccountHistory = ({ did }: { did: string }) => {
                 {dateFormatter.format(new Date(item.createdAt))}
               </td>
               <td className="px-2 py-2">
-                {item.createdBy === did ? 'User' : item.createdBy}
+                {item.createdBy === did ? (
+                  'User'
+                ) : item.createdBy.startsWith('did:') ? (
+                  <a
+                    href={`/repositories/${item.createdBy}`}
+                    target="_blank"
+                    className="underline"
+                  >
+                    {item.createdBy}
+                  </a>
+                ) : (
+                  item.createdBy
+                )}
               </td>
               <AccountHistoryDetails details={item.details} />
             </tr>
