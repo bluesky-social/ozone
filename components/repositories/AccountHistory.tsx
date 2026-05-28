@@ -34,10 +34,10 @@ const AccountHistoryDetails = ({ details }) => {
           {details.email && details.handle
             ? `${details.email} / ${details.handle}`
             : details.email
-            ? details.email
-            : details.handle
-            ? details.handle
-            : 'No details available'}
+              ? details.email
+              : details.handle
+                ? details.handle
+                : 'No details available'}
         </td>
       </>
     )
@@ -135,14 +135,16 @@ export const AccountHistory = ({ did }: { did: string }) => {
               <td className="px-2 py-2">
                 {item.createdBy === did ? (
                   'User'
-                ) : (
+                ) : item.createdBy.startsWith('did:') ? (
                   <a
-                    href={`/repositories/${did}`}
+                    href={`/repositories/${item.createdBy}`}
                     target="_blank"
                     className="underline"
                   >
-                    {did}
+                    {item.createdBy}
                   </a>
+                ) : (
+                  item.createdBy
                 )}
               </td>
               <AccountHistoryDetails details={item.details} />
