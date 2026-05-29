@@ -22,6 +22,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { ProfileStatusCard } from './profileStatus/ProfileStatusCard'
+import { ConvoCard } from '@/dms/ConvoCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   getProfileFromRepo,
@@ -71,6 +72,9 @@ export function RecordCard(props: {
   }
   if (parsed.collection === CollectionId.StarterPack) {
     return <StarterPackRecordCard uri={uri} />
+  }
+  if (parsed.collection === CollectionId.Convo) {
+    return <ConvoCard uri={uri} />
   }
   if (parsed.collection === CollectionId.ProfileStatus) {
     return (

@@ -12,6 +12,7 @@ const PreviewTitleMap = {
   [CollectionId.Profile]: 'Reported profile',
   [CollectionId.StarterPack]: 'Reported starter pack',
   [CollectionId.ProfileStatus]: 'Reported profile status',
+  [CollectionId.Convo]: 'Reported conversation',
 }
 
 const getPreviewTitleForAtUri = (uri: string): string => {
