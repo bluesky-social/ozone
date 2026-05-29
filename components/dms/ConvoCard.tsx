@@ -1,24 +1,15 @@
-import {
-  AppBskyEmbedRecord,
-  ChatBskyActorDefs,
-  ChatBskyConvoDefs,
-} from '@atproto/api'
+import { ChatBskyActorDefs, ChatBskyModerationDefs } from '@atproto/api'
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { LockClosedIcon, LockOpenIcon } from '@heroicons/react/24/outline'
-import { useQuery } from '@tanstack/react-query'
-import Link from 'next/link'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 
-import { Alert } from '@/common/Alert'
-import {
-  LoadingDense,
-  LoadingFailedDense,
-  displayError,
-} from '@/common/Loader'
-import { RecordEmbedView } from '@/common/posts/PostsFeed'
+import { LoadingDense, LoadingFailedDense } from '@/common/Loader'
+import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { RepoCard } from '@/common/RecordCard'
 import { parseAtUri, pluralize } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { SubjectToWorkspaceAction } from '@/workspace/SubjectsToWorkspaceAction'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
@@ -32,9 +23,9 @@ const useConvo = ({ convoId }: { convoId: string }) => {
     staleTime: 10 * 60 * 1000,
     retry: 0,
     enabled: !!convoId,
-    queryKey: ['convoCard', { convoId }],
+    queryKey: ['modConvoCard', { convoId }],
     queryFn: async () => {
-      const { data } = await labelerAgent.api.chat.bsky.convo.getConvo({
+      const { data } = await labelerAgent.api.chat.bsky.moderation.getConvo({
         convoId,
       })
       return data.convo
@@ -42,7 +33,7 @@ const useConvo = ({ convoId }: { convoId: string }) => {
   })
 }
 
-const useConvoMessages = ({
+const useConvoMembers = ({
   convoId,
   enabled,
 }: {
@@ -50,19 +41,22 @@ const useConvoMessages = ({
   enabled: boolean
 }) => {
   const labelerAgent = useLabelerAgent()
-  return useQuery({
+  return useInfiniteQuery({
     cacheTime: 10 * 60 * 1000,
     staleTime: 10 * 60 * 1000,
     retry: 0,
     enabled,
-    queryKey: ['convoMessages', { convoId }],
-    queryFn: async () => {
-      const { data } = await labelerAgent.api.chat.bsky.convo.getMessages({
-        convoId,
-        limit: 20,
-      })
-      return data.messages
+    queryKey: ['modConvoMembers', { convoId }],
+    queryFn: async ({ pageParam }: { pageParam?: string }) => {
+      const { data } =
+        await labelerAgent.api.chat.bsky.moderation.getConvoMembers({
+          convoId,
+          cursor: pageParam,
+          limit: 50,
+        })
+      return data
     },
+    getNextPageParam: (lastPage) => lastPage.cursor,
   })
 }
 
@@ -70,6 +64,8 @@ export function ConvoCard({ uri }: { uri: string }) {
   const parsed = parseAtUri(uri)
   const convoId = parsed?.rkey ?? ''
   const { data: convo, error, isLoading } = useConvo({ convoId })
+  const [showMembers, setShowMembers] = useState(false)
+  const membersQuery = useConvoMembers({ convoId, enabled: !!convoId })
 
   if (!convoId) return null
   if (isLoading) return <LoadingDense />
@@ -84,26 +80,68 @@ export function ConvoCard({ uri }: { uri: string }) {
   }
   if (!convo) return null
 
-  const groupKind = ChatBskyConvoDefs.isGroupConvo(convo.kind)
+  const groupKind = ChatBskyModerationDefs.isGroupConvo(convo.kind)
     ? convo.kind
     : null
+  const isGroup = !!groupKind
+  const members =
+    membersQuery.data?.pages.flatMap((p) => p.members) ?? []
+  const owner = isGroup
+    ? members.find(
+        (m) =>
+          ChatBskyActorDefs.isGroupConvoMember(m.kind) &&
+          m.kind.role === 'owner',
+      )
+    : undefined
 
   return (
     <div className="bg-white dark:bg-slate-800 p-3 rounded-sm">
       {groupKind ? (
-        <GroupConvoHeader kind={groupKind} />
+        <GroupConvoHeader
+          kind={groupKind}
+          loadedMemberCount={members.length}
+          showMembers={showMembers}
+          onToggleMembers={() => setShowMembers((s) => !s)}
+        />
       ) : (
         <p className="text-sm font-bold text-gray-900 dark:text-gray-200">
           Direct conversation
         </p>
       )}
-      <MembersList members={convo.members} isGroup={!!groupKind} />
-      <ConvoMessages convoId={convoId} />
+
+      {owner && (
+        <div className="mt-2">
+          <RepoCard did={owner.did} />
+        </div>
+      )}
+
+      {(!isGroup || showMembers) && (
+        <MembersPanel
+          isGroup={isGroup}
+          ownerDid={owner?.did}
+          members={members}
+          isLoading={membersQuery.isLoading}
+          error={membersQuery.error}
+          hasNextPage={!!membersQuery.hasNextPage}
+          isFetchingNextPage={membersQuery.isFetchingNextPage}
+          fetchNextPage={membersQuery.fetchNextPage}
+        />
+      )}
     </div>
   )
 }
 
-function GroupConvoHeader({ kind }: { kind: ChatBskyConvoDefs.GroupConvo }) {
+function GroupConvoHeader({
+  kind,
+  loadedMemberCount,
+  showMembers,
+  onToggleMembers,
+}: {
+  kind: ChatBskyModerationDefs.GroupConvo
+  loadedMemberCount: number
+  showMembers: boolean
+  onToggleMembers: () => void
+}) {
   const isLocked =
     kind.lockStatus === 'locked' || kind.lockStatus === 'locked-permanently'
   const LockIcon = isLocked ? LockClosedIcon : LockOpenIcon
@@ -129,73 +167,149 @@ function GroupConvoHeader({ kind }: { kind: ChatBskyConvoDefs.GroupConvo }) {
         <LockIcon className="h-3 w-3" />
         {lockLabel}
       </span>
-      <span className="text-xs text-gray-500 dark:text-gray-300">
-        {pluralize(kind.memberCount, 'member')}
+      {kind.memberCount > 1 ? (
+        <button
+          type="button"
+          onClick={onToggleMembers}
+          className="text-xs text-gray-500 dark:text-gray-300 underline inline-flex items-center"
+          title={
+            loadedMemberCount > 0 && loadedMemberCount < kind.memberCount
+              ? `${loadedMemberCount} loaded`
+              : undefined
+          }
+        >
+          {pluralize(kind.memberCount, 'member')} of {kind.memberLimit}
+          {showMembers ? (
+            <ChevronUpIcon className="h-3 w-3 ml-1 inline" />
+          ) : (
+            <ChevronDownIcon className="h-3 w-3 ml-1 inline" />
+          )}
+        </button>
+      ) : (
+        <span className="text-xs text-gray-500 dark:text-gray-300">
+          {pluralize(kind.memberCount, 'member')} of {kind.memberLimit}
+        </span>
+      )}
+      {kind.joinRequestCount > 0 && (
+        <span
+          className="text-xs text-gray-500 dark:text-gray-300"
+          title="Pending join requests visible to moderators (capped at 21)"
+        >
+          {pluralize(kind.joinRequestCount, 'pending join request')}
+        </span>
+      )}
+      <span className="text-xs text-gray-400 dark:text-gray-400">
+        Created {dateFormatter.format(new Date(kind.createdAt))}
       </span>
     </div>
   )
 }
 
-function MembersList({
-  members,
+function MembersPanel({
   isGroup,
+  ownerDid,
+  members,
+  isLoading,
+  error,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
 }: {
-  members: ChatBskyActorDefs.ProfileViewBasic[]
   isGroup: boolean
+  ownerDid?: string
+  members: ChatBskyActorDefs.ProfileViewBasic[]
+  isLoading: boolean
+  error: unknown
+  hasNextPage: boolean
+  isFetchingNextPage: boolean
+  fetchNextPage: ReturnType<typeof useConvoMembers>['fetchNextPage']
 }) {
-  if (!members.length) return null
+  const otherMembers = isGroup
+    ? members.filter((m) => m.did !== ownerDid)
+    : members
 
-  if (!isGroup) {
-    return (
-      <div className="mt-2 flex flex-col gap-1">
-        {members.map((m) => (
-          <RepoCard key={m.did} did={m.did} />
-        ))}
-      </div>
-    )
+  const getSubjectsNextPage = async () => {
+    const result = await fetchNextPage()
+    if (result.data?.pages?.length) {
+      const lastPage = result.data.pages[result.data.pages.length - 1]
+      return {
+        subjects: lastPage.members.map((m) => m.did),
+        hasNextPage: !!result.hasNextPage,
+      }
+    }
+    return { subjects: [], hasNextPage: false }
   }
 
-  const owner = members.find(
-    (m) =>
-      ChatBskyActorDefs.isGroupConvoMember(m.kind) && m.kind.role === 'owner',
-  )
-  const otherMembers = members.filter((m) => m.did !== owner?.did)
-
   return (
-    <div className="mt-2 flex flex-col gap-2">
-      {owner && (
-        <div>
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 mb-1">
-            Owner
-          </p>
-          <RepoCard did={owner.did} />
+    <div className="mt-2 rounded-sm bg-gray-50 dark:bg-slate-900/40 p-2">
+      {isLoading && <LoadingDense />}
+      {!!error && (
+        <LoadingFailedDense
+          className="text-gray-600"
+          error={error}
+          noPadding
+        />
+      )}
+      {!isLoading && !error && members.length === 0 && (
+        <p className="italic text-gray-500 dark:text-gray-300">
+          No members found.
+        </p>
+      )}
+
+      {isGroup && members.length > 0 && (
+        <div className="flex flex-row justify-end mb-2">
+          <SubjectToWorkspaceAction
+            appearance="outlined"
+            size="xs"
+            initialSubjects={members.map((m) => m.did)}
+            hasNextPage={hasNextPage}
+            getSubjectsNextPage={getSubjectsNextPage}
+            description={
+              <>
+                Once confirmed, all members of this conversation will be added
+                to the workspace. For groups with many members this may take a
+                while — you can stop the process at any time and members
+                already added will remain in the workspace.
+              </>
+            }
+          />
         </div>
       )}
+
       {otherMembers.length > 0 && (
-        <div>
-          <p className="text-xs font-semibold text-gray-500 dark:text-gray-300 mb-1">
-            Members shown
-          </p>
-          <p className="text-xs italic text-gray-400 dark:text-gray-400 mb-1">
-            Partial list — not all group members are included here.
-          </p>
-          <div className="flex flex-col gap-1">
-            {otherMembers.map((m) => (
-              <MemberRow key={m.did} member={m} />
-            ))}
-          </div>
+        <div className="flex flex-col gap-1">
+          {otherMembers.map((m) => (
+            <MemberRow key={m.did} member={m} isGroup={isGroup} />
+          ))}
+        </div>
+      )}
+
+      {hasNextPage && (
+        <div className="mt-2">
+          <LoadMoreButton
+            onClick={() => fetchNextPage()}
+            disabled={isFetchingNextPage}
+          />
         </div>
       )}
     </div>
   )
 }
 
-function MemberRow({ member }: { member: ChatBskyActorDefs.ProfileViewBasic }) {
+function MemberRow({
+  member,
+  isGroup,
+}: {
+  member: ChatBskyActorDefs.ProfileViewBasic
+  isGroup: boolean
+}) {
   let label = ''
-  if (ChatBskyActorDefs.isGroupConvoMember(member.kind)) {
-    if (member.kind.role !== 'standard') label = member.kind.role
-  } else if (ChatBskyActorDefs.isPastGroupConvoMember(member.kind)) {
-    label = 'past member'
+  if (isGroup) {
+    if (ChatBskyActorDefs.isGroupConvoMember(member.kind)) {
+      if (member.kind.role !== 'standard') label = member.kind.role
+    } else if (ChatBskyActorDefs.isPastGroupConvoMember(member.kind)) {
+      label = 'past member'
+    }
   }
   return (
     <div>
@@ -206,126 +320,5 @@ function MemberRow({ member }: { member: ChatBskyActorDefs.ProfileViewBasic }) {
       )}
       <RepoCard did={member.did} />
     </div>
-  )
-}
-
-function ConvoMessages({ convoId }: { convoId: string }) {
-  const [show, setShow] = useState(false)
-  const {
-    data: messages,
-    error,
-    isLoading,
-  } = useConvoMessages({ convoId, enabled: show })
-
-  return (
-    <div className="mt-3">
-      <button
-        type="button"
-        className="font-bold"
-        onClick={() => setShow((s) => !s)}
-      >
-        Conversation messages
-        {show ? (
-          <ChevronUpIcon className="h-3 w-3 ml-1 inline" />
-        ) : (
-          <ChevronDownIcon className="h-3 w-3 ml-1 inline" />
-        )}
-      </button>
-      {show && isLoading && <p className="mt-1">Loading messages...</p>}
-      {show && !!error && (
-        <div className="mt-2">
-          <Alert
-            type="error"
-            title="Failed to load messages"
-            body={displayError(error)}
-          />
-        </div>
-      )}
-      {show && messages && messages.length === 0 && (
-        <p className="mt-1 italic text-gray-500 dark:text-gray-300">
-          No messages found.
-        </p>
-      )}
-      {show &&
-        messages?.map((message, i) => (
-          <ConvoMessageItem key={getMessageKey(message, i)} message={message} />
-        ))}
-    </div>
-  )
-}
-
-type ConvoMessage =
-  | ChatBskyConvoDefs.MessageView
-  | ChatBskyConvoDefs.DeletedMessageView
-  | ChatBskyConvoDefs.SystemMessageView
-  | { $type: string }
-
-function getMessageKey(message: ConvoMessage, fallback: number): string | number {
-  if ('id' in message && typeof message.id === 'string') {
-    return message.id
-  }
-  return fallback
-}
-
-function ConvoMessageItem({ message }: { message: ConvoMessage }) {
-  if (ChatBskyConvoDefs.isMessageView(message)) {
-    const embed = AppBskyEmbedRecord.isView(message.embed) ? (
-      <RecordEmbedView embed={message.embed} />
-    ) : null
-    return (
-      <div className="pt-2">
-        <MessageSenderInfo did={message.sender.did} sentAt={message.sentAt} />
-        {embed}
-        <p className="break-all">{message.text}</p>
-      </div>
-    )
-  }
-  if (ChatBskyConvoDefs.isDeletedMessageView(message)) {
-    return (
-      <div className="pt-2">
-        <MessageSenderInfo did={message.sender.did} sentAt={message.sentAt} />
-        <p>
-          <i>Deleted message</i>
-        </p>
-      </div>
-    )
-  }
-  if (ChatBskyConvoDefs.isSystemMessageView(message)) {
-    return (
-      <div className="pt-2">
-        <p className="text-xs italic text-gray-500 dark:text-gray-300">
-          System message
-          <span className="ml-1">
-            {dateFormatter.format(new Date(message.sentAt))}
-          </span>
-        </p>
-      </div>
-    )
-  }
-  return (
-    <div className="pt-2">
-      <p>
-        <i>Unknown message type</i>
-      </p>
-    </div>
-  )
-}
-
-function MessageSenderInfo({ did, sentAt }: { did: string; sentAt: string }) {
-  return (
-    <p>
-      <i>
-        <Link
-          target="_blank"
-          href={`/repositories/${did}`}
-          className="underline"
-        >
-          {did}
-        </Link>{' '}
-        <span className="text-xs text-gray-400">
-          {dateFormatter.format(new Date(sentAt))}
-        </span>
-      </i>
-    </p>
   )
 }

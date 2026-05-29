@@ -30,6 +30,7 @@ export const QueueFilterSubjectType = () => {
         !!selectedCollections.length ||
         !!selectedIncludeEmbedTypes.length
       }
+      isSubjectTypeConversation={queueFilters.subjectType === 'conversation'}
       toggleCollection={toggleCollection}
       toggleSubjectType={toggleSubjectType}
       clearSubjectType={clearSubjectType}
@@ -41,6 +42,7 @@ export const SubjectTypeFilter = ({
   hasSubjectTypeFilter,
   isSubjectTypeRecord,
   isSubjectTypeAccount,
+  isSubjectTypeConversation,
   selectedCollections,
   toggleSubjectType,
   clearSubjectType,
@@ -49,8 +51,11 @@ export const SubjectTypeFilter = ({
   hasSubjectTypeFilter: boolean
   isSubjectTypeRecord: boolean
   isSubjectTypeAccount: boolean
+  isSubjectTypeConversation: boolean
   selectedCollections: string[]
-  toggleSubjectType: (subjectType: 'account' | 'record') => void
+  toggleSubjectType: (
+    subjectType: 'account' | 'record' | 'conversation',
+  ) => void
   clearSubjectType: () => void
   toggleCollection: (collectionId: string) => void
 }) => {
@@ -91,6 +96,14 @@ export const SubjectTypeFilter = ({
               toggleSubjectType('record')
             },
             isActive: isSubjectTypeRecord,
+          },
+          {
+            id: 'subjectTypeConversation',
+            text: 'Conversation',
+            onClick: () => {
+              toggleSubjectType('conversation')
+            },
+            isActive: isSubjectTypeConversation,
           },
         ]}
       />
