@@ -1,6 +1,6 @@
 import { getLanguageName } from '@/lib/locale/helpers'
 import { AppBskyEmbedVideo } from '@atproto/api'
-import Hls from 'hls.js/dist/hls.light' // Use light build of hls.
+import Hls from 'hls.js/light'
 import { useEffect, useId, useRef, useState } from 'react'
 import { GraphicMediaFilterPreference } from '@/config/useLocalPreferences'
 import { classNames } from '@/lib/util'

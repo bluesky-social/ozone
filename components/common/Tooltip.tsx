@@ -1,4 +1,4 @@
-import { Fragment, type ReactNode } from 'react'
+import { ComponentProps, Fragment, type ReactNode } from 'react'
 import {
   Popover,
   Transition,
@@ -6,7 +6,8 @@ import {
   PopoverPanel,
 } from '@headlessui/react'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/solid'
-import { AnchorProps } from '@headlessui/react/dist/internal/floating'
+
+type AnchorProps = ComponentProps<typeof PopoverPanel>['anchor']
 
 export type TooltipProps = {
   title?: string
