@@ -64,8 +64,6 @@ export function ConvoCard({ uri }: { uri: string }) {
   const parsed = parseAtUri(uri)
   const convoId = parsed?.rkey ?? ''
   const { data: convo, error, isLoading } = useConvo({ convoId })
-  const [showMembers, setShowMembers] = useState(false)
-  const membersQuery = useConvoMembers({ convoId, enabled: !!convoId })
 
   if (!convoId) return null
   if (isLoading) return <LoadingDense />
@@ -79,6 +77,19 @@ export function ConvoCard({ uri }: { uri: string }) {
     )
   }
   if (!convo) return null
+
+  return <ConvoCardView convoId={convoId} convo={convo} />
+}
+
+export function ConvoCardView({
+  convoId,
+  convo,
+}: {
+  convoId: string
+  convo: ChatBskyModerationDefs.ConvoView
+}) {
+  const membersQuery = useConvoMembers({ convoId, enabled: !!convoId })
+  const [showMembers, setShowMembers] = useState(false)
 
   const groupKind = ChatBskyModerationDefs.isGroupConvo(convo.kind)
     ? convo.kind

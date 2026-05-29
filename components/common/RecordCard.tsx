@@ -3,6 +3,7 @@ import {
   AppBskyFeedDefs,
   ToolsOzoneModerationDefs,
   AppBskyActorDefs,
+  ChatBskyModerationDefs,
   ComAtprotoLabelDefs,
   asPredicate,
   AppBskyActorStatus,
@@ -22,7 +23,7 @@ import {
 } from '@heroicons/react/24/solid'
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { ProfileStatusCard } from './profileStatus/ProfileStatusCard'
-import { ConvoCard } from '@/dms/ConvoCard'
+import { ConvoCard, ConvoCardView } from '@/dms/ConvoCard'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   getProfileFromRepo,
@@ -74,7 +75,23 @@ export function RecordCard(props: {
     return <StarterPackRecordCard uri={uri} />
   }
   if (parsed.collection === CollectionId.Convo) {
-    return <ConvoCard uri={uri} />
+    return (
+      <RecordWithSnapshots uri={uri} className="pl-0">
+        {(selectedSnapshot) => {
+          if (selectedSnapshot) {
+            return (
+              <ConvoCardView
+                convoId={parsed.rkey ?? ''}
+                convo={
+                  selectedSnapshot.value as unknown as ChatBskyModerationDefs.ConvoView
+                }
+              />
+            )
+          }
+          return <ConvoCard uri={uri} />
+        }}
+      </RecordWithSnapshots>
+    )
   }
   if (parsed.collection === CollectionId.ProfileStatus) {
     return (
