@@ -1,8 +1,11 @@
 import Link from 'next/link'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/20/solid'
+import { ChatBskyConvoDefs, asPredicate } from '@atproto/api'
 import { classNames, createAtUri, parseAtUri, truncate } from '@/lib/util'
 import { CollectionId } from './helpers/subject'
 import { usePathname, useSearchParams } from 'next/navigation'
+
+const isConvoRef = asPredicate(ChatBskyConvoDefs.validateConvoRef)
 
 // Renders @handle with link to the repo so that clicking the link can open all reports for that repo's did
 const OtherReportsForAuthorLink = ({
@@ -74,19 +77,6 @@ const CollectionLink = ({
   )
 }
 
-type ConvoRefSubject = {
-  $type: 'chat.bsky.convo.defs#convoRef'
-  did: string
-  convoId: string
-}
-
-const isConvoRefSubject = (
-  subject: Record<string, unknown>,
-): subject is ConvoRefSubject =>
-  subject['$type'] === 'chat.bsky.convo.defs#convoRef' &&
-  typeof subject['did'] === 'string' &&
-  typeof subject['convoId'] === 'string'
-
 export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>
   omitQueryParamsInLinks?: string[]
@@ -95,7 +85,7 @@ export function SubjectOverview(props: {
   hideActor?: boolean
 }) {
   const { subject, subjectRepoHandle, withTruncation = true, hideActor } = props
-  const summary = isConvoRefSubject(subject)
+  const summary = isConvoRef(subject)
     ? {
         did: subject.did,
         collection: CollectionId.Convo,

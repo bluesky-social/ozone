@@ -74,6 +74,10 @@ const FilterSummary = ({
     inclusions.push('Only Records')
   }
 
+  if (subjectType === 'conversation') {
+    inclusions.push('Only Conversations')
+  }
+
   if (tags?.length) {
     inclusions.push(buildTagFilterSummary(tags))
   }
