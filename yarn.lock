@@ -7009,7 +7009,7 @@ __metadata:
     "@atproto/api": "npm:0.20.7"
     "@atproto/oauth-client-browser": "npm:^0.3.42"
     "@atproto/oauth-types": "npm:^0.6.3"
-    "@atproto/xrpc": "npm:^0.7.7"
+    "@atproto/xrpc": "npm:^0.8.0"
     "@headlessui/react": "npm:^2.2.1"
     "@heroicons/react": "npm:^2.0.13"
     "@tailwindcss/forms": "npm:^0.5.3"
