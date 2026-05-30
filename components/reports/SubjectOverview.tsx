@@ -74,6 +74,19 @@ const CollectionLink = ({
   )
 }
 
+type ConvoRefSubject = {
+  $type: 'chat.bsky.convo.defs#convoRef'
+  did: string
+  convoId: string
+}
+
+const isConvoRefSubject = (
+  subject: Record<string, unknown>,
+): subject is ConvoRefSubject =>
+  subject['$type'] === 'chat.bsky.convo.defs#convoRef' &&
+  typeof subject['did'] === 'string' &&
+  typeof subject['convoId'] === 'string'
+
 export function SubjectOverview(props: {
   subject: { did: string } | { uri: string } | Record<string, unknown>
   omitQueryParamsInLinks?: string[]
@@ -82,12 +95,17 @@ export function SubjectOverview(props: {
   hideActor?: boolean
 }) {
   const { subject, subjectRepoHandle, withTruncation = true, hideActor } = props
-  const summary =
-    typeof subject['did'] === 'string'
-      ? { did: subject['did'], collection: null, rkey: null }
-      : typeof subject['uri'] === 'string'
-      ? parseAtUri(subject['uri'])
-      : null
+  const summary = isConvoRefSubject(subject)
+    ? {
+        did: subject.did,
+        collection: CollectionId.Convo,
+        rkey: subject.convoId,
+      }
+    : typeof subject['did'] === 'string'
+    ? { did: subject['did'], collection: null, rkey: null }
+    : typeof subject['uri'] === 'string'
+    ? parseAtUri(subject['uri'])
+    : null
 
   if (!summary) {
     return null
@@ -178,6 +196,30 @@ export function SubjectOverview(props: {
             repoUrl={summary.did}
             uri={createAtUri(summary)}
             collectionName="profile"
+            omitQueryParams={props.omitQueryParamsInLinks}
+          />
+          {!hideActor && (
+            <>
+              by
+              <OtherReportsForAuthorLink
+                did={summary.did}
+                repoText={repoText}
+                className="ml-1"
+                omitQueryParams={props.omitQueryParamsInLinks}
+              />
+            </>
+          )}
+        </div>
+      )
+    }
+
+    if (summary.collection === CollectionId.Convo) {
+      return (
+        <div className="flex flex-row items-center">
+          <CollectionLink
+            repoUrl={summary.did}
+            uri={createAtUri(summary)}
+            collectionName="conversation"
             omitQueryParams={props.omitQueryParamsInLinks}
           />
           {!hideActor && (

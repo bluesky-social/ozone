@@ -40,12 +40,16 @@ export const ItemTitle = ({
       modEvent.event.reportType === ComAtprotoModerationDefs.REASONAPPEAL
     const isMessageReport =
       modEvent.subject.$type === 'chat.bsky.convo.defs#messageRef'
+    const isConvoReport =
+      modEvent.subject.$type === 'chat.bsky.convo.defs#convoRef'
     eventColor = isAppeal ? 'text-orange-500' : 'text-orange-300'
     eventTitle = isAppeal
       ? 'Appealed'
       : isMessageReport
         ? 'Message Reported'
-        : 'Reported'
+        : isConvoReport
+          ? 'Conversation Reported'
+          : 'Reported'
   }
   if (ToolsOzoneModerationDefs.isModEventResolveAppeal(modEvent.event)) {
     eventColor = 'text-blue-400'

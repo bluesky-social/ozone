@@ -39,6 +39,7 @@ import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
+import { ConversationSubjectWarning } from '@/dms/ConversationSubjectWarning'
 import { EmailComposer, EmailComposerFields } from 'components/email/Composer'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { Alert } from '@/common/Alert'
@@ -435,6 +436,11 @@ function Form(
                       <HighProfileWarning profile={profile} />
                     </div>
                   )}
+                  <ConversationSubjectWarning
+                    subject={subject}
+                    setSubject={setSubject}
+                    className="mb-2"
+                  />
                   {!!strikeDataError &&
                     (isTakedownEvent ||
                       isEmailEvent ||

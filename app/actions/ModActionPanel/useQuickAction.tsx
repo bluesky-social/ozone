@@ -16,12 +16,14 @@ import {
   DAY,
   getDidFromUri,
   HOUR,
+  parseAtUri,
   pluralize,
   takesKeyboardEvt,
   unique,
 } from '@/lib/util'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import {
+  CollectionId,
   getCollectionName,
   useCreateSubjectFromId,
 } from '@/reports/helpers/subject'
@@ -896,7 +898,12 @@ function useSubjectQuery(subject: string) {
     // subject of the report
     queryKey: ['modActionSubject', subject],
     queryFn: async () => {
-      if (subject.startsWith('did:')) {
+      const isDid = subject.startsWith('did:')
+      const parsed = subject.startsWith('at://') ? parseAtUri(subject) : null
+      const isAtUri = !!parsed
+      const isConversation = parsed?.collection === CollectionId.Convo
+      const didFromUri = parsed?.did ?? ''
+      if (isDid) {
         const [{ data: repo }, profile] = await Promise.all([
           labelerAgent.tools.ozone.moderation.getRepo({
             did: subject,
@@ -904,12 +911,20 @@ function useSubjectQuery(subject: string) {
           getProfile(subject),
         ])
         return { repo, profile }
-      } else if (subject.startsWith('at://')) {
+      } else if (isConversation) {
+        const [{ data: repo }, profile] = await Promise.all([
+          labelerAgent.tools.ozone.moderation.getRepo({
+            did: didFromUri,
+          }),
+          getProfile(didFromUri),
+        ])
+        return { repo, profile }
+      } else if (isAtUri) {
         const [{ data: record }, profile] = await Promise.all([
           labelerAgent.tools.ozone.moderation.getRecord({
             uri: subject,
           }),
-          getProfile(getDidFromUri(subject)),
+          getProfile(didFromUri),
         ])
         return { record, profile }
       } else {

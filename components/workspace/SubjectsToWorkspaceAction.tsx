@@ -12,6 +12,8 @@ export const SubjectToWorkspaceAction = ({
   hasNextPage,
   subjectType = 'user',
   description,
+  appearance = 'primary',
+  size = 'sm',
 }: {
   initialSubjects: string[]
   hasNextPage?: boolean
@@ -21,6 +23,8 @@ export const SubjectToWorkspaceAction = ({
   }>
   subjectType?: 'user' | 'post' | 'subject'
   description: JSX.Element
+  appearance?: 'primary' | 'outlined' | 'negative'
+  size?: 'xs' | 'sm' | 'md'
 }) => {
   const abortController = useRef<AbortController | null>(null)
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
@@ -74,8 +78,8 @@ export const SubjectToWorkspaceAction = ({
   return (
     <>
       <ActionButton
-        appearance="primary"
-        size="sm"
+        appearance={appearance}
+        size={size}
         onClick={() => setIsConfirmationOpen(true)}
       >
         Add{' '}
