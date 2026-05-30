@@ -26,7 +26,7 @@
     "@atproto/xrpc": "^0.8.0",
     "@headlessui/react": "^2.2.1",
     "@heroicons/react": "^2.0.13",
-    "@tanstack/react-query": "^4.22.0",
+    "@tanstack/react-query": "^5.100.13",
     "@types/node": "18.11.17",
     "@types/react": "19.2.5",
     "@types/react-dom": "19.2.3",
