@@ -1,83 +1,92 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useQuery, useQueryClient, InfiniteData } from '@tanstack/react-query'
-import {
-  ToolsOzoneReportDefs,
-  ToolsOzoneModerationEmitEvent,
-  ComAtprotoModerationDefs,
-} from '@atproto/api'
-import { formatDistanceToNow } from 'date-fns'
-import { toast } from 'react-toastify'
-import {
-  ArrowLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from '@heroicons/react/24/outline'
+import { Alert } from '@/common/Alert'
+import { Loading } from '@/common/Loader'
+import { PreviewCard } from '@/common/PreviewCard'
+import { TextWithLinks } from '@/common/TextWithLinks'
 import { ActionButton, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Select, Textarea } from '@/common/forms'
-import { PreviewCard } from '@/common/PreviewCard'
-import { ModEventList } from '@/mod-event/EventList'
-import { ModEventItem } from '@/mod-event/EventItem'
-import { ModToolProvider } from '@/mod-event/ModToolContext'
 import {
   LabelList,
   LabelListEmpty,
   ModerationLabel,
 } from '@/common/labels/List'
-import { isSelfLabel } from '@/common/labels/util'
 import { LabelSelector } from '@/common/labels/Selector'
-import { getDidFromUri } from '@/lib/util'
-import { Loading } from '@/common/Loader'
-import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
-import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import {
-  ReviewStateIcon,
-  SubjectReviewStateBadge,
-} from '@/subject/ReviewStateMarker'
-import { ActionError } from '@/reports/ModerationForm/ActionError'
+import { isSelfLabel } from '@/common/labels/util'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
-import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
-import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
-import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
-import { SubjectTag } from 'components/tags/SubjectTag'
-import { HighProfileWarning } from '@/repositories/HighProfileWarning'
-import { PriorityScore } from '@/subject/PriorityScore'
-import { Alert } from '@/common/Alert'
-import { TextWithLinks } from '@/common/TextWithLinks'
+import { getDidFromUri } from '@/lib/util'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
-import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
-import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
-import { EmailComposerFields } from 'components/email/Composer'
+import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
+import { ModEventItem } from '@/mod-event/EventItem'
+import { ModEventList } from '@/mod-event/EventList'
+import { ModToolProvider } from '@/mod-event/ModToolContext'
+import { MOD_EVENTS } from '@/mod-event/constants'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ReasonBadge } from 'components/reports/ReasonBadge'
-import { useAssignModerator, useUnassignModerator } from 'components/reports/hooks'
-import { ConfirmationModal } from '@/common/modals/confirmation'
-import {
-  ReportActionsBar,
-  ActivityTimeline,
-  ReportActionType,
-} from 'components/reports/ReportActions'
-import { MemberView } from 'components/reports/MemberView'
+import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
+import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { MOD_EVENTS } from '@/mod-event/constants'
-import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
+import { HighProfileWarning } from '@/repositories/HighProfileWarning'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
+import { PriorityScore } from '@/subject/PriorityScore'
+import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
+import {
+  ReviewStateIcon,
+  SubjectReviewStateBadge,
+} from '@/subject/ReviewStateMarker'
+import {
+  ComAtprotoModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+  ToolsOzoneReportDefs,
+} from '@atproto/api'
+import {
+  ArrowLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline'
+import { InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
+import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
+import { EmailComposerFields } from 'components/email/Composer'
+import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
+import { ReasonBadge } from 'components/reports/ReasonBadge'
 import {
-  ViewersIndicator,
+  ActivityTimeline,
+  ReportActionsBar,
+  ReportActionType,
+} from 'components/reports/ReportActions'
+import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
+import {
   AssignmentViewWithModerator,
+  ViewersIndicator,
 } from 'components/reports/ViewersIndicator'
-import { getHandleFromSubjectView } from 'components/reports/utils'
+import {
+  useAssignModerator,
+  useCreateActivity,
+  useUnassignModerator,
+} from 'components/reports/hooks'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
-import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { getHandleFromSubjectView } from 'components/reports/utils'
+import { SubjectTag } from 'components/tags/SubjectTag'
 import { WorkspacePanel } from 'components/workspace/Panel'
-import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { formatDistanceToNow } from 'date-fns'
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
 const FORM_ID = 'report-detail-action-panel'
 
@@ -305,7 +314,7 @@ function ReportInfoPanel({
         confirmButtonDisabled={isUnassigning}
         error={
           unassignError
-            ? (unassignError as any)?.message ?? 'Failed to unassign'
+            ? ((unassignError as any)?.message ?? 'Failed to unassign')
             : undefined
         }
         onConfirm={() => unassignFromMe(report.id)}
@@ -460,7 +469,9 @@ export function ReportDetailPageContent() {
               hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
             )
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
-            queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
+            queryClient.invalidateQueries({
+              queryKey: ['reportActivities', reportId],
+            })
           }}
           onCancel={() => router.push('/reports')}
           onClickDid={setQuickActionPanelSubject}
@@ -478,7 +489,9 @@ export function ReportDetailPageContent() {
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           queryClient.invalidateQueries({ queryKey: ['report', reportId] })
-          queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
+          queryClient.invalidateQueries({
+            queryKey: ['reportActivities', reportId],
+          })
         }}
       />
       <WorkspacePanel
@@ -510,6 +523,8 @@ function ReportDetailLayout(props: {
     onClickDid,
   } = props
   const subjectOptions = [subject]
+
+  const createActivity = useCreateActivity()
 
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
@@ -545,31 +560,74 @@ function ReportDetailLayout(props: {
       }
     }
 
-    const eventType = (finalVals.event as any)?.$type as string | undefined
-    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-      const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
-      if (reportActionScope === 'current') {
-        reportAction.ids = [report.id]
-      } else if (reportActionScope === 'all') {
-        reportAction.all = true
-      } else if (reportActionTypes.length > 0) {
-        reportAction.types = reportActionTypes
-      }
-      await onSubmit({ ...finalVals, reportAction })
+    const subj = (finalVals as any).subject
+    const event = finalVals.event
+    const eventType = event?.$type as string | undefined
+    // check if event was escalated to the owning account
+    const isEscalated =
+      report.subject.type !== 'account' &&
+      subj.$type === 'com.atproto.admin.defs#repoRef'
 
-      // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
-      if (
-        isAppealReport(report.reportType) &&
-        eventType !== MOD_EVENTS.RESOLVE_APPEAL
-      ) {
-        await onSubmit({
-          ...finalVals,
-          event: {
-            $type: MOD_EVENTS.RESOLVE_APPEAL,
-            comment: '[RESOLVING_APPEAL]',
+    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+      if (isEscalated) {
+        const reportUrl = `${window.location.origin}/reports/${report.id}`
+        // 1. Send event plus escalation comment
+        if ('comment' in event) {
+          await onSubmit({
+            ...finalVals,
+            event: {
+              ...event,
+              comment:
+                `[ESCALATION_ACTION]: This action was taken after actioning this report: \n${reportUrl}\n\n${event.comment || ''}`.trim(),
+            },
+          })
+        } else {
+          await onSubmit(finalVals)
+          await onSubmit({
+            subject: subj,
+            createdBy: finalVals.createdBy,
+            event: {
+              ...event,
+              $type: MOD_EVENTS.COMMENT,
+              comment: `[ESCALATION_ACTION]: The action immediately before this occurred after actioning this report: \n${reportUrl}`,
+            },
+          })
+        }
+        // 2. Add note to report log
+        await createActivity.mutateAsync({
+          reportId: report.id,
+          activity: {
+            $type: 'tools.ozone.report.defs#noteActivity',
           },
-          reportAction: { ids: [report.id] },
+          internalNote:
+            'Account-level actions were taken as a result of actioning this report.',
+          isAutomated: true,
         })
+      } else {
+        const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+        if (reportActionScope === 'current') {
+          reportAction.ids = [report.id]
+        } else if (reportActionScope === 'all') {
+          reportAction.all = true
+        } else if (reportActionTypes.length > 0) {
+          reportAction.types = reportActionTypes
+        }
+        await onSubmit({ ...finalVals, reportAction })
+
+        // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
+        if (
+          isAppealReport(report.reportType) &&
+          eventType !== MOD_EVENTS.RESOLVE_APPEAL
+        ) {
+          await onSubmit({
+            ...finalVals,
+            event: {
+              $type: MOD_EVENTS.RESOLVE_APPEAL,
+              comment: '[RESOLVING_APPEAL]',
+            },
+            reportAction: { ids: [report.id] },
+          })
+        }
       }
 
       setSelectedAction(null) // Reset after successful submission
@@ -803,7 +861,11 @@ function ReportDetailLayout(props: {
 
         {/* Right col */}
         <div className="w-full lg:w-1/2 shrink-0">
-          <ReportInfoPanel report={report} assignment={assignment} onClickDid={onClickDid} />
+          <ReportInfoPanel
+            report={report}
+            assignment={assignment}
+            onClickDid={onClickDid}
+          />
 
           <ViewersIndicator viewers={viewers} onClickDid={onClickDid} />
 
@@ -844,9 +906,15 @@ function ReportDetailLayout(props: {
             onResolveAppeal={
               isAppealReport(report.reportType)
                 ? async () => {
-                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = { ids: [report.id] }
+                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction =
+                      { ids: [report.id] }
                     await onSubmit({
-                      subject: { $type: 'com.atproto.admin.defs#repoRef', did: subject.startsWith('at://') ? getDidFromUri(subject)! : subject },
+                      subject: {
+                        $type: 'com.atproto.admin.defs#repoRef',
+                        did: subject.startsWith('at://')
+                          ? getDidFromUri(subject)!
+                          : subject,
+                      },
                       createdBy: config.did,
                       event: {
                         $type: MOD_EVENTS.RESOLVE_APPEAL,
@@ -896,7 +964,9 @@ function ReportDetailLayout(props: {
                   defaultSeverityLevel={selectedSeverityLevelName}
                   currentStrikes={currentStrikes}
                   actionRecommendation={actionRecommendation}
-                  variant={isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'}
+                  variant={
+                    isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'
+                  }
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
                   isSubjectDid={isSubjectDid}
