@@ -1,4 +1,13 @@
-import { AppBskyEmbedRecord, ChatBskyConvoDefs } from '@atproto/api'
+import {
+  AppBskyEmbedRecord,
+  ChatBskyConvoDefs,
+  asPredicate,
+} from '@atproto/api'
+
+const isMessageView = asPredicate(ChatBskyConvoDefs.validateMessageView)
+const isDeletedMessageView = asPredicate(
+  ChatBskyConvoDefs.validateDeletedMessageView,
+)
 import { ChevronDownIcon, ChevronUpIcon } from '@heroicons/react/24/solid'
 import { useQuery } from '@tanstack/react-query'
 import { ComponentProps, useState } from 'react'
@@ -73,7 +82,7 @@ export const MessageContext = ({
       </button>
       {showMessageContext &&
         messages?.map((message, i) => {
-          if (ChatBskyConvoDefs.isDeletedMessageView(message)) {
+          if (isDeletedMessageView(message)) {
             return (
               <div key={message.id} className="pt-2">
                 <MessageSenderInfo {...{ message, subject }} />
@@ -83,7 +92,7 @@ export const MessageContext = ({
               </div>
             )
           }
-          if (ChatBskyConvoDefs.isMessageView(message)) {
+          if (isMessageView(message)) {
             let embedView: React.ReactNode = null
             const texts = [
               message.text,

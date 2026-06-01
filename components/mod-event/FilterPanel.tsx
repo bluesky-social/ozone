@@ -244,6 +244,7 @@ export const EventFilterPanel = ({
               isSubjectTypeAccount={subjectType === 'account'}
               selectedCollections={selectedCollections}
               isSubjectTypeRecord={subjectType === 'record'}
+              isSubjectTypeConversation={subjectType === 'conversation'}
               toggleCollection={(collectionId) => {
                 const newCollections = new Set(selectedCollections)
                 if (newCollections.has(collectionId)) {

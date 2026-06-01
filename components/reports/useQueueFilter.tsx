@@ -53,7 +53,9 @@ export const useQueueFilter = () => {
     router.replace(`${pathname}?${updatedParams.toString()}`)
   }
 
-  const toggleSubjectType = (targetType: 'account' | 'record') => {
+  const toggleSubjectType = (
+    targetType: 'account' | 'record' | 'conversation',
+  ) => {
     const subjectType =
       queueFilters.subjectType === targetType ? undefined : targetType
 
@@ -63,7 +65,8 @@ export const useQueueFilter = () => {
 
     if (
       (targetType === 'record' && subjectType === undefined) ||
-      subjectType === 'account'
+      subjectType === 'account' ||
+      subjectType === 'conversation'
     ) {
       newParams.collections = undefined
       const newTags = queueFilters.tags?.filter(

@@ -15,7 +15,15 @@ import { isSelfLabel } from '@/common/labels/util'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
-import { getDidFromUri } from '@/lib/util'
+import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
+import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
+import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
+import { SubjectTag } from 'components/tags/SubjectTag'
+import { HighProfileWarning } from '@/repositories/HighProfileWarning'
+import { ConversationSubjectWarning } from '@/dms/ConversationSubjectWarning'
+import { PriorityScore } from '@/subject/PriorityScore'
+import { Alert } from '@/common/Alert'
+import { TextWithLinks } from '@/common/TextWithLinks'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { ModEventItem } from '@/mod-event/EventItem'
@@ -874,6 +882,11 @@ function ReportDetailLayout(props: {
               <HighProfileWarning profile={profile} />
             </div>
           )}
+          <ConversationSubjectWarning
+            subject={subject}
+            setSubject={setSubject}
+            className="mb-3"
+          />
 
           {/* Strike data error - unlikely to happen */}
           {!!strikeDataError && (isTakedownEvent || isReverseTakedownEvent) && (

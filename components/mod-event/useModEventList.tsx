@@ -154,7 +154,7 @@ export type EventListState = Omit<
   addedLabels: string[]
   removedLabels: string[]
   showContentPreview: boolean
-  subjectType?: 'account' | 'record'
+  subjectType?: 'account' | 'record' | 'conversation'
   selectedCollections: string[]
   ageAssuranceState?: string
   withStrike?: boolean
@@ -177,7 +177,7 @@ type EventListFilterPayload =
   | { field: 'removedTags'; value: string }
   | { field: 'policies'; value: string[] }
   | { field: 'limit'; value: number }
-  | { field: 'subjectType'; value?: 'account' | 'record' }
+  | { field: 'subjectType'; value?: 'account' | 'record' | 'conversation' }
   | { field: 'selectedCollections'; value: string[] }
   | { field: 'ageAssuranceState'; value?: string }
   | { field: 'withStrike'; value?: boolean }
