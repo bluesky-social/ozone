@@ -5,6 +5,7 @@ export type CompileTemplateInput = {
   handle?: string
   subjectName: string // 'account', 'post', 'list', 'record', etc.
   recordContent?: string
+  hasMedia?: boolean
   isPermanent?: boolean
 
   strikeCount?: string
@@ -26,6 +27,31 @@ export type CompileTemplateInput = {
     emailExtraNotes?: string
   }
   severityLevelConfig?: SeverityLevelDetail
+}
+
+export function recordHasMedia(value: unknown): boolean {
+  if (!value || typeof value !== 'object') return false
+  const record = value as Record<string, unknown>
+
+  switch (record.$type) {
+    case 'app.bsky.feed.post': {
+      const embedType =
+        record.embed && typeof record.embed === 'object'
+          ? (record.embed as { $type?: string }).$type
+          : undefined
+      return (
+        embedType === 'app.bsky.embed.images' ||
+        embedType === 'app.bsky.embed.video' ||
+        embedType === 'app.bsky.embed.recordWithMedia'
+      )
+    }
+    case 'app.bsky.actor.profile':
+      return Boolean(record.avatar || record.banner)
+    case 'app.bsky.graph.list':
+      return Boolean(record.avatar)
+    default:
+      return false
+  }
 }
 
 export function compileTakedownSubject({
@@ -54,6 +80,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     subjectName,
     isPermanent,
     recordContent,
+    hasMedia,
     totalStrikes,
     thresholdCrossed,
     nextThreshold,
@@ -102,7 +129,9 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
   })()
 
   const postBlock = recordContent
-    ? `The following ${subjectName} was removed:\n\n> ${recordContent
+    ? `The following ${subjectName}${
+        hasMedia ? ', or media attached to it,' : ''
+      } was removed:\n\n> ${recordContent
         .split('\n')
         .map((line) => `*${line}*`)
         .join('\n> ')}`
