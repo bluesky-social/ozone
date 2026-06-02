@@ -40,6 +40,7 @@ import {
   ReviewStateIcon,
   SubjectReviewStateBadge,
 } from '@/subject/ReviewStateMarker'
+import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
 import {
   ComAtprotoModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -162,6 +163,7 @@ function ReportInfoPanel({
   onClickDid?: (did: string) => void
 }) {
   const labelerAgent = useLabelerAgent()
+  const refetchOnlineModerators = useRefetchOnlineModerators()
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
 
   const {
@@ -169,7 +171,10 @@ function ReportInfoPanel({
     isPending,
     error,
   } = useAssignModerator({
-    onSuccess: () => toast.success('Report assigned to you'),
+    onSuccess: () => {
+      toast.success('Report assigned to you')
+      refetchOnlineModerators()
+    },
   })
 
   const {
@@ -334,6 +339,7 @@ export function ReportDetailPageContent() {
   const queryClient = useQueryClient()
   const emitEvent = useEmitEvent()
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
+  const refetchOnlineModerators = useRefetchOnlineModerators()
 
   const quickOpenParam = searchParams.get('quickOpen') ?? ''
   const setQuickActionPanelSubject = (subject: string) => {
@@ -360,6 +366,7 @@ export function ReportDetailPageContent() {
   useEffect(() => {
     labelerAgent.tools.ozone.report
       .assignModerator({ reportId })
+      .then(() => refetchOnlineModerators())
       .catch(() => {})
   }, [reportId])
 
