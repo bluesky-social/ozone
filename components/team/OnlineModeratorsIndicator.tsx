@@ -13,7 +13,7 @@ export function OnlineModeratorsIndicator() {
   return (
     <Popover className="relative">
       <PopoverButton className="flex items-center gap-1.5 px-2 py-1 rounded-md hover:bg-gray-100 dark:hover:bg-slate-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500">
-        <span className="sr-only">View online moderators</span>
+        <span className="sr-only">{onlineModerators.length} online</span>
         <div className="relative">
           <UserGroupIcon className="h-5 w-5 text-gray-600 dark:text-gray-300" />
           <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-green-500 ring-1 ring-white dark:ring-slate-900" />
@@ -25,7 +25,7 @@ export function OnlineModeratorsIndicator() {
 
       <PopoverPanel className="absolute right-0 z-10 mt-2 w-64 origin-top-right rounded-md bg-white dark:bg-slate-900 py-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
         <div className="px-3 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 border-b border-gray-200 dark:border-slate-700">
-          Online Moderators ({onlineModerators.length})
+          {onlineModerators.length} online
         </div>
         <div className="max-h-96 overflow-y-auto">
           {onlineModerators.map((mod) => (
