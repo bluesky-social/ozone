@@ -237,7 +237,7 @@ export function ReportActionsBar({
   const isSubjectTakendown = !!subjectStatus?.takendown
 
   const status = report.status
-  const canEscalate = canTransitionTo(status, 'escalated')
+  const canEscalate = status === 'assigned' && canTransitionTo(status, 'escalated')
   const canReopen = status === 'closed' && canTransitionTo(status, 'open')
   const canNoAction =
     (status === 'open' || status === 'assigned' || status === 'escalated') &&
