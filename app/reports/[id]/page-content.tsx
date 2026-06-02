@@ -532,6 +532,8 @@ function ReportDetailLayout(props: {
   } = props
   const subjectOptions = [subject]
 
+  const router = useRouter()
+
   const createActivity = useCreateActivity()
 
   const [reportActionScope, setReportActionScope] = useState<
@@ -713,6 +715,9 @@ function ReportDetailLayout(props: {
     modEventType,
   )
 
+  const subjectDid =
+    report.subject.repo?.did || profile?.did || repo?.did || record?.repo.did
+
   return (
     <div className="dark:text-gray-50">
       <div className="flex flex-col lg:flex-row gap-6">
@@ -851,6 +856,23 @@ function ReportDetailLayout(props: {
                   <SubjectTag key={tag} tag={tag} />
                 ))}
               </LabelList>
+            </div>
+          )}
+
+          {/* Open account in action panel */}
+          {!isSubjectDid && subjectDid && (
+            <div className="">
+              <button
+                type="button"
+                onClick={() =>
+                  router.replace(
+                    `${window.location.origin}/reports/${report.id}?quickOpen=${subjectDid}`,
+                  )
+                }
+                className="text-xs text-gray-500 underline"
+              >
+                Open account in action panel
+              </button>
             </div>
           )}
 
