@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLabelerAgent } from '../shell/ConfigurationContext'
+import { useConfigContext } from '../shell/ConfigContext'
 
 export const ONLINE_MODERATORS_QUERY_KEY = ['onlineModerators']
 
@@ -14,6 +15,7 @@ const STALE_TIME = 2 * 1000 // debounce protection when used with refetch below
 
 export function useOnlineModerators() {
   const labelerAgent = useLabelerAgent()
+  const { config } = useConfigContext()
 
   return useQuery<OnlineModerator[]>({
     queryKey: ONLINE_MODERATORS_QUERY_KEY,
@@ -22,7 +24,7 @@ export function useOnlineModerators() {
       const activeThreshold = new Date(Date.now() - ACTIVE_THRESHOLD)
 
       const updateMod = (did: string, activityTime: Date) => {
-        if (did === labelerAgent?.did) return
+        if (did === config.did) return
         const existing = moderatorActivity.get(did)
         if (!existing || activityTime.getTime() > existing.getTime()) {
           moderatorActivity.set(did, activityTime)
