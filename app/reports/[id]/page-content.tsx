@@ -70,13 +70,22 @@ import {
   AssignmentViewWithModerator,
   ViewersIndicator,
 } from 'components/reports/ViewersIndicator'
-import { useAssignModerator, useCreateActivity, useUnassignModerator } from 'components/reports/hooks'
+import {
+  useAssignModerator,
+  useCreateActivity,
+  useUnassignModerator,
+} from 'components/reports/hooks'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { formatDistanceToNow } from 'date-fns'
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-toastify'
 
@@ -581,7 +590,7 @@ function ReportDetailLayout(props: {
             event: {
               ...event,
               $type: MOD_EVENTS.COMMENT,
-              comment: `[ELEVATED_ACTION]: The action immediately before this occurred after actioning a report on a subject that the account owns. (${reportUrl})`,
+              comment: `[ELEVATED_ACTION]: An action  before this event occurred after actioning a report on a subject that the account owns. (${reportUrl})`,
             },
           })
         }
