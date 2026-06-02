@@ -112,20 +112,28 @@ function isAppealReport(reportType?: string): boolean {
 function getReportsFromCache(
   queryClient: ReturnType<typeof useQueryClient>,
 ): ToolsOzoneReportDefs.ReportView[] {
-  const allReports: ToolsOzoneReportDefs.ReportView[] = []
-  for (const key of ['betaReports']) {
-    const allQueriesData = queryClient.getQueriesData<
-      InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
-    >({ queryKey: [key] })
+  // Each filter combination produces its own 'betaReports' cache entry.
+  // Pick the most recently updated one for navigation in this cache.
+  const queries = queryClient
+    .getQueryCache()
+    .findAll({ queryKey: ['betaReports'] })
 
-    for (const [, data] of allQueriesData) {
-      if (!data?.pages) continue
-      for (const page of data.pages) {
-        if (page.reports) allReports.push(...page.reports)
-      }
-    }
+  const latest = queries.reduce<(typeof queries)[number] | null>(
+    (best, q) =>
+      !best || q.state.dataUpdatedAt > best.state.dataUpdatedAt ? q : best,
+    null,
+  )
+  const data = latest?.state.data as
+    | InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
+    | undefined
+
+  if (!data?.pages) return []
+
+  const reports: ToolsOzoneReportDefs.ReportView[] = []
+  for (const page of data.pages) {
+    if (page.reports) reports.push(...page.reports)
   }
-  return allReports
+  return reports
 }
 
 function findAdjacentReportsInCache(
