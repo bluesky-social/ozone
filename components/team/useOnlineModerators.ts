@@ -34,7 +34,7 @@ export function useOnlineModerators() {
       try {
         const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
           createdAfter: activeThreshold.toISOString(),
-          limit: 10,
+          limit: 30,
         })
         data.events.forEach((event) => {
           updateMod(event.createdBy, new Date(event.createdAt))
