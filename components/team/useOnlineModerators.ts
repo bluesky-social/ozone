@@ -52,7 +52,7 @@ export function useOnlineModerators() {
         const { data: reportData } =
           await labelerAgent.tools.ozone.report.getAssignments({
             onlyActive: true,
-            limit: 10,
+            limit: 30,
           })
         reportData.assignments.forEach((assignment) => {
           updateMod(assignment.did, new Date(assignment.startAt))
