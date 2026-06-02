@@ -27,6 +27,7 @@ import {
   VIDEO_UPLOAD_DISABLE_TAG,
 } from '@/lib/constants'
 import { getBatchId } from '@/lib/batchId'
+import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
 
@@ -65,6 +66,8 @@ export const hydrateModToolInfo = (
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
+  const refetchOnlineModerators = useRefetchOnlineModerators()
+
   const pendingTimeoutRef = useRef<number | null>(null)
 
   return useCallback(
@@ -122,6 +125,7 @@ export function useEmitEvent() {
             queryKey: ['accountView', { id: vals?.subject.did }],
           })
         }
+        refetchOnlineModerators()
       }
 
       // If this is not a delayed action, proceed immediately
