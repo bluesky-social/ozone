@@ -113,7 +113,7 @@ function getReportsFromCache(
   queryClient: ReturnType<typeof useQueryClient>,
 ): ToolsOzoneReportDefs.ReportView[] {
   const allReports: ToolsOzoneReportDefs.ReportView[] = []
-  for (const key of ['events', 'betaReports']) {
+  for (const key of ['betaReports']) {
     const allQueriesData = queryClient.getQueriesData<
       InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
     >({ queryKey: [key] })
