@@ -443,6 +443,7 @@ export function ReportDetailPageContent() {
               size="xs"
               appearance="primary"
               disabled={prevId === null}
+              className="disabled:opacity-50"
               onClick={() =>
                 prevId !== null && router.push(`/reports/${prevId}`)
               }
@@ -454,6 +455,7 @@ export function ReportDetailPageContent() {
               size="xs"
               appearance="primary"
               disabled={nextId === null}
+              className="disabled:opacity-50"
               onClick={() =>
                 nextId !== null && router.push(`/reports/${nextId}`)
               }
