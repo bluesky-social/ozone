@@ -22,7 +22,6 @@ export function useOnlineModerators() {
       const activeThreshold = new Date(Date.now() - ACTIVE_THRESHOLD)
 
       const updateMod = (did: string, activityTime: Date) => {
-        if (activityTime < activeThreshold) return
         if (did === labelerAgent?.did) return
         const existing = moderatorActivity.get(did)
         if (!existing || activityTime.getTime() > existing.getTime()) {
