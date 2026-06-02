@@ -564,22 +564,22 @@ function ReportDetailLayout(props: {
     const subj = (finalVals as any).subject
     const event = finalVals.event
     const eventType = event?.$type as string | undefined
-    // check if event was elevated to the owning account
-    const isElevated =
+    // check if event was cascaded to the owning account
+    const isCascaded =
       report.subject.type !== 'account' &&
       subj.$type === 'com.atproto.admin.defs#repoRef'
 
     if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-      if (isElevated) {
+      if (isCascaded) {
         const reportUrl = `${window.location.origin}/reports/${report.id}`
-        // 1. Send event plus elevation comment
+        // 1. Send event plus cascaded comment
         if ('comment' in event) {
           await onSubmit({
             ...finalVals,
             event: {
               ...event,
               comment:
-                `[ELEVATED_ACTION]: This action was taken after actioning a report on a subject that the account owns. (${reportUrl})\n\n${event.comment || ''}`.trim(),
+                `[CASCADED_ACTION]: This action was taken after actioning a report on a subject that the account owns. (${reportUrl})\n\n${event.comment || ''}`.trim(),
             },
           })
         } else {
@@ -590,7 +590,7 @@ function ReportDetailLayout(props: {
             event: {
               ...event,
               $type: MOD_EVENTS.COMMENT,
-              comment: `[ELEVATED_ACTION]: An action  before this event occurred after actioning a report on a subject that the account owns. (${reportUrl})`,
+              comment: `[CASCADED_ACTION]: An action before this event occurred after actioning a report on a subject that the account owns. (${reportUrl})`,
             },
           })
         }
