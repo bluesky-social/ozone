@@ -25,6 +25,7 @@ export function useOnlineModerators() {
 
       const updateMod = (did: string, activityTime: Date) => {
         if (did === config.did) return
+        if (activityTime < activeThreshold) return
         const existing = moderatorActivity.get(did)
         if (!existing || activityTime.getTime() > existing.getTime()) {
           moderatorActivity.set(did, activityTime)
