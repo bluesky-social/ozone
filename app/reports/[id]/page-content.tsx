@@ -948,6 +948,7 @@ function ReportDetailLayout(props: {
 
           <ReportActionsBar
             report={report}
+            assignment={assignment}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
             subjectStatus={subjectStatus}

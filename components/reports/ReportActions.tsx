@@ -1,38 +1,40 @@
 'use client'
-import { useState } from 'react'
+import { ActionButton } from '@/common/buttons'
+import { Dropdown } from '@/common/Dropdown'
+import { Textarea } from '@/common/forms'
+import { displayError } from '@/common/Loader'
+import { useAuthDid } from '@/shell/AuthContext'
+import { usePermission } from '@/shell/ConfigurationContext'
 import {
-  ArrowUpCircleIcon,
+  ComAtprotoModerationDefs,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneReportDefs,
+} from '@atproto/api'
+import {
   ArrowPathIcon,
+  ArrowRightIcon,
+  ArrowUpCircleIcon,
   ChatBubbleLeftIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ArrowRightIcon,
   CpuChipIcon,
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
-import {
-  ToolsOzoneReportDefs,
-  ToolsOzoneModerationDefs,
-  ComAtprotoModerationDefs,
-} from '@atproto/api'
-import { usePermission } from '@/shell/ConfigurationContext'
 import { formatDistanceToNow } from 'date-fns'
-import { ActionButton } from '@/common/buttons'
-import { Textarea } from '@/common/forms'
-import { Dropdown } from '@/common/Dropdown'
-import { useCreateActivity, useListActivities } from './hooks'
+import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { displayError } from '@/common/Loader'
+import { useCreateActivity, useListActivities } from './hooks'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
-// Mirror of backend VALID_TRANSITIONS in packages/ozone/src/report/activity.ts
+// Mirror of backend VALID_TRANSITIONS
+// https://github.com/bluesky-social/atproto/blob/main/packages/ozone/src/report/handle-report-update.ts
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open: ['closed', 'escalated', 'queued', 'assigned'],
   closed: ['open'],
   escalated: ['open', 'closed'],
   queued: ['assigned', 'open', 'escalated'],
-  assigned: ['open', 'closed', 'escalated'],
+  assigned: ['open', 'closed', 'escalated', 'queued'],
 }
 
 function canTransitionTo(fromState: string, toState: string): boolean {
@@ -215,35 +217,41 @@ function NoteComposer({
 
 export function ReportActionsBar({
   report,
+  assignment,
   selectedAction,
   onActionSelect,
   subjectStatus,
   onResolveAppeal,
 }: {
   report: ToolsOzoneReportDefs.ReportView
+  assignment?: ToolsOzoneReportDefs.ReportAssignment
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   onResolveAppeal?: () => Promise<void>
 }) {
+  const currentUserDid = useAuthDid()
+
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
-
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
   const isAppeal =
     report.reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
     report.reportType === 'tools.ozone.report.defs#reasonAppeal'
   const isSubjectTakendown = !!subjectStatus?.takendown
+  const assignedToMe = assignment?.did === currentUserDid
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
   const canReopen = status === 'closed' && canTransitionTo(status, 'open')
   const canNoAction =
+    assignedToMe &&
     (status === 'open' || status === 'assigned' || status === 'escalated') &&
     canTransitionTo(status, 'closed')
   const canAction =
-    status === 'open' || status === 'assigned' || status === 'escalated'
+    assignedToMe &&
+    (status === 'open' || status === 'assigned' || status === 'escalated')
 
   const handleActionClick = (action: ActionType) => {
     setShowNote(false)
