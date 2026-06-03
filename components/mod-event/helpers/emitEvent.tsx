@@ -71,7 +71,12 @@ export function useEmitEvent() {
     async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
       const isDelayedAction = vals.event.$type === MOD_EVENTS.EMAIL
       const isRecord = vals?.subject.$type === 'com.atproto.repo.strongRef'
-      const subjectType = isRecord ? 'Record' : 'Account'
+      const isConvo = vals?.subject.$type === 'chat.bsky.convo.defs#convoRef'
+      const subjectType = isConvo
+        ? 'Conversation'
+        : isRecord
+          ? 'Record'
+          : 'Account'
 
       // Define the actual emit event function to reuse
       const emitModerationEventAsync = async () => {

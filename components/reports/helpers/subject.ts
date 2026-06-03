@@ -3,6 +3,7 @@ import { ComAtprotoRepoStrongRef, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
+import { parseAtUri } from '@/lib/util'
 
 export const isIdRecord = (id: string) => id.startsWith('at://')
 
@@ -17,10 +18,29 @@ export const useCreateSubjectFromId = () => {
       subject: { $type: string } & (
         | { uri: string; cid: string }
         | { did: string }
+        | { did: string; convoId: string }
       )
       record: ToolsOzoneModerationDefs.RecordViewDetail | null
     }> => {
       if (isIdRecord(id)) {
+        // Conversations aren't PDS records, so getRecord can't resolve the
+        // synthesized at://{did}/chat.bsky.convo/{convoId} id from SubjectOverview.
+        const parsed = parseAtUri(id)
+        if (
+          parsed?.collection === CollectionId.Convo &&
+          parsed.did &&
+          parsed.rkey
+        ) {
+          return {
+            record: null,
+            subject: {
+              $type: 'chat.bsky.convo.defs#convoRef',
+              did: parsed.did,
+              convoId: parsed.rkey,
+            },
+          }
+        }
+
         // Check if we have this record data in any workspaceListData cache
         const workspaceQueries = queryClient.getQueryCache().findAll({
           queryKey: ['workspaceListData'],
