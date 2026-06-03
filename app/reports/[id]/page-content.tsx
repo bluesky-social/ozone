@@ -660,14 +660,17 @@ function ReportDetailLayout(props: {
     setSelectedAction(null)
   }
 
-  // Sync selectedAction with modEventType
+  // Sync selectedAction and reportActionScope with modEventType
   useEffect(() => {
     if (selectedAction === 'label') {
       setModEventType(MOD_EVENTS.LABEL)
+      setReportActionScope('types')
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
+      setReportActionScope('types')
     } else if (selectedAction === 'revert-takedown') {
       setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
+      setReportActionScope('current')
     }
   }, [selectedAction])
 
