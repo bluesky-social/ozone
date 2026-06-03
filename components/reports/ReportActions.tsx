@@ -460,7 +460,7 @@ function ActivityItem({
         </div>
 
         {noteText && (
-          <p className="mt-0.5 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
+          <p className="mt-0.5 text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
             {noteText}
           </p>
         )}
