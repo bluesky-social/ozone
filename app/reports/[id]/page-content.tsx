@@ -484,7 +484,7 @@ export function ReportDetailPageContent() {
           viewers={viewers}
           onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
             await emitEvent(
-              hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+              hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
             queryClient.invalidateQueries({

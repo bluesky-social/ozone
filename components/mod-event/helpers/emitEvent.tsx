@@ -36,6 +36,7 @@ export enum ActionPanelNames {
   QuickAction = 'quick-action',
   EmailComposer = 'email-composer',
   AccountManager = 'account-manager',
+  ReportPage = 'report-page',
 }
 
 export const buildModToolInfo = (
