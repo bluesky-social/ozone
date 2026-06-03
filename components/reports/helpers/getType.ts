@@ -21,6 +21,7 @@ export const reasonTypeOptions = {
   'tools.ozone.report.defs#reasonAppeal': 'Appeal',
 
   // Violence and Welfare
+  'tools.ozone.report.defs#reasonViolenceAnimal': 'Animal Violence',
   'tools.ozone.report.defs#reasonViolenceAnimalWelfare':
     'Animal Welfare Violation',
   'tools.ozone.report.defs#reasonViolenceThreats': 'Violent Threats',
@@ -47,6 +48,7 @@ export const reasonTypeOptions = {
   'tools.ozone.report.defs#reasonChildSafetyCSAM':
     'Child Sexual Abuse Material',
   'tools.ozone.report.defs#reasonChildSafetyGroom': 'Child Grooming',
+  'tools.ozone.report.defs#reasonChildSafetyPrivacy': 'Child Privacy Violation',
   'tools.ozone.report.defs#reasonChildSafetyMinorPrivacy':
     'Minor Privacy Violation',
   'tools.ozone.report.defs#reasonChildSafetyEndangerment': 'Child Endangerment',
@@ -67,6 +69,7 @@ export const reasonTypeOptions = {
   'tools.ozone.report.defs#reasonMisleadingImpersonation': 'Impersonation',
   'tools.ozone.report.defs#reasonMisleadingSpam': 'Spam',
   'tools.ozone.report.defs#reasonMisleadingScam': 'Scam',
+  'tools.ozone.report.defs#reasonMisleadingElections': 'Election Interference',
   'tools.ozone.report.defs#reasonMisleadingSyntheticContent':
     'Synthetic Content',
   'tools.ozone.report.defs#reasonMisleadingMisinformation': 'Misinformation',
@@ -93,6 +96,9 @@ export const reasonTypeOptions = {
   'tools.ozone.report.defs#reasonSelfHarmStunts': 'Self Harm Stunts',
   'tools.ozone.report.defs#reasonSelfHarmSubstances': 'Self Harm Substances',
   'tools.ozone.report.defs#reasonSelfHarmOther': 'Other Self Harm Content',
+
+  // Other
+  'tools.ozone.report.defs#reasonOther': 'Other',
 }
 
 export const groupedReasonTypes = {
@@ -107,9 +113,11 @@ export const groupedReasonTypes = {
   ],
   Appeal: ['tools.ozone.report.defs#reasonAppeal'],
   Violence: [
+    'tools.ozone.report.defs#reasonViolenceAnimal',
     'tools.ozone.report.defs#reasonViolenceAnimalWelfare',
     'tools.ozone.report.defs#reasonViolenceThreats',
     'tools.ozone.report.defs#reasonViolenceGraphicContent',
+    'tools.ozone.report.defs#reasonViolenceSelfHarm',
     'tools.ozone.report.defs#reasonViolenceGlorification',
     'tools.ozone.report.defs#reasonViolenceExtremistContent',
     'tools.ozone.report.defs#reasonViolenceTrafficking',
@@ -127,6 +135,7 @@ export const groupedReasonTypes = {
   'Child Safety': [
     'tools.ozone.report.defs#reasonChildSafetyCSAM',
     'tools.ozone.report.defs#reasonChildSafetyGroom',
+    'tools.ozone.report.defs#reasonChildSafetyPrivacy',
     'tools.ozone.report.defs#reasonChildSafetyMinorPrivacy',
     'tools.ozone.report.defs#reasonChildSafetyEndangerment',
     'tools.ozone.report.defs#reasonChildSafetyHarassment',
@@ -145,6 +154,7 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonMisleadingImpersonation',
     'tools.ozone.report.defs#reasonMisleadingSpam',
     'tools.ozone.report.defs#reasonMisleadingScam',
+    'tools.ozone.report.defs#reasonMisleadingElections',
     'tools.ozone.report.defs#reasonMisleadingSyntheticContent',
     'tools.ozone.report.defs#reasonMisleadingMisinformation',
     'tools.ozone.report.defs#reasonMisleadingOther',
@@ -170,6 +180,7 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonSelfHarmSubstances',
     'tools.ozone.report.defs#reasonSelfHarmOther',
   ],
+  Other: ['tools.ozone.report.defs#reasonOther'],
 }
 
 export const getTagForReport = (reasonType: string) => {
