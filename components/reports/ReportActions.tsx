@@ -242,11 +242,8 @@ export function ReportActionsBar({
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
   const canReopen = status === 'closed' && canTransitionTo(status, 'open')
-  const canNoAction =
-    (status === 'open' || status === 'assigned' || status === 'escalated') &&
-    canTransitionTo(status, 'closed')
-  const canAction =
-    status === 'open' || status === 'assigned' || status === 'escalated'
+  const canNoAction = (status === 'open' || status === 'assigned' || status === 'escalated') && canTransitionTo(status, 'closed')
+  const canAction = status === 'open' || status === 'assigned' || status === 'escalated'
 
   const handleActionClick = (action: ActionType) => {
     setShowNote(false)
