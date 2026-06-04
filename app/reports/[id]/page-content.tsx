@@ -583,16 +583,8 @@ function ReportDetailLayout(props: {
             },
           })
         } else {
+          // Cannot add a comment - emit the original cascaded event
           await onSubmit(finalVals)
-          await onSubmit({
-            subject: subj,
-            createdBy: finalVals.createdBy,
-            event: {
-              ...event,
-              $type: MOD_EVENTS.COMMENT,
-              comment: `[CASCADED_ACTION]: An action before this event occurred after actioning a report on a subject that the account owns. (${reportUrl})`,
-            },
-          })
         }
         // 2. Add note to report log
         await createActivity.mutateAsync({
