@@ -358,6 +358,8 @@ export function ReportDetailPageContent() {
     skipInitialPoll: calledGetReport,
   })
 
+  const createActivity = useCreateActivity()
+
   if (!report && isLoading) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
@@ -432,9 +434,23 @@ export function ReportDetailPageContent() {
           assignment={report.assignment}
           viewers={viewers}
           onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-            await emitEvent(
+            const result = await emitEvent(
               hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
+            const eventId = (result as any)?.id
+            const isCascaded =
+              report.subject.type !== 'account' &&
+              vals.subject.$type === 'com.atproto.admin.defs#repoRef'
+            if (isCascaded && eventId) {
+              await createActivity.mutateAsync({
+                reportId: report.id,
+                activity: {
+                  $type: 'tools.ozone.report.defs#noteActivity',
+                },
+                internalNote: `Account-level actions were taken as a result of actioning this report. (${window.location.origin}/events/${eventId})`,
+                isAutomated: true,
+              })
+            }
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
             queryClient.invalidateQueries({
               queryKey: ['reportActivities', reportId],
@@ -492,7 +508,6 @@ function ReportDetailLayout(props: {
   const subjectOptions = [subject]
 
   const router = useRouter()
-  const createActivity = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
@@ -540,39 +555,8 @@ function ReportDetailLayout(props: {
 
     if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
       if (isCascaded) {
-        const reportUrl = `${window.location.origin}/reports/${report.id}`
-        // 1. Send event plus cascaded comment
-        if ('comment' in event) {
-          await onSubmit({
-            ...finalVals,
-            event: {
-              ...event,
-              comment:
-                `[CASCADED_ACTION]: This action was taken after actioning a report on a subject that the account owns. (${reportUrl})\n\n${event.comment || ''}`.trim(),
-            },
-          })
-        } else {
-          await onSubmit(finalVals)
-          await onSubmit({
-            subject: subj,
-            createdBy: finalVals.createdBy,
-            event: {
-              ...event,
-              $type: MOD_EVENTS.COMMENT,
-              comment: `[CASCADED_ACTION]: An action before this event occurred after actioning a report on a subject that the account owns. (${reportUrl})`,
-            },
-          })
-        }
-        // 2. Add note to report log
-        await createActivity.mutateAsync({
-          reportId: report.id,
-          activity: {
-            $type: 'tools.ozone.report.defs#noteActivity',
-          },
-          internalNote:
-            'Account-level actions were taken as a result of actioning this report.',
-          isAutomated: true,
-        })
+        // Send original event without a report action
+        await onSubmit(finalVals)
       } else {
         const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
         if (reportActionScope === 'current') {
