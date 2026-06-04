@@ -1,9 +1,8 @@
 'use client'
 import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
-import { Textarea } from '@/common/forms'
+import { Checkbox, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
-import { useAuthDid } from '@/shell/AuthContext'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
   ComAtprotoModerationDefs,
@@ -24,6 +23,7 @@ import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useCreateActivity, useListActivities } from './hooks'
+import { useReports } from './useReports'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
@@ -98,6 +98,7 @@ function TransitionConfirmPanel({
 }) {
   const [note, setNote] = useState('')
   const createActivity = useCreateActivity()
+  const { advanceToNext } = useReports(reportId)
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
 
   const handleConfirm = () => {
@@ -115,6 +116,9 @@ function TransitionConfirmPanel({
         onSuccess: async () => {
           if (action === 'no-action' && onResolveAppeal) {
             await onResolveAppeal()
+          }
+          if (action === 'no-action') {
+            advanceToNext()
           }
           onDone()
         },
@@ -217,20 +221,18 @@ function NoteComposer({
 
 export function ReportActionsBar({
   report,
-  assignment,
   selectedAction,
   onActionSelect,
   subjectStatus,
   onResolveAppeal,
 }: {
   report: ToolsOzoneReportDefs.ReportView
-  assignment?: ToolsOzoneReportDefs.ReportAssignment
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   onResolveAppeal?: () => Promise<void>
 }) {
-  const currentUserDid = useAuthDid()
+  const { advanceAfterAction, setAdvanceAfterAction } = useReports(report.id)
 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
@@ -240,18 +242,15 @@ export function ReportActionsBar({
     report.reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
     report.reportType === 'tools.ozone.report.defs#reasonAppeal'
   const isSubjectTakendown = !!subjectStatus?.takendown
-  const assignedToMe = assignment?.did === currentUserDid
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
   const canReopen = status === 'closed' && canTransitionTo(status, 'open')
   const canNoAction =
-    assignedToMe &&
     (status === 'open' || status === 'assigned' || status === 'escalated') &&
     canTransitionTo(status, 'closed')
   const canAction =
-    assignedToMe &&
-    (status === 'open' || status === 'assigned' || status === 'escalated')
+    status === 'open' || status === 'assigned' || status === 'escalated'
 
   const handleActionClick = (action: ActionType) => {
     setShowNote(false)
@@ -373,6 +372,13 @@ export function ReportActionsBar({
           Note
         </button>
       </div>
+
+      <Checkbox
+        className="mt-2 flex items-center text-xs"
+        label="Advance to next after closing"
+        checked={!!advanceAfterAction}
+        onChange={(e) => setAdvanceAfterAction(e.target.checked)}
+      />
 
       {pendingAction && (
         <TransitionConfirmPanel

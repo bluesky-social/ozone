@@ -31,6 +31,7 @@ import {
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { useReports } from '@/reports/useReports'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -51,7 +52,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
-import { InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
 import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
@@ -87,7 +88,7 @@ import {
   useRouter,
   useSearchParams,
 } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 
 const FORM_ID = 'report-detail-action-panel'
@@ -107,58 +108,6 @@ function isAppealReport(reportType?: string): boolean {
     reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
     reportType === 'tools.ozone.report.defs#reasonAppeal'
   )
-}
-
-function getReportsFromCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-): ToolsOzoneReportDefs.ReportView[] {
-  // Each filter combination produces its own 'betaReports' cache entry.
-  // Pick the most recently updated one for navigation in this cache.
-  const queries = queryClient
-    .getQueryCache()
-    .findAll({ queryKey: ['betaReports'] })
-
-  const latest = queries.reduce<(typeof queries)[number] | null>(
-    (best, q) =>
-      !best || q.state.dataUpdatedAt > best.state.dataUpdatedAt ? q : best,
-    null,
-  )
-  const data = latest?.state.data as
-    | InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
-    | undefined
-
-  if (!data?.pages) return []
-
-  const reports: ToolsOzoneReportDefs.ReportView[] = []
-  for (const page of data.pages) {
-    if (page.reports) reports.push(...page.reports)
-  }
-  return reports
-}
-
-function findAdjacentReportsInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  reportId: number,
-): { prevId: number | null; nextId: number | null } {
-  const allReports = getReportsFromCache(queryClient)
-
-  if (allReports.length === 0) return { prevId: null, nextId: null }
-
-  const index = allReports.findIndex((r) => r.id === reportId)
-  if (index === -1) return { prevId: null, nextId: null }
-
-  return {
-    prevId: index > 0 ? allReports[index - 1].id : null,
-    nextId: index < allReports.length - 1 ? allReports[index + 1].id : null,
-  }
-}
-
-function findReportInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  reportId: number,
-): ToolsOzoneReportDefs.ReportView | null {
-  const allReports = getReportsFromCache(queryClient)
-  return allReports.find((r) => r.id === reportId) ?? null
 }
 
 function ReportInfoPanel({
@@ -360,15 +309,11 @@ export function ReportDetailPageContent() {
     router.push((pathname ?? '') + '?' + nextParams.toString())
   }
 
-  const cachedReport = useMemo(
-    () => findReportInCache(queryClient, reportId),
-    [reportId],
-  )
-
-  const { prevId, nextId } = useMemo(
-    () => findAdjacentReportsInCache(queryClient, reportId),
-    [reportId],
-  )
+  const {
+    report: cachedReport,
+    prevReportId,
+    nextReportId,
+  } = useReports(reportId)
 
   // Register this session as a viewer (temporary, non-permanent assignment).
   useEffect(() => {
@@ -445,15 +390,15 @@ export function ReportDetailPageContent() {
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Report #{reportId}
         </h1>
-        {(prevId !== null || nextId !== null) && (
+        {(prevReportId !== null || nextReportId !== null) && (
           <div className="ml-auto flex items-center gap-1">
             <ActionButton
               size="xs"
               appearance="primary"
-              disabled={prevId === null}
+              disabled={prevReportId === null}
               className="disabled:opacity-50"
               onClick={() =>
-                prevId !== null && router.push(`/reports/${prevId}`)
+                prevReportId !== null && router.push(`/reports/${prevReportId}`)
               }
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -462,10 +407,10 @@ export function ReportDetailPageContent() {
             <ActionButton
               size="xs"
               appearance="primary"
-              disabled={nextId === null}
+              disabled={nextReportId === null}
               className="disabled:opacity-50"
               onClick={() =>
-                nextId !== null && router.push(`/reports/${nextId}`)
+                nextReportId !== null && router.push(`/reports/${nextReportId}`)
               }
             >
               Next
@@ -543,8 +488,8 @@ function ReportDetailLayout(props: {
   const subjectOptions = [subject]
 
   const router = useRouter()
-
   const createActivity = useCreateActivity()
+  const { advanceToNext } = useReports(report.id)
 
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
@@ -651,6 +596,7 @@ function ReportDetailLayout(props: {
       }
 
       setSelectedAction(null) // Reset after successful submission
+      advanceToNext()
     } else {
       await onSubmit(finalVals)
     }
@@ -948,7 +894,6 @@ function ReportDetailLayout(props: {
 
           <ReportActionsBar
             report={report}
-            assignment={assignment}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
             subjectStatus={subjectStatus}
