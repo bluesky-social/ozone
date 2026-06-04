@@ -116,8 +116,6 @@ function TransitionConfirmPanel({
           if (action === 'no-action' && onResolveAppeal) {
             await onResolveAppeal()
           }
-          // Auto-advance is handled centrally by useAdvanceOnReportClose,
-          // which fires when the report's status transitions to 'closed'.
           onDone()
         },
         onError: (e) => {
