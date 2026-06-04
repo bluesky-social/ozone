@@ -31,7 +31,11 @@ import {
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { useReportAutoAdvance, useReports } from '@/reports/useReports'
+import {
+  useReportArrowKeyNavigation,
+  useReportAutoAdvance,
+  useReports,
+} from '@/reports/useReports'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -489,6 +493,7 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const createActivity = useCreateActivity()
+  useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
   const [reportActionScope, setReportActionScope] = useState<

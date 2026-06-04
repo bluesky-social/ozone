@@ -5,7 +5,7 @@ import { InfiniteData, useQueryClient } from '@tanstack/react-query'
 import {
   useRouter
 } from 'next/navigation'
-import { useEffect, useMemo, useRef } from 'react'
+import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocalStorage } from 'react-use'
 
 function getReportsFromCache(
@@ -127,4 +127,41 @@ export function useReportAutoAdvance(reportId: number, status?: string) {
     // reportId/status change, capturing the latest closure at that point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [reportId, status])
+}
+
+/**
+ * Navigates between adjacent reports using arrow keys.
+ */
+export function useReportArrowKeyNavigation(reportId: number) {
+  const router = useRouter()
+  const { prevReportId, nextReportId } = useReports(reportId)
+
+  const isEditableTarget = useCallback((target: EventTarget | null): boolean => {
+    if (!(target instanceof HTMLElement)) return false
+    const tag = target.tagName
+    return (
+      tag === 'INPUT' ||
+      tag === 'TEXTAREA' ||
+      tag === 'SELECT' ||
+      target.isContentEditable
+    )
+  }, [])
+
+  useEffect(() => {
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return
+      if (isEditableTarget(e.target)) return
+
+      if (e.key === 'ArrowLeft' && prevReportId !== null) {
+        e.preventDefault()
+        router.push(`/reports/${prevReportId}`)
+      } else if (e.key === 'ArrowRight' && nextReportId !== null) {
+        e.preventDefault()
+        router.push(`/reports/${nextReportId}`)
+      }
+    }
+
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [reportId, prevReportId, nextReportId, router])
 }
