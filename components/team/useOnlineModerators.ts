@@ -20,15 +20,13 @@ export function useOnlineModerators() {
   return useQuery<OnlineModerator[]>({
     queryKey: ONLINE_MODERATORS_QUERY_KEY,
     queryFn: async () => {
-      const moderatorActivity = new Map<string, Date>()
       const activeThreshold = new Date(Date.now() - ACTIVE_THRESHOLD)
 
-      const updateMod = (did: string, activityTime: Date) => {
-        if (did === config.did) return
-        if (activityTime < activeThreshold) return
+      const moderatorActivity = new Map<string, Date>()
+      const update = (did: string, activityDate: Date) => {
         const existing = moderatorActivity.get(did)
-        if (!existing || activityTime.getTime() > existing.getTime()) {
-          moderatorActivity.set(did, activityTime)
+        if (!existing || activityDate > existing) {
+          moderatorActivity.set(did, activityDate)
         }
       }
 
@@ -39,7 +37,8 @@ export function useOnlineModerators() {
           limit: 30,
         })
         data.events.forEach((event) => {
-          updateMod(event.createdBy, new Date(event.createdAt))
+          if (event.createdBy === config.did) return // block labeler events
+          update(event.createdBy, new Date(event.createdAt))
         })
       } catch (err) {
         console.warn('Failed to fetch recent moderation events:', err)
@@ -56,7 +55,13 @@ export function useOnlineModerators() {
             limit: 30,
           })
         reportData.assignments.forEach((assignment) => {
-          updateMod(assignment.did, new Date(assignment.startAt))
+          // if recent or a temp assignment
+          if (
+            new Date(assignment.startAt) > activeThreshold ||
+            assignment.endAt
+          ) {
+            update(assignment.did, new Date(assignment.startAt))
+          }
         })
       } catch (err) {
         console.warn('Failed to fetch active report assignments:', err)

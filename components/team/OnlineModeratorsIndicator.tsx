@@ -65,7 +65,7 @@ function ModeratorListItem({
   const handle = profile?.handle
   const avatar = profile?.avatar
 
-  const timeAgo = getTimeAgo(lastActive)
+  const activeFor = getActiveFor(lastActive)
 
   return (
     <Link
@@ -87,18 +87,18 @@ function ModeratorListItem({
           </div>
         )}
         <div className="text-xs text-gray-500 dark:text-gray-400">
-          Active {timeAgo}
+          {activeFor}
         </div>
       </div>
     </Link>
   )
 }
 
-function getTimeAgo(date: Date): string {
+function getActiveFor(date: Date): string {
   const seconds = Math.floor((Date.now() - date.getTime()) / 1000)
-
-  if (seconds < 60) return 'just now'
   const minutes = Math.floor(seconds / 60)
-  if (minutes === 1) return '1 minute ago'
-  return `${minutes} minutes ago`
+
+  if (minutes < 1) return 'Active for less than a minute'
+  if (minutes === 1) return 'Active for 1 minute'
+  return `Active for ${minutes} minutes`
 }
