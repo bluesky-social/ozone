@@ -5,7 +5,7 @@ import { InfiniteData, useQueryClient } from '@tanstack/react-query'
 import {
   useRouter
 } from 'next/navigation'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { useLocalStorage } from 'react-use'
 
 function getReportsFromCache(
@@ -82,33 +82,49 @@ export function useReports(reportId: number) {
     [reportId],
   )
 
-  // auto advance
-  const [advanceAfterAction, setAdvanceAfterAction] = useLocalStorage(
+  // auto advance setting
+  const [autoAdvance, setAutoAdvance] = useLocalStorage(
     'reports.advanceAfterAction',
     false,
   )
-  const advanceToNext = () => {
-    if (advanceAfterAction) {
-      if (nextId) {
-        router.push(`/reports/${nextId}`)
-      }
-    }
-  }
-
-  console.log('useReports', {
-    reportId,
-    report,
-    prevId,
-    nextId,
-    advanceAfterAction,
-  })
 
   return {
     report,
     prevReportId: prevId,
     nextReportId: nextId,
-    advanceAfterAction,
-    setAdvanceAfterAction,
-    advanceToNext,
+    autoAdvance,
+    setAutoAdvance,
   }
+}
+
+/**
+ * Advances to the next report after closing.
+ * Respects autoAdvance setting.
+ */
+export function useReportAutoAdvance(reportId: number, status?: string) {
+  const router = useRouter()
+  const { nextReportId, autoAdvance } = useReports(reportId)
+
+  // Track the report a status belongs to, so navigating between reports (which
+  // keeps this hook mounted on the /reports/[id] route) re-baselines instead of
+  // comparing the new report's status against the previous report's.
+  const prevRef = useRef<{ reportId: number; status?: string }>({
+    reportId,
+    status,
+  })
+
+  useEffect(() => {
+    const prev = prevRef.current
+    prevRef.current = { reportId, status }
+    // Only react to status changes within the same report.
+    if (prev.reportId !== reportId) return
+    if (prev.status && prev.status !== 'closed' && status === 'closed') {
+      if (autoAdvance && nextReportId) {
+        router.push(`/reports/${nextReportId}`)
+      }
+    }
+    // advanceToNext is recreated each render; the effect re-runs only on
+    // reportId/status change, capturing the latest closure at that point.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [reportId, status])
 }

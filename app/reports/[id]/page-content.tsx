@@ -31,7 +31,7 @@ import {
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { useReports } from '@/reports/useReports'
+import { useReportAutoAdvance, useReports } from '@/reports/useReports'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -489,7 +489,7 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const createActivity = useCreateActivity()
-  const { advanceToNext } = useReports(report.id)
+  useReportAutoAdvance(report.id, report.status)
 
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
@@ -596,7 +596,6 @@ function ReportDetailLayout(props: {
       }
 
       setSelectedAction(null) // Reset after successful submission
-      advanceToNext()
     } else {
       await onSubmit(finalVals)
     }

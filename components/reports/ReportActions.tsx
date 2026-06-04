@@ -98,7 +98,6 @@ function TransitionConfirmPanel({
 }) {
   const [note, setNote] = useState('')
   const createActivity = useCreateActivity()
-  const { advanceToNext } = useReports(reportId)
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
 
   const handleConfirm = () => {
@@ -117,9 +116,8 @@ function TransitionConfirmPanel({
           if (action === 'no-action' && onResolveAppeal) {
             await onResolveAppeal()
           }
-          if (action === 'no-action') {
-            advanceToNext()
-          }
+          // Auto-advance is handled centrally by useAdvanceOnReportClose,
+          // which fires when the report's status transitions to 'closed'.
           onDone()
         },
         onError: (e) => {
@@ -232,7 +230,7 @@ export function ReportActionsBar({
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   onResolveAppeal?: () => Promise<void>
 }) {
-  const { advanceAfterAction, setAdvanceAfterAction } = useReports(report.id)
+  const { autoAdvance, setAutoAdvance } = useReports(report.id)
 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
@@ -376,8 +374,8 @@ export function ReportActionsBar({
       <Checkbox
         className="mt-2 flex items-center text-xs"
         label="Advance to next after closing"
-        checked={!!advanceAfterAction}
-        onChange={(e) => setAdvanceAfterAction(e.target.checked)}
+        checked={!!autoAdvance}
+        onChange={(e) => setAutoAdvance(e.target.checked)}
       />
 
       {pendingAction && (
