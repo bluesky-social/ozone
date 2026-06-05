@@ -1,6 +1,7 @@
 import {
   $Typed,
   AppBskyEmbedExternal,
+  AppBskyEmbedGallery,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
   AppBskyEmbedRecordWithMedia,
@@ -14,6 +15,7 @@ export const isValidPostRecord = asPredicate(AppBskyFeedPost.validateRecord)
 
 export type KnownEmbedView =
   | $Typed<AppBskyEmbedExternal.View>
+  | $Typed<AppBskyEmbedGallery.View>
   | $Typed<AppBskyEmbedImages.View>
   | $Typed<AppBskyEmbedRecord.View>
   | $Typed<AppBskyEmbedVideo.View>

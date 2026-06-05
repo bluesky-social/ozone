@@ -7,6 +7,7 @@ import {
   AppBskyFeedPost,
   AppBskyEmbedRecord,
   AppBskyEmbedImages,
+  AppBskyEmbedGallery,
   AppBskyEmbedExternal,
   AppBskyGraphDefs,
   $Typed,
@@ -39,6 +40,7 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 import { ImageList } from './ImageList'
+import { GalleryEmbed } from './GalleryEmbed'
 import {
   GraphicMediaFilterPreference,
   useGraphicMediaPreferences,
@@ -351,6 +353,11 @@ export function EmbedRenderer({
         />
       </div>
     )
+  }
+  // render gallery embeds (open-union; up to 20 items, may include
+  // future non-image variants which render as an unsupported placeholder)
+  if (AppBskyEmbedGallery.isView(embed)) {
+    return <GalleryEmbed embed={embed} imageClassName={imageClassName} />
   }
   // render external link embeds
   if (AppBskyEmbedExternal.isView(embed)) {
