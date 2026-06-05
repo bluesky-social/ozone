@@ -7,19 +7,16 @@ import {
   ToolsOzoneModerationDefs,
 } from '@atproto/api'
 
-const appendGalleryAlts = (
-  gallery: AppBskyEmbedGallery.Main,
-  startIndex: number,
-): { text: string; nextIndex: number } => {
+const galleryAltsText = (gallery: AppBskyEmbedGallery.Main): string => {
   let text = ''
-  let i = startIndex
+  let i = 1
   for (const item of gallery.items) {
     if (AppBskyEmbedGallery.isImage(item)) {
       text += `Image ${i} ALT: ${item.alt}\n`
       i += 1
     }
   }
-  return { text, nextIndex: i }
+  return text
 }
 
 export const useCopyRecordDetails = ({
@@ -38,7 +35,7 @@ export const useCopyRecordDetails = ({
           data += `Image ${i + 1} ALT: ${img.alt}\n`
         })
       } else if (asPredicate(AppBskyEmbedGallery.validateMain)(embed)) {
-        data += appendGalleryAlts(embed, 1).text
+        data += galleryAltsText(embed)
       } else if (
         asPredicate(AppBskyEmbedRecordWithMedia.validateMain)(embed)
       ) {
@@ -49,7 +46,7 @@ export const useCopyRecordDetails = ({
         } else if (
           asPredicate(AppBskyEmbedGallery.validateMain)(embed.media)
         ) {
-          data += appendGalleryAlts(embed.media, 1).text
+          data += galleryAltsText(embed.media)
         }
       }
     }
