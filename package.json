@@ -20,7 +20,7 @@
     "unlink-atproto": "node scripts/toggle-atproto.js --unlink"
   },
   "dependencies": {
-    "@atproto/api": "0.20.7",
+    "@atproto/api": "0.20.9",
     "@atproto/oauth-client-browser": "^0.3.42",
     "@atproto/oauth-types": "^0.6.3",
     "@atproto/xrpc": "^0.8.0",

@@ -14,6 +14,7 @@ import {
 import { regenerateBatchId } from '@/lib/batchId'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import {
+  AppBskyEmbedGallery,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
   asPredicate,
@@ -267,6 +268,12 @@ const getEmbedValues = (embed: unknown): string => {
       .map(({ image }) => {
         return image.ref.toString()
       })
+      .join('|')
+  }
+  if (asPredicate(AppBskyEmbedGallery.validateMain)(embed)) {
+    return embed.items
+      .filter(AppBskyEmbedGallery.isImage)
+      .map(({ image }) => image.ref.toString())
       .join('|')
   }
   if (asPredicate(AppBskyEmbedRecord.validateMain)(embed)) {
