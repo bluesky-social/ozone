@@ -77,6 +77,7 @@ export function QueueFilters({
           <option value="account">account</option>
           <option value="record">record</option>
           <option value="message">message</option>
+          <option value="conversation">conversation</option>
         </Select>
         <div hidden={hiddenFilters?.includes('collection')} className="flex-1">
           <CollectionAutocomplete

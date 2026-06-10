@@ -16,6 +16,23 @@
       "lastUpdated": "2026-03-02T15:49:30.681Z"
     }
   },
+  "convoQueue": {
+    "id": 3,
+    "name": "Convo Queue",
+    "description": "Handles reports against DM conversations",
+    "subjectTypes": ["conversation"],
+    "reportTypes": ["tools.ozone.report.defs#reasonMisleadingSpam"],
+    "createdBy": "did:plc:tfeay256xpz3vf5v5d3cxykt",
+    "createdAt": "2026-03-02T15:49:30.681Z",
+    "updatedAt": "2026-03-02T15:49:30.681Z",
+    "enabled": true,
+    "stats": {
+      "pendingCount": 2,
+      "actionedCount": 4,
+      "escalatedCount": 0,
+      "lastUpdated": "2026-03-02T15:49:30.681Z"
+    }
+  },
   "hateSpeechQueue": {
     "id": 2,
     "name": "Hate Speech Queue",

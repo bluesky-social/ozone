@@ -34,6 +34,8 @@ const SUBJECT_TYPE_OPTIONS = [
   { id: 'all', text: 'All Subject Types', value: '' },
   { id: 'account', text: 'Account', value: 'account' },
   { id: 'record', text: 'Record', value: 'record' },
+  { id: 'message', text: 'Message', value: 'message' },
+  { id: 'conversation', text: 'Conversation', value: 'conversation' },
 ]
 
 function useFiltersUpdater() {
@@ -91,10 +93,11 @@ export function BetaReportsFilters() {
   const setSubjectType = (value: string) => {
     if (value === subjectType) {
       updateParam({ subjectType: undefined, collections: undefined })
-    } else if (value === 'account') {
-      updateParam({ subjectType: 'account', collections: undefined })
+    } else if (value === 'record') {
+      updateParam({ subjectType: value })
     } else {
-      updateParam({ subjectType: value || undefined })
+      // Collections only apply to record subjects
+      updateParam({ subjectType: value || undefined, collections: undefined })
     }
   }
 
