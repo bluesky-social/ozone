@@ -13,6 +13,7 @@ describe('Queue Management', () => {
   let authFixture: Record<string, any>
   let spamQueue: Record<string, any>
   let hateSpeechQueue: Record<string, any>
+  let convoQueue: Record<string, any>
 
   beforeEach(() => {
     cy.visit(`${BASE_URL}/configure?tab=queues`)
@@ -21,6 +22,7 @@ describe('Queue Management', () => {
       cy.fixture('queues.json').then((queues) => {
         spamQueue = queues.spamQueue
         hateSpeechQueue = queues.hateSpeechQueue
+        convoQueue = queues.convoQueue
         mockQueueGetAssignmentsResponse({
           statusCode: 200,
           body: { assignments: [] },
@@ -146,6 +148,42 @@ describe('Queue Management', () => {
       cy.wait(2000)
 
       cy.contains('Queue created successfully').should('be.visible')
+    })
+
+    it('creates a queue with the conversation subject type', () => {
+      const createdQueue = {
+        ...convoQueue,
+        id: 100,
+        name: 'My Convo Queue',
+      }
+
+      mockCreateQueueResponse({
+        statusCode: 200,
+        body: { queue: createdQueue },
+      })
+      mockListQueuesResponse({
+        statusCode: 200,
+        body: { queues: [createdQueue] },
+      })
+
+      cy.get('[data-cy="add-queue-button"]').click()
+      cy.get('#name').should('be.visible')
+
+      cy.get('#name').type('My Convo Queue')
+      cy.get('#subjectTypes-conversation').check()
+
+      cy.get('[data-cy="report-types-input"]').scrollIntoView().type('spam')
+      cy.contains('Spam').click()
+      cy.get('[data-cy="report-types-input"]').type('{esc}')
+
+      cy.get('[data-cy="submit-queue-button"]').click()
+      cy.wait(2000)
+
+      cy.contains('Queue created successfully').should('be.visible')
+      cy.get('[data-cy="queue-card"]').within(() => {
+        cy.contains('My Convo Queue')
+        cy.contains('conversation')
+      })
     })
 
     it('shows collection field only when record subject type is checked', () => {

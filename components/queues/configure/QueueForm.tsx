@@ -266,7 +266,7 @@ export function QueueForm({
                   />
                 )}
               </div>
-              <div className="h-6 flex items-center gap-1">
+              <div className="h-8 flex items-center gap-1">
                 <Checkbox
                   id="subjectTypes-message"
                   name="subjectTypes"
@@ -276,6 +276,19 @@ export function QueueForm({
                 />
                 <Tooltip anchor="right start">
                   Reports against direct messages.
+                </Tooltip>
+              </div>
+              <div className="h-6 flex items-center gap-1">
+                <Checkbox
+                  id="subjectTypes-conversation"
+                  name="subjectTypes"
+                  checked={subjectTypes.has('conversation')}
+                  onChange={() => toggleSubjectType('conversation')}
+                  label="conversation"
+                />
+                <Tooltip anchor="right start">
+                  Reports against an entire DM conversation, such as a group
+                  chat.
                 </Tooltip>
               </div>
             </div>
