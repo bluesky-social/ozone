@@ -506,7 +506,7 @@ const TakedownOrMute = ({
         </p>
       )}
       {modEvent.event.comment ? (
-        <p className="pb-1">{`${modEvent.event.comment}`}</p>
+        <p className="pb-1 whitespace-pre-wrap">{`${modEvent.event.comment}`}</p>
       ) : null}
 
       {ToolsOzoneModerationDefs.isModEventTakedown(modEvent.event) && (

@@ -1,6 +1,6 @@
 'use client'
 
-import { groupedReasonTypes } from '@/reports/helpers/getType'
+import { statReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsPanel } from '@/reports/stats/LiveStats'
 import {
@@ -19,9 +19,7 @@ export function StatsDetailPageContent() {
   const { filters, handleFilterChange } = useParamStatsFilters()
 
   const isAggregate = filters.grouping === 'aggregate'
-  const reportTypes = filters.category
-    ? groupedReasonTypes[filters.category]
-    : []
+  const reportTypes = filters.category ? statReasonTypes[filters.category] : []
   const live: LiveStatsParams = isAggregate
     ? {}
     : {
