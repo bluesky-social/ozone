@@ -69,7 +69,9 @@ import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
 import { MutedBadge } from 'components/reports/MutedBadge'
+import { AutomatedBadge } from 'components/reports/AutomatedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
+import { getReportModTool } from '@/lib/report-modtool-types'
 import {
   ViewersIndicator,
   AssignmentViewWithModerator,
@@ -187,6 +189,7 @@ function ReportInfoPanel({
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
         <MutedBadge isMuted={report.isMuted} />
+        <AutomatedBadge modTool={getReportModTool(report)} />
         <QueueBadge reportId={report.id} queue={report.queue} />
         <span
           className="text-xs text-gray-500 dark:text-gray-400"
