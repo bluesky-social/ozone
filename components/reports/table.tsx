@@ -36,7 +36,9 @@ import { PriorityScore } from '../subject/PriorityScore'
 import { AccountStrike } from '../subject/AccountStrike'
 import { ReasonBadge } from '../reports/ReasonBadge'
 import { ReportStatusBadge } from '../reports/ReportStatusBadge'
+import { AutomatedBadge } from './AutomatedBadge'
 import { MutedBadge } from './MutedBadge'
+import { getReportModTool } from '@/lib/report-modtool-types'
 import { TextWithLinks } from '../common/TextWithLinks'
 import { LabelList, ModerationLabel } from '../common/labels/List'
 import { SubjectTag } from '../tags/SubjectTag'
@@ -371,6 +373,7 @@ function ReportRow({
           )}
           <ReportStatusBadge status={report.status} />
           <MutedBadge isMuted={report.isMuted} />
+          <AutomatedBadge modTool={getReportModTool(report)} />
         </div>
         {!!report.comment && (
           <div
