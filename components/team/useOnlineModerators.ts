@@ -1,7 +1,8 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { useLabelerAgent } from '../shell/ConfigurationContext'
-import { useConfigContext } from '../shell/ConfigContext'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
+import { useConfigContext } from '../shell/ConfigContext'
+import { useLabelerAgent } from '../shell/ConfigurationContext'
+import { useFullMemberList } from './useMemberList'
 
 export const ONLINE_MODERATORS_QUERY_KEY = ['onlineModerators']
 
@@ -33,9 +34,12 @@ const MOD_ACTION_EVENT_TYPES = [
 export function useOnlineModerators() {
   const labelerAgent = useLabelerAgent()
   const { config } = useConfigContext()
+  const { data: members } = useFullMemberList()
 
   return useQuery<OnlineModerator[]>({
     queryKey: ONLINE_MODERATORS_QUERY_KEY,
+    select: (moderators) =>
+      members ? moderators.filter((mod) => members.has(mod.did)) : moderators,
     queryFn: async () => {
       const activeThreshold = new Date(Date.now() - ACTIVE_THRESHOLD)
 

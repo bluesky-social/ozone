@@ -45,13 +45,13 @@ export const useMemberList = (q?: string) => {
 }
 
 /**
- * Fetches all active members.
+ * Fetches full list of active members.
  */
-export const useActiveMemberList = () => {
+export const useFullMemberList = () => {
   const labelerAgent = useLabelerAgent()
 
   return useQuery({
-    queryKey: ['activeMemberList'],
+    queryKey: ['fullMemberList'],
     // expensive so use longer stale time
     staleTime: 5 * 60 * 1000,
     queryFn: async () => {
