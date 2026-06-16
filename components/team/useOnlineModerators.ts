@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { useLabelerAgent } from '../shell/ConfigurationContext'
 import { useConfigContext } from '../shell/ConfigContext'
+import { MOD_EVENTS } from '@/mod-event/constants'
 
 export const ONLINE_MODERATORS_QUERY_KEY = ['onlineModerators']
 
@@ -12,6 +13,22 @@ export type OnlineModerator = {
 const ACTIVE_THRESHOLD = 5 * 60 * 1000
 const REFETCH_INTERVAL = 5 * 1000
 const STALE_TIME = 2 * 1000 // debounce protection when used with refetch below
+
+// Event types that indicate a moderator is actively working.
+const MOD_ACTION_EVENT_TYPES = [
+  MOD_EVENTS.TAKEDOWN,
+  MOD_EVENTS.REVERSE_TAKEDOWN,
+  MOD_EVENTS.LABEL,
+  MOD_EVENTS.EMAIL,
+  MOD_EVENTS.COMMENT,
+  MOD_EVENTS.ESCALATE,
+  MOD_EVENTS.ACKNOWLEDGE,
+  MOD_EVENTS.TAG,
+  MOD_EVENTS.MUTE,
+  MOD_EVENTS.UNMUTE,
+  MOD_EVENTS.RESOLVE_APPEAL,
+  MOD_EVENTS.SET_PRIORITY,
+]
 
 export function useOnlineModerators() {
   const labelerAgent = useLabelerAgent()
@@ -34,6 +51,7 @@ export function useOnlineModerators() {
       try {
         const { data } = await labelerAgent.tools.ozone.moderation.queryEvents({
           createdAfter: activeThreshold.toISOString(),
+          types: MOD_ACTION_EVENT_TYPES,
           limit: 30,
         })
         data.events.forEach((event) => {
