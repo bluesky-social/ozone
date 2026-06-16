@@ -78,6 +78,8 @@ export function displayError(err: unknown) {
     originalMessage = err
   } else if (typeof err?.['message'] === 'string') {
     originalMessage = err['message']
+  } else if (typeof err?.['error'] === 'string') {
+    originalMessage = err['error']
   }
   if (!originalMessage) {
     return displayErrorMapping.$default

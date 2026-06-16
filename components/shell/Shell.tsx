@@ -4,6 +4,7 @@ import { MagnifyingGlassIcon } from '@heroicons/react/20/solid'
 import { SidebarNav } from './SidebarNav'
 import { MobileMenuProvider, MobileMenu, MobileMenuBtn } from './MobileMenu'
 import { ProfileMenu } from './ProfileMenu'
+import { OnlineModeratorsIndicator } from '../team/OnlineModeratorsIndicator'
 
 import { useCommandPaletteAsyncSearch } from './CommandPalette/useAsyncSearch'
 import { useFluentReportSearchUpdate } from '@/reports/useFluentReportSearch'
@@ -62,7 +63,9 @@ export function Shell({ children }: React.PropsWithChildren) {
                     </div>
                   </form>
                 </div>
-                <div className="ml-2 flex items-center space-x-4 sm:ml-6 sm:space-x-6">
+                <div className="ml-2 flex items-center gap-6 sm:ml-6 sm:gap-6">
+                  {/* Online moderators indicator */}
+                  <OnlineModeratorsIndicator />
                   {/* Profile dropdown */}
                   <ProfileMenu />
                 </div>
