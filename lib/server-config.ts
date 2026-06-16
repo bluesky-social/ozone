@@ -21,6 +21,7 @@ export type ServerConfig = {
     canManageQueues: boolean
     canAssignOthers: boolean
     canPurgeAgeAssurance: boolean
+    canViewModeratorStats: boolean
   }
 }
 
@@ -56,6 +57,7 @@ export const parseServerConfig = (
       canManageQueues: isModerator,
       canAssignOthers: isAdmin,
       canPurgeAgeAssurance: isModerator,
+      canViewModeratorStats: isAdmin,
     },
   }
 }

@@ -12,13 +12,19 @@ import {
   LiveStatsParams,
   useHistoricalStats,
 } from '@/reports/stats/useReportStats'
+import { usePermission } from '@/shell/ConfigurationContext'
 import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 
 export function StatsDetailPageContent() {
+  const canViewModeratorStats = usePermission('canViewModeratorStats')
   const { filters, handleFilterChange } = useParamStatsFilters()
 
-  const isAggregate = filters.grouping === 'aggregate'
+  // consider aggregate if selected or if not permitted
+  const isAggregate =
+    filters.grouping === 'aggregate' ||
+    (filters.grouping === 'moderator' && !canViewModeratorStats)
+
   const reportTypes = filters.category ? statReasonTypes[filters.category] : []
   const live: LiveStatsParams = isAggregate
     ? {}
