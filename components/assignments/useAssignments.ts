@@ -94,37 +94,3 @@ export const useReportAssignments = (
     },
   })
 }
-
-const AUTO_ASSIGN_INTERVAL_MS = 3 * MINUTE
-export const useAutoAssignReport = ({
-  reportId,
-  queueId,
-}: {
-  reportId: number
-  queueId?: number
-}) => {
-  const labelerAgent = useLabelerAgent()
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-
-  const assign = useCallback(async () => {
-    try {
-      await labelerAgent.tools.ozone.report.assignModerator({
-        reportId,
-        queueId,
-      })
-    } catch (err) {
-      console.warn(`Auto-assign failed. `, err)
-    }
-  }, [reportId, queueId, labelerAgent])
-
-  useEffect(() => {
-    assign()
-    intervalRef.current = setInterval(assign, AUTO_ASSIGN_INTERVAL_MS)
-
-    return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current)
-      }
-    }
-  }, [reportId, queueId])
-}

@@ -8,7 +8,6 @@ import { ReportStatuses } from '@/reports/constants'
 import { useAuthDid } from '@/shell/AuthContext'
 
 const STATUS_OPTIONS = [
-  { id: 'all', text: 'All Statuses', value: '' },
   { id: ReportStatuses.OPEN, text: 'Open', value: ReportStatuses.OPEN },
   { id: ReportStatuses.CLOSED, text: 'Closed', value: ReportStatuses.CLOSED },
   {

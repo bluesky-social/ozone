@@ -28,9 +28,15 @@ import {
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
+import { AutomatedBadge } from '@/reports/AutomatedBadge'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import {
+  useReportArrowKeyNavigation,
+  useReportAutoAdvance,
+  useReports,
+} from '@/reports/useReports'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
@@ -40,6 +46,7 @@ import {
   ReviewStateIcon,
   SubjectReviewStateBadge,
 } from '@/subject/ReviewStateMarker'
+import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
 import {
   ComAtprotoModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -50,13 +57,12 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
 } from '@heroicons/react/24/outline'
-import { InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
 import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
 import { EmailComposerFields } from 'components/email/Composer'
-import { AutomatedBadge } from 'components/reports/AutomatedBadge'
 import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
@@ -71,14 +77,23 @@ import {
   AssignmentViewWithModerator,
   ViewersIndicator,
 } from 'components/reports/ViewersIndicator'
-import { useAssignModerator, useUnassignModerator } from 'components/reports/hooks'
+import {
+  useAssignModerator,
+  useCreateActivity,
+  useUnassignModerator,
+} from 'components/reports/hooks'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { formatDistanceToNow } from 'date-fns'
-import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useState } from 'react'
+import {
+  useParams,
+  usePathname,
+  useRouter,
+  useSearchParams,
+} from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-toastify'
 
 const FORM_ID = 'report-detail-action-panel'
@@ -100,50 +115,6 @@ function isAppealReport(reportType?: string): boolean {
   )
 }
 
-function getReportsFromCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-): ToolsOzoneReportDefs.ReportView[] {
-  const allReports: ToolsOzoneReportDefs.ReportView[] = []
-  for (const key of ['events', 'betaReports']) {
-    const allQueriesData = queryClient.getQueriesData<
-      InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
-    >({ queryKey: [key] })
-
-    for (const [, data] of allQueriesData) {
-      if (!data?.pages) continue
-      for (const page of data.pages) {
-        if (page.reports) allReports.push(...page.reports)
-      }
-    }
-  }
-  return allReports
-}
-
-function findAdjacentReportsInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  reportId: number,
-): { prevId: number | null; nextId: number | null } {
-  const allReports = getReportsFromCache(queryClient)
-
-  if (allReports.length === 0) return { prevId: null, nextId: null }
-
-  const index = allReports.findIndex((r) => r.id === reportId)
-  if (index === -1) return { prevId: null, nextId: null }
-
-  return {
-    prevId: index > 0 ? allReports[index - 1].id : null,
-    nextId: index < allReports.length - 1 ? allReports[index + 1].id : null,
-  }
-}
-
-function findReportInCache(
-  queryClient: ReturnType<typeof useQueryClient>,
-  reportId: number,
-): ToolsOzoneReportDefs.ReportView | null {
-  const allReports = getReportsFromCache(queryClient)
-  return allReports.find((r) => r.id === reportId) ?? null
-}
-
 function ReportInfoPanel({
   report,
   assignment,
@@ -154,6 +125,7 @@ function ReportInfoPanel({
   onClickDid?: (did: string) => void
 }) {
   const labelerAgent = useLabelerAgent()
+  const refetchOnlineModerators = useRefetchOnlineModerators()
   const [unassignConfirmOpen, setUnassignConfirmOpen] = useState(false)
 
   const {
@@ -161,7 +133,10 @@ function ReportInfoPanel({
     isPending,
     error,
   } = useAssignModerator({
-    onSuccess: () => toast.success('Report assigned to you'),
+    onSuccess: () => {
+      toast.success('Report assigned to you')
+      refetchOnlineModerators()
+    },
   })
 
   const {
@@ -308,7 +283,7 @@ function ReportInfoPanel({
         confirmButtonDisabled={isUnassigning}
         error={
           unassignError
-            ? (unassignError as any)?.message ?? 'Failed to unassign'
+            ? ((unassignError as any)?.message ?? 'Failed to unassign')
             : undefined
         }
         onConfirm={() => unassignFromMe(report.id)}
@@ -327,6 +302,7 @@ export function ReportDetailPageContent() {
   const queryClient = useQueryClient()
   const emitEvent = useEmitEvent()
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
+  const refetchOnlineModerators = useRefetchOnlineModerators()
 
   const quickOpenParam = searchParams.get('quickOpen') ?? ''
   const setQuickActionPanelSubject = (subject: string) => {
@@ -339,20 +315,17 @@ export function ReportDetailPageContent() {
     router.push((pathname ?? '') + '?' + nextParams.toString())
   }
 
-  const cachedReport = useMemo(
-    () => findReportInCache(queryClient, reportId),
-    [reportId],
-  )
-
-  const { prevId, nextId } = useMemo(
-    () => findAdjacentReportsInCache(queryClient, reportId),
-    [reportId],
-  )
+  const {
+    report: cachedReport,
+    prevReportId,
+    nextReportId,
+  } = useReports(reportId)
 
   // Register this session as a viewer (temporary, non-permanent assignment).
   useEffect(() => {
     labelerAgent.tools.ozone.report
       .assignModerator({ reportId })
+      .then(() => refetchOnlineModerators())
       .catch(() => {})
   }, [reportId])
 
@@ -386,6 +359,8 @@ export function ReportDetailPageContent() {
     initialAssigneeDid: report?.assignment?.did,
     skipInitialPoll: calledGetReport,
   })
+
+  const createActivity = useCreateActivity()
 
   if (!report && isLoading) {
     return (
@@ -423,14 +398,15 @@ export function ReportDetailPageContent() {
         <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">
           Report #{reportId}
         </h1>
-        {(prevId !== null || nextId !== null) && (
+        {(prevReportId !== null || nextReportId !== null) && (
           <div className="ml-auto flex items-center gap-1">
             <ActionButton
               size="xs"
               appearance="primary"
-              disabled={prevId === null}
+              disabled={prevReportId === null}
+              className="disabled:opacity-50"
               onClick={() =>
-                prevId !== null && router.push(`/reports/${prevId}`)
+                prevReportId !== null && router.push(`/reports/${prevReportId}`)
               }
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -439,9 +415,10 @@ export function ReportDetailPageContent() {
             <ActionButton
               size="xs"
               appearance="primary"
-              disabled={nextId === null}
+              disabled={nextReportId === null}
+              className="disabled:opacity-50"
               onClick={() =>
-                nextId !== null && router.push(`/reports/${nextId}`)
+                nextReportId !== null && router.push(`/reports/${nextReportId}`)
               }
             >
               Next
@@ -459,11 +436,27 @@ export function ReportDetailPageContent() {
           assignment={report.assignment}
           viewers={viewers}
           onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-            await emitEvent(
-              hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+            const result = await emitEvent(
+              hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
+            const eventId = (result as any)?.id
+            const isCascaded =
+              report.subject.type !== 'account' &&
+              vals.subject.$type === 'com.atproto.admin.defs#repoRef'
+            if (isCascaded && eventId) {
+              await createActivity.mutateAsync({
+                reportId: report.id,
+                activity: {
+                  $type: 'tools.ozone.report.defs#noteActivity',
+                },
+                internalNote: `Account-level actions were taken as a result of actioning this report. (${window.location.origin}/events/${eventId})`,
+                isAutomated: true,
+              })
+            }
             queryClient.invalidateQueries({ queryKey: ['report', reportId] })
-            queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
+            queryClient.invalidateQueries({
+              queryKey: ['reportActivities', reportId],
+            })
           }}
           onCancel={() => router.push('/reports')}
           onClickDid={setQuickActionPanelSubject}
@@ -481,7 +474,9 @@ export function ReportDetailPageContent() {
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           queryClient.invalidateQueries({ queryKey: ['report', reportId] })
-          queryClient.invalidateQueries({ queryKey: ['reportActivities', reportId] })
+          queryClient.invalidateQueries({
+            queryKey: ['reportActivities', reportId],
+          })
         }}
       />
       <WorkspacePanel
@@ -513,6 +508,10 @@ function ReportDetailLayout(props: {
     onClickDid,
   } = props
   const subjectOptions = [subject]
+
+  const router = useRouter()
+  useReportArrowKeyNavigation(report.id)
+  useReportAutoAdvance(report.id, report.status)
 
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
@@ -548,31 +547,43 @@ function ReportDetailLayout(props: {
       }
     }
 
-    const eventType = (finalVals.event as any)?.$type as string | undefined
-    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-      const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
-      if (reportActionScope === 'current') {
-        reportAction.ids = [report.id]
-      } else if (reportActionScope === 'all') {
-        reportAction.all = true
-      } else if (reportActionTypes.length > 0) {
-        reportAction.types = reportActionTypes
-      }
-      await onSubmit({ ...finalVals, reportAction })
+    const subj = (finalVals as any).subject
+    const event = finalVals.event
+    const eventType = event?.$type as string | undefined
+    // check if event was cascaded to the owning account
+    const isCascaded =
+      report.subject.type !== 'account' &&
+      subj.$type === 'com.atproto.admin.defs#repoRef'
 
-      // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
-      if (
-        isAppealReport(report.reportType) &&
-        eventType !== MOD_EVENTS.RESOLVE_APPEAL
-      ) {
-        await onSubmit({
-          ...finalVals,
-          event: {
-            $type: MOD_EVENTS.RESOLVE_APPEAL,
-            comment: '[RESOLVING_APPEAL]',
-          },
-          reportAction: { ids: [report.id] },
-        })
+    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+      if (isCascaded) {
+        // Send original event without a report action
+        await onSubmit(finalVals)
+      } else {
+        const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+        if (reportActionScope === 'current') {
+          reportAction.ids = [report.id]
+        } else if (reportActionScope === 'all') {
+          reportAction.all = true
+        } else if (reportActionTypes.length > 0) {
+          reportAction.types = reportActionTypes
+        }
+        await onSubmit({ ...finalVals, reportAction })
+
+        // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
+        if (
+          isAppealReport(report.reportType) &&
+          eventType !== MOD_EVENTS.RESOLVE_APPEAL
+        ) {
+          await onSubmit({
+            ...finalVals,
+            event: {
+              $type: MOD_EVENTS.RESOLVE_APPEAL,
+              comment: '[RESOLVING_APPEAL]',
+            },
+            reportAction: { ids: [report.id] },
+          })
+        }
       }
 
       setSelectedAction(null) // Reset after successful submission
@@ -585,14 +596,17 @@ function ReportDetailLayout(props: {
     setSelectedAction(null)
   }
 
-  // Sync selectedAction with modEventType
+  // Sync selectedAction and reportActionScope with modEventType
   useEffect(() => {
     if (selectedAction === 'label') {
       setModEventType(MOD_EVENTS.LABEL)
+      setReportActionScope('types')
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
+      setReportActionScope('types')
     } else if (selectedAction === 'revert-takedown') {
       setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
+      setReportActionScope('current')
     }
   }, [selectedAction])
 
@@ -649,6 +663,9 @@ function ReportDetailLayout(props: {
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
   )
+
+  const subjectDid =
+    report.subject.repo?.did || profile?.did || repo?.did || record?.repo.did
 
   return (
     <div className="dark:text-gray-50">
@@ -791,6 +808,23 @@ function ReportDetailLayout(props: {
             </div>
           )}
 
+          {/* Open account in action panel */}
+          {!isSubjectDid && subjectDid && (
+            <div className="">
+              <button
+                type="button"
+                onClick={() =>
+                  router.replace(
+                    `${window.location.origin}/reports/${report.id}?quickOpen=${subjectDid}`,
+                  )
+                }
+                className="text-xs text-gray-500 underline"
+              >
+                Open account in action panel
+              </button>
+            </div>
+          )}
+
           {/* Event stream */}
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
             <ModEventList
@@ -806,7 +840,11 @@ function ReportDetailLayout(props: {
 
         {/* Right col */}
         <div className="w-full lg:w-1/2 shrink-0">
-          <ReportInfoPanel report={report} assignment={assignment} onClickDid={onClickDid} />
+          <ReportInfoPanel
+            report={report}
+            assignment={assignment}
+            onClickDid={onClickDid}
+          />
 
           <ViewersIndicator viewers={viewers} onClickDid={onClickDid} />
 
@@ -852,9 +890,15 @@ function ReportDetailLayout(props: {
             onResolveAppeal={
               isAppealReport(report.reportType)
                 ? async () => {
-                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = { ids: [report.id] }
+                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction =
+                      { ids: [report.id] }
                     await onSubmit({
-                      subject: { $type: 'com.atproto.admin.defs#repoRef', did: subject.startsWith('at://') ? getDidFromUri(subject)! : subject },
+                      subject: {
+                        $type: 'com.atproto.admin.defs#repoRef',
+                        did: subject.startsWith('at://')
+                          ? getDidFromUri(subject)!
+                          : subject,
+                      },
                       createdBy: config.did,
                       event: {
                         $type: MOD_EVENTS.RESOLVE_APPEAL,
@@ -904,7 +948,9 @@ function ReportDetailLayout(props: {
                   defaultSeverityLevel={selectedSeverityLevelName}
                   currentStrikes={currentStrikes}
                   actionRecommendation={actionRecommendation}
-                  variant={isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'}
+                  variant={
+                    isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'
+                  }
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
                   isSubjectDid={isSubjectDid}

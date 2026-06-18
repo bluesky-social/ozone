@@ -15,6 +15,7 @@ import {
   Bars3BottomLeftIcon,
   CheckCircleIcon,
   ChevronDownIcon,
+  ChevronRightIcon,
   ChevronUpIcon,
 } from '@heroicons/react/20/solid'
 import {
@@ -267,7 +268,18 @@ function ReportRow({
     : report.subject.record?.repo?.did
 
   return (
-    <tr {...others}>
+    <tr
+      {...others}
+      onClick={(e) => {
+        // Let nested links/buttons (subject, reporter, etc.) handle their own clicks
+        if ((e.target as HTMLElement).closest('button, a')) return
+        router.push(reportUrl)
+      }}
+      className={classNames(
+        'group cursor-pointer hover:bg-gray-50 dark:hover:bg-slate-700/50',
+        others.className,
+      )}
+    >
       {/* Mobile-only collapsed row */}
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
         <div className="flex flex-row items-center pb-1 gap-1">
@@ -375,13 +387,7 @@ function ReportRow({
           <AutomatedBadge report={report} />
         </div>
         {!!report.comment && (
-          <div
-            className="mb-1 cursor-pointer"
-            onClick={(e) => {
-              if ((e.target as HTMLElement).closest('button, a')) return
-              router.push(reportUrl)
-            }}
-          >
+          <div className="mb-1">
             <ReporterComment comment={report.comment} />
           </div>
         )}
@@ -494,6 +500,12 @@ function ReportRow({
             </span>
           </div>
         )}
+      </td>
+      <td className="hidden w-8 pr-3 py-4 text-right align-middle sm:table-cell">
+        <ChevronRightIcon
+          className="h-5 w-5 inline-block text-gray-300 dark:text-gray-600 group-hover:text-gray-500 dark:group-hover:text-gray-300"
+          aria-hidden="true"
+        />
       </td>
     </tr>
   )
@@ -664,6 +676,9 @@ function ReportRowHead() {
             ))}
         </Link>
       </th>
+      <th scope="col" className="hidden w-8 py-3.5 sm:table-cell">
+        <span className="sr-only">Open report</span>
+      </th>
     </tr>
   )
 }
@@ -677,7 +692,7 @@ function EmptyRows({
 }) {
   return (
     <tr>
-      <td colSpan={5} className="text-center">
+      <td colSpan={6} className="text-center">
         {isInitialLoading ? (
           <>
             <Loading />
