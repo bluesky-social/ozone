@@ -1,86 +1,85 @@
 'use client'
-import { useState, useEffect, useMemo } from 'react'
-import { useParams, useRouter, useSearchParams, usePathname } from 'next/navigation'
-import { useQuery, useQueryClient, InfiniteData } from '@tanstack/react-query'
-import {
-  ToolsOzoneReportDefs,
-  ToolsOzoneModerationEmitEvent,
-  ComAtprotoModerationDefs,
-} from '@atproto/api'
-import { formatDistanceToNow } from 'date-fns'
-import { toast } from 'react-toastify'
-import {
-  ArrowLeftIcon,
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from '@heroicons/react/24/outline'
+import { Alert } from '@/common/Alert'
+import { Loading } from '@/common/Loader'
+import { PreviewCard } from '@/common/PreviewCard'
+import { TextWithLinks } from '@/common/TextWithLinks'
 import { ActionButton, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
 import { Checkbox, FormLabel, Select, Textarea } from '@/common/forms'
-import { PreviewCard } from '@/common/PreviewCard'
-import { ModEventList } from '@/mod-event/EventList'
-import { ModEventItem } from '@/mod-event/EventItem'
-import { ModToolProvider } from '@/mod-event/ModToolContext'
 import {
   LabelList,
   LabelListEmpty,
   ModerationLabel,
 } from '@/common/labels/List'
-import { isSelfLabel } from '@/common/labels/util'
 import { LabelSelector } from '@/common/labels/Selector'
-import { getDidFromUri } from '@/lib/util'
-import { Loading } from '@/common/Loader'
-import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
-import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
-import {
-  ReviewStateIcon,
-  SubjectReviewStateBadge,
-} from '@/subject/ReviewStateMarker'
-import { ActionError } from '@/reports/ModerationForm/ActionError'
-import { MessageActorMeta } from '@/dms/MessageActorMeta'
-import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
-import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
-import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
-import { SubjectTag } from 'components/tags/SubjectTag'
-import { HighProfileWarning } from '@/repositories/HighProfileWarning'
+import { isSelfLabel } from '@/common/labels/util'
+import { ConfirmationModal } from '@/common/modals/confirmation'
+import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { ConversationSubjectWarning } from '@/dms/ConversationSubjectWarning'
-import { PriorityScore } from '@/subject/PriorityScore'
-import { Alert } from '@/common/Alert'
-import { TextWithLinks } from '@/common/TextWithLinks'
+import { MessageActorMeta } from '@/dms/MessageActorMeta'
+import { getDidFromUri } from '@/lib/util'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
-import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
-import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
-import { EmailComposerFields } from 'components/email/Composer'
+import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
+import { ModEventItem } from '@/mod-event/EventItem'
+import { ModEventList } from '@/mod-event/EventList'
+import { ModToolProvider } from '@/mod-event/ModToolContext'
+import { MOD_EVENTS } from '@/mod-event/constants'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
+import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
+import { ActionError } from '@/reports/ModerationForm/ActionError'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { HighProfileWarning } from '@/repositories/HighProfileWarning'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ReasonBadge } from 'components/reports/ReasonBadge'
-import { useAssignModerator, useUnassignModerator } from 'components/reports/hooks'
-import { ConfirmationModal } from '@/common/modals/confirmation'
+import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
+import { PriorityScore } from '@/subject/PriorityScore'
+import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
 import {
-  ReportActionsBar,
+  ReviewStateIcon,
+  SubjectReviewStateBadge,
+} from '@/subject/ReviewStateMarker'
+import {
+  ComAtprotoModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+  ToolsOzoneReportDefs,
+} from '@atproto/api'
+import {
+  ArrowLeftIcon,
+  ChevronLeftIcon,
+  ChevronRightIcon,
+} from '@heroicons/react/24/outline'
+import { InfiniteData, useQuery, useQueryClient } from '@tanstack/react-query'
+import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
+import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
+import { EmailComposerFields } from 'components/email/Composer'
+import { AutomatedBadge } from 'components/reports/AutomatedBadge'
+import { MemberView } from 'components/reports/MemberView'
+import { MutedBadge } from 'components/reports/MutedBadge'
+import { QueueBadge } from 'components/reports/QueueBadge'
+import { ReasonBadge } from 'components/reports/ReasonBadge'
+import {
   ActivityTimeline,
+  ReportActionsBar,
   ReportActionType,
 } from 'components/reports/ReportActions'
-import { MemberView } from 'components/reports/MemberView'
-import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { MOD_EVENTS } from '@/mod-event/constants'
 import { ReportStatusBadge } from 'components/reports/ReportStatusBadge'
-import { MutedBadge } from 'components/reports/MutedBadge'
-import { AutomatedBadge } from 'components/reports/AutomatedBadge'
-import { QueueBadge } from 'components/reports/QueueBadge'
-import { getReportModTool } from '@/lib/report-modtool-types'
 import {
-  ViewersIndicator,
   AssignmentViewWithModerator,
+  ViewersIndicator,
 } from 'components/reports/ViewersIndicator'
-import { getHandleFromSubjectView } from 'components/reports/utils'
+import { useAssignModerator, useUnassignModerator } from 'components/reports/hooks'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
-import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+import { getHandleFromSubjectView } from 'components/reports/utils'
+import { SubjectTag } from 'components/tags/SubjectTag'
 import { WorkspacePanel } from 'components/workspace/Panel'
-import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { formatDistanceToNow } from 'date-fns'
+import { useParams, usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-toastify'
 
 const FORM_ID = 'report-detail-action-panel'
 
@@ -189,7 +188,7 @@ function ReportInfoPanel({
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
         <MutedBadge isMuted={report.isMuted} />
-        <AutomatedBadge modTool={getReportModTool(report)} />
+        <AutomatedBadge report={report} />
         <QueueBadge reportId={report.id} queue={report.queue} />
         <span
           className="text-xs text-gray-500 dark:text-gray-400"

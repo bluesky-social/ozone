@@ -1,7 +1,6 @@
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { Card } from '@/common/Card'
-import { CopyButton } from '@/common/CopyButton'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { StatValues } from '@/reports/stats/Stats'
@@ -73,24 +72,6 @@ export function QueueCard({
               ))}
             </div>
           </div>
-          {!hiddenFields?.includes('id') && (
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Queue ID
-              </p>
-              <div className="flex items-center gap-1" data-cy="queue-id">
-                <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-                  {queue.id}
-                </code>
-                <CopyButton
-                  text={String(queue.id)}
-                  label="queue ID"
-                  title="Copy queue ID to clipboard"
-                  className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
-                />
-              </div>
-            </div>
-          )}
           {!!queue.collection && !hiddenFields?.includes('collection') && (
             <div className="flex flex-col gap-1">
               <p className="text-xs text-gray-400 dark:text-gray-500">
