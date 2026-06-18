@@ -76,6 +76,8 @@ import {
 } from 'components/reports/ViewersIndicator'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
+import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
+import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
@@ -177,6 +179,11 @@ function ReportInfoPanel({
   const reporterHandle = getHandleFromSubjectView(report.reporter)
   const createdAt = new Date(report.createdAt)
 
+  // The report-creating event carries modTool context for reports filed by
+  // external intake tools (e.g. fieldkit). The panel renders nothing unless the
+  // tool is in the registry, so this is a no-op for ordinary reports.
+  const { data: creationEvent } = useReportCreationEvent(report.eventId)
+
   const moderator = assignment?.moderator
   const isAssignedToMe = !!assignment && assignment.did === labelerAgent.did
 
@@ -234,6 +241,9 @@ function ReportInfoPanel({
           />
         </div>
       )}
+
+      {/* External intake tool context (e.g. fieldkit) */}
+      <ModToolContextPanel modTool={creationEvent?.modTool} />
 
       {/* Assignment */}
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">
