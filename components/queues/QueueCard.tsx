@@ -1,12 +1,20 @@
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { Card } from '@/common/Card'
+import { Hover } from '@/common/Hover'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { StatValues } from '@/reports/stats/Stats'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import Link from 'next/link'
 import { ReactNode } from 'react'
+
+export type QueueCardField =
+  | Exclude<
+      keyof ToolsOzoneQueueDefs.QueueView,
+      'subjectTypes' | 'collection' | 'reportTypes'
+    >
+  | 'filters'
 
 export function QueueCard({
   queue,
@@ -16,13 +24,78 @@ export function QueueCard({
 }: {
   queue: ToolsOzoneQueueDefs.QueueView
   actions?: ReactNode
-  hiddenFields?: (keyof ToolsOzoneQueueDefs.QueueView)[]
+  hiddenFields?: QueueCardField[]
   hideViewReports?: boolean
 }) {
   const { data: assignments } = useQueueAssignments({
     onlyActive: true,
     queueIds: [queue.id],
   })
+
+  const hasNoCriteria =
+    !queue.subjectTypes?.length && !queue.reportTypes?.length
+
+  const subjectCount = queue.subjectTypes?.length ?? 0
+  const reportCount = queue.reportTypes?.length ?? 0
+  const filterSummary = [
+    subjectCount > 0 &&
+      `${subjectCount} subject type${subjectCount === 1 ? '' : 's'}`,
+    reportCount > 0 &&
+      `${reportCount} report type${reportCount === 1 ? '' : 's'}`,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+
+  const filters = () => {
+    if (hasNoCriteria) {
+      return (
+        <p className="text-xs text-gray-500 dark:text-gray-400">
+          This queue has no matching criteria. Reports are never auto-matched to
+          it and only land here when assigned explicitly.
+        </p>
+      )
+    }
+
+    return (
+      <>
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Subject Types
+          </p>
+          <div className="flex flex-wrap items-center gap-1">
+            {queue.subjectTypes?.map((type) => (
+              <span
+                key={type}
+                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
+              >
+                {type}
+              </span>
+            ))}
+          </div>
+        </div>
+        {!!queue.collection && (
+          <div className="flex flex-col gap-1">
+            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Collection
+            </p>
+            <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
+              {queue.collection}
+            </code>
+          </div>
+        )}
+        <div className="flex flex-col gap-1">
+          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
+            Report Types
+          </p>
+          <div className="flex flex-wrap items-center gap-1">
+            {queue.reportTypes?.map((type) => (
+              <ReasonBadge key={type} reasonType={type} />
+            ))}
+          </div>
+        </div>
+      </>
+    )
+  }
 
   return (
     <Card data-cy="queue-card" className="relative px-4 py-3">
@@ -51,50 +124,18 @@ export function QueueCard({
               {queue.enabled ? 'Enabled' : 'Disabled'}
             </span>
           </div>
-          <div className="flex flex-col gap-1">
-            <p
-              className="text-xs text-gray-400 dark:text-gray-500"
-              hidden={hiddenFields?.includes('subjectTypes')}
-            >
-              Subject Types
-            </p>
-            <div
-              className="flex items-center gap-1"
-              hidden={hiddenFields?.includes('subjectTypes')}
-            >
-              {queue.subjectTypes?.map((type) => (
-                <span
-                  key={type}
-                  className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-                >
-                  {type}
+          {!hiddenFields?.includes('filters') && (
+            <Hover content={filters()}>
+              <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
+                <span className="font-medium tracking-wide text-gray-500 dark:text-gray-400">
+                  Filters:{' '}
                 </span>
-              ))}
-            </div>
-          </div>
-          {!!queue.collection && !hiddenFields?.includes('collection') && (
-            <div className="flex flex-col gap-1">
-              <p className="text-xs text-gray-400 dark:text-gray-500">
-                Collection
-              </p>
-              <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-                {queue.collection}
-              </code>
-            </div>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {hasNoCriteria ? 'None' : filterSummary}
+                </span>
+              </div>
+            </Hover>
           )}
-          <div
-            className="flex flex-col gap-1"
-            hidden={hiddenFields?.includes('reportTypes')}
-          >
-            <p className="text-xs text-gray-400 dark:text-gray-500">
-              Report Types
-            </p>
-            <div className="flex flex-wrap items-center gap-1">
-              {queue.reportTypes?.map((type) => (
-                <ReasonBadge key={type} reasonType={type} />
-              ))}
-            </div>
-          </div>
         </div>
 
         {/* Column 2 */}
