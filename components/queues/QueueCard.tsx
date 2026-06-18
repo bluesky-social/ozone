@@ -62,7 +62,7 @@ export function QueueCard({
               className="flex items-center gap-1"
               hidden={hiddenFields?.includes('subjectTypes')}
             >
-              {queue.subjectTypes.map((type) => (
+              {queue.subjectTypes?.map((type) => (
                 <span
                   key={type}
                   className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
@@ -90,7 +90,7 @@ export function QueueCard({
               Report Types
             </p>
             <div className="flex flex-wrap items-center gap-1">
-              {queue.reportTypes.map((type) => (
+              {queue.reportTypes?.map((type) => (
                 <ReasonBadge key={type} reasonType={type} />
               ))}
             </div>
