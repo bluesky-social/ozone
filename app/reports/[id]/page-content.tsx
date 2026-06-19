@@ -77,6 +77,7 @@ import {
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
+import { ReportBatchLink } from 'components/reports/ReportBatchLink'
 import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { WorkspacePanel } from 'components/workspace/Panel'
@@ -241,6 +242,10 @@ function ReportInfoPanel({
           />
         </div>
       )}
+
+      {/* Batch actions link, shown for any report whose creating event carries
+          a modTool batchId (not just registered intake tools). */}
+      <ReportBatchLink modTool={creationEvent?.modTool} />
 
       {/* External intake tool context (e.g. fieldkit) */}
       <ModToolContextPanel modTool={creationEvent?.modTool} />
