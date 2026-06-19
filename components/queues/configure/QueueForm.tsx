@@ -23,7 +23,8 @@ function MatchSummary({
   if (subjectTypes.size === 0 || reportTypes.length === 0) {
     return (
       <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-sm text-yellow-900 dark:text-yellow-200">
-        No reports will match this queue.
+        No reports will match this queue automatically. Reports must be routed
+        to this queue explicitly.
       </div>
     )
   }
@@ -149,12 +150,7 @@ export function QueueForm({
     }
 
     if (!isEditMode) {
-      if (subjectTypes.size === 0) {
-        newErrors.subjectTypes = 'At least one subject type is required'
-      }
-      if (reportTypes.length === 0) {
-        newErrors.reportTypes = 'At least one report type is required'
-      } else if (reportTypes.length > 25) {
+      if (reportTypes.length > 25) {
         newErrors.reportTypes = 'Maximum 25 report types allowed'
       }
     }
@@ -197,7 +193,8 @@ export function QueueForm({
           Create a queue to route reports to. Only the name and description can
           be modified after creation. To change the filtering logic (subject
           types, report types, collection), you will need to create a new queue
-          and migrate reports to it.
+          and migrate reports to it. Leave the matching criteria empty to create
+          a queue that only receives reports routed to it explicitly.
         </p>
       )}
       <FormLabel label="Name" htmlFor="name" required className="mb-3">
@@ -229,7 +226,7 @@ export function QueueForm({
 
       {!isEditMode && (
         <>
-          <FormLabel label="Subject Type(s)" required>
+          <FormLabel label="Subject Type(s)">
             <div className="flex flex-col gap-5">
               <div className="h-8 flex items-center gap-1">
                 <Checkbox
@@ -284,7 +281,7 @@ export function QueueForm({
             )}
           </FormLabel>
 
-          <FormLabel label="Report Type(s)" required className="mb-3">
+          <FormLabel label="Report Type(s)" className="mb-3">
             <ReportTypeMultiselect
               value={reportTypes}
               limit={25}

@@ -28,6 +28,7 @@ import {
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
+import { AutomatedBadge } from '@/reports/AutomatedBadge'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
@@ -170,6 +171,7 @@ function ReportInfoPanel({
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
         <MutedBadge isMuted={report.isMuted} />
+        <AutomatedBadge report={report} />
         <QueueBadge reportId={report.id} queue={report.queue} />
         <span
           className="text-xs text-gray-500 dark:text-gray-400"

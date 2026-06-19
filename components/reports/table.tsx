@@ -1,46 +1,47 @@
-import Link from 'next/link'
-import { formatDistanceToNow } from 'date-fns'
-import {
-  CheckCircleIcon,
-  ChevronDownIcon,
-  ChevronUpIcon,
-  ChevronRightIcon,
-  Bars3BottomLeftIcon,
-} from '@heroicons/react/20/solid'
-import { LoadMoreButton } from '../common/LoadMoreButton'
-import { classNames, pluralize } from '@/lib/util'
-import { SubjectOverview } from '../reports/SubjectOverview'
-import { Loading } from '../common/Loader'
-import { useSearchParams, usePathname, useRouter } from 'next/navigation'
-import { Fragment, HTMLAttributes, useState } from 'react'
-import { ReviewStateIcon } from '../subject/ReviewStateMarker'
-import {
-  Popover,
-  Transition,
-  PopoverButton,
-  PopoverPanel,
-} from '@headlessui/react'
 import { ButtonGroup } from '@/common/buttons'
+import { classNames, pluralize } from '@/lib/util'
 import {
   asPredicate,
   ToolsOzoneModerationDefs,
   ToolsOzoneReportDefs,
 } from '@atproto/api'
-import { StatView } from '../subject/Summary'
+import {
+  Popover,
+  PopoverButton,
+  PopoverPanel,
+  Transition,
+} from '@headlessui/react'
+import {
+  Bars3BottomLeftIcon,
+  CheckCircleIcon,
+  ChevronDownIcon,
+  ChevronRightIcon,
+  ChevronUpIcon,
+} from '@heroicons/react/20/solid'
 import {
   FlagIcon,
   ShieldExclamationIcon,
   TrashIcon,
   UserIcon,
 } from '@heroicons/react/24/solid'
-import { PriorityScore } from '../subject/PriorityScore'
-import { AccountStrike } from '../subject/AccountStrike'
-import { ReasonBadge } from '../reports/ReasonBadge'
-import { ReportStatusBadge } from '../reports/ReportStatusBadge'
-import { MutedBadge } from './MutedBadge'
+import { formatDistanceToNow } from 'date-fns'
+import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Fragment, HTMLAttributes, useState } from 'react'
+import { LoadMoreButton } from '../common/LoadMoreButton'
+import { Loading } from '../common/Loader'
 import { TextWithLinks } from '../common/TextWithLinks'
 import { LabelList, ModerationLabel } from '../common/labels/List'
+import { ReasonBadge } from '../reports/ReasonBadge'
+import { ReportStatusBadge } from '../reports/ReportStatusBadge'
+import { SubjectOverview } from '../reports/SubjectOverview'
+import { AccountStrike } from '../subject/AccountStrike'
+import { PriorityScore } from '../subject/PriorityScore'
+import { ReviewStateIcon } from '../subject/ReviewStateMarker'
+import { StatView } from '../subject/Summary'
 import { SubjectTag } from '../tags/SubjectTag'
+import { AutomatedBadge } from './AutomatedBadge'
+import { MutedBadge } from './MutedBadge'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
@@ -383,6 +384,7 @@ function ReportRow({
           )}
           <ReportStatusBadge status={report.status} />
           <MutedBadge isMuted={report.isMuted} />
+          <AutomatedBadge report={report} />
         </div>
         {!!report.comment && (
           <div className="mb-1">

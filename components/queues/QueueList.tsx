@@ -2,7 +2,7 @@ import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { Loading } from '@/common/Loader'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
-import { QueueCard } from '@/queues/QueueCard'
+import { QueueCard, QueueCardField } from '@/queues/QueueCard'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { PencilIcon, TrashIcon } from '@heroicons/react/24/solid'
@@ -22,7 +22,7 @@ export function QueueList({
   hasNextPage?: boolean
   onEdit?: (queue: ToolsOzoneQueueDefs.QueueView) => void
   onDelete?: (queue: ToolsOzoneQueueDefs.QueueView) => void
-  hiddenFields?: (keyof ToolsOzoneQueueDefs.QueueView)[]
+  hiddenFields?: QueueCardField[]
 }) {
   const canManage = usePermission('canManageQueues')
   const showActions = canManage && (onEdit || onDelete)
