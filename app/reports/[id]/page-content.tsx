@@ -82,6 +82,9 @@ import {
   useUnassignModerator,
 } from 'components/reports/hooks'
 import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
+import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
+import { ReportBatchLink } from 'components/reports/ReportBatchLink'
+import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { SubjectTag } from 'components/tags/SubjectTag'
 import { WorkspacePanel } from 'components/workspace/Panel'
@@ -152,6 +155,11 @@ function ReportInfoPanel({
   const reporterHandle = getHandleFromSubjectView(report.reporter)
   const createdAt = new Date(report.createdAt)
 
+  // The report-creating event carries modTool context for reports filed by
+  // external intake tools (e.g. fieldkit). The panel renders nothing unless the
+  // tool is in the registry, so this is a no-op for ordinary reports.
+  const { data: creationEvent } = useReportCreationEvent(report.eventId)
+
   const moderator = assignment?.moderator
   const isAssignedToMe = !!assignment && assignment.did === labelerAgent.did
 
@@ -209,6 +217,13 @@ function ReportInfoPanel({
           />
         </div>
       )}
+
+      {/* Batch actions link, shown for any report whose creating event carries
+          a modTool batchId (not just registered intake tools). */}
+      <ReportBatchLink modTool={creationEvent?.modTool} />
+
+      {/* External intake tool context (e.g. fieldkit) */}
+      <ModToolContextPanel modTool={creationEvent?.modTool} />
 
       {/* Assignment */}
       <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700">

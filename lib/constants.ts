@@ -1,3 +1,5 @@
+import { parseModToolRegistry } from '@/reports/modToolRegistry'
+
 export const OAUTH_SCOPE = 'atproto transition:generic transition:chat.bsky'
 
 export const OZONE_SERVICE_DID =
@@ -93,3 +95,9 @@ export const STRIKE_TO_SUSPENSION_DURATION_IN_HOURS =
 export const AUTOMATED_ACTION_EMAIL_IDS = {
   strike: process.env.NEXT_PUBLIC_STRIKE_EMAIL_TEMPLATE_ID,
 }
+
+// Display config for reports created by external intake tools (keyed by
+// modTool.name). See components/reports/modToolRegistry.ts.
+export const MOD_TOOL_REGISTRY = parseModToolRegistry(
+  process.env.NEXT_PUBLIC_MOD_TOOL_REGISTRY,
+)
