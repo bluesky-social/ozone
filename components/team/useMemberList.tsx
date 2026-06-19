@@ -1,6 +1,10 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { Agent, ToolsOzoneTeamListMembers } from '@atproto/api'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import {
+  Agent,
+  ToolsOzoneTeamDefs,
+  ToolsOzoneTeamListMembers,
+} from '@atproto/api'
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import { useState } from 'react'
 import { MemberRoleNames } from './helpers'
 
@@ -38,4 +42,31 @@ export const useMemberList = (q?: string) => {
     roles,
     setRoles,
   }
+}
+
+/**
+ * Fetches full list of active members.
+ */
+export const useFullMemberList = () => {
+  const labelerAgent = useLabelerAgent()
+
+  return useQuery({
+    queryKey: ['fullMemberList'],
+    // expensive so use longer stale time
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const data = new Map<string, ToolsOzoneTeamDefs.Member>()
+      let cursor: string | undefined
+      do {
+        const page = await getMembersList(labelerAgent, {
+          disabled: false,
+          limit: 100,
+          cursor,
+        })
+        page.members.forEach((member) => data.set(member.did, member))
+        cursor = page.cursor
+      } while (cursor)
+      return data
+    },
+  })
 }

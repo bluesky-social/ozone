@@ -50,7 +50,9 @@ Cypress.Commands.add(
       body: authFixture.getLabelerRecordResponse,
     })
 
-    cy.get('#service-url').clear().type(API_URL)
+    // The login form mounts after @atproto/oauth-client-browser import
+    // Allow a timeout for the import to complete
+    cy.get('#service-url', { timeout: 10000 }).clear().type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()

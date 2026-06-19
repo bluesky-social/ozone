@@ -6,7 +6,7 @@ import { useMemo } from 'react'
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { twMerge } from 'tailwind-merge'
 import { getHrefFromGroup, StatGroup } from '.'
-import { groupedReasonTypes } from '../helpers/getType'
+import { statReasonTypes } from '../helpers/getType'
 import {
   LiveStatsParams,
   useHistoricalStats,
@@ -164,9 +164,7 @@ export function StatCard({
 
 export function StatsCard({ group }: { group: StatGroup }) {
   const filterParams: LiveStatsParams = {
-    reportTypes: group.category
-      ? groupedReasonTypes[group.category]
-      : undefined,
+    reportTypes: group.category ? statReasonTypes[group.category] : undefined,
     queueId: group.queueId,
     moderatorDid: group.moderatorDid,
   }

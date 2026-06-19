@@ -1,9 +1,9 @@
-import { groupedReasonTypes } from '../helpers/getType'
+import { statReasonTypes } from '../helpers/getType'
 
 export interface StatGroup {
   title: string
   description?: string
-  category?: keyof typeof groupedReasonTypes
+  category?: keyof typeof statReasonTypes
   queueId?: number
   moderatorDid?: string
 }

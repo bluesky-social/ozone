@@ -1,36 +1,40 @@
 'use client'
-import { useState } from 'react'
+import { ActionButton } from '@/common/buttons'
+import { Dropdown } from '@/common/Dropdown'
+import { Checkbox, Textarea } from '@/common/forms'
+import { displayError } from '@/common/Loader'
+import { usePermission } from '@/shell/ConfigurationContext'
 import {
-  ArrowUpCircleIcon,
+  ComAtprotoModerationDefs,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneReportDefs,
+} from '@atproto/api'
+import {
   ArrowPathIcon,
+  ArrowRightIcon,
+  ArrowUpCircleIcon,
   ChatBubbleLeftIcon,
   ChevronDownIcon,
   ChevronUpIcon,
-  ArrowRightIcon,
   CpuChipIcon,
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
-import {
-  ToolsOzoneReportDefs,
-  ToolsOzoneModerationDefs,
-  ComAtprotoModerationDefs,
-} from '@atproto/api'
-import { usePermission } from '@/shell/ConfigurationContext'
 import { formatDistanceToNow } from 'date-fns'
-import { ActionButton } from '@/common/buttons'
-import { Textarea } from '@/common/forms'
-import { Dropdown } from '@/common/Dropdown'
+import { useState } from 'react'
+import { toast } from 'react-toastify'
 import { useCreateActivity, useListActivities } from './hooks'
+import { useReports } from './useReports'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
-// Mirror of backend VALID_TRANSITIONS in packages/ozone/src/report/activity.ts
+// Mirror of backend VALID_TRANSITIONS
+// https://github.com/bluesky-social/atproto/blob/main/packages/ozone/src/report/handle-report-update.ts
 const VALID_TRANSITIONS: Record<string, string[]> = {
   open: ['closed', 'escalated', 'queued', 'assigned'],
   closed: ['open'],
   escalated: ['open', 'closed'],
-  queued: ['assigned', 'open', 'escalated'],
-  assigned: ['open', 'closed', 'escalated'],
+  queued: ['assigned', 'open'],
+  assigned: ['open', 'closed', 'escalated', 'queued'],
 }
 
 function canTransitionTo(fromState: string, toState: string): boolean {
@@ -40,15 +44,19 @@ function canTransitionTo(fromState: string, toState: string): boolean {
 const statusColors: Record<string, string> = {
   open: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
   closed: 'bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-300',
-  escalated: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-  queued: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
+  escalated:
+    'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
+  queued:
+    'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200',
   assigned: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200',
 }
 
 function StatusChip({ status }: { status: string }) {
   const color = statusColors[status] ?? statusColors.open
   return (
-    <span className={`${color} inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium capitalize`}>
+    <span
+      className={`${color} inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium capitalize`}
+    >
       {status}
     </span>
   )
@@ -56,10 +64,25 @@ function StatusChip({ status }: { status: string }) {
 
 type ActionType = 'escalate' | 'reopen' | 'no-action'
 
-const ACTION_CONFIG: Record<ActionType, { activityType: string; label: string; confirmLabel: string }> = {
-  escalate: { activityType: 'tools.ozone.report.defs#escalationActivity', label: 'Escalate', confirmLabel: 'Escalate report' },
-  reopen: { activityType: 'tools.ozone.report.defs#reopenActivity', label: 'Re-open', confirmLabel: 'Re-open report' },
-  'no-action': { activityType: 'tools.ozone.report.defs#closeActivity', label: 'No-action', confirmLabel: 'Close as no-action' },
+const ACTION_CONFIG: Record<
+  ActionType,
+  { activityType: string; label: string; confirmLabel: string }
+> = {
+  escalate: {
+    activityType: 'tools.ozone.report.defs#escalationActivity',
+    label: 'Escalate',
+    confirmLabel: 'Escalate report',
+  },
+  reopen: {
+    activityType: 'tools.ozone.report.defs#reopenActivity',
+    label: 'Re-open',
+    confirmLabel: 'Re-open report',
+  },
+  'no-action': {
+    activityType: 'tools.ozone.report.defs#closeActivity',
+    label: 'No-action',
+    confirmLabel: 'Close as no-action',
+  },
 }
 
 function TransitionConfirmPanel({
@@ -81,7 +104,11 @@ function TransitionConfirmPanel({
     createActivity.mutate(
       {
         reportId,
-        activity: { $type: activityType as Parameters<typeof createActivity.mutate>[0]['activity']['$type'] },
+        activity: {
+          $type: activityType as Parameters<
+            typeof createActivity.mutate
+          >[0]['activity']['$type'],
+        },
         internalNote: note.trim() || undefined,
       },
       {
@@ -90,6 +117,9 @@ function TransitionConfirmPanel({
             await onResolveAppeal()
           }
           onDone()
+        },
+        onError: (e) => {
+          toast.error(`Error actioning: ${displayError(e)}`)
         },
       },
     )
@@ -145,7 +175,12 @@ function NoteComposer({
         activity: { $type: 'tools.ozone.report.defs#noteActivity' },
         internalNote: text.trim(),
       },
-      { onSuccess: () => { setText(''); onDone() } },
+      {
+        onSuccess: () => {
+          setText('')
+          onDone()
+        },
+      },
     )
   }
 
@@ -193,9 +228,10 @@ export function ReportActionsBar({
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   onResolveAppeal?: () => Promise<void>
 }) {
+  const { autoAdvance, setAutoAdvance } = useReports(report.id)
+
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
-
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
   const isAppeal =
@@ -256,7 +292,9 @@ export function ReportActionsBar({
           <>
             {isSubjectTakendown && canTakedown && (
               <ActionButton
-                appearance={selectedAction === 'revert-takedown' ? 'primary' : 'outlined'}
+                appearance={
+                  selectedAction === 'revert-takedown' ? 'primary' : 'outlined'
+                }
                 size="sm"
                 onClick={() => handleReportActionSelect('revert-takedown')}
               >
@@ -277,14 +315,22 @@ export function ReportActionsBar({
         {canAction && !isAppeal && (canLabel || canTakedown) && (
           <Dropdown
             items={[
-              ...(canLabel ? [{
-                text: 'Label',
-                onClick: () => handleReportActionSelect('label'),
-              }] : []),
-              ...(canTakedown ? [{
-                text: 'Takedown',
-                onClick: () => handleReportActionSelect('takedown'),
-              }] : []),
+              ...(canLabel
+                ? [
+                    {
+                      text: 'Label',
+                      onClick: () => handleReportActionSelect('label'),
+                    },
+                  ]
+                : []),
+              ...(canTakedown
+                ? [
+                    {
+                      text: 'Takedown',
+                      onClick: () => handleReportActionSelect('takedown'),
+                    },
+                  ]
+                : []),
             ]}
             className={`inline-flex justify-center items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm ${
               selectedAction
@@ -320,6 +366,13 @@ export function ReportActionsBar({
         </button>
       </div>
 
+      <Checkbox
+        className="mt-2 flex items-center text-xs"
+        label="Advance to next after closing"
+        checked={!!autoAdvance}
+        onChange={(e) => setAutoAdvance(e.target.checked)}
+      />
+
       {pendingAction && (
         <TransitionConfirmPanel
           action={pendingAction}
@@ -347,28 +400,43 @@ const ACTIVITY_TO_STATUS: Record<string, string> = {
 
 type ActivityPayload = { $type: string; previousStatus?: string }
 
-function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActivityView }) {
-  const payload = (activity as unknown as { activity: ActivityPayload }).activity
+function ActivityItem({
+  activity,
+}: {
+  activity: ToolsOzoneReportDefs.ReportActivityView
+}) {
+  const payload = (activity as unknown as { activity: ActivityPayload })
+    .activity
   const activityType = payload?.$type ?? ''
   const toStatus = ACTIVITY_TO_STATUS[activityType]
   const isStateChange = !!toStatus
-  const noteText = (activity as unknown as { internalNote?: string }).internalNote
-  const timeAgo = formatDistanceToNow(new Date(activity.createdAt), { addSuffix: true })
-  const moderator = (activity as unknown as { moderator?: { profile?: { handle?: string; displayName?: string } } }).moderator
+  const noteText = (activity as unknown as { internalNote?: string })
+    .internalNote
+  const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
+    addSuffix: true,
+  })
+  const moderator = (
+    activity as unknown as {
+      moderator?: { profile?: { handle?: string; displayName?: string } }
+    }
+  ).moderator
   const displayName = moderator?.profile?.handle || activity.createdBy
 
   return (
     <div className="relative flex gap-3">
       <div className="flex flex-col items-center">
-        <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-          isStateChange
-            ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
-            : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
-        }`}>
-          {isStateChange
-            ? <ArrowRightIcon className="h-3.5 w-3.5" />
-            : <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
-          }
+        <div
+          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
+            isStateChange
+              ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
+              : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
+          }`}
+        >
+          {isStateChange ? (
+            <ArrowRightIcon className="h-3.5 w-3.5" />
+          ) : (
+            <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
+          )}
         </div>
       </div>
 
@@ -399,7 +467,7 @@ function ActivityItem({ activity }: { activity: ToolsOzoneReportDefs.ReportActiv
         </div>
 
         {noteText && (
-          <p className="mt-0.5 text-xs text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
+          <p className="mt-0.5 text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
             {noteText}
           </p>
         )}
@@ -431,8 +499,14 @@ export function ActivityTimeline({ reportId }: { reportId: number }) {
         className="flex w-full items-center justify-between px-4 py-2.5 text-sm font-medium text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-slate-800 rounded-lg"
         onClick={() => setOpen((v) => !v)}
       >
-        <span>Activity{activities?.length ? ` (${activities.length})` : ''}</span>
-        {open ? <ChevronUpIcon className="h-4 w-4" /> : <ChevronDownIcon className="h-4 w-4" />}
+        <span>
+          Activity{activities?.length ? ` (${activities.length})` : ''}
+        </span>
+        {open ? (
+          <ChevronUpIcon className="h-4 w-4" />
+        ) : (
+          <ChevronDownIcon className="h-4 w-4" />
+        )}
       </button>
 
       {open && (
@@ -441,7 +515,9 @@ export function ActivityTimeline({ reportId }: { reportId: number }) {
             <p className="py-4 text-center text-xs text-gray-400">Loading…</p>
           )}
           {!isLoading && !activities?.length && (
-            <p className="py-4 text-center text-xs text-gray-400">No activity yet</p>
+            <p className="py-4 text-center text-xs text-gray-400">
+              No activity yet
+            </p>
           )}
           {!!activities?.length && (
             <div className="relative">

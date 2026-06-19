@@ -1,6 +1,7 @@
 import { PaginatedSelect } from '@/common/PaginatedSelect'
 import { useQueueList } from '@/queues/useQueues'
 import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
+import { usePermission } from '@/shell/ConfigurationContext'
 import { MemberSingleSelect } from '@/team/MemberSingleSelect'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -45,7 +46,12 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   if (startDateParam) dateRange.startDate = startDateParam
   if (endDateParam) dateRange.endDate = endDateParam
 
-  const validGroupings: Grouping[] = ['aggregate', 'queue', 'category', 'moderator']
+  const validGroupings: Grouping[] = [
+    'aggregate',
+    'queue',
+    'category',
+    'moderator',
+  ]
   const grouping: Grouping =
     groupingParam && validGroupings.includes(groupingParam as Grouping)
       ? (groupingParam as Grouping)
@@ -144,12 +150,13 @@ export function StatsFilters({
   value: StatsFilterState
   onChange: (value: StatsFilterState) => void
 }) {
-  const {
-    data: queuesData,
-    hasNextPage,
-    fetchNextPage,
-  } = useQueueList()
+  const canViewModeratorStats = usePermission('canViewModeratorStats')
+  const { data: queuesData, hasNextPage, fetchNextPage } = useQueueList()
   const queues = queuesData?.pages.flatMap((page) => page.queues ?? []) ?? []
+
+  const groupings = canViewModeratorStats
+    ? GROUPINGS
+    : GROUPINGS.filter((mode) => mode.key !== 'moderator')
 
   const handleGroupingChange = (grouping: Grouping) => {
     onChange({
@@ -172,7 +179,7 @@ export function StatsFilters({
           onChange={(e) => handleGroupingChange(e.target.value as Grouping)}
           className="block w-auto text-sm rounded border-gray-300 dark:border-slate-600 dark:bg-slate-700 dark:text-gray-200"
         >
-          {GROUPINGS.map((mode) => (
+          {groupings.map((mode) => (
             <option key={mode.key} value={mode.key}>
               {mode.label}
             </option>
@@ -228,7 +235,7 @@ export function StatsFilters({
         </div>
       )}
 
-      {value.grouping === 'moderator' && (
+      {canViewModeratorStats && value.grouping === 'moderator' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
             Moderator
