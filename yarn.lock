@@ -1204,29 +1204,21 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@tanstack/query-core@npm:4.41.0":
-  version: 4.41.0
-  resolution: "@tanstack/query-core@npm:4.41.0"
-  checksum: 10c0/e8a502c855ac08006665293478a692dbbca39fddc1fff815d99c7dcfd01dec75705548237fe162d0db6c35f9c7bb9e8313aeaed81c952f244eed91cc1d54006c
+"@tanstack/query-core@npm:5.100.13":
+  version: 5.100.13
+  resolution: "@tanstack/query-core@npm:5.100.13"
+  checksum: 10c0/74fe49afa493d18915341c6182e825c7178dd6f6a40620c33f1b0b9a88fdeb88e8d43fddb3734973801b0f4fac98bfdd79bbd5b90f182894be9f6b66b87c154c
   languageName: node
   linkType: hard
 
-"@tanstack/react-query@npm:^4.22.0":
-  version: 4.42.0
-  resolution: "@tanstack/react-query@npm:4.42.0"
+"@tanstack/react-query@npm:^5.100.13":
+  version: 5.100.13
+  resolution: "@tanstack/react-query@npm:5.100.13"
   dependencies:
-    "@tanstack/query-core": "npm:4.41.0"
-    use-sync-external-store: "npm:^1.2.0"
+    "@tanstack/query-core": "npm:5.100.13"
   peerDependencies:
-    react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-dom: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
-    react-native: "*"
-  peerDependenciesMeta:
-    react-dom:
-      optional: true
-    react-native:
-      optional: true
-  checksum: 10c0/2258f4d592addc1c78061bc8eb059f1de3a0fa3cbf5106326a63122273dac64e96fe2a708cfbdb1b3e552810ebbe83ae27b1e5f1dec8cae77a195203c20cdcd5
+    react: ^18 || ^19
+  checksum: 10c0/7e3bdb17fb878e5c16dd25455386dcb941792078246af1c2b07d3de1bb9cc309d254f73fe65859afc3c6cfc6e35ae42842be52945d3cb5db8b38760d537baff1
   languageName: node
   linkType: hard
 
@@ -7014,7 +7006,7 @@ __metadata:
     "@heroicons/react": "npm:^2.0.13"
     "@tailwindcss/forms": "npm:^0.5.3"
     "@tailwindcss/typography": "npm:^0.5.8"
-    "@tanstack/react-query": "npm:^4.22.0"
+    "@tanstack/react-query": "npm:^5.100.13"
     "@types/node": "npm:18.11.17"
     "@types/react": "npm:19.2.5"
     "@types/react-dom": "npm:19.2.3"
@@ -9566,7 +9558,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"use-sync-external-store@npm:^1.2.0, use-sync-external-store@npm:^1.5.0":
+"use-sync-external-store@npm:^1.5.0":
   version: 1.6.0
   resolution: "use-sync-external-store@npm:1.6.0"
   peerDependencies:
