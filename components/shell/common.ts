@@ -12,9 +12,12 @@ import {
   ClockIcon,
   InboxStackIcon,
   DocumentTextIcon,
+  PhotoIcon,
 } from '@heroicons/react/24/outline'
 import { useKBar } from 'kbar'
-import { MouseEventHandler } from 'react'
+import { MouseEventHandler, useMemo } from 'react'
+
+import { useIsImageSearchEnabled } from '@/lib/useImageSearch'
 
 export const ICONS = {
   reports: ExclamationCircleIcon,
@@ -30,6 +33,7 @@ export const ICONS = {
   clock: ClockIcon,
   queues: InboxStackIcon,
   document: DocumentTextIcon,
+  photo: PhotoIcon,
 }
 
 export type SidebarNavChild = {
@@ -82,6 +86,24 @@ export const NAV_ITEMS: SidebarNavItem[] = [
     icon: 'configure',
   },
 ]
+
+export function useNavItems(): SidebarNavItem[] {
+  const imageSearchEnabled = useIsImageSearchEnabled()
+  return useMemo(() => {
+    if (!imageSearchEnabled) return NAV_ITEMS
+    return NAV_ITEMS.map((item) =>
+      'children' in item && item.name === 'Search'
+        ? {
+            ...item,
+            children: [
+              ...item.children,
+              { name: 'Images', href: '/image-search', icon: 'photo' },
+            ],
+          }
+        : item,
+    )
+  }, [imageSearchEnabled])
+}
 
 export function isCurrent(
   currentPathname: string,

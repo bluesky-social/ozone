@@ -11,7 +11,7 @@ import {
 } from '@headlessui/react'
 import { Bars3BottomLeftIcon, XMarkIcon } from '@heroicons/react/24/outline'
 import { classNames } from '@/lib/util'
-import { ICONS, NAV_ITEMS, isCurrent } from './common'
+import { ICONS, isCurrent, useNavItems } from './common'
 import Image from 'next/image'
 import { useKBar } from 'kbar'
 
@@ -50,6 +50,7 @@ export function MobileMenuBtn() {
 
 export function MobileMenu() {
   const pathname = usePathname() || '/'
+  const navItems = useNavItems()
   const mobileMenuOpen = useContext(MobileMenuOpenCtx)
   const kbar = useKBar()
   return (
@@ -120,7 +121,7 @@ export function MobileMenu() {
                 <div className="mt-5 h-0 flex-1 overflow-y-auto px-2">
                   <nav className="flex h-full flex-col">
                     <div className="space-y-1">
-                      {NAV_ITEMS.map((item) => {
+                      {navItems.map((item) => {
                         const Icon = ICONS[item.icon]
                         const active = isCurrent(pathname, item)
                         const activeClass = active

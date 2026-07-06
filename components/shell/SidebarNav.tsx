@@ -4,23 +4,24 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useKBar } from 'kbar'
 import { classNames } from '@/lib/util'
-import { ICONS, NAV_ITEMS, SidebarNavChild, isCurrent } from './common'
+import { ICONS, SidebarNavChild, isCurrent, useNavItems } from './common'
 import { useMemo, useState } from 'react'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/24/outline'
 
 export function SidebarNav() {
   const kbar = useKBar()
   const pathname = usePathname() || '/'
+  const navItems = useNavItems()
 
   const autoExpanded = useMemo(() => {
     const set = new Set<string>()
-    for (const item of NAV_ITEMS) {
+    for (const item of navItems) {
       if ('children' in item && isCurrent(pathname, item)) {
         set.add(item.name)
       }
     }
     return set
-  }, [pathname])
+  }, [pathname, navItems])
 
   const [manuallyToggled, setManuallyToggled] = useState<
     Record<string, boolean>
@@ -60,7 +61,7 @@ export function SidebarNav() {
 
   return (
     <div className="mt-6 w-full flex-1 space-y-1 px-2">
-      {NAV_ITEMS.map((item) => {
+      {navItems.map((item) => {
         const Icon = ICONS[item.icon]
         const active = isCurrent(pathname, item)
 

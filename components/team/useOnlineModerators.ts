@@ -13,7 +13,7 @@ export type OnlineModerator = {
 
 const ACTIVE_THRESHOLD = 5 * 60 * 1000
 const REFETCH_INTERVAL = 5 * 1000
-const STALE_TIME = 2 * 1000 // debounce protection when used with refetch below
+const STALE_TIME = 20 * 1000 // debounce protection when used with refetch below
 
 // Event types that indicate a moderator is actively working.
 const MOD_ACTION_EVENT_TYPES = [

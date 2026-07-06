@@ -11,6 +11,8 @@ declare global {
       NEXT_PUBLIC_SOCIAL_APP_URL?: string // e.g. https://bsky.app
       SNAPSHOT_API_URL?: string // e.g. http://localhost:3000
       SNAPSHOT_AUTH_HEADER?: string
+      IMAGE_SEARCH_API_URL?: string // image search service base URL
+      IMAGE_SEARCH_AUTH_HEADER?: string // image search service token (sent as Authorization)
     }
   }
 }
