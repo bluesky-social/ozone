@@ -37,6 +37,12 @@ const PAGE_SIZES = [10, 25, 50, 100]
 const DEFAULT_THRESHOLD = 31
 const DEFAULT_LOOKBACK_DAYS = 7
 
+const THRESHOLD_PRESETS = [
+  { label: 'Exact', value: 10, description: 'Near-identical images only' },
+  { label: 'Close', value: 31, description: 'Visually similar variants' },
+  { label: 'Broad', value: 50, description: 'Loosely similar images' },
+] as const
+
 // parseIntParam reads an integer query param, falling back to a default when
 // absent or unparseable.
 function parseIntParam(raw: string | null, fallback: number): number {
@@ -252,34 +258,59 @@ export const ImageSearchPageContent = () => {
           )}
         </FormLabel>
 
-        <div className="flex flex-row gap-4">
-          <FormLabel label="Threshold" htmlFor="threshold" className="flex-1">
-            <Input
-              id="threshold"
-              type="number"
-              min={0}
-              max={256}
-              value={threshold}
-              onChange={(e) => setThreshold(Number(e.target.value))}
-              className="w-full"
-            />
-          </FormLabel>
-          <FormLabel
-            label="Lookback (days)"
-            htmlFor="lookback"
-            className="flex-1"
-          >
-            <Input
-              id="lookback"
-              type="number"
-              min={1}
-              max={365}
-              value={lookbackDays}
-              onChange={(e) => setLookbackDays(Number(e.target.value))}
-              className="w-full"
-            />
-          </FormLabel>
-        </div>
+        <FormLabel label="Match threshold" htmlFor="threshold">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 mb-2">
+            {THRESHOLD_PRESETS.map((preset) => {
+              const selected = threshold === preset.value
+              return (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => setThreshold(preset.value)}
+                  aria-pressed={selected}
+                  className={`rounded-xl border px-4 py-3 text-left transition-colors ${
+                    selected
+                      ? 'border-indigo-500 bg-indigo-50 dark:border-teal-500 dark:bg-slate-700'
+                      : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-slate-800 hover:border-indigo-300 dark:hover:border-teal-600'
+                  }`}
+                >
+                  <span className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-gray-700 dark:text-gray-100">
+                      {preset.label}
+                    </span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500 font-mono">
+                      &le;{preset.value}
+                    </span>
+                  </span>
+                  <span className="block text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                    {preset.description}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+          <Input
+            id="threshold"
+            type="number"
+            min={0}
+            max={256}
+            value={threshold}
+            onChange={(e) => setThreshold(Number(e.target.value))}
+            className="w-full"
+          />
+        </FormLabel>
+
+        <FormLabel label="Lookback (days)" htmlFor="lookback">
+          <Input
+            id="lookback"
+            type="number"
+            min={1}
+            max={365}
+            value={lookbackDays}
+            onChange={(e) => setLookbackDays(Number(e.target.value))}
+            className="w-full"
+          />
+        </FormLabel>
 
         <div className="flex flex-row gap-2">
           <ButtonPrimary type="submit" disabled={isSearching}>
