@@ -19,9 +19,13 @@ export function useIsImageSearchEnabled(): boolean {
 
 // request
 export interface ImageSearchOptions {
+  /** Max hamming distance (0-256) for a match; lower = stricter */
   threshold?: number
+  /** How many days back to search */
   lookbackDays?: number
+  /** Max number of matches to return */
   limit?: number
+  /** Server-side search timeout in seconds */
   timeout?: number
 }
 export type ImageSearchInput =
@@ -30,17 +34,27 @@ export type ImageSearchInput =
 
 // response
 export interface ImageSearchMatch {
+  /** When the matched record was indexed (ISO 8601) */
   timestamp: string
+  /** DID of the account that posted the matched image */
   did: string
+  /** AT-URI of the matched record */
   uri: string
+  /** Text of the matched post, if any */
   postText: string
+  /** PDQ hash of the matched image (64-char hex) */
   matchedHash: string
+  /** Hamming distance between the query and matched hashes (0-256) */
   distance: number
 }
 export interface ImageSearchResult {
+  /** PDQ hash that was searched (computed server-side for image uploads) */
   query: string
+  /** Threshold the search ran with */
   threshold: number
+  /** Lookback window the search ran with */
   lookbackDays: number
+  /** Total number of matches found */
   total: number
   matches: ImageSearchMatch[]
 }
