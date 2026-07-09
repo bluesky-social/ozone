@@ -8,6 +8,7 @@ import Lightbox from 'yet-another-react-lightbox'
 import Captions from 'yet-another-react-lightbox/plugins/captions'
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
 import { classNames } from '@/lib/util'
+import { ImageSearchLink } from './ImageSearchLink'
 
 // Mirrors `getImageSizeClass` in PostsFeed.tsx so gallery thumbnails align
 // visually with `app.bsky.embed.images` thumbnails. Width is applied to the
@@ -132,6 +133,7 @@ export const GalleryEmbed = ({
               </button>
               <figcaption>
                 <ImageAltText alt={entry.item.alt} />
+                <ImageSearchLink url={entry.item.fullsize} />
               </figcaption>
             </figure>
           ) : (

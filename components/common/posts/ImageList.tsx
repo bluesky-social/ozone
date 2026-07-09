@@ -1,6 +1,7 @@
 import { AppBskyEmbedImages } from '@atproto/api'
 import { useState } from 'react'
 import { InformationCircleIcon } from '@heroicons/react/24/outline'
+import { ImageSearchLink } from './ImageSearchLink'
 import Lightbox from 'yet-another-react-lightbox'
 import Captions from 'yet-another-react-lightbox/plugins/captions'
 import Thumbnails from 'yet-another-react-lightbox/plugins/thumbnails'
@@ -62,6 +63,7 @@ export const ImageList = ({
           </button>
           <figcaption>
             <ImageAltText alt={image.alt} />
+            <ImageSearchLink url={image.fullsize} />
           </figcaption>
         </figure>
       ))}
