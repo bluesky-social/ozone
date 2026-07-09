@@ -34,6 +34,15 @@ import {
 const HASH_RE = /^[0-9a-f]{64}$/i
 const PAGE_SIZES = [10, 25, 50, 100]
 
+function isValidUrl(input: string): boolean {
+  try {
+    const u = new URL(input.trim())
+    return u.protocol === 'https:'
+  } catch {
+    return false
+  }
+}
+
 const DEFAULT_THRESHOLD = 31
 const DEFAULT_LOOKBACK_DAYS = 7
 
@@ -90,9 +99,11 @@ export const ImageSearchPageContent = () => {
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
 
-  // Inputs — seeded from the URL so a shared link reproduces the search. Image
-  // uploads can't be encoded in a URL, so file searches aren't shareable.
-  const [hash, setHash] = useState(() => searchParams.get('hash') ?? '')
+  // text input - can be hash or image URL
+  const [text, setText] = useState(
+    () => searchParams.get('hash') ?? searchParams.get('url') ?? '',
+  )
+  // file input
   const [file, setFile] = useState<File | null>(null)
 
   // Controls — also seeded from the URL.
@@ -115,47 +126,57 @@ export const ImageSearchPageContent = () => {
   const [formError, setFormError] = useState<string | null>(null)
   useEffect(() => {
     setFormError(null)
-  }, [hash, file])
+  }, [text, file])
 
-  const hashValid = HASH_RE.test(hash.trim())
+  const hashValid = HASH_RE.test(text.trim())
+  const urlValid = isValidUrl(text)
+  const inputValid = hashValid || urlValid
 
   // Write the current inputs to the URL
-  const syncUrl = (normalizedHash: string) => {
-    const params = new URLSearchParams()
-    if (normalizedHash) params.set('hash', normalizedHash)
+  const syncUrl = (params: URLSearchParams) => {
     params.set('threshold', String(threshold))
     params.set('lookbackDays', String(lookbackDays))
     router.replace(`${pathname ?? ''}?${params.toString()}`)
   }
 
-  const runSearch = (normalizedHash?: string) => {
+  const runSearch = () => {
     const options: ImageSearchOptions = {
       threshold,
       lookbackDays,
     }
     if (file) {
-      // Image searches can't be shared via URL; clear any stale hash param.
+      // File searches can't be shared via URL; clear any stale params.
       router.replace(pathname ?? '')
       search.mutate({ image: file, options })
       return
     }
-    const h = (normalizedHash ?? hash).trim().toLowerCase()
-    syncUrl(h)
-    search.mutate({ hash: h, options } satisfies ImageSearchInput)
+    const trimmed = text.trim()
+    const params = new URLSearchParams()
+    let input: ImageSearchInput
+    if (urlValid) {
+      params.set('url', trimmed)
+      input = { url: trimmed, options }
+    } else {
+      const h = trimmed.toLowerCase()
+      params.set('hash', h)
+      input = { hash: h, options }
+    }
+    syncUrl(params)
+    search.mutate(input)
   }
 
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (isSearching) return
 
-    // Validate: need either a hash or an image, and if a hash is given it must
-    // be well-formed.
-    if (!hash.trim() && !file) {
-      setFormError('Enter a PDQ hash or choose an image to search.')
+    // Validate: need a hash, an image URL, or a file, and text input must be
+    // one of the two recognized forms.
+    if (!text.trim() && !file) {
+      setFormError('Enter a PDQ hash, image URL, or upload an image to search.')
       return
     }
-    if (!file && !hashValid) {
-      setFormError('The PDQ hash must be a 64-character hex string.')
+    if (!file && !inputValid) {
+      setFormError(`Enter a 64-character hex PDQ hash or an https image URL.`)
       return
     }
 
@@ -218,21 +239,21 @@ export const ImageSearchPageContent = () => {
       </p>
 
       <form onSubmit={onSubmit} className="space-y-4">
-        <FormLabel label="PDQ hash" htmlFor="pdq-hash">
+        <FormLabel label="PDQ hash or image URL" htmlFor="pdq-hash">
           <Input
             id="pdq-hash"
             type="text"
             autoComplete="off"
             spellCheck={false}
-            placeholder="64-character hex PDQ hash"
-            value={hash}
+            placeholder={`64-character hex PDQ hash or https://example.com/... image URL`}
+            value={text}
             disabled={!!file}
-            onChange={(e) => setHash(e.target.value)}
+            onChange={(e) => setText(e.target.value)}
             className="w-full font-mono"
           />
-          {hash.length > 0 && !hashValid && (
+          {text.length > 0 && !inputValid && (
             <p className="text-xs text-red-500 mt-1">
-              Must be a 64-character hex string.
+              Must be a 64-character hex string or an https image URL.
             </p>
           )}
         </FormLabel>

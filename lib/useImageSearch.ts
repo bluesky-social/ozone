@@ -31,6 +31,7 @@ export interface ImageSearchOptions {
 export type ImageSearchInput =
   | { hash: string; options?: ImageSearchOptions }
   | { image: File | Blob; options?: ImageSearchOptions }
+  | { url: string; options?: ImageSearchOptions }
 
 // response
 export interface ImageSearchMatch {
@@ -82,8 +83,12 @@ async function runSearch(
   const params = optionsToQuery(input.options)
 
   let response: Response
-  if ('hash' in input) {
-    params.set('hash', input.hash)
+  if ('hash' in input || 'url' in input) {
+    if ('hash' in input) {
+      params.set('hash', input.hash)
+    } else {
+      params.set('url', input.url)
+    }
     response = await fetch(`/api/image-search/search?${params.toString()}`, {
       signal,
     })

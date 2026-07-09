@@ -29,7 +29,8 @@ function forwardSearchParams(from: URLSearchParams, to: URL) {
   }
 }
 
-// GET proxies a raw-hash search: /api/image-search/search?hash=<64 hex>&threshold=...
+// GET proxies a raw-hash search (?hash=<64 hex>) or an image-URL search
+// (?url=<https://example.com/...>)
 export async function GET(request: NextRequest) {
   if (!IMAGE_SEARCH_API_URL) {
     return notConfigured()
@@ -37,16 +38,21 @@ export async function GET(request: NextRequest) {
 
   const searchParams = request.nextUrl.searchParams
   const hash = searchParams.get('hash')
-  if (!hash) {
+  const url = searchParams.get('url')
+  if (!hash === !url) {
     return Response.json(
-      { error: 'Missing required query parameter: hash' },
+      { error: 'Need either a hash or url' },
       { status: 400 },
     )
   }
 
   try {
     const target = new URL('/api/search', IMAGE_SEARCH_API_URL)
-    target.searchParams.set('hash', hash)
+    if (hash) {
+      target.searchParams.set('hash', hash)
+    } else if (url) {
+      target.searchParams.set('url', url)
+    }
     forwardSearchParams(searchParams, target)
 
     const response = await fetch(target.toString(), {
