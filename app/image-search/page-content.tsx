@@ -1,35 +1,39 @@
 'use client'
 
-import { FormEvent, useEffect, useMemo, useState } from 'react'
+import {
+  CheckCircleIcon,
+  LinkIcon,
+  PhotoIcon,
+} from '@heroicons/react/24/outline'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { FormEvent, useEffect, useMemo, useState } from 'react'
 import { useTitle } from 'react-use'
-import { CheckCircleIcon, PhotoIcon } from '@heroicons/react/24/outline'
 
-import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
-import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
-import { CopyButton } from '@/common/CopyButton'
-import { Checkbox, FormLabel, Input, Select } from '@/common/forms'
 import { Alert } from '@/common/Alert'
-import { Loading } from '@/common/Loader'
+import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
+import { CopyButton, copyToClipboard } from '@/common/CopyButton'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
+import { FormLabel, Input, Select } from '@/common/forms'
+import { Loading } from '@/common/Loader'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import {
-  useWorkspaceAddItemsMutation,
-  useWorkspaceList,
-} from '@/workspace/hooks'
-import { WorkspacePanel } from '@/workspace/Panel'
-import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
+  ImageSearchInput,
+  ImageSearchMatch,
+  ImageSearchOptions,
+  useImageSearch,
+} from '@/lib/useImageSearch'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
   useEmitEvent,
 } from '@/mod-event/helpers/emitEvent'
 import {
-  ImageSearchMatch,
-  ImageSearchInput,
-  ImageSearchOptions,
-  useImageSearch,
-} from '@/lib/useImageSearch'
+  useWorkspaceAddItemsMutation,
+  useWorkspaceList,
+} from '@/workspace/hooks'
+import { WorkspacePanel } from '@/workspace/Panel'
+import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 
 const HASH_RE = /^[0-9a-f]{64}$/i
 const PAGE_SIZES = [10, 25, 50, 100]
@@ -57,17 +61,6 @@ const THRESHOLD_PRESETS = [
 function parseIntParam(raw: string | null, fallback: number): number {
   const n = Number(raw)
   return raw !== null && Number.isFinite(n) ? n : fallback
-}
-
-function downloadCsv(filename: string, header: string, rows: string[]) {
-  const csv = [header, ...rows].join('\n')
-  const blob = new Blob([csv], { type: 'text/csv' })
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  URL.revokeObjectURL(url)
 }
 
 export const ImageSearchPageContent = () => {
@@ -165,6 +158,17 @@ export const ImageSearchPageContent = () => {
     search.mutate(input)
   }
 
+  const shareSearch = () => {
+    if (!result?.query) return
+    const params = new URLSearchParams()
+    params.set('hash', result.query)
+    syncUrl(params)
+    const shareUrl = `${window.location.origin}${
+      pathname ?? ''
+    }?${params.toString()}`
+    copyToClipboard(shareUrl, 'share link ')
+  }
+
   const onSubmit = (e: FormEvent) => {
     e.preventDefault()
     if (isSearching) return
@@ -217,25 +221,14 @@ export const ImageSearchPageContent = () => {
     addToWorkspace([uri])
   }
 
-  const exportUris = () => {
-    const uris = matches.map((m) => m.uri).filter(Boolean)
-    if (uris.length === 0) return
-    downloadCsv('image_search_uris.csv', 'uri', uris)
-  }
-  const exportDids = () => {
-    const dids = [...new Set(matches.map((m) => m.did).filter(Boolean))]
-    if (dids.length === 0) return
-    downloadCsv('image_search_dids.csv', 'did', dids)
-  }
-
   return (
     <div className="w-11/12 lg:w-5/6 mx-auto my-4 dark:text-gray-100">
       <h4 className="font-medium text-gray-700 dark:text-gray-100 mb-2">
         Image Search
       </h4>
       <p className="text-sm text-gray-500 dark:text-gray-300 mb-4">
-        Find posts and profiles across the network whose perceptual hash matches
-        an image or raw PDQ hash.
+        Find images across the network whose perceptual hash matches the
+        provided hash, file, or image URL.
       </p>
 
       <form onSubmit={onSubmit} className="space-y-4">
@@ -390,8 +383,7 @@ export const ImageSearchPageContent = () => {
                 setPage(0)
               }}
               onAddAllToWorkspace={addMatchesToWorkspace}
-              onExportUris={exportUris}
-              onExportDids={exportDids}
+              onShare={shareSearch}
               onOpenQuickAction={setQuickActionPanelSubject}
               workspaceItems={workspaceItems}
               onAddToWorkspace={addMatchToWorkspace}
@@ -433,8 +425,7 @@ function ImageSearchResults({
   onPageChange,
   onPageSizeChange,
   onAddAllToWorkspace,
-  onExportUris,
-  onExportDids,
+  onShare,
   onOpenQuickAction,
   workspaceItems,
   onAddToWorkspace,
@@ -449,8 +440,7 @@ function ImageSearchResults({
   onPageChange: (page: number) => void
   onPageSizeChange: (size: number) => void
   onAddAllToWorkspace: () => void
-  onExportUris: () => void
-  onExportDids: () => void
+  onShare: () => void
   onOpenQuickAction: (subject: string) => void
   workspaceItems: Set<string>
   onAddToWorkspace: (uri: string) => void
@@ -479,17 +469,11 @@ function ImageSearchResults({
         <div className="flex flex-row gap-2">
           <ButtonSecondary
             className="text-xs py-1"
-            onClick={onExportDids}
-            disabled={shown === 0}
+            onClick={onShare}
+            title="Copy a shareable link for this search"
           >
-            Download DIDs
-          </ButtonSecondary>
-          <ButtonSecondary
-            className="text-xs py-1"
-            onClick={onExportUris}
-            disabled={shown === 0}
-          >
-            Download URIs
+            <LinkIcon className="h-3 w-3 mr-1" />
+            Share
           </ButtonSecondary>
           <ButtonSecondary
             className="text-xs py-1"
