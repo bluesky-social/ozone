@@ -1,12 +1,46 @@
-import { NextRequest } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
+
+import type { ImageSearchResult } from '@/lib/useImageSearch'
 
 // Server-side proxy to the image search service
 const IMAGE_SEARCH_API_URL = process.env.IMAGE_SEARCH_API_URL
 const IMAGE_SEARCH_AUTH_HEADER = process.env.IMAGE_SEARCH_AUTH_HEADER
-const SEARCH_PARAMS = ['threshold', 'lookbackDays', 'limit', 'timeout']
+const SEARCH_PARAMS = [
+  'threshold',
+  'lookbackDays',
+  'limit',
+  'timeout',
+] as const satisfies readonly (keyof ImageSearchQueryParams)[]
 
-function notConfigured() {
-  return Response.json(
+/**
+ * Query params accepted by both GET and POST. GET additionally requires
+ * exactly one of `hash` or `url`; POST takes the image bytes as the body.
+ */
+export interface ImageSearchQueryParams {
+  /** PDQ hash to search (64-char hex). GET only; mutually exclusive with url */
+  hash?: string
+  /** https URL of an image to search. GET only; mutually exclusive with hash */
+  url?: string
+  /** Max hamming distance (0-256) for a match; lower = stricter */
+  threshold?: string
+  /** How many days back to search */
+  lookbackDays?: string
+  /** Max number of matches to return */
+  limit?: string
+  /** Server-side search timeout in seconds */
+  timeout?: string
+}
+
+export interface ImageSearchErrorResponse {
+  error: string
+}
+
+export type ImageSearchResponse = NextResponse<
+  ImageSearchResult | ImageSearchErrorResponse
+>
+
+function notConfigured(): ImageSearchResponse {
+  return NextResponse.json(
     { error: 'Image search is not configured' },
     { status: 501 },
   )
@@ -31,7 +65,7 @@ function forwardSearchParams(from: URLSearchParams, to: URL) {
 
 // GET proxies a raw-hash search (?hash=<64 hex>) or an image-URL search
 // (?url=<https://example.com/...>)
-export async function GET(request: NextRequest) {
+export async function GET(request: NextRequest): Promise<ImageSearchResponse> {
   if (!IMAGE_SEARCH_API_URL) {
     return notConfigured()
   }
@@ -40,7 +74,7 @@ export async function GET(request: NextRequest) {
   const hash = searchParams.get('hash')
   const url = searchParams.get('url')
   if (!hash === !url) {
-    return Response.json(
+    return NextResponse.json(
       { error: 'Need either a hash or url' },
       { status: 400 },
     )
@@ -67,7 +101,7 @@ export async function GET(request: NextRequest) {
 }
 
 // POST proxies an image search to the image search service
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest): Promise<ImageSearchResponse> {
   if (!IMAGE_SEARCH_API_URL) {
     return notConfigured()
   }
@@ -78,7 +112,7 @@ export async function POST(request: NextRequest) {
 
     const body = await request.arrayBuffer()
     if (body.byteLength === 0) {
-      return Response.json({ error: 'Empty image body' }, { status: 400 })
+      return NextResponse.json({ error: 'Empty image body' }, { status: 400 })
     }
 
     const contentType =
@@ -96,21 +130,21 @@ export async function POST(request: NextRequest) {
   }
 }
 
-async function relay(response: Response) {
+async function relay(response: Response): Promise<ImageSearchResponse> {
   if (!response.ok) {
-    const errorData = await response
+    const errorData = (await response
       .json()
-      .catch(() => ({ error: 'Unknown error' }))
-    return Response.json(errorData, { status: response.status })
+      .catch(() => ({ error: 'Unknown error' }))) as ImageSearchErrorResponse
+    return NextResponse.json(errorData, { status: response.status })
   }
-  const data = await response.json()
-  return Response.json(data)
+  const data = (await response.json()) as ImageSearchResult
+  return NextResponse.json(data)
 }
 
-function handleError(error: unknown) {
+function handleError(error: unknown): ImageSearchResponse {
   if (error instanceof Error && error.name === 'AbortError') {
-    return Response.json({ error: 'Search cancelled' }, { status: 499 })
+    return NextResponse.json({ error: 'Search cancelled' }, { status: 499 })
   }
   console.error('Error proxying image search:', error)
-  return Response.json({ error: 'Internal server error' }, { status: 500 })
+  return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
 }
