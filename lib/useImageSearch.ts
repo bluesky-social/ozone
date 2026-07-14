@@ -1,20 +1,11 @@
-import { useMutation, useQuery } from '@tanstack/react-query'
+import { useServerConfig } from '@/shell/ConfigurationContext'
+import { useMutation } from '@tanstack/react-query'
 import { useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 
 export function useIsImageSearchEnabled(): boolean {
-  const { data } = useQuery({
-    queryKey: ['imageSearchEnabled'],
-    queryFn: async () => {
-      const response = await fetch('/api/image-search/enabled')
-      if (!response.ok) return false
-      const body = (await response.json()) as { enabled?: boolean }
-      return !!body.enabled
-    },
-    retry: false,
-    staleTime: Infinity,
-  })
-  return data ?? false
+  const { imageSearch } = useServerConfig()
+  return !!imageSearch
 }
 
 // request

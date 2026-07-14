@@ -36,6 +36,8 @@ export const TRUSTED_VERIFIER_TAG = 'trusted-verifier'
 
 export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`
 
+export const IMAGE_SEARCH_API_URL = process.env.NEXT_PUBLIC_IMAGE_SEARCH_API_URL
+
 export const NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS = process.env
   .NEXT_PUBLIC_NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS
   ? parseInt(process.env.NEXT_PUBLIC_NEW_ACCOUNT_MARKER_THRESHOLD_IN_DAYS)

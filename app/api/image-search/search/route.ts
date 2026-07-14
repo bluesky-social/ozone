@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import type { ImageSearchResult } from '@/lib/useImageSearch'
 
 // Server-side proxy to the image search service
-const IMAGE_SEARCH_API_URL = process.env.IMAGE_SEARCH_API_URL
+const IMAGE_SEARCH_API_URL = process.env.NEXT_PUBLIC_IMAGE_SEARCH_API_URL
 const IMAGE_SEARCH_AUTH_HEADER = process.env.IMAGE_SEARCH_AUTH_HEADER
 const SEARCH_PARAMS = [
   'threshold',
