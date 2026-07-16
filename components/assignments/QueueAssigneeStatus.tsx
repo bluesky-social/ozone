@@ -7,8 +7,8 @@ import { toast } from 'react-toastify'
 import { useServerConfig } from '@/shell/ConfigurationContext'
 import { displayError } from '@/common/Loader'
 import { ConfirmationModal } from '@/common/modals/confirmation'
+import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { useUnassignQueue } from './useAssignments'
-import { Assignee } from './Assignee'
 
 interface QueueAssigneeStatusProps {
   queueId: number
@@ -66,9 +66,10 @@ export function QueueAssigneeStatus({
   return (
     <div className="flex items-center gap-2 flex-wrap">
       {assignments.map((a) => (
-        <Assignee
+        <ModeratorBadge
           key={a.id}
           did={a.did}
+          profile={a.moderator?.profile}
           onRemove={isAdmin ? () => handleAssigneeClick(a) : undefined}
         />
       ))}
