@@ -9,7 +9,7 @@ import { WORKSPACE_FORM_ID } from './constants'
 import { EmailComposer } from 'components/email/Composer'
 import { EmailComposerData } from 'components/email/helpers'
 import { ActionPolicySelector } from '@/reports/ModerationForm/ActionPolicySelector'
-import { getBatchId, regenerateBatchId } from '@/lib/batchId'
+import { getBatchId, regenerateBatchId, setBatchId } from '@/lib/batchId'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { ModToolForm } from './ModToolForm'
@@ -32,6 +32,12 @@ export const WorkspacePanelActionForm = ({
     const newBatchId = regenerateBatchId()
     setCurrentBatchId(newBatchId)
     toast.success('Workspace Batch ID updated')
+  }
+
+  const handleBatchIdChange = (batchId: string) => {
+    // Persist edits so event submission picks up the user-provided value
+    setBatchId(batchId)
+    setCurrentBatchId(batchId)
   }
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
@@ -213,6 +219,7 @@ export const WorkspacePanelActionForm = ({
           <ModToolForm
             currentBatchId={currentBatchId}
             handleRegenerateBatchId={handleRegenerateBatchId}
+            onBatchIdChange={handleBatchIdChange}
           />
 
           <div className="flex flex-row gap-2">

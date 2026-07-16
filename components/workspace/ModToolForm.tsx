@@ -6,11 +6,13 @@ import { WORKSPACE_FORM_ID } from './constants'
 export const ModToolForm = ({
   currentBatchId,
   handleRegenerateBatchId,
+  onBatchIdChange,
   externalUrl,
   setExternalUrl,
 }: {
   currentBatchId: string
   handleRegenerateBatchId: () => void
+  onBatchIdChange?: (batchId: string) => void
   externalUrl?: string
   setExternalUrl?: (url: string) => void
 }) => {
@@ -31,20 +33,20 @@ export const ModToolForm = ({
         </FormLabel>
       </div>
 
-      <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-800 rounded border">
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-              Batch ID:
-            </span>
-            <span className="ml-2 text-sm text-gray-600 dark:text-gray-400 font-mono">
-              {currentBatchId}
-            </span>
-          </div>
-          <div>
+      <div className="mb-3">
+        <FormLabel label="Batch ID" htmlFor="batchId">
+          <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              id="batchId"
+              className="block w-full font-mono"
+              value={currentBatchId}
+              onChange={(e) => onBatchIdChange?.(e.target.value)}
+              placeholder="Batch identifier"
+              autoComplete="off"
+            />
             <CopyButton
               text={currentBatchId}
-              className="mr-2"
               labelText="Batch ID "
               title={`Copy batch id to clipboard`}
             />
@@ -57,7 +59,7 @@ export const ModToolForm = ({
               <ArrowPathIcon className="h-3 w-3 text-gray-500 dark:text-gray-300" />
             </button>
           </div>
-        </div>
+        </FormLabel>
       </div>
     </>
   )

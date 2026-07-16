@@ -18,6 +18,10 @@ export const getBatchId = (): string => {
   return batchId
 }
 
+export const setBatchId = (batchId: string): void => {
+  localStorage.setItem(BATCH_ID_KEY, batchId)
+}
+
 export const regenerateBatchId = (): string => {
   const newBatchId = generateBatchId()
   localStorage.setItem(BATCH_ID_KEY, newBatchId)

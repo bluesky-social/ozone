@@ -19,7 +19,7 @@ import { ToolsOzoneCommunicationDefs } from '@atproto/api'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { compileTemplateContent } from '@/email/helpers'
 import { executeBatchedOperation, pluralize } from '@/lib/util'
-import { getBatchId, regenerateBatchId } from '@/lib/batchId'
+import { getBatchId, regenerateBatchId, setBatchId } from '@/lib/batchId'
 import {
   ActionPanelNames,
   hydrateModToolInfo,
@@ -200,6 +200,12 @@ function useRevokeCredentialsState() {
     toast.success('Batch ID updated')
   }
 
+  const handleBatchIdChange = (batchId: string) => {
+    // Persist edits so other consumers of the stored batch id stay in sync
+    setBatchId(batchId)
+    setCurrentBatchId(batchId)
+  }
+
   return {
     isRevokeModalOpen,
     setIsRevokeModalOpen,
@@ -210,6 +216,7 @@ function useRevokeCredentialsState() {
     externalUrl,
     setExternalUrl,
     handleRegenerateBatchId,
+    handleBatchIdChange,
   }
 }
 
@@ -244,6 +251,7 @@ export const RevokeCredentialsForm = ({
     externalUrl,
     setExternalUrl,
     handleRegenerateBatchId,
+    handleBatchIdChange,
   } = useRevokeCredentialsState()
 
   const templateName = emailTemplate?.name
@@ -344,6 +352,7 @@ export const RevokeCredentialsForm = ({
           setExternalUrl={setExternalUrl}
           currentBatchId={currentBatchId}
           handleRegenerateBatchId={handleRegenerateBatchId}
+          onBatchIdChange={handleBatchIdChange}
         />
       )}
 
