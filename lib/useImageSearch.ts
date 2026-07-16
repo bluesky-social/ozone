@@ -1,11 +1,10 @@
-import { useServerConfig } from '@/shell/ConfigurationContext'
 import { useMutation } from '@tanstack/react-query'
 import { useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
+import { IMAGE_SEARCH_API_URL } from './constants'
 
 export function useIsImageSearchEnabled(): boolean {
-  const { imageSearch } = useServerConfig()
-  return !!imageSearch
+  return !!IMAGE_SEARCH_API_URL
 }
 
 // request

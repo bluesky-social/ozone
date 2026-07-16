@@ -8,7 +8,6 @@ export type ServerConfig = {
   chat?: string
   role?: ToolsOzoneServerGetConfig.ViewerConfig['role']
   verifierDid?: string
-  imageSearch?: string
   permissions: {
     canManageTemplates: boolean
     canTakedown: boolean
@@ -45,7 +44,6 @@ export const parseServerConfig = (
     chat: config.chat?.url,
     role: config.viewer?.role,
     verifierDid: config.verifierDid,
-    imageSearch: IMAGE_SEARCH_API_URL,
     permissions: {
       canManageTemplates: isModerator,
       canTakedown: !!config.pds?.url && isModerator,
