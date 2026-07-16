@@ -1,3 +1,4 @@
+import { QueueAssignControls } from '@/assignments/QueueAssignControls'
 import { QueueAssigneeStatus } from '@/assignments/QueueAssigneeStatus'
 import { useQueueAssignments } from '@/assignments/useAssignments'
 import { Card } from '@/common/Card'
@@ -166,27 +167,35 @@ export function QueueCard({
             </p>
             <ModeratorBadge did={queue.createdBy} />
           </div>
-          <Hover
-            content={
-              <div data-cy="queue-assignees">
-                <QueueAssigneeStatus
-                  queueId={queue.id}
-                  assignments={assignments ?? []}
-                />
+          <div className="flex items-center gap-2 flex-wrap">
+            <Hover
+              content={
+                <div data-cy="queue-assignees">
+                  <QueueAssigneeStatus
+                    queueId={queue.id}
+                    assignments={assignments ?? []}
+                  />
+                </div>
+              }
+            >
+              <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
+                <span className="font-medium tracking-wide text-gray-500 dark:text-gray-400">
+                  Assigned:{' '}
+                </span>
+                <span className="text-gray-500 dark:text-gray-400">
+                  {assigneeCount === 0
+                    ? 'None'
+                    : `${assigneeCount} moderator${
+                        assigneeCount === 1 ? '' : 's'
+                      }`}
+                </span>
               </div>
-            }
-          >
-            <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
-              <span className="font-medium tracking-wide text-gray-500 dark:text-gray-400">
-                Assigned:{' '}
-              </span>
-              <span className="text-gray-500 dark:text-gray-400">
-                {assigneeCount === 0
-                  ? 'None'
-                  : `${assigneeCount} moderator${assigneeCount === 1 ? '' : 's'}`}
-              </span>
-            </div>
-          </Hover>
+            </Hover>
+            <QueueAssignControls
+              queueId={queue.id}
+              assignments={assignments ?? []}
+            />
+          </div>
         </div>
 
         {/* Actions */}
