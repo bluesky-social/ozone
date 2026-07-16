@@ -35,6 +35,8 @@ export function QueueCard({
   const hasNoCriteria =
     !queue.subjectTypes?.length && !queue.reportTypes?.length
 
+  const assigneeCount = assignments?.length ?? 0
+
   const subjectCount = queue.subjectTypes?.length ?? 0
   const reportCount = queue.reportTypes?.length ?? 0
   const filterSummary = [
@@ -164,15 +166,27 @@ export function QueueCard({
             </p>
             <ModeratorBadge did={queue.createdBy} />
           </div>
-          <div className="w-fit flex flex-col gap-1">
-            <p className="text-xs text-gray-400 dark:text-gray-500">Assigned</p>
-            <div data-cy="queue-assignees">
-              <QueueAssigneeStatus
-                queueId={queue.id}
-                assignments={assignments ?? []}
-              />
+          <Hover
+            content={
+              <div data-cy="queue-assignees">
+                <QueueAssigneeStatus
+                  queueId={queue.id}
+                  assignments={assignments ?? []}
+                />
+              </div>
+            }
+          >
+            <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
+              <span className="font-medium tracking-wide text-gray-500 dark:text-gray-400">
+                Assigned:{' '}
+              </span>
+              <span className="text-gray-500 dark:text-gray-400">
+                {assigneeCount === 0
+                  ? 'None'
+                  : `${assigneeCount} moderator${assigneeCount === 1 ? '' : 's'}`}
+              </span>
             </div>
-          </div>
+          </Hover>
         </div>
 
         {/* Actions */}
