@@ -130,9 +130,6 @@ export function QueueCard({
           {!hiddenFields?.includes('filters') && (
             <Hover content={filters()}>
               <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
-                <span className="font-medium tracking-wide text-gray-500 dark:text-gray-400">
-                  Filters:{' '}
-                </span>
                 <span className="text-gray-500 dark:text-gray-400">
                   {hasNoCriteria ? 'None' : filterSummary}
                 </span>
