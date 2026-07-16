@@ -82,21 +82,13 @@ export function QueueAssigneeStatus({
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
-      {assignments.map((a) =>
-        isAdmin ? (
-          <button
-            key={a.id}
-            type="button"
-            onClick={() => handleAssigneeClick(a)}
-            className="rounded focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-teal-400"
-            title="Unassign moderator"
-          >
-            <Assignee did={a.did} />
-          </button>
-        ) : (
-          <Assignee key={a.id} did={a.did} />
-        ),
-      )}
+      {assignments.map((a) => (
+        <Assignee
+          key={a.id}
+          did={a.did}
+          onRemove={isAdmin ? () => handleAssigneeClick(a) : undefined}
+        />
+      ))}
       {isAdmin && (
         <AssigneeSearchPopover
           excludeDids={assignedDids}
