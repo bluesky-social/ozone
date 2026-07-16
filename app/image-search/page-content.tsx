@@ -16,6 +16,7 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { FormLabel, Input, Select } from '@/common/forms'
 import { Loading } from '@/common/Loader'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
+import { IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS } from '@/lib/constants'
 import {
   ImageSearchInput,
   ImageSearchMatch,
@@ -48,7 +49,6 @@ function isValidUrl(input: string): boolean {
 }
 
 const DEFAULT_THRESHOLD = 31
-const DEFAULT_LOOKBACK_DAYS = 7
 
 const THRESHOLD_PRESETS = [
   { label: 'Exact', value: 10, description: 'Near-identical images only' },
@@ -104,7 +104,10 @@ export const ImageSearchPageContent = () => {
     parseIntParam(searchParams.get('threshold'), DEFAULT_THRESHOLD),
   )
   const [lookbackDays, setLookbackDays] = useState(() =>
-    parseIntParam(searchParams.get('lookbackDays'), DEFAULT_LOOKBACK_DAYS),
+    parseIntParam(
+      searchParams.get('lookbackDays'),
+      IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS,
+    ),
   )
 
   // Results paging

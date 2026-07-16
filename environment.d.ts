@@ -13,6 +13,7 @@ declare global {
       SNAPSHOT_AUTH_HEADER?: string
       NEXT_PUBLIC_IMAGE_SEARCH_API_URL?: string // image search service base URL
       IMAGE_SEARCH_AUTH_HEADER?: string // image search service token (sent as Authorization)
+      NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS?: string // default lookback window for image search, in days
     }
   }
 }
