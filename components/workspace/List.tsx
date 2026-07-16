@@ -215,7 +215,7 @@ const ListItem = <ItemType extends string>({
   return (
     <Card key={item}>
       <div className="flex items-center justify-between space-x-4">
-        <div className="flex items-center">
+        <div className="flex items-center min-w-0 flex-wrap gap-y-1">
           <Checkbox
             id={item}
             name="workspaceItem"
@@ -283,7 +283,7 @@ const ListItem = <ItemType extends string>({
                 />
               )}
               {!!displayLabels?.length && (
-                <div className="flex ml-1">
+                <div className="flex flex-wrap gap-1 ml-1">
                   {displayLabels.map((label) => (
                     <ModerationLabel
                       key={`${label.src}_${label.val}`}
@@ -293,14 +293,14 @@ const ListItem = <ItemType extends string>({
                 </div>
               )}
               {!!langTagsFromRecord?.length && (
-                <div className="flex ml-1">
+                <div className="flex flex-wrap gap-1 ml-1">
                   {langTagsFromRecord.map((tag) => (
                     <SubjectTag key={tag} tag={tag} />
                   ))}
                 </div>
               )}
               {!!displayTags?.length && (
-                <div className="flex ml-1">
+                <div className="flex flex-wrap gap-1 ml-1">
                   {displayTags.map((tag) => (
                     <SubjectTag key={tag} tag={tag} />
                   ))}
@@ -314,7 +314,7 @@ const ListItem = <ItemType extends string>({
             />
           )}
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-shrink-0">
           <ActionButton size="sm" appearance="outlined" onClick={onRemoveItem}>
             <TrashIcon className="h-3 w-3" />
           </ActionButton>
