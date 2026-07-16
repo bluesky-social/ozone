@@ -33,12 +33,12 @@ export const WorkspacePanelActionForm = ({
     setCurrentBatchId(newBatchId)
     toast.success('Workspace Batch ID updated')
   }
-
   const handleBatchIdChange = (batchId: string) => {
     // Persist edits so event submission picks up the user-provided value
     setBatchId(batchId)
     setCurrentBatchId(batchId)
   }
+  
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
