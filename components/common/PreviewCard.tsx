@@ -1,6 +1,6 @@
 import { classNames, parseAtUri } from '@/lib/util'
 import { CollectionId, getCollectionName } from '@/reports/helpers/subject'
-import { LinkIcon, UserIcon } from '@heroicons/react/24/outline'
+import { EyeIcon, LinkIcon, UserIcon } from '@heroicons/react/24/outline'
 import { ReactNode, useState } from 'react'
 import { CopyButton } from './CopyButton'
 import { RecordCard, RepoCard } from './RecordCard'
@@ -31,10 +31,12 @@ function SubjectTitleWithIcon({
   subject,
   title,
   isAtUri,
+  onOpenInActionPanel,
 }: {
   subject: string
   title: ReactNode
   isAtUri: boolean
+  onOpenInActionPanel?: (subject: string) => void
 }) {
   const [showPopup, setShowPopup] = useState(false)
   const Icon = isAtUri ? LinkIcon : UserIcon
@@ -74,6 +76,19 @@ function SubjectTitleWithIcon({
           </>
         )}
       </span>
+      {onOpenInActionPanel && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            onOpenInActionPanel(subject)
+          }}
+          title="Open subject in action panel"
+          className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 align-middle"
+        >
+          <EyeIcon className="h-4 w-4" />
+        </button>
+      )}
     </span>
   )
 }
@@ -85,6 +100,7 @@ export function PreviewCard({
   className,
   isAuthorDeactivated,
   isAuthorTakendown,
+  onOpenInActionPanel,
 }: {
   subject: string
   isAuthorDeactivated?: boolean
@@ -92,6 +108,7 @@ export function PreviewCard({
   title?: string | ReactNode
   children?: ReactNode
   className?: string
+  onOpenInActionPanel?: (subject: string) => void
 }) {
   if (subject.startsWith('at://')) {
     const displayTitle = title || getPreviewTitleForAtUri(subject)
@@ -102,6 +119,7 @@ export function PreviewCard({
             subject={subject}
             title={displayTitle}
             isAtUri={true}
+            onOpenInActionPanel={onOpenInActionPanel}
           />
         </p>
         <RecordCard
@@ -121,6 +139,7 @@ export function PreviewCard({
             subject={subject}
             title={title ? title : 'Reported user'}
             isAtUri={false}
+            onOpenInActionPanel={onOpenInActionPanel}
           />
         </p>
         <RepoCard did={subject} />

@@ -24,9 +24,12 @@ export const Hover = ({
   panelClassName = '',
 }: HoverProps) => {
   return (
-    <div tabIndex={0} className={`group relative w-fit ${className}`}>
+    <div
+      tabIndex={0}
+      className={`group/hover-card relative w-fit ${className}`}
+    >
       {children}
-      <div className="invisible opacity-0 transition-all delay-200 duration-150 group-hover:visible group-hover:opacity-100 group-hover:delay-0 group-focus-within:visible group-focus-within:opacity-100 group-focus-within:delay-0 absolute left-0 top-full z-10 pt-1">
+      <div className="invisible opacity-0 transition-all delay-200 duration-150 group-hover/hover-card:visible group-hover/hover-card:opacity-100 group-hover/hover-card:delay-0 group-focus-within/hover-card:visible group-focus-within/hover-card:opacity-100 group-focus-within/hover-card:delay-0 absolute left-0 top-full z-10 pt-1">
         <div
           className={`w-64 rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 shadow-lg p-2.5 space-y-2 ${panelClassName}`}
         >

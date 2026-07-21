@@ -228,7 +228,7 @@ export function ReportActionsBar({
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   onResolveAppeal?: () => Promise<void>
 }) {
-  const { autoAdvance, setAutoAdvance } = useReports(report.id)
+  const { autoAdvance, setAutoAdvance, nextReportId } = useReports(report.id)
 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
@@ -366,12 +366,14 @@ export function ReportActionsBar({
         </button>
       </div>
 
-      <Checkbox
-        className="mt-2 flex items-center text-xs"
-        label="Advance to next after closing"
-        checked={!!autoAdvance}
-        onChange={(e) => setAutoAdvance(e.target.checked)}
-      />
+      {canNoAction && nextReportId !== null && (
+        <Checkbox
+          className="mt-2 flex items-center text-xs"
+          label="Advance to next after closing"
+          checked={!!autoAdvance}
+          onChange={(e) => setAutoAdvance(e.target.checked)}
+        />
+      )}
 
       {pendingAction && (
         <TransitionConfirmPanel

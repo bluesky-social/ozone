@@ -39,7 +39,7 @@ import { AccountStrike } from '../subject/AccountStrike'
 import { PriorityScore } from '../subject/PriorityScore'
 import { ReviewStateIcon } from '../subject/ReviewStateMarker'
 import { StatView } from '../subject/Summary'
-import { SubjectTag } from '../tags/SubjectTag'
+import { SubjectTagList } from '../tags/SubjectTagList'
 import { AutomatedBadge } from './AutomatedBadge'
 import { MutedBadge } from './MutedBadge'
 
@@ -432,21 +432,14 @@ function ReportRow({
             ))}
           </LabelList>
         )}
-        {!!subjectTags?.length && (
-          <LabelList className="flex-wrap gap-0.5 mt-1">
-            {subjectTags.sort().map((tag) => (
-              <SubjectTag key={tag} tag={tag} />
-            ))}
-          </LabelList>
-        )}
+        <SubjectTagList tags={subjectTags} className="flex-wrap gap-0.5 mt-1" />
         {!!accountTagsForRecord?.length && (
           <div className="flex flex-row items-center gap-0.5 mt-1">
             <UserIcon className="h-3 w-3 shrink-0 text-gray-400" title="Account" />
-            <LabelList className="flex-wrap gap-0.5">
-              {accountTagsForRecord.sort().map((tag) => (
-                <SubjectTag key={tag} tag={tag} />
-              ))}
-            </LabelList>
+            <SubjectTagList
+              tags={accountTagsForRecord}
+              className="flex-wrap gap-0.5"
+            />
           </div>
         )}
       </td>

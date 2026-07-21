@@ -87,7 +87,7 @@ import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
 import { ReportBatchLink } from 'components/reports/ReportBatchLink'
 import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
 import { getHandleFromSubjectView } from 'components/reports/utils'
-import { SubjectTag } from 'components/tags/SubjectTag'
+import { SubjectTagList } from 'components/tags/SubjectTagList'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { formatDistanceToNow } from 'date-fns'
 import {
@@ -695,6 +695,7 @@ function ReportDetailLayout(props: {
               isAuthorTakendown={
                 !!record?.repo.moderation.subjectStatus?.takendown
               }
+              onOpenInActionPanel={onClickDid}
             >
               {!isSubjectDid && record?.repo && (
                 <div className="-ml-1 my-2">
@@ -788,11 +789,10 @@ function ReportDetailLayout(props: {
                 label="Tags"
                 className="flex flex-row items-center gap-2"
               >
-                <LabelList className="-mt-1 -ml-1 flex-wrap gap-1">
-                  {subjectStatus.tags.sort().map((tag) => (
-                    <SubjectTag key={tag} tag={tag} />
-                  ))}
-                </LabelList>
+                <SubjectTagList
+                  tags={subjectStatus.tags}
+                  className="-mt-1 -ml-1 flex-wrap gap-1"
+                />
               </FormLabel>
             </div>
           )}
@@ -815,11 +815,10 @@ function ReportDetailLayout(props: {
           {!!record?.repo.moderation.subjectStatus?.tags?.length && (
             <div className="mb-2 flex flex-row items-center">
               <div className="mr-2">Account Tags</div>
-              <LabelList className="-ml-1 flex-wrap gap-1">
-                {record.repo.moderation.subjectStatus.tags.sort().map((tag) => (
-                  <SubjectTag key={tag} tag={tag} />
-                ))}
-              </LabelList>
+              <SubjectTagList
+                tags={record.repo.moderation.subjectStatus.tags}
+                className="-ml-1 flex-wrap gap-1"
+              />
             </div>
           )}
 
