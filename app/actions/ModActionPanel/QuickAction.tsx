@@ -12,6 +12,7 @@ import {
 import { isSelfLabel } from '@/common/labels/util'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
+import { VideoTimestampProvider } from '@/common/video/TimestampContext'
 import { createBreakpoint } from 'react-use'
 import {
   ArrowLeftIcon,
@@ -218,7 +219,7 @@ function Form(
   }
 
   return (
-    <>
+    <VideoTimestampProvider>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
       {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
       {/* @ts-ignore */}
@@ -865,6 +866,6 @@ function Form(
           </ButtonSecondary>
         </div>
       )}
-    </>
+    </VideoTimestampProvider>
   )
 }
