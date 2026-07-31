@@ -112,11 +112,7 @@ export function QueueForm({
     queue?.reportTypes ?? [],
   )
   const [recommendedPolicies, setRecommendedPolicies] = useState<string[]>(
-    (
-      queue as ToolsOzoneQueueDefs.QueueView & {
-        recommendedPolicies?: string[]
-      }
-    )?.recommendedPolicies ?? [],
+    queue?.recommendedPolicies ?? [],
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -129,7 +125,7 @@ export function QueueForm({
         description: queue.description,
         recommendedPolicies,
         enabled: !queue.enabled,
-      } as Parameters<typeof updateMutation.mutateAsync>[0],
+      },
       {
         onSuccess: () => {
           setShowToggleDialog(false)
@@ -179,7 +175,7 @@ export function QueueForm({
           name,
           description,
           recommendedPolicies,
-        } as Parameters<typeof updateMutation.mutateAsync>[0],
+        },
         { onSuccess },
       )
     } else {
@@ -191,7 +187,7 @@ export function QueueForm({
           reportTypes,
           collection: collectionSanitized,
           recommendedPolicies,
-        } as Parameters<typeof createMutation.mutateAsync>[0],
+        },
         { onSuccess },
       )
     }
