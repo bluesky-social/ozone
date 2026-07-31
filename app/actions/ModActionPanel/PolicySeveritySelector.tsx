@@ -35,6 +35,7 @@ type PolicySeveritySelectorProps = {
   selectedSeverityLevel?: string
   severityLevelSetting?: SeverityLevelListSetting
   isSubjectDid?: boolean
+  recommendedPolicies?: string[]
 
   // Variant-specific behavior
   variant?: 'takedown' | 'email' | 'reverse-takedown'
@@ -53,6 +54,7 @@ export function PolicySeveritySelector({
   setTargetServices,
   variant = 'takedown',
   isSubjectDid,
+  recommendedPolicies,
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
   const showFullRecommendation = variant === 'takedown' || variant === 'email'
@@ -71,6 +73,7 @@ export function PolicySeveritySelector({
           name="policies"
           defaultPolicy={defaultPolicy}
           onSelect={handlePolicySelect}
+          recommendedPolicies={recommendedPolicies}
         />
       </div>
       {policyDetails && (

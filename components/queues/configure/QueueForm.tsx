@@ -8,6 +8,7 @@ import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { useState } from 'react'
 import { Tooltip } from '@/common/Tooltip'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
+import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
 
 function MatchSummary({
   subjectTypes,
@@ -110,6 +111,13 @@ export function QueueForm({
   const [reportTypes, setReportTypes] = useState<string[]>(
     queue?.reportTypes ?? [],
   )
+  const [recommendedPolicies, setRecommendedPolicies] = useState<string[]>(
+    (
+      queue as ToolsOzoneQueueDefs.QueueView & {
+        recommendedPolicies?: string[]
+      }
+    )?.recommendedPolicies ?? [],
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleToggleEnabled = async () => {
@@ -119,8 +127,9 @@ export function QueueForm({
         queueId: queue.id,
         name: queue.name,
         description: queue.description,
+        recommendedPolicies,
         enabled: !queue.enabled,
-      },
+      } as Parameters<typeof updateMutation.mutateAsync>[0],
       {
         onSuccess: () => {
           setShowToggleDialog(false)
@@ -169,7 +178,8 @@ export function QueueForm({
           queueId: queue.id,
           name,
           description,
-        },
+          recommendedPolicies,
+        } as Parameters<typeof updateMutation.mutateAsync>[0],
         { onSuccess },
       )
     } else {
@@ -180,7 +190,8 @@ export function QueueForm({
           subjectTypes: Array.from(subjectTypes),
           reportTypes,
           collection: collectionSanitized,
-        },
+          recommendedPolicies,
+        } as Parameters<typeof createMutation.mutateAsync>[0],
         { onSuccess },
       )
     }
@@ -190,11 +201,11 @@ export function QueueForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {!isEditMode && (
         <p className="text-sm text-gray-400">
-          Create a queue to route reports to. Only the name and description can
-          be modified after creation. To change the filtering logic (subject
-          types, report types, collection), you will need to create a new queue
-          and migrate reports to it. Leave the matching criteria empty to create
-          a queue that only receives reports routed to it explicitly.
+          Create a queue to route reports to. Matching criteria cannot be
+          modified after creation. To change the filtering logic (subject types,
+          report types, collection), create a new queue and migrate reports to
+          it. Leave the matching criteria empty to create a queue that only
+          receives reports routed to it explicitly.
         </p>
       )}
       <FormLabel label="Name" htmlFor="name" required className="mb-3">
@@ -210,6 +221,18 @@ export function QueueForm({
         {errors.name && (
           <p className="text-red-500 text-xs mt-1">{errors.name}</p>
         )}
+      </FormLabel>
+
+      <FormLabel label="Recommended takedown policies" className="mb-3">
+        <ActionPoliciesSelector
+          defaultPolicies={recommendedPolicies}
+          onSelect={setRecommendedPolicies}
+          name="recommendedPolicies"
+          usePolicyKeys
+        />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          These policies appear first when actioning reports in this queue.
+        </p>
       </FormLabel>
 
       <FormLabel label="Description" htmlFor="description" className="mb-3">

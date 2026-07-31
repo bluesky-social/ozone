@@ -968,6 +968,13 @@ function ReportDetailLayout(props: {
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
                   isSubjectDid={isSubjectDid}
+                  recommendedPolicies={
+                    (
+                      report.queue as typeof report.queue & {
+                        recommendedPolicies?: string[]
+                      }
+                    )?.recommendedPolicies
+                  }
                 />
               )}
 
