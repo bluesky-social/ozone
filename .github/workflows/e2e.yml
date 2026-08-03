@@ -44,7 +44,7 @@ jobs:
 
       # Run E2E tests
       - name: Cypress E2E Tests
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v7
         with:
           install: false # Skip installation as we've already done it
           start: yarn start # Start the app server
@@ -53,7 +53,7 @@ jobs:
 
       # Run Component tests
       - name: Cypress Component Tests
-        uses: cypress-io/github-action@v5
+        uses: cypress-io/github-action@v7
         with:
           install: false # Skip installation again
           component: true # Run component tests
