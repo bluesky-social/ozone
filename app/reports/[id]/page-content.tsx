@@ -525,6 +525,7 @@ function ReportDetailLayout(props: {
   const subjectOptions = [subject]
 
   const router = useRouter()
+  const labelerAgent = useLabelerAgent()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
@@ -898,7 +899,7 @@ function ReportDetailLayout(props: {
 
           <ReportActionsBar
             report={report}
-            currentUserDid={config.did}
+            currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
             subjectStatus={subjectStatus}
