@@ -898,6 +898,7 @@ function ReportDetailLayout(props: {
 
           <ReportActionsBar
             report={report}
+            currentUserDid={config.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
             subjectStatus={subjectStatus}
