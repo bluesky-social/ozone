@@ -224,7 +224,7 @@ export function ReportActionsBar({
   onResolveAppeal,
 }: {
   report: ToolsOzoneReportDefs.ReportView
-  currentUserDid: string
+  currentUserDid?: string
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
@@ -269,7 +269,7 @@ export function ReportActionsBar({
 
   const assignmentHelpText = !report.assignment
     ? 'Please assign this report to yourself before proceeding with an action'
-    : report.assignment.did !== currentUserDid
+    : currentUserDid && report.assignment.did !== currentUserDid
       ? 'You are not assigned to this report, please proceed with caution'
       : null
   const hasAvailableActions =
