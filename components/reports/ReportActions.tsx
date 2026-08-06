@@ -248,6 +248,7 @@ export function ReportActionsBar({
   const canAction = status === 'open' || status === 'assigned' || status === 'escalated'
 
   const handleActionClick = (action: ActionType) => {
+    onActionSelect(null)
     setShowNote(false)
     setPendingAction((prev) => (prev === action ? null : action))
   }
