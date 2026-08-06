@@ -86,6 +86,11 @@ import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
 import { ReportBatchLink } from 'components/reports/ReportBatchLink'
 import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
+import {
+  getVideoTimestampSeconds,
+  ReportedVideoTimestamp,
+} from 'components/reports/ReportedVideoTimestamp'
+import { VideoTimestampProvider } from '@/common/video/TimestampContext'
 import { getHandleFromSubjectView } from 'components/reports/utils'
 import { SubjectTagList } from 'components/tags/SubjectTagList'
 import { WorkspacePanel } from 'components/workspace/Panel'
@@ -219,6 +224,10 @@ function ReportInfoPanel({
           />
         </div>
       )}
+
+      <ReportedVideoTimestamp
+        seconds={getVideoTimestampSeconds(creationEvent?.modTool)}
+      />
 
       {/* Batch actions link, shown for any report whose creating event carries
           a modTool batchId (not just registered intake tools). */}
@@ -525,6 +534,7 @@ function ReportDetailLayout(props: {
   const subjectOptions = [subject]
 
   const router = useRouter()
+  const labelerAgent = useLabelerAgent()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
@@ -683,8 +693,9 @@ function ReportDetailLayout(props: {
     report.subject.repo?.did || profile?.did || repo?.did || record?.repo.did
 
   return (
-    <div className="dark:text-gray-50">
-      <div className="flex flex-col lg:flex-row gap-6">
+    <VideoTimestampProvider>
+      <div className="dark:text-gray-50">
+        <div className="flex flex-col lg:flex-row gap-6">
         {/* Left col */}
         <div className="flex-1 min-w-0">
           {/* Subject preview */}
@@ -898,6 +909,7 @@ function ReportDetailLayout(props: {
 
           <ReportActionsBar
             report={report}
+            currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
             subjectStatus={subjectStatus}
@@ -1128,7 +1140,8 @@ function ReportDetailLayout(props: {
 
           <ActivityTimeline reportId={report.id} />
         </div>
+        </div>
       </div>
-    </div>
+    </VideoTimestampProvider>
   )
 }

@@ -217,12 +217,14 @@ function NoteComposer({
 
 export function ReportActionsBar({
   report,
+  currentUserDid,
   selectedAction,
   onActionSelect,
   subjectStatus,
   onResolveAppeal,
 }: {
   report: ToolsOzoneReportDefs.ReportView
+  currentUserDid?: string
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
@@ -265,9 +267,33 @@ export function ReportActionsBar({
     ? selectedAction.charAt(0).toUpperCase() + selectedAction.slice(1)
     : 'Action'
 
+  const assignmentHelpText = !report.assignment
+    ? 'Please assign this report to yourself before proceeding with an action'
+    : currentUserDid && report.assignment.did !== currentUserDid
+      ? 'You are not assigned to this report, please proceed with caution'
+      : null
+  const hasAvailableActions =
+    canEscalate ||
+    canNoAction ||
+    canReopen ||
+    (canAction &&
+      isAppeal &&
+      ((isSubjectTakendown && canTakedown) || canLabel)) ||
+    (canAction && !isAppeal && (canLabel || canTakedown))
+
   return (
     <div className="mb-3 rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-slate-900 px-3 py-2">
+      {assignmentHelpText && hasAvailableActions && (
+        <p className="-mx-3 -mt-2 mb-2 rounded-t-lg border-b border-yellow-200 bg-yellow-50 px-3 py-2 text-xs font-medium text-yellow-900 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-200">
+          {assignmentHelpText}
+        </p>
+      )}
       <div className="flex flex-row items-center gap-2 flex-wrap">
+        {assignmentHelpText && !hasAvailableActions && (
+          <p className="text-xs font-medium text-yellow-800 dark:text-yellow-200">
+            {assignmentHelpText}
+          </p>
+        )}
         {canEscalate && (
           <ActionButton
             appearance={pendingAction === 'escalate' ? 'primary' : 'outlined'}
