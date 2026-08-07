@@ -8,6 +8,7 @@
 
 # testing
 /coverage
+/dependency-audit-reports
 
 # next.js
 /.next/
@@ -35,6 +36,9 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local agent planning artifacts
+specs/
 
 # cypress
 cypress/videos

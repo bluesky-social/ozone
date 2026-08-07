@@ -28,10 +28,11 @@ lint: ## Run style checks and verify syntax
 
 .PHONY: deps
 deps: ## Installs dependent libs using 'yarn install'
-	yarn install --frozen-lockfile
+	yarn install --immutable
 
 .PHONY: nvm-setup
 nvm-setup: ## Use NVM to install and activate node+yarn
-	nvm install 20
-	nvm use 20
-	npm install --global yarn
+	nvm install 26.4.0
+	nvm use 26.4.0
+	corepack enable
+	corepack prepare yarn@4.17.0 --activate

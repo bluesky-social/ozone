@@ -2,9 +2,20 @@
   "name": "ozone-service",
   "description": "Ozone service entrypoint",
   "main": "index.js",
+  "engines": {
+    "node": "26.x"
+  },
+  "packageManager": "yarn@4.17.0",
   "dependencies": {
-    "@atproto/ozone": "0.1.167",
-    "next": "15.5.18",
-    "react": "19.2.5"
+    "@atproto/ozone": "0.2.12",
+    "next": "15.5.20",
+    "react": "19.2.5",
+    "react-dom": "19.2.5"
+  },
+  "resolutions": {
+    "form-data@npm:^4.0.5": "4.0.6",
+    "postcss@npm:8.4.31": "8.5.16",
+    "qs@npm:~6.14.0": "6.15.3",
+    "ws@npm:^8.12.0": "8.21.0"
   }
 }

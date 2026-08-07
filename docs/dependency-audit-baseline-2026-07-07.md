@@ -1,0 +1,502 @@
+# Dependency Audit Baseline - 2026-07-07
+
+This file captures the recursive dependency-audit baseline before adding the CI
+audit gate and remediating high-severity findings.
+
+Commands:
+
+```sh
+npm exec --package=@yarnpkg/cli-dist@4.8.1 yarn -- npm audit --recursive --json
+(cd service && npm exec --package=@yarnpkg/cli-dist@4.8.1 yarn -- npm audit --recursive --json)
+```
+
+Both commands exited with status `1`, which is expected when Yarn reports audit
+findings. Yarn emits one JSON object per line for `--json`; the entries below
+preserve the package, advisory or deprecation identifier, severity, vulnerable
+version range, observed tree versions, and dependent chain reported by Yarn.
+
+## After Remediation Snapshot
+
+Commands:
+
+```sh
+yarn audit:deps
+yarn npm audit --recursive --json
+(cd service && yarn npm audit --recursive --json)
+```
+
+Result after the dependency and toolchain remediation commits:
+
+- Root high-severity recursive threshold: pass, `No audit suggestions`.
+- Service high-severity recursive threshold: pass, `No audit suggestions`.
+- Root full recursive report: two remaining moderate deprecation-style entries:
+  - `@ungap/structured-clone` `1.3.0` through `rehype-autolink-headings@7.1.0`.
+  - `recharts` `2.15.4`, whose 1.x and 2.x branches are inactive and require a v3 migration.
+- Service full recursive report: clean, exit status `0`.
+
+The CI workflow uploads the full recursive reports and threshold reports as
+`dependency-audit-reports` on every run, including failing runs, so future
+dependency changes retain before/after evidence without weakening the high
+severity merge gate.
+
+## Root Package Audit
+
+- `@humanwhocodes/config-array`
+  - ID: `@humanwhocodes/config-array (deprecation)`
+  - Severity: moderate
+  - Issue: Use `@eslint/config-array` instead.
+  - Vulnerable versions: `0.13.0`
+  - Tree versions: `0.13.0`
+  - Dependents: `eslint@npm:8.57.1`
+- `@humanwhocodes/object-schema`
+  - ID: `@humanwhocodes/object-schema (deprecation)`
+  - Severity: moderate
+  - Issue: Use `@eslint/object-schema` instead.
+  - Vulnerable versions: `2.0.3`
+  - Tree versions: `2.0.3`
+  - Dependents: `@humanwhocodes/config-array@npm:0.13.0`
+- `@isaacs/brace-expansion`
+  - ID: `1112954`
+  - Severity: high
+  - Issue: Uncontrolled resource consumption.
+  - URL: `https://github.com/advisories/GHSA-7h2j-956f-4vf2`
+  - Vulnerable versions: `<=5.0.0`
+  - Tree versions: `5.0.0`
+  - Dependents: `minimatch@npm:10.1.1`
+- `@ungap/structured-clone`
+  - ID: `@ungap/structured-clone (deprecation)`
+  - Severity: moderate
+  - Issue: Potential CWE-502; update to `1.3.1` or higher.
+  - Vulnerable versions: `1.3.0`
+  - Tree versions: `1.3.0`
+  - Dependents: `eslint@npm:8.57.1`
+- `ajv`
+  - ID: `1113714`
+  - Severity: moderate
+  - Issue: ReDoS when using the `$data` option.
+  - URL: `https://github.com/advisories/GHSA-2g4f-4pwh-qvx6`
+  - Vulnerable versions: `<6.14.0`
+  - Tree versions: `6.12.6`
+  - Dependents: `eslint@npm:8.57.1`
+- `brace-expansion`
+  - ID: `1115540`
+  - Severity: moderate
+  - Issue: Zero-step sequence causes process hang and memory exhaustion.
+  - URL: `https://github.com/advisories/GHSA-f886-m6hf-6m8v`
+  - Vulnerable versions: `<1.1.13`
+  - Tree versions: `1.1.12`
+  - Dependents: `minimatch@npm:3.1.2`
+- `brace-expansion`
+  - ID: `1115541`
+  - Severity: moderate
+  - Issue: Zero-step sequence causes process hang and memory exhaustion.
+  - URL: `https://github.com/advisories/GHSA-f886-m6hf-6m8v`
+  - Vulnerable versions: `>=2.0.0 <2.0.3`
+  - Tree versions: `2.0.2`
+  - Dependents: `minimatch@npm:9.0.5`
+- `diff`
+  - ID: `1112705`
+  - Severity: low
+  - Issue: Denial of Service vulnerability in `parsePatch` and `applyPatch`.
+  - URL: `https://github.com/advisories/GHSA-73rr-hh4g-fpgx`
+  - Vulnerable versions: `>=5.0.0 <5.2.2`
+  - Tree versions: `5.2.0`
+  - Dependents: `uvu@npm:0.5.6`
+- `eslint`
+  - ID: `eslint (deprecation)`
+  - Severity: moderate
+  - Issue: This version is no longer supported.
+  - Vulnerable versions: `8.57.1`
+  - Tree versions: `8.57.1`
+  - Dependents: `ozone@workspace:.`
+- `flatted`
+  - ID: `1114526`
+  - Severity: high
+  - Issue: Unbounded recursion DoS in `parse()` revive phase.
+  - URL: `https://github.com/advisories/GHSA-25h7-pfq9-p65f`
+  - Vulnerable versions: `<3.4.0`
+  - Tree versions: `3.3.3`
+  - Dependents: `flat-cache@npm:3.2.0`
+- `flatted`
+  - ID: `1115357`
+  - Severity: high
+  - Issue: Prototype pollution via `parse()`.
+  - URL: `https://github.com/advisories/GHSA-rf6f-7fwh-wjgh`
+  - Vulnerable versions: `<=3.4.1`
+  - Tree versions: `3.3.3`
+  - Dependents: `flat-cache@npm:3.2.0`
+- `form-data`
+  - ID: `1120743`
+  - Severity: high
+  - Issue: CRLF injection via unescaped multipart field names and filenames.
+  - URL: `https://github.com/advisories/GHSA-hmw2-7cc7-3qxx`
+  - Vulnerable versions: `>=4.0.0 <4.0.6`
+  - Tree versions: `4.0.5`
+  - Dependents: `@cypress/request@npm:3.0.9`
+- `glob`
+  - ID: `glob (deprecation)`
+  - Severity: moderate
+  - Issue: Old versions are unsupported and contain known vulnerabilities.
+  - Vulnerable versions: `7.2.3`
+  - Tree versions: `7.2.3`
+  - Dependents: `rimraf@npm:3.0.2`
+- `inflight`
+  - ID: `inflight (deprecation)`
+  - Severity: moderate
+  - Issue: Unsupported module that leaks memory.
+  - Vulnerable versions: `1.0.6`
+  - Tree versions: `1.0.6`
+  - Dependents: `glob@npm:7.2.3`
+- `ip-address`
+  - ID: `1118827`
+  - Severity: moderate
+  - Issue: XSS in Address6 HTML-emitting methods.
+  - URL: `https://github.com/advisories/GHSA-v2v4-37r5-5v8g`
+  - Vulnerable versions: `<=10.1.0`
+  - Tree versions: `10.1.0`
+  - Dependents: `socks@npm:2.8.7`
+- `js-cookie`
+  - ID: `1120607`
+  - Severity: high
+  - Issue: Per-instance prototype hijack enables cookie-attribute injection.
+  - URL: `https://github.com/advisories/GHSA-qjx8-664m-686j`
+  - Vulnerable versions: `<=3.0.5`
+  - Tree versions: `2.2.1`
+  - Dependents: `react-use@virtual:...#npm:17.6.0`
+- `js-yaml`
+  - ID: `1121860`
+  - Severity: moderate
+  - Issue: Quadratic-complexity DoS in merge key handling via repeated aliases.
+  - URL: `https://github.com/advisories/GHSA-h67p-54hq-rp68`
+  - Vulnerable versions: `>=4.0.0 <=4.1.1`
+  - Tree versions: `4.1.1`
+  - Dependents: `eslint@npm:8.57.1`
+- `lodash`
+  - ID: `1115806`
+  - Severity: high
+  - Issue: Code injection via `_.template` imports key names.
+  - URL: `https://github.com/advisories/GHSA-r5fr-rjxr-66jc`
+  - Vulnerable versions: `>=4.0.0 <=4.17.23`
+  - Tree versions: `4.17.21`
+  - Dependents: `cypress@npm:14.5.4`
+- `lodash`
+  - ID: `1115810`
+  - Severity: moderate
+  - Issue: Prototype pollution via array path bypass in `_.unset` and `_.omit`.
+  - URL: `https://github.com/advisories/GHSA-f23m-r3pf-42rh`
+  - Vulnerable versions: `<=4.17.23`
+  - Tree versions: `4.17.21`
+  - Dependents: `cypress@npm:14.5.4`
+- `lodash`
+  - ID: `1120370`
+  - Severity: moderate
+  - Issue: Prototype pollution in `_.unset` and `_.omit`.
+  - URL: `https://github.com/advisories/GHSA-xxjr-mmjv-4gpg`
+  - Vulnerable versions: `>=4.0.0 <=4.17.22`
+  - Tree versions: `4.17.21`
+  - Dependents: `cypress@npm:14.5.4`
+- `minimatch`
+  - ID: `1113459`
+  - Severity: high
+  - Issue: ReDoS via repeated wildcards with non-matching literal in pattern.
+  - URL: `https://github.com/advisories/GHSA-3ppc-4f35-3m26`
+  - Vulnerable versions: `<3.1.3`
+  - Tree versions: `3.1.2`
+  - Dependents: `eslint@npm:8.57.1`
+- `minimatch`
+  - ID: `1113465`
+  - Severity: high
+  - Issue: ReDoS via repeated wildcards with non-matching literal in pattern.
+  - URL: `https://github.com/advisories/GHSA-3ppc-4f35-3m26`
+  - Vulnerable versions: `>=9.0.0 <9.0.6`
+  - Tree versions: `9.0.5`
+  - Dependents: `@typescript-eslint/typescript-estree@virtual:...#npm:8.49.0`
+- `minimatch`
+  - ID: `1113466`
+  - Severity: high
+  - Issue: ReDoS via repeated wildcards with non-matching literal in pattern.
+  - URL: `https://github.com/advisories/GHSA-3ppc-4f35-3m26`
+  - Vulnerable versions: `>=10.0.0 <10.2.1`
+  - Tree versions: `10.1.1`
+  - Dependents: `glob@npm:13.0.0`
+- `minimatch`
+  - ID: `1113538`
+  - Severity: high
+  - Issue: ReDoS via `matchOne()` combinatorial backtracking.
+  - URL: `https://github.com/advisories/GHSA-7r86-cg39-jmmj`
+  - Vulnerable versions: `<3.1.3`
+  - Tree versions: `3.1.2`
+  - Dependents: `eslint@npm:8.57.1`
+- `minimatch`
+  - ID: `1113544`
+  - Severity: high
+  - Issue: ReDoS via `matchOne()` combinatorial backtracking.
+  - URL: `https://github.com/advisories/GHSA-7r86-cg39-jmmj`
+  - Vulnerable versions: `>=9.0.0 <9.0.7`
+  - Tree versions: `9.0.5`
+  - Dependents: `@typescript-eslint/typescript-estree@virtual:...#npm:8.49.0`
+- `minimatch`
+  - ID: `1113545`
+  - Severity: high
+  - Issue: ReDoS via `matchOne()` combinatorial backtracking.
+  - URL: `https://github.com/advisories/GHSA-7r86-cg39-jmmj`
+  - Vulnerable versions: `>=10.0.0 <10.2.3`
+  - Tree versions: `10.1.1`
+  - Dependents: `glob@npm:13.0.0`
+- `minimatch`
+  - ID: `1113546`
+  - Severity: high
+  - Issue: ReDoS via nested `*()` extglobs.
+  - URL: `https://github.com/advisories/GHSA-23c5-xmqv-rm74`
+  - Vulnerable versions: `<3.1.4`
+  - Tree versions: `3.1.2`
+  - Dependents: `eslint@npm:8.57.1`
+- `minimatch`
+  - ID: `1113552`
+  - Severity: high
+  - Issue: ReDoS via nested `*()` extglobs.
+  - URL: `https://github.com/advisories/GHSA-23c5-xmqv-rm74`
+  - Vulnerable versions: `>=9.0.0 <9.0.7`
+  - Tree versions: `9.0.5`
+  - Dependents: `@typescript-eslint/typescript-estree@virtual:...#npm:8.49.0`
+- `minimatch`
+  - ID: `1113553`
+  - Severity: high
+  - Issue: ReDoS via nested `*()` extglobs.
+  - URL: `https://github.com/advisories/GHSA-23c5-xmqv-rm74`
+  - Vulnerable versions: `>=10.0.0 <10.2.3`
+  - Tree versions: `10.1.1`
+  - Dependents: `glob@npm:13.0.0`
+- `picomatch`
+  - ID: `1115549`
+  - Severity: moderate
+  - Issue: Method injection in POSIX character classes causes incorrect glob matching.
+  - URL: `https://github.com/advisories/GHSA-3v7f-55p6-f55p`
+  - Vulnerable versions: `<2.3.2`
+  - Tree versions: `2.3.1`
+  - Dependents: `micromatch@npm:4.0.8`
+- `picomatch`
+  - ID: `1115551`
+  - Severity: moderate
+  - Issue: Method injection in POSIX character classes causes incorrect glob matching.
+  - URL: `https://github.com/advisories/GHSA-3v7f-55p6-f55p`
+  - Vulnerable versions: `>=4.0.0 <4.0.4`
+  - Tree versions: `4.0.3`
+  - Dependents: `tinyglobby@npm:0.2.15`
+- `picomatch`
+  - ID: `1115552`
+  - Severity: high
+  - Issue: ReDoS via extglob quantifiers.
+  - URL: `https://github.com/advisories/GHSA-c2c7-rcm5-vvqj`
+  - Vulnerable versions: `<2.3.2`
+  - Tree versions: `2.3.1`
+  - Dependents: `micromatch@npm:4.0.8`
+- `picomatch`
+  - ID: `1115554`
+  - Severity: high
+  - Issue: ReDoS via extglob quantifiers.
+  - URL: `https://github.com/advisories/GHSA-c2c7-rcm5-vvqj`
+  - Vulnerable versions: `>=4.0.0 <4.0.4`
+  - Tree versions: `4.0.3`
+  - Dependents: `tinyglobby@npm:0.2.15`
+- `postcss`
+  - ID: `1117015`
+  - Severity: moderate
+  - Issue: XSS via unescaped `</style>` in CSS stringify output.
+  - URL: `https://github.com/advisories/GHSA-qx2v-qp2m-jg93`
+  - Vulnerable versions: `<8.5.10`
+  - Tree versions: `8.4.31`, `8.5.6`
+  - Dependents: `next@virtual:...#npm:15.5.18`, `ozone@workspace:.`
+- `qs`
+  - ID: `1113161`
+  - Severity: low
+  - Issue: `arrayLimit` bypass in comma parsing allows denial of service.
+  - URL: `https://github.com/advisories/GHSA-w7fw-mjwx-w883`
+  - Vulnerable versions: `>=6.7.0 <=6.14.1`
+  - Tree versions: `6.14.0`
+  - Dependents: `@cypress/request@npm:3.0.9`
+- `qs`
+  - ID: `1113719`
+  - Severity: moderate
+  - Issue: `arrayLimit` bypass in bracket notation allows DoS via memory exhaustion.
+  - URL: `https://github.com/advisories/GHSA-6rw7-vpxm-498p`
+  - Vulnerable versions: `<6.14.1`
+  - Tree versions: `6.14.0`
+  - Dependents: `@cypress/request@npm:3.0.9`
+- `qs`
+  - ID: `1119502`
+  - Severity: moderate
+  - Issue: `qs.stringify` can crash on null or undefined entries in comma-format arrays.
+  - URL: `https://github.com/advisories/GHSA-q8mj-m7cp-5q26`
+  - Vulnerable versions: `>=6.11.1 <=6.15.1`
+  - Tree versions: `6.14.0`
+  - Dependents: `@cypress/request@npm:3.0.9`
+- `recharts`
+  - ID: `recharts (deprecation)`
+  - Severity: moderate
+  - Issue: 1.x and 2.x branches are no longer active.
+  - Vulnerable versions: `2.15.4`
+  - Tree versions: `2.15.4`
+  - Dependents: `ozone@workspace:.`
+- `rimraf`
+  - ID: `rimraf (deprecation)`
+  - Severity: moderate
+  - Issue: Versions prior to v4 are no longer supported.
+  - Vulnerable versions: `3.0.2`
+  - Tree versions: `3.0.2`
+  - Dependents: `flat-cache@npm:3.2.0`
+- `tar`
+  - ID: `1112659`
+  - Severity: high
+  - Issue: Arbitrary file creation or overwrite via hardlink path traversal.
+  - URL: `https://github.com/advisories/GHSA-34x7-hfp2-rc4v`
+  - Vulnerable versions: `<7.5.7`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tar`
+  - ID: `1113300`
+  - Severity: high
+  - Issue: Arbitrary file overwrite and symlink poisoning via insufficient path sanitization.
+  - URL: `https://github.com/advisories/GHSA-8qq5-rm4j-mr97`
+  - Vulnerable versions: `<=7.5.2`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tar`
+  - ID: `1113375`
+  - Severity: high
+  - Issue: Arbitrary file read/write via hardlink target escape through symlink chain.
+  - URL: `https://github.com/advisories/GHSA-83g3-92jg-28cx`
+  - Vulnerable versions: `<7.5.8`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tar`
+  - ID: `1114200`
+  - Severity: high
+  - Issue: Hardlink path traversal via drive-relative linkpath.
+  - URL: `https://github.com/advisories/GHSA-qffp-2rhf-9h96`
+  - Vulnerable versions: `<=7.5.9`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tar`
+  - ID: `1114302`
+  - Severity: high
+  - Issue: Symlink path traversal via drive-relative linkpath.
+  - URL: `https://github.com/advisories/GHSA-9ppj-qmqm-q256`
+  - Vulnerable versions: `<=7.5.10`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tar`
+  - ID: `1114680`
+  - Severity: high
+  - Issue: Race condition in path reservations via Unicode ligature collisions on macOS APFS.
+  - URL: `https://github.com/advisories/GHSA-r6q2-hw4h-h46w`
+  - Vulnerable versions: `<=7.5.3`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tar`
+  - ID: `1120782`
+  - Severity: moderate
+  - Issue: PAX size override on intermediary GNU long-name/long-link headers.
+  - URL: `https://github.com/advisories/GHSA-vmf3-w455-68vh`
+  - Vulnerable versions: `<=7.5.15`
+  - Tree versions: `7.5.2`
+  - Dependents: `node-gyp@npm:12.1.0`
+- `tmp`
+  - ID: `1120654`
+  - Severity: high
+  - Issue: Path traversal via unsanitized prefix/postfix.
+  - URL: `https://github.com/advisories/GHSA-ph9p-34f9-6g65`
+  - Vulnerable versions: `<0.2.6`
+  - Tree versions: `0.2.5`
+  - Dependents: `cypress@npm:14.5.4`
+- `uuid`
+  - ID: `1119441`
+  - Severity: moderate
+  - Issue: Missing buffer bounds check in v3/v5/v6 when `buf` is provided.
+  - URL: `https://github.com/advisories/GHSA-w5hq-g745-h8pq`
+  - Vulnerable versions: `<11.1.1`
+  - Tree versions: `8.3.2`
+  - Dependents: `@cypress/request@npm:3.0.9`
+
+## Service Package Audit
+
+- `form-data`
+  - ID: `1120743`
+  - Severity: high
+  - Issue: CRLF injection via unescaped multipart field names and filenames.
+  - URL: `https://github.com/advisories/GHSA-hmw2-7cc7-3qxx`
+  - Vulnerable versions: `>=4.0.0 <4.0.6`
+  - Tree versions: `4.0.5`
+  - Dependents: `axios@npm:1.16.1`
+- `kysely`
+  - ID: `1115531`
+  - Severity: high
+  - Issue: MySQL SQL injection via insufficient backslash escaping in `sql.lit(string)` usage or similar literal helpers.
+  - URL: `https://github.com/advisories/GHSA-8cpq-38p9-67gx`
+  - Vulnerable versions: `<=0.28.13`
+  - Tree versions: `0.22.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`
+- `postcss`
+  - ID: `1117015`
+  - Severity: moderate
+  - Issue: XSS via unescaped `</style>` in CSS stringify output.
+  - URL: `https://github.com/advisories/GHSA-qx2v-qp2m-jg93`
+  - Vulnerable versions: `<8.5.10`
+  - Tree versions: `8.4.31`
+  - Dependents: `next@virtual:...#npm:15.5.18`
+- `qs`
+  - ID: `1119502`
+  - Severity: moderate
+  - Issue: `qs.stringify` can crash on null or undefined entries in comma-format arrays.
+  - URL: `https://github.com/advisories/GHSA-q8mj-m7cp-5q26`
+  - Vulnerable versions: `>=6.11.1 <=6.15.1`
+  - Tree versions: `6.14.2`
+  - Dependents: `express@npm:4.22.1`
+- `undici`
+  - ID: `1121242`
+  - Severity: moderate
+  - Issue: HTTP header injection via Set-Cookie percent-decoding.
+  - URL: `https://github.com/advisories/GHSA-p88m-4jfj-68fv`
+  - Vulnerable versions: `<6.27.0`
+  - Tree versions: `6.25.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`
+- `undici`
+  - ID: `1121245`
+  - Severity: high
+  - Issue: WebSocket client denial of service via fragment count bypass.
+  - URL: `https://github.com/advisories/GHSA-vxpw-j846-p89q`
+  - Vulnerable versions: `<6.27.0`
+  - Tree versions: `6.25.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`
+- `undici`
+  - ID: `1121250`
+  - Severity: low
+  - Issue: HTTP response queue poisoning via keep-alive socket reuse.
+  - URL: `https://github.com/advisories/GHSA-35p6-xmwp-9g52`
+  - Vulnerable versions: `<6.27.0`
+  - Tree versions: `6.25.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`
+- `undici`
+  - ID: `1121255`
+  - Severity: low
+  - Issue: Set-Cookie SameSite attribute downgrade via permissive substring matching.
+  - URL: `https://github.com/advisories/GHSA-g8m3-5g58-fq7m`
+  - Vulnerable versions: `<6.27.0`
+  - Tree versions: `6.25.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`
+- `ws`
+  - ID: `1119108`
+  - Severity: moderate
+  - Issue: Uninitialized memory disclosure.
+  - URL: `https://github.com/advisories/GHSA-58qx-3vcg-4xpx`
+  - Vulnerable versions: `>=8.0.0 <8.20.1`
+  - Tree versions: `8.20.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`
+- `ws`
+  - ID: `1120730`
+  - Severity: high
+  - Issue: Memory exhaustion DoS from tiny fragments and data chunks.
+  - URL: `https://github.com/advisories/GHSA-96hv-2xvq-fx4p`
+  - Vulnerable versions: `>=8.0.0 <8.21.0`
+  - Tree versions: `8.20.0`
+  - Dependents: `@atproto/ozone@npm:0.1.167`

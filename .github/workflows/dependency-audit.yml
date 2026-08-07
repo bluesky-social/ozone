@@ -1,0 +1,48 @@
+name: Dependency Audit
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+jobs:
+  dependency-audit:
+    name: Recursive dependency audit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Check out Git repository
+        uses: actions/checkout@v4
+
+      - name: Install node 26.4.0
+        uses: actions/setup-node@v4
+        with:
+          node-version: 26.4.0
+
+      - name: Enable Corepack
+        run: |
+          corepack enable
+          corepack prepare yarn@4.17.0 --activate
+
+      - name: Install root dependencies
+        run: yarn install --immutable
+
+      - name: Install service dependencies
+        working-directory: service
+        run: yarn install --immutable
+
+      - name: Run recursive dependency audit
+        env:
+          DEPENDENCY_AUDIT_OUTPUT_DIR: dependency-audit-reports
+        run: yarn audit:deps
+
+      - name: Upload dependency audit reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dependency-audit-reports
+          path: dependency-audit-reports
+          if-no-files-found: error
+          retention-days: 30

@@ -5,13 +5,14 @@
   "description": "Moderation admin interface for atproto services",
   "license": "MIT or Apache 2.0",
   "engines": {
-    "node": "20.x"
+    "node": "26.x"
   },
-  "packageManager": "yarn@4.8.1",
+  "packageManager": "yarn@4.17.0",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
+    "audit:deps": "bash scripts/dependency-audit.sh",
     "lint": "next lint",
     "type-check": "tsc --noEmit",
     "cypress": "cypress open",
@@ -27,18 +28,18 @@
     "@headlessui/react": "^2.2.1",
     "@heroicons/react": "^2.0.13",
     "@tanstack/react-query": "^4.22.0",
-    "@types/node": "18.11.17",
+    "@types/node": "26.1.0",
     "@types/react": "19.2.5",
     "@types/react-dom": "19.2.3",
     "@uiw/react-md-editor": "^4.0.5",
     "bcp-47-match": "^2.0.3",
     "date-fns": "^2.29.3",
-    "eslint": "^8.57.0",
-    "eslint-config-next": "15.2.4",
+    "eslint": "9.39.4",
+    "eslint-config-next": "15.5.20",
     "hls.js": "^1.5.13",
     "kbar": "^0.1.0-beta.45",
     "lande": "^1.0.10",
-    "next": "15.5.18",
+    "next": "15.5.20",
     "react": "19.2.5",
     "react-dom": "19.2.5",
     "react-dropzone": "^14.3.5",
@@ -46,29 +47,47 @@
     "react-tailwindcss-select": "^1.8.5",
     "react-tetris": "^0.3.0",
     "react-toastify": "^11.0.5",
-    "react-use": "^17.4.0",
+    "react-use": "17.6.1",
     "recharts": "^2.15.3",
     "remark": "^14.0.3",
     "remark-html": "^15.0.2",
     "tailwind-merge": "^3.5.0",
     "typescript": "^5.4.5",
+    "uuid": "14.0.1",
     "yet-another-react-lightbox": "^3.20.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.8",
     "autoprefixer": "^10.4.13",
-    "cypress": "^14.3.0",
+    "cypress": "15.17.0",
     "eslint-plugin-cypress": "^4.2.1",
-    "postcss": "^8.4.20",
+    "postcss": "8.5.16",
     "tailwindcss": "^3.2.4"
   },
   "resolutions": {
     "jackspeak": "2.1.1",
     "@types/react": "19.2.5",
-    "@types/react-dom": "19.2.3"
+    "@types/react-dom": "19.2.3",
+    "@isaacs/brace-expansion@npm:^5.0.0": "5.0.1",
+    "brace-expansion@npm:^1.1.7": "1.1.13",
+    "diff@npm:^5.0.0": "5.2.2",
+    "flatted@npm:^3.2.9": "3.4.2",
+    "form-data@npm:~4.0.4": "4.0.6",
+    "ip-address@npm:^10.0.1": "10.2.0",
+    "lodash@npm:^4.17.21": "4.18.1",
+    "minimatch@npm:^3.1.2": "3.1.5",
+    "minimatch@npm:^9.0.4": "9.0.8",
+    "minimatch@npm:^10.1.1": "10.2.5",
+    "picomatch@npm:^2.0.4": "2.3.2",
+    "picomatch@npm:^2.2.1": "2.3.2",
+    "picomatch@npm:^2.3.1": "2.3.2",
+    "picomatch@npm:^4.0.3": "4.0.5",
+    "postcss@npm:8.4.31": "8.5.16",
+    "postcss@npm:^8.4.47": "8.5.16",
+    "tar@npm:^7.5.2": "7.5.19"
   },
   "volta": {
-    "node": "20.9.0"
+    "node": "26.4.0"
   }
 }
