@@ -1,6 +1,6 @@
 import { PaginatedSelect } from '@/common/PaginatedSelect'
 import { useQueueList } from '@/queues/useQueues'
-import { ReportCategorySelect } from '@/reports/ReportCategorySelect'
+import { ReportReasonSelect } from '@/reports/ReportReasonSelect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { MemberSingleSelect } from '@/team/MemberSingleSelect'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -12,19 +12,19 @@ import {
   DateRangeValue,
 } from '../../common/DateRangeFilter'
 
-export type Grouping = 'aggregate' | 'queue' | 'category' | 'moderator'
+export type Grouping = 'aggregate' | 'queue' | 'reason' | 'moderator'
 
 export type StatsFilterState = {
   grouping: Grouping
   queueId?: number
-  category?: string
+  reportReason?: string
   moderatorDid?: string
   dateRange: DateRangeValue
 }
 
 function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   const groupingParam = searchParams.get('grouping')
-  const categoryParam = searchParams.get('category')
+  const reportReasonParam = searchParams.get('reportReason')
   const moderatorDidParam = searchParams.get('moderatorDid')
   const queueIdParam = searchParams.get('queueId')
   const startDateParam = searchParams.get('startDate')
@@ -49,14 +49,14 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   const validGroupings: Grouping[] = [
     'aggregate',
     'queue',
-    'category',
+    'reason',
     'moderator',
   ]
   const grouping: Grouping =
     groupingParam && validGroupings.includes(groupingParam as Grouping)
       ? (groupingParam as Grouping)
-      : categoryParam
-        ? 'category'
+      : reportReasonParam
+        ? 'reason'
         : moderatorDidParam
           ? 'moderator'
           : queueIdParam
@@ -66,7 +66,7 @@ function filtersFromParams(searchParams: URLSearchParams): StatsFilterState {
   return {
     grouping,
     queueId: queueIdParam ? Number(queueIdParam) : undefined,
-    category: categoryParam ?? undefined,
+    reportReason: reportReasonParam ?? undefined,
     moderatorDid: moderatorDidParam || undefined,
     dateRange,
   }
@@ -76,8 +76,8 @@ function filtersToParams(filters: StatsFilterState): URLSearchParams {
   const params = new URLSearchParams()
 
   params.set('grouping', filters.grouping)
-  if (filters.category) {
-    params.set('category', filters.category)
+  if (filters.reportReason) {
+    params.set('reportReason', filters.reportReason)
   }
   if (filters.queueId != null) {
     params.set('queueId', String(filters.queueId))
@@ -139,7 +139,7 @@ export const useParamStatsFilters = () => {
 const GROUPINGS: { key: Grouping; label: string }[] = [
   { key: 'aggregate', label: 'Aggregate' },
   { key: 'queue', label: 'By Queue' },
-  { key: 'category', label: 'By Category' },
+  { key: 'reason', label: 'By Report Reason' },
   { key: 'moderator', label: 'By Moderator' },
 ]
 
@@ -162,7 +162,7 @@ export function StatsFilters({
     onChange({
       grouping,
       queueId: undefined,
-      category: undefined,
+      reportReason: undefined,
       moderatorDid: undefined,
       dateRange: value.dateRange,
     })
@@ -198,7 +198,7 @@ export function StatsFilters({
               onChange({
                 ...value,
                 queueId: val ? Number(val) : undefined,
-                category: undefined,
+                reportReason: undefined,
                 moderatorDid: undefined,
               })
             }
@@ -216,17 +216,17 @@ export function StatsFilters({
         </div>
       )}
 
-      {value.grouping === 'category' && (
+      {value.grouping === 'reason' && (
         <div>
           <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
-            Category
+            Report Reason
           </label>
-          <ReportCategorySelect
-            value={value.category}
-            onChange={(category) =>
+          <ReportReasonSelect
+            value={value.reportReason}
+            onChange={(reportReason) =>
               onChange({
                 ...value,
-                category,
+                reportReason,
                 queueId: undefined,
                 moderatorDid: undefined,
               })
@@ -248,7 +248,7 @@ export function StatsFilters({
                 ...value,
                 moderatorDid,
                 queueId: undefined,
-                category: undefined,
+                reportReason: undefined,
               })
             }
           />

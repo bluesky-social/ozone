@@ -1,8 +1,7 @@
 'use client'
 
-import { statReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
-import { LiveStatsPanel } from '@/reports/stats/LiveStats'
+import { LiveStatsCards } from '@/reports/stats/LiveStats'
 import {
   StatsFilters,
   useParamStatsFilters,
@@ -25,7 +24,7 @@ export function StatsDetailPageContent() {
     filters.grouping === 'aggregate' ||
     (filters.grouping === 'moderator' && !canViewModeratorStats)
 
-  const reportTypes = filters.category ? statReasonTypes[filters.category] : []
+  const reportTypes = filters.reportReason ? [filters.reportReason] : undefined
   const live: LiveStatsParams = isAggregate
     ? {}
     : {
@@ -66,7 +65,7 @@ export function StatsDetailPageContent() {
 
       <StatsFilters value={filters} onChange={handleFilterChange} />
 
-      <LiveStatsPanel params={live} />
+      <LiveStatsCards params={live} />
 
       <div className="rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700">
         <HistoricalGraph
