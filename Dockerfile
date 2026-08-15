@@ -1,4 +1,4 @@
-FROM node:22.23.2-alpine3.23 AS build
+FROM node:26.7.0-alpine3.23 AS build
 
 WORKDIR /usr/src/ozone
 
@@ -14,7 +14,7 @@ RUN yarn
 
 # final stage
 
-FROM node:22.23.2-alpine3.23
+FROM node:26.7.0-alpine3.23
 
 RUN apk add --update dumb-init
 ENV TZ=Etc/UTC
