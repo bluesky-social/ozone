@@ -77,15 +77,11 @@ export interface ReportStats {
   actionRate?: number
   /** Average time in seconds from report creation to close, for reports closed in this period. */
   avgHandlingTimeSec?: number
-  /** Average time from active assignment to first close. */
-  avgModeratorHandlingTimeSec?: number
   labelActionCount?: number
   tagActionCount?: number
   takedownActionCount?: number
   ahtDurationSec?: number
   ahtSampleCount?: number
-  moderatorHandlingDurationSec?: number
-  moderatorHandlingSampleCount?: number
   /** When these statistics were last computed */
   lastUpdated?: string
 }

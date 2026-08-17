@@ -112,13 +112,6 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
             classNamePreset="avgHandlingTime"
           />
         )}
-        {stats.avgModeratorHandlingTimeSec != null && (
-          <StatCard
-            label="Moderator Handling"
-            value={formatDuration(stats.avgModeratorHandlingTimeSec)}
-            classNamePreset="avgHandlingTime"
-          />
-        )}
       </div>
       {(stats.labelActionCount != null ||
         stats.tagActionCount != null ||

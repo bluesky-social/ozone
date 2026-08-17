@@ -86,8 +86,6 @@ export function HistoricalGraph({
   const actionedCount = sum('actionedCount')
   const ahtSampleCount = sum('ahtSampleCount')
   const ahtDurationSec = sum('ahtDurationSec')
-  const moderatorSampleCount = sum('moderatorHandlingSampleCount')
-  const moderatorDurationSec = sum('moderatorHandlingDurationSec')
   const latestPending = [...stats]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .find((stat) => stat.pendingCount != null)?.pendingCount
@@ -98,7 +96,7 @@ export function HistoricalGraph({
 
   return (
     <div className="w-full space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
         <StatCard
           label="Inbound"
           value={sum('inboundCount')}
@@ -125,17 +123,6 @@ export function HistoricalGraph({
           value={
             ahtSampleCount > 0
               ? formatDuration(Math.round(ahtDurationSec / ahtSampleCount))
-              : undefined
-          }
-          classNamePreset="avgHandlingTime"
-        />
-        <StatCard
-          label="Moderator Handling"
-          value={
-            moderatorSampleCount > 0
-              ? formatDuration(
-                  Math.round(moderatorDurationSec / moderatorSampleCount),
-                )
               : undefined
           }
           classNamePreset="avgHandlingTime"
