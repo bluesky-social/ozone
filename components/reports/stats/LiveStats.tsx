@@ -73,7 +73,7 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <StatCard
           label="Inbound"
           value={stats.inboundCount}
@@ -109,6 +109,13 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
           <StatCard
             label="Avg Handling Time"
             value={formatDuration(stats.avgHandlingTimeSec)}
+            classNamePreset="avgHandlingTime"
+          />
+        )}
+        {stats.avgResolutionTimeSec != null && (
+          <StatCard
+            label="Avg Resolution Time"
+            value={formatDuration(stats.avgResolutionTimeSec)}
             classNamePreset="avgHandlingTime"
           />
         )}

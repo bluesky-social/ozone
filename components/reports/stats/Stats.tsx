@@ -75,13 +75,17 @@ export interface ReportStats {
   inboundCount?: number
   /** Percentage of closures actioned, rounded to the nearest integer. */
   actionRate?: number
-  /** Average time in seconds from report creation to close, for reports closed in this period. */
+  /** Average time in seconds from report assignment to close. */
   avgHandlingTimeSec?: number
+  /** Average time in seconds from report creation to close. */
+  avgResolutionTimeSec?: number
   labelActionCount?: number
   tagActionCount?: number
   takedownActionCount?: number
   ahtDurationSec?: number
   ahtSampleCount?: number
+  resolutionDurationSec?: number
+  resolutionSampleCount?: number
   /** When these statistics were last computed */
   lastUpdated?: string
 }
