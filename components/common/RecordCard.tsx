@@ -365,6 +365,10 @@ const useRepoAndProfile = ({ did }: { did: string }) => {
   return useQuery({
     retry: false,
     queryKey: ['repoCard', { did }],
+    // Treat data as fresh for a minute so a value seeded in bulk (e.g. the
+    // workspace profile prefetch) is used on mount instead of immediately
+    // triggering a redundant per-DID refetch.
+    staleTime: 60 * 1000,
     queryFn: async () => {
       const getRepo = async () => {
         const { data: repo } =

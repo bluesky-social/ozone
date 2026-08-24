@@ -17,7 +17,7 @@ import { MOD_EVENT_TITLES, MOD_EVENTS } from '@/mod-event/constants'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useCallback, useRef } from 'react'
 import { useCreateSubjectFromId } from '@/reports/helpers/subject'
-import { chunkArray } from '@/lib/util'
+import { chunkArray, pluralize } from '@/lib/util'
 import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
 import { compileTemplateContent } from 'components/email/helpers'
 import { diffTags } from 'components/tags/utils'
@@ -28,6 +28,7 @@ import {
 } from '@/lib/constants'
 import { getBatchId } from '@/lib/batchId'
 import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
+import { withRateLimitRetry } from './rateLimitRetry'
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
 
@@ -275,6 +276,7 @@ const emitEventsInBulk = async ({
   subjectData,
   modTool,
   scheduling,
+  onItemComplete,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
@@ -283,90 +285,75 @@ const emitEventsInBulk = async ({
   subjectData: WorkspaceListData
   modTool?: ToolsOzoneModerationEmitEvent.InputSchema['modTool']
   scheduling?: ToolsOzoneModerationScheduleAction.SchedulingConfig
+  /** Called once per subject as it settles (success or failure), for progress. */
+  onItemComplete?: () => void
 }) => {
-  const toastId = 'workspace-bulk-action'
-  try {
-    const results: BulkActionResults = {
-      succeeded: [],
-      failed: [],
-    }
+  const results: BulkActionResults = {
+    succeeded: [],
+    failed: [],
+  }
 
-    let actions: PromiseSettledResult<void>[] | Promise<any>
-    // For takedowns with scheduling we can't just emit the event
-    // instead use the scheduling api
-    if (
-      ToolsOzoneModerationDefs.isModEventTakedown(eventData.event) &&
-      scheduling
-    ) {
-      actions = labelerAgent.tools.ozone.moderation
-        .scheduleAction({
-          subjects,
-          modTool,
-          scheduling,
-          createdBy: labelerAgent.assertDid,
-          action: {
-            ...eventData.event,
-            $type: 'tools.ozone.moderation.scheduleAction#takedown',
-          },
-        })
-        .then(({ data }) => {
-          if (data.succeeded.length) {
-            results.succeeded.push(...data.succeeded)
-          }
-          if (data.failed.length) {
-            data.failed.map((failed) => {
-              results.failed.push(failed.subject)
-            })
-          }
-        })
-        .catch(() => {
-          results.failed.push(...subjects)
-        })
-    } else {
-      actions = Promise.allSettled(
-        subjects.map(async (sub) => {
-          try {
-            const { subject } = await createSubjectFromId(sub)
-            await labelerAgent.tools.ozone.moderation.emitEvent({
+  // For takedowns with scheduling we can't just emit the event
+  // instead use the scheduling api
+  if (
+    ToolsOzoneModerationDefs.isModEventTakedown(eventData.event) &&
+    scheduling
+  ) {
+    await labelerAgent.tools.ozone.moderation
+      .scheduleAction({
+        subjects,
+        modTool,
+        scheduling,
+        createdBy: labelerAgent.assertDid,
+        action: {
+          ...eventData.event,
+          $type: 'tools.ozone.moderation.scheduleAction#takedown',
+        },
+      })
+      .then(({ data }) => {
+        if (data.succeeded.length) {
+          results.succeeded.push(...data.succeeded)
+        }
+        if (data.failed.length) {
+          data.failed.map((failed) => {
+            results.failed.push(failed.subject)
+          })
+        }
+      })
+      .catch(() => {
+        results.failed.push(...subjects)
+      })
+      .finally(() => {
+        // Scheduling is a single call; count all subjects as completed at once.
+        subjects.forEach(() => onItemComplete?.())
+      })
+  } else {
+    await Promise.allSettled(
+      subjects.map(async (sub) => {
+        try {
+          const { subject } = await createSubjectFromId(sub)
+          // Retry on rate-limit (429) rather than failing outright: when a
+          // large batch trips the server rate limit, this lets the affected
+          // items recover with backoff instead of permanently failing.
+          await withRateLimitRetry(() =>
+            labelerAgent.tools.ozone.moderation.emitEvent({
               ...eventForSubject(eventData, subjectData[sub]),
               subject,
               createdBy: labelerAgent.assertDid,
               modTool,
-            })
-            results.succeeded.push(sub)
-          } catch (err) {
-            results.failed.push(sub)
-          }
-        }),
-      )
-    }
-    await toast.promise(actions, {
-      pending: {
-        toastId,
-        render: `Taking action on ${buildItemsSummary(
-          groupSubjects(subjects),
-        )}...`,
-      },
-      success: {
-        toastId,
-        render() {
-          return results.failed.length
-            ? `Actioned ${buildItemsSummary(
-                groupSubjects(results.succeeded),
-              )}. Failed to action ${buildItemsSummary(
-                groupSubjects(results.failed),
-              )}. Failed items will remain selected.`
-            : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`
-        },
-      },
-    })
-    return results
-  } catch (err) {
-    toast.error(`Error taking action: ${displayError(err)}`, {
-      toastId,
-    })
-    throw err
+            }),
+          )
+          results.succeeded.push(sub)
+        } catch (err) {
+          results.failed.push(sub)
+        } finally {
+          onItemComplete?.()
+        }
+      }),
+    )
   }
+
+  return results
 }
 
 export const useActionSubjects = () => {
@@ -403,31 +390,67 @@ export const useActionSubjects = () => {
         externalUrl: externalUrl || undefined,
       })
 
-      // Emails have a lower limit per second so we want to make sure we are well below that
-      const chunkSize = ToolsOzoneModerationDefs.isModEventEmail(
-        eventData.event,
-      )
-        ? 25
-        : 50
-      for (const chunk of chunkArray(subjects, chunkSize)) {
-        const { succeeded, failed } = await emitEventsInBulk({
-          labelerAgent,
-          createSubjectFromId,
-          subjects: chunk,
-          eventData,
-          subjectData,
-          modTool,
-          scheduling,
-        })
+      const toastId = 'workspace-bulk-action'
+      const total = subjects.length
+      // Running count of settled items across ALL chunks, so the toast shows
+      // overall progress (e.g. "Actioned 75 / 750...") rather than resetting
+      // per chunk — mirroring the batched revoke-credentials flow.
+      let processed = 0
+      const renderProgress = () =>
+        `Taking action… ${processed} / ${pluralize(total, 'item')}`
 
-        results.succeeded.push(...succeeded)
-        results.failed.push(...failed)
-        if (subjects.length > 300) {
-          // add a delay of 1s between each batch if we are going to be processing more than 6 batches
-          // this is kinda arbitrary and not backed by any particular limit but this gives the server a bit of room
-          // avoids potential rate limiting
-          await new Promise((resolve) => setTimeout(resolve, 1000))
+      toast.info(renderProgress(), { toastId, autoClose: false })
+
+      try {
+        // Emails have a lower limit per second so we want to make sure we are well below that
+        const chunkSize = ToolsOzoneModerationDefs.isModEventEmail(
+          eventData.event,
+        )
+          ? 25
+          : 50
+        for (const chunk of chunkArray(subjects, chunkSize)) {
+          const { succeeded, failed } = await emitEventsInBulk({
+            labelerAgent,
+            createSubjectFromId,
+            subjects: chunk,
+            eventData,
+            subjectData,
+            modTool,
+            scheduling,
+            onItemComplete: () => {
+              processed++
+              toast.update(toastId, { render: renderProgress() })
+            },
+          })
+
+          results.succeeded.push(...succeeded)
+          results.failed.push(...failed)
+          if (subjects.length > 300) {
+            // add a delay of 1s between each batch if we are going to be processing more than 6 batches
+            // this is kinda arbitrary and not backed by any particular limit but this gives the server a bit of room
+            // avoids potential rate limiting
+            await new Promise((resolve) => setTimeout(resolve, 1000))
+          }
         }
+
+        toast.update(toastId, {
+          type: results.failed.length ? 'warning' : 'success',
+          autoClose: 5000,
+          render: results.failed.length
+            ? `Actioned ${buildItemsSummary(
+                groupSubjects(results.succeeded),
+              )}. Failed to action ${buildItemsSummary(
+                groupSubjects(results.failed),
+              )}. Failed items will remain selected.`
+            : `Actioned ${buildItemsSummary(groupSubjects(results.succeeded))}`,
+        })
+      } catch (err) {
+        toast.update(toastId, {
+          type: 'error',
+          autoClose: 5000,
+          render: `Error taking action: ${displayError(err)}`,
+        })
+        throw err
       }
 
       return results

@@ -42,6 +42,7 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData, WorkspaceListData } from './useWorkspaceListData'
+import { WorkspaceLoadProgress } from './LoadProgress'
 import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
@@ -76,6 +77,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
     )
   }
 
+  // Live count of selected items. Selection is driven by raw DOM checkboxes
+  // (incl. select-all and shift-range), so we recount on any change within the
+  // form rather than tracking per-item React state.
+  const [selectedCount, setSelectedCount] = useState(0)
+  const recountSelected = useCallback(() => {
+    setSelectedCount(getSelectedItems().length)
+  }, [])
+
   const handleRemoveSelected = () => {
     removeItemsMutation.mutate(getSelectedItems())
   }
@@ -85,7 +94,14 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   }
 
   const handleEmptyWorkspace = () => {
+    // Emptying wipes the whole (possibly hard-won) list and regenerates the
+    // batch id, so confirm before doing it rather than acting on a misclick.
+    setShowEmptyConfirmation(true)
+  }
+
+  const confirmEmptyWorkspace = () => {
     emptyWorkspaceMutation.mutate()
+    setShowEmptyConfirmation(false)
   }
 
   const selectItems = (items: string[]) => {
@@ -101,10 +117,13 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
           checkbox.dispatchEvent(new Event('mousedown'))
         }
       })
+    // Programmatic selection doesn't fire the form's onChange, so recount here.
+    recountSelected()
   }
 
   // confirmation modal
   const [showConfirmationModal, setShowConfirmationModal] = useState(false)
+  const [showEmptyConfirmation, setShowEmptyConfirmation] = useState(false)
 
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
@@ -207,12 +226,16 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       : undefined
 
   const { data: workspaceList } = useWorkspaceList()
-  const { data: workspaceListStatuses, refetch: refetchWorkspaceListData } =
-    useWorkspaceListData({
-      subjects: workspaceList || [],
-      // Make sure we aren't constantly refreshing the data unless the panel is open
-      enabled: props.open,
-    })
+  const {
+    data: workspaceListStatuses,
+    refetch: refetchWorkspaceListData,
+    isFetching: isFetchingWorkspaceListData,
+    progress: workspaceLoadProgress,
+  } = useWorkspaceListData({
+    subjects: workspaceList || [],
+    // Make sure we aren't constantly refreshing the data unless the panel is open
+    enabled: props.open,
+  })
   const getSelectedWorkspaceItems = useCallback(() => {
     const selectedItems = getSelectedItems()
     return Object.entries(workspaceListStatuses ?? {})
@@ -436,6 +459,17 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                 )}
                 {showActionForm && (
                   <>
+                    <div
+                      className="mb-2 text-sm font-medium text-gray-700 dark:text-gray-200"
+                      data-cy="workspace-selected-count"
+                    >
+                      {selectedCount > 0
+                        ? `Action will apply to ${pluralize(
+                            selectedCount,
+                            'selected item',
+                          )}.`
+                        : 'No items selected — select items to action.'}
+                    </div>
                     <WorkspacePanelActionForm
                       modEventType={modEventType}
                       setModEventType={setModEventType}
@@ -491,6 +525,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                   ref={formRef}
                   id={WORKSPACE_FORM_ID}
                   onSubmit={onFormSubmit}
+                  // Recount selected items whenever any checkbox in the form
+                  // toggles (event delegation covers select-all + shift-range).
+                  onChange={recountSelected}
                   // The overflow here allows dropdowns in the form filter to adjust height of the window accordingly
                   className="overflow-y-auto"
                 >
@@ -532,6 +569,10 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                       }
                     }
                   `}</style>
+                  <WorkspaceLoadProgress
+                    progress={workspaceLoadProgress}
+                    isFetching={isFetchingWorkspaceListData}
+                  />
                   <div className="scrollable-container overflow-y-auto">
                     <WorkspaceList
                       canExport={
@@ -570,6 +611,21 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         confirmButtonDisabled={submission.isSubmitting}
         onConfirm={onConfirm}
         error={submission.error}
+      />
+
+      <ConfirmationModal
+        isOpen={showEmptyConfirmation}
+        setIsOpen={setShowEmptyConfirmation}
+        title="Empty workspace?"
+        description={
+          <span className="text-gray-600 dark:text-gray-300">
+            This removes{' '}
+            <strong>{pluralize(workspaceList?.length || 0, 'item')}</strong>{' '}
+            from your workspace. This cannot be undone.
+          </span>
+        }
+        confirmButtonText="Yes, empty workspace"
+        onConfirm={confirmEmptyWorkspace}
       />
     </FullScreenActionPanel>
   )

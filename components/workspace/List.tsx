@@ -22,6 +22,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import { WorkspaceExportPanel } from './ExportPanel'
 import { WorkspaceListData } from './useWorkspaceListData'
 import { groupSubjects, isHighProfileAccount } from './utils'
+import { usePrefetchWorkspaceProfiles } from './usePrefetchWorkspaceProfiles'
 
 interface WorkspaceListProps {
   list: string[]
@@ -90,6 +91,15 @@ const ListGroup = ({
   const checkboxesRef = useRef<(HTMLInputElement | null)[]>([])
   const [detailShown, setDetailShown] = useState<string[]>([])
   const areAllDetailShown = items.every((item) => detailShown.includes(item))
+  const { prefetch, progress, isPrefetching } = usePrefetchWorkspaceProfiles()
+
+  const expandAll = () => {
+    // Bulk-warm the profile cache before expanding so the rows render from
+    // cache instead of each firing its own getRepo/getProfile (which hammered
+    // rate limits). Fire-and-forget: rows still render as data arrives.
+    void prefetch(listData)
+    setDetailShown(items)
+  }
 
   //   This ensures that when shift+clicking checkboxes, all checkboxes between the last interacted item are toggled
   const handleChange = (
@@ -134,7 +144,12 @@ const ListGroup = ({
         <h5 className="text-base font-semibold">
           {title}({items.length})
         </h5>
-        <div className="flex gap-1">
+        <div className="flex items-center gap-1">
+          {isPrefetching && (
+            <span className="text-xs text-gray-500 dark:text-gray-400">
+              Loading profiles {progress.loaded}/{progress.total}…
+            </span>
+          )}
           {canExport && <WorkspaceExportPanel listData={listData} />}
           <ActionButton
             size="sm"
@@ -143,7 +158,7 @@ const ListGroup = ({
               if (areAllDetailShown) {
                 setDetailShown([])
               } else {
-                setDetailShown(items)
+                expandAll()
               }
             }}
           >

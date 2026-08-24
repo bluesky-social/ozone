@@ -50,7 +50,12 @@ export const useWorkspaceList = () => {
   return { data, error, isFetching }
 }
 
-export const useWorkspaceAddItemsMutation = () => {
+export const useWorkspaceAddItemsMutation = ({
+  // Callers that show their own, more specific toast (e.g. ItemCreator, which
+  // also reports skipped/invalid input) can opt out of this generic one to
+  // avoid two toasts telling overlapping/contradictory stories.
+  showToast = true,
+}: { showToast?: boolean } = {}) => {
   const queryClient = useQueryClient()
   const toastId = useRef<number | string | null>(null)
   const mutation = useMutation<string[], unknown, string[], unknown>(
@@ -59,20 +64,22 @@ export const useWorkspaceAddItemsMutation = () => {
     },
     {
       onSuccess: (allItems, addedItems) => {
-        const message = `Attempted to add ${pluralize(
-          addedItems.length,
-          'subject',
-        )}, there are ${pluralize(
-          allItems.length,
-          'subject',
-        )} in your workspace now.`
+        if (showToast) {
+          const message = `Attempted to add ${pluralize(
+            addedItems.length,
+            'subject',
+          )}, there are ${pluralize(
+            allItems.length,
+            'subject',
+          )} in your workspace now.`
 
-        if (toastId.current && toast.isActive(toastId.current)) {
-          toast.update(toastId.current, {
-            render: message,
-          })
-        } else {
-          toastId.current = toast.success(message)
+          if (toastId.current && toast.isActive(toastId.current)) {
+            toast.update(toastId.current, {
+              render: message,
+            })
+          } else {
+            toastId.current = toast.success(message)
+          }
         }
 
         queryClient.invalidateQueries({ queryKey: [WORKSPACE_LIST_QUERY_KEY] })

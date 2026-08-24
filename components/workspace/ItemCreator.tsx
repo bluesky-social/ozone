@@ -4,8 +4,8 @@ import { useWorkspaceAddItemsMutation } from './hooks'
 import { ActionButton } from '@/common/buttons'
 import { PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { toast } from 'react-toastify'
-import { buildItemsSummary, groupSubjects } from './utils'
 import { getDidFromHandleInBatch } from '@/lib/identity'
+import { pluralize } from '@/lib/util'
 import { ArrowPathIcon, PaperClipIcon } from '@heroicons/react/24/solid'
 
 interface WorkspaceItemCreatorProps {
@@ -19,7 +19,9 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
   onCancel,
   size = 'lg',
 }) => {
-  const addItemsMutation = useWorkspaceAddItemsMutation()
+  // Opt out of the mutation's generic toast; we show one complete summary
+  // (added + skipped) so the numbers reconcile with what the user entered.
+  const addItemsMutation = useWorkspaceAddItemsMutation({ showToast: false })
   const [isAdding, setIsAdding] = React.useState(false)
 
   const handleSubmit = async (
@@ -44,14 +46,23 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
       const isPossiblyHandle = (item) =>
         item.includes('.') && !isDid(item) && !isAtUri(item)
 
-      const itemList = items
+      const enteredTokens = items
         .split(',')
         .map((item) => item.trim())
-        .filter(
-          (item) => isDid(item) || isAtUri(item) || isPossiblyHandle(item),
-        )
+        .filter((item) => item.length > 0)
+
+      const itemList = enteredTokens.filter(
+        (item) => isDid(item) || isAtUri(item) || isPossiblyHandle(item),
+      )
+
+      // Tokens that aren't a DID, AT-URI, or plausible handle — silently
+      // dropped before. Track them so we can tell the user.
+      const invalidCount = enteredTokens.length - itemList.length
 
       const handleList = itemList.filter(isPossiblyHandle)
+
+      // Handles that couldn't be resolved to a DID (mistyped, deleted, etc.).
+      let unresolvedHandleCount = 0
 
       // If there are handles in the list, we need to resolve them to DIDs and replace the handles with dids before placing them in the workspace
       if (handleList.length > 0) {
@@ -59,6 +70,7 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
         Object.keys(handleToDid).forEach((handle) => {
           // If we couldn't find the did, we don't want to replace the handle in the list
           if (handleToDid[handle] === null) {
+            unresolvedHandleCount++
             return
           }
           const handleIndex = itemList.indexOf(handle)
@@ -68,12 +80,48 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
         })
       }
 
-      const groupedItems = groupSubjects(itemList)
+      // Detail the reasons anything was skipped, so the numbers reconcile with
+      // what the user typed. (Unresolved handles are still added as raw handle
+      // strings, so they're not counted as skipped here.)
+      const entered = enteredTokens.length
+      const skippedDetail: string[] = []
+      if (invalidCount > 0) {
+        skippedDetail.push(`${invalidCount} invalid`)
+      }
+      if (unresolvedHandleCount > 0) {
+        skippedDetail.push(`${unresolvedHandleCount} handle(s) could not be resolved`)
+      }
+      const detailSuffix = skippedDetail.length
+        ? ` (${skippedDetail.join(', ')})`
+        : ''
+
+      // Nothing valid to add — tell the user rather than silently doing nothing.
+      if (itemList.length === 0) {
+        toast.error(
+          `No valid items to add${detailSuffix || '. Enter DIDs, AT-URIs, or handles.'}`,
+        )
+        setIsAdding(false)
+        return false
+      }
 
       await addItemsMutation.mutateAsync(itemList, {
         onSuccess: () => {
-          const addedItemsSummary = buildItemsSummary(groupedItems)
-          toast.success(`Added ${addedItemsSummary} to workspace.`)
+          // Single, self-consistent summary: added-vs-entered, with the reason
+          // for any difference. The mutation's own generic toast is disabled
+          // (showToast: false) so there's exactly one message.
+          const addedCount = itemList.length
+          const message =
+            addedCount === entered
+              ? `Added ${pluralize(addedCount, 'item')} to workspace.`
+              : `Added ${addedCount} of ${pluralize(
+                  entered,
+                  'entered item',
+                )} to workspace${detailSuffix}.`
+          if (addedCount === entered) {
+            toast.success(message)
+          } else {
+            toast.warning(message)
+          }
           event.target.reset()
           onCancel?.()
         },
