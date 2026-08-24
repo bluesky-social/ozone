@@ -42,7 +42,6 @@ import WorkspaceList from './List'
 import { WorkspacePanelActionForm } from './PanelActionForm'
 import { WorkspacePanelActions } from './PanelActions'
 import { useWorkspaceListData, WorkspaceListData } from './useWorkspaceListData'
-import { WorkspaceLoadProgress } from './LoadProgress'
 import { isNonNullable, isValidDid, pluralize } from '@/lib/util'
 import { EmailComposerData } from 'components/email/helpers'
 import { Alert } from '@/common/Alert'
@@ -226,16 +225,12 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       : undefined
 
   const { data: workspaceList } = useWorkspaceList()
-  const {
-    data: workspaceListStatuses,
-    refetch: refetchWorkspaceListData,
-    isFetching: isFetchingWorkspaceListData,
-    progress: workspaceLoadProgress,
-  } = useWorkspaceListData({
-    subjects: workspaceList || [],
-    // Make sure we aren't constantly refreshing the data unless the panel is open
-    enabled: props.open,
-  })
+  const { data: workspaceListStatuses, refetch: refetchWorkspaceListData } =
+    useWorkspaceListData({
+      subjects: workspaceList || [],
+      // Make sure we aren't constantly refreshing the data unless the panel is open
+      enabled: props.open,
+    })
   const getSelectedWorkspaceItems = useCallback(() => {
     const selectedItems = getSelectedItems()
     return Object.entries(workspaceListStatuses ?? {})
@@ -569,10 +564,6 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                       }
                     }
                   `}</style>
-                  <WorkspaceLoadProgress
-                    progress={workspaceLoadProgress}
-                    isFetching={isFetchingWorkspaceListData}
-                  />
                   <div className="scrollable-container overflow-y-auto">
                     <WorkspaceList
                       canExport={

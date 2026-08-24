@@ -1,9 +1,13 @@
-import { chunkArray } from '@/lib/util'
+import { chunkArray, pluralize } from '@/lib/util'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
-import { useRef, useState } from 'react'
+import { useRef } from 'react'
 import { toast } from 'react-toastify'
+
+// Shared toast id so the loading progress updates a single toast in place
+// (matching the batch-action / add-item toasts) rather than stacking new ones.
+const WORKSPACE_LOADING_TOAST_ID = 'workspace-loading'
 
 export type WorkspaceListData = Record<
   string,
@@ -49,13 +53,6 @@ export const fetchSubjectsInChunks = async (
   return results
 }
 
-export type WorkspaceLoadProgress = {
-  /** Subjects whose metadata has been fetched so far. */
-  loaded: number
-  /** Total subjects to fetch. */
-  total: number
-}
-
 export const useWorkspaceListData = ({
   subjects,
   enabled,
@@ -64,10 +61,6 @@ export const useWorkspaceListData = ({
   enabled: boolean
 }) => {
   const labelerAgent = useLabelerAgent()
-  const [progress, setProgress] = useState<WorkspaceLoadProgress>({
-    loaded: 0,
-    total: 0,
-  })
   // Persistent per-subject cache across renders. Because the query key is the
   // full subjects array, adding/removing a single item would otherwise refetch
   // metadata for the ENTIRE workspace. Keeping already-fetched subjects here
@@ -106,20 +99,40 @@ export const useWorkspaceListData = ({
       const missing = subjects.filter((sub) => !cacheRef.current[sub])
 
       if (missing.length) {
-        setProgress({ loaded: 0, total: missing.length })
-        const data = await fetchSubjectsInChunks(
-          labelerAgent,
-          missing,
-          (loaded, total) => setProgress({ loaded, total }),
-        )
-        for (const sub of data) {
-          cacheRef.current[sub.subject] = sub
+        // Show a single, in-place progress toast (matching the tool's other
+        // toasts) so a large load isn't a silent wait. Only worth showing when
+        // there's more than one chunk of work.
+        const showToast = missing.length > WORKSPACE_SUBJECTS_CHUNK_SIZE
+        const renderLoading = (loaded: number, total: number) =>
+          `Loading details… ${loaded} / ${pluralize(total, 'item')}`
+        if (showToast) {
+          toast.info(renderLoading(0, missing.length), {
+            toastId: WORKSPACE_LOADING_TOAST_ID,
+            autoClose: false,
+          })
         }
-        // Record when we last hit the network, to gate focus-refresh.
-        lastFetchAtRef.current = Date.now()
-      } else {
-        // Nothing to fetch (e.g. an item was just removed) — no spinner.
-        setProgress({ loaded: 0, total: 0 })
+        try {
+          const data = await fetchSubjectsInChunks(
+            labelerAgent,
+            missing,
+            (loaded, total) => {
+              if (showToast) {
+                toast.update(WORKSPACE_LOADING_TOAST_ID, {
+                  render: renderLoading(loaded, total),
+                })
+              }
+            },
+          )
+          for (const sub of data) {
+            cacheRef.current[sub.subject] = sub
+          }
+          // Record when we last hit the network, to gate focus-refresh.
+          lastFetchAtRef.current = Date.now()
+        } finally {
+          if (showToast) {
+            toast.dismiss(WORKSPACE_LOADING_TOAST_ID)
+          }
+        }
       }
 
       // Drop cache entries for subjects no longer in the workspace so the
@@ -166,5 +179,5 @@ export const useWorkspaceListData = ({
     },
   })
 
-  return Object.assign(query, { progress })
+  return query
 }
