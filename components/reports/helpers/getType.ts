@@ -114,10 +114,8 @@ export const groupedReasonTypes = {
   Appeal: ['tools.ozone.report.defs#reasonAppeal'],
   Violence: [
     'tools.ozone.report.defs#reasonViolenceAnimal',
-    'tools.ozone.report.defs#reasonViolenceAnimalWelfare',
     'tools.ozone.report.defs#reasonViolenceThreats',
     'tools.ozone.report.defs#reasonViolenceGraphicContent',
-    'tools.ozone.report.defs#reasonViolenceSelfHarm',
     'tools.ozone.report.defs#reasonViolenceGlorification',
     'tools.ozone.report.defs#reasonViolenceExtremistContent',
     'tools.ozone.report.defs#reasonViolenceTrafficking',
@@ -126,7 +124,6 @@ export const groupedReasonTypes = {
   Sexual: [
     'tools.ozone.report.defs#reasonSexualAbuseContent',
     'tools.ozone.report.defs#reasonSexualNCII',
-    'tools.ozone.report.defs#reasonSexualSextortion',
     'tools.ozone.report.defs#reasonSexualDeepfake',
     'tools.ozone.report.defs#reasonSexualAnimal',
     'tools.ozone.report.defs#reasonSexualUnlabeled',
@@ -136,10 +133,7 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonChildSafetyCSAM',
     'tools.ozone.report.defs#reasonChildSafetyGroom',
     'tools.ozone.report.defs#reasonChildSafetyPrivacy',
-    'tools.ozone.report.defs#reasonChildSafetyMinorPrivacy',
-    'tools.ozone.report.defs#reasonChildSafetyEndangerment',
     'tools.ozone.report.defs#reasonChildSafetyHarassment',
-    'tools.ozone.report.defs#reasonChildSafetyPromotion',
     'tools.ozone.report.defs#reasonChildSafetyOther',
   ],
   Harassment: [
@@ -155,23 +149,13 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonMisleadingSpam',
     'tools.ozone.report.defs#reasonMisleadingScam',
     'tools.ozone.report.defs#reasonMisleadingElections',
-    'tools.ozone.report.defs#reasonMisleadingSyntheticContent',
-    'tools.ozone.report.defs#reasonMisleadingMisinformation',
     'tools.ozone.report.defs#reasonMisleadingOther',
   ],
   'Rule Violations': [
     'tools.ozone.report.defs#reasonRuleSiteSecurity',
-    'tools.ozone.report.defs#reasonRuleStolenContent',
     'tools.ozone.report.defs#reasonRuleProhibitedSales',
     'tools.ozone.report.defs#reasonRuleBanEvasion',
     'tools.ozone.report.defs#reasonRuleOther',
-  ],
-  Civic: [
-    'tools.ozone.report.defs#reasonCivicElectoralProcess',
-    'tools.ozone.report.defs#reasonCivicDisclosure',
-    'tools.ozone.report.defs#reasonCivicInterference',
-    'tools.ozone.report.defs#reasonCivicMisinformation',
-    'tools.ozone.report.defs#reasonCivicImpersonation',
   ],
   'Self Harm': [
     'tools.ozone.report.defs#reasonSelfHarmContent',
