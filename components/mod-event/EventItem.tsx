@@ -388,7 +388,10 @@ const Report = ({
         </div>
       </div>
       {modEvent.event.comment && (
-        <TextWithLinks text={modEvent.event.comment} />
+        <TextWithLinks
+          text={modEvent.event.comment}
+          className="[overflow-wrap:anywhere]"
+        />
       )}
       <ReportedVideoTimestamp
         seconds={getVideoTimestampSeconds(modEvent.modTool)}

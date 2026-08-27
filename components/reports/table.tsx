@@ -195,7 +195,10 @@ export const ReporterComment = ({ comment }: { comment: string }) => {
   if (!isLong || expanded) {
     return (
       <div>
-        <TextWithLinks text={comment} className="text-sm break-words" />
+        <TextWithLinks
+          text={comment}
+          className="text-sm [overflow-wrap:anywhere]"
+        />
         {isLong && (
           <button
             onClick={() => setExpanded(false)}
@@ -210,7 +213,7 @@ export const ReporterComment = ({ comment }: { comment: string }) => {
 
   return (
     <div>
-      <p className="text-sm break-words">
+      <p className="text-sm [overflow-wrap:anywhere]">
         {comment.slice(0, COMMENT_TRUNCATE_AT).trimEnd()}…{' '}
         <button
           onClick={() => setExpanded(true)}

@@ -220,7 +220,7 @@ function ReportInfoPanel({
           </p>
           <TextWithLinks
             text={report.comment}
-            className="text-sm text-gray-700 dark:text-gray-200 break-words"
+            className="text-sm text-gray-700 dark:text-gray-200 [overflow-wrap:anywhere]"
           />
         </div>
       )}
