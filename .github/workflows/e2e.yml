@@ -27,7 +27,7 @@ jobs:
         run: corepack enable
 
       - name: Cache dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v6
         with:
           path: |
             **/node_modules
