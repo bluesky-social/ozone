@@ -5,6 +5,7 @@ const {
   envToCfg,
   envToSecrets,
   OzoneService,
+  MetricsService,
   Database,
 } = require('@atproto/ozone')
 const pkg = require('@atproto/ozone/package.json')
@@ -29,7 +30,16 @@ async function main() {
     await db.migrateToLatestOrThrow()
     await db.close()
   }
-  const ozone = await OzoneService.create(config, secrets)
+  // Metrics are opt-in for self-hosters via OZONE_METRICS_PORT. Off by default:
+  // when unset, no registry is created and no metrics are collected or served.
+  // MetricsService is only present in newer @atproto/ozone versions, so guard on it.
+  let register
+  if (config.service.metricsPort && MetricsService) {
+    const prometheus = require('prom-client')
+    register = new prometheus.Registry()
+  }
+
+  const ozone = await OzoneService.create(config, secrets, undefined, register)
 
   // Note: We must use `use()` here. This should be the last middleware.
   ozone.app.use((req, res) => {
@@ -40,6 +50,14 @@ async function main() {
   /** @type {import('net').AddressInfo} */
   const addr = httpServer.address()
   httpLogger.info(`Ozone is running at http://localhost:${addr.port}`)
+
+  if (register && config.service.metricsPort) {
+    const metrics = MetricsService.create(register)
+    await metrics.start(config.service.metricsPort)
+    httpLogger.info(
+      `Ozone metrics is running at http://localhost:${config.service.metricsPort}/metrics`,
+    )
+  }
 }
 
 main().catch(console.error)
