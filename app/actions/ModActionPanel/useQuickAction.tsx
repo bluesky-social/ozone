@@ -52,6 +52,7 @@ import { TakedownTargetService } from '@/lib/types'
 import {
   compileTakedownEmail,
   compileTakedownSubject,
+  recordHasMedia,
 } from './useTakedownEmail'
 import { format } from 'date-fns'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
@@ -781,6 +782,7 @@ export const useQuickAction = (
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
       recordContent: record?.value?.text ? `${record.value.text}` : undefined,
+      hasMedia: recordHasMedia(record?.value),
       handle:
         repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
       totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,
