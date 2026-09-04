@@ -63,6 +63,7 @@ import { useCopyAccountDetails } from './useCopyAccountDetails'
 import { getProfiles } from './api'
 import { VerificationBadge } from 'components/verification/Badge'
 import { AccountHistory } from './AccountHistory'
+import { AccountPreferences } from './AccountPreferences'
 import { Country } from './Country'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { ManageView } from './ManageView'
@@ -678,6 +679,7 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      <AccountPreferences did={repo.did} />
       <AccountHistory did={repo.did} />
       {canShowDidHistory && <DidHistory did={repo.did} />}
       {isDidWeb && <DidWebDetails did={repo.did} />}
