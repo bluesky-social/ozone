@@ -73,7 +73,7 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <StatCard
           label="Inbound"
           value={stats.inboundCount}
@@ -90,10 +90,20 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
           classNamePreset="escalated"
         />
         <StatCard
+          label="Closed"
+          value={stats.closedCount}
+          classNamePreset="closed"
+        />
+        <StatCard
           label="Actioned"
           value={stats.actionedCount}
           suffix={stats.actionRate != null ? `${stats.actionRate}%` : undefined}
           classNamePreset="actioned"
+        />
+        <StatCard
+          label="Acknowledged"
+          value={stats.acknowledgedCount}
+          classNamePreset="acknowledged"
         />
         {stats.avgHandlingTimeSec != null && (
           <StatCard
@@ -102,7 +112,24 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
             classNamePreset="avgHandlingTime"
           />
         )}
+        {stats.avgResolutionTimeSec != null && (
+          <StatCard
+            label="Avg Resolution Time"
+            value={formatDuration(stats.avgResolutionTimeSec)}
+            classNamePreset="avgHandlingTime"
+          />
+        )}
       </div>
+      {(stats.labelActionCount != null ||
+        stats.tagActionCount != null ||
+        stats.takedownActionCount != null) && (
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-300">
+          <span>Actions:</span>
+          <span>Labels {stats.labelActionCount ?? 0}</span>
+          <span>Tags {stats.tagActionCount ?? 0}</span>
+          <span>Takedowns {stats.takedownActionCount ?? 0}</span>
+        </div>
+      )}
       <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
         Updated {new Date(stats.lastUpdated).toLocaleTimeString()}
       </p>

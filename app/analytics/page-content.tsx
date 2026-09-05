@@ -6,6 +6,7 @@ import { LiveStatsCards } from '@/reports/stats/LiveStats'
 import { StatsCard } from '@/reports/stats/Stats'
 import { useMemo } from 'react'
 import { useTitle } from 'react-use'
+import Link from 'next/link'
 
 export function AnalyticsPageContent() {
   useTitle('Analytics')
@@ -24,6 +25,12 @@ export function AnalyticsPageContent() {
 
       <div className="mb-6">
         <LiveStatsCards />
+        <Link
+          href="/analytics/detail?grouping=aggregate"
+          className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
+        >
+          View aggregate details
+        </Link>
       </div>
 
       {queues.length > 0 && (
