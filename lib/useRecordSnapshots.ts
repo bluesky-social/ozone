@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query'
 
+import { usePluginFetch } from './plugins/auth/usePluginFetch'
+
 export interface RecordSnapshot {
   id: number
   cid: string
@@ -18,6 +20,8 @@ export interface SnapshotResponse {
 }
 
 export function useRecordSnapshots(uri: string | undefined) {
+  const pluginFetch = usePluginFetch()
+
   return useQuery({
     retry: false,
     enabled: !!uri,
@@ -27,7 +31,7 @@ export function useRecordSnapshots(uri: string | undefined) {
         throw new Error('URI is required')
       }
 
-      const response = await fetch(
+      const response = await pluginFetch(
         `/api/get-record-snapshot?uri=${encodeURIComponent(uri)}`,
       )
 
