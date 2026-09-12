@@ -1,6 +1,11 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ToolsOzoneReportDefs } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
+import type { ReportStats } from './Stats'
+
+export type HistoricalReportStats = ReportStats & {
+  date: string
+  computedAt?: string
+}
 
 export type LiveStatsParams = {
   queueId?: number
@@ -27,7 +32,7 @@ export const useLiveStats = (params?: LiveStatsParams) => {
       const { data } = await labelerAgent.tools.ozone.report.getLiveStats(
         params ?? {},
       )
-      return data.stats
+      return data.stats as ReportStats
     },
     refetchInterval: 5 * 60 * 1000,
   })
@@ -43,7 +48,7 @@ export const useHistoricalStats = (params?: HistoricalStatsParams) => {
         params ?? {},
       )
       return {
-        stats: data.stats as ToolsOzoneReportDefs.HistoricalStats[],
+        stats: data.stats as unknown as HistoricalReportStats[],
         cursor: data.cursor,
       }
     },
