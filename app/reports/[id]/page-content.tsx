@@ -220,7 +220,7 @@ function ReportInfoPanel({
           </p>
           <TextWithLinks
             text={report.comment}
-            className="text-sm text-gray-700 dark:text-gray-200 break-words"
+            className="text-sm text-gray-700 dark:text-gray-200 [overflow-wrap:anywhere]"
           />
         </div>
       )}
@@ -353,10 +353,6 @@ export function ReportDetailPageContent() {
       .catch(() => {})
   }, [reportId])
 
-  // If no cached report exists, getReport will be called and returns fresh assignment data.
-  // In that case we skip the initial assignment poll and start it after the first interval.
-  const calledGetReport = !cachedReport
-
   const { data: report, isLoading } = useQuery({
     queryKey: ['report', reportId],
     queryFn: async () => {
@@ -381,7 +377,6 @@ export function ReportDetailPageContent() {
     reportId,
     hasReport: !!report,
     initialAssigneeDid: report?.assignment?.did,
-    skipInitialPoll: calledGetReport,
   })
 
   const createActivity = useCreateActivity()

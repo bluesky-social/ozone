@@ -1,9 +1,14 @@
 import { NextRequest } from 'next/server'
 
+import { authorizePluginRequest } from '@/lib/plugins/auth/server'
+
 const SNAPSHOT_API_URL = process.env.SNAPSHOT_API_URL
 const SNAPSHOT_AUTH_HEADER = process.env.SNAPSHOT_AUTH_HEADER
 
 export async function GET(request: NextRequest) {
+  const authError = await authorizePluginRequest(request)
+  if (authError) return authError
+
   const searchParams = request.nextUrl.searchParams
   const uri = searchParams.get('uri')
 

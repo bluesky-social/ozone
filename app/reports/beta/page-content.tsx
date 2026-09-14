@@ -25,6 +25,7 @@ import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useQueueById } from '@/queues/useQueues'
+import { persistReportListIds } from 'components/reports/useReports'
 import { BetaReportsFilters } from './Filters'
 import { QueueFilterBar } from './QueueFilterBar'
 
@@ -85,6 +86,13 @@ export const BetaReportsPageContent = () => {
 
   const reports = data?.pages.flatMap((page) => page.reports) ?? []
   const subjectOptions = unique(reports.map((report) => report.subject.subject))
+
+  // Save report IDs so navigation state survives page loads
+  const reportIdsKey = reports.map((report) => report.id).join(',')
+  useEffect(() => {
+    if (!reportIdsKey) return
+    persistReportListIds(reportIdsKey.split(',').map(Number))
+  }, [reportIdsKey])
 
   useTitle(queue ? `${queue.name} - Reports (Beta)` : 'Queue - Reports (Beta)')
 

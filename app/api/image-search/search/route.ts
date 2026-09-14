@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
+import { authorizePluginRequest } from '@/lib/plugins/auth/server'
 import type { ImageSearchResult } from '@/lib/useImageSearch'
 
 // Server-side proxy to the image search service
@@ -66,6 +67,9 @@ function forwardSearchParams(from: URLSearchParams, to: URL) {
 // GET proxies a raw-hash search (?hash=<64 hex>) or an image-URL search
 // (?url=<https://example.com/...>)
 export async function GET(request: NextRequest): Promise<ImageSearchResponse> {
+  const authError = await authorizePluginRequest(request)
+  if (authError) return authError
+
   if (!IMAGE_SEARCH_API_URL) {
     return notConfigured()
   }
@@ -102,6 +106,9 @@ export async function GET(request: NextRequest): Promise<ImageSearchResponse> {
 
 // POST proxies an image search to the image search service
 export async function POST(request: NextRequest): Promise<ImageSearchResponse> {
+  const authError = await authorizePluginRequest(request)
+  if (authError) return authError
+
   if (!IMAGE_SEARCH_API_URL) {
     return notConfigured()
   }

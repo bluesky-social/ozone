@@ -115,7 +115,7 @@ function Details({ event }: { event: GetEvent.OutputSchema }) {
   const commentComponent = ToolsOzoneModerationDefs.isModEventReport(
     event.event,
   ) && (
-    <span>
+    <span className="[overflow-wrap:anywhere]">
       <ReasonBadge reasonType={event.event.reportType} /> {event.event.comment}
     </span>
   )
