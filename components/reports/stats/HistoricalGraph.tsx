@@ -1,4 +1,5 @@
 'use client'
+import { useState } from 'react'
 import {
   LineChart,
   Line,
@@ -31,6 +32,20 @@ export function HistoricalGraph({
   isError?: boolean
   onRetry?: () => void
 }) {
+  const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
+
+  const toggleSeries = (key: string) => {
+    setHiddenSeries((current) => {
+      const next = new Set(current)
+      if (next.has(key)) {
+        next.delete(key)
+      } else {
+        next.add(key)
+      }
+      return next
+    })
+  }
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-[400px] text-sm text-gray-500 dark:text-gray-400">
@@ -102,7 +117,33 @@ export function HistoricalGraph({
               color: dark ? '#e2e8f0' : '#1f2937',
             }}
           />
-          <Legend />
+          <Legend
+            content={({ payload }) => (
+              <div className="flex flex-wrap justify-center gap-4 text-sm">
+                {payload?.map((entry) => {
+                  const key = String(entry.dataKey)
+                  const hidden = hiddenSeries.has(key)
+
+                  return (
+                    <button
+                      key={key}
+                      type="button"
+                      aria-pressed={!hidden}
+                      className="flex items-center gap-1.5 select-none"
+                      style={{ opacity: hidden ? 0.45 : 1 }}
+                      onClick={() => toggleSeries(key)}
+                    >
+                      <span
+                        className="inline-block h-0.5 w-3"
+                        style={{ backgroundColor: entry.color }}
+                      />
+                      {entry.value}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          />
           {SERIES.map((s) => (
             <Line
               key={s.key}
@@ -113,6 +154,7 @@ export function HistoricalGraph({
               strokeWidth={2}
               dot={{ r: 3 }}
               activeDot={{ r: 5 }}
+              hide={hiddenSeries.has(s.key)}
             />
           ))}
         </LineChart>
