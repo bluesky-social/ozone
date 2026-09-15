@@ -34,7 +34,7 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
   let sortDirection = params.get('sortDirection')
 
   if (!['asc', 'desc'].includes(sortDirection ?? '')) {
-    sortDirection = 'desc'
+    sortDirection = 'asc'
   }
 
   if (!['createdAt', 'updatedAt'].includes(sortField ?? '')) {
