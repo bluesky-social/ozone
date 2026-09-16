@@ -41,6 +41,9 @@ export type ActionRecommendation = {
 }
 
 const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
+  // Without a DID, queryEvents would return strike events across the entire service
+  if (!did) return []
+
   let cursor: string | undefined = undefined
   const events: ToolsOzoneModerationDefs.ModEventView[] = []
 
@@ -73,8 +76,12 @@ const useStrikeEvents = (
   subject: string,
   severityLevelSettings?: SeverityLevelListSetting | null,
 ) => {
+  // Resolves to '' for invalid/partially-typed subjects (the panel's subject input
+  // updates on every keystroke), in which case we must not query at all
+  const did = subject.startsWith('did:') ? subject : getDidFromUri(subject)
+
   return useQuery({
-    queryKey: ['strikeEvents', subject, severityLevelSettings],
+    queryKey: ['strikeEvents', did, severityLevelSettings],
     queryFn: async () => {
       let lastAccountSuspensionEvent:
         | ToolsOzoneModerationDefs.ModEventView
@@ -88,7 +95,7 @@ const useStrikeEvents = (
         | ToolsOzoneModerationDefs.ModEventView
         | undefined
 
-      if (!subject) {
+      if (!did) {
         return {
           totalStrikeCount: 0,
           activeStrikeCount: 0,
@@ -99,7 +106,6 @@ const useStrikeEvents = (
         }
       }
 
-      const did = subject.startsWith('did:') ? subject : getDidFromUri(subject)
       const strikeEvents = await getStrikeEvents(labelerAgent, did)
 
       const now = new Date()
@@ -178,7 +184,7 @@ const useStrikeEvents = (
             : false,
       }
     },
-    enabled: !!subject,
+    enabled: !!did,
   })
 }
 
