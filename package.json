@@ -63,7 +63,7 @@
     "eslint-plugin-cypress": "^4.2.1",
     "postcss": "^8.4.20",
     "tailwindcss": "^3.2.4",
-    "vitest": "^2.1.9"
+    "vitest": "^4.1.11"
   },
   "resolutions": {
     "jackspeak": "2.1.1",
