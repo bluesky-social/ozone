@@ -56,7 +56,9 @@ function confirmRefresh() {
     cy.contains(
       'aggregate totals, categories, and active queues and moderators',
     ).should('be.visible')
-    cy.contains('current pending counts').should('be.visible')
+    cy.contains(
+      'Past pending counts reflect the backlog at the end of each UTC day; today uses the current backlog.',
+    ).should('be.visible')
     cy.contains('button', /^Recompute$/).click()
   })
 }

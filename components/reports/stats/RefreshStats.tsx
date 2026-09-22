@@ -52,9 +52,7 @@ export function RefreshStats({ dateRange }: { dateRange: DateRangeValue }) {
           <>
             Recompute {selectedDates?.[0]} through {selectedDates?.at(-1)} (UTC)
             for aggregate totals, categories, and active queues and moderators,
-            regardless of the current grouping filter. Existing statistics will
-            be replaced using current report data, including current pending
-            counts.
+            regardless of the current grouping filter.
           </>
         }
         confirmButtonText="Recompute"
