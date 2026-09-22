@@ -3,6 +3,7 @@
 import { statReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsCards } from '@/reports/stats/LiveStats'
+import { RefreshStats } from '@/reports/stats/RefreshStats'
 import {
   StatsFilters,
   useParamStatsFilters,
@@ -65,6 +66,8 @@ export function StatsDetailPageContent() {
       </div>
 
       <StatsFilters value={filters} onChange={handleFilterChange} />
+
+      <RefreshStats dateRange={filters.dateRange} />
 
       <LiveStatsCards params={live} />
 

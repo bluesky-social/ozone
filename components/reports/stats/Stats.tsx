@@ -63,9 +63,9 @@ export function StatValue({
 export interface ReportStats {
   /** Current number of reports that are not closed. */
   pendingCount?: number
-  /** Close transitions linked to a label, tag, or takedown event. */
+  /** Current closures whose last report action is label, tag, or takedown. */
   actionedCount?: number
-  /** Number of close transitions */
+  /** Number of current closures in the date window. */
   closedCount?: number
   /** Number of closures without a linked enforcement action */
   acknowledgedCount?: number

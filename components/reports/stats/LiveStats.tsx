@@ -73,6 +73,12 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
 
   return (
     <div>
+      {stats.closedCount == null && (
+        <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
+          Today’s statistics use older metric definitions. Outcome counts and
+          timings will appear after they are recomputed.
+        </p>
+      )}
       <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
         <StatCard
           label="Inbound"

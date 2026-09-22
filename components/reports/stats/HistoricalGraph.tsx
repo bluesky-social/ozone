@@ -82,6 +82,8 @@ export function HistoricalGraph({
 
   const sum = (key: keyof HistoricalReportStats) =>
     stats.reduce((total, stat) => total + Number(stat[key] ?? 0), 0)
+  const legacyDays = stats.filter((stat) => stat.closedCount == null).length
+  const hasLifecycleStats = legacyDays < stats.length
   const closedCount = sum('closedCount')
   const actionedCount = sum('actionedCount')
   const ahtSampleCount = sum('ahtSampleCount')
@@ -97,7 +99,14 @@ export function HistoricalGraph({
   const gridColor = dark ? '#374151' : '#e5e7eb'
 
   return (
-    <div className="w-full space-y-4">
+    <div className="w-full space-y-4" data-cy="historical-stats">
+      {legacyDays > 0 && (
+        <p className="text-sm text-amber-700 dark:text-amber-300">
+          {legacyDays} of {stats.length} daily snapshots use older metric
+          definitions. Outcome counts, escalation counts, and timings include
+          refreshed days only. Recompute the selected dates to update them.
+        </p>
+      )}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <StatCard
           label="Inbound"
@@ -109,10 +118,14 @@ export function HistoricalGraph({
           value={latestPending}
           classNamePreset="pending"
         />
-        <StatCard label="Closed" value={closedCount} classNamePreset="closed" />
+        <StatCard
+          label="Closed"
+          value={hasLifecycleStats ? closedCount : undefined}
+          classNamePreset="closed"
+        />
         <StatCard
           label="Actioned"
-          value={actionedCount}
+          value={hasLifecycleStats ? actionedCount : undefined}
           suffix={
             closedCount > 0
               ? `${Math.round((actionedCount / closedCount) * 100)}%`

@@ -23,6 +23,7 @@ export type ServerConfig = {
     canAssignOthers: boolean
     canPurgeAgeAssurance: boolean
     canViewModeratorStats: boolean
+    canRefreshStats: boolean
   }
 }
 
@@ -59,6 +60,7 @@ export const parseServerConfig = (
       canAssignOthers: isAdmin,
       canPurgeAgeAssurance: isModerator,
       canViewModeratorStats: isAdmin,
+      canRefreshStats: isModerator,
     },
   }
 }
