@@ -3,7 +3,6 @@
 import { statReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import { LiveStatsCards } from '@/reports/stats/LiveStats'
-import { RefreshStats } from '@/reports/stats/RefreshStats'
 import {
   StatsFilters,
   useParamStatsFilters,
@@ -34,18 +33,12 @@ export function StatsDetailPageContent() {
         queueId: filters.queueId,
         moderatorDid: filters.moderatorDid,
       }
-  const historical: HistoricalStatsParams = isAggregate
-    ? {
-        startDate: filters.dateRange.startDate,
-        endDate: filters.dateRange.endDate,
-      }
-    : {
-        reportTypes,
-        queueId: filters.queueId,
-        moderatorDid: filters.moderatorDid,
-        startDate: filters.dateRange.startDate,
-        endDate: filters.dateRange.endDate,
-      }
+  const historical: HistoricalStatsParams = {
+    ...live,
+    startDate: filters.dateRange.startDate,
+    endDate: filters.dateRange.endDate,
+    limit: 100,
+  }
 
   const {
     data: historicalStats,
@@ -66,8 +59,6 @@ export function StatsDetailPageContent() {
       </div>
 
       <StatsFilters value={filters} onChange={handleFilterChange} />
-
-      <RefreshStats dateRange={filters.dateRange} />
 
       <LiveStatsCards params={live} />
 

@@ -70,6 +70,8 @@ export const useHistoricalStats = (params?: HistoricalStatsParams) => {
   })
 }
 
+export const MAX_STATS_REFRESH_DAYS = 7
+
 export function getStatsRefreshDates(startDate?: string, endDate?: string) {
   const start = startDate?.split('T')[0] ?? ''
   const end = endDate?.split('T')[0] ?? ''
@@ -85,9 +87,11 @@ export function getStatsRefreshDates(startDate?: string, endDate?: string) {
     return []
   }
   const days = (dates[1].getTime() - dates[0].getTime()) / 86400000 + 1
-  if (days < 1 || days > 100) return []
-  return Array.from({ length: days }, (_, i) =>
-    new Date(dates[0].getTime() + i * 86400000).toISOString().slice(0, 10),
+  if (days < 1) return []
+  const refreshDays = Math.min(days, MAX_STATS_REFRESH_DAYS)
+  const refreshStart = dates[1].getTime() - (refreshDays - 1) * 86400000
+  return Array.from({ length: refreshDays }, (_, i) =>
+    new Date(refreshStart + i * 86400000).toISOString().slice(0, 10),
   )
 }
 
@@ -99,7 +103,7 @@ export function useRefreshStats() {
     retry: false,
     mutationFn: async (range: { startDate: string; endDate: string }) => {
       const dates = getStatsRefreshDates(range.startDate, range.endDate)
-      if (!dates.length) throw new Error('Select between 1 and 100 days.')
+      if (!dates.length) throw new Error('Select a valid start and end date.')
       setProgress({ completed: 0, total: dates.length })
       for (const [i, date] of dates.entries()) {
         try {

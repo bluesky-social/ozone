@@ -3,7 +3,11 @@ import { DateRangeValue } from '@/common/DateRangeFilter'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { usePermission } from '@/shell/ConfigurationContext'
 import { useState } from 'react'
-import { getStatsRefreshDates, useRefreshStats } from './useReportStats'
+import {
+  getStatsRefreshDates,
+  MAX_STATS_REFRESH_DAYS,
+  useRefreshStats,
+} from './useReportStats'
 
 export function RefreshStats({ dateRange }: { dateRange: DateRangeValue }) {
   const canRefreshStats = usePermission('canRefreshStats')
@@ -14,10 +18,11 @@ export function RefreshStats({ dateRange }: { dateRange: DateRangeValue }) {
   if (!canRefreshStats) return null
 
   return (
-    <div className="space-y-2 text-sm">
+    <div className="max-w-sm space-y-2 text-sm">
       <ActionButton
         appearance="outlined"
         size="sm"
+        className="min-h-[38px]"
         disabled={refresh.isLoading || !dates.length}
         onClick={() => setSelectedDates(dates)}
       >
@@ -25,7 +30,7 @@ export function RefreshStats({ dateRange }: { dateRange: DateRangeValue }) {
       </ActionButton>
       {!dates.length && (
         <p className="text-gray-500 dark:text-gray-400">
-          Select a date range of 1 to 100 days to recompute.
+          Select a valid start and end date to recompute.
         </p>
       )}
       <p role="status" className="text-gray-600 dark:text-gray-300">
@@ -50,6 +55,15 @@ export function RefreshStats({ dateRange }: { dateRange: DateRangeValue }) {
         title="Recompute report statistics?"
         description={
           <>
+            <span
+              role="alert"
+              className="mb-3 block text-amber-700 dark:text-amber-300"
+            >
+              Only the most recent {MAX_STATS_REFRESH_DAYS} days of your
+              selected range will be recomputed. Shorter ranges will be
+              recomputed in full. Your date selection will stay the same. This
+              can take several minutes; keep this page open until it finishes.
+            </span>
             Recompute {selectedDates?.[0]} through {selectedDates?.at(-1)} (UTC)
             for aggregate totals, categories, and active queues and moderators,
             regardless of the current grouping filter.

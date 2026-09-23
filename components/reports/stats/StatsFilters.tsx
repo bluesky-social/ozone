@@ -11,6 +11,7 @@ import {
   DateRangePreset,
   DateRangeValue,
 } from '../../common/DateRangeFilter'
+import { RefreshStats } from './RefreshStats'
 
 export type Grouping = 'aggregate' | 'queue' | 'category' | 'moderator'
 
@@ -259,11 +260,14 @@ export function StatsFilters({
         <label className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
           Date Range
         </label>
-        <DateRangeFilter
-          value={value.dateRange}
-          onChange={(dateRange) => onChange({ ...value, dateRange })}
-          limit={100}
-        />
+        <div className="flex flex-wrap items-start gap-3">
+          <DateRangeFilter
+            value={value.dateRange}
+            onChange={(dateRange) => onChange({ ...value, dateRange })}
+            limit={100}
+          />
+          <RefreshStats dateRange={value.dateRange} />
+        </div>
       </div>
     </div>
   )
