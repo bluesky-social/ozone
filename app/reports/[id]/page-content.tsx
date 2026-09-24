@@ -49,6 +49,8 @@ import {
 import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
 import {
   ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneReportDefs,
 } from '@atproto/api'
@@ -101,7 +103,7 @@ import {
   useRouter,
   useSearchParams,
 } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 const FORM_ID = 'report-detail-action-panel'
@@ -458,6 +460,22 @@ export function ReportDetailPageContent() {
             const result = await emitEvent(
               hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
+            if (vals.event.$type === MOD_EVENTS.RESOLVE_APPEAL) {
+              try {
+                await emitEvent(
+                  hydrateModToolInfo(
+                    {
+                      subject: vals.subject,
+                      createdBy: vals.createdBy,
+                      event: { $type: MOD_EVENTS.ACKNOWLEDGE },
+                    },
+                    ActionPanelNames.ReportPage,
+                  ),
+                )
+              } finally {
+                queryClient.invalidateQueries({ queryKey: ['modSubjectStatus'] })
+              }
+            }
             const eventId = (result as any)?.id
             const isCascaded =
               report.subject.type !== 'account' &&
@@ -530,6 +548,7 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const labelerAgent = useLabelerAgent()
+  const closeReport = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
@@ -545,8 +564,61 @@ function ReportDetailLayout(props: {
     return report.reportType ? [report.reportType] : []
   })
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
+  const appealLabelActionStarted = useRef(false)
   const [applyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
+
+  const resolveAppealForReport = async (createdBy: string, comment?: string) => {
+    const { data: creationEvent } =
+      await labelerAgent.tools.ozone.moderation.getEvent({ id: report.eventId })
+    const subjectView = creationEvent.subject
+    let appealSubject: ToolsOzoneModerationEmitEvent.InputSchema['subject']
+    if (
+      report.subject.type === 'account' &&
+      (ToolsOzoneModerationDefs.isRepoView(subjectView) ||
+        ToolsOzoneModerationDefs.isRepoViewNotFound(subjectView))
+    ) {
+      appealSubject = {
+        $type: 'com.atproto.admin.defs#repoRef',
+        did: subjectView.did,
+      }
+    } else if (ToolsOzoneModerationDefs.isRecordView(subjectView)) {
+      appealSubject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: subjectView.uri,
+        cid: subjectView.cid,
+      }
+    } else if (ToolsOzoneModerationDefs.isConvoView(subjectView)) {
+      appealSubject = {
+        $type: 'chat.bsky.convo.defs#convoRef',
+        did: subjectView.did,
+        convoId: subjectView.convoId,
+      } as ToolsOzoneModerationEmitEvent.InputSchema['subject']
+    } else if (
+      ComAtprotoRepoStrongRef.isMain(report.subject.status?.subject) &&
+      report.subject.status.subject.uri === report.subject.subject
+    ) {
+      // Deleted records may only have a repoViewNotFound in getEvent.
+      appealSubject = report.subject.status.subject
+    } else {
+      throw new Error('Cannot determine the appeal subject for this report')
+    }
+    await onSubmit({
+      subject: appealSubject,
+      createdBy,
+      event: {
+        $type: MOD_EVENTS.RESOLVE_APPEAL,
+        comment: comment?.trim() ? comment : '[RESOLVING_APPEAL]',
+      },
+    })
+  }
+
+  const closeCurrentReport = async () => {
+    await closeReport.mutateAsync({
+      reportId: report.id,
+      activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+    })
+  }
 
   const wrappedOnSubmit = async (
     vals: ToolsOzoneModerationEmitEvent.InputSchema,
@@ -570,65 +642,85 @@ function ReportDetailLayout(props: {
     const subj = (finalVals as any).subject
     const event = finalVals.event
     const eventType = event?.$type as string | undefined
+    const actionComment =
+      event && 'comment' in event && typeof event.comment === 'string'
+        ? event.comment
+        : undefined
+    const isAppealLabel =
+      isAppealReport(report.reportType) && eventType === MOD_EVENTS.LABEL
+    const isFirstAppealLabel = isAppealLabel && !appealLabelActionStarted.current
+    if (isAppealLabel) {
+      if (appealLabelActionStarted.current) {
+        // A label removal can emit one event per record CID. Only the first
+        // event should close the report and resolve the appeal.
+        await onSubmit(finalVals)
+        return
+      }
+      appealLabelActionStarted.current = true
+    }
     // check if event was cascaded to the owning account
     const isCascaded =
       report.subject.type !== 'account' &&
       subj.$type === 'com.atproto.admin.defs#repoRef'
 
-    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-      if (isCascaded) {
-        // Send original event without a report action
-        await onSubmit(finalVals)
-      } else {
-        const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
-        if (reportActionScope === 'current') {
-          reportAction.ids = [report.id]
-        } else if (reportActionScope === 'all') {
-          reportAction.all = true
-        } else if (reportActionTypes.length > 0) {
-          reportAction.types = reportActionTypes
-        }
-        await onSubmit({ ...finalVals, reportAction })
-
-        // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
-        if (
-          isAppealReport(report.reportType) &&
-          eventType !== MOD_EVENTS.RESOLVE_APPEAL
-        ) {
+    try {
+      if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+        if (isCascaded) {
+          // Send original event without a report action
+          await onSubmit(finalVals)
+          if (
+            isAppealReport(report.reportType) &&
+            eventType !== MOD_EVENTS.RESOLVE_APPEAL
+          ) {
+            await resolveAppealForReport(finalVals.createdBy, actionComment)
+            await closeCurrentReport()
+          }
+        } else {
+          const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+          const targetsCurrentReport =
+            reportActionScope === 'current' ||
+            reportActionScope === 'all' ||
+            reportActionTypes.includes(report.reportType)
+          if (reportActionScope === 'current') {
+            reportAction.ids = [report.id]
+          } else if (reportActionScope === 'all') {
+            reportAction.all = true
+          } else if (reportActionTypes.length > 0) {
+            reportAction.types = reportActionTypes
+          }
           await onSubmit({
             ...finalVals,
-            event: {
-              $type: MOD_EVENTS.RESOLVE_APPEAL,
-              comment: '[RESOLVING_APPEAL]',
-            },
-            reportAction: { ids: [report.id] },
+            reportAction: Object.keys(reportAction).length
+              ? reportAction
+              : undefined,
           })
-        }
-      }
 
-      setSelectedAction(null) // Reset after successful submission
-    } else {
-      await onSubmit(finalVals)
+          if (
+            isAppealReport(report.reportType) &&
+            eventType !== MOD_EVENTS.RESOLVE_APPEAL
+          ) {
+            await resolveAppealForReport(finalVals.createdBy, actionComment)
+            if (eventType !== MOD_EVENTS.LABEL || !targetsCurrentReport) {
+              await closeCurrentReport()
+            }
+          }
+        }
+
+        setSelectedAction(null) // Reset after successful submission
+      } else {
+        await onSubmit(finalVals)
+      }
+    } catch (err) {
+      if (isFirstAppealLabel) {
+        appealLabelActionStarted.current = false
+      }
+      throw err
     }
   }
 
   const handleCancelAction = () => {
     setSelectedAction(null)
   }
-
-  // Sync selectedAction and reportActionScope with modEventType
-  useEffect(() => {
-    if (selectedAction === 'label') {
-      setModEventType(MOD_EVENTS.LABEL)
-      setReportActionScope('types')
-    } else if (selectedAction === 'takedown') {
-      setModEventType(MOD_EVENTS.TAKEDOWN)
-      setReportActionScope('types')
-    } else if (selectedAction === 'revert-takedown') {
-      setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
-      setReportActionScope('current')
-    }
-  }, [selectedAction])
 
   const {
     submission,
@@ -679,6 +771,21 @@ function ReportDetailLayout(props: {
     setSubject,
     subjectOptions,
   })
+
+  // Sync the selected action with its event type and report closing scope.
+  useEffect(() => {
+    appealLabelActionStarted.current = false
+    if (selectedAction === 'label') {
+      setModEventType(MOD_EVENTS.LABEL)
+      setReportActionScope(isAppealReport(report.reportType) ? 'current' : 'types')
+    } else if (selectedAction === 'takedown') {
+      setModEventType(MOD_EVENTS.TAKEDOWN)
+      setReportActionScope(isAppealReport(report.reportType) ? 'current' : 'types')
+    } else if (selectedAction === 'revert-takedown') {
+      setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
+      setReportActionScope('current')
+    }
+  }, [selectedAction, report.reportType, setModEventType])
 
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
@@ -910,24 +1017,7 @@ function ReportDetailLayout(props: {
             subjectStatus={subjectStatus}
             onResolveAppeal={
               isAppealReport(report.reportType)
-                ? async () => {
-                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction =
-                      { ids: [report.id] }
-                    await onSubmit({
-                      subject: {
-                        $type: 'com.atproto.admin.defs#repoRef',
-                        did: subject.startsWith('at://')
-                          ? getDidFromUri(subject)!
-                          : subject,
-                      },
-                      createdBy: config.did,
-                      event: {
-                        $type: MOD_EVENTS.RESOLVE_APPEAL,
-                        comment: '[RESOLVING_APPEAL]',
-                      },
-                      reportAction,
-                    })
-                  }
+                ? (comment) => resolveAppealForReport(config.did, comment)
                 : undefined
             }
           />
