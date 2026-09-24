@@ -94,15 +94,20 @@ function TransitionConfirmPanel({
   action: ActionType
   reportId: number
   onDone: () => void
-  onResolveAppeal?: () => Promise<void>
+  onResolveAppeal?: (comment?: string) => Promise<void>
 }) {
   const [note, setNote] = useState('')
+  const [isResolving, setIsResolving] = useState(false)
   const createActivity = useCreateActivity()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
 
-  const handleConfirm = () => {
-    createActivity.mutate(
-      {
+  const handleConfirm = async () => {
+    setIsResolving(true)
+    try {
+      if (action === 'no-action') {
+        await onResolveAppeal?.(note.trim())
+      }
+      await createActivity.mutateAsync({
         reportId,
         activity: {
           $type: activityType as Parameters<
@@ -110,19 +115,13 @@ function TransitionConfirmPanel({
           >[0]['activity']['$type'],
         },
         internalNote: note.trim() || undefined,
-      },
-      {
-        onSuccess: async () => {
-          if (action === 'no-action' && onResolveAppeal) {
-            await onResolveAppeal()
-          }
-          onDone()
-        },
-        onError: (e) => {
-          toast.error(`Error actioning: ${displayError(e)}`)
-        },
-      },
-    )
+      })
+      onDone()
+    } catch (e) {
+      toast.error(`Error actioning: ${displayError(e)}`)
+    } finally {
+      setIsResolving(false)
+    }
   }
 
   return (
@@ -140,17 +139,17 @@ function TransitionConfirmPanel({
           type="button"
           className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-1"
           onClick={onDone}
-          disabled={createActivity.isPending}
+          disabled={isResolving || createActivity.isPending}
         >
           Cancel
         </button>
         <ActionButton
           appearance="primary"
           size="sm"
-          disabled={createActivity.isPending}
+          disabled={isResolving || createActivity.isPending}
           onClick={handleConfirm}
         >
-          {createActivity.isPending ? 'Saving…' : confirmLabel}
+          {isResolving || createActivity.isPending ? 'Saving…' : confirmLabel}
         </ActionButton>
       </div>
     </div>
@@ -228,7 +227,7 @@ export function ReportActionsBar({
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
-  onResolveAppeal?: () => Promise<void>
+  onResolveAppeal?: (comment?: string) => Promise<void>
 }) {
   const { autoAdvance, setAutoAdvance, nextReportId } = useReports(report.id)
 
