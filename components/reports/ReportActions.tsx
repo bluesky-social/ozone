@@ -23,7 +23,6 @@ import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { useCreateActivity, useListActivities } from './hooks'
-import { PublicNoteField } from './PublicNoteField'
 import { useReports } from './useReports'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
@@ -98,7 +97,6 @@ function TransitionConfirmPanel({
   onResolveAppeal?: () => Promise<void>
 }) {
   const [note, setNote] = useState('')
-  const [publicNote, setPublicNote] = useState('')
   const createActivity = useCreateActivity()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
 
@@ -112,7 +110,6 @@ function TransitionConfirmPanel({
           >[0]['activity']['$type'],
         },
         internalNote: note.trim() || undefined,
-        publicNote: action === 'no-action' ? publicNote.trim() || undefined : undefined,
       },
       {
         onSuccess: async () => {
@@ -132,15 +129,12 @@ function TransitionConfirmPanel({
     <div className="mt-2 rounded-md bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 p-2.5 space-y-2">
       <Textarea
         rows={2}
-        placeholder="Internal note (moderators only, optional)…"
+        placeholder="Add a note (optional)…"
         className="block w-full text-xs"
         autoFocus
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
-      {action === 'no-action' && (
-        <PublicNoteField value={publicNote} onChange={setPublicNote} />
-      )}
       <div className="flex justify-end gap-1.5">
         <button
           type="button"
@@ -447,8 +441,6 @@ function ActivityItem({
   const isStateChange = !!toStatus
   const noteText = (activity as unknown as { internalNote?: string })
     .internalNote
-  const publicNote = (activity as unknown as { publicNote?: string })
-    .publicNote
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
     addSuffix: true,
   })
@@ -506,12 +498,6 @@ function ActivityItem({
         {noteText && (
           <p className="mt-0.5 text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
             {noteText}
-          </p>
-        )}
-        {publicNote && (
-          <p className="mt-0.5 text-base text-teal-700 dark:text-teal-300 whitespace-pre-wrap break-words">
-            <span className="text-xs font-medium">Public note to reporter: </span>
-            {publicNote}
           </p>
         )}
 
