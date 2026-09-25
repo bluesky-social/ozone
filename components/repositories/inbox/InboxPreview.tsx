@@ -10,7 +10,7 @@ import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { Loading, LoadingFailed } from '@/common/Loader'
-import { reasonTypeOptions } from '@/reports/helpers/getType'
+import { ReasonBadge } from '@/reports/ReasonBadge'
 import { SubjectOverview } from '@/reports/SubjectOverview'
 import {
   ActionPanelNames,
@@ -35,7 +35,7 @@ import { useInboxPreview } from './useInboxPreview'
 
 type Hydrated = Record<string, ToolsOzoneModerationDefs.SubjectView>
 const cardClass =
-  'rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-900'
+  'rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100'
 const linkClass = 'text-blue-600 hover:underline dark:text-blue-400'
 
 function date(value?: string, time = false) {
@@ -57,13 +57,6 @@ function readable(value?: string) {
     .replace(/^.*#/, '')
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .replace(/^./, (letter) => letter.toUpperCase())
-}
-
-function reason(value: string) {
-  return (
-    reasonTypeOptions[value as keyof typeof reasonTypeOptions] ||
-    readable(value)
-  )
 }
 
 function recordKind(uri: string) {
@@ -217,7 +210,7 @@ function Row({
   children,
 }: {
   title: string
-  subtitle: string
+  subtitle: React.ReactNode
   isRead: boolean
   open: boolean
   onToggle: () => void
@@ -293,7 +286,12 @@ function ReportRow({
   return (
     <Row
       title={subjectTitle(item.subject, hydrated)}
-      subtitle={`${status} · ${date(item.updatedAt)}`}
+      subtitle={
+        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          <ReasonBadge reasonType={item.reasonType} />
+          <span>{status} · {date(item.updatedAt)}</span>
+        </span>
+      }
       isRead={item.isRead}
       open={open}
       onToggle={() => setOpen(!open)}
@@ -305,20 +303,12 @@ function ReportRow({
           What was reported
         </h3>
         <SubjectContent subject={report.subject} hydrated={hydrated} />
-        <dl className="mt-4 grid gap-3 text-sm text-gray-900 dark:text-gray-100 sm:grid-cols-2">
-          <div>
-            <dt className="text-gray-500 dark:text-gray-400">Reason</dt>
-            <dd>{reason(report.reasonType)}</dd>
+        {report.reason && (
+          <div className="mt-4 text-sm">
+            <h4 className="text-gray-500 dark:text-gray-400">Reporter’s note</h4>
+            <p className="whitespace-pre-wrap break-words">{report.reason}</p>
           </div>
-          {report.reason && (
-            <div>
-              <dt className="text-gray-500 dark:text-gray-400">
-                Reporter’s note
-              </dt>
-              <dd className="whitespace-pre-wrap">{report.reason}</dd>
-            </div>
-          )}
-        </dl>
+        )}
       </section>
       <Timeline
         events={[
