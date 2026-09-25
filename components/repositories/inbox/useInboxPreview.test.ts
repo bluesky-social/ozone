@@ -4,6 +4,7 @@ import {
   fetchInboxDetail,
   fetchInboxPreviewPage,
   hydrateInboxSubjects,
+  subjectKey,
   submitInboxAppeal,
   type InboxReport,
 } from './api'
@@ -156,5 +157,16 @@ describe('moderator inbox preview requests', () => {
     expect(getSubjects.mock.calls[0][0].subjects).toHaveLength(50)
     expect(getSubjects.mock.calls[1][0].subjects).toHaveLength(2)
     expect(Object.keys(result)).toHaveLength(52)
+  })
+
+  it('does not mistake a chat report for an account subject', () => {
+    expect(
+      subjectKey({
+        $type: 'chat.bsky.convo.defs#messageRef',
+        did: 'did:plc:sender',
+        convoId: 'c',
+        messageId: 'm',
+      }),
+    ).toBeUndefined()
   })
 })

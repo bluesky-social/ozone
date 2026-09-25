@@ -80,6 +80,7 @@ export type ActionedSubjectDetail = ActionedSubject & {
 }
 
 export function subjectKey(subject: SubjectRef): string | undefined {
+  if ('messageId' in subject || 'convoId' in subject) return undefined
   if ('uri' in subject && subject.uri) return subject.uri
   if ('did' in subject && subject.did) return subject.did
 }
