@@ -281,12 +281,15 @@ function ReportRow({
   })
   const report = detail.data?.report || item
   const resolution = detail.data?.resolution
+  const actionTaken = resolution?.actionTaken || item.lastActionTaken
   const status =
     report.status === 'pending'
       ? 'Awaiting review'
-      : resolution?.outcome === 'noAction' || !report.lastActionTaken
+      : resolution?.outcome === 'noAction'
         ? 'No action taken'
-        : readable(resolution?.actionTaken || report.lastActionTaken)
+        : actionTaken
+          ? readable(actionTaken)
+          : 'Reviewed'
   return (
     <Row
       title={subjectTitle(item.subject, hydrated)}
