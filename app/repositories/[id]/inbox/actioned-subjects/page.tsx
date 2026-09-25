@@ -1,12 +1,14 @@
 'use client'
 
-import { use } from 'react'
-import { useTitle } from 'react-use'
-import { ActionedSubjectsPreview } from '@/repositories/inbox/InboxPreview'
+import { Suspense, use } from 'react'
+import { RepositoryViewPageContent } from '../../page-content'
 
 export default function ActionedSubjectsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = use(params)
   const did = decodeURIComponent(id)
-  useTitle(`Actioned subjects - ${did}`)
-  return <ActionedSubjectsPreview did={did} />
+  return (
+    <Suspense fallback={null}>
+      <RepositoryViewPageContent id={did} inboxSection="actioned-subjects" />
+    </Suspense>
+  )
 }

@@ -1,23 +1,20 @@
 'use client'
 
-import type {
-  ToolsOzoneModerationDefs,
-  ToolsOzoneModerationEmitEvent,
-} from '@atproto/api'
-import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
+import type { ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  ChevronDownIcon,
+  ChevronRightIcon,
+  DocumentTextIcon,
+  ShieldCheckIcon,
+} from '@heroicons/react/20/solid'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
-import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
+import { ButtonGroup } from '@/common/buttons'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import {
-  ActionPanelNames,
-  hydrateModToolInfo,
-  useEmitEvent,
-} from '@/mod-event/helpers/emitEvent'
-import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   ActionedSubject,
@@ -544,79 +541,47 @@ function PreviewFrame({
   current: 'reports' | 'actioned-subjects'
   children: React.ReactNode
 }) {
-  const params = useSearchParams()
-  const pathname = usePathname()
   const router = useRouter()
-  const queryClient = useQueryClient()
-  const emitEvent = useEmitEvent()
-  const quickOpen = params.get('quickOpen') || ''
-  const setQuickOpen = (subject: string) => {
-    const next = new URLSearchParams(params)
-    if (subject) next.set('quickOpen', subject)
-    else next.delete('quickOpen')
-    router.replace(`${pathname}?${next}`)
-  }
   return (
-    <main className="mx-auto w-full max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-      <Link
-        href={`/repositories/${encodeURIComponent(did)}`}
-        className={`text-sm ${linkClass}`}
-      >
-        ← Back to repository
-      </Link>
-      <h1 className="mt-4 text-xl font-semibold text-gray-900 dark:text-gray-100">
-        Moderation inbox preview
-      </h1>
-      <p className="mt-1 text-sm text-gray-600 dark:text-gray-300">
-        What this account sees from the moderation service.
-      </p>
-      <p className="mt-1 break-all text-xs text-gray-500 dark:text-gray-400">
-        {did}
-      </p>
-      <nav
-        aria-label="Inbox preview sections"
-        className="mt-5 flex gap-6 border-b border-gray-200 text-sm dark:border-slate-700"
-      >
-        {(
-          [
-            ['reports', 'Reports sent'],
-            ['actioned-subjects', 'Actioned subjects'],
-          ] as const
-        ).map(([kind, label]) => (
-          <Link
-            key={kind}
-            href={`/repositories/${encodeURIComponent(did)}/inbox/${kind}`}
-            aria-current={current === kind ? 'page' : undefined}
-            className={`pb-2 ${current === kind ? 'border-b-2 border-blue-600 font-semibold text-blue-700 dark:text-blue-300' : linkClass}`}
-          >
-            {label}
-          </Link>
-        ))}
-      </nav>
-      <div className="mt-5">{children}</div>
-      <ModActionPanelQuick
-        open={!!quickOpen}
-        onClose={() => setQuickOpen('')}
-        setSubject={setQuickOpen}
-        subject={quickOpen}
-        subjectOptions={quickOpen ? [quickOpen] : []}
-        isInitialLoading={false}
-        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
-          await emitEvent(
-            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
-          )
-          await queryClient.invalidateQueries({
-            queryKey: ['moderatorInboxPreview'],
-          })
-          await queryClient.invalidateQueries({
-            queryKey: ['inboxActionDetail'],
-          })
-          await queryClient.invalidateQueries({
-            queryKey: ['inboxReportDetail'],
-          })
-        }}
-      />
-    </main>
+    <section className="mx-auto w-full max-w-5xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+          Mod Inbox
+        </h2>
+        <div role="group" aria-label="Inbox preview sections">
+          <ButtonGroup
+            size="sm"
+            appearance="primary"
+            leftAligned
+            items={[
+              {
+                id: 'actioned-subjects',
+                text: 'Actioned subjects',
+                Icon: ShieldCheckIcon,
+                isActive: current === 'actioned-subjects',
+                'aria-pressed': current === 'actioned-subjects',
+                onClick: () =>
+                  router.push(
+                    `/repositories/${encodeURIComponent(did)}/inbox/actioned-subjects`,
+                  ),
+              },
+              {
+                id: 'reports',
+                text: 'Reports sent',
+                Icon: DocumentTextIcon,
+                isActive: current === 'reports',
+                'aria-pressed': current === 'reports',
+                onClick: () =>
+                  router.push(
+                    `/repositories/${encodeURIComponent(did)}/inbox/reports`,
+                  ),
+              },
+            ]}
+          />
+        </div>
+      </div>
+      {children}
+    </section>
   )
 }
 
@@ -657,10 +622,7 @@ export function ReportsPreview({ did }: { did: string }) {
         <LoadingFailed error={query.error} />
       ) : (
         <>
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h2 className="text-base font-semibold text-gray-900 dark:text-gray-100">
-              Reports sent
-            </h2>
+          <div className="mb-3 flex items-center justify-end gap-3">
             <label className="text-sm text-gray-600 dark:text-gray-300">
               Show{' '}
               <select
@@ -732,9 +694,6 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
         <LoadingFailed error={query.error} />
       ) : (
         <>
-          <h2 className="mb-3 text-base font-semibold text-gray-900 dark:text-gray-100">
-            Actioned subjects
-          </h2>
           {hydrated.isError && (
             <p role="alert" className="mb-3 text-sm text-red-600">
               Could not load some subject content.
