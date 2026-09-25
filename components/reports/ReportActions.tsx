@@ -1,8 +1,9 @@
 'use client'
 import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
-import { Checkbox, Textarea } from '@/common/forms'
+import { Checkbox, Select, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
   ComAtprotoModerationDefs,
@@ -22,7 +23,7 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { useCreateActivity, useListActivities } from './hooks'
+import { useCloseReports, useCreateActivity, useListActivities } from './hooks'
 import { useReports } from './useReports'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
@@ -87,42 +88,59 @@ const ACTION_CONFIG: Record<
 
 function TransitionConfirmPanel({
   action,
-  reportId,
+  report,
   onDone,
   onResolveAppeal,
 }: {
   action: ActionType
-  reportId: number
+  report: ToolsOzoneReportDefs.ReportView
   onDone: () => void
   onResolveAppeal?: () => Promise<void>
 }) {
   const [note, setNote] = useState('')
+  const [scope, setScope] = useState<'current' | 'all' | 'types'>('current')
+  const [reportTypes, setReportTypes] = useState<string[]>(() =>
+    report.queue?.reportTypes?.length
+      ? report.queue.reportTypes
+      : report.reportType
+        ? [report.reportType]
+        : [],
+  )
   const createActivity = useCreateActivity()
+  const closeReports = useCloseReports()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
+  const isBulkNoAction = action === 'no-action' && scope !== 'current'
+  const isPending = createActivity.isPending || closeReports.isPending
 
-  const handleConfirm = () => {
-    createActivity.mutate(
-      {
-        reportId,
-        activity: {
-          $type: activityType as Parameters<
-            typeof createActivity.mutate
-          >[0]['activity']['$type'],
-        },
-        internalNote: note.trim() || undefined,
-      },
-      {
-        onSuccess: async () => {
-          if (action === 'no-action' && onResolveAppeal) {
-            await onResolveAppeal()
-          }
-          onDone()
-        },
-        onError: (e) => {
-          toast.error(`Error actioning: ${displayError(e)}`)
-        },
-      },
-    )
+  const handleConfirm = async () => {
+    try {
+      if (isBulkNoAction) {
+        const result = await closeReports.mutateAsync({
+          subject: report.subject.subject,
+          reportTypes: scope === 'types' ? reportTypes : undefined,
+          internalNote: note.trim() || undefined,
+        })
+        toast.success(
+          `Closed ${result.closedCount} ${result.closedCount === 1 ? 'report' : 'reports'} as no-action`,
+        )
+      } else {
+        await createActivity.mutateAsync({
+          reportId: report.id,
+          activity: {
+            $type: activityType as Parameters<
+              typeof createActivity.mutate
+            >[0]['activity']['$type'],
+          },
+          internalNote: note.trim() || undefined,
+        })
+      }
+      if (action === 'no-action' && onResolveAppeal) {
+        await onResolveAppeal()
+      }
+      onDone()
+    } catch (e) {
+      toast.error(`Error actioning: ${displayError(e)}`)
+    }
   }
 
   return (
@@ -135,22 +153,44 @@ function TransitionConfirmPanel({
         value={note}
         onChange={(e) => setNote(e.target.value)}
       />
+      {action === 'no-action' && (
+        <div className="space-y-2">
+          <Select
+            aria-label="Report closure scope"
+            className="w-full"
+            value={scope}
+            onChange={(e) =>
+              setScope(e.target.value as 'current' | 'all' | 'types')
+            }
+          >
+            <option value="current">Close this report only</option>
+            <option value="all">Close all open reports on subject</option>
+            <option value="types">Close reports of specific types</option>
+          </Select>
+          {scope === 'types' && (
+            <ReportTypeMultiselect
+              value={reportTypes}
+              onChange={setReportTypes}
+            />
+          )}
+        </div>
+      )}
       <div className="flex justify-end gap-1.5">
         <button
           type="button"
           className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 px-1"
           onClick={onDone}
-          disabled={createActivity.isPending}
+          disabled={isPending}
         >
           Cancel
         </button>
         <ActionButton
           appearance="primary"
           size="sm"
-          disabled={createActivity.isPending}
+          disabled={isPending || (scope === 'types' && !reportTypes.length)}
           onClick={handleConfirm}
         >
-          {createActivity.isPending ? 'Saving…' : confirmLabel}
+          {isPending ? 'Saving…' : confirmLabel}
         </ActionButton>
       </div>
     </div>
@@ -405,7 +445,7 @@ export function ReportActionsBar({
       {pendingAction && (
         <TransitionConfirmPanel
           action={pendingAction}
-          reportId={report.id}
+          report={report}
           onDone={() => setPendingAction(null)}
           onResolveAppeal={isAppeal ? onResolveAppeal : undefined}
         />
