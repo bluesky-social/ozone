@@ -19,11 +19,13 @@ export function Tabs<ViewName>({
   onSetCurrentView,
   views,
   fullWidth,
+  endAdornment,
 }: {
   currentView: ViewName
   onSetCurrentView: (v: ViewName) => void
   views: TabView<ViewName>[]
   fullWidth?: boolean
+  endAdornment?: ReactNode
 }) {
   return (
     <div className="mt-6 sm:mt-2 2xl:mt-5">
@@ -40,6 +42,7 @@ export function Tabs<ViewName>({
                 {...{ view, label, sublabel, currentView, onSetCurrentView }}
               />
             ))}
+            {endAdornment}
           </nav>
         </div>
       </div>
