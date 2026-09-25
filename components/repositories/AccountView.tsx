@@ -225,6 +225,23 @@ export function AccountView({
               />
               {repo ? (
                 <>
+                  <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-4 gap-y-2 px-4 text-sm sm:px-6 lg:px-8">
+                    <span className="font-medium text-gray-600 dark:text-gray-300">
+                      User inbox preview
+                    </span>
+                    <Link
+                      href={`/repositories/${encodeURIComponent(repo.did)}/inbox/actioned-subjects`}
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Actioned subjects
+                    </Link>
+                    <Link
+                      href={`/repositories/${encodeURIComponent(repo.did)}/inbox/reports`}
+                      className="text-blue-600 hover:underline dark:text-blue-400"
+                    >
+                      Reports
+                    </Link>
+                  </div>
                   <Tabs
                     currentView={currentView}
                     views={getTabViews()}
