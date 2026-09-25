@@ -73,6 +73,7 @@ export function useCreateActivity(options?: {
         | { $type: 'tools.ozone.report.defs#reopenActivity' }
         | { $type: 'tools.ozone.report.defs#noteActivity' }
       internalNote?: string
+      publicNote?: string
       isAutomated?: boolean
     }) => {
       const { data } = await labelerAgent.tools.ozone.report.createActivity(input as Parameters<typeof labelerAgent.tools.ozone.report.createActivity>[0])

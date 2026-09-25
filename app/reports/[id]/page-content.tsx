@@ -32,6 +32,7 @@ import { AutomatedBadge } from '@/reports/AutomatedBadge'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { PublicNoteField } from '@/reports/PublicNoteField'
 import {
   useReportArrowKeyNavigation,
   useReportAutoAdvance,
@@ -545,6 +546,7 @@ function ReportDetailLayout(props: {
     return report.reportType ? [report.reportType] : []
   })
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
+  const [publicNote, setPublicNote] = useState('')
   const [applyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
 
@@ -588,6 +590,7 @@ function ReportDetailLayout(props: {
         } else if (reportActionTypes.length > 0) {
           reportAction.types = reportActionTypes
         }
+        reportAction.note = publicNote.trim() || undefined
         await onSubmit({ ...finalVals, reportAction })
 
         // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
@@ -607,6 +610,7 @@ function ReportDetailLayout(props: {
       }
 
       setSelectedAction(null) // Reset after successful submission
+      setPublicNote('')
     } else {
       await onSubmit(finalVals)
     }
@@ -614,6 +618,7 @@ function ReportDetailLayout(props: {
 
   const handleCancelAction = () => {
     setSelectedAction(null)
+    setPublicNote('')
   }
 
   // Sync selectedAction and reportActionScope with modEventType
@@ -906,7 +911,10 @@ function ReportDetailLayout(props: {
             report={report}
             currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
-            onActionSelect={setSelectedAction}
+            onActionSelect={(action) => {
+              setSelectedAction(action)
+              setPublicNote('')
+            }}
             subjectStatus={subjectStatus}
             onResolveAppeal={
               isAppealReport(report.reportType)
@@ -954,7 +962,10 @@ function ReportDetailLayout(props: {
                   name="applyToAccount"
                   className="mb-3 flex items-center"
                   checked={applyToAccount}
-                  onChange={(e) => setApplyToAccount(e.target.checked)}
+                  onChange={(e) => {
+                    setApplyToAccount(e.target.checked)
+                    if (e.target.checked) setPublicNote('')
+                  }}
                   label="Apply action to account"
                 />
               )}
@@ -1083,6 +1094,13 @@ function ReportDetailLayout(props: {
                     <ReportTypeMultiselect
                       value={reportActionTypes}
                       onChange={setReportActionTypes}
+                    />
+                  )}
+                  {!applyToAccount && selectedAction && (
+                    <PublicNoteField
+                      key={selectedAction}
+                      value={publicNote}
+                      onChange={setPublicNote}
                     />
                   )}
                 </div>
