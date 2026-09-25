@@ -1,12 +1,23 @@
 'use client'
 
-import type { ToolsOzoneModerationDefs } from '@atproto/api'
+import type {
+  ToolsOzoneModerationDefs,
+  ToolsOzoneModerationEmitEvent,
+} from '@atproto/api'
 import { ChevronDownIcon, ChevronRightIcon } from '@heroicons/react/20/solid'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { reasonTypeOptions } from '@/reports/helpers/getType'
+import { SubjectOverview } from '@/reports/SubjectOverview'
+import {
+  ActionPanelNames,
+  hydrateModToolInfo,
+  useEmitEvent,
+} from '@/mod-event/helpers/emitEvent'
+import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   ActionedSubject,
@@ -26,15 +37,6 @@ type Hydrated = Record<string, ToolsOzoneModerationDefs.SubjectView>
 const cardClass =
   'rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-slate-700 dark:bg-slate-900'
 const linkClass = 'text-blue-600 hover:underline dark:text-blue-400'
-
-function subjectHref(subject: SubjectRef): string | undefined {
-  const key = subjectKey(subject)
-  if (key?.startsWith('did:')) return `/repositories/${encodeURIComponent(key)}`
-  if (key?.startsWith('at://')) {
-    const [did, ...path] = key.slice(5).split('/')
-    return `/repositories/${encodeURIComponent(did)}/${path.map(encodeURIComponent).join('/')}`
-  }
-}
 
 function date(value?: string, time = false) {
   if (!value) return '—'
@@ -111,7 +113,6 @@ function SubjectContent({
   hydrated?: ToolsOzoneModerationDefs.SubjectView
 }) {
   const key = subjectKey(subject)
-  const href = subjectHref(subject)
   const value = hydrated?.record?.value
   const description =
     typeof value?.text === 'string'
@@ -121,9 +122,24 @@ function SubjectContent({
         : undefined
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-      <p className="font-medium text-gray-900 dark:text-gray-100">
-        {subjectTitle(subject, hydrated)}
-      </p>
+      {key ? (
+        <SubjectOverview
+          subject={subject}
+          subjectRepoHandle={
+            hydrated?.record?.repo?.handle || hydrated?.repo?.handle
+          }
+          withTruncation={false}
+        />
+      ) : (
+        <p className="font-medium text-gray-900 dark:text-gray-100">
+          {subjectTitle(subject, hydrated)}
+        </p>
+      )}
+      {typeof value?.name === 'string' && (
+        <p className="mt-2 font-medium text-gray-900 dark:text-gray-100">
+          {value.name}
+        </p>
+      )}
       {description && (
         <p className="mt-2 whitespace-pre-wrap break-words text-sm text-gray-700 dark:text-gray-300">
           {description}
@@ -138,14 +154,6 @@ function SubjectContent({
         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
           Content unavailable or removed
         </p>
-      )}
-      {href && (
-        <Link className={`${linkClass} mt-3 inline-block text-sm`} href={href}>
-          Open in Ozone ↗
-        </Link>
-      )}
-      {!href && key && (
-        <p className="mt-2 break-all text-xs text-gray-500">{key}</p>
       )}
     </div>
   )
@@ -177,25 +185,25 @@ function Timeline({ events }: { events: { label: string; at?: string }[] }) {
   )
 }
 
-function useHydratedSubjects(items: { subject: SubjectRef }[]) {
+function useHydratedSubjects(items: { subject: SubjectRef }[], did: string) {
   const agent = useLabelerAgent()
   const keys = useMemo(
     () =>
       [
         ...new Set(
-          items
+          [...items, { subject: { did } }]
             .map((item) => subjectKey(item.subject))
             .filter((key): key is string => !!key),
         ),
       ].sort(),
-    [items],
+    [items, did],
   )
   return useQuery<Hydrated>({
     queryKey: ['inboxSubjectHydration', keys],
     enabled: keys.length > 0,
     staleTime: 60_000,
     queryFn: async () => {
-      return hydrateInboxSubjects(agent, items)
+      return hydrateInboxSubjects(agent, [...items, { subject: { did } }])
     },
   })
 }
@@ -256,10 +264,12 @@ function ReportRow({
   item,
   did,
   hydrated,
+  reporterHandle,
 }: {
   item: InboxReport
   did: string
   hydrated?: ToolsOzoneModerationDefs.SubjectView
+  reporterHandle?: string
 }) {
   const [open, setOpen] = useState(false)
   const agent = useLabelerAgent()
@@ -292,7 +302,7 @@ function ReportRow({
           What was reported
         </h3>
         <SubjectContent subject={report.subject} hydrated={hydrated} />
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+        <dl className="mt-4 grid gap-3 text-sm text-gray-900 dark:text-gray-100 sm:grid-cols-2">
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Reason</dt>
             <dd>{reason(report.reasonType)}</dd>
@@ -320,8 +330,13 @@ function ReportRow({
               ]),
         ]}
       />
-      <div className="text-xs text-gray-500 dark:text-gray-400">
-        Report #{item.id} · {item.src}
+      <div className="flex flex-wrap items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+        <Link href={`/reports/${item.id}`} className={linkClass}>
+          Open report #{item.id} ↗
+        </Link>
+        <span>
+          · Sent by {reporterHandle ? `@${reporterHandle}` : 'this account'}
+        </span>
       </div>
     </Row>
   )
@@ -442,7 +457,7 @@ function ActionedRow({
           Your {key?.startsWith('did:') ? 'account' : 'content'}
         </h3>
         <SubjectContent subject={subject.subject} hydrated={hydrated} />
-        <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
+        <dl className="mt-4 grid gap-3 text-sm text-gray-900 dark:text-gray-100 sm:grid-cols-2">
           <div>
             <dt className="text-gray-500 dark:text-gray-400">Current status</dt>
             <dd>{readable(subject.enforcement.state)}</dd>
@@ -521,8 +536,7 @@ function ActionedRow({
         ]}
       />
       <div className="text-xs text-gray-500 dark:text-gray-400">
-        {item.actionCount ?? detail.data?.actions.length ?? 0} actions ·{' '}
-        {item.src}
+        {item.actionCount ?? detail.data?.actions.length ?? 0} actions
       </div>
     </Row>
   )
@@ -537,8 +551,20 @@ function PreviewFrame({
   current: 'reports' | 'actioned-subjects'
   children: React.ReactNode
 }) {
+  const params = useSearchParams()
+  const pathname = usePathname()
+  const router = useRouter()
+  const queryClient = useQueryClient()
+  const emitEvent = useEmitEvent()
+  const quickOpen = params.get('quickOpen') || ''
+  const setQuickOpen = (subject: string) => {
+    const next = new URLSearchParams(params)
+    if (subject) next.set('quickOpen', subject)
+    else next.delete('quickOpen')
+    router.replace(`${pathname}?${next}`)
+  }
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 sm:px-6">
+    <main className="w-full px-4 py-6 sm:px-6 lg:px-8">
       <Link
         href={`/repositories/${encodeURIComponent(did)}`}
         className={`text-sm ${linkClass}`}
@@ -575,6 +601,28 @@ function PreviewFrame({
         ))}
       </nav>
       <div className="mt-5">{children}</div>
+      <ModActionPanelQuick
+        open={!!quickOpen}
+        onClose={() => setQuickOpen('')}
+        setSubject={setQuickOpen}
+        subject={quickOpen}
+        subjectOptions={quickOpen ? [quickOpen] : []}
+        isInitialLoading={false}
+        onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
+          await emitEvent(
+            hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
+          )
+          await queryClient.invalidateQueries({
+            queryKey: ['moderatorInboxPreview'],
+          })
+          await queryClient.invalidateQueries({
+            queryKey: ['inboxActionDetail'],
+          })
+          await queryClient.invalidateQueries({
+            queryKey: ['inboxReportDetail'],
+          })
+        }}
+      />
     </main>
   )
 }
@@ -605,7 +653,7 @@ export function ReportsPreview({ did }: { did: string }) {
     () => query.data?.pages.flatMap((page) => page.items) || [],
     [query.data],
   )
-  const hydrated = useHydratedSubjects(items)
+  const hydrated = useHydratedSubjects(items, did)
   return (
     <PreviewFrame did={did} current="reports">
       {!did.startsWith('did:') ? (
@@ -651,6 +699,7 @@ export function ReportsPreview({ did }: { did: string }) {
                 item={item}
                 did={did}
                 hydrated={hydrated.data?.[subjectKey(item.subject) || '']}
+                reporterHandle={hydrated.data?.[did]?.repo?.handle}
               />
             ))}
           </div>
@@ -679,7 +728,7 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
     () => query.data?.pages.flatMap((page) => page.items) || [],
     [query.data],
   )
-  const hydrated = useHydratedSubjects(items)
+  const hydrated = useHydratedSubjects(items, did)
   return (
     <PreviewFrame did={did} current="actioned-subjects">
       {!did.startsWith('did:') ? (
