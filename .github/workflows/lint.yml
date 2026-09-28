@@ -25,10 +25,10 @@ jobs:
       - name: Yarn install
         run: yarn
 
-      - name: Typescript & Lint check
-        run: yarn lint
-
       - name: Lint Reporter
         uses: wearerequired/lint-action@v2.2.0
         with:
           eslint: true
+
+      - name: Typescript & Lint check
+        run: yarn lint
