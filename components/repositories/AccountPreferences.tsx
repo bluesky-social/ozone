@@ -323,39 +323,11 @@ export function AccountPreferences({ did }: { did: string }) {
     enabled: isOpen,
     cacheTime: 1000 * 60 * 5,
     queryFn: async ({ signal }) => {
-      const params = new URLSearchParams({ did })
-      const response = await labelerAgent.fetchHandler(
-        `/xrpc/tools.ozone.moderation.getAccountPreferences?${params}`,
-        {
-          method: 'GET',
-          headers: { accept: 'application/json' },
-          signal,
-        },
+      const { data } = await labelerAgent.tools.ozone.moderation.getAccountPreferences(
+        { did },
+        { signal },
       )
-      const body = await response.text()
-      let data: {
-        error?: string
-        message?: string
-        preferences?: AppBskyActorDefs.Preferences
-      } = {}
-      try {
-        if (body) data = JSON.parse(body)
-      } catch {
-        // Fall through to the status-based error for non-JSON responses.
-      }
-
-      if (!response.ok) {
-        throw new Error(
-          data.message ||
-            data.error ||
-            `Failed to load preferences (HTTP ${response.status})`,
-        )
-      }
-      if (!data.preferences) {
-        throw new Error('Preferences response is missing preferences')
-      }
-
-      return { preferences: data.preferences }
+      return data
     },
   })
 
