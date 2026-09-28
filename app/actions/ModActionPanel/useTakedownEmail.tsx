@@ -6,6 +6,8 @@ export type CompileTemplateInput = {
   subjectName: string // 'account', 'post', 'list', 'record', etc.
   recordContent?: string
   isPermanent?: boolean
+  accountRestrictionUnchanged?: boolean
+  suspensionExtended?: boolean
 
   strikeCount?: string
 
@@ -32,16 +34,19 @@ export function compileTakedownSubject({
   thresholdCrossed,
   suspensionDuration,
   isFirstSev1ForPolicy,
+  accountRestrictionUnchanged,
 }: {
   thresholdCrossed?: number
   suspensionDuration?: string | null
   isFirstSev1ForPolicy?: boolean
+  accountRestrictionUnchanged?: boolean
 }): string {
   if (isFirstSev1ForPolicy) {
     return `Bluesky Account Warning - Community Guidelines Violation`
   }
 
-  const applyingSuspension = thresholdCrossed && suspensionDuration
+  const applyingSuspension =
+    !accountRestrictionUnchanged && thresholdCrossed && suspensionDuration
   if (applyingSuspension) {
     return `Bluesky Account Suspended - Community Guidelines Violation`
   }
@@ -53,6 +58,8 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     handle,
     subjectName,
     isPermanent,
+    accountRestrictionUnchanged,
+    suspensionExtended,
     recordContent,
     totalStrikes,
     thresholdCrossed,
@@ -110,6 +117,15 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
 
   // Strike logic (Section 2.5)
   const strikeInfo = (() => {
+    if (!isAccountLevel && accountRestrictionUnchanged) {
+      const strikeText = !severityLevelConfig?.strikeCount
+        ? `Your ${subjectName} was removed, but no new strikes have been applied to your account.`
+        : isFirstSev1ForPolicy
+          ? 'This is a warning. Future similar violations will result in strikes against your account.'
+          : `You now have ${totalStrikes} total strikes.`
+      return `${strikeText}\n\nYour existing account restriction remains unchanged.`
+    }
+
     // If 16 strikes => permanent ban
     if (totalStrikes >= 16) {
       return `Because you reached 16 strikes, your account has been permanently removed. You will no longer be able to access this account.`
@@ -135,7 +151,10 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     const needsSuspensionCopy =
       thresholdCrossed && suspensionDuration && suspensionEndDate
     if (needsSuspensionCopy) {
-      out += `${lineBreaks}Because you reached ${thresholdCrossed} strikes, your account has been suspended for ${suspensionDuration}. You will be able to access your account again on ${suspensionEndDate}.`
+      const suspensionText = suspensionExtended
+        ? `your existing account suspension has been extended by ${suspensionDuration}`
+        : `your account has been suspended for ${suspensionDuration}`
+      out += `${lineBreaks}Because you reached ${thresholdCrossed} strikes, ${suspensionText}. You will be able to access your account again on ${suspensionEndDate}.`
     }
 
     // Approaching permanent ban (12–15)
@@ -180,4 +199,56 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     ),
     input,
   )
+}
+
+export type GeneratedTakedownEmail = {
+  input: CompileTemplateInput
+  content: string
+  subject: string
+}
+
+/**
+ * Prepares the takedown email content and subject based on the generated email and any changes to account restrictions.
+ */
+export function prepareTakedownEmail({
+  content,
+  subject,
+  generated,
+  accountRestrictionUnchanged,
+  suspensionExtended,
+  suspensionEndDate,
+}: {
+  content: string
+  subject: string
+  generated: GeneratedTakedownEmail | null
+  accountRestrictionUnchanged: boolean
+  suspensionExtended?: boolean
+  suspensionEndDate?: string | null
+}): { content: string; subject: string } {
+  if (!generated) return { content, subject }
+
+  const input = {
+    ...generated.input,
+    accountRestrictionUnchanged,
+    suspensionExtended,
+    ...(suspensionEndDate !== undefined ? { suspensionEndDate } : {}),
+  }
+  const next = {
+    content: compileTakedownEmail(input),
+    subject: compileTakedownSubject(input),
+  }
+  if (
+    next.content === generated.content &&
+    next.subject === generated.subject
+  ) {
+    return { content, subject }
+  }
+
+  if (content !== generated.content || subject !== generated.subject) {
+    throw new Error(
+      'The content action completed, but the account restriction changed. Review the edited notification and send it separately from the account email panel.',
+    )
+  }
+
+  return next
 }
