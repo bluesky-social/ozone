@@ -25,10 +25,8 @@ jobs:
       - name: Yarn install
         run: yarn
 
-      - name: Lint Reporter
-        uses: wearerequired/lint-action@v2.2.0
-        with:
-          eslint: true
+      - name: Lint JavaScript files
+        run: yarn eslint --ext .js .
 
-      - name: Typescript & Lint check
+      - name: Lint Next.js app
         run: yarn lint
