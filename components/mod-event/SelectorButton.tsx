@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
 import { ChevronDownIcon } from '@heroicons/react/20/solid'
-import { Dropdown } from '@/common/Dropdown'
+import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { MOD_EVENTS } from './constants'
 import { isReporterMuted, isSubjectMuted } from '@/subject/helpers'
 import {
@@ -97,6 +97,10 @@ export const ModEventSelectorButton = ({
   hasBlobs,
   isSubjectDid,
   forceDisplayActions = [],
+  customItems = [],
+  customName,
+  describedBy,
+  disabled,
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
@@ -104,6 +108,10 @@ export const ModEventSelectorButton = ({
   hasBlobs: boolean
   isSubjectDid: boolean
   forceDisplayActions?: string[]
+  customItems?: DropdownItem[]
+  customName?: string
+  describedBy?: string
+  disabled?: boolean
 }) => {
   const canDivertBlob = usePermission('canDivertBlob')
   const canTakedown = usePermission('canTakedown')
@@ -270,15 +278,20 @@ export const ModEventSelectorButton = ({
 
   return (
     <Dropdown
+      disabled={disabled}
+      describedBy={describedBy}
       className="inline-flex justify-center rounded-md border border-gray-300 dark:border-teal-500 bg-white dark:bg-slate-800 dark:text-gray-100 dark:focus:border-teal-500  dark px-4 py-2 text-sm font-medium text-gray-700 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700"
-      items={availableActions.map(({ key, text }) => ({
-        id: key,
-        text,
-        onClick: () => setSelectedAction(key),
-      }))}
+      items={[
+        ...availableActions.map(({ key, text }) => ({
+          id: key,
+          text,
+          onClick: () => setSelectedAction(key),
+        })),
+        ...customItems,
+      ]}
       data-cy="mod-event-selector"
     >
-      {actionsByKey[selectedAction] || 'Action'}
+      {customName || actionsByKey[selectedAction] || 'Action'}
 
       <ChevronDownIcon
         className="ml-2 -mr-1 h-5 w-5 text-violet-200 hover:text-violet-100"

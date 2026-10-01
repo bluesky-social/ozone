@@ -1,3 +1,4 @@
+import { CustomActionPanel, customMenuItems, useCustomActionPanel } from 'components/custom-actions/Panel'
 import { useState } from 'react'
 import { ActionPanel } from '@/common/ActionPanel'
 import { ButtonPrimary, ButtonSecondary } from '@/common/buttons'
@@ -144,6 +145,7 @@ function Form(
     subjectOptions,
     ...others
   } = props
+  const custom = useCustomActionPanel(subject)
   const {
     submission,
     navigateQueue,
@@ -240,7 +242,7 @@ function Form(
       `}</style>
       <div className="flex overflow-y-auto scrollable-container pt-1">
         <div className="flex sm:w-1/2 flex-col">
-          <form id={FORM_ID} onSubmit={onFormSubmit} {...others}>
+          <form id={FORM_ID} onSubmit={(e) => { if (custom.selected) e.preventDefault(); else void onFormSubmit(e) }} {...others}>
             <div className="flex flex-col">
               <div className="flex flex-row items-end mb-3">
                 <FormLabel
@@ -468,20 +470,25 @@ function Form(
                     )}
                   <div className="relative flex flex-row gap-3 items-center">
                     <ModEventSelectorButton
+                      customItems={customMenuItems(custom, () => {})}
+                      customName={custom.selected?.name}
+                      describedBy={custom.selected?.helpText ? custom.helpId : undefined}
                       isSubjectDid={isSubjectDid}
                       subjectStatus={subjectStatus}
                       selectedAction={modEventType}
                       hasBlobs={!!record?.blobs?.length}
-                      setSelectedAction={(action) => setModEventType(action)}
+                      setSelectedAction={(action) => { custom.setSelection(null); setModEventType(action) }}
                     />
-                    <ModEventDetailsPopover modEventType={modEventType} />
-                    {isSubjectDid && profile && (
+                    {!custom.selected && <ModEventDetailsPopover modEventType={modEventType} />}
+                    {!custom.selected && isSubjectDid && profile && (
                       <VerificationActionButton
                         did={subject}
                         profile={profile}
                       />
                     )}
                   </div>
+                  <CustomActionPanel model={custom} />
+                  {!custom.selected && <>
                   {isTakedownEvent && (
                     <PolicySeveritySelector
                       defaultPolicy={selectedPolicyName}
@@ -833,12 +840,13 @@ function Form(
                       </div>
                     </div>
                   )}
+                  </>}
                 </div>
               )}
             </div>
           </form>
           {/* IMPORTANT: This component has a form so we can't nest it inside the above form */}
-          {isEmailEvent && isSubjectDid && (
+          {!custom.selected && isEmailEvent && isSubjectDid && (
             <div className="ml-2 mt-2">
               <EmailComposer did={subject} handleSubmit={handleEmailSubmit} />
             </div>

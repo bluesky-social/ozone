@@ -331,13 +331,12 @@ export const useQuickAction = (
   const createSubjectFromId = useCreateSubjectFromId()
 
   // on form submit
-  const onFormSubmit = async (
-    ev: FormEvent<HTMLFormElement> & { target: HTMLFormElement },
-  ) => {
+  const onFormSubmit = async (ev: FormEvent<HTMLFormElement>) => {
     ev.preventDefault()
+    const form = ev.currentTarget
     try {
       setSubmission({ isSubmitting: true, error: '' })
-      const formData = new FormData(ev.currentTarget)
+      const formData = new FormData(form)
       const nextLabels = String(formData.get('labels'))!.split(',')
       const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
 
@@ -599,7 +598,7 @@ export const useQuickAction = (
       queryClient.invalidateQueries({ queryKey: ['modEventList'] })
 
       // After successful submission, reset the form state to clear inputs for previous submission
-      ev.target.reset()
+      form.reset()
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       // If previous event was takedown and not immediately moving to next subject, moderators are most like to send a follow up email so default to email event
       const eventMayNeedEmail =
