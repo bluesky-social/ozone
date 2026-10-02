@@ -1,6 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import {
-  $Typed,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
@@ -52,7 +51,17 @@ import { TakedownTargetService } from '@/lib/types'
 import {
   compileTakedownEmail,
   compileTakedownSubject,
+  prepareTakedownEmail,
+  type CompileTemplateInput,
+  type GeneratedTakedownEmail,
 } from './useTakedownEmail'
+import {
+  getAccountTakedownOutcome,
+  getAccountTakedownState,
+  getNextAccountTakedownState,
+  submitRecordTakedown,
+  type AccountTakedownOutcome,
+} from '@/mod-event/helpers/takedown'
 import { format } from 'date-fns'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
 
@@ -94,6 +103,9 @@ export const useQuickAction = (
   const recipientLanguages = getRecipientsLanguages(repo)
 
   const isSubjectDid = subject.startsWith('did:')
+  const currentAccountTakedownState = getAccountTakedownState(
+    record?.repo.moderation.subjectStatus ?? repo?.moderation.subjectStatus,
+  )
   const isReviewClosed =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
@@ -228,7 +240,7 @@ export const useQuickAction = (
   const eventNeedsActionRecommendation =
     isTakedownEvent || isReverseTakedownEvent || isEmailEvent
 
-  const actionRecommendation =
+  const baseActionRecommendation =
     eventNeedsActionRecommendation &&
     selectedPolicyName &&
     selectedSeverityLevelName
@@ -241,6 +253,41 @@ export const useQuickAction = (
           isReverseTakedownEvent, // Pass true for negative strikes
         )
       : null
+
+  const nextAccountTakedownState = getNextAccountTakedownState(
+    currentAccountTakedownState,
+    baseActionRecommendation,
+  )
+  const currentSuspensionExpiresAt =
+    isTakedownEvent &&
+    !isSubjectDid &&
+    currentAccountTakedownState.type === 'temporary'
+      ? currentAccountTakedownState.expiresAt
+      : undefined
+  const accountTakedownOutcome = getAccountTakedownOutcome(
+    currentAccountTakedownState,
+    nextAccountTakedownState,
+  )
+  const accountRestrictionUnchanged =
+    isTakedownEvent &&
+    !isSubjectDid &&
+    accountTakedownOutcome.accountRestrictionUnchanged
+  const suspensionExtended =
+    isTakedownEvent &&
+    !isSubjectDid &&
+    accountTakedownOutcome.suspensionExtended
+  const actionRecommendation =
+    baseActionRecommendation && isTakedownEvent && accountRestrictionUnchanged
+      ? {
+          ...baseActionRecommendation,
+          message: `${baseActionRecommendation.totalStrikes} total strikes - Existing account restriction will remain unchanged`,
+        }
+      : baseActionRecommendation && isTakedownEvent && suspensionExtended
+        ? {
+            ...baseActionRecommendation,
+            message: `${baseActionRecommendation.totalStrikes} total strikes - Account suspension will be extended by ${pluralize(baseActionRecommendation.suspensionDurationInHours ?? 0, 'hour')}`,
+          }
+        : baseActionRecommendation
 
   // When action recommendation changes, if we're taking down an account,
   // we need to automatically select the suspension duration based policy and sev level
@@ -452,61 +499,32 @@ export const useQuickAction = (
 
         await Promise.all(labelSubmissions)
       } else {
-        await onSubmit({
+        const primaryAction = {
           subject: subjectInfo,
           createdBy: accountDid,
           subjectBlobCids,
           event: coreEvent,
-        })
-
-        // If this is a record takedown and we have reached a suspension/ban threshold,
-        // emit an additional account-level takedown event
-        if (
-          ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
-          !isSubjectDid &&
-          actionRecommendation &&
-          actionRecommendation.thresholdCrossed &&
-          (actionRecommendation.isPermanent ||
-            actionRecommendation.suspensionDurationInHours !== null)
-        ) {
-          const accountEvent: $Typed<ToolsOzoneModerationDefs.ModEventTakedown> =
-            {
-              $type: MOD_EVENTS.TAKEDOWN,
-              comment: coreEvent.comment,
-              policies: coreEvent.policies,
-              severityLevel: coreEvent.severityLevel,
-            }
-
-          // Only set durationInHours if not permanent (for suspensions)
-          if (
-            !actionRecommendation.isPermanent &&
-            actionRecommendation.suspensionDurationInHours
-          ) {
-            accountEvent.durationInHours =
-              actionRecommendation.suspensionDurationInHours
-          }
-
-          // Add targetServices if present in the original event
-          if (targetServices) {
-            accountEvent.targetServices = targetServices
-          }
-
-          await onSubmit({
-            subject: {
-              $type: 'com.atproto.admin.defs#repoRef',
-              did: subjectDid,
-            },
-            createdBy: accountDid,
-            event: accountEvent,
-          })
         }
+        const sendEmail = async (outcome?: AccountTakedownOutcome) => {
+          if (!showAutomatedEmailComposer || !emailContent) return
 
-        if (showAutomatedEmailComposer && emailContent) {
+          const email = prepareTakedownEmail({
+            content: emailContent,
+            subject: formData.get('subjectLine')?.toString() ?? '',
+            generated: generatedEmailRef.current,
+            accountRestrictionUnchanged:
+              outcome?.accountRestrictionUnchanged ?? false,
+            suspensionExtended: outcome?.suspensionExtended,
+            suspensionEndDate:
+              outcome?.state.type === 'temporary'
+                ? format(outcome.state.expiresAt, 'do MMM, yyyy')
+                : undefined,
+          })
+          formData.set('subjectLine', email.subject)
           const emailEvent = await buildEmailEventFromFormData(
             formData,
-            emailContent,
+            email.content,
           )
-
           await onSubmit({
             subject: {
               $type: 'com.atproto.admin.defs#repoRef',
@@ -515,6 +533,66 @@ export const useQuickAction = (
             createdBy: accountDid,
             event: emailEvent,
           })
+        }
+
+        if (
+          !isSubjectDid &&
+          ToolsOzoneModerationDefs.isModEventTakedown(coreEvent)
+        ) {
+          // If a record action crosses a suspension/ban threshold, prepare an
+          // account-level event. The helper calculates whether to apply it.
+          const accountAction: ToolsOzoneModerationEmitEvent.InputSchema = {
+            subject: {
+              $type: 'com.atproto.admin.defs#repoRef',
+              did: subjectDid,
+            },
+            createdBy: accountDid,
+            event: {
+              $type: MOD_EVENTS.TAKEDOWN,
+              comment: coreEvent.comment,
+              policies: coreEvent.policies,
+              severityLevel: coreEvent.severityLevel,
+              targetServices,
+            },
+          }
+          try {
+            await submitRecordTakedown({
+              primaryAction,
+              accountAction,
+              recommendation: actionRecommendation,
+              getAccountStatus: async () => {
+                const { data } =
+                  await labelerAgent.tools.ozone.moderation.queryStatuses({
+                    subject: subjectDid,
+                    includeMuted: true,
+                    limit: 1,
+                  })
+                return data.subjectStatuses.at(0)
+              },
+              getAccountTakedown: async () => {
+                const { data } =
+                  await labelerAgent.tools.ozone.moderation.queryEvents({
+                    subject: subjectDid,
+                    includeAllUserRecords: false,
+                    types: [MOD_EVENTS.TAKEDOWN],
+                    limit: 1,
+                  })
+                const event = data.events.at(0)?.event
+                return ToolsOzoneModerationDefs.isModEventTakedown(event)
+                  ? event
+                  : undefined
+              },
+              onSubmit,
+              sendEmail,
+            })
+          } finally {
+            await queryClient.invalidateQueries({
+              queryKey: ['strikeEvents', subjectDid],
+            })
+          }
+        } else {
+          await onSubmit(primaryAction)
+          await sendEmail()
         }
 
         // If this is a REVERSE_TAKEDOWN and we've crossed a suspension threshold (going down),
@@ -664,6 +742,7 @@ export const useQuickAction = (
   const [selectedAgeAssuranceState, setSelectedAgeAssuranceState] = useState('')
   const emailSubjectField = useRef<HTMLInputElement>(null)
   const [emailContent, setEmailContent] = useState<string | undefined>('')
+  const generatedEmailRef = useRef<GeneratedTakedownEmail | null>(null)
   const durationSelectorRef = useRef<HTMLSelectElement>(null)
 
   // Keyboard shortcuts for action types
@@ -718,6 +797,9 @@ export const useQuickAction = (
       onEmailTemplateSelect(automatedEmailTemplate.name)
     }
   }, [
+    accountRestrictionUnchanged,
+    suspensionExtended,
+    currentSuspensionExpiresAt,
     actionRecommendation?.isPermanent,
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
@@ -733,6 +815,7 @@ export const useQuickAction = (
 
     // If the selected tpl is NOT the automated template, it usually means user wants to use a custom tpl
     if (template?.id && template?.id !== automatedEmailTemplate?.id) {
+      generatedEmailRef.current = null
       const content = compileTemplateContent(template.contentMarkdown, {
         handle:
           repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
@@ -771,12 +854,22 @@ export const useQuickAction = (
       severityLevel.strikeOnOccurrence > 0 &&
       !actionRecommendation?.actualStrikesToApply
 
-    const emailSubject = compileTakedownSubject({
-      suspensionDuration,
-      isFirstSev1ForPolicy,
-      thresholdCrossed: actionRecommendation?.thresholdCrossed,
-    })
-    const content = compileTakedownEmail({
+    const suspensionEndDate =
+      isTakedownEvent &&
+      !isSubjectDid &&
+      nextAccountTakedownState.type === 'temporary'
+        ? format(nextAccountTakedownState.expiresAt, 'do MMM, yyyy')
+        : actionRecommendation?.suspensionDurationInHours
+          ? format(
+              Date.now() +
+                actionRecommendation.suspensionDurationInHours * HOUR,
+              'do MMM, yyyy',
+            )
+          : undefined
+
+    const emailInput: CompileTemplateInput = {
+      accountRestrictionUnchanged,
+      suspensionExtended,
       subjectName: isSubjectDid
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
@@ -786,15 +879,7 @@ export const useQuickAction = (
       totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,
       previousStrikes: currentStrikes,
       suspensionDuration,
-      suspensionEndDate: actionRecommendation?.suspensionDurationInHours
-        ? format(
-            new Date(
-              Date.now() +
-                actionRecommendation.suspensionDurationInHours * HOUR,
-            ),
-            'do MMM, yyyy',
-          )
-        : undefined,
+      suspensionEndDate,
       isPermanent: actionRecommendation?.isPermanent,
       policyConfig: policy ?? undefined,
       severityLevelConfig: severityLevel,
@@ -804,7 +889,14 @@ export const useQuickAction = (
       // Only when we are applying a policy where strike will be applied on repeat occurrence
       // but the current action is not applying any strikes
       isFirstSev1ForPolicy,
-    })
+    }
+    const emailSubject = compileTakedownSubject(emailInput)
+    const content = compileTakedownEmail(emailInput)
+    generatedEmailRef.current = {
+      input: emailInput,
+      content,
+      subject: emailSubject,
+    }
 
     // TODO: typing here is super slow in the editor so we may need to debounce this somewhere
     setEmailContent(content)
