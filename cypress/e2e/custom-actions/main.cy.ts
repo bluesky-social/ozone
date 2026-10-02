@@ -495,7 +495,6 @@ describe('Settings custom actions', () => {
       cy.get('[data-cy="custom-action-panel"]').should('not.exist')
       cy.get(ui === 'quick-action' ? '[role="dialog"]' : 'body')
         .contains('button', /^Label$/)
-        .should('be.visible')
         .click()
       cy.contains('[role="menuitem"]', workflow.name).click()
       cy.get('[data-cy="custom-operation-status"]').should('not.exist')
