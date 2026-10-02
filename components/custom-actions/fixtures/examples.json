@@ -1,0 +1,94 @@
+{
+  "version": 1,
+  "customActions": [
+    {
+      "id": "label-and-close",
+      "name": "Label as rude and close report",
+      "helpText": "Apply rude to the current account or content and close the current report as actioned, linked to the label event.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["account", "record"],
+      "actions": [
+        {
+          "id": "label-subject",
+          "type": "event",
+          "target": "subject",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventLabel",
+            "createLabelVals": ["rude"],
+            "negateLabelVals": []
+          },
+          "reportAction": {
+            "scope": "current"
+          }
+        }
+      ]
+    },
+    {
+      "id": "label-account-and-content",
+      "name": "Label account and content, and close report",
+      "helpText": "For records only: label the owning account kind, then label the content nice and close the current report as actioned, linked to the content label event.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["record"],
+      "actions": [
+        {
+          "id": "label-account",
+          "type": "event",
+          "target": "account",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventLabel",
+            "createLabelVals": ["kind"],
+            "negateLabelVals": []
+          }
+        },
+        {
+          "id": "label-content",
+          "type": "event",
+          "target": "subject",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventLabel",
+            "createLabelVals": ["nice"],
+            "negateLabelVals": []
+          },
+          "reportAction": {
+            "scope": "current"
+          }
+        }
+      ]
+    },
+    {
+      "id": "note-and-escalate",
+      "name": "Note & Escalate",
+      "helpText": "Add an internal report note then escalate the current report.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["account", "record"],
+      "actions": [
+        {
+          "id": "add-report-note",
+          "type": "activity",
+          "target": "report",
+          "activity": {
+            "$type": "tools.ozone.report.defs#noteActivity"
+          },
+          "internalNote": "no issues"
+        },
+        {
+          "id": "escalate-report",
+          "type": "activity",
+          "target": "report",
+          "activity": {
+            "$type": "tools.ozone.report.defs#escalationActivity"
+          }
+        }
+      ]
+    }
+  ]
+}

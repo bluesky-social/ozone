@@ -1,5 +1,4 @@
 import { ToolsOzoneServerGetConfig, ToolsOzoneTeamDefs } from '@atproto/api'
-import { IMAGE_SEARCH_API_URL } from './constants'
 
 export type ServerConfig = {
   pds?: string
