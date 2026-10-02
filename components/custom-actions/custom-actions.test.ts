@@ -103,7 +103,7 @@ function agentWith(api: object) {
 
 describe('configuration contract', () => {
   it('validates the specification settings fixture', () => {
-    expect(validateSettings(settingsFixture).customActions).toHaveLength(7)
+    expect(validateSettings(settingsFixture)).toEqual(settingsFixture)
   })
   it.each([
     'admin',

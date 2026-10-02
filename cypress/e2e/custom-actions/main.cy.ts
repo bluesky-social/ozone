@@ -143,6 +143,9 @@ describe('Settings custom actions', () => {
       workflow.helpText,
     )
     cy.get('[data-cy="custom-action-panel"] b').should('not.exist')
+    cy.get('[data-cy="custom-action-panel"]')
+      .contains('button', 'Confirm and run')
+      .should('be.enabled')
   }
   it('uses the same definition, help text, and receipt in the old quick-action panel', () => {
     cy.get('table').should('contain.text', seed.carla.repo.handle)
@@ -490,9 +493,10 @@ describe('Settings custom actions', () => {
       cy.contains('button', workflow.name).should('not.be.disabled').click()
       cy.contains('[role="menuitem"]', /^Label$/).click()
       cy.get('[data-cy="custom-action-panel"]').should('not.exist')
-      cy.contains('button', /^Label$/).should('be.visible')
-
-      cy.contains('button', /^Label$/).click()
+      cy.get(ui === 'quick-action' ? '[role="dialog"]' : 'body')
+        .contains('button', /^Label$/)
+        .should('be.visible')
+        .click()
       cy.contains('[role="menuitem"]', workflow.name).click()
       cy.get('[data-cy="custom-operation-status"]').should('not.exist')
       cy.contains('button', 'Confirm and run').click()
@@ -561,7 +565,7 @@ describe('Settings custom actions', () => {
   it('cancels during initial checks and keeps the final status without sending events', () => {
     cy.visit(`${origin}/reports/123`)
     selectCustom()
-    let finishSettings: (() => void) | undefined
+    let finishPreflight: (() => void) | undefined
     let sends = 0
     cy.intercept(
       'POST',
@@ -574,30 +578,19 @@ describe('Settings custom actions', () => {
     cy.intercept(
       {
         method: 'GET',
-        url: '**/xrpc/tools.ozone.setting.listOptions*',
+        url: '**/xrpc/tools.ozone.setting.listOptions*tools.ozone.setting.protectedTags*',
         times: 1,
       },
       (req) =>
         new Promise<void>((resolve) => {
-          finishSettings = () => {
-            req.reply({
-              options: [
-                {
-                  key: KEY,
-                  scope: 'instance',
-                  did: auth.ozoneMetaResponse.did,
-                  createdBy: auth.createSessionResponse.did,
-                  lastUpdatedBy: auth.createSessionResponse.did,
-                  value: configuration,
-                },
-              ],
-            })
+          finishPreflight = () => {
+            req.reply({ options: [] })
             resolve()
           }
         }),
     )
     cy.contains('button', 'Confirm and run').click()
-    cy.wrap(null).should(() => expect(finishSettings).to.be.a('function'))
+    cy.wrap(null).should(() => expect(finishPreflight).to.be.a('function'))
     cy.get('[data-cy="custom-action-panel"]')
       .contains('button', /^Cancel$/)
       .click()
@@ -608,7 +601,7 @@ describe('Settings custom actions', () => {
       'contain.text',
       'skipped',
     )
-    cy.then(() => finishSettings!())
+    cy.then(() => finishPreflight!())
     cy.contains(
       'Custom action cancelled. Remaining steps were skipped.',
     ).should('be.visible')
