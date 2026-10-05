@@ -14,6 +14,10 @@ declare global {
       NEXT_PUBLIC_IMAGE_SEARCH_API_URL?: string // image search service base URL
       IMAGE_SEARCH_AUTH_HEADER?: string // image search service token (sent as Authorization)
       NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS?: string // default lookback window for image search, in days
+      NEXT_PUBLIC_ACCOUNT_AGE_THRESHOLD_DAYS?: string // account age warning threshold, in days
+      NEXT_PUBLIC_ACCOUNT_AGE_SEVERITY_LEVEL?: string // severity level preferred for aged accounts
+      NEXT_PUBLIC_RECORD_AGE_THRESHOLD_DAYS?: string // record age warning threshold, in days
+      NEXT_PUBLIC_RECORD_AGE_SEVERITY_LEVEL?: string // severity level preferred for aged records
     }
   }
 }

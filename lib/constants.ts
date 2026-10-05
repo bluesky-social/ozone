@@ -38,6 +38,27 @@ export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`
 
 export const IMAGE_SEARCH_API_URL = process.env.NEXT_PUBLIC_IMAGE_SEARCH_API_URL
 
+function parsePositiveDays(value: string | undefined): number | undefined {
+  if (!value || !/^\d+$/.test(value)) return undefined
+
+  const days = Number(value)
+  return Number.isSafeInteger(days) && days > 0 ? days : undefined
+}
+
+export const RECORD_AGE_THRESHOLD_DAYS = parsePositiveDays(
+  process.env.NEXT_PUBLIC_RECORD_AGE_THRESHOLD_DAYS,
+)
+
+export const ACCOUNT_AGE_THRESHOLD_DAYS = parsePositiveDays(
+  process.env.NEXT_PUBLIC_ACCOUNT_AGE_THRESHOLD_DAYS,
+)
+
+export const RECORD_AGE_SEVERITY_LEVEL =
+  process.env.NEXT_PUBLIC_RECORD_AGE_SEVERITY_LEVEL?.trim() || undefined
+
+export const ACCOUNT_AGE_SEVERITY_LEVEL =
+  process.env.NEXT_PUBLIC_ACCOUNT_AGE_SEVERITY_LEVEL?.trim() || undefined
+
 export const IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS = process.env
   .NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS
   ? parseInt(process.env.NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS)

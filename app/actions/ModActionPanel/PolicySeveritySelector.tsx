@@ -20,10 +20,12 @@ type PolicySeveritySelectorProps = {
   } | null
   handlePolicySelect: (policyName: string) => void
   handleSeverityLevelSelect: (levelName: string) => void
+  onSeverityLevelUserSelect?: () => void
 
   // Optional props for REVERSE_TAKEDOWN auto-selection
   defaultPolicy?: string
   defaultSeverityLevel?: string
+  preferredDefaultSeverityLevel?: string
 
   // Optional props for strike display
   severityLevelStrikeCount: number | null
@@ -45,8 +47,10 @@ export function PolicySeveritySelector({
   policyDetails,
   handlePolicySelect,
   handleSeverityLevelSelect,
+  onSeverityLevelUserSelect,
   defaultPolicy,
   defaultSeverityLevel,
+  preferredDefaultSeverityLevel,
   severityLevelStrikeCount,
   currentStrikes = 0,
   actionRecommendation,
@@ -81,8 +85,10 @@ export function PolicySeveritySelector({
           <ActionSeverityLevelSelector
             name="severityLevel"
             defaultSeverityLevel={defaultSeverityLevel}
+            preferredDefaultSeverityLevel={preferredDefaultSeverityLevel}
             policySeverityLevels={policyDetails.severityLevels}
             onSelect={handleSeverityLevelSelect}
+            onUserSelect={onSeverityLevelUserSelect}
           />
           {severityLevelStrikeCount !== null && (
             <input
