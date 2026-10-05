@@ -114,7 +114,8 @@ function TransitionConfirmPanel({
   const closeReports = useCloseReports()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
   const isBulkNoAction = action === 'no-action' && scope !== 'current'
-  const isPending = isResolving || createActivity.isPending || closeReports.isPending
+  const isPending =
+    isResolving || createActivity.isPending || closeReports.isPending
 
   const handleConfirm = async () => {
     setIsResolving(true)
