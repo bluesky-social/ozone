@@ -3,6 +3,7 @@ import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
 import { Checkbox, Select, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
+import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
@@ -19,6 +20,7 @@ import {
   ChevronUpIcon,
   CpuChipIcon,
   NoSymbolIcon,
+  UserMinusIcon,
 } from '@heroicons/react/24/outline'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
@@ -477,10 +479,29 @@ function ActivityItem({
   const payload = (activity as unknown as { activity: ActivityPayload })
     .activity
   const activityType = payload?.$type ?? ''
-  const toStatus = ACTIVITY_TO_STATUS[activityType]
-  const isStateChange = !!toStatus
-  const noteText = (activity as unknown as { internalNote?: string })
-    .internalNote
+  const unassignment = ToolsOzoneReportDefs.isUnassignmentActivity(
+    activity.activity,
+  )
+    ? activity.activity
+    : undefined
+  const isUnassignment = !!unassignment
+  const toStatus = unassignment?.nextStatus ?? ACTIVITY_TO_STATUS[activityType]
+  const showStatus =
+    !!toStatus && (!isUnassignment || payload.previousStatus !== toStatus)
+  const unassignedFrom =
+    isUnassignment && typeof activity.meta?.unassignedFrom === 'string'
+      ? activity.meta.unassignedFrom
+      : undefined
+  const ActivityIcon = isUnassignment
+    ? UserMinusIcon
+    : showStatus
+      ? ArrowRightIcon
+      : ChatBubbleLeftIcon
+  const noteText =
+    unassignedFrom &&
+    activity.internalNote === `Report unassigned from ${unassignedFrom}.`
+      ? undefined
+      : activity.internalNote
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
     addSuffix: true,
   })
@@ -496,33 +517,35 @@ function ActivityItem({
       <div className="flex flex-col items-center">
         <div
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-            isStateChange
+            showStatus
               ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
           }`}
         >
-          {isStateChange ? (
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          ) : (
-            <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
-          )}
+          <ActivityIcon className="h-3.5 w-3.5" />
         </div>
       </div>
 
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {isStateChange && (
+          {isUnassignment && !showStatus && (
+            <span className="text-gray-500 dark:text-gray-400 font-medium">
+              Unassigned
+            </span>
+          )}
+          {showStatus && (
             <>
-              {payload.previousStatus && (
-                <>
-                  <StatusChip status={payload.previousStatus} />
-                  <ArrowRightIcon className="h-3 w-3 text-gray-400 shrink-0" />
-                </>
-              )}
+              {payload.previousStatus &&
+                payload.previousStatus !== toStatus && (
+                  <>
+                    <StatusChip status={payload.previousStatus} />
+                    <ArrowRightIcon className="h-3 w-3 text-gray-400 shrink-0" />
+                  </>
+                )}
               <StatusChip status={toStatus} />
             </>
           )}
-          {!isStateChange && (
+          {!showStatus && !isUnassignment && (
             <span className="text-gray-500 dark:text-gray-400 font-medium">
               Note
             </span>
@@ -535,6 +558,11 @@ function ActivityItem({
           )}
         </div>
 
+        {unassignedFrom && (
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-base text-gray-700 dark:text-gray-300">
+            Unassigned from <ModeratorBadge did={unassignedFrom} />
+          </div>
+        )}
         {noteText && (
           <p className="mt-0.5 text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
             {noteText}
