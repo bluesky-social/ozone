@@ -93,7 +93,10 @@ import {
   ReportedVideoTimestamp,
 } from 'components/reports/ReportedVideoTimestamp'
 import { VideoTimestampProvider } from '@/common/video/TimestampContext'
-import { getHandleFromSubjectView } from 'components/reports/utils'
+import {
+  getDefaultReportTypes,
+  getHandleFromSubjectView,
+} from 'components/reports/utils'
 import { SubjectTagList } from 'components/tags/SubjectTagList'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { formatDistanceToNow } from 'date-fns'
@@ -555,14 +558,9 @@ function ReportDetailLayout(props: {
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
   >('current')
-  const [reportActionTypes, setReportActionTypes] = useState<string[]>(() => {
-    // If the queue has report types, default to those
-    if (report.queue?.reportTypes && report.queue.reportTypes.length > 0) {
-      return report.queue.reportTypes
-    }
-    // Otherwise, fall back to the current report's type
-    return report.reportType ? [report.reportType] : []
-  })
+  const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
+    getDefaultReportTypes(report),
+  )
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const appealLabelActionStarted = useRef(false)
   const [applyToAccount, setApplyToAccount] = useState(false)
@@ -777,10 +775,10 @@ function ReportDetailLayout(props: {
     appealLabelActionStarted.current = false
     if (selectedAction === 'label') {
       setModEventType(MOD_EVENTS.LABEL)
-      setReportActionScope(isAppealReport(report.reportType) ? 'current' : 'types')
+      setReportActionScope('types')
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
-      setReportActionScope(isAppealReport(report.reportType) ? 'current' : 'types')
+      setReportActionScope('types')
     } else if (selectedAction === 'revert-takedown') {
       setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
       setReportActionScope('current')
@@ -1210,7 +1208,7 @@ function ReportDetailLayout(props: {
                 Actions on this report
               </h4>
               <ModToolProvider>
-                {report.actions.map((modEvent) => (
+                {[...report.actions].reverse().map((modEvent) => (
                   <ModEventItem
                     key={modEvent.id}
                     modEvent={modEvent}
