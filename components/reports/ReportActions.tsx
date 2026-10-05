@@ -23,8 +23,13 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { useCloseReports, useCreateActivity, useListActivities } from './hooks'
+import {
+  useCloseReports,
+  useCreateActivity,
+  useListActivities,
+} from './hooks'
 import { useReports } from './useReports'
+import { getDefaultReportTypes } from './utils'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
@@ -95,25 +100,29 @@ function TransitionConfirmPanel({
   action: ActionType
   report: ToolsOzoneReportDefs.ReportView
   onDone: () => void
-  onResolveAppeal?: () => Promise<void>
+  onResolveAppeal?: (comment?: string) => Promise<void>
 }) {
   const [note, setNote] = useState('')
-  const [scope, setScope] = useState<'current' | 'all' | 'types'>('current')
-  const [reportTypes, setReportTypes] = useState<string[]>(() =>
-    report.queue?.reportTypes?.length
-      ? report.queue.reportTypes
-      : report.reportType
-        ? [report.reportType]
-        : [],
+  const [scope, setScope] = useState<'current' | 'all' | 'types'>(() =>
+    report.queue?.reportTypes?.length ? 'types' : 'current',
   )
+  const [reportTypes, setReportTypes] = useState<string[]>(() =>
+    getDefaultReportTypes(report),
+  )
+  const [isResolving, setIsResolving] = useState(false)
   const createActivity = useCreateActivity()
   const closeReports = useCloseReports()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
   const isBulkNoAction = action === 'no-action' && scope !== 'current'
-  const isPending = createActivity.isPending || closeReports.isPending
+  const isPending =
+    isResolving || createActivity.isPending || closeReports.isPending
 
   const handleConfirm = async () => {
+    setIsResolving(true)
     try {
+      if (action === 'no-action') {
+        await onResolveAppeal?.(note.trim())
+      }
       if (isBulkNoAction) {
         const result = await closeReports.mutateAsync({
           subject: report.subject.subject,
@@ -134,12 +143,11 @@ function TransitionConfirmPanel({
           internalNote: note.trim() || undefined,
         })
       }
-      if (action === 'no-action' && onResolveAppeal) {
-        await onResolveAppeal()
-      }
       onDone()
     } catch (e) {
       toast.error(`Error actioning: ${displayError(e)}`)
+    } finally {
+      setIsResolving(false)
     }
   }
 
@@ -187,7 +195,12 @@ function TransitionConfirmPanel({
         <ActionButton
           appearance="primary"
           size="sm"
-          disabled={isPending || (scope === 'types' && !reportTypes.length)}
+          disabled={
+            isPending ||
+            (action === 'no-action' &&
+              scope === 'types' &&
+              reportTypes.length === 0)
+          }
           onClick={handleConfirm}
         >
           {isPending ? 'Saving…' : confirmLabel}
@@ -268,7 +281,7 @@ export function ReportActionsBar({
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
-  onResolveAppeal?: () => Promise<void>
+  onResolveAppeal?: (comment?: string) => Promise<void>
 }) {
   const { autoAdvance, setAutoAdvance, nextReportId } = useReports(report.id)
 
