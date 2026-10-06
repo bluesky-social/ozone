@@ -1,5 +1,11 @@
 import { ComponentProps } from 'react'
+import { ComAtprotoModerationDefs } from '@atproto/api'
+import { ScaleIcon } from '@heroicons/react/20/solid'
 import { reasonTypeOptions, groupedReasonTypes } from './helpers/getType'
+
+const isAppealReason = (reasonType: string) =>
+  reasonType === ComAtprotoModerationDefs.REASONAPPEAL ||
+  reasonType === 'tools.ozone.report.defs#reasonAppeal'
 
 export function ReasonBadgeButton(
   props: {
@@ -30,9 +36,15 @@ export function ReasonBadge(props: { reasonType: string; className?: string }) {
   const color = getReasonColor(reasonType)
   return (
     <span
-      className={`${color} inline-flex items-center rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
+      className={`${color} inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-xs font-medium ${className}`}
       title={reasonType}
     >
+      {isAppealReason(reasonType) && (
+        <ScaleIcon
+          aria-hidden="true"
+          className="h-3.5 w-3.5 text-orange-500 dark:text-orange-400"
+        />
+      )}
       {readable}
     </span>
   )
