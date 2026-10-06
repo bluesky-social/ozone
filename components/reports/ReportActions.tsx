@@ -3,6 +3,7 @@ import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
 import { Checkbox, Select, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
+import { getDidFromUri } from '@/lib/util'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
@@ -18,11 +19,15 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   CpuChipIcon,
+  EnvelopeIcon,
   NoSymbolIcon,
 } from '@heroicons/react/24/outline'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
+import { EmailComposer } from 'components/email/Composer'
+import type { EmailComposerData } from 'components/email/helpers'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
 import {
   useCloseReports,
   useCreateActivity,
@@ -275,6 +280,7 @@ export function ReportActionsBar({
   onActionSelect,
   subjectStatus,
   onResolveAppeal,
+  onSendEmail,
 }: {
   report: ToolsOzoneReportDefs.ReportView
   currentUserDid?: string
@@ -282,17 +288,26 @@ export function ReportActionsBar({
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   onResolveAppeal?: (comment?: string) => Promise<void>
+  onSendEmail?: (emailData: EmailComposerData) => Promise<void>
 }) {
   const { autoAdvance, setAutoAdvance, nextReportId } = useReports(report.id)
 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
+  const [showEmailComposer, setShowEmailComposer] = useState(false)
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
+  const canSendEmail = usePermission('canSendEmail')
   const isAppeal =
     report.reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
     report.reportType === 'tools.ozone.report.defs#reasonAppeal'
   const isSubjectTakendown = !!subjectStatus?.takendown
+  const emailDid = report.subject.subject.startsWith('did:')
+    ? report.subject.subject
+    : getDidFromUri(report.subject.subject)
+  const { cantReceive: cantReceiveEmail } = useEmailRecipientStatus(
+    showEmailComposer ? emailDid : undefined,
+  )
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
@@ -303,18 +318,28 @@ export function ReportActionsBar({
   const handleActionClick = (action: ActionType) => {
     onActionSelect(null)
     setShowNote(false)
+    setShowEmailComposer(false)
     setPendingAction((prev) => (prev === action ? null : action))
   }
 
   const handleNoteClick = () => {
     setPendingAction(null)
+    setShowEmailComposer(false)
     setShowNote((v) => !v)
   }
 
   const handleReportActionSelect = (action: ReportActionType) => {
     setPendingAction(null)
     setShowNote(false)
+    setShowEmailComposer(false)
     onActionSelect(action)
+  }
+
+  const handleEmailClick = () => {
+    setPendingAction(null)
+    setShowNote(false)
+    onActionSelect(null)
+    setShowEmailComposer((isOpen) => !isOpen)
   }
 
   const actionButtonText = selectedAction
@@ -432,6 +457,16 @@ export function ReportActionsBar({
             Re-open
           </ActionButton>
         )}
+        {isAppeal && canSendEmail && emailDid && onSendEmail && (
+          <ActionButton
+            appearance={showEmailComposer ? 'primary' : 'outlined'}
+            size="sm"
+            onClick={handleEmailClick}
+          >
+            <EnvelopeIcon className="h-3.5 w-3.5 mr-1" />
+            Email
+          </ActionButton>
+        )}
 
         <span className="flex-1" />
 
@@ -466,6 +501,40 @@ export function ReportActionsBar({
 
       {showNote && !pendingAction && (
         <NoteComposer reportId={report.id} onDone={() => setShowNote(false)} />
+      )}
+
+      {showEmailComposer && emailDid && onSendEmail && (
+        <div className="mt-2 rounded-md bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              Email user
+            </h3>
+            <button
+              type="button"
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={() => setShowEmailComposer(false)}
+            >
+              Close
+            </button>
+          </div>
+          {cantReceiveEmail ? (
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              This user&apos;s account is hosted on a PDS that does not allow
+              sending emails.
+            </p>
+          ) : (
+            <EmailComposer
+              did={emailDid}
+              handleSubmit={async (emailData) => {
+                await toast.promise(onSendEmail(emailData), {
+                  pending: 'Sending email...',
+                  success: 'Email sent to user',
+                  error: 'Error sending email',
+                })
+              }}
+            />
+          )}
+        </div>
       )}
     </div>
   )
