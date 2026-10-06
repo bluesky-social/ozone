@@ -38,26 +38,79 @@ export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`
 
 export const IMAGE_SEARCH_API_URL = process.env.NEXT_PUBLIC_IMAGE_SEARCH_API_URL
 
-function parsePositiveDays(value: string | undefined): number | undefined {
-  if (!value || !/^\d+$/.test(value)) return undefined
-
-  const days = Number(value)
-  return Number.isSafeInteger(days) && days > 0 ? days : undefined
+type SubjectAgeWarningSettings = {
+  thresholdDays?: number
+  severityLevel?: string
 }
 
-export const RECORD_AGE_THRESHOLD_DAYS = parsePositiveDays(
-  process.env.NEXT_PUBLIC_RECORD_AGE_THRESHOLD_DAYS,
+type SubjectAgeWarningConfig = {
+  record: SubjectAgeWarningSettings
+  account: SubjectAgeWarningSettings
+}
+
+const parseSubjectAgeWarningSettings = (
+  value: unknown,
+): SubjectAgeWarningSettings => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return {}
+  }
+
+  const settings = value as Record<string, unknown>
+  const thresholdDays = settings.thresholdDays
+  const severityLevel =
+    typeof settings.severityLevel === 'string'
+      ? settings.severityLevel.trim() || undefined
+      : undefined
+
+  return {
+    ...(typeof thresholdDays === 'number' &&
+      Number.isSafeInteger(thresholdDays) &&
+      thresholdDays > 0 && { thresholdDays }),
+    ...(severityLevel && { severityLevel }),
+  }
+}
+
+const parseSubjectAgeWarningConfig = (
+  value: string | undefined,
+): SubjectAgeWarningConfig => {
+  const emptyConfig = { record: {}, account: {} }
+  if (!value?.trim()) return emptyConfig
+
+  try {
+    const config: unknown = JSON.parse(value)
+    if (
+      typeof config !== 'object' ||
+      config === null ||
+      Array.isArray(config)
+    ) {
+      return emptyConfig
+    }
+
+    const settings = config as Record<string, unknown>
+    return {
+      record: parseSubjectAgeWarningSettings(settings.record),
+      account: parseSubjectAgeWarningSettings(settings.account),
+    }
+  } catch {
+    return emptyConfig
+  }
+}
+
+const SUBJECT_AGE_WARNING_CONFIG = parseSubjectAgeWarningConfig(
+  process.env.NEXT_PUBLIC_SUBJECT_AGE_WARNING_CONFIG,
 )
 
-export const ACCOUNT_AGE_THRESHOLD_DAYS = parsePositiveDays(
-  process.env.NEXT_PUBLIC_ACCOUNT_AGE_THRESHOLD_DAYS,
-)
+export const RECORD_AGE_THRESHOLD_DAYS =
+  SUBJECT_AGE_WARNING_CONFIG.record.thresholdDays
+
+export const ACCOUNT_AGE_THRESHOLD_DAYS =
+  SUBJECT_AGE_WARNING_CONFIG.account.thresholdDays
 
 export const RECORD_AGE_SEVERITY_LEVEL =
-  process.env.NEXT_PUBLIC_RECORD_AGE_SEVERITY_LEVEL?.trim() || undefined
+  SUBJECT_AGE_WARNING_CONFIG.record.severityLevel
 
 export const ACCOUNT_AGE_SEVERITY_LEVEL =
-  process.env.NEXT_PUBLIC_ACCOUNT_AGE_SEVERITY_LEVEL?.trim() || undefined
+  SUBJECT_AGE_WARNING_CONFIG.account.severityLevel
 
 export const IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS = process.env
   .NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS
