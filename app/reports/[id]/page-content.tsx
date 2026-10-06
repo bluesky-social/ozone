@@ -779,6 +779,7 @@ function ReportDetailLayout(props: {
     submitButton,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    handleManualSeverityLevelSelect,
     targetServices,
     setTargetServices,
     config,
@@ -792,12 +793,18 @@ function ReportDetailLayout(props: {
     setEmailContent,
     onEmailTemplateSelect,
     emailSubjectField,
+    showRecordAgeWarning,
+    showAccountAgeWarning,
+    recordAgeWarningText,
+    accountAgeWarningText,
+    preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
     onSubmit: wrappedOnSubmit,
     subject,
     setSubject,
     subjectOptions,
+    applyToAccount,
   })
 
   // Sync the selected action with its event type and report closing scope.
@@ -1103,6 +1110,12 @@ function ReportDetailLayout(props: {
                   policyDetails={policyDetails}
                   handlePolicySelect={handlePolicySelect}
                   handleSeverityLevelSelect={handleSeverityLevelSelect}
+                  preferredDefaultSeverityLevel={
+                    isTakedownEvent ? preferredSeverityLevelName : undefined
+                  }
+                  onSeverityLevelUserSelect={
+                    isTakedownEvent ? handleManualSeverityLevelSelect : undefined
+                  }
                   severityLevelStrikeCount={severityLevelStrikeCount}
                   defaultSeverityLevel={selectedSeverityLevelName}
                   currentStrikes={currentStrikes}
@@ -1229,6 +1242,27 @@ function ReportDetailLayout(props: {
               {submission.error && (
                 <div className="my-2">
                   <ActionError error={submission.error} />
+                </div>
+              )}
+
+              {showRecordAgeWarning && (
+                <div className="mb-3">
+                  <Alert
+                    showIcon
+                    type="warning"
+                    title="Record age notice"
+                    body={recordAgeWarningText}
+                  />
+                </div>
+              )}
+              {showAccountAgeWarning && (
+                <div className="mb-3">
+                  <Alert
+                    showIcon
+                    type="warning"
+                    title="Account age notice"
+                    body={accountAgeWarningText}
+                  />
                 </div>
               )}
 

@@ -4,7 +4,7 @@ import {
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
-import { FormEvent, useEffect, useRef, useState } from 'react'
+import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
 import {
   diffLabels,
   getLabelsForSubject,
@@ -46,6 +46,10 @@ import { useColorScheme } from '@/common/useColorScheme'
 import {
   AUTOMATED_ACTION_EMAIL_IDS,
   STRIKE_TO_SUSPENSION_DURATION_IN_HOURS,
+  ACCOUNT_AGE_THRESHOLD_DAYS,
+  ACCOUNT_AGE_SEVERITY_LEVEL,
+  RECORD_AGE_THRESHOLD_DAYS,
+  RECORD_AGE_SEVERITY_LEVEL,
 } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
@@ -55,6 +59,7 @@ import {
 } from './useTakedownEmail'
 import { format } from 'date-fns'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
+import { getProfileFromRepo } from '@/repositories/helpers'
 
 export type QuickActionProps = {
   subject: string
@@ -66,9 +71,37 @@ export type QuickActionProps = {
 const hasAutomatedEmailTemplates = Object.values(
   AUTOMATED_ACTION_EMAIL_IDS,
 ).some(Boolean)
+
+function isSubjectOlderThanThreshold(
+  createdAt: string | undefined,
+  thresholdDays: number | undefined,
+) {
+  if (!createdAt || thresholdDays === undefined) return false
+
+  const createdAtMs = Date.parse(createdAt)
+  return (
+    Number.isFinite(createdAtMs) &&
+    Date.now() - createdAtMs > thresholdDays * DAY
+  )
+}
+
+function getSubjectAgeWarningText(
+  thresholdDays: number | undefined,
+  severityLevelName: string | undefined,
+) {
+  if (thresholdDays === undefined) return ''
+
+  const severityText = severityLevelName
+    ? `${severityLevelName} is the default severity level.`
+    : 'Take caution when actioning.'
+
+  return `This is more than ${pluralize(thresholdDays, 'day')} old. ${severityText}`
+}
+
 export const useQuickAction = (
   props: QuickActionProps & {
     onCancel: () => void
+    applyToAccount?: boolean
   },
 ) => {
   const { config } = useConfigurationContext()
@@ -77,7 +110,14 @@ export const useQuickAction = (
   const accountDid = labelerAgent.assertDid
   const { theme } = useColorScheme()
 
-  const { subject, setSubject, subjectOptions, onCancel, onSubmit } = props
+  const {
+    subject,
+    setSubject,
+    subjectOptions,
+    onCancel,
+    onSubmit,
+    applyToAccount = false,
+  } = props
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
     error: string
@@ -91,9 +131,21 @@ export const useQuickAction = (
   const { data: { record, repo, profile } = {}, refetch: refetchSubject } =
     useSubjectQuery(subject)
 
+  const isSubjectDid = subject.startsWith('did:')
+  const actionTargetsAccount = isSubjectDid || applyToAccount
+  const accountRepo = repo ?? record?.repo
+  const recordCreatedAt =
+    typeof record?.value?.createdAt === 'string'
+      ? record.value.createdAt
+      : undefined
+  const relatedProfile = accountRepo
+    ? getProfileFromRepo(accountRepo.relatedRecords)
+    : undefined
+  const accountCreatedAt =
+    profile?.createdAt || relatedProfile?.createdAt || accountRepo?.indexedAt
+
   const recipientLanguages = getRecipientsLanguages(repo)
 
-  const isSubjectDid = subject.startsWith('did:')
   const isReviewClosed =
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWCLOSED
   const isEscalated =
@@ -124,6 +176,8 @@ export const useQuickAction = (
   const [selectedPolicyName, setSelectedPolicyName] = useState<string>('')
   const [selectedSeverityLevelName, setSelectedSeverityLevelName] =
     useState<string>('')
+  const [hasManuallySelectedSeverity, setHasManuallySelectedSeverity] =
+    useState(false)
   const [targetServices, setTargetServices] = useState<TakedownTargetService[]>(
     ['appview'],
   )
@@ -146,28 +200,38 @@ export const useQuickAction = (
     setSeverityLevelStrikeCount(null)
     setSelectedPolicyName(policyName)
     setSelectedSeverityLevelName('')
+    setHasManuallySelectedSeverity(false)
   }
 
   // Reusable handler for severity level selection
-  const handleSeverityLevelSelect = (levelName: string) => {
-    const levelKey = nameToKey(levelName)
-    const level = severityLevelData?.value?.[levelKey]
-    setSeverityLevelStrikeCount(
-      level?.strikeCount !== undefined ||
-        level?.firstOccurrenceStrikeCount !== undefined
-        ? (level.strikeCount ?? 0)
-        : null,
-    )
-    setSelectedSeverityLevelName(levelName)
+  const handleSeverityLevelSelect = useCallback(
+    (levelName: string) => {
+      const levelKey = nameToKey(levelName)
+      const level = severityLevelData?.value?.[levelKey]
+      setSeverityLevelStrikeCount(
+        level?.strikeCount !== undefined ||
+          level?.firstOccurrenceStrikeCount !== undefined
+          ? (level.strikeCount ?? 0)
+          : null,
+      )
+      setSelectedSeverityLevelName(levelName)
 
-    // Update targetServices based on policy configuration for this severity level
-    const configuredServices =
-      policyDetails?.severityLevels?.[levelName]?.targetServices
-    if (configuredServices && configuredServices.length > 0) {
-      setTargetServices(configuredServices)
-    } else {
-      // Default to appview if not configured
-      setTargetServices(['appview'])
+      // Update targetServices based on policy configuration for this severity level
+      const configuredServices =
+        policyDetails?.severityLevels?.[levelName]?.targetServices
+      if (configuredServices && configuredServices.length > 0) {
+        setTargetServices(configuredServices)
+      } else {
+        // Default to appview if not configured
+        setTargetServices(['appview'])
+      }
+    },
+    [policyDetails?.severityLevels, severityLevelData?.value],
+  )
+
+  const handleManualSeverityLevelSelect = () => {
+    if (modEventType === MOD_EVENTS.TAKEDOWN) {
+      setHasManuallySelectedSeverity(true)
     }
   }
 
@@ -213,6 +277,67 @@ export const useQuickAction = (
   const isReverseTakedownEvent = modEventType === MOD_EVENTS.REVERSE_TAKEDOWN
   const isAgeAssuranceOverrideEvent =
     modEventType === MOD_EVENTS.AGE_ASSURANCE_OVERRIDE
+  const isBeyondRecordAgeThreshold = isSubjectOlderThanThreshold(
+    recordCreatedAt,
+    RECORD_AGE_THRESHOLD_DAYS,
+  )
+  const isBeyondAccountAgeThreshold = isSubjectOlderThanThreshold(
+    accountCreatedAt,
+    ACCOUNT_AGE_THRESHOLD_DAYS,
+  )
+  const isAgeAction = isTakedownEvent
+  const showRecordAgeWarning = isBeyondRecordAgeThreshold && isAgeAction
+  const showAccountAgeWarning =
+    isBeyondAccountAgeThreshold && actionTargetsAccount && isAgeAction
+  const configuredAgeSeverityLevelNames = [
+    isBeyondAccountAgeThreshold && actionTargetsAccount
+      ? ACCOUNT_AGE_SEVERITY_LEVEL
+      : undefined,
+    isBeyondRecordAgeThreshold && !isSubjectDid
+      ? RECORD_AGE_SEVERITY_LEVEL
+      : undefined,
+  ].filter((levelName): levelName is string => !!levelName)
+  const findSupportedPolicySeverityLevel = (configuredLevelName?: string) =>
+    configuredLevelName
+      ? Object.keys(policyDetails?.severityLevels ?? {}).find(
+          (levelName) =>
+            nameToKey(levelName) === nameToKey(configuredLevelName) &&
+            !!severityLevelData?.value?.[nameToKey(levelName)],
+        )
+      : undefined
+  const configuredPolicySeverityLevelNames = configuredAgeSeverityLevelNames
+    .map(findSupportedPolicySeverityLevel)
+    .filter((levelName): levelName is string => !!levelName)
+  const policyDefaultSeverityLevelName =
+    Object.entries(policyDetails?.severityLevels ?? {}).find(
+      ([, level]) => level.isDefault,
+    )?.[0] ?? Object.keys(policyDetails?.severityLevels ?? {})[0]
+  const recordAgeWarningSeverityLevelName =
+    findSupportedPolicySeverityLevel(RECORD_AGE_SEVERITY_LEVEL) ??
+    policyDefaultSeverityLevelName ??
+    RECORD_AGE_SEVERITY_LEVEL
+  const accountAgeWarningSeverityLevelName =
+    findSupportedPolicySeverityLevel(ACCOUNT_AGE_SEVERITY_LEVEL) ??
+    policyDefaultSeverityLevelName ??
+    ACCOUNT_AGE_SEVERITY_LEVEL
+  const preferredSeverityLevelName =
+    isTakedownEvent &&
+    !hasManuallySelectedSeverity &&
+    configuredPolicySeverityLevelNames.length > 0
+      ? configuredPolicySeverityLevelNames[0]
+      : undefined
+  const recordAgeWarningText = getSubjectAgeWarningText(
+    RECORD_AGE_THRESHOLD_DAYS,
+    recordAgeWarningSeverityLevelName,
+  )
+  const accountAgeWarningText = getSubjectAgeWarningText(
+    ACCOUNT_AGE_THRESHOLD_DAYS,
+    accountAgeWarningSeverityLevelName,
+  )
+
+  useEffect(() => {
+    setHasManuallySelectedSeverity(false)
+  }, [subject])
   const shouldShowDurationInHoursField =
     isTakedownEvent ||
     isMuteEvent ||
@@ -873,10 +998,16 @@ export const useQuickAction = (
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    handleManualSeverityLevelSelect,
     targetServices,
     setTargetServices,
     selectedAgeAssuranceState,
     setSelectedAgeAssuranceState,
+    showRecordAgeWarning,
+    showAccountAgeWarning,
+    recordAgeWarningText,
+    accountAgeWarningText,
+    preferredSeverityLevelName,
   }
 }
 
