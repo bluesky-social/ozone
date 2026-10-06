@@ -592,14 +592,44 @@ function ReportDetailLayout(props: {
         did: subjectView.did,
         convoId: subjectView.convoId,
       } as ToolsOzoneModerationEmitEvent.InputSchema['subject']
-    } else if (
-      ComAtprotoRepoStrongRef.isMain(report.subject.status?.subject) &&
-      report.subject.status.subject.uri === report.subject.subject
-    ) {
-      // Deleted records may only have a repoViewNotFound in getEvent.
-      appealSubject = report.subject.status.subject
     } else {
-      throw new Error('Cannot determine the appeal subject for this report')
+      const reportUri = report.subject.subject
+      const reportStatusSubject = report.subject.status?.subject
+
+      // getReport may omit subject status when the record can no longer be
+      // hydrated. queryStatuses still returns the stored strong reference for
+      // deleted records, which is needed to resolve an appeal on that record.
+      if (
+        ComAtprotoRepoStrongRef.isMain(reportStatusSubject) &&
+        reportStatusSubject.uri === reportUri
+      ) {
+        appealSubject = reportStatusSubject
+      } else if (
+        report.subject.record?.uri === reportUri &&
+        report.subject.record.cid
+      ) {
+        appealSubject = {
+          $type: 'com.atproto.repo.strongRef',
+          uri: reportUri,
+          cid: report.subject.record.cid,
+        }
+      } else {
+        const { data } =
+          await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+            subject: reportUri,
+            includeMuted: true,
+            limit: 1,
+          })
+        const statusSubject = data.subjectStatuses[0]?.subject
+        if (
+          ComAtprotoRepoStrongRef.isMain(statusSubject) &&
+          statusSubject.uri === reportUri
+        ) {
+          appealSubject = statusSubject
+        } else {
+          throw new Error('Cannot determine the appeal subject for this report')
+        }
+      }
     }
     await onSubmit({
       subject: appealSubject,
@@ -1016,6 +1046,26 @@ function ReportDetailLayout(props: {
             onResolveAppeal={
               isAppealReport(report.reportType)
                 ? (comment) => resolveAppealForReport(config.did, comment)
+                : undefined
+            }
+            onSendEmail={
+              isAppealReport(report.reportType)
+                ? async (emailEvent) => {
+                    const did = report.subject.subject.startsWith('did:')
+                      ? report.subject.subject
+                      : getDidFromUri(report.subject.subject)
+                    if (!did) {
+                      throw new Error('Cannot determine the email recipient')
+                    }
+                    return onSubmit({
+                      subject: {
+                        $type: 'com.atproto.admin.defs#repoRef',
+                        did,
+                      },
+                      createdBy: labelerAgent.assertDid,
+                      event: emailEvent,
+                    })
+                  }
                 : undefined
             }
           />
