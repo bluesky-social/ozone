@@ -78,9 +78,7 @@ jobs:
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p "${{ runner.temp }}/digests"
-          # Artifact file names cannot contain the colon in sha256:<digest>.
-          digest="${{ steps.build-and-push.outputs.digest }}"
-          touch "${{ runner.temp }}/digests/${digest#sha256:}"
+          touch "${{ runner.temp }}/digests/${{ steps.build-and-push.outputs.digest }}"
 
       - name: Upload image digest
         if: github.event_name != 'pull_request'
@@ -132,7 +130,7 @@ jobs:
         run: |
           image_args=()
           while IFS= read -r digest_file; do
-            image_args+=("${IMAGE}@sha256:${digest_file##*/}")
+            image_args+=("${IMAGE}@${digest_file##*/}")
           done < <(find "${{ runner.temp }}/digests" -type f)
           docker buildx imagetools create --tag "${IMAGE}:${TAG}" "${image_args[@]}"
 
