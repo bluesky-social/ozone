@@ -7,7 +7,7 @@ import {
   mockLabelerServiceRecordResponse,
 } from '../../support/api'
 
-const basePath = `/repositories/${encodeURIComponent(inbox.did)}/inbox`
+const basePath = `${Cypress.config('baseUrl') ?? 'http://127.0.0.1:3000'}/repositories/${encodeURIComponent(inbox.did)}/inbox`
 function expectVisible(text: string) {
   cy.contains(text).scrollIntoView()
   cy.contains(text).should('be.visible')
