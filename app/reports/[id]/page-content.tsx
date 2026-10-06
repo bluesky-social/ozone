@@ -1064,6 +1064,7 @@ function ReportDetailLayout(props: {
                       },
                       createdBy: labelerAgent.assertDid,
                       event: emailEvent,
+                      reportAction: { ids: [report.id] },
                     })
                   }
                 : undefined
