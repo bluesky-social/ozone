@@ -43,7 +43,7 @@ export function RepositoryViewPageContent({
   inboxSection,
 }: {
   id: string
-  inboxSection?: 'reports' | 'actioned-subjects'
+  inboxSection?: 'reports' | 'actioned-subjects' | 'notifications'
 }) {
   const {
     error,
@@ -100,6 +100,11 @@ export function RepositoryViewPageContent({
           })
           await queryClient.invalidateQueries({ queryKey: ['inboxActionDetail'] })
           await queryClient.invalidateQueries({ queryKey: ['inboxReportDetail'] })
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['inboxAccountStatus'] }),
+            queryClient.invalidateQueries({ queryKey: ['inboxUnreadCounts'] }),
+            queryClient.invalidateQueries({ queryKey: ['inboxNotifications'] }),
+          ])
         }}
       />
       <AccountView

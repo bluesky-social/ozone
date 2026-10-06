@@ -6,6 +6,8 @@ import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { CheckboxesModal } from '@/common/modals/checkboxes'
 import { Tabs, TabView } from '@/common/Tabs'
 import { ActionedSubjectsPreview, ReportsPreview } from './inbox/InboxPreview'
+import { NotificationsPreview } from './inbox/NotificationsPreview'
+import type { InboxSection } from './inbox/api'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
 import { ModEventList } from '@/mod-event/EventList'
@@ -113,7 +115,7 @@ export function AccountView({
   error?: unknown
   onSubmit: (vals: any) => Promise<void>
   onShowActionPanel: (subject: string) => void
-  inboxSection?: 'reports' | 'actioned-subjects'
+  inboxSection?: InboxSection
 }) {
   const searchParams = useSearchParams()
   const currentView = inboxSection
@@ -315,6 +317,8 @@ export function AccountView({
                   {currentView === Views.Inbox && (
                     inboxSection === 'actioned-subjects' ? (
                       <ActionedSubjectsPreview did={repo.did} />
+                    ) : inboxSection === 'notifications' ? (
+                      <NotificationsPreview did={repo.did} />
                     ) : (
                       <ReportsPreview did={repo.did} />
                     )

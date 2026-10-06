@@ -25,19 +25,11 @@ export type ActionedSubject = {
     state: string
     appealedAt?: string
     resolvedAt?: string
-    note?: string
+    appealableUntil?: string
   }
   availableActions?: string[]
   isRead: boolean
-  latestAction?: {
-    id: number
-    type: string
-    scope?: string
-    createdAt: string
-    reversedAt?: string
-    expiresAt?: string
-    labels?: string[]
-  }
+  latestAction?: InboxAction
   actionCount?: number
   createdAt: string
   updatedAt: string
@@ -58,11 +50,29 @@ export type InboxReport = {
 }
 
 export type InboxKind = 'actioned-subjects' | 'reports'
+export type InboxSection = InboxKind | 'notifications'
 export type InboxItem = ActionedSubject | InboxReport
 export type InboxPage<T> = { cursor?: string; items: T[] }
-export type ReportFilter = 'all' | 'pending' | 'resolved' | 'unread'
+export type InboxFilter = 'all' | 'pending' | 'resolved' | 'unread'
+export type ReportFilter = InboxFilter
+export type InboxSort = {
+  sortField: 'createdAt' | 'updatedAt'
+  sortDirection: 'asc' | 'desc'
+}
+export type InboxAction = {
+  id: number
+  type: string
+  scope?: string
+  createdAt: string
+  reversedAt?: string
+  expiresAt?: string
+  labels?: string[]
+  policies?: { key: string; displayName: string; link: string }[]
+}
 export type ReportDetail = {
-  report: InboxReport
+  report: Omit<InboxReport, 'isRead' | 'lastActionTaken' | 'scope'> & {
+    record?: unknown
+  }
   resolution?: {
     outcome: string
     actionTaken?: string
@@ -70,13 +80,61 @@ export type ReportDetail = {
     resolvedAt: string
   }
 }
-export type ActionedSubjectDetail = ActionedSubject & {
-  actions: NonNullable<ActionedSubject['latestAction']>[]
+export type ActionedSubjectDetail = Omit<
+  ActionedSubject,
+  'latestAction' | 'actionCount'
+> & {
+  record?: unknown
+  cursor?: string
+  actions: InboxAction[]
   reports?: {
     reasonTypes: string[]
     firstReportedOn: string
     lastReportedOn: string
   }
+}
+
+export type AccountStatus = {
+  src: string
+  standing: string
+  updatedAt: string
+  expiresAt?: string
+}
+export type UnreadCounts = {
+  total: number
+  reports?: number
+  subjects?: number
+  accountStatus?: number
+}
+export type NotificationTarget =
+  | {
+      $type: 'tools.ozone.inbox.defs#reportRef'
+      reportId: number
+      subject?: SubjectRef
+      status?: string
+    }
+  | {
+      $type: 'tools.ozone.inbox.defs#subjectRef'
+      subject: SubjectRef
+      actionType?: string
+      actionId?: number
+    }
+  | {
+      $type: 'tools.ozone.inbox.defs#standingRef'
+      standing: string
+      previousStanding?: string
+    }
+export type InboxNotification = {
+  id: number
+  reason: string
+  target: NotificationTarget
+  isRead: boolean
+  createdAt: string
+}
+export type NotificationFilters = {
+  section?: 'reports' | 'subjects' | 'accountStatus'
+  reason?: string
+  unreadOnly?: boolean
 }
 
 export function subjectKey(subject: SubjectRef): string | undefined {
@@ -130,12 +188,17 @@ export async function fetchInboxDetail<
   kind: InboxKind,
   key: string | number,
   signal?: AbortSignal,
+  cursor?: string,
 ): Promise<T> {
   const method = kind === 'reports' ? 'getReport' : 'getActionedSubject'
   const params = new URLSearchParams({
     did,
     [kind === 'reports' ? 'id' : 'subject']: String(key),
   })
+  if (kind === 'actioned-subjects') {
+    params.set('limit', '50')
+    if (cursor) params.set('cursor', cursor)
+  }
   const response = await agent.fetchHandler(
     `/xrpc/tools.ozone.inbox.${method}?${params}`,
     { method: 'GET', signal },
@@ -147,13 +210,25 @@ export async function submitInboxAppeal(
   agent: Pick<Agent, 'fetchHandler'>,
   subject: SubjectRef,
   reason: string,
+  actionId?: number,
 ): Promise<ActionedSubject> {
   const response = await agent.fetchHandler(
     '/xrpc/tools.ozone.inbox.appealActionedSubject',
     {
       method: 'POST',
       headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ subject, reason }),
+      body: JSON.stringify({
+        subject,
+        ...(reason ? { reason } : {}),
+        ...(actionId
+          ? {
+              action: {
+                $type: 'tools.ozone.inbox.appealActionedSubject#actionRef',
+                id: actionId,
+              },
+            }
+          : {}),
+      }),
     },
   )
   return readResponse<ActionedSubject>(response)
@@ -170,7 +245,8 @@ export async function fetchInboxPreviewPage<T extends InboxItem>(
   kind: InboxKind,
   cursor?: string,
   signal?: AbortSignal,
-  filter?: ReportFilter,
+  filter?: InboxFilter,
+  sort?: InboxSort,
 ): Promise<InboxPage<T>> {
   const method =
     kind === 'reports'
@@ -179,8 +255,11 @@ export async function fetchInboxPreviewPage<T extends InboxItem>(
   const field = kind === 'reports' ? 'reports' : 'subjects'
   const params = new URLSearchParams({ did, limit: '50' })
   if (cursor) params.set('cursor', cursor)
-  if (kind === 'reports' && filter && filter !== 'all')
-    params.set('filter', filter)
+  if (filter && filter !== 'all') params.set('filter', filter)
+  if (sort) {
+    params.set('sortField', sort.sortField)
+    params.set('sortDirection', sort.sortDirection)
+  }
   const response = await agent.fetchHandler(`/xrpc/${method}?${params}`, {
     method: 'GET',
     signal,
@@ -200,4 +279,79 @@ export async function fetchInboxPreviewPage<T extends InboxItem>(
         : undefined,
     items: items as T[],
   }
+}
+
+async function fetchPreviewRead<T>(
+  agent: Pick<Agent, 'fetchHandler'>,
+  did: string,
+  method: string,
+  signal?: AbortSignal,
+  params = new URLSearchParams(),
+): Promise<T> {
+  params.set('did', did)
+  return readResponse<T>(
+    await agent.fetchHandler(`/xrpc/tools.ozone.inbox.${method}?${params}`, {
+      method: 'GET',
+      signal,
+    }),
+  )
+}
+
+export function fetchAccountStatus(
+  agent: Pick<Agent, 'fetchHandler'>,
+  did: string,
+  signal?: AbortSignal,
+) {
+  return fetchPreviewRead<AccountStatus>(agent, did, 'getAccountStatus', signal)
+}
+
+export async function fetchUnreadCounts(
+  agent: Pick<Agent, 'fetchHandler'>,
+  did: string,
+  signal?: AbortSignal,
+) {
+  return (
+    await fetchPreviewRead<{ unreadCounts: UnreadCounts }>(
+      agent,
+      did,
+      'getUnreadCount',
+      signal,
+    )
+  ).unreadCounts
+}
+
+export async function fetchNotificationPreferences(
+  agent: Pick<Agent, 'fetchHandler'>,
+  did: string,
+  signal?: AbortSignal,
+) {
+  return (
+    await fetchPreviewRead<{ preferences: { push: boolean } }>(
+      agent,
+      did,
+      'getNotificationPreferences',
+      signal,
+    )
+  ).preferences
+}
+
+export async function fetchNotificationsPage(
+  agent: Pick<Agent, 'fetchHandler'>,
+  did: string,
+  filters: NotificationFilters = {},
+  cursor?: string,
+  signal?: AbortSignal,
+): Promise<InboxPage<InboxNotification>> {
+  const params = new URLSearchParams({ limit: '50' })
+  if (cursor) params.set('cursor', cursor)
+  if (filters.section) params.set('section', filters.section)
+  if (filters.reason) params.append('reasons', filters.reason)
+  if (filters.unreadOnly) params.set('unreadOnly', 'true')
+  const data = await fetchPreviewRead<{
+    notifications: InboxNotification[]
+    cursor?: string
+  }>(agent, did, 'listNotifications', signal, params)
+  if (!Array.isArray(data.notifications))
+    throw new Error('The inbox returned an unexpected response.')
+  return { items: data.notifications, cursor: data.cursor }
 }

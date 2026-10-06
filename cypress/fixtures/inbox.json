@@ -1,0 +1,117 @@
+{
+  "did": "did:plc:bbbbbbbbbbbbbbbbbbbbbbbb",
+  "subject": {
+    "$type": "com.atproto.repo.strongRef",
+    "uri": "at://did:plc:bbbbbbbbbbbbbbbbbbbbbbbb/app.bsky.feed.post/removed",
+    "cid": "bafyreigklczuekgj7q2pj3ys5ck3ah7v2ps5qbly6viwcj26vrmigbfyce"
+  },
+  "item": {
+    "src": "did:plc:ar7c4by46qjdydhdevvrndac",
+    "subject": {
+      "$type": "com.atproto.repo.strongRef",
+      "uri": "at://did:plc:bbbbbbbbbbbbbbbbbbbbbbbb/app.bsky.feed.post/removed",
+      "cid": "bafyreigklczuekgj7q2pj3ys5ck3ah7v2ps5qbly6viwcj26vrmigbfyce"
+    },
+    "enforcement": {
+      "state": "none",
+      "scope": "app"
+    },
+    "appeal": {
+      "state": "resolved",
+      "appealedAt": "2026-09-30T13:00:00Z",
+      "resolvedAt": "2026-10-01T14:00:00Z",
+      "appealableUntil": "2027-03-29T12:00:00Z"
+    },
+    "availableActions": [],
+    "isRead": false,
+    "actionCount": 3,
+    "createdAt": "2026-09-29T12:00:00Z",
+    "updatedAt": "2026-10-01T14:00:00Z"
+  },
+  "actions": [
+    {
+      "id": 30,
+      "type": "communicationSent",
+      "createdAt": "2026-10-01T12:00:00Z"
+    },
+    {
+      "id": 20,
+      "type": "contentRemoved",
+      "scope": "app",
+      "createdAt": "2026-09-29T12:00:00Z",
+      "reversedAt": "2026-10-01T14:00:00Z",
+      "policies": [
+        {
+          "key": "spam",
+          "displayName": "Spam and deceptive conduct",
+          "link": "https://example.test/policies/spam"
+        }
+      ]
+    }
+  ],
+  "olderAction": {
+    "id": 10,
+    "type": "labelApplied",
+    "scope": "labelOnly",
+    "labels": ["spam"],
+    "createdAt": "2026-09-28T12:00:00Z"
+  },
+  "report": {
+    "src": "did:plc:ar7c4by46qjdydhdevvrndac",
+    "id": 900,
+    "subject": {
+      "$type": "com.atproto.repo.strongRef",
+      "uri": "at://did:plc:bbbbbbbbbbbbbbbbbbbbbbbb/app.bsky.feed.post/removed",
+      "cid": "bafyreigklczuekgj7q2pj3ys5ck3ah7v2ps5qbly6viwcj26vrmigbfyce"
+    },
+    "status": "resolved",
+    "reasonType": "com.atproto.moderation.defs#reasonSpam",
+    "reason": "The reporter's explanation",
+    "createdAt": "2026-09-29T12:00:00Z",
+    "updatedAt": "2026-10-01T12:00:00Z",
+    "record": {
+      "$type": "app.bsky.feed.post",
+      "text": "Original removed post returned by the backend",
+      "createdAt": "2026-09-28T12:00:00Z"
+    }
+  },
+  "notifications": [
+    {
+      "id": 5,
+      "reason": "reportResolved",
+      "isRead": false,
+      "createdAt": "2026-10-01T14:00:00Z",
+      "target": {
+        "$type": "tools.ozone.inbox.defs#reportRef",
+        "reportId": 900,
+        "status": "resolved"
+      }
+    },
+    {
+      "id": 4,
+      "reason": "actionReversed",
+      "isRead": true,
+      "createdAt": "2026-10-01T13:00:00Z",
+      "target": {
+        "$type": "tools.ozone.inbox.defs#subjectRef",
+        "subject": {
+          "$type": "com.atproto.admin.defs#repoRef",
+          "did": "did:plc:bbbbbbbbbbbbbbbbbbbbbbbb"
+        },
+        "actionType": "accountSuspended",
+        "actionId": 1
+      }
+    }
+  ],
+  "standingNotification": {
+    "id": 3,
+    "reason": "standingChanged",
+    "isRead": false,
+    "createdAt": "2026-10-01T12:00:00Z",
+    "target": {
+      "$type": "tools.ozone.inbox.defs#standingRef",
+      "standing": "good",
+      "previousStanding": "warning"
+    }
+  }
+}
