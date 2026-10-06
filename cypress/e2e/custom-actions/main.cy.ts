@@ -147,35 +147,21 @@ describe('Settings custom actions', () => {
       .contains('button', 'Confirm and run')
       .should('be.enabled')
   }
-  it('uses the same definition, help text, and receipt in the old quick-action panel', () => {
+  it('keeps custom actions out of the quick-action panel', () => {
     cy.get('table').should('contain.text', seed.carla.repo.handle)
     cy.contains('button', 'Take Action').click()
-    selectCustom()
-    cy.intercept(
-      'POST',
-      `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
-      (req) => {
-        expect(req.body.event).to.deep.equal(workflow.actions[0].event)
-        expect(req.body.modTool.meta.stepId).to.equal('tag')
-        expect(req.body.modTool.meta.reportId).to.equal(undefined)
-        req.reply({
-          id: 70,
-          ...req.body,
-          createdAt: new Date().toISOString(),
-          subjectBlobCids: [],
-        })
-      },
-    ).as('customEvent')
-    cy.contains('button', 'Confirm and run').click()
-    cy.wait('@customEvent')
-    cy.get('[data-cy="custom-operation-status"]').should(
+    cy.get('[role="dialog"] [data-cy="mod-event-selector"]')
+      .contains('button', /^Action$|^Acknowledge$/)
+      .click()
+    cy.contains('[role="menuitem"]', workflow.name).should('not.exist')
+    cy.contains('[role="menu"]', 'Custom actions').should('not.exist')
+    cy.contains('[role="menuitem"]', /^Label$/).click()
+    cy.get('[role="dialog"] [data-cy="mod-event-selector"]').should(
       'contain.text',
-      'succeeded',
+      'Label',
     )
-    cy.contains('a', 'View history')
-      .should('have.attr', 'href')
-      .and('include', '/events/batch/')
-    cy.contains('button', 'Export for handoff').should('not.exist')
+    cy.get('[data-cy="custom-action-panel"]').should('not.exist')
+    cy.contains('button', 'Confirm and run').should('not.exist')
   })
   it('uses refreshed definitions for selection while keeping started runs fixed', () => {
     cy.visit(`${origin}/reports/123`)
@@ -333,193 +319,174 @@ describe('Settings custom actions', () => {
       cy.then(() => expect(sends).to.equal(1))
     })
   }
-  for (const ui of ['report', 'quick-action']) {
-    it(`prints configured effects without executing them in the ${ui} preview`, () => {
-      const actions = [
-        {
-          ...workflow.actions[0],
-          event: { ...workflow.actions[0].event, remove: ['retired-tag'] },
+  it(`prints configured effects without executing them in the report preview`, () => {
+    const actions = [
+      {
+        ...workflow.actions[0],
+        event: { ...workflow.actions[0].event, remove: ['retired-tag'] },
+      },
+      {
+        id: 'label',
+        type: 'event',
+        target: 'subject',
+        event: {
+          $type: 'tools.ozone.moderation.defs#modEventLabel',
+          createLabelVals: ['test-label'],
+          negateLabelVals: ['old-label'],
         },
-        {
-          id: 'label',
-          type: 'event',
-          target: 'subject',
-          event: {
-            $type: 'tools.ozone.moderation.defs#modEventLabel',
-            createLabelVals: ['test-label'],
-            negateLabelVals: ['old-label'],
-          },
+      },
+      {
+        id: 'dm',
+        type: 'event',
+        target: 'account',
+        event: {
+          $type: 'tools.ozone.moderation.defs#modEventTag',
+          add: [],
+          remove: ['chat-disabled'],
         },
-        {
-          id: 'dm',
-          type: 'event',
-          target: 'account',
-          event: {
-            $type: 'tools.ozone.moderation.defs#modEventTag',
-            add: [],
-            remove: ['chat-disabled'],
-          },
+      },
+      { id: 'verify', type: 'verify', target: 'account' },
+      {
+        id: 'temporary',
+        type: 'event',
+        target: 'subject',
+        event: {
+          $type: 'tools.ozone.moderation.defs#modEventTakedown',
+          durationInHours: 24,
+          comment: 'Configured takedown note',
         },
-        { id: 'verify', type: 'verify', target: 'account' },
-        {
-          id: 'temporary',
-          type: 'event',
-          target: 'subject',
-          event: {
-            $type: 'tools.ozone.moderation.defs#modEventTakedown',
-            durationInHours: 24,
-            comment: 'Configured takedown note',
-          },
+      },
+      {
+        id: 'permanent',
+        type: 'event',
+        target: 'account',
+        event: { $type: 'tools.ozone.moderation.defs#modEventTakedown' },
+      },
+      {
+        id: 'comment',
+        type: 'event',
+        target: 'subject',
+        event: {
+          $type: 'tools.ozone.moderation.defs#modEventComment',
+          comment: '<b>Literal configured comment</b>',
+          sticky: true,
         },
-        {
-          id: 'permanent',
-          type: 'event',
-          target: 'account',
-          event: { $type: 'tools.ozone.moderation.defs#modEventTakedown' },
-        },
-        {
-          id: 'comment',
-          type: 'event',
-          target: 'subject',
-          event: {
-            $type: 'tools.ozone.moderation.defs#modEventComment',
-            comment: '<b>Literal configured comment</b>',
-            sticky: true,
-          },
-        },
-        ...(ui === 'report'
-          ? [
-              {
-                id: 'note',
-                type: 'activity',
-                target: 'report',
-                activity: { $type: 'tools.ozone.report.defs#noteActivity' },
-                internalNote: 'Configured internal note',
-                publicNote: 'Configured public note',
-              },
-            ]
-          : []),
-      ]
-      cy.then(() => {
-        configuration.customActions = [{ ...workflow, actions }]
-        cy.intercept('GET', `${SERVER_URL}/tools.ozone.server.getConfig*`, {
-          ...auth.ozoneServerConfigResponse,
-          verifierDid: auth.ozoneMetaResponse.did,
-        })
-        cy.intercept('GET', '**/xrpc/app.bsky.actor.getProfile*', {
-          ...auth.getProfileResponse,
-          did: seed.carla.repo.did,
-          handle: 'profile-for-execution.test',
-        })
+      },
+      {
+        id: 'note',
+        type: 'activity',
+        target: 'report',
+        activity: { $type: 'tools.ozone.report.defs#noteActivity' },
+        internalNote: 'Configured internal note',
+        publicNote: 'Configured public note',
+      },
+    ]
+    cy.then(() => {
+      configuration.customActions = [{ ...workflow, actions }]
+      cy.intercept('GET', `${SERVER_URL}/tools.ozone.server.getConfig*`, {
+        ...auth.ozoneServerConfigResponse,
+        verifierDid: auth.ozoneMetaResponse.did,
       })
-      let mutations = 0
-      cy.intercept(
-        'POST',
-        /\/xrpc\/tools\.ozone\.(moderation\.emitEvent|report\.createActivity|verification\.grantVerifications)$/,
-        (req) => {
-          mutations++
-          req.reply({ statusCode: 500, body: { error: 'UnexpectedMutation' } })
-        },
-      )
-      if (ui === 'report') cy.visit(`${origin}/reports/123`)
-      else {
-        cy.get('table').should('contain.text', seed.carla.repo.handle)
-        cy.contains('button', 'Take Action').click()
-      }
-      selectCustom()
-      cy.get('[data-cy="custom-action-panel"] > ol > li').should(
-        'have.length',
-        actions.length,
-      )
-      cy.get('[data-cy="custom-action-panel"]')
-        .should('contain.text', 'review:example')
-        .and('contain.text', 'retired-tag')
-        .and('contain.text', 'test-label')
-        .and('contain.text', 'old-label')
-        .and('contain.text', `Update tags: ${seed.carla.repo.did}`)
-        .and('contain.text', 'chat-disabled')
-        .and('contain.text', `Verify account: ${seed.carla.repo.did}`)
-        .and('not.contain.text', 'profile-for-execution.test')
-        .and('contain.text', 'for 24 hours')
-        .and('contain.text', 'PERMANENT')
-        .and('contain.text', 'Configured takedown note')
-        .and('contain.text', '<b>Literal configured comment</b>')
-        .and('contain.text', 'Replace the persistent subject note')
-      if (ui === 'report') {
-        cy.get('[data-cy="custom-action-panel"]')
-          .should('contain.text', 'Add report note #123')
-          .and('contain.text', 'Internal note: Configured internal note')
-          .and('contain.text', 'Public note: Configured public note')
-      }
-      cy.get('[data-cy="custom-operation-status"]').should('not.exist')
-      cy.contains('button', 'Confirm and run').should('be.enabled')
-      cy.then(() => expect(mutations).to.equal(0))
+      cy.intercept('GET', '**/xrpc/app.bsky.actor.getProfile*', {
+        ...auth.getProfileResponse,
+        did: seed.carla.repo.did,
+        handle: 'profile-for-execution.test',
+      })
     })
-    it(`switches from completed custom actions to built-in and custom choices in the ${ui} UI`, () => {
-      const nextWorkflow = {
-        ...workflow,
-        id: 'followup-example',
-        name: 'Follow-up example',
-        helpText: 'Review the next action before running it.',
-      }
-      cy.then(() => {
-        configuration.customActions.push(nextWorkflow)
-      })
-      if (ui === 'report') {
-        cy.visit(`${origin}/reports/123`)
-      } else {
-        cy.get('table').should('contain.text', seed.carla.repo.handle)
-        cy.contains('button', 'Take Action').click()
-      }
-      let sends = 0
-      cy.intercept(
-        'POST',
-        `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
-        (req) => {
-          sends++
-          req.reply({
-            id: 80 + sends,
-            ...req.body,
-            createdAt: new Date().toISOString(),
-            subjectBlobCids: [],
-          })
-        },
-      ).as('customEvent')
+    let mutations = 0
+    cy.intercept(
+      'POST',
+      /\/xrpc\/tools\.ozone\.(moderation\.emitEvent|report\.createActivity|verification\.grantVerifications)$/,
+      (req) => {
+        mutations++
+        req.reply({ statusCode: 500, body: { error: 'UnexpectedMutation' } })
+      },
+    )
+    cy.visit(`${origin}/reports/123`)
+    selectCustom()
+    cy.get('[data-cy="custom-action-panel"] > ol > li').should(
+      'have.length',
+      actions.length,
+    )
+    cy.get('[data-cy="custom-action-panel"]')
+      .should('contain.text', 'review:example')
+      .and('contain.text', 'retired-tag')
+      .and('contain.text', 'test-label')
+      .and('contain.text', 'old-label')
+      .and('contain.text', `Update tags: ${seed.carla.repo.did}`)
+      .and('contain.text', 'chat-disabled')
+      .and('contain.text', `Verify account: ${seed.carla.repo.did}`)
+      .and('not.contain.text', 'profile-for-execution.test')
+      .and('contain.text', 'for 24 hours')
+      .and('contain.text', 'PERMANENT')
+      .and('contain.text', 'Configured takedown note')
+      .and('contain.text', '<b>Literal configured comment</b>')
+      .and('contain.text', 'Replace the persistent subject note')
+    cy.get('[data-cy="custom-action-panel"]')
+      .should('contain.text', 'Add report note #123')
+      .and('contain.text', 'Internal note: Configured internal note')
+      .and('contain.text', 'Public note: Configured public note')
+    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    cy.contains('button', 'Confirm and run').should('be.enabled')
+    cy.then(() => expect(mutations).to.equal(0))
+  })
+  it(`switches from completed custom actions to built-in and custom choices in the report UI`, () => {
+    const nextWorkflow = {
+      ...workflow,
+      id: 'followup-example',
+      name: 'Follow-up example',
+      helpText: 'Review the next action before running it.',
+    }
+    cy.then(() => {
+      configuration.customActions.push(nextWorkflow)
+    })
+    cy.visit(`${origin}/reports/123`)
+    let sends = 0
+    cy.intercept(
+      'POST',
+      `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
+      (req) => {
+        sends++
+        req.reply({
+          id: 80 + sends,
+          ...req.body,
+          createdAt: new Date().toISOString(),
+          subjectBlobCids: [],
+        })
+      },
+    ).as('customEvent')
 
-      selectCustom()
-      cy.contains('button', 'Confirm and run').click()
-      cy.wait('@customEvent')
-      cy.contains('Custom action completed.').should('be.visible')
-      cy.contains('button', workflow.name).should('not.be.disabled').click()
-      cy.contains('[role="menuitem"]', /^Label$/).click()
-      cy.get('[data-cy="custom-action-panel"]').should('not.exist')
-      cy.get(ui === 'quick-action' ? '[role="dialog"]' : 'body')
-        .contains('button', /^Label$/)
-        .click()
-      cy.contains('[role="menuitem"]', workflow.name).click()
-      cy.get('[data-cy="custom-operation-status"]').should('not.exist')
-      cy.contains('button', 'Confirm and run').click()
-      cy.wait('@customEvent')
-      cy.contains('Custom action completed.').should('be.visible')
-      cy.contains('button', workflow.name).should('not.be.disabled').click()
-      cy.contains('[role="menuitem"]', nextWorkflow.name).click()
-      cy.contains('button', nextWorkflow.name).should('be.visible')
-      cy.get('[data-cy="custom-action-panel"]').should(
-        'contain.text',
-        nextWorkflow.helpText,
-      )
-      cy.get('[data-cy="custom-operation-status"]').should('not.exist')
-      cy.contains('button', 'Confirm and run').should('be.enabled')
-      cy.then(() => expect(sends).to.equal(2))
-      cy.window().then((win) => {
-        expect(
-          Object.keys(win.sessionStorage).filter((key) =>
-            key.startsWith('ozone.custom-actions.v1:'),
-          ),
-        ).to.have.length(0)
-      })
+    selectCustom()
+    cy.contains('button', 'Confirm and run').click()
+    cy.wait('@customEvent')
+    cy.contains('Custom action completed.').should('be.visible')
+    cy.contains('button', workflow.name).should('not.be.disabled').click()
+    cy.contains('[role="menuitem"]', /^Label$/).click()
+    cy.get('[data-cy="custom-action-panel"]').should('not.exist')
+    cy.contains('button', /^Label$/).click()
+    cy.contains('[role="menuitem"]', workflow.name).click()
+    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    cy.contains('button', 'Confirm and run').click()
+    cy.wait('@customEvent')
+    cy.contains('Custom action completed.').should('be.visible')
+    cy.contains('button', workflow.name).should('not.be.disabled').click()
+    cy.contains('[role="menuitem"]', nextWorkflow.name).click()
+    cy.contains('button', nextWorkflow.name).should('be.visible')
+    cy.get('[data-cy="custom-action-panel"]').should(
+      'contain.text',
+      nextWorkflow.helpText,
+    )
+    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    cy.contains('button', 'Confirm and run').should('be.enabled')
+    cy.then(() => expect(sends).to.equal(2))
+    cy.window().then((win) => {
+      expect(
+        Object.keys(win.sessionStorage).filter((key) =>
+          key.startsWith('ozone.custom-actions.v1:'),
+        ),
+      ).to.have.length(0)
     })
-  }
+  })
   it('allows navigation after a failed run and discards panel progress without replay', () => {
     cy.visit(`${origin}/reports/123`)
     selectCustom()
@@ -606,191 +573,172 @@ describe('Settings custom actions', () => {
     ).should('be.visible')
     cy.then(() => expect(sends).to.equal(0))
   })
-  for (const ui of ['report', 'quick-action']) {
-    for (const stop of ['timeout', 'cancel']) {
-      it(`handles ${stop} without sending remaining steps in the ${ui} UI`, () => {
-        cy.then(() => {
-          configuration.customActions = [
-            {
-              ...workflow,
-              actions: [
-                workflow.actions[0],
-                { ...workflow.actions[0], id: 'unsent' },
-              ],
-            },
-          ]
-        })
-        if (ui === 'report') {
-          cy.visit(`${origin}/reports/123`)
-        } else {
-          cy.get('table').should('contain.text', seed.carla.repo.handle)
-          cy.contains('button', 'Take Action').click()
-        }
-        let finishLate: (() => void) | undefined
-        let sends = 0
-        cy.intercept(
-          'POST',
-          `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
-          (req) => {
-            sends++
-            return new Promise<void>((resolve) => {
-              finishLate = () => {
-                req.reply({
-                  id: 90,
-                  ...req.body,
-                  createdAt: new Date().toISOString(),
-                  subjectBlobCids: [],
-                })
-                resolve()
-              }
-            })
-          },
-        )
-        selectCustom()
-        cy.clock(Date.now(), ['setTimeout', 'clearTimeout'])
-        cy.contains('button', 'Confirm and run').click()
-        cy.wrap(null).should(() => expect(finishLate).to.be.a('function'))
-        cy.get('[data-cy="custom-operation-status"]')
-          .first()
-          .should('contain.text', 'running')
-        cy.contains(
-          'button',
-          /Stop for now|Pause|Continue|Retry remaining|Check outcome/,
-        ).should('not.exist')
-        if (stop === 'timeout') cy.tick(60_000)
-        else
-          cy.get('[data-cy="custom-action-panel"]')
-            .contains('button', /^Cancel$/)
-            .click()
-        const timeoutMessage =
-          stop === 'timeout'
-            ? 'Custom action timed out. Remaining steps were skipped.'
-            : 'Custom action cancelled. Remaining steps were skipped.'
-        cy.contains(timeoutMessage).scrollIntoView()
-        cy.contains(timeoutMessage).should('be.visible')
-        cy.get('[data-cy="custom-operation-status"]')
-          .first()
-          .should(
-            'contain.text',
-            stop === 'timeout' ? 'timed-out' : 'cancelled',
-          )
-        cy.get('[data-cy="custom-operation-status"]')
-          .last()
-          .should('contain.text', 'skipped')
-        cy.contains('a', 'View history').scrollIntoView()
-        cy.contains('a', 'View history').should('be.visible')
-        cy.then(() => finishLate!())
-        cy.tick(1)
-        cy.contains(timeoutMessage).scrollIntoView()
-        cy.contains(timeoutMessage).should('be.visible')
-        cy.contains('a', 'event 90').should('not.exist')
-        cy.get('[data-cy="custom-action-panel"]')
-          .contains('button', /^Cancel$/)
-          .should('not.exist')
-        cy.then(() => expect(sends).to.equal(1))
-      })
-    }
-    it(`allows overlapping runs with distinct batch IDs in the ${ui} UI`, () => {
-      const comment = (id: string) => ({
-        id,
-        type: 'event',
-        target: 'account',
-        event: {
-          $type: 'tools.ozone.moderation.defs#modEventComment',
-          comment: id,
-        },
-      })
-      const secondWorkflow = {
-        ...workflow,
-        id: 'second-workflow',
-        name: 'Second workflow',
-        actions: [comment('second-run')],
-      }
+  for (const stop of ['timeout', 'cancel']) {
+    it(`handles ${stop} without sending remaining steps in the report UI`, () => {
       cy.then(() => {
         configuration.customActions = [
           {
             ...workflow,
-            actions: [comment('first-step'), comment('last-step')],
+            actions: [
+              workflow.actions[0],
+              { ...workflow.actions[0], id: 'unsent' },
+            ],
           },
-          secondWorkflow,
         ]
       })
-      if (ui === 'report') {
-        cy.visit(`${origin}/reports/123`)
-      } else {
-        cy.get('table').should('contain.text', seed.carla.repo.handle)
-        cy.contains('button', 'Take Action').click()
-      }
-      let releaseFirst: (() => void) | undefined
-      const sent: any[] = []
+      cy.visit(`${origin}/reports/123`)
+      let finishLate: (() => void) | undefined
+      let sends = 0
       cy.intercept(
         'POST',
         `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
         (req) => {
-          sent.push(req.body)
-          const reply = () =>
-            req.reply({
-              id: 100 + sent.length,
-              ...req.body,
-              createdAt: new Date().toISOString(),
-              subjectBlobCids: [],
-            })
-          if (req.body.modTool.meta.stepId === 'first-step') {
-            req.alias = 'firstEvent'
-            return new Promise<void>((resolve) => {
-              releaseFirst = () => {
-                reply()
-                resolve()
-              }
-            })
-          }
-          req.alias =
-            req.body.modTool.meta.stepId === 'last-step'
-              ? 'lastEvent'
-              : 'secondEvent'
-          reply()
+          sends++
+          return new Promise<void>((resolve) => {
+            finishLate = () => {
+              req.reply({
+                id: 90,
+                ...req.body,
+                createdAt: new Date().toISOString(),
+                subjectBlobCids: [],
+              })
+              resolve()
+            }
+          })
         },
       )
       selectCustom()
+      cy.clock(Date.now(), ['setTimeout', 'clearTimeout'])
       cy.contains('button', 'Confirm and run').click()
-      cy.wrap(null).should(() => expect(releaseFirst).to.be.a('function'))
-      cy.get('[data-cy="custom-operation-status"]').should(
-        'contain.text',
-        'running',
-      )
-      cy.contains('button', workflow.name).should('not.be.disabled').click()
-      cy.contains('[role="menuitem"]', secondWorkflow.name).click()
-      cy.contains('button', 'Confirm and run').should('be.enabled').click()
-      cy.wait('@secondEvent')
-      cy.contains('Custom action completed.').should('be.visible')
-      cy.then(() => {
-        expect(sent).to.have.length(2)
-        expect(sent[0].modTool.meta.batchId).not.to.equal(
-          sent[1].modTool.meta.batchId,
+      cy.wrap(null).should(() => expect(finishLate).to.be.a('function'))
+      cy.get('[data-cy="custom-operation-status"]')
+        .first()
+        .should('contain.text', 'running')
+      cy.contains(
+        'button',
+        /Stop for now|Pause|Continue|Retry remaining|Check outcome/,
+      ).should('not.exist')
+      if (stop === 'timeout') cy.tick(60_000)
+      else
+        cy.get('[data-cy="custom-action-panel"]')
+          .contains('button', /^Cancel$/)
+          .click()
+      const timeoutMessage =
+        stop === 'timeout'
+          ? 'Custom action timed out. Remaining steps were skipped.'
+          : 'Custom action cancelled. Remaining steps were skipped.'
+      cy.contains(timeoutMessage).scrollIntoView()
+      cy.contains(timeoutMessage).should('be.visible')
+      cy.get('[data-cy="custom-operation-status"]')
+        .first()
+        .should(
+          'contain.text',
+          stop === 'timeout' ? 'timed-out' : 'cancelled',
         )
-      })
-      if (ui === 'report') {
-        cy.get('a[href="/configure"]').filter(':visible').first().click()
-        cy.location('pathname').should('equal', '/configure')
-      }
-      cy.then(() => releaseFirst!())
-      cy.wait('@firstEvent')
-      cy.wait('@lastEvent')
-      cy.then(() => {
-        expect(sent).to.have.length(3)
-        expect(sent[2].modTool.meta.batchId).to.equal(
-          sent[0].modTool.meta.batchId,
-        )
-        expect(sent[2].subject).to.deep.equal(sent[0].subject)
-      })
-      if (ui === 'report') {
-        cy.contains('aside', 'has unfinished work').should('not.exist')
-      } else {
-        cy.contains('button', secondWorkflow.name).should('be.visible')
-        cy.contains('Custom action completed.').should('be.visible')
-      }
+      cy.get('[data-cy="custom-operation-status"]')
+        .last()
+        .should('contain.text', 'skipped')
+      cy.contains('a', 'View history').scrollIntoView()
+      cy.contains('a', 'View history').should('be.visible')
+      cy.then(() => finishLate!())
+      cy.tick(1)
+      cy.contains(timeoutMessage).scrollIntoView()
+      cy.contains(timeoutMessage).should('be.visible')
+      cy.contains('a', 'event 90').should('not.exist')
+      cy.get('[data-cy="custom-action-panel"]')
+        .contains('button', /^Cancel$/)
+        .should('not.exist')
+      cy.then(() => expect(sends).to.equal(1))
     })
   }
+  it(`allows overlapping runs with distinct batch IDs in the report UI`, () => {
+    const comment = (id: string) => ({
+      id,
+      type: 'event',
+      target: 'account',
+      event: {
+        $type: 'tools.ozone.moderation.defs#modEventComment',
+        comment: id,
+      },
+    })
+    const secondWorkflow = {
+      ...workflow,
+      id: 'second-workflow',
+      name: 'Second workflow',
+      actions: [comment('second-run')],
+    }
+    cy.then(() => {
+      configuration.customActions = [
+        {
+          ...workflow,
+          actions: [comment('first-step'), comment('last-step')],
+        },
+        secondWorkflow,
+      ]
+    })
+    cy.visit(`${origin}/reports/123`)
+    let releaseFirst: (() => void) | undefined
+    const sent: any[] = []
+    cy.intercept(
+      'POST',
+      `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
+      (req) => {
+        sent.push(req.body)
+        const reply = () =>
+          req.reply({
+            id: 100 + sent.length,
+            ...req.body,
+            createdAt: new Date().toISOString(),
+            subjectBlobCids: [],
+          })
+        if (req.body.modTool.meta.stepId === 'first-step') {
+          req.alias = 'firstEvent'
+          return new Promise<void>((resolve) => {
+            releaseFirst = () => {
+              reply()
+              resolve()
+            }
+          })
+        }
+        req.alias =
+          req.body.modTool.meta.stepId === 'last-step'
+            ? 'lastEvent'
+            : 'secondEvent'
+        reply()
+      },
+    )
+    selectCustom()
+    cy.contains('button', 'Confirm and run').click()
+    cy.wrap(null).should(() => expect(releaseFirst).to.be.a('function'))
+    cy.get('[data-cy="custom-operation-status"]').should(
+      'contain.text',
+      'running',
+    )
+    cy.contains('button', workflow.name).should('not.be.disabled').click()
+    cy.contains('[role="menuitem"]', secondWorkflow.name).click()
+    cy.contains('button', 'Confirm and run').should('be.enabled').click()
+    cy.wait('@secondEvent')
+    cy.contains('Custom action completed.').should('be.visible')
+    cy.then(() => {
+      expect(sent).to.have.length(2)
+      expect(sent[0].modTool.meta.batchId).not.to.equal(
+        sent[1].modTool.meta.batchId,
+      )
+    })
+    cy.get('a[href="/configure"]').filter(':visible').first().click()
+    cy.location('pathname').should('equal', '/configure')
+    cy.then(() => releaseFirst!())
+    cy.wait('@firstEvent')
+    cy.wait('@lastEvent')
+    cy.then(() => {
+      expect(sent).to.have.length(3)
+      expect(sent[2].modTool.meta.batchId).to.equal(
+        sent[0].modTool.meta.batchId,
+      )
+      expect(sent[2].subject).to.deep.equal(sent[0].subject)
+    })
+    cy.contains('aside', 'has unfinished work').should('not.exist')
+  })
   it('runs without session storage and never persists custom-action progress', () => {
     cy.visit(`${origin}/reports/123`)
     let storageWrites: any
