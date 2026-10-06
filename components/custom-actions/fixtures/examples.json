@@ -78,7 +78,7 @@
           "activity": {
             "$type": "tools.ozone.report.defs#noteActivity"
           },
-          "internalNote": "no issues"
+          "internalNote": "Not sure about this"
         },
         {
           "id": "escalate-report",
