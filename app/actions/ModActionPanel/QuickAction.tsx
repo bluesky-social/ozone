@@ -188,6 +188,7 @@ function Form(
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    handleManualSeverityLevelSelect,
     targetServices,
     setTargetServices,
     config,
@@ -203,6 +204,11 @@ function Form(
     emailSubjectField,
     selectedAgeAssuranceState,
     setSelectedAgeAssuranceState,
+    showRecordAgeWarning,
+    showAccountAgeWarning,
+    recordAgeWarningText,
+    accountAgeWarningText,
+    preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
     onSubmit,
@@ -488,6 +494,12 @@ function Form(
                       policyDetails={policyDetails}
                       handlePolicySelect={handlePolicySelect}
                       handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      preferredDefaultSeverityLevel={
+                        preferredSeverityLevelName
+                      }
+                      onSeverityLevelUserSelect={
+                        handleManualSeverityLevelSelect
+                      }
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       currentStrikes={currentStrikes}
@@ -741,8 +753,11 @@ function Form(
                       label={
                         <span className="leading-4">
                           {isEscalated
-                            ? `De-escalate the subject and acknowledge all open reports after this action`
-                            : `Acknowledge all open reports after this action`}
+                            ? `De-escalate the subject and close its review after this action`
+                            : `Close this subject's review after this action`}
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Reports in queues remain open.
+                          </span>
                         </span>
                       }
                     />
@@ -756,8 +771,12 @@ function Form(
                       className="mb-3 flex items-center leading-3"
                       label={
                         <span className="leading-4">
-                          Acknowledge all open/escalated/appealed reports on
-                          subjects created by this user
+                          Close open or escalated subject reviews for content
+                          created by this account.
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Also resolves appeals on those subjects. Reports in
+                            queues remain open.
+                          </span>
                         </span>
                       }
                     />
@@ -772,7 +791,10 @@ function Form(
                       className="mb-3 flex items-center leading-3"
                       label={
                         <span className="leading-4">
-                          Resolve appeal from the user
+                          Resolve this subject&apos;s appeal
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Appeal reports in queues remain open.
+                          </span>
                         </span>
                       }
                     />
@@ -781,6 +803,27 @@ function Form(
                   {submission.error && (
                     <div className="my-2">
                       <ActionError error={submission.error} />
+                    </div>
+                  )}
+
+                  {showRecordAgeWarning && (
+                    <div className="my-2">
+                      <Alert
+                        showIcon
+                        type="warning"
+                        title="Record age notice"
+                        body={recordAgeWarningText}
+                      />
+                    </div>
+                  )}
+                  {showAccountAgeWarning && (
+                    <div className="my-2">
+                      <Alert
+                        showIcon
+                        type="warning"
+                        title="Account age notice"
+                        body={accountAgeWarningText}
+                      />
                     </div>
                   )}
 

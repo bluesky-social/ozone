@@ -5,7 +5,12 @@ import {
   ToolsOzoneQueueRouteReports,
   ToolsOzoneQueueUpdateQueue,
 } from '@atproto/api'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 
 export type QueueListFilters = {
@@ -14,6 +19,14 @@ export type QueueListFilters = {
   collection?: string
   reportTypes?: string[]
   limit?: number
+}
+
+export type CreateQueueInput = ToolsOzoneQueueCreateQueue.InputSchema & {
+  recommendedLabels?: string[]
+}
+
+export type UpdateQueueInput = ToolsOzoneQueueUpdateQueue.InputSchema & {
+  recommendedLabels?: string[]
 }
 
 export const useQueueList = (filters?: QueueListFilters) => {
@@ -58,7 +71,7 @@ export const useCreateQueue = () => {
 
   return useMutation({
     mutationKey: ['queues', 'create'],
-    mutationFn: async (input: ToolsOzoneQueueCreateQueue.InputSchema) => {
+    mutationFn: async (input: CreateQueueInput) => {
       const { data } = await labelerAgent.tools.ozone.queue.createQueue(input)
       return data
     },
@@ -82,7 +95,7 @@ export const useUpdateQueue = () => {
 
   return useMutation({
     mutationKey: ['queues', 'update'],
-    mutationFn: async (input: ToolsOzoneQueueUpdateQueue.InputSchema) => {
+    mutationFn: async (input: UpdateQueueInput) => {
       const { data } = await labelerAgent.tools.ozone.queue.updateQueue(input)
       return data
     },

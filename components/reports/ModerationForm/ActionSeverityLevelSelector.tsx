@@ -14,13 +14,17 @@ import { Fragment, useState, useEffect } from 'react'
 
 export const ActionSeverityLevelSelector = ({
   defaultSeverityLevel,
+  preferredDefaultSeverityLevel,
   onSelect,
+  onUserSelect,
   name = 'severityLevel',
   policySeverityLevels,
 }: {
   name?: string
   defaultSeverityLevel?: string
+  preferredDefaultSeverityLevel?: string
   onSelect?: (name: string) => void
+  onUserSelect?: () => void
   policySeverityLevels?: Record<
     string,
     { description: string; isDefault: boolean }
@@ -30,8 +34,16 @@ export const ActionSeverityLevelSelector = ({
   const { data, isLoading } = useSeverityLevelSetting(labelerAgent)
   const [selected, setSelected] = useState(defaultSeverityLevel)
 
-  // Auto-select default severity level from policy when policy changes
+  // Prefer an explicit age-based default, then the selected or policy default.
   useEffect(() => {
+    if (
+      preferredDefaultSeverityLevel &&
+      policySeverityLevels?.[preferredDefaultSeverityLevel]
+    ) {
+      setSelected(preferredDefaultSeverityLevel)
+      onSelect?.(preferredDefaultSeverityLevel)
+      return
+    }
     if (defaultSeverityLevel) {
       setSelected(defaultSeverityLevel)
       return
@@ -50,7 +62,12 @@ export const ActionSeverityLevelSelector = ({
     } else {
       setSelected('')
     }
-  }, [policySeverityLevels, defaultSeverityLevel])
+  }, [
+    policySeverityLevels,
+    defaultSeverityLevel,
+    preferredDefaultSeverityLevel,
+    onSelect,
+  ])
 
   if (!Object.keys(data?.value || {}).length) {
     return null
@@ -64,6 +81,7 @@ export const ActionSeverityLevelSelector = ({
         onChange={(selectedLevel) => {
           setSelected(selectedLevel || '')
           onSelect?.(selectedLevel || '')
+          onUserSelect?.()
         }}
       >
         <ActionSeverityLevelList
