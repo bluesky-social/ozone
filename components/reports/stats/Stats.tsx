@@ -18,6 +18,7 @@ export const STATS_PRESETS = {
   pending: 'bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300',
   escalated:
     'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300',
+  closed: 'bg-teal-100 text-teal-800 dark:bg-teal-900/30 dark:text-teal-300',
   actioned:
     'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300',
   avgHandlingTime:
@@ -57,17 +58,19 @@ export function StatValue({
 }
 
 export interface ReportStats {
-  /** Number of reports in 'open' status */
+  /** All reports currently not closed, including reports from previous days. */
   pendingCount?: number
-  /** Number of reports in 'closed' status */
+  /** Reports closed during this period. */
+  closedCount?: number
+  /** Closures whose last linked action is label, tag, or takedown. */
   actionedCount?: number
-  /** Number of reports in 'escalated' status */
+  /** Escalation activities recorded during this period. */
   escalatedCount?: number
-  /** Reports received in this queue in the last 24 hours. */
+  /** Reports created during this period (since UTC midnight for live stats). */
   inboundCount?: number
-  /** Percentage of reports actioned (actionedCount / inboundCount * 100), rounded to nearest integer. Absent when inboundCount is 0. */
+  /** Percentage of closures actioned, rounded to the nearest integer. Absent when closedCount is 0. */
   actionRate?: number
-  /** Average time in seconds from report creation to close, for reports closed in this period. */
+  /** Average time in seconds from report assignment to close. */
   avgHandlingTimeSec?: number
   /** When these statistics were last computed */
   lastUpdated?: string
@@ -107,12 +110,21 @@ export function StatValues({
           value={stats.escalatedCount}
           classNamePreset="escalated"
         />
+        {stats.closedCount != null && (
+          <StatValue
+            label="Closed"
+            value={stats.closedCount}
+            classNamePreset="closed"
+          />
+        )}
         <StatValue
           label="Actioned"
           value={stats.actionedCount}
           classNamePreset="actioned"
           suffix={
-            stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
+            stats.actionRate != null
+              ? ` (${stats.actionRate}% of closed)`
+              : undefined
           }
         />
       </div>
@@ -254,12 +266,21 @@ export function StatsCard({ group }: { group: StatGroup }) {
               value={stats.escalatedCount}
               classNamePreset="escalated"
             />
+            {stats.closedCount != null && (
+              <StatValue
+                label="Closed"
+                value={stats.closedCount}
+                classNamePreset="closed"
+              />
+            )}
             <StatValue
               label="Actioned"
               value={stats.actionedCount}
               classNamePreset="actioned"
               suffix={
-                stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
+                stats.actionRate != null
+                  ? ` (${stats.actionRate}% of closed)`
+                  : undefined
               }
             />
           </div>
