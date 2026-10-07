@@ -5,6 +5,9 @@ import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { CheckboxesModal } from '@/common/modals/checkboxes'
 import { Tabs, TabView } from '@/common/Tabs'
+import { ActionedSubjectsPreview, ReportsPreview } from './inbox/InboxPreview'
+import { NotificationsPreview } from './inbox/NotificationsPreview'
+import type { InboxSection } from './inbox/api'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
 import { ModEventList } from '@/mod-event/EventList'
@@ -28,6 +31,7 @@ import {
   ToolsOzoneModerationGetRepo as GetRepo,
 } from '@atproto/api'
 import {
+  ChevronDownIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
@@ -36,6 +40,7 @@ import {
   UserCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/20/solid'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { useQuery } from '@tanstack/react-query'
 import { Followers } from 'components/graph/Followers'
 import { Follows } from 'components/graph/Follows'
@@ -84,6 +89,7 @@ enum Views {
   Manage,
   Lists,
   RelatedAccounts,
+  Inbox,
 }
 
 const TabKeys = {
@@ -97,6 +103,7 @@ const TabKeys = {
   events: Views.Events,
   manage: Views.Manage,
   related: Views.RelatedAccounts,
+  inbox: Views.Inbox,
 }
 
 export function AccountView({
@@ -106,6 +113,7 @@ export function AccountView({
   id,
   onSubmit,
   onShowActionPanel,
+  inboxSection,
 }: {
   id: string
   repo?: GetRepo.OutputSchema
@@ -113,18 +121,28 @@ export function AccountView({
   error?: unknown
   onSubmit: (vals: any) => Promise<void>
   onShowActionPanel: (subject: string) => void
+  inboxSection?: InboxSection
 }) {
   const searchParams = useSearchParams()
-  const currentView =
-    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
-  const setCurrentView = (view: Views) => {
-    const newParams = new URLSearchParams(searchParams)
-    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
-    newParams.set('tab', newTab || 'details')
-    router.push((pathname ?? '') + '?' + newParams.toString())
-  }
+  const currentView = inboxSection
+    ? Views.Inbox
+    : TabKeys[searchParams.get('tab') || 'details'] ?? TabKeys.details
   const pathname = usePathname()
   const router = useRouter()
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const basePath = `/repositories/${encodeURIComponent(repo?.did || id)}`
+    if (view === Views.Inbox) {
+      newParams.delete('tab')
+      router.push(
+        `${basePath}/inbox/${inboxSection || 'reports'}${newParams.size ? `?${newParams}` : ''}`,
+      )
+      return
+    }
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push(`${basePath}?${newParams}`)
+  }
   const reportUri = searchParams.get('reportUri') || undefined
   const setReportUri = (uri?: string) => {
     const newParams = new URLSearchParams(searchParams)
@@ -148,14 +166,18 @@ export function AccountView({
       0,
     )
 
-    const views: TabView<Views>[] = [{ view: Views.Details, label: 'Profile' }]
+    const views: TabView<Views>[] = [
+      { view: Views.Details, label: 'Profile' },
+      {
+        view: Views.Posts,
+        label: 'Posts',
+        sublabel:
+          profile?.postsCount != null ? String(profile.postsCount) : undefined,
+      },
+      { view: Views.Manage, label: 'Manage' },
+    ]
     if (profile) {
       views.push(
-        {
-          view: Views.Posts,
-          label: 'Posts',
-          sublabel: String(profile.postsCount),
-        },
         {
           view: Views.Follows,
           label: 'Follows',
@@ -189,10 +211,18 @@ export function AccountView({
       { view: Views.Events, label: 'Events' },
     )
 
-    views.push({ view: Views.Manage, label: 'Manage' })
+    views.push({ view: Views.Inbox, label: 'Mod Inbox' })
 
     return views
   }
+  const tabViews = getTabViews()
+  const primaryViews = [Views.Details, Views.Posts, Views.Manage]
+  const visibleViews = tabViews.filter(
+    ({ view }) => primaryViews.includes(view) || view === currentView,
+  )
+  const moreViews = tabViews.filter(
+    ({ view }) => !primaryViews.includes(view) && view !== currentView,
+  )
 
   return (
     <div className="flex h-full bg-white dark:bg-slate-900">
@@ -233,8 +263,31 @@ export function AccountView({
                 <>
                   <Tabs
                     currentView={currentView}
-                    views={getTabViews()}
+                    views={visibleViews}
                     onSetCurrentView={setCurrentView}
+                    endAdornment={
+                      <Menu as="div" className="relative shrink-0">
+                        <MenuButton className="inline-flex items-center gap-1 whitespace-nowrap border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-100 dark:hover:border-teal-300 dark:hover:text-teal-200">
+                          More <ChevronDownIcon className="h-4 w-4" aria-hidden="true" />
+                        </MenuButton>
+                        <MenuItems
+                          anchor="bottom end"
+                          className="z-50 mt-1 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-slate-800 dark:shadow-slate-900"
+                        >
+                          {moreViews.map(({ view, label }) => (
+                            <MenuItem key={view}>
+                              <button
+                                type="button"
+                                onClick={() => setCurrentView(view)}
+                                className="block w-full px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 dark:text-gray-100 dark:data-[focus]:bg-slate-700"
+                              >
+                                {label}
+                              </button>
+                            </MenuItem>
+                          ))}
+                        </MenuItems>
+                      </Menu>
+                    }
                   />
                   {currentView === Views.Details && (
                     <Details profile={profile} repo={repo} id={id} />
@@ -266,6 +319,15 @@ export function AccountView({
                   )}
                   {currentView === Views.Manage && (
                     <ManageView repo={repo} did={repo.did} />
+                  )}
+                  {currentView === Views.Inbox && (
+                    inboxSection === 'actioned-subjects' ? (
+                      <ActionedSubjectsPreview did={repo.did} />
+                    ) : inboxSection === 'notifications' ? (
+                      <NotificationsPreview did={repo.did} />
+                    ) : (
+                      <ReportsPreview did={repo.did} />
+                    )
                   )}
                 </>
               ) : (

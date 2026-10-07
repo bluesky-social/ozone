@@ -73,7 +73,7 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
 
   return (
     <div>
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <StatCard
           label="Inbound"
           value={stats.inboundCount}
@@ -89,10 +89,21 @@ export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
           value={stats.escalatedCount}
           classNamePreset="escalated"
         />
+        {stats.closedCount != null && (
+          <StatCard
+            label="Closed"
+            value={stats.closedCount}
+            classNamePreset="closed"
+          />
+        )}
         <StatCard
           label="Actioned"
           value={stats.actionedCount}
-          suffix={stats.actionRate != null ? `${stats.actionRate}%` : undefined}
+          suffix={
+            stats.actionRate != null
+              ? `${stats.actionRate}% of closed`
+              : undefined
+          }
           classNamePreset="actioned"
         />
         {stats.avgHandlingTimeSec != null && (
