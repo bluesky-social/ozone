@@ -36,10 +36,7 @@ export const ActionSeverityLevelSelector = ({
 
   // Prefer an explicit age-based default, then the selected or policy default.
   useEffect(() => {
-    if (
-      preferredDefaultSeverityLevel &&
-      policySeverityLevels?.[preferredDefaultSeverityLevel]
-    ) {
+    if (preferredDefaultSeverityLevel) {
       setSelected(preferredDefaultSeverityLevel)
       onSelect?.(preferredDefaultSeverityLevel)
       return

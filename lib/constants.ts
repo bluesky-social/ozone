@@ -45,7 +45,20 @@ type SubjectAgeWarningSettings = {
 
 type SubjectAgeWarningConfig = {
   record: SubjectAgeWarningSettings
-  account: SubjectAgeWarningSettings
+  includedPolicies: string[]
+}
+
+const parseIncludedPolicies = (value: unknown): string[] => {
+  if (!Array.isArray(value)) return []
+
+  return [
+    ...new Set(
+      value
+        .filter((policy): policy is string => typeof policy === 'string')
+        .map((policy) => policy.trim())
+        .filter(Boolean),
+    ),
+  ]
 }
 
 const parseSubjectAgeWarningSettings = (
@@ -73,7 +86,7 @@ const parseSubjectAgeWarningSettings = (
 const parseSubjectAgeWarningConfig = (
   value: string | undefined,
 ): SubjectAgeWarningConfig => {
-  const emptyConfig = { record: {}, account: {} }
+  const emptyConfig = { record: {}, includedPolicies: [] }
   if (!value?.trim()) return emptyConfig
 
   try {
@@ -89,7 +102,7 @@ const parseSubjectAgeWarningConfig = (
     const settings = config as Record<string, unknown>
     return {
       record: parseSubjectAgeWarningSettings(settings.record),
-      account: parseSubjectAgeWarningSettings(settings.account),
+      includedPolicies: parseIncludedPolicies(settings.includedPolicies),
     }
   } catch {
     return emptyConfig
@@ -103,14 +116,11 @@ const SUBJECT_AGE_WARNING_CONFIG = parseSubjectAgeWarningConfig(
 export const RECORD_AGE_THRESHOLD_DAYS =
   SUBJECT_AGE_WARNING_CONFIG.record.thresholdDays
 
-export const ACCOUNT_AGE_THRESHOLD_DAYS =
-  SUBJECT_AGE_WARNING_CONFIG.account.thresholdDays
-
 export const RECORD_AGE_SEVERITY_LEVEL =
   SUBJECT_AGE_WARNING_CONFIG.record.severityLevel
 
-export const ACCOUNT_AGE_SEVERITY_LEVEL =
-  SUBJECT_AGE_WARNING_CONFIG.account.severityLevel
+export const SUBJECT_AGE_WARNING_INCLUDED_POLICIES =
+  SUBJECT_AGE_WARNING_CONFIG.includedPolicies
 
 export const IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS = process.env
   .NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS
