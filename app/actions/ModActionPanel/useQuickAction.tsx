@@ -281,23 +281,22 @@ export const useQuickAction = (
     SUBJECT_AGE_WARNING_INCLUDED_POLICIES.some(
       (policyName) => nameToKey(policyName) === nameToKey(selectedPolicyName),
     )
-  const findSupportedPolicySeverityLevel = (configuredLevelName?: string) =>
+  const findConfiguredSeverityLevel = (configuredLevelName?: string) =>
     configuredLevelName && isAgeSeverityDefaultIncludedForPolicy
-      ? Object.keys(policyDetails?.severityLevels ?? {}).find(
+      ? Object.keys(severityLevelData?.value ?? {}).find(
           (levelName) =>
-            nameToKey(levelName) === nameToKey(configuredLevelName) &&
-            !!severityLevelData?.value?.[nameToKey(levelName)],
+            nameToKey(levelName) === nameToKey(configuredLevelName),
         )
       : undefined
-  const configuredPolicySeverityLevelNames = configuredAgeSeverityLevelNames
-    .map(findSupportedPolicySeverityLevel)
+  const configuredSeverityLevelNames = configuredAgeSeverityLevelNames
+    .map(findConfiguredSeverityLevel)
     .filter((levelName): levelName is string => !!levelName)
   const policyDefaultSeverityLevelName =
     Object.entries(policyDetails?.severityLevels ?? {}).find(
       ([, level]) => level.isDefault,
     )?.[0] ?? Object.keys(policyDetails?.severityLevels ?? {})[0]
   const recordAgeWarningSeverityLevelName =
-    findSupportedPolicySeverityLevel(RECORD_AGE_SEVERITY_LEVEL) ??
+    findConfiguredSeverityLevel(RECORD_AGE_SEVERITY_LEVEL) ??
     policyDefaultSeverityLevelName ??
     (isAgeSeverityDefaultIncludedForPolicy
       ? RECORD_AGE_SEVERITY_LEVEL
@@ -305,8 +304,8 @@ export const useQuickAction = (
   const preferredSeverityLevelName =
     isTakedownEvent &&
     !hasManuallySelectedSeverity &&
-    configuredPolicySeverityLevelNames.length > 0
-      ? configuredPolicySeverityLevelNames[0]
+    configuredSeverityLevelNames.length > 0
+      ? configuredSeverityLevelNames[0]
       : undefined
   const recordAgeWarningText = getSubjectAgeWarningText(
     RECORD_AGE_THRESHOLD_DAYS,
