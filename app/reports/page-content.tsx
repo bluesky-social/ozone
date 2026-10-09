@@ -1,11 +1,6 @@
 'use client'
 import { useCallback } from 'react'
-import {
-  ReadonlyURLSearchParams,
-  usePathname,
-  useRouter,
-  useSearchParams,
-} from 'next/navigation'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useInfiniteQuery } from '@tanstack/react-query'
 import {
   Agent,
@@ -33,6 +28,7 @@ import { WorkspacePanel } from 'components/workspace/Panel'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { useQueueSetting } from 'components/setting/useQueueSetting'
 import QueueFilterPanel from '@/reports/QueueFilter/Panel'
+import { getSubjectStatusSortParams } from '@/lib/subject-status-sort'
 
 const TABS = [
   {
@@ -185,29 +181,6 @@ const ResolvedFilters = () => {
   )
 }
 
-const getSortParams = (params: ReadonlyURLSearchParams) => {
-  let sortField = params.get('sortField')
-  let sortDirection = params.get('sortDirection')
-
-  if (!['asc', 'desc'].includes(sortDirection ?? '')) {
-    sortDirection = 'desc'
-  }
-
-  if (
-    ![
-      'lastReportedAt',
-      'lastReviewedAt',
-      'reportedRecordsCount',
-      'takendownRecordsCount',
-      'priorityScore',
-    ].includes(sortField ?? '')
-  ) {
-    sortField = 'lastReportedAt'
-  }
-
-  return { sortField, sortDirection }
-}
-
 export const ReportsPageContent = () => {
   const emitEvent = useEmitEvent()
   const params = useSearchParams()
@@ -332,7 +305,7 @@ function useModerationQueueQuery() {
   const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
   const minPriorityScore = params.get('minPriorityScore')
   const ageAssuranceState = params.get('ageAssuranceState')
-  const { sortField, sortDirection } = getSortParams(params)
+  const { sortField, sortDirection } = getSubjectStatusSortParams(params)
   const { lastReviewedBy, subject, reporters, includeAllUserRecords } =
     useFluentReportSearchParams()
 
