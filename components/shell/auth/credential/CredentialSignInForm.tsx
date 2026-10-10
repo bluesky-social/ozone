@@ -4,6 +4,7 @@ import { createRef, FormEvent, useCallback, useState } from 'react'
 
 import { Alert } from '@/common/Alert'
 import { ErrorInfo } from '@/common/ErrorInfo'
+import { DEFAULT_LOGIN_SERVICE_URL } from '@/lib/constants'
 
 export type CredentialSignIn = (input: {
   identifier: string
@@ -11,6 +12,12 @@ export type CredentialSignIn = (input: {
   authFactorToken?: string
   service: string
 }) => unknown
+
+const BSKY_SOCIAL_URL = 'https://bsky.social'
+const STAGING_BSKY_URL = 'https://staging.bsky.dev'
+
+export const getSuggestedServiceUrls = (defaultPdsUrl: string) =>
+  Array.from(new Set([defaultPdsUrl, BSKY_SOCIAL_URL, STAGING_BSKY_URL]))
 
 /**
  * @returns Nice tailwind css form asking to enter either a handle or the host
@@ -22,12 +29,13 @@ export function CredentialSignInForm({
 }: {
   signIn: CredentialSignIn
 } & Omit<React.HTMLAttributes<HTMLFormElement>, 'onSubmit'>) {
+  const suggestedServiceUrls = getSuggestedServiceUrls(DEFAULT_LOGIN_SERVICE_URL)
   const [error, setError] = useState<string | null>(null)
   const [isValidatingAuth, setIsValidatingAuth] = useState(false)
 
   const [handle, setHandle] = useState('')
   const [password, setPassword] = useState('')
-  const [service, setService] = useState('https://bsky.social')
+  const [service, setService] = useState(DEFAULT_LOGIN_SERVICE_URL)
   const [authFactor, setAuthFactor] = useState<{
     token: string
     isInvalid: boolean
@@ -107,8 +115,9 @@ export function CredentialSignInForm({
             onChange={(e) => setService(e.target.value)}
           />
           <datalist id="service-url-suggestions">
-            <option value="https://bsky.social" />
-            <option value="https://staging.bsky.dev" />
+            {suggestedServiceUrls.map((url) => (
+              <option key={url} value={url} />
+            ))}
           </datalist>
         </div>
         <div>
