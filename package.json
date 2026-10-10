@@ -32,6 +32,7 @@
     "@types/react": "19.2.5",
     "@types/react-dom": "19.2.3",
     "@uiw/react-md-editor": "^4.0.5",
+    "ajv": "6.12.6",
     "bcp-47-match": "^2.0.3",
     "date-fns": "^2.29.3",
     "eslint": "^8.57.0",

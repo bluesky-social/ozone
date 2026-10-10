@@ -1,0 +1,505 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "urn:ozone:custom-action-settings:v1",
+  "title": "Ozone custom action settings, version 1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["version", "customActions"],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "customActions": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/action"
+      }
+    }
+  },
+  "definitions": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z][a-zA-Z0-9_-]*$",
+      "maxLength": 64
+    },
+    "text": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^\\S(?:.*\\S)?$"
+    },
+    "target": {
+      "enum": ["subject", "account"]
+    },
+    "tags": {
+      "type": "array",
+      "uniqueItems": true,
+      "items": {
+        "$ref": "#/definitions/text"
+      }
+    },
+    "action": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "name", "allowedRoles", "subjectTypes", "actions"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "name": {
+          "$ref": "#/definitions/text"
+        },
+        "helpText": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "description": {
+          "$ref": "#/definitions/text"
+        },
+        "enabled": {
+          "type": "boolean",
+          "default": true
+        },
+        "allowedRoles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": [
+              "tools.ozone.team.defs#roleAdmin",
+              "tools.ozone.team.defs#roleModerator",
+              "tools.ozone.team.defs#roleVerifier",
+              "tools.ozone.team.defs#roleTriage"
+            ]
+          }
+        },
+        "subjectTypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "enum": ["account", "record"]
+          }
+        },
+        "collections": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/text"
+          }
+        },
+        "when": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/condition"
+          }
+        },
+        "actions": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/definitions/eventStep"
+              },
+              {
+                "$ref": "#/definitions/activityStep"
+              },
+              {
+                "$ref": "#/definitions/verifyEvent"
+              }
+            ]
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["collections"]
+          },
+          "then": {
+            "properties": {
+              "subjectTypes": {
+                "const": ["record"]
+              }
+            }
+          }
+        }
+      ]
+    },
+    "condition": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["target"],
+      "properties": {
+        "target": {
+          "$ref": "#/definitions/target"
+        },
+        "requiredTags": {
+          "$ref": "#/definitions/tags"
+        },
+        "absentTags": {
+          "$ref": "#/definitions/tags"
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["requiredTags"],
+          "properties": {
+            "requiredTags": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": ["absentTags"],
+          "properties": {
+            "absentTags": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "eventStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "target", "event"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "type": {
+          "const": "event"
+        },
+        "target": {
+          "$ref": "#/definitions/target"
+        },
+        "event": {
+          "$ref": "#/definitions/moderationEvent"
+        },
+        "reportAction": {
+          "$ref": "#/definitions/currentReportAction"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "required": ["reportAction"]
+          },
+          "then": {
+            "properties": {
+              "event": {
+                "properties": {
+                  "$type": {
+                    "enum": [
+                      "tools.ozone.moderation.defs#modEventLabel",
+                      "tools.ozone.moderation.defs#modEventTakedown",
+                      "tools.ozone.moderation.defs#modEventAcknowledge",
+                      "tools.ozone.moderation.defs#modEventComment",
+                      "tools.ozone.moderation.defs#modEventEscalate"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "tagEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type", "add", "remove"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventTag"
+        },
+        "add": {
+          "$ref": "#/definitions/tags"
+        },
+        "remove": {
+          "$ref": "#/definitions/tags"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "durationInHours": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "anyOf": [
+        {
+          "required": ["add"],
+          "properties": {
+            "add": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": ["remove"],
+          "properties": {
+            "remove": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "verifyEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "target"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "type": {
+          "const": "verify"
+        },
+        "target": {
+          "const": "account"
+        }
+      }
+    },
+    "reportActivity": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "enum": [
+            "tools.ozone.report.defs#closeActivity",
+            "tools.ozone.report.defs#reopenActivity",
+            "tools.ozone.report.defs#escalationActivity",
+            "tools.ozone.report.defs#noteActivity"
+          ]
+        }
+      }
+    },
+    "activityStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "type", "target", "activity"],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "type": {
+          "const": "activity"
+        },
+        "target": {
+          "const": "report"
+        },
+        "activity": {
+          "$ref": "#/definitions/reportActivity"
+        },
+        "internalNote": {
+          "$ref": "#/definitions/text"
+        },
+        "publicNote": {
+          "$ref": "#/definitions/text"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "activity": {
+                "properties": {
+                  "$type": {
+                    "const": "tools.ozone.report.defs#noteActivity"
+                  }
+                }
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": ["internalNote"]
+              },
+              {
+                "required": ["publicNote"]
+              }
+            ]
+          }
+        }
+      ]
+    },
+    "labelEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type", "createLabelVals", "negateLabelVals"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventLabel"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "createLabelVals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "negateLabelVals": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "uniqueItems": true
+        },
+        "durationInHours": {
+          "type": "integer",
+          "minimum": 1
+        }
+      },
+      "anyOf": [
+        {
+          "properties": {
+            "createLabelVals": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "properties": {
+            "negateLabelVals": {
+              "minItems": 1
+            }
+          }
+        }
+      ]
+    },
+    "takedownEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventTakedown"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "durationInHours": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "policies": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1
+          },
+          "maxItems": 5,
+          "uniqueItems": true
+        },
+        "severityLevel": {
+          "type": "string"
+        },
+        "targetServices": {
+          "type": "array",
+          "items": {
+            "enum": ["appview", "pds"]
+          },
+          "uniqueItems": true
+        },
+        "strikeCount": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "strikeExpiresAt": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
+    },
+    "acknowledgeEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventAcknowledge"
+        },
+        "comment": {
+          "type": "string"
+        }
+      }
+    },
+    "commentEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventComment"
+        },
+        "comment": {
+          "type": "string"
+        },
+        "sticky": {
+          "type": "boolean"
+        }
+      }
+    },
+    "escalateEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventEscalate"
+        },
+        "comment": {
+          "type": "string"
+        }
+      }
+    },
+    "moderationEvent": {
+      "oneOf": [
+        {
+          "$ref": "#/definitions/tagEvent"
+        },
+        {
+          "$ref": "#/definitions/labelEvent"
+        },
+        {
+          "$ref": "#/definitions/takedownEvent"
+        },
+        {
+          "$ref": "#/definitions/acknowledgeEvent"
+        },
+        {
+          "$ref": "#/definitions/commentEvent"
+        },
+        {
+          "$ref": "#/definitions/escalateEvent"
+        }
+      ]
+    },
+    "currentReportAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope"],
+      "properties": {
+        "scope": {
+          "const": "current"
+        },
+        "note": {
+          "$ref": "#/definitions/text"
+        }
+      }
+    }
+  }
+}

@@ -1,4 +1,9 @@
 'use client'
+import {
+  CustomActionPanel,
+  customMenuItems,
+  useCustomActionPanel,
+} from '../custom-actions/Panel'
 import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
 import { Checkbox, Select, Textarea } from '@/common/forms'
@@ -292,6 +297,12 @@ export function ReportActionsBar({
   onResolveAppeal?: (comment?: string) => Promise<void>
   onSendEmail?: (emailData: EmailComposerData) => Promise<void>
 }) {
+  const custom = useCustomActionPanel(report.subject.subject, report)
+  const customItems = customMenuItems(custom, () => {
+    onActionSelect(null)
+    setPendingAction(null)
+    setShowNote(false)
+  })
   const { autoAdvance, setAutoAdvance, nextReportId } = useReports(report.id)
 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
@@ -314,10 +325,14 @@ export function ReportActionsBar({
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
   const canReopen = status === 'closed' && canTransitionTo(status, 'open')
-  const canNoAction = (status === 'open' || status === 'assigned' || status === 'escalated') && canTransitionTo(status, 'closed')
-  const canAction = status === 'open' || status === 'assigned' || status === 'escalated'
+  const canNoAction =
+    (status === 'open' || status === 'assigned' || status === 'escalated') &&
+    canTransitionTo(status, 'closed')
+  const canAction =
+    status === 'open' || status === 'assigned' || status === 'escalated'
 
   const handleActionClick = (action: ActionType) => {
+    custom.setSelection(null)
     onActionSelect(null)
     setShowNote(false)
     setShowEmailComposer(false)
@@ -325,12 +340,14 @@ export function ReportActionsBar({
   }
 
   const handleNoteClick = () => {
+    custom.setSelection(null)
     setPendingAction(null)
     setShowEmailComposer(false)
     setShowNote((v) => !v)
   }
 
   const handleReportActionSelect = (action: ReportActionType) => {
+    custom.setSelection(null)
     setPendingAction(null)
     setShowNote(false)
     setShowEmailComposer(false)
@@ -354,6 +371,7 @@ export function ReportActionsBar({
       ? 'You are not assigned to this report, please proceed with caution'
       : null
   const hasAvailableActions =
+    customItems.length > 0 ||
     canEscalate ||
     canNoAction ||
     canReopen ||
@@ -419,10 +437,12 @@ export function ReportActionsBar({
             )}
           </>
         )}
-        {canAction && !isAppeal && (canLabel || canTakedown) && (
+        {((canAction && !isAppeal && (canLabel || canTakedown)) ||
+          customItems.length > 0) && (
           <Dropdown
+            describedBy={custom.selected?.helpText ? custom.helpId : undefined}
             items={[
-              ...(canLabel
+              ...(canAction && !isAppeal && canLabel
                 ? [
                     {
                       text: 'Label',
@@ -430,7 +450,7 @@ export function ReportActionsBar({
                     },
                   ]
                 : []),
-              ...(canTakedown
+              ...(canAction && !isAppeal && canTakedown
                 ? [
                     {
                       text: 'Takedown',
@@ -438,14 +458,15 @@ export function ReportActionsBar({
                     },
                   ]
                 : []),
+              ...customItems,
             ]}
             className={`inline-flex justify-center items-center gap-1 rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm ${
-              selectedAction
+              selectedAction || custom.selected
                 ? 'border-teal-500 bg-teal-50 dark:bg-teal-900/20 text-teal-700 dark:text-teal-300'
                 : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-slate-800 text-gray-700 dark:text-gray-100 hover:bg-gray-50 dark:hover:bg-slate-700'
             }`}
           >
-            {actionButtonText}
+            {custom.selected?.name || actionButtonText}
             <ChevronDownIcon className="h-4 w-4" />
           </Dropdown>
         )}
@@ -482,6 +503,7 @@ export function ReportActionsBar({
           Note
         </button>
       </div>
+      <CustomActionPanel model={custom} />
 
       {canNoAction && nextReportId !== null && (
         <Checkbox
