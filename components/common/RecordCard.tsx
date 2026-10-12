@@ -38,6 +38,7 @@ import {
 import type { JSX } from 'react'
 import { VerificationBadge } from 'components/verification/Badge'
 import { RecordWithSnapshots } from './snapshots/RecordWithSnapshots'
+import { ProfileLinkCard } from './profileLinks/ProfileLinkCard'
 
 export function RecordCard(props: {
   uri: string
@@ -73,6 +74,35 @@ export function RecordCard(props: {
   }
   if (parsed.collection === CollectionId.StarterPack) {
     return <StarterPackRecordCard uri={uri} />
+  }
+  if (parsed.collection === CollectionId.ProfileLink) {
+    return (
+      <RecordWithSnapshots key={uri} uri={uri} className="pl-0">
+        {(snapshot) => (
+          <>
+            <RepoCard did={parsed.did} />
+            {snapshot ? (
+              <ProfileLinkCard
+                uri={uri}
+                cid={snapshot.cid}
+                value={snapshot.value}
+              />
+            ) : (
+              <BaseRecordCard
+                uri={uri}
+                renderRecord={(record) => (
+                  <ProfileLinkCard
+                    uri={record.uri}
+                    cid={record.cid}
+                    value={record.value}
+                  />
+                )}
+              />
+            )}
+          </>
+        )}
+      </RecordWithSnapshots>
+    )
   }
   if (parsed.collection === CollectionId.Convo) {
     return (
