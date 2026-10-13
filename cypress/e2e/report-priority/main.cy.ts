@@ -238,7 +238,11 @@ describe('Report priority configuration', () => {
     cy.contains('button', 'Assignments').click()
     cy.get('#priority-report-reason')
       .should('be.enabled')
-      .type('Animal Welfare')
+      .type('Animal Violence')
+    cy.contains(
+      '[role="option"]',
+      'tools.ozone.report.defs#reasonViolenceAnimal',
+    ).should('be.visible')
     cy.get('#priority-report-reason').type('{enter}')
     cy.contains('button', 'Add reason').click()
     cy.get('[data-cy="priority-assignment"] select').select('normal')
@@ -247,7 +251,7 @@ describe('Report priority configuration', () => {
       expect(stored[levelsKey].normal.targetResolutionMinutes).to.equal(30)
       expect(stored[levelsKey].normal.score).to.equal(100)
       expect(stored[mappingsKey]).to.deep.equal({
-        'tools.ozone.report.defs#reasonViolenceAnimalWelfare': 'normal',
+        'tools.ozone.report.defs#reasonViolenceAnimal': 'normal',
       })
     })
   })
@@ -406,8 +410,8 @@ describe('Report reason picker', () => {
       },
     ).as('createReport')
     login(`/repositories/${did}?reportUri=${did}`)
-    cy.get('#reasonType').type('Animal Welfare')
-    cy.contains('[role="option"]', 'Animal Welfare').click()
+    cy.get('#reasonType').type('Animal Violence')
+    cy.contains('[role="option"]', 'Animal Violence').click()
     cy.get('#reasonType').clear()
     cy.get('#reasonType').type('Violent Threats')
     cy.contains('[role="option"]', 'Use custom reason').should('not.exist')
@@ -445,22 +449,25 @@ describe('Report priority badges', () => {
       reports: [report],
     }).as('reports')
     login('/reports/beta')
-    cy.wait('@reports')
-      .its('request.query.sortField')
-      .should('equal', 'createdAt')
+    cy.wait('@reports').then(({ request }) => {
+      expect(request.query.sortField).to.equal('createdAt')
+      expect(request.query.sortDirection).to.equal('asc')
+    })
     cy.get('tbody span[title="urgent · 30m target"]:visible').should(
       'have.length',
       1,
     )
     cy.get('[aria-label="Report order"]').should('not.exist')
     cy.get('thead').contains('a', 'Report').click()
-    cy.wait('@reports')
-      .its('request.query.sortField')
-      .should('equal', 'createdAt')
+    cy.wait('@reports').then(({ request }) => {
+      expect(request.query.sortField).to.equal('createdAt')
+      expect(request.query.sortDirection).to.equal('desc')
+    })
     cy.get('thead').contains('a', 'Last Update').click()
-    cy.wait('@reports')
-      .its('request.query.sortField')
-      .should('equal', 'updatedAt')
+    cy.wait('@reports').then(({ request }) => {
+      expect(request.query.sortField).to.equal('updatedAt')
+      expect(request.query.sortDirection).to.equal('asc')
+    })
     cy.viewport(375, 812)
     cy.get('tbody span[title="urgent · 30m target"]:visible').should(
       'have.length',

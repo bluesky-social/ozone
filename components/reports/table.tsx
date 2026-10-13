@@ -42,8 +42,10 @@ const useSortOrder = () => {
 
   const directionKey = 'sortDirection'
   const fieldKey = 'sortField'
-  const sortDirection = searchParams.get(directionKey)
-  const sortField = searchParams.get(fieldKey)
+  const sortDirection =
+    searchParams.get(directionKey) === 'desc' ? 'desc' : 'asc'
+  const sortField =
+    searchParams.get(fieldKey) === 'updatedAt' ? 'updatedAt' : 'createdAt'
 
   function getToggleReverseOrderLink(field: string, newDirection?: string) {
     const params = new URLSearchParams(searchParams)
