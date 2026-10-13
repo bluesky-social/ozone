@@ -9,7 +9,11 @@ import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
 import { ModEventList } from '@/mod-event/EventList'
 import { getProfileUriForDid } from '@/reports/helpers/subject'
-import { useLabelerAgent, usePermission } from '@/shell/ConfigurationContext'
+import {
+  useLabelerAgent,
+  usePermission,
+  useServerConfig,
+} from '@/shell/ConfigurationContext'
 import { SubjectReviewStateBadge } from '@/subject/ReviewStateMarker'
 import {
   useWorkspaceAddItemsMutation,
@@ -19,6 +23,7 @@ import {
 import {
   AppBskyActorDefs,
   ComAtprotoAdminDefs,
+  ToolsOzoneTeamDefs,
   AppBskyActorGetProfile as GetProfile,
   ToolsOzoneModerationGetRepo as GetRepo,
 } from '@atproto/api'
@@ -63,6 +68,7 @@ import { useCopyAccountDetails } from './useCopyAccountDetails'
 import { getProfiles } from './api'
 import { VerificationBadge } from 'components/verification/Badge'
 import { AccountHistory } from './AccountHistory'
+import { AccountPreferences } from './AccountPreferences'
 import { Country } from './Country'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { ManageView } from './ManageView'
@@ -508,6 +514,7 @@ function Details({
   id: string
 }) {
   const router = useRouter()
+  const { role } = useServerConfig()
   const labels = getLabelsForSubject({ repo })
   const tags = repo.moderation.subjectStatus?.tags || []
   const canShowDidHistory = repo.did.startsWith('did:plc')
@@ -678,6 +685,9 @@ function Details({
           invitesDisabled={repo.invitesDisabled}
         />
       </dl>
+      {role === ToolsOzoneTeamDefs.ROLEADMIN && (
+        <AccountPreferences did={repo.did} />
+      )}
       <AccountHistory did={repo.did} />
       {canShowDidHistory && <DidHistory did={repo.did} />}
       {isDidWeb && <DidWebDetails did={repo.did} />}

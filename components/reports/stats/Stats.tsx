@@ -76,9 +76,11 @@ export interface ReportStats {
 export function StatValues({
   stats,
   className,
+  description,
 }: {
   stats: ReportStats
   className?: string
+  description?: string
 }) {
   const from = new Date()
   from.setUTCHours(0, 0, 0, 0) // stats are calculated from UTC midnight
@@ -114,7 +116,11 @@ export function StatValues({
           }
         />
       </div>
-      {windowHours && (
+      {description ? (
+        <div className="text-xs text-gray-400 dark:text-gray-500">
+          {description}
+        </div>
+      ) : windowHours ? (
         <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
           <span>
             Stats from last {windowHours} hour
@@ -128,7 +134,7 @@ export function StatValues({
             </span>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }

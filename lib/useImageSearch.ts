@@ -2,6 +2,8 @@ import { useMutation } from '@tanstack/react-query'
 import { useCallback, useRef } from 'react'
 import { toast } from 'react-toastify'
 import { IMAGE_SEARCH_API_URL } from './constants'
+import type { PluginFetch } from './plugins/auth/client'
+import { usePluginFetch } from './plugins/auth/usePluginFetch'
 
 export function useIsImageSearchEnabled(): boolean {
   return !!IMAGE_SEARCH_API_URL
@@ -68,6 +70,7 @@ function optionsToQuery(options: ImageSearchOptions = {}): URLSearchParams {
 
 async function runSearch(
   input: ImageSearchInput,
+  pluginFetch: PluginFetch,
   signal?: AbortSignal,
 ): Promise<ImageSearchResult | null> {
   const params = optionsToQuery(input.options)
@@ -79,12 +82,13 @@ async function runSearch(
     } else {
       params.set('url', input.url)
     }
-    response = await fetch(`/api/image-search/search?${params.toString()}`, {
-      signal,
-    })
+    response = await pluginFetch(
+      `/api/image-search/search?${params.toString()}`,
+      { signal },
+    )
   } else {
     const query = params.toString()
-    response = await fetch(
+    response = await pluginFetch(
       `/api/image-search/search${query ? `?${query}` : ''}`,
       {
         method: 'POST',
@@ -110,6 +114,7 @@ async function runSearch(
 // cancel() to abort. Aborting rejects the fetch with an AbortError, which the
 // onError handler swallows, so the UI just stops loading.
 export function useImageSearch() {
+  const pluginFetch = usePluginFetch()
   // One controller per in-flight search; replaced on each new mutate.
   const abortRef = useRef<AbortController | null>(null)
 
@@ -123,7 +128,7 @@ export function useImageSearch() {
       abortRef.current?.abort()
       const controller = new AbortController()
       abortRef.current = controller
-      return runSearch(input, controller.signal)
+      return runSearch(input, pluginFetch, controller.signal)
     },
     retry: false,
     onError: (e) => {

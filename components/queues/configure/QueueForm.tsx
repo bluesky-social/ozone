@@ -9,6 +9,11 @@ import { useState } from 'react'
 import { Tooltip } from '@/common/Tooltip'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
 import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { LabelSelector } from '@/common/labels/Selector'
+
+type QueueWithRecommendedLabels = ToolsOzoneQueueDefs.QueueView & {
+  recommendedLabels?: string[]
+}
 
 function MatchSummary({
   subjectTypes,
@@ -83,7 +88,7 @@ export function QueueForm({
   onCancel,
   onSuccess,
 }: {
-  queue?: ToolsOzoneQueueDefs.QueueView
+  queue?: QueueWithRecommendedLabels
   onCancel: () => void
   onSuccess: () => void
 }) {
@@ -114,6 +119,9 @@ export function QueueForm({
   const [recommendedPolicies, setRecommendedPolicies] = useState<string[]>(
     queue?.recommendedPolicies ?? [],
   )
+  const [recommendedLabels, setRecommendedLabels] = useState<string[]>(
+    queue?.recommendedLabels ?? [],
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const handleToggleEnabled = async () => {
@@ -124,6 +132,7 @@ export function QueueForm({
         name: queue.name,
         description: queue.description,
         recommendedPolicies,
+        recommendedLabels,
         enabled: !queue.enabled,
       },
       {
@@ -175,6 +184,7 @@ export function QueueForm({
           name,
           description,
           recommendedPolicies,
+          recommendedLabels,
         },
         { onSuccess },
       )
@@ -187,6 +197,7 @@ export function QueueForm({
           reportTypes,
           collection: collectionSanitized,
           recommendedPolicies,
+          recommendedLabels,
         },
         { onSuccess },
       )
@@ -194,7 +205,7 @@ export function QueueForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id="queue-form" onSubmit={handleSubmit} className="space-y-4">
       {!isEditMode && (
         <p className="text-sm text-gray-400">
           Create a queue to route reports to. Matching criteria cannot be
@@ -228,6 +239,20 @@ export function QueueForm({
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           These policies appear first when actioning reports in this queue.
+        </p>
+      </FormLabel>
+
+      <FormLabel label="Recommended labels" className="mb-3">
+        <LabelSelector
+          id="recommendedLabels"
+          name="recommendedLabels"
+          form="queue-form"
+          defaultLabels={recommendedLabels}
+          onChange={setRecommendedLabels}
+        />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          These labels are recommended for this queue and route label appeals
+          here when no source report association is available.
         </p>
       </FormLabel>
 

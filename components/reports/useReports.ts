@@ -1,12 +1,35 @@
-import {
-  ToolsOzoneReportDefs
-} from '@atproto/api'
+import { ToolsOzoneReportDefs } from '@atproto/api'
 import { InfiniteData, useQueryClient } from '@tanstack/react-query'
-import {
-  useRouter
-} from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocalStorage } from 'react-use'
+
+// The report list lives in an in-memory react-query cache, which is dropped on
+// a full page load. Mirroring the ordering into sessionStorage keeps prev/next
+// navigation working when the detail page is reloaded or opened directly.
+const REPORTS_LIST_IDS_KEY = 'ozone:reportsListIds'
+
+export function persistReportListIds(ids: number[]) {
+  if (typeof window === 'undefined') return
+  try {
+    sessionStorage.setItem(REPORTS_LIST_IDS_KEY, JSON.stringify(ids))
+  } catch {
+    // sessionStorage may be unavailable, navigation just falls back to the cache
+  }
+}
+
+function getPersistedReportIds(): number[] {
+  if (typeof window === 'undefined') return []
+  try {
+    const raw = sessionStorage.getItem(REPORTS_LIST_IDS_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.filter((id): id is number => typeof id === 'number')
+  } catch {
+    return []
+  }
+}
 
 function getReportsFromCache(
   queryClient: ReturnType<typeof useQueryClient>,
@@ -35,20 +58,30 @@ function getReportsFromCache(
   return reports
 }
 
-function findAdjacentReportsInCache(
+// Prefer the live cache, which reflects the list the user is looking at, and
+// fall back to the persisted ordering after a reload clears it.
+function getReportIdsForNavigation(
+  queryClient: ReturnType<typeof useQueryClient>,
+): number[] {
+  const cached = getReportsFromCache(queryClient)
+  if (cached.length > 0) return cached.map((r) => r.id)
+  return getPersistedReportIds()
+}
+
+function findAdjacentReports(
   queryClient: ReturnType<typeof useQueryClient>,
   reportId: number,
 ): { prevId: number | null; nextId: number | null } {
-  const allReports = getReportsFromCache(queryClient)
+  const reportIds = getReportIdsForNavigation(queryClient)
 
-  if (allReports.length === 0) return { prevId: null, nextId: null }
+  if (reportIds.length === 0) return { prevId: null, nextId: null }
 
-  const index = allReports.findIndex((r) => r.id === reportId)
+  const index = reportIds.indexOf(reportId)
   if (index === -1) return { prevId: null, nextId: null }
 
   return {
-    prevId: index > 0 ? allReports[index - 1].id : null,
-    nextId: index < allReports.length - 1 ? allReports[index + 1].id : null,
+    prevId: index > 0 ? reportIds[index - 1] : null,
+    nextId: index < reportIds.length - 1 ? reportIds[index + 1] : null,
   }
 }
 
@@ -64,7 +97,6 @@ function findReportInCache(
  * Hook to manage current report
  */
 export function useReports(reportId: number) {
-  const router = useRouter()
   const queryClient = useQueryClient()
 
   // current report
@@ -77,7 +109,7 @@ export function useReports(reportId: number) {
   const { prevId, nextId } = useMemo(
     function () {
       if (reportId === null) return { prevId: null, nextId: null }
-      return findAdjacentReportsInCache(queryClient, reportId)
+      return findAdjacentReports(queryClient, reportId)
     },
     [reportId],
   )
@@ -136,16 +168,19 @@ export function useReportArrowKeyNavigation(reportId: number) {
   const router = useRouter()
   const { prevReportId, nextReportId } = useReports(reportId)
 
-  const isEditableTarget = useCallback((target: EventTarget | null): boolean => {
-    if (!(target instanceof HTMLElement)) return false
-    const tag = target.tagName
-    return (
-      tag === 'INPUT' ||
-      tag === 'TEXTAREA' ||
-      tag === 'SELECT' ||
-      target.isContentEditable
-    )
-  }, [])
+  const isEditableTarget = useCallback(
+    (target: EventTarget | null): boolean => {
+      if (!(target instanceof HTMLElement)) return false
+      const tag = target.tagName
+      return (
+        tag === 'INPUT' ||
+        tag === 'TEXTAREA' ||
+        tag === 'SELECT' ||
+        target.isContentEditable
+      )
+    },
+    [],
+  )
 
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
