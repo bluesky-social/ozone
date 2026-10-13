@@ -205,9 +205,7 @@ function Form(
     selectedAgeAssuranceState,
     setSelectedAgeAssuranceState,
     showRecordAgeWarning,
-    showAccountAgeWarning,
     recordAgeWarningText,
-    accountAgeWarningText,
     preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
@@ -816,17 +814,6 @@ function Form(
                       />
                     </div>
                   )}
-                  {showAccountAgeWarning && (
-                    <div className="my-2">
-                      <Alert
-                        showIcon
-                        type="warning"
-                        title="Account age notice"
-                        body={accountAgeWarningText}
-                      />
-                    </div>
-                  )}
-
                   {!isEmailEvent && (
                     <div className="mt-auto flex flex-row justify-between">
                       <div>

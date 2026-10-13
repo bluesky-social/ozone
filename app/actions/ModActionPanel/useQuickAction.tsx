@@ -46,10 +46,9 @@ import { useColorScheme } from '@/common/useColorScheme'
 import {
   AUTOMATED_ACTION_EMAIL_IDS,
   STRIKE_TO_SUSPENSION_DURATION_IN_HOURS,
-  ACCOUNT_AGE_THRESHOLD_DAYS,
-  ACCOUNT_AGE_SEVERITY_LEVEL,
   RECORD_AGE_THRESHOLD_DAYS,
   RECORD_AGE_SEVERITY_LEVEL,
+  SUBJECT_AGE_WARNING_INCLUDED_POLICIES,
 } from '@/lib/constants'
 import { useEmailRecipientStatus } from '@/email/useEmailRecipientStatus'
 import { TakedownTargetService } from '@/lib/types'
@@ -59,7 +58,6 @@ import {
 } from './useTakedownEmail'
 import { format } from 'date-fns'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
-import { getProfileFromRepo } from '@/repositories/helpers'
 
 export type QuickActionProps = {
   subject: string
@@ -101,7 +99,6 @@ function getSubjectAgeWarningText(
 export const useQuickAction = (
   props: QuickActionProps & {
     onCancel: () => void
-    applyToAccount?: boolean
   },
 ) => {
   const { config } = useConfigurationContext()
@@ -116,7 +113,6 @@ export const useQuickAction = (
     subjectOptions,
     onCancel,
     onSubmit,
-    applyToAccount = false,
   } = props
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
@@ -132,17 +128,10 @@ export const useQuickAction = (
     useSubjectQuery(subject)
 
   const isSubjectDid = subject.startsWith('did:')
-  const actionTargetsAccount = isSubjectDid || applyToAccount
-  const accountRepo = repo ?? record?.repo
   const recordCreatedAt =
     typeof record?.value?.createdAt === 'string'
       ? record.value.createdAt
       : undefined
-  const relatedProfile = accountRepo
-    ? getProfileFromRepo(accountRepo.relatedRecords)
-    : undefined
-  const accountCreatedAt =
-    profile?.createdAt || relatedProfile?.createdAt || accountRepo?.indexedAt
 
   const recipientLanguages = getRecipientsLanguages(repo)
 
@@ -281,60 +270,47 @@ export const useQuickAction = (
     recordCreatedAt,
     RECORD_AGE_THRESHOLD_DAYS,
   )
-  const isBeyondAccountAgeThreshold = isSubjectOlderThanThreshold(
-    accountCreatedAt,
-    ACCOUNT_AGE_THRESHOLD_DAYS,
-  )
   const isAgeAction = isTakedownEvent
   const showRecordAgeWarning = isBeyondRecordAgeThreshold && isAgeAction
-  const showAccountAgeWarning =
-    isBeyondAccountAgeThreshold && actionTargetsAccount && isAgeAction
-  const configuredAgeSeverityLevelNames = [
-    isBeyondAccountAgeThreshold && actionTargetsAccount
-      ? ACCOUNT_AGE_SEVERITY_LEVEL
-      : undefined,
-    isBeyondRecordAgeThreshold && !isSubjectDid
-      ? RECORD_AGE_SEVERITY_LEVEL
-      : undefined,
-  ].filter((levelName): levelName is string => !!levelName)
-  const findSupportedPolicySeverityLevel = (configuredLevelName?: string) =>
-    configuredLevelName
-      ? Object.keys(policyDetails?.severityLevels ?? {}).find(
+  const configuredAgeSeverityLevelNames =
+    isBeyondRecordAgeThreshold && !isSubjectDid && RECORD_AGE_SEVERITY_LEVEL
+      ? [RECORD_AGE_SEVERITY_LEVEL]
+      : []
+  const isAgeSeverityDefaultIncludedForPolicy =
+    !!selectedPolicyName &&
+    SUBJECT_AGE_WARNING_INCLUDED_POLICIES.some(
+      (policyName) => nameToKey(policyName) === nameToKey(selectedPolicyName),
+    )
+  const findConfiguredSeverityLevel = (configuredLevelName?: string) =>
+    configuredLevelName && isAgeSeverityDefaultIncludedForPolicy
+      ? Object.keys(severityLevelData?.value ?? {}).find(
           (levelName) =>
-            nameToKey(levelName) === nameToKey(configuredLevelName) &&
-            !!severityLevelData?.value?.[nameToKey(levelName)],
+            nameToKey(levelName) === nameToKey(configuredLevelName),
         )
       : undefined
-  const configuredPolicySeverityLevelNames = configuredAgeSeverityLevelNames
-    .map(findSupportedPolicySeverityLevel)
+  const configuredSeverityLevelNames = configuredAgeSeverityLevelNames
+    .map(findConfiguredSeverityLevel)
     .filter((levelName): levelName is string => !!levelName)
   const policyDefaultSeverityLevelName =
     Object.entries(policyDetails?.severityLevels ?? {}).find(
       ([, level]) => level.isDefault,
     )?.[0] ?? Object.keys(policyDetails?.severityLevels ?? {})[0]
   const recordAgeWarningSeverityLevelName =
-    findSupportedPolicySeverityLevel(RECORD_AGE_SEVERITY_LEVEL) ??
+    findConfiguredSeverityLevel(RECORD_AGE_SEVERITY_LEVEL) ??
     policyDefaultSeverityLevelName ??
-    RECORD_AGE_SEVERITY_LEVEL
-  const accountAgeWarningSeverityLevelName =
-    findSupportedPolicySeverityLevel(ACCOUNT_AGE_SEVERITY_LEVEL) ??
-    policyDefaultSeverityLevelName ??
-    ACCOUNT_AGE_SEVERITY_LEVEL
+    (isAgeSeverityDefaultIncludedForPolicy
+      ? RECORD_AGE_SEVERITY_LEVEL
+      : undefined)
   const preferredSeverityLevelName =
     isTakedownEvent &&
     !hasManuallySelectedSeverity &&
-    configuredPolicySeverityLevelNames.length > 0
-      ? configuredPolicySeverityLevelNames[0]
+    configuredSeverityLevelNames.length > 0
+      ? configuredSeverityLevelNames[0]
       : undefined
   const recordAgeWarningText = getSubjectAgeWarningText(
     RECORD_AGE_THRESHOLD_DAYS,
     recordAgeWarningSeverityLevelName,
   )
-  const accountAgeWarningText = getSubjectAgeWarningText(
-    ACCOUNT_AGE_THRESHOLD_DAYS,
-    accountAgeWarningSeverityLevelName,
-  )
-
   useEffect(() => {
     setHasManuallySelectedSeverity(false)
   }, [subject])
@@ -1004,9 +980,7 @@ export const useQuickAction = (
     selectedAgeAssuranceState,
     setSelectedAgeAssuranceState,
     showRecordAgeWarning,
-    showAccountAgeWarning,
     recordAgeWarningText,
-    accountAgeWarningText,
     preferredSeverityLevelName,
   }
 }

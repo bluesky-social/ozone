@@ -794,9 +794,7 @@ function ReportDetailLayout(props: {
     onEmailTemplateSelect,
     emailSubjectField,
     showRecordAgeWarning,
-    showAccountAgeWarning,
     recordAgeWarningText,
-    accountAgeWarningText,
     preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
@@ -804,7 +802,6 @@ function ReportDetailLayout(props: {
     subject,
     setSubject,
     subjectOptions,
-    applyToAccount,
   })
 
   // Sync the selected action with its event type and report closing scope.
@@ -1255,17 +1252,6 @@ function ReportDetailLayout(props: {
                   />
                 </div>
               )}
-              {showAccountAgeWarning && (
-                <div className="mb-3">
-                  <Alert
-                    showIcon
-                    type="warning"
-                    title="Account age notice"
-                    body={accountAgeWarningText}
-                  />
-                </div>
-              )}
-
               <div className="mt-4 flex flex-row justify-between">
                 <ButtonSecondary
                   className="px-4"
