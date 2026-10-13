@@ -7,6 +7,12 @@ export function getType(obj: unknown): string {
   return ''
 }
 
+export function getReasonLabel(reason: string): string {
+  return Object.hasOwn(reasonTypeOptions, reason)
+    ? reasonTypeOptions[reason]
+    : reason
+}
+
 export const reasonTypeOptions = {
   // Legacy constant-based reasons
   [ComAtprotoModerationDefs.REASONSPAM]: 'Spam',
