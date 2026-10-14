@@ -119,6 +119,7 @@ export enum CollectionId {
   LabelerService = 'app.bsky.labeler.service',
   StarterPack = 'app.bsky.graph.starterpack',
   ProfileStatus = 'app.bsky.actor.status',
+  StandardDocument = 'site.standard.document',
   Convo = 'chat.bsky.convo',
 }
 export const getProfileUriForDid = (did: string) =>
@@ -148,6 +149,9 @@ export const getCollectionName = (collection: string) => {
   }
   if (collection === CollectionId.Convo) {
     return 'Conversation'
+  }
+  if (collection === CollectionId.StandardDocument) {
+    return 'Document'
   }
   // If the collection is a string with ., use the last two segments as the title
   // so app.bsky.graph.list -> graph list
