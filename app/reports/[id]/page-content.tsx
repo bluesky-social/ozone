@@ -483,6 +483,7 @@ export function ReportDetailPageContent() {
             }
             const eventId = (result as any)?.id
             const isCascaded =
+              vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&
               vals.subject.$type === 'com.atproto.admin.defs#repoRef'
             if (isCascaded && eventId) {
@@ -1074,6 +1075,7 @@ function ReportDetailLayout(props: {
                       },
                       createdBy: labelerAgent.assertDid,
                       event: emailEvent,
+                      reportAction: { ids: [report.id] },
                     })
                   }
                 : undefined
