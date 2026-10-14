@@ -12,6 +12,7 @@ const PreviewTitleMap = {
   [CollectionId.Profile]: 'Reported profile',
   [CollectionId.StarterPack]: 'Reported starter pack',
   [CollectionId.ProfileStatus]: 'Reported profile status',
+  [CollectionId.StandardDocument]: 'Reported document',
   [CollectionId.Convo]: 'Reported conversation',
 }
 
