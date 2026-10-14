@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { Agent } from '@atproto/api'
+import inbox from '../../../cypress/fixtures/inbox.json'
 import {
   fetchInboxDetail,
   fetchAccountStatus,
@@ -10,93 +11,106 @@ import {
   hydrateInboxSubjects,
   subjectKey,
   submitInboxAppeal,
-  type InboxReport,
 } from './api'
+import { appealLabel, notificationLabel } from './presentation'
+
+const subject = {
+  $type: 'com.atproto.admin.defs#repoRef' as const,
+  did: inbox.did,
+}
+const report = { ...inbox.report, isRead: false }
+const detail = { ...inbox.item, actions: inbox.actions }
+
+// Exercise the released lexicons and actual XRPC serialization/validation.
+function mockAgent(...responses: unknown[]) {
+  const fetch = vi
+    .fn()
+    .mockImplementation(async () =>
+      Response.json(responses.length > 1 ? responses.shift() : responses[0]),
+    )
+  const agent = new Agent({ service: 'https://pds.test', fetch }).withProxy(
+    'atproto_labeler',
+    'did:plc:ozone',
+  )
+  return { agent, fetch }
+}
+function request(fetch: ReturnType<typeof vi.fn>, index = 0) {
+  return new URL(fetch.mock.calls[index][0])
+}
 
 describe('moderator inbox preview requests', () => {
   it.each(['pending', 'resolved', 'unread'] as const)(
     'filters actioned subjects by %s with explicit sorting',
     async (filter) => {
-      const fetchHandler = vi
-        .fn()
-        .mockResolvedValue(Response.json({ subjects: [], cursor: 'next' }))
+      const { agent, fetch } = mockAgent({ subjects: [], cursor: 'next' })
       const signal = new AbortController().signal
       await fetchInboxPreviewPage(
-        { fetchHandler },
-        'did:plc:target',
+        agent,
+        inbox.did,
         'actioned-subjects',
         'previous',
         signal,
         filter,
         { sortField: 'createdAt', sortDirection: 'asc' },
       )
-      const url = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-      expect(Object.fromEntries(url.searchParams)).toEqual({
-        did: 'did:plc:target',
+      expect(Object.fromEntries(request(fetch).searchParams)).toEqual({
+        did: inbox.did,
         limit: '50',
         cursor: 'previous',
         filter,
         sortField: 'createdAt',
         sortDirection: 'asc',
       })
-      expect(fetchHandler.mock.calls[0][1]).toEqual({ method: 'GET', signal })
+      expect(fetch.mock.calls[0][1]).toMatchObject({ method: 'get', signal })
     },
   )
 
   it('paginates action history with the same subject and preview account', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(Response.json({ actions: [] }))
+    const { agent, fetch } = mockAgent(detail)
     await fetchInboxDetail(
-      { fetchHandler },
-      'did:plc:target',
+      agent,
+      inbox.did,
       'actioned-subjects',
-      'did:plc:target',
+      inbox.did,
       undefined,
       'older::100',
     )
-    const url = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-    expect(Object.fromEntries(url.searchParams)).toEqual({
-      did: 'did:plc:target',
-      subject: 'did:plc:target',
+    expect(Object.fromEntries(request(fetch).searchParams)).toEqual({
+      did: inbox.did,
+      subject: inbox.did,
       limit: '50',
       cursor: 'older::100',
     })
   })
 
-  it('reads standing, notification counts, and push preferences for the preview account', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValueOnce(
-        Response.json({
-          standing: 'warning',
-          updatedAt: '2026-10-01T00:00:00Z',
-        }),
-      )
-      .mockResolvedValueOnce(
-        Response.json({
-          unreadCounts: { total: 4, reports: 2, subjects: 1, accountStatus: 1 },
-        }),
-      )
-      .mockResolvedValueOnce(Response.json({ preferences: { push: false } }))
-    const agent = { fetchHandler }
-    expect(await fetchAccountStatus(agent, 'did:plc:target')).toMatchObject({
+  it('reads standing, counts, and independent push preferences for the preview account', async () => {
+    const preferences = { reports: false, account: true, labels: false }
+    const { agent, fetch } = mockAgent(
+      {
+        src: inbox.item.src,
+        standing: 'warning',
+        updatedAt: '2026-10-01T00:00:00Z',
+      },
+      { unreadCounts: { total: 4, reports: 2, subjects: 1, accountStatus: 1 } },
+      { preferences },
+    )
+    expect(await fetchAccountStatus(agent, inbox.did)).toMatchObject({
       standing: 'warning',
     })
-    expect(await fetchUnreadCounts(agent, 'did:plc:target')).toEqual({
+    expect(await fetchUnreadCounts(agent, inbox.did)).toMatchObject({
       total: 4,
       reports: 2,
       subjects: 1,
       accountStatus: 1,
     })
-    expect(await fetchNotificationPreferences(agent, 'did:plc:target')).toEqual(
-      { push: false },
+    expect(await fetchNotificationPreferences(agent, inbox.did)).toEqual(
+      preferences,
     )
     expect(
-      fetchHandler.mock.calls.map(([path, init]) => {
-        const url = new URL(path, 'https://ozone.test')
-        expect(url.searchParams.get('did')).toBe('did:plc:target')
-        expect(init.method).toBe('GET')
+      fetch.mock.calls.map(([path, init]) => {
+        const url = new URL(path)
+        expect(url.searchParams.get('did')).toBe(inbox.did)
+        expect(init.method.toUpperCase()).toBe('GET')
         return url.pathname.split('.').pop()
       }),
     ).toEqual([
@@ -107,40 +121,37 @@ describe('moderator inbox preview requests', () => {
   })
 
   it('passes notification filters and cursors to the preview read endpoint', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ notifications: [{ id: 5 }], cursor: 'next' }),
-      )
+    const { agent, fetch } = mockAgent({
+      notifications: inbox.notifications,
+      cursor: 'next',
+    })
     const result = await fetchNotificationsPage(
-      { fetchHandler },
-      'did:plc:target',
+      agent,
+      inbox.did,
       { section: 'subjects', reason: 'appealResolved', unreadOnly: true },
       'older',
     )
-    const url = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-    expect(url.pathname).toBe('/xrpc/tools.ozone.inbox.listNotifications')
-    expect(Object.fromEntries(url.searchParams)).toEqual({
-      did: 'did:plc:target',
+    expect(request(fetch).pathname).toBe(
+      '/xrpc/tools.ozone.inbox.listNotifications',
+    )
+    expect(Object.fromEntries(request(fetch).searchParams)).toEqual({
+      did: inbox.did,
       limit: '50',
       section: 'subjects',
       reasons: 'appealResolved',
       unreadOnly: 'true',
       cursor: 'older',
     })
-    expect(result).toEqual({ items: [{ id: 5 }], cursor: 'next' })
+    expect(result).toEqual({ items: inbox.notifications, cursor: 'next' })
   })
 
   it('omits an empty reason and references the specific decision when appealing', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(Response.json({ appeal: { state: 'pending' } }))
-    const subject = {
-      did: 'did:plc:target',
-      $type: 'com.atproto.admin.defs#repoRef',
-    }
-    await submitInboxAppeal({ fetchHandler }, subject, '', 27)
-    expect(JSON.parse(fetchHandler.mock.calls[0][1].body)).toEqual({
+    const { agent, fetch } = mockAgent({
+      ...inbox.item,
+      appeal: { state: 'pending' },
+    })
+    await submitInboxAppeal(agent, subject, '', 27)
+    expect(await new Response(fetch.mock.calls[0][1].body).json()).toEqual({
       subject,
       action: {
         $type: 'tools.ozone.inbox.appealActionedSubject#actionRef',
@@ -149,53 +160,47 @@ describe('moderator inbox preview requests', () => {
     })
   })
 
-  it('rejects malformed notification pages', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(Response.json({ notifications: {} }))
-    await expect(
-      fetchNotificationsPage({ fetchHandler }, 'did:plc:target'),
-    ).rejects.toThrow('unexpected response')
+  it('rejects malformed notification pages using the released lexicon', async () => {
+    const { agent } = mockAgent({ notifications: {} })
+    await expect(fetchNotificationsPage(agent, inbox.did)).rejects.toThrow()
   })
+
   it('passes the route DID and cursor to the reports endpoint', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ reports: [{ id: 42 }], cursor: 'next::42' }),
-      )
-    const result = await fetchInboxPreviewPage<InboxReport>(
-      { fetchHandler },
-      'did:plc:target',
+    const { agent, fetch } = mockAgent({
+      reports: [report],
+      cursor: 'next::42',
+    })
+    const result = await fetchInboxPreviewPage(
+      agent,
+      inbox.did,
       'reports',
       'previous::1',
     )
-    const request = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-    expect(request.pathname).toBe('/xrpc/tools.ozone.inbox.listReports')
-    expect(request.searchParams.get('did')).toBe('did:plc:target')
-    expect(request.searchParams.get('cursor')).toBe('previous::1')
-    expect(request.searchParams.get('limit')).toBe('50')
-    expect(result).toEqual({ items: [{ id: 42 }], cursor: 'next::42' })
+    expect(request(fetch).pathname).toBe('/xrpc/tools.ozone.inbox.listReports')
+    expect(Object.fromEntries(request(fetch).searchParams)).toEqual({
+      did: inbox.did,
+      cursor: 'previous::1',
+      limit: '50',
+    })
+    expect(result).toEqual({ items: [report], cursor: 'next::42' })
   })
 
   it('applies the reports filter without losing the preview DID', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(Response.json({ reports: [] }))
+    const { agent, fetch } = mockAgent({ reports: [] })
     await fetchInboxPreviewPage(
-      { fetchHandler },
-      'did:plc:target',
+      agent,
+      inbox.did,
       'reports',
       undefined,
       undefined,
       'unread',
     )
-    const request = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-    expect(request.searchParams.get('did')).toBe('did:plc:target')
-    expect(request.searchParams.get('filter')).toBe('unread')
+    expect(request(fetch).searchParams.get('did')).toBe(inbox.did)
+    expect(request(fetch).searchParams.get('filter')).toBe('unread')
   })
 
-  it('requests actioned subjects and surfaces backend authorization errors', async () => {
-    const fetchHandler = vi
+  it('surfaces typed backend authorization errors', async () => {
+    const fetch = vi
       .fn()
       .mockResolvedValue(
         Response.json(
@@ -203,88 +208,138 @@ describe('moderator inbox preview requests', () => {
           { status: 403 },
         ),
       )
+    const agent = new Agent({ service: 'https://pds.test', fetch })
     await expect(
-      fetchInboxPreviewPage(
-        { fetchHandler },
-        'did:plc:target',
-        'actioned-subjects',
-      ),
+      fetchInboxPreviewPage(agent, inbox.did, 'actioned-subjects'),
     ).rejects.toThrow('Unauthorized')
-    const request = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-    expect(request.pathname).toBe(
+    expect(request(fetch).pathname).toBe(
       '/xrpc/tools.ozone.inbox.listActionedSubjects',
     )
   })
 
-  it('reads the actioned subjects list from the subjects response field', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(
-        Response.json({ subjects: [{ subject: { did: 'did:plc:target' } }] }),
-      )
-    const result = await fetchInboxPreviewPage(
-      { fetchHandler },
-      'did:plc:target',
-      'actioned-subjects',
-    )
-    expect(result).toEqual({
-      items: [{ subject: { did: 'did:plc:target' } }],
-      cursor: undefined,
-    })
+  it('reads actioned subjects from the subjects response field', async () => {
+    const { agent } = mockAgent({ subjects: [inbox.item] })
+    expect(
+      await fetchInboxPreviewPage(agent, inbox.did, 'actioned-subjects'),
+    ).toEqual({ items: [inbox.item], cursor: undefined })
   })
 
-  it('retains the labeler proxy configured on the signed-in agent', async () => {
-    const fetch = vi.fn().mockResolvedValue(Response.json({ subjects: [] }))
-    const agent = new Agent({ service: 'https://pds.test', fetch }).withProxy(
-      'atproto_labeler',
-      'did:plc:ozone',
+  it('retains the labeler proxy on all signed-in agent inbox calls', async () => {
+    const { agent, fetch } = mockAgent(
+      { subjects: [] },
+      { reports: [] },
+      detail,
+      { report: inbox.report },
+      {
+        src: inbox.item.src,
+        standing: 'good',
+        updatedAt: '2026-10-01T00:00:00Z',
+      },
+      { unreadCounts: { total: 0 } },
+      { preferences: { reports: true, account: false, labels: true } },
+      { notifications: [] },
+      { ...inbox.item, appeal: { state: 'pending' } },
     )
-    await fetchInboxPreviewPage(agent, 'did:plc:target', 'actioned-subjects')
-    const headers = new Headers(fetch.mock.calls[0][1].headers)
-    expect(headers.get('atproto-proxy')).toBe('did:plc:ozone#atproto_labeler')
+    await fetchInboxPreviewPage(agent, inbox.did, 'actioned-subjects')
+    await fetchInboxPreviewPage(agent, inbox.did, 'reports')
+    await fetchInboxDetail(agent, inbox.did, 'actioned-subjects', inbox.did)
+    await fetchInboxDetail(agent, inbox.did, 'reports', 900)
+    await fetchAccountStatus(agent, inbox.did)
+    await fetchUnreadCounts(agent, inbox.did)
+    await fetchNotificationPreferences(agent, inbox.did)
+    await fetchNotificationsPage(agent, inbox.did)
+    await submitInboxAppeal(agent, subject, '')
+    expect(fetch).toHaveBeenCalledTimes(9)
+    for (const [, init] of fetch.mock.calls) {
+      expect(new Headers(init.headers).get('atproto-proxy')).toBe(
+        'did:plc:ozone#atproto_labeler',
+      )
+    }
   })
 
   it('passes the preview DID to both detail endpoints', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockImplementation(async () => Response.json({ report: { id: 42 } }))
-    await fetchInboxDetail({ fetchHandler }, 'did:plc:target', 'reports', 42)
-    let request = new URL(fetchHandler.mock.calls[0][0], 'https://ozone.test')
-    expect(request.pathname).toBe('/xrpc/tools.ozone.inbox.getReport')
-    expect(request.searchParams.get('did')).toBe('did:plc:target')
-    expect(request.searchParams.get('id')).toBe('42')
-
+    const { agent, fetch } = mockAgent({ report: inbox.report }, detail)
+    await fetchInboxDetail(agent, inbox.did, 'reports', 900)
+    expect(request(fetch).pathname).toBe('/xrpc/tools.ozone.inbox.getReport')
+    expect(request(fetch).searchParams.get('did')).toBe(inbox.did)
+    expect(request(fetch).searchParams.get('id')).toBe('900')
     await fetchInboxDetail(
-      { fetchHandler },
-      'did:plc:target',
+      agent,
+      inbox.did,
       'actioned-subjects',
-      'at://did:plc:target/app.bsky.feed.post/abc',
+      inbox.subject.uri,
     )
-    request = new URL(fetchHandler.mock.calls[1][0], 'https://ozone.test')
-    expect(request.pathname).toBe('/xrpc/tools.ozone.inbox.getActionedSubject')
-    expect(request.searchParams.get('subject')).toBe(
-      'at://did:plc:target/app.bsky.feed.post/abc',
+    expect(request(fetch, 1).pathname).toBe(
+      '/xrpc/tools.ozone.inbox.getActionedSubject',
     )
-    expect(request.searchParams.get('did')).toBe('did:plc:target')
+    expect(request(fetch, 1).searchParams.get('subject')).toBe(
+      inbox.subject.uri,
+    )
+    expect(request(fetch, 1).searchParams.get('did')).toBe(inbox.did)
   })
 
-  it('submits an appeal with the subject and reason to the labeler', async () => {
-    const fetchHandler = vi
-      .fn()
-      .mockResolvedValue(Response.json({ appeal: { state: 'pending' } }))
-    const subject = {
-      $type: 'com.atproto.admin.defs#repoRef',
-      did: 'did:plc:target',
-    }
-    await submitInboxAppeal({ fetchHandler }, subject, 'Please review')
-    expect(fetchHandler.mock.calls[0][0]).toBe(
+  it('submits an appeal with subject and reason to the labeler', async () => {
+    const { agent, fetch } = mockAgent({
+      ...inbox.item,
+      appeal: { state: 'pending' },
+    })
+    await submitInboxAppeal(agent, subject, 'Please review')
+    expect(request(fetch).pathname).toBe(
       '/xrpc/tools.ozone.inbox.appealActionedSubject',
     )
-    expect(fetchHandler.mock.calls[0][1]).toMatchObject({
-      method: 'POST',
-      body: JSON.stringify({ subject, reason: 'Please review' }),
+    expect(await new Response(fetch.mock.calls[0][1].body).json()).toEqual({
+      subject,
+      reason: 'Please review',
     })
   })
+
+  it.each(['approved', 'denied'] as const)(
+    'preserves %s appeal outcomes through generated response validation',
+    async (outcome) => {
+      const { agent } = mockAgent(
+        {
+          subjects: [
+            { ...inbox.item, appeal: { ...inbox.item.appeal, outcome } },
+          ],
+        },
+        { ...detail, appeal: { ...detail.appeal, outcome } },
+        {
+          notifications: [
+            {
+              ...inbox.notifications[0],
+              reason: 'appealResolved',
+              target: {
+                $type: 'tools.ozone.inbox.defs#subjectRef',
+                subject,
+                appealOutcome: outcome,
+              },
+            },
+          ],
+        },
+      )
+      const list = await fetchInboxPreviewPage(
+        agent,
+        inbox.did,
+        'actioned-subjects',
+      )
+      expect(appealLabel(list.items[0].appeal!)).toBe(
+        outcome === 'approved' ? 'Approved' : 'Denied',
+      )
+      const data = await fetchInboxDetail(
+        agent,
+        inbox.did,
+        'actioned-subjects',
+        inbox.did,
+      )
+      expect(appealLabel(data.appeal!)).toBe(
+        outcome === 'approved' ? 'Approved' : 'Denied',
+      )
+      const notifications = await fetchNotificationsPage(agent, inbox.did)
+      expect(notificationLabel(notifications.items[0])).toBe(
+        `Appeal ${outcome}`,
+      )
+    },
+  )
 
   it('deduplicates and batches subject previews for the loaded page', async () => {
     const getSubjects = vi
@@ -293,9 +348,9 @@ describe('moderator inbox preview requests', () => {
         data: { subjects: subjects.map((subject) => ({ subject })) },
       }))
     const items = Array.from({ length: 52 }, (_, index) => ({
-      subject: { did: `did:plc:${index}` },
+      subject: { ...subject, did: `did:plc:${index}` },
     }))
-    items.push({ subject: { did: 'did:plc:0' } })
+    items.push({ subject: { ...subject, did: 'did:plc:0' } })
     const result = await hydrateInboxSubjects(
       { tools: { ozone: { moderation: { getSubjects } } } } as never,
       items,
@@ -306,7 +361,7 @@ describe('moderator inbox preview requests', () => {
     expect(Object.keys(result)).toHaveLength(52)
   })
 
-  it('does not mistake a chat report for an account subject', () => {
+  it('does not mistake chat reports or future subject types for accounts', () => {
     expect(
       subjectKey({
         $type: 'chat.bsky.convo.defs#messageRef',
@@ -315,5 +370,6 @@ describe('moderator inbox preview requests', () => {
         messageId: 'm',
       }),
     ).toBeUndefined()
+    expect(subjectKey({ $type: 'future.subject' })).toBeUndefined()
   })
 })

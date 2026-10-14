@@ -1,3 +1,4 @@
+import type { ToolsOzoneReportDefs } from '@atproto/api'
 import { numberToString } from '@/lib/util'
 import { ClockIcon } from '@heroicons/react/24/outline'
 import { formatDistanceToNow, subDays } from 'date-fns'
@@ -57,24 +58,7 @@ export function StatValue({
   )
 }
 
-export interface ReportStats {
-  /** All reports currently not closed, including reports from previous days. */
-  pendingCount?: number
-  /** Reports closed during this period. */
-  closedCount?: number
-  /** Closures whose last linked action is label, tag, or takedown. */
-  actionedCount?: number
-  /** Escalation activities recorded during this period. */
-  escalatedCount?: number
-  /** Reports created during this period (since UTC midnight for live stats). */
-  inboundCount?: number
-  /** Percentage of closures actioned, rounded to the nearest integer. Absent when closedCount is 0. */
-  actionRate?: number
-  /** Average time in seconds from report assignment to close. */
-  avgHandlingTimeSec?: number
-  /** When these statistics were last computed */
-  lastUpdated?: string
-}
+export type ReportStats = Omit<ToolsOzoneReportDefs.LiveStats, '$type'>
 
 export function StatValues({
   stats,

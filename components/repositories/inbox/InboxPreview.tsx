@@ -204,7 +204,15 @@ export function useHydratedSubjects(
     () =>
       [
         ...new Set(
-          [...items, { subject: { did } }]
+          [
+            ...items,
+            {
+              subject: {
+                $type: 'com.atproto.admin.defs#repoRef' as const,
+                did,
+              },
+            },
+          ]
             .map((item) => subjectKey(item.subject))
             .filter((key): key is string => !!key),
         ),
@@ -216,7 +224,10 @@ export function useHydratedSubjects(
     enabled: keys.length > 0,
     staleTime: 60_000,
     queryFn: async () => {
-      return hydrateInboxSubjects(agent, [...items, { subject: { did } }])
+      return hydrateInboxSubjects(agent, [
+        ...items,
+        { subject: { $type: 'com.atproto.admin.defs#repoRef' as const, did } },
+      ])
     },
   })
 }
@@ -280,7 +291,7 @@ export function ReportRow({
   reporterHandle,
   selected = false,
 }: {
-  item: Omit<InboxReport, 'isRead'> & { isRead?: boolean }
+  item: InboxReport | ReportDetail['report']
   did: string
   hydrated?: ToolsOzoneModerationDefs.SubjectView
   reporterHandle?: string
@@ -304,7 +315,9 @@ export function ReportRow({
     report.status === 'resolved'
       ? detail.data
         ? resolution?.actionTaken
-        : item.lastActionTaken
+        : 'lastActionTaken' in item
+          ? item.lastActionTaken
+          : undefined
       : undefined
   const status =
     report.status === 'pending'
@@ -325,7 +338,7 @@ export function ReportRow({
           </span>
         </span>
       }
-      isRead={item.isRead}
+      isRead={'isRead' in item ? item.isRead : undefined}
       open={open}
       onToggle={() => setOpen(!open)}
     >
@@ -396,7 +409,7 @@ function AppealForm({
   onDone,
   action,
 }: {
-  item: ActionedSubject
+  item: ActionedSubject | ActionedSubjectDetail
   did: string
   onDone: () => void
   action?: InboxAction
@@ -492,7 +505,7 @@ export function ActionedRow({
   hydrated,
   selected = false,
 }: {
-  item: ActionedSubject
+  item: ActionedSubject | ActionedSubjectDetail
   did: string
   hydrated?: ToolsOzoneModerationDefs.SubjectView
   selected?: boolean
@@ -507,7 +520,7 @@ export function ActionedRow({
   const subject = detail.data?.pages[0] || item
   const actions = detail.data
     ? mergeActions(detail.data.pages)
-    : item.latestAction
+    : 'latestAction' in item && item.latestAction
       ? [item.latestAction]
       : []
   const appealAction = actions.find(isAppealableAction)
@@ -515,7 +528,7 @@ export function ActionedRow({
     subject.appeal?.state === 'pending'
       ? 'Appeal under review'
       : subject.appeal?.state === 'resolved'
-        ? `Appeal reviewed · ${enforcementLabel(subject.enforcement.state)}`
+        ? `Appeal ${appealLabel(subject.appeal).toLowerCase()} · ${enforcementLabel(subject.enforcement.state)}`
         : enforcementLabel(subject.enforcement.state)
   return (
     <Row
@@ -569,7 +582,7 @@ export function ActionedRow({
             <div>
               <dt className="text-gray-500 dark:text-gray-400">Appeal</dt>
               <dd>
-                {appealLabel(subject.appeal.state)}
+                {appealLabel(subject.appeal)}
                 {subject.appeal.resolvedAt &&
                   ` · ${date(subject.appeal.resolvedAt)}`}
               </dd>
@@ -719,7 +732,7 @@ export function ActionedRow({
         </section>
       )}
       <div className="text-xs text-gray-500 dark:text-gray-400">
-        {item.actionCount !== undefined
+        {'actionCount' in item && item.actionCount !== undefined
           ? `${item.actionCount} actions`
           : `${actions.length} actions loaded`}
       </div>
@@ -1015,7 +1028,7 @@ export function ReportsPreview({ did }: { did: string }) {
   })
   const searchParams = useSearchParams()
   const selected = Number(searchParams.get('reportId'))
-  const query = useInboxPreview<InboxReport>(did, 'reports', filter, sort)
+  const query = useInboxPreview(did, 'reports', filter, sort)
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) || [],
     [query.data],
@@ -1090,12 +1103,7 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
   })
   const searchParams = useSearchParams()
   const selected = searchParams.get('subject')
-  const query = useInboxPreview<ActionedSubject>(
-    did,
-    'actioned-subjects',
-    filter,
-    sort,
-  )
+  const query = useInboxPreview(did, 'actioned-subjects', filter, sort)
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) || [],
     [query.data],

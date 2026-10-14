@@ -1,5 +1,6 @@
 'use client'
 
+import { ToolsOzoneInboxDefs } from '@atproto/api'
 import { useInfiniteQuery, useQuery } from '@tanstack/react-query'
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
@@ -126,10 +127,10 @@ export function NotificationsPreview({ did }: { did: string }) {
       {enabled && (
         <p className="mb-4 text-sm text-gray-500 dark:text-gray-400">
           {preferences.data
-            ? `Push notifications: ${preferences.data.push ? 'On' : 'Off'}`
+            ? `Push notifications: Reports ${preferences.data.reports ? 'On' : 'Off'} · Account ${preferences.data.account ? 'On' : 'Off'} · Labels ${preferences.data.labels ? 'On' : 'Off'}`
             : preferences.isError
-              ? 'Push notification preference unavailable.'
-              : 'Loading push notification preference…'}
+              ? 'Push notification preferences unavailable.'
+              : 'Loading push notification preferences…'}
         </p>
       )}
       {!enabled ? (
@@ -188,18 +189,19 @@ export function NotificationsPreview({ did }: { did: string }) {
                       />
                     </div>
                   )}
-                  {'reportId' in target && (
+                  {ToolsOzoneInboxDefs.isReportRef(target) && (
                     <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                       Report #{target.reportId}
                       {target.status ? ` · ${readable(target.status)}` : ''}
                     </p>
                   )}
-                  {'actionType' in target && target.actionType && (
-                    <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
-                      {readable(target.actionType)}
-                    </p>
-                  )}
-                  {'standing' in target && (
+                  {ToolsOzoneInboxDefs.isSubjectRef(target) &&
+                    target.actionType && (
+                      <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
+                        {readable(target.actionType)}
+                      </p>
+                    )}
+                  {ToolsOzoneInboxDefs.isStandingRef(target) && (
                     <p className="mt-2 text-sm text-gray-600 dark:text-gray-300">
                       {target.previousStanding
                         ? `${standingLabel(target.previousStanding)} → `
@@ -212,7 +214,10 @@ export function NotificationsPreview({ did }: { did: string }) {
                       href={href}
                       className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
                     >
-                      {'reportId' in target ? 'View report' : 'View subject'} ↗
+                      {ToolsOzoneInboxDefs.isReportRef(target)
+                        ? 'View report'
+                        : 'View subject'}{' '}
+                      ↗
                     </Link>
                   )}
                 </li>

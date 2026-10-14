@@ -44,9 +44,58 @@ describe('inbox presentation', () => {
 
   it('does not infer an action reversal or an appeal verdict from current state', () => {
     expect(enforcementLabel('none')).toBe('No active enforcement')
-    expect(appealLabel('pending')).toBe('Under review')
-    expect(appealLabel('resolved')).toBe('Reviewed')
+    expect(appealLabel({ state: 'pending' })).toBe('Under review')
+    expect(appealLabel({ state: 'resolved' })).toBe('Reviewed')
     expect(scopeLabel('labelOnly')).toBe('Labels only')
+  })
+
+  it('uses explicit appeal outcomes and keeps unknown outcomes neutral', () => {
+    expect(appealLabel({ state: 'resolved', ...{ outcome: 'approved' } })).toBe(
+      'Approved',
+    )
+    expect(appealLabel({ state: 'resolved', ...{ outcome: 'denied' } })).toBe(
+      'Denied',
+    )
+    expect(appealLabel({ state: 'resolved', ...{ outcome: 'future' } })).toBe(
+      'Reviewed',
+    )
+    expect(appealLabel({ state: 'pending', ...{ outcome: 'approved' } })).toBe(
+      'Under review',
+    )
+    const target = {
+      $type: 'tools.ozone.inbox.defs#subjectRef' as const,
+      subject: {
+        $type: 'com.atproto.admin.defs#repoRef' as const,
+        did: 'did:plc:target',
+      },
+    }
+    expect(notificationLabel(notification(target, 'appealResolved'))).toBe(
+      'Appeal reviewed',
+    )
+    expect(
+      notificationLabel(
+        notification(
+          { ...target, ...{ appealOutcome: 'future' } },
+          'appealResolved',
+        ),
+      ),
+    ).toBe('Appeal reviewed')
+    expect(
+      notificationLabel(
+        notification(
+          { ...target, ...{ appealOutcome: 'denied' } },
+          'appealResolved',
+        ),
+      ),
+    ).toBe('Appeal denied')
+    expect(
+      notificationLabel(
+        notification(
+          { ...target, ...{ appealOutcome: 'approved' } },
+          'actionTaken',
+        ),
+      ),
+    ).toBe('Moderation action taken')
   })
 
   it('merges history pages by ID, including reversal and policy data', () => {
@@ -105,7 +154,11 @@ describe('inbox presentation', () => {
       '/repositories/did%3Aplc%3Atarget/inbox/reports?reportId=101',
     )
     expect(notificationLabel(report)).toBe('Report reviewed')
-    const subject = { uri: 'at://did:plc:target/app.bsky.feed.post/old' }
+    const subject = {
+      $type: 'com.atproto.repo.strongRef' as const,
+      uri: 'at://did:plc:target/app.bsky.feed.post/old',
+      cid: 'bafyreigklczuekgj7q2pj3ys5ck3ah7v2ps5qbly6viwcj26vrmigbfyce',
+    }
     const action = notification({
       $type: 'tools.ozone.inbox.defs#subjectRef',
       subject,

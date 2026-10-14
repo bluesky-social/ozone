@@ -103,7 +103,9 @@ describe('Moderator inbox preview', () => {
           unreadCounts: { total: 3, reports: 1, subjects: 1, accountStatus: 1 },
         })
       } else if (method === 'getNotificationPreferences') {
-        request.reply({ preferences: { push: false } })
+        request.reply({
+          preferences: { reports: false, account: true, labels: false },
+        })
       } else if (method === 'listNotifications') {
         request.reply(
           url.searchParams.has('cursor')
@@ -180,6 +182,7 @@ describe('Moderator inbox preview', () => {
     cy.get('article > button[aria-expanded]').click()
     expectVisible('Original removed post returned by the backend')
     expectVisible('No active enforcement')
+    expectVisible('Appeal approved')
     cy.contains('a', 'Spam and deceptive conduct').should(
       'have.attr',
       'href',
@@ -207,11 +210,13 @@ describe('Moderator inbox preview', () => {
 
   it('shows notifications, standing, preferences, older pages, and a linked report outside the list', () => {
     cy.contains('button', 'Notifications').click()
-    expectVisible('Push notifications: Off')
+    expectVisible('Push notifications: Reports Off · Account On · Labels Off')
     cy.contains('Unread notifications')
       .parent()
       .should('contain.text', 'Reports 1 · Subjects 1 · Account standing 1')
     expectVisible('Latest account activity')
+    expectVisible('Appeal approved')
+    expectVisible('Appeal denied')
     cy.contains('button', 'Load more').click()
     expectVisible('Warning → Good')
     cy.contains('button', 'Load more').should('not.exist')
@@ -237,6 +242,27 @@ describe('Moderator inbox preview', () => {
     cy.get(
       'section[aria-label="Selected report"] [aria-label="Unread"]',
     ).should('not.exist')
+    cy.then(() => expect(writes).to.deep.equal([]))
+  })
+
+  it('keeps historical appeals neutral and shows the authoritative detail outcome', () => {
+    const legacy = {
+      ...inbox.item,
+      appeal: { ...inbox.item.appeal, outcome: undefined },
+    }
+    cy.intercept('GET', '**/xrpc/tools.ozone.inbox.listActionedSubjects*', {
+      subjects: [legacy],
+    })
+    cy.intercept('GET', '**/xrpc/tools.ozone.inbox.getActionedSubject*', {
+      ...details,
+      appeal: { ...inbox.item.appeal, outcome: 'denied' },
+    })
+    cy.reload()
+    cy.contains('h2', 'Mod Inbox', { timeout: 30000 }).scrollIntoView()
+    expectVisible('Appeal reviewed')
+    cy.get('article > button[aria-expanded]').click()
+    expectVisible('Appeal denied')
+    cy.contains('dt', 'Appeal').next('dd').should('contain.text', 'Denied')
     cy.then(() => expect(writes).to.deep.equal([]))
   })
 
@@ -270,7 +296,7 @@ describe('Moderator inbox preview', () => {
     cy.viewport(390, 844)
     cy.document().then((doc) => doc.documentElement.classList.remove('dark'))
     cy.contains('label', 'Inbox section').find('select').select('notifications')
-    expectVisible('Push notifications: Off')
+    expectVisible('Push notifications: Reports Off · Account On · Labels Off')
     cy.contains('label', 'Inbox section')
       .find('select')
       .select('actioned-subjects')

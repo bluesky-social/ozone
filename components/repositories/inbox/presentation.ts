@@ -1,4 +1,10 @@
-import type { InboxAction, InboxNotification, SubjectRef } from './api'
+import { ToolsOzoneInboxDefs } from '@atproto/api'
+import {
+  subjectKey,
+  type InboxAction,
+  type InboxNotification,
+  type SubjectRef,
+} from './api'
 
 export function readable(value?: string) {
   if (!value) return '—'
@@ -59,7 +65,22 @@ export function standingLabel(standing: string) {
   )
 }
 
-export function appealLabel(state: string) {
+// @atproto/api 0.26.0 omits the optional outcome fields introduced in atproto #5642.
+// Keep reads on the generated types and validate the extra fields until codegen includes them.
+export function appealOutcome(
+  value: object,
+  field: 'outcome' | 'appealOutcome',
+) {
+  if (field in value) {
+    const outcome: unknown = Reflect.get(value, field)
+    if (outcome === 'approved' || outcome === 'denied') return outcome
+  }
+}
+
+export function appealLabel(appeal: ToolsOzoneInboxDefs.AppealView) {
+  const { state } = appeal
+  const outcome = appealOutcome(appeal, 'outcome')
+  if (state === 'resolved' && outcome) return readable(outcome)
   return (
     (
       {
@@ -84,6 +105,13 @@ export function isAppealableAction(action: InboxAction) {
 }
 
 export function notificationLabel(notification: InboxNotification) {
+  if (
+    notification.reason === 'appealResolved' &&
+    ToolsOzoneInboxDefs.isSubjectRef(notification.target)
+  ) {
+    const outcome = appealOutcome(notification.target, 'appealOutcome')
+    if (outcome) return `Appeal ${outcome}`
+  }
   return (
     (
       {
@@ -101,24 +129,19 @@ export function notificationLabel(notification: InboxNotification) {
 export function notificationSubject(
   notification: InboxNotification,
 ): SubjectRef | undefined {
-  return 'subject' in notification.target
+  return ToolsOzoneInboxDefs.isSubjectRef(notification.target) ||
+    ToolsOzoneInboxDefs.isReportRef(notification.target)
     ? notification.target.subject
     : undefined
 }
 
 export function notificationHref(did: string, notification: InboxNotification) {
   const base = `/repositories/${encodeURIComponent(did)}/inbox`
-  if ('reportId' in notification.target)
+  if (ToolsOzoneInboxDefs.isReportRef(notification.target))
     return `${base}/reports?reportId=${notification.target.reportId}`
-  if ('subject' in notification.target) {
+  if (ToolsOzoneInboxDefs.isSubjectRef(notification.target)) {
     const subject = notification.target.subject
-    const key =
-      subject &&
-      ('uri' in subject
-        ? subject.uri
-        : 'did' in subject
-          ? subject.did
-          : undefined)
+    const key = subjectKey(subject)
     return key
       ? `${base}/actioned-subjects?subject=${encodeURIComponent(key)}`
       : undefined

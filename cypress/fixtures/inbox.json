@@ -20,7 +20,8 @@
       "state": "resolved",
       "appealedAt": "2026-09-30T13:00:00Z",
       "resolvedAt": "2026-10-01T14:00:00Z",
-      "appealableUntil": "2027-03-29T12:00:00Z"
+      "appealableUntil": "2027-03-29T12:00:00Z",
+      "outcome": "approved"
     },
     "availableActions": [],
     "isRead": false,
@@ -100,6 +101,36 @@
         },
         "actionType": "accountSuspended",
         "actionId": 1
+      }
+    },
+    {
+      "id": 7,
+      "reason": "appealResolved",
+      "isRead": false,
+      "createdAt": "2026-10-01T14:00:00Z",
+      "target": {
+        "$type": "tools.ozone.inbox.defs#subjectRef",
+        "subject": {
+          "$type": "com.atproto.repo.strongRef",
+          "uri": "at://did:plc:bbbbbbbbbbbbbbbbbbbbbbbb/app.bsky.feed.post/removed",
+          "cid": "bafyreigklczuekgj7q2pj3ys5ck3ah7v2ps5qbly6viwcj26vrmigbfyce"
+        },
+        "appealOutcome": "approved"
+      }
+    },
+    {
+      "id": 6,
+      "reason": "appealResolved",
+      "isRead": false,
+      "createdAt": "2026-10-01T14:00:00Z",
+      "target": {
+        "$type": "tools.ozone.inbox.defs#subjectRef",
+        "subject": {
+          "$type": "com.atproto.repo.strongRef",
+          "uri": "at://did:plc:bbbbbbbbbbbbbbbbbbbbbbbb/app.bsky.feed.post/removed",
+          "cid": "bafyreigklczuekgj7q2pj3ys5ck3ah7v2ps5qbly6viwcj26vrmigbfyce"
+        },
+        "appealOutcome": "denied"
       }
     }
   ],
