@@ -730,7 +730,11 @@ function ReportDetailLayout(props: {
             eventType !== MOD_EVENTS.RESOLVE_APPEAL
           ) {
             await resolveAppealForReport(finalVals.createdBy, actionComment)
-            if (eventType !== MOD_EVENTS.LABEL || !targetsCurrentReport) {
+            if (
+              (eventType !== MOD_EVENTS.LABEL &&
+                eventType !== MOD_EVENTS.REVERSE_TAKEDOWN) ||
+              !targetsCurrentReport
+            ) {
               await closeCurrentReport()
             }
           }
