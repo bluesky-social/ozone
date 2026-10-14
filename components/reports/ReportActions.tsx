@@ -111,7 +111,10 @@ function TransitionConfirmPanel({
 }) {
   const [note, setNote] = useState('')
   const [scope, setScope] = useState<'current' | 'all' | 'types'>(() =>
-    report.queue?.reportTypes?.length ? 'types' : 'current',
+    report.queue?.reportTypes?.length &&
+    getDefaultReportTypes(report).includes(report.reportType)
+      ? 'types'
+      : 'current',
   )
   const [reportTypes, setReportTypes] = useState<string[]>(() =>
     getDefaultReportTypes(report),
@@ -136,6 +139,14 @@ function TransitionConfirmPanel({
           reportTypes: scope === 'types' ? reportTypes : undefined,
           internalNote: note.trim() || undefined,
         })
+        if (result.closedCount === 0) {
+          toast.info(
+            scope === 'types'
+              ? 'No open reports matched the selected types. Choose different types or close this report only.'
+              : 'No reports were closed for this subject.',
+          )
+          return
+        }
         toast.success(
           `Closed ${result.closedCount} ${result.closedCount === 1 ? 'report' : 'reports'} as no-action`,
         )
