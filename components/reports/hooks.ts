@@ -89,6 +89,39 @@ export function useCreateActivity(options?: {
   })
 }
 
+export function useCloseReports(options?: {
+  onSuccess?: (data: { closedCount: number; reportIds: number[] }) => void
+  onError?: (error: unknown) => void
+}) {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: async (input: {
+      subject: string
+      reportTypes?: string[]
+      internalNote?: string
+    }) => {
+      const { data } = await labelerAgent.tools.ozone.report.closeReports(input)
+      return data
+    },
+    onSuccess: (data) => {
+      for (const reportId of data.reportIds) {
+        queryClient.invalidateQueries({ queryKey: ['report', reportId] })
+        queryClient.invalidateQueries({
+          queryKey: ['reportActivities', reportId],
+        })
+      }
+      queryClient.invalidateQueries({ queryKey: ['betaReports'] })
+      queryClient.invalidateQueries({ queryKey: ['events'] })
+      options?.onSuccess?.(data)
+    },
+    onError: (error) => {
+      options?.onError?.(error)
+    },
+  })
+}
+
 export function useListActivities(reportId: number) {
   const labelerAgent = useLabelerAgent()
 

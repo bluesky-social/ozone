@@ -208,9 +208,13 @@ export const WorkspacePanelActionForm = ({
               form={WORKSPACE_FORM_ID}
               label={
                 <span className="leading-4">
-                  Acknowledge all open/escalated/appealed reports on subjects
-                  created by accounts that you are{' '}
+                  Close open or escalated subject reviews for subjects by
+                  accounts you are{' '}
                   {isAckEvent ? 'acknowledging' : 'taking down'}.
+                  <span className="block text-xs text-gray-500 dark:text-gray-400">
+                    Also resolves appeals on those subjects. Reports in queues
+                    remain open.
+                  </span>
                 </span>
               }
             />

@@ -11,12 +11,10 @@ export function useAssignmentPolling({
   reportId,
   hasReport,
   initialAssigneeDid,
-  skipInitialPoll,
 }: {
   reportId: number
   hasReport: boolean
   initialAssigneeDid?: string
-  skipInitialPoll: boolean
 }) {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
@@ -24,17 +22,6 @@ export function useAssignmentPolling({
 
   const lastKnownAssigneeDid = useRef<string | undefined>(initialAssigneeDid)
   const hasPolledOnce = useRef(false)
-
-  const [pollEnabled, setPollEnabled] = useState(!skipInitialPoll)
-  useEffect(() => {
-    if (skipInitialPoll) {
-      const timer = setTimeout(
-        () => setPollEnabled(true),
-        ASSIGNMENT_POLL_INTERVAL,
-      )
-      return () => clearTimeout(timer)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [viewers, setViewers] = useState<AssignmentViewWithModerator[]>([])
 
@@ -46,7 +33,7 @@ export function useAssignmentPolling({
       })
       return data
     },
-    enabled: hasReport && pollEnabled,
+    enabled: hasReport,
     refetchInterval: ASSIGNMENT_POLL_INTERVAL,
   })
 

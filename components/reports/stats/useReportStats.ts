@@ -1,12 +1,8 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
-import type { ReportStats } from './Stats'
-
-export type HistoricalReportStats = ReportStats & {
-  date: string
-  computedAt?: string
-}
+import { normalizeStats } from './reportStats'
+export type { HistoricalReportStats } from './reportStats'
 
 export type LiveStatsParams = {
   queueId?: number
@@ -24,18 +20,6 @@ export type HistoricalStatsParams = {
   cursor?: string
 }
 
-// Older snapshots used different definitions for these metrics.
-function normalizeStats<T extends ReportStats>(stats: T): T {
-  if (stats.closedCount != null) return stats
-  return {
-    ...stats,
-    actionedCount: undefined,
-    actionRate: undefined,
-    escalatedCount: undefined,
-    avgHandlingTimeSec: undefined,
-  }
-}
-
 export const useLiveStats = (params?: LiveStatsParams) => {
   const labelerAgent = useLabelerAgent()
 
@@ -45,7 +29,7 @@ export const useLiveStats = (params?: LiveStatsParams) => {
       const { data } = await labelerAgent.tools.ozone.report.getLiveStats(
         params ?? {},
       )
-      return normalizeStats(data.stats as ReportStats)
+      return normalizeStats(data.stats)
     },
     refetchInterval: 5 * 60 * 1000,
   })
@@ -61,9 +45,7 @@ export const useHistoricalStats = (params?: HistoricalStatsParams) => {
         params ?? {},
       )
       return {
-        stats: (data.stats as unknown as HistoricalReportStats[]).map(
-          normalizeStats,
-        ),
+        stats: data.stats.map(normalizeStats),
         cursor: data.cursor,
       }
     },

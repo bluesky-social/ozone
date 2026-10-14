@@ -7,6 +7,8 @@ import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { twMerge } from 'tailwind-merge'
 import { getHrefFromGroup, StatGroup } from '.'
 import { statReasonTypes } from '../helpers/getType'
+import type { ReportStats } from './reportStats'
+export type { ReportStats } from './reportStats'
 import {
   LiveStatsParams,
   useHistoricalStats,
@@ -60,42 +62,14 @@ export function StatValue({
   )
 }
 
-export interface ReportStats {
-  /** Current number of reports that are not closed. */
-  pendingCount?: number
-  /** Current closures whose last report action is label, tag, or takedown. */
-  actionedCount?: number
-  /** Number of current closures in the date window. */
-  closedCount?: number
-  /** Number of closures without a linked enforcement action */
-  acknowledgedCount?: number
-  /** Escalation transitions in the current UTC day. */
-  escalatedCount?: number
-  /** Reports created in the current UTC day. */
-  inboundCount?: number
-  /** Percentage of closures actioned, rounded to the nearest integer. */
-  actionRate?: number
-  /** Average time in seconds from report assignment to close. */
-  avgHandlingTimeSec?: number
-  /** Average time in seconds from report creation to close. */
-  avgResolutionTimeSec?: number
-  labelActionCount?: number
-  tagActionCount?: number
-  takedownActionCount?: number
-  ahtDurationSec?: number
-  ahtSampleCount?: number
-  resolutionDurationSec?: number
-  resolutionSampleCount?: number
-  /** When these statistics were last computed */
-  lastUpdated?: string
-}
-
 export function StatValues({
   stats,
   className,
+  description,
 }: {
   stats: ReportStats
   className?: string
+  description?: string
 }) {
   const from = new Date()
   from.setUTCHours(0, 0, 0, 0) // stats are calculated from UTC midnight
@@ -141,7 +115,11 @@ export function StatValues({
           classNamePreset="acknowledged"
         />
       </div>
-      {windowHours && (
+      {description ? (
+        <div className="text-xs text-gray-400 dark:text-gray-500">
+          {description}
+        </div>
+      ) : windowHours ? (
         <div className="flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
           <span>
             Stats from last {windowHours} hour
@@ -155,7 +133,7 @@ export function StatValues({
             </span>
           )}
         </div>
-      )}
+      ) : null}
     </div>
   )
 }
@@ -165,26 +143,29 @@ export function StatCard({
   value,
   suffix,
   classNamePreset,
+  description,
 }: {
   label: string
   value: string | number | undefined
   suffix?: string
   classNamePreset?: StatsValuePreset
+  description?: string
 }) {
   const displayValue = typeof value !== 'string' ? numberToString(value) : value
 
   return (
     <div
       className={twMerge(
-        'rounded-lg px-4 py-3 flex flex-col gap-1',
+        'rounded-lg border border-gray-200 dark:border-slate-700 px-4 py-3 flex flex-col gap-1',
         classNamePreset ? STATS_PRESETS[classNamePreset] : '',
       )}
     >
       <span className="text-xs font-medium opacity-80">{label}</span>
-      <span className="text-2xl font-bold leading-tight">
+      <span className="text-2xl font-bold leading-tight break-words tabular-nums">
         {displayValue}
         {suffix && <span className="text-sm font-medium ml-1">{suffix}</span>}
       </span>
+      {description && <span className="text-xs opacity-80">{description}</span>}
     </div>
   )
 }

@@ -84,6 +84,7 @@ describe('Report statistics recomputation', () => {
   it('recomputes inclusive UTC dates serially and reloads the statistics', () => {
     visitStats('roleModerator')
     cy.get('[data-cy="historical-stats"]').within(() => {
+      cy.contains('1 of 2 daily snapshots').scrollIntoView()
       cy.contains('1 of 2 daily snapshots').should('be.visible')
     })
     let completed = 0

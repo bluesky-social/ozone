@@ -1,5 +1,5 @@
-import { formatDuration } from '@/lib/util'
-import { StatCard, StatValues } from './Stats'
+import { StatValues } from './Stats'
+import { BacklogSummary, StatsSummary } from './StatsSummary'
 import { LiveStatsParams, useLiveStats } from './useReportStats'
 
 export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
@@ -38,107 +38,47 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
   return <StatValues stats={stats} />
 }
 
-export function LiveStatsCards({ params }: { params?: LiveStatsParams }) {
+export function LiveStatsCards({
+  params,
+  backlogOnly = false,
+}: {
+  params?: LiveStatsParams
+  backlogOnly?: boolean
+}) {
   const { data: stats, isLoading, isError, refetch } = useLiveStats(params)
 
-  if (isLoading) {
-    return (
-      <div className="text-sm text-gray-500 dark:text-gray-400">
-        Loading stats...
-      </div>
-    )
-  }
-
+  if (isLoading)
+    return <p className="text-sm text-gray-500">Loading current stats...</p>
   if (isError) {
     return (
-      <div className="text-sm text-red-600 dark:text-red-400">
-        Failed to load stats.{' '}
-        <button
-          onClick={() => refetch()}
-          className="underline hover:no-underline"
-        >
+      <p className="text-sm text-red-600 dark:text-red-400">
+        Failed to load current stats.{' '}
+        <button onClick={() => refetch()} className="underline">
           Retry
         </button>
-      </div>
+      </p>
     )
   }
-
-  if (!stats || !stats.lastUpdated) {
+  if (!stats?.lastUpdated)
     return (
-      <div className="text-sm text-gray-500 dark:text-gray-400">
-        No data available yet
-      </div>
+      <p className="text-sm text-gray-500">No current data available yet.</p>
     )
-  }
 
   return (
-    <div>
-      {stats.closedCount == null && (
-        <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
-          Today’s statistics use older metric definitions. Outcome counts and
-          timings will appear after they are recomputed.
-        </p>
+    <div className="space-y-6">
+      {!params?.moderatorDid && <BacklogSummary stats={stats} />}
+      {!backlogOnly && (
+        <section aria-label="Today’s activity">
+          <h2 className="mb-3 text-lg font-semibold">Today (UTC)</h2>
+          {stats.closedCount == null && (
+            <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
+              Today’s statistics use older metric definitions. Outcome counts
+              and timings are unavailable until recomputed.
+            </p>
+          )}
+          <StatsSummary stats={stats} />
+        </section>
       )}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3">
-        <StatCard
-          label="Inbound"
-          value={stats.inboundCount}
-          classNamePreset="inbound"
-        />
-        <StatCard
-          label="Pending"
-          value={stats.pendingCount}
-          classNamePreset="pending"
-        />
-        <StatCard
-          label="Escalated"
-          value={stats.escalatedCount}
-          classNamePreset="escalated"
-        />
-        <StatCard
-          label="Closed"
-          value={stats.closedCount}
-          classNamePreset="closed"
-        />
-        <StatCard
-          label="Actioned"
-          value={stats.actionedCount}
-          suffix={stats.actionRate != null ? `${stats.actionRate}%` : undefined}
-          classNamePreset="actioned"
-        />
-        <StatCard
-          label="Acknowledged"
-          value={stats.acknowledgedCount}
-          classNamePreset="acknowledged"
-        />
-        {stats.avgHandlingTimeSec != null && (
-          <StatCard
-            label="Avg Handling Time"
-            value={formatDuration(stats.avgHandlingTimeSec)}
-            classNamePreset="avgHandlingTime"
-          />
-        )}
-        {stats.avgResolutionTimeSec != null && (
-          <StatCard
-            label="Avg Resolution Time"
-            value={formatDuration(stats.avgResolutionTimeSec)}
-            classNamePreset="avgHandlingTime"
-          />
-        )}
-      </div>
-      {(stats.labelActionCount != null ||
-        stats.tagActionCount != null ||
-        stats.takedownActionCount != null) && (
-        <div className="mt-3 flex flex-wrap gap-2 text-xs text-gray-600 dark:text-gray-300">
-          <span>Actions:</span>
-          <span>Labels {stats.labelActionCount ?? 0}</span>
-          <span>Tags {stats.tagActionCount ?? 0}</span>
-          <span>Takedowns {stats.takedownActionCount ?? 0}</span>
-        </div>
-      )}
-      <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">
-        Updated {new Date(stats.lastUpdated).toLocaleTimeString()}
-      </p>
     </div>
   )
 }

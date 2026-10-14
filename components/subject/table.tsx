@@ -3,7 +3,6 @@ import { formatDistanceToNow } from 'date-fns'
 import {
   CheckCircleIcon,
   ChevronDownIcon,
-  ChevronUpIcon,
   Bars3BottomLeftIcon,
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
@@ -30,28 +29,22 @@ import {
 } from '@heroicons/react/24/solid'
 import { PriorityScore } from './PriorityScore'
 import { AccountStrike } from './AccountStrike'
+import { getSubjectStatusSortParams } from '@/lib/subject-status-sort'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
   const pathname = usePathname()
 
-  const directionKey = 'sortDirection'
-  const fieldKey = 'sortField'
-  const sortDirection = searchParams.get(directionKey)
-  const sortField = searchParams.get(fieldKey)
+  const { sortField } = getSubjectStatusSortParams(searchParams)
 
-  function getToggleReverseOrderLink(field: string, newDirection?: string) {
+  function getSortLink(field: string) {
     const params = new URLSearchParams(searchParams)
-    // If the caller wants a specific direction, use that
-    params.set(
-      directionKey,
-      newDirection || (sortDirection === 'asc' ? 'desc' : 'asc'),
-    )
-    params.set(fieldKey, field)
+    params.set('sortDirection', 'desc')
+    params.set('sortField', field)
     return `${pathname}?${params}`
   }
 
-  return { sortDirection, sortField, getToggleReverseOrderLink }
+  return { sortField, getSortLink }
 }
 
 export function SubjectTable(
@@ -271,19 +264,17 @@ function SubjectRow({
   )
 }
 
-const ToggleSortButtonGroup = ({
-  currentSortDirection,
+const SortButtonGroup = ({
   currentSortField,
   sortField,
   title,
 }: {
-  currentSortDirection: string | null
   currentSortField: string | null
   sortField: string
   title: string
 }) => {
   const router = useRouter()
-  const { getToggleReverseOrderLink } = useSortOrder()
+  const { getSortLink } = useSortOrder()
 
   return (
     <div className="pb-2">
@@ -294,22 +285,12 @@ const ToggleSortButtonGroup = ({
         appearance="primary"
         items={[
           {
-            id: 'asc',
-            text: 'Ascending',
-            onClick: () => {
-              router.push(getToggleReverseOrderLink(sortField, 'asc'))
-            },
-            isActive:
-              currentSortField === sortField && currentSortDirection === 'asc',
-          },
-          {
             id: 'desc',
             text: 'Descending',
             onClick: () => {
-              router.push(getToggleReverseOrderLink(sortField, 'desc'))
+              router.push(getSortLink(sortField))
             },
-            isActive:
-              currentSortField === sortField && currentSortDirection === 'desc',
+            isActive: currentSortField === sortField,
           },
         ]}
       />
@@ -318,7 +299,7 @@ const ToggleSortButtonGroup = ({
 }
 
 const SummaryColumnHeader = () => {
-  const { sortDirection, sortField } = useSortOrder()
+  const { sortField } = useSortOrder()
   const hasSort =
     sortField &&
     ['reportedRecordsCount', 'takendownRecordsCount', 'priorityScore'].includes(
@@ -333,11 +314,7 @@ const SummaryColumnHeader = () => {
       >
         Summary
         {hasSort ? (
-          sortDirection === 'asc' ? (
-            <ChevronUpIcon className="h-4 w-4" />
-          ) : (
-            <ChevronDownIcon className="h-4 w-4" />
-          )
+          <ChevronDownIcon className="h-4 w-4" />
         ) : (
           <Bars3BottomLeftIcon className="h-4 w-4" />
         )}
@@ -354,20 +331,17 @@ const SummaryColumnHeader = () => {
       >
         <PopoverPanel className="absolute z-10 rounded p-4">
           <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
-            <ToggleSortButtonGroup
+            <SortButtonGroup
               title="Reported records count"
-              currentSortDirection={sortDirection}
               sortField="reportedRecordsCount"
               currentSortField={sortField}
             />
-            <ToggleSortButtonGroup
+            <SortButtonGroup
               title="Takendown records count"
-              currentSortDirection={sortDirection}
               sortField="takendownRecordsCount"
               currentSortField={sortField}
             />
-            <ToggleSortButtonGroup
-              currentSortDirection={sortDirection}
+            <SortButtonGroup
               currentSortField={sortField}
               sortField="priorityScore"
               title="Priority score"
@@ -380,7 +354,7 @@ const SummaryColumnHeader = () => {
 }
 
 function SubjectRowHead() {
-  const { sortDirection, sortField, getToggleReverseOrderLink } = useSortOrder()
+  const { sortField, getSortLink } = useSortOrder()
 
   return (
     <tr>
@@ -412,34 +386,22 @@ function SubjectRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        <Link
-          prefetch={false}
-          href={getToggleReverseOrderLink('lastReviewedAt')}
-        >
+        <Link prefetch={false} href={getSortLink('lastReviewedAt')}>
           Last Reviewed/Note
-          {sortField === 'lastReviewedAt' &&
-            (sortDirection === 'asc' ? (
-              <ChevronUpIcon className="h-4 w-4 inline-block align-text-bottom" />
-            ) : (
-              <ChevronDownIcon className="h-4 w-4 inline-block align-text-bottom" />
-            ))}
+          {sortField === 'lastReviewedAt' && (
+            <ChevronDownIcon className="h-4 w-4 inline-block align-text-bottom" />
+          )}
         </Link>
       </th>
       <th
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        <Link
-          prefetch={false}
-          href={getToggleReverseOrderLink('lastReportedAt')}
-        >
+        <Link prefetch={false} href={getSortLink('lastReportedAt')}>
           Last Reported
-          {sortField === 'lastReportedAt' &&
-            (sortDirection === 'asc' ? (
-              <ChevronUpIcon className="h-4 w-4 inline-block align-text-bottom" />
-            ) : (
-              <ChevronDownIcon className="h-4 w-4 inline-block align-text-bottom" />
-            ))}
+          {sortField === 'lastReportedAt' && (
+            <ChevronDownIcon className="h-4 w-4 inline-block align-text-bottom" />
+          )}
         </Link>
       </th>
     </tr>
