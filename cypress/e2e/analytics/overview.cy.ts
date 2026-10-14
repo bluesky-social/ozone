@@ -82,6 +82,158 @@ function expectMetric(label: string, value: string) {
     .should('have.text', value)
 }
 
+function queueSnapshot(
+  id: number,
+  name: string,
+  pendingCount?: number,
+  closureTargetOverdueCount?: number,
+) {
+  return {
+    id,
+    name,
+    createdBy: 'did:plc:tfeay256xpz3vf5v5d3cxykt',
+    createdAt: snapshot.lastUpdated,
+    updatedAt: snapshot.lastUpdated,
+    enabled: true,
+    stats: {
+      lastUpdated: snapshot.lastUpdated,
+      pendingCount,
+      closureTargetOverdueCount,
+    },
+  }
+}
+
+describe('Queue aging', () => {
+  it('shows current queue snapshots, preserving zero and unavailable target counts across date windows', () => {
+    cy.viewport(1280, 900)
+    visitOverview(snapshot, [], 'Today', [
+      queueSnapshot(1, 'Review queue', 100, 25),
+      queueSnapshot(2, 'No overdue reports', 40, 0),
+      queueSnapshot(3, 'Empty queue', 0, 0),
+      queueSnapshot(4, 'Legacy queue', 50),
+      queueSnapshot(5, 'No stats yet'),
+    ])
+    const checkSnapshots = () => {
+      cy.get('[data-cy="queue-aging"]').within(() => {
+        cy.contains('li', 'Review queue').within(() => {
+          cy.get('[data-cy="queue-pending"]').should('have.text', '100 pending')
+          cy.get('[data-cy="queue-overdue"]').should(
+            'have.text',
+            '25 past target',
+          )
+          cy.get('[role="img"]').should(
+            'have.attr',
+            'aria-label',
+            '25 past target; 75 other pending',
+          )
+        })
+        cy.contains('li', 'No overdue reports').within(() => {
+          cy.get('[data-cy="queue-overdue"]').should(
+            'have.text',
+            '0 past target',
+          )
+          cy.get('[role="img"]').should(
+            'have.attr',
+            'aria-label',
+            '0 past target; 40 other pending',
+          )
+        })
+        cy.contains('li', 'Empty queue').within(() => {
+          cy.get('[data-cy="queue-pending"]').should('have.text', '0 pending')
+          cy.get('[data-cy="queue-overdue"]').should(
+            'have.text',
+            '0 past target',
+          )
+        })
+        cy.contains('li', 'Legacy queue').within(() => {
+          cy.get('[data-cy="queue-pending"]').should('have.text', '50 pending')
+          cy.get('[data-cy="queue-overdue"]').should(
+            'have.text',
+            '— past target',
+          )
+          cy.contains('Target breakdown unavailable.')
+          cy.get('[role="img"]').should('not.exist')
+        })
+        cy.contains('li', 'No stats yet').within(() => {
+          cy.get('[data-cy="queue-pending"]').should('have.text', '— pending')
+          cy.get('[data-cy="queue-overdue"]').should(
+            'have.text',
+            '— past target',
+          )
+        })
+        cy.get('a').should('not.exist')
+        cy.contains('Other pending includes reports without a closure target.')
+      })
+    }
+    checkSnapshots()
+    cy.contains('[aria-label="Statistics period"] button', '30d').click()
+    checkSnapshots()
+    cy.get('[data-cy="queue-aging"]').scrollIntoView()
+    cy.get('[data-cy="queue-aging"]').should('be.visible')
+    cy.screenshot('queue-aging-light', { capture: 'viewport' })
+    cy.document().then((doc) => doc.documentElement.classList.add('dark'))
+    cy.get('[data-cy="queue-aging"] h2').should(
+      'have.css',
+      'color',
+      'rgb(243, 244, 246)',
+    )
+    cy.screenshot('queue-aging-dark', { capture: 'viewport' })
+    cy.viewport(375, 812)
+    cy.get('[data-cy="queue-aging"]').scrollIntoView()
+    cy.get('[data-cy="queue-aging"]').then(($el) => {
+      expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth)
+    })
+    cy.get('[data-cy="queue-aging"]').should('be.visible')
+    cy.screenshot('queue-aging-mobile', { capture: 'viewport' })
+  })
+
+  it('loads additional queue snapshots without requesting per-queue stats', () => {
+    visitOverview(snapshot)
+    cy.contains('[data-cy="queue-aging"]', 'No queues available.')
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.queue.listQueues*`,
+      (req) => {
+        req.reply(
+          req.query.cursor
+            ? {
+                queues: [queueSnapshot(2, 'Next queue', 80, 10)],
+              }
+            : {
+                queues: [queueSnapshot(1, 'First queue', 100, 25)],
+                cursor: 'next-page',
+              },
+        )
+      },
+    ).as('agingQueues')
+    cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.getLiveStats*`, {
+      stats: snapshot,
+    }).as('agingStats')
+    cy.reload()
+    cy.wait('@agingQueues')
+    cy.get('[data-cy="queue-aging"]').scrollIntoView()
+    cy.get('[data-cy="queue-aging"]').within(() => {
+      cy.contains('li', 'First queue').should('be.visible')
+      cy.contains('button', 'Load more queues').click()
+    })
+    cy.wait('@agingQueues')
+      .its('request.query.cursor')
+      .should('equal', 'next-page')
+    cy.get('[data-cy="queue-aging"]').within(() => {
+      cy.get('li').should('have.length', 2)
+      cy.contains('li', 'Next queue')
+        .should('contain', '80 pending')
+        .and('contain', '10 past target')
+      cy.contains('button', 'Load more queues').should('not.exist')
+    })
+    cy.get('@agingStats.all').then((requests) => {
+      for (const request of requests) {
+        expect(request.request.query).not.to.have.property('queueId')
+      }
+    })
+  })
+})
+
 describe('Analytics overview cards', () => {
   it('shows the current backlog and target attainment among targeted closures, in both themes and on mobile', () => {
     cy.viewport(1280, 900)

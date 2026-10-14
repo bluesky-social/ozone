@@ -5,6 +5,7 @@ import { REPORT_CATEGORIES } from '@/reports/stats'
 import { OverviewActivity } from '@/reports/stats/OverviewActivity'
 import { OverviewStats } from '@/reports/stats/OverviewStats'
 import { ReportTypePanels } from '@/reports/stats/ReportTypePanels'
+import { QueueAging } from '@/reports/stats/QueueAging'
 import { StatsCard } from '@/reports/stats/Stats'
 import {
   getStatsWindow,
@@ -119,6 +120,7 @@ function Overview({ window }: { window: StatsWindow }) {
       </div>
       <OverviewActivity window={window} data={data} />
       <ReportTypePanels window={window} />
+      <QueueAging />
     </>
   )
 }
