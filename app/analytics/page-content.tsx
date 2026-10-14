@@ -2,6 +2,7 @@
 import { PaginatedGrid } from '@/common/PaginatedGrid'
 import { useQueueList } from '@/queues/useQueues'
 import { REPORT_CATEGORIES } from '@/reports/stats'
+import { OverviewActivity } from '@/reports/stats/OverviewActivity'
 import { OverviewStats } from '@/reports/stats/OverviewStats'
 import { StatsCard } from '@/reports/stats/Stats'
 import { useMemo } from 'react'
@@ -32,6 +33,8 @@ export function AnalyticsPageContent() {
           View aggregate details
         </Link>
       </div>
+
+      <OverviewActivity />
 
       {queues.length > 0 && (
         <div className="mb-6">

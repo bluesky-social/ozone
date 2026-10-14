@@ -22,16 +22,25 @@ const snapshot = {
   closureTargetMissedCount: 2,
 }
 
-function visitOverview(stats: object) {
+function visitOverview(stats: object, history: object[] = []) {
   cy.intercept('GET', `${SERVER_URL}/tools.ozone.queue.listQueues*`, {
     queues: [],
   })
   cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.getLiveStats*`, {
     stats,
   }).as('liveStats')
-  cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.getHistoricalStats*`, {
-    stats: [],
-  })
+  cy.intercept(
+    'GET',
+    `${SERVER_URL}/tools.ozone.report.getHistoricalStats*`,
+    (req) => {
+      if (req.query.limit === '30' && !req.query.reportTypes) {
+        req.alias = 'overviewHistory'
+        req.reply({ stats: history })
+      } else {
+        req.reply({ stats: [] })
+      }
+    },
+  )
   cy.fixture('auth.json').then((auth) => {
     mockOzoneMetaResponse({ body: auth.ozoneMetaResponse })
     mockOzoneDidDataResponse({ body: auth.ozoneDidDataResponse })
@@ -58,7 +67,7 @@ function expectMetric(label: string, value: string) {
 
 describe('Analytics overview cards', () => {
   it('shows the current backlog and target attainment among targeted closures, in both themes and on mobile', () => {
-    cy.viewport(1440, 1000)
+    cy.viewport(1280, 900)
     visitOverview(snapshot)
     cy.get('[data-cy="overview-metrics"]').within(() => {
       cy.get('dt').then((labels) => {
@@ -128,6 +137,162 @@ describe('Analytics overview cards', () => {
     cy.get('[data-cy="overview-metrics"]').within(() => {
       expectMetric('Closure Target', '—')
       cy.contains('No closed reports with a target').should('be.visible')
+    })
+  })
+})
+
+const history = Array.from({ length: 30 }, (_, i) => ({
+  date: new Date(Date.UTC(2026, 8, 15 + i)).toISOString().slice(0, 10),
+  inboundCount: 100 + (i % 7) * 30,
+  closedCount: i === 29 ? 400 : 40,
+  actionedCount: i === 29 ? 370 : 10,
+  acknowledgedCount: 30,
+  labelActionCount: i === 29 ? 70 : 5,
+  tagActionCount: i === 29 ? 100 : 1,
+  takedownActionCount: i === 29 ? 200 : 4,
+}))
+
+describe('Overview activity panels', () => {
+  beforeEach(() => cy.clock(Date.UTC(2026, 9, 14, 23, 30), ['Date']))
+
+  it('compares daily flows and weighted closure outcomes over the same UTC window', () => {
+    cy.viewport(1280, 900)
+    visitOverview(snapshot, [...history].reverse())
+    cy.wait('@overviewHistory').its('request.query').should('deep.equal', {
+      startDate: '2026-09-15T00:00:00.000Z',
+      endDate: '2026-10-14T00:00:00.000Z',
+      limit: '30',
+    })
+    cy.get('[data-cy="inbound-closed-chart"]').within(() => {
+      cy.contains('Last 30 days').should('contain', 'Today is partial')
+      cy.get('tbody tr')
+        .should('have.length', 30)
+        .first()
+        .should('contain', '2026-09-15')
+      cy.get('.recharts-bar').should('have.length', 2)
+      cy.contains('button', /^Closed$/).click()
+      cy.contains('button', /^Closed$/).should(
+        'have.attr',
+        'aria-pressed',
+        'false',
+      )
+      cy.get('.recharts-bar').should('have.length', 1)
+      cy.contains('button', /^Closed$/).click()
+      cy.get('.recharts-bar').should('have.length', 2)
+    })
+    cy.get('[data-cy="closure-breakdown"]').within(() => {
+      cy.get('[data-cy="closure-action-rate"]').should('have.text', '42%')
+      cy.contains('1,560 closed reports').should('be.visible')
+      for (const [label, value] of [
+        ['Actioned', '660'],
+        ['Acknowledged', '900'],
+        ['Label', '215'],
+        ['Tag', '129'],
+        ['Takedown', '316'],
+      ]) {
+        cy.contains('dt', new RegExp(`^${label}$`))
+          .siblings('dd')
+          .should('have.text', value)
+      }
+      cy.contains('of 30 days').should('not.exist')
+    })
+    cy.get('[data-cy="inbound-closed-chart"]').parent().scrollIntoView()
+    cy.get('[data-cy="inbound-closed-chart"]')
+      .parent()
+      .should('be.visible')
+      .screenshot('overview-activity-light')
+    cy.document().then((doc) => doc.documentElement.classList.add('dark'))
+    cy.get('[data-cy="inbound-closed-chart"] h2').should(
+      'have.css',
+      'color',
+      'rgb(243, 244, 246)',
+    )
+    cy.get('[data-cy="closure-breakdown"] h2').should(
+      'have.css',
+      'color',
+      'rgb(243, 244, 246)',
+    )
+    cy.get('[data-cy="inbound-closed-chart"]')
+      .parent()
+      .should('be.visible')
+      .screenshot('overview-activity-dark')
+    cy.viewport(375, 812)
+    cy.get('[data-cy="inbound-closed-chart"]').scrollIntoView()
+    cy.get('[data-cy="inbound-closed-chart"]').then(($el) => {
+      expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth)
+    })
+    cy.get('[data-cy="inbound-closed-chart"]').screenshot(
+      'overview-activity-mobile',
+    )
+  })
+
+  it('preserves missing and legacy values and labels matching outcome coverage', () => {
+    visitOverview(snapshot, [
+      { date: '2026-09-15', inboundCount: 7, actionedCount: 900 },
+      {
+        date: '2026-10-13',
+        inboundCount: 0,
+        closedCount: 10,
+        actionedCount: 2,
+        acknowledgedCount: 8,
+        labelActionCount: 1,
+        tagActionCount: 1,
+        takedownActionCount: 0,
+      },
+      {
+        date: '2026-10-14',
+        inboundCount: 15,
+        closedCount: 90,
+        actionedCount: 81,
+        acknowledgedCount: 9,
+        labelActionCount: 50,
+        takedownActionCount: 31,
+      },
+    ])
+    cy.get('[data-cy="inbound-closed-chart"]').scrollIntoView()
+    cy.get('[data-cy="inbound-closed-chart"]').within(() => {
+      cy.contains('Some daily counts are unavailable').should('be.visible')
+      cy.contains('tbody th', '2026-09-15')
+        .siblings('td')
+        .eq(1)
+        .should('have.text', 'Unavailable')
+      cy.contains('tbody th', '2026-09-16')
+        .siblings('td')
+        .first()
+        .should('have.text', 'Unavailable')
+      cy.contains('tbody th', '2026-10-13')
+        .siblings('td')
+        .first()
+        .should('have.text', '0')
+    })
+    cy.get('[data-cy="closure-breakdown"]').scrollIntoView()
+    cy.get('[data-cy="closure-breakdown"]').within(() => {
+      cy.get('[data-cy="closure-action-rate"]').should('have.text', '83%')
+      cy.contains(
+        'Comparable closure outcomes available for 2 of 30 days.',
+      ).should('be.visible')
+      cy.contains('Action types available for 1 of 30 days.').should(
+        'be.visible',
+      )
+      cy.contains('dt', /^Label$/)
+        .siblings('dd')
+        .should('have.text', '1')
+    })
+  })
+
+  it('keeps an empty historical response unavailable', () => {
+    visitOverview(snapshot)
+    cy.get('[data-cy="inbound-closed-chart"]').should(
+      'contain',
+      'No daily stats available for the last 30 days.',
+    )
+    cy.get('[data-cy="closure-breakdown"]').scrollIntoView()
+    cy.get('[data-cy="closure-breakdown"]').within(() => {
+      cy.get('[data-cy="closure-action-rate"]').should('have.text', '—')
+      cy.contains('Closure outcomes unavailable.').should('be.visible')
+      cy.contains('dt', /^Label$/)
+        .siblings('dd')
+        .should('have.text', '—')
     })
   })
 })
