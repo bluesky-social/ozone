@@ -394,6 +394,141 @@ describe('Queue statistics table', () => {
   })
 })
 
+describe('Category statistics table', () => {
+  it('uses category-specific stats, preserves unavailable results, and opens category details', () => {
+    cy.viewport(1280, 900)
+    visitOverview(snapshot)
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.report.getLiveStats*`,
+      (req) => {
+        const types = new URL(req.url).searchParams
+          .getAll('reportTypes')
+          .join(',')
+        if (types.includes('reasonChildSafetyCSAM'))
+          req.alias = 'childSafetyStats'
+        req.reply({
+          stats: types.includes('reasonChildSafetyCSAM')
+            ? {
+                ...snapshot,
+                inboundCount: 71,
+                pendingCount: 13,
+                closedCount: 25,
+                acknowledgedCount: 5,
+                actionedCount: 20,
+                escalatedCount: 1,
+                avgHandlingTimeSec: 60,
+                closureTargetOverdueCount: 2,
+                closureTargetMetCount: 3,
+                closureTargetMissedCount: 2,
+              }
+            : types.includes('reasonAppeal')
+              ? {
+                  ...snapshot,
+                  inboundCount: 0,
+                  pendingCount: 0,
+                  closedCount: 0,
+                  acknowledgedCount: 0,
+                  actionedCount: 0,
+                  escalatedCount: 0,
+                  avgHandlingTimeSec: undefined,
+                  closureTargetOverdueCount: 0,
+                  closureTargetMetCount: 0,
+                  closureTargetMissedCount: 0,
+                }
+              : types.includes('reasonHarassmentTroll')
+                ? {
+                    lastUpdated: snapshot.lastUpdated,
+                    inboundCount: 9,
+                    pendingCount: 12,
+                    actionedCount: 30,
+                  }
+                : snapshot,
+        })
+      },
+    )
+    // Install the scoped fixtures before Overview populates the shared cache.
+    cy.reload()
+    cy.get('[data-cy="overview-metrics"]').should('be.visible')
+    cy.contains('[role="tab"]', 'Categories').click()
+    cy.wait('@childSafetyStats')
+      .its('request.query')
+      .should('have.property', 'reportTypes')
+    cy.get('[data-cy="category-stats-table"]').within(() => {
+      cy.get('thead th').first().should('have.text', 'Category')
+      cy.get('tbody tr').should('have.length', 8)
+      cy.contains('tr', 'Child Safety').within(() => {
+        cy.get('[data-cy="category-inbound"]').should('have.text', '71')
+        cy.get('[data-cy="category-pending"]').should('have.text', '13')
+        cy.get('[data-cy="category-overdue"]').should(
+          'have.text',
+          '2 past target',
+        )
+        cy.get('[data-cy="category-outcomes"]').should(
+          'have.text',
+          '5 ack / 20 action',
+        )
+        cy.get('[data-cy="category-handling"]').should('have.text', '1m')
+        cy.get('[data-cy="category-target-rate"]').should('have.text', '60%')
+      })
+      cy.contains('tr', 'Appeals').within(() => {
+        cy.get('[data-cy="category-pending"]').should('have.text', '0')
+        cy.get('[data-cy="category-overdue"]').should(
+          'have.text',
+          '0 past target',
+        )
+        cy.get('[data-cy="category-target-rate"]').should('have.text', '—')
+        cy.contains('No targeted closures')
+      })
+      cy.contains('tr', 'Harassment').within(() => {
+        cy.get('[data-cy="category-inbound"]').should('have.text', '9')
+        cy.get('[data-cy="category-closed"]').should('have.text', '— closed')
+        cy.get('[data-cy="category-escalated"]').should('have.text', '—')
+        cy.contains('Breakdown unavailable')
+      })
+    })
+    cy.get('[data-cy="category-stats-table"]').should('be.visible')
+    cy.screenshot('category-table-light', { capture: 'viewport' })
+    cy.document().then((doc) => doc.documentElement.classList.add('dark'))
+    cy.get('[data-cy="category-stats-table"] h2').should(
+      'have.css',
+      'color',
+      'rgb(243, 244, 246)',
+    )
+    cy.screenshot('category-table-dark', { capture: 'viewport' })
+    cy.viewport(375, 812)
+    cy.get('[data-cy="category-stats-table"]').then(($el) => {
+      expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth)
+    })
+    cy.get('[data-cy="category-stats-table"]').should('be.visible')
+    cy.screenshot('category-table-mobile', { capture: 'viewport' })
+    cy.viewport(1280, 900)
+    cy.contains('[data-cy="category-stats-table"] tr', 'Child Safety')
+      .find('[data-cy="category-inbound"]')
+      .click()
+    cy.location('pathname').should('equal', '/analytics/detail')
+    cy.location('search').should((search) => {
+      expect(Object.fromEntries(new URLSearchParams(search))).to.deep.equal({
+        grouping: 'category',
+        category: 'Child Safety',
+        preset: 'custom',
+        startDate: '2026-10-14T00:00:00.000Z',
+        endDate: '2026-10-14T00:00:00.000Z',
+      })
+    })
+    cy.get('@childSafetyStats.all').then((requests) => {
+      for (const request of requests)
+        expect(request.request.query).not.to.have.property('queueId')
+    })
+    cy.go('back')
+    cy.contains('[role="tab"]', 'Categories').should(
+      'have.attr',
+      'aria-selected',
+      'true',
+    )
+  })
+})
+
 describe('Analytics overview cards', () => {
   it('shows the current backlog and target attainment among targeted closures, in both themes and on mobile', () => {
     cy.viewport(1280, 900)
@@ -641,9 +776,32 @@ describe('Overview activity panels', () => {
       .its('request.query')
       .should('include', { limit: '7' })
       .and('have.property', 'reportTypes')
-    cy.contains('a', 'Violence & Welfare')
-      .should('contain', '140Inbound')
-      .and('contain', '2400Pending')
+    cy.contains(
+      '[data-cy="category-stats-table"] tr',
+      'Violence & Welfare',
+    ).within(() => {
+      cy.get('[data-cy="category-inbound"]').should('have.text', '140')
+      cy.get('[data-cy="category-pending"]').should('have.text', '2,400')
+      cy.get('[data-cy="category-overdue"]').should(
+        'have.text',
+        '250 past target',
+      )
+      cy.get('[data-cy="category-outcomes"]').should(
+        'have.text',
+        '17 ack / 83 action',
+      )
+      cy.get('[data-cy="category-handling"]').should('have.text', '2m')
+      cy.get('[data-cy="category-target-rate"]').should('have.text', '95%')
+      cy.contains('2 of 7 days')
+      cy.contains('a', 'Violence & Welfare')
+        .should('have.attr', 'href')
+        .then((href) => {
+          const params = new URL(String(href), BASE_URL).searchParams
+          expect(params.get('category')).to.equal('Violence')
+          expect(params.get('startDate')).to.equal('2026-10-08T00:00:00.000Z')
+          expect(params.get('endDate')).to.equal('2026-10-14T00:00:00.000Z')
+        })
+    })
     cy.contains('[role="tab"]', 'Overview').click()
     cy.contains('[aria-label="Statistics period"] button', '7d').should(
       'have.attr',

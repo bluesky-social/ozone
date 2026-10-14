@@ -5,7 +5,7 @@ import { OverviewStats } from '@/reports/stats/OverviewStats'
 import { ReportTypePanels } from '@/reports/stats/ReportTypePanels'
 import { QueueAging } from '@/reports/stats/QueueAging'
 import { QueueStatsTable } from '@/reports/stats/QueueStatsTable'
-import { StatsCard } from '@/reports/stats/Stats'
+import { StatsTable } from '@/reports/stats/StatsTable'
 import {
   getStatsWindow,
   STATS_PERIODS,
@@ -111,11 +111,11 @@ export function AnalyticsPageContent() {
             <QueueStatsTable window={window} />
           </TabPanel>
           <TabPanel>
-            <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {REPORT_CATEGORIES.map((group) => (
-                <StatsCard key={group.title} group={group} window={window} />
-              ))}
-            </div>
+            <StatsTable
+              grouping="category"
+              groups={REPORT_CATEGORIES}
+              window={window}
+            />
           </TabPanel>
         </TabPanels>
       </TabGroup>
