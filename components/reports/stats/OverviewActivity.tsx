@@ -8,11 +8,11 @@ import {
   XAxis,
   YAxis,
 } from 'recharts'
-import { useHistoricalStats } from './useReportStats'
 import { ClosureBreakdown } from './ClosureBreakdown'
+import { getStatsWindow, type StatsWindow } from './statsWindow'
+import { useHistoricalStats } from './useReportStats'
+import type { WindowStats } from './useStatsWindow'
 
-const DAY_MS = 86400000
-const DAYS = 30
 const SERIES = [
   { key: 'inboundCount', label: 'Inbound', color: '#93c5fd' },
   { key: 'closedCount', label: 'Closed', color: '#2563eb' },
@@ -25,19 +25,32 @@ const formatDate = (date: string) =>
     timeZone: 'UTC',
   })
 
-export function OverviewActivity() {
-  const today = new Date().toISOString().slice(0, 10)
-  const dates = useMemo(() => {
-    const lastDay = Date.parse(`${today}T00:00:00.000Z`)
-    return Array.from({ length: DAYS }, (_, i) =>
-      new Date(lastDay - (DAYS - i - 1) * DAY_MS).toISOString().slice(0, 10),
-    )
-  }, [today])
-  const { data, isLoading, isError, refetch } = useHistoricalStats({
-    startDate: `${dates[0]}T00:00:00.000Z`,
-    endDate: `${today}T00:00:00.000Z`,
-    limit: DAYS,
-  })
+export function OverviewActivity({
+  window,
+  data,
+}: {
+  window: StatsWindow
+  data: WindowStats
+}) {
+  const today = window.endDate.slice(0, 10)
+  const chartWindow = useMemo(
+    () => (window.period === 'Today' ? getStatsWindow('7d', today) : window),
+    [window, today],
+  )
+  const { dates } = chartWindow
+  const {
+    data: history,
+    isLoading,
+    isError,
+    refetch,
+  } = useHistoricalStats(
+    {
+      startDate: chartWindow.startDate,
+      endDate: chartWindow.endDate,
+      limit: chartWindow.days,
+    },
+    { refetchInterval: 5 * 60 * 1000 },
+  )
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
   const toggleSeries = (key: string) =>
     setHiddenSeries((current) => {
@@ -47,13 +60,13 @@ export function OverviewActivity() {
       return next
     })
   const rows = useMemo(() => {
-    const snapshots = new Map(data?.stats.map((row) => [row.date, row]))
+    const byDate = new Map(history?.stats.map((row) => [row.date, row]))
     return dates.map((date) => ({
       date,
-      inboundCount: snapshots.get(date)?.inboundCount,
-      closedCount: snapshots.get(date)?.closedCount,
+      inboundCount: byDate.get(date)?.inboundCount,
+      closedCount: byDate.get(date)?.closedCount,
     }))
-  }, [data, dates])
+  }, [history, dates])
   const hasData = rows.some(
     (row) => row.inboundCount != null || row.closedCount != null,
   )
@@ -72,7 +85,8 @@ export function OverviewActivity() {
           <div>
             <h2 className="font-semibold">Inbound vs closed</h2>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-              Last 30 days · {formatDate(dates[0])} – {formatDate(today)} (UTC).
+              {chartWindow.label} · {formatDate(dates[0])}
+              {chartWindow.days > 1 ? ` – ${formatDate(today)}` : ''} (UTC).
               Today is partial.
             </p>
           </div>
@@ -118,7 +132,7 @@ export function OverviewActivity() {
           </p>
         ) : !hasData ? (
           <p className="py-20 text-center text-sm text-gray-500 dark:text-gray-400">
-            No daily stats available for the last 30 days.
+            No daily stats available for this period.
           </p>
         ) : (
           <>
@@ -226,11 +240,12 @@ export function OverviewActivity() {
         )}
       </section>
       <ClosureBreakdown
-        stats={data?.stats ?? []}
-        days={DAYS}
-        isLoading={isLoading}
-        isError={isError}
-        onRetry={() => refetch()}
+        stats={data.rows}
+        days={window.days}
+        periodLabel={window.label}
+        isLoading={data.isLoading}
+        isError={data.isError}
+        onRetry={() => data.refetch()}
       />
     </div>
   )

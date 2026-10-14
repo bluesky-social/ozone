@@ -55,9 +55,8 @@ export function StatsSummary({
           {card('escalatedCount', 'Escalated', 'escalated')}
           {card('actionRate', 'Action rate', undefined, 'percent')}
         </div>
-        <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+        <div className="mt-3 grid grid-cols-2 gap-3">
           {card('labelActionCount', 'Label actions')}
-          {card('tagActionCount', 'Tag actions')}
           {card('takedownActionCount', 'Takedown actions')}
         </div>
       </section>

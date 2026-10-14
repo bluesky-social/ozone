@@ -1,19 +1,16 @@
 import { numberToString } from '@/lib/util'
 import { ClockIcon } from '@heroicons/react/24/outline'
-import { formatDistanceToNow, subDays } from 'date-fns'
+import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
-import { useMemo } from 'react'
 import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { twMerge } from 'tailwind-merge'
 import { getHrefFromGroup, StatGroup } from '.'
 import { statReasonTypes } from '../helpers/getType'
 import type { ReportStats } from './reportStats'
 export type { ReportStats } from './reportStats'
-import {
-  LiveStatsParams,
-  useHistoricalStats,
-  useLiveStats,
-} from './useReportStats'
+import { LiveStatsParams } from './useReportStats'
+import type { StatsWindow } from './statsWindow'
+import { useStatsWindow } from './useStatsWindow'
 
 export const STATS_PRESETS = {
   inbound: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
@@ -180,33 +177,33 @@ export function StatCard({
   )
 }
 
-export function StatsCard({ group }: { group: StatGroup }) {
+export function StatsCard({
+  group,
+  window,
+}: {
+  group: StatGroup
+  window: StatsWindow
+}) {
   const filterParams: LiveStatsParams = {
     reportTypes: group.category ? statReasonTypes[group.category] : undefined,
     queueId: group.queueId,
     moderatorDid: group.moderatorDid,
   }
 
-  const {
-    data: stats,
-    isLoading,
-    isError,
-    refetch,
-  } = useLiveStats(filterParams)
+  const { stats, rows, coverage, lastUpdated, isLoading, isError, refetch } =
+    useStatsWindow(window, filterParams)
 
-  const startDate = useMemo(() => subDays(new Date(), 7).toISOString(), [])
-  const { data: historical } = useHistoricalStats({
-    ...filterParams,
-    startDate,
-    limit: 7,
-  })
-
-  const sparklineData = historical?.stats
-    ?.slice()
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .map((s) => ({ value: s.inboundCount }))
-
-  const showGraph = sparklineData && sparklineData.length > 1
+  const byDate = new Map(rows.map((row) => [row.date, row]))
+  const sparklineData = window.dates.map((date) => ({
+    date,
+    value: byDate.get(date)?.inboundCount,
+  }))
+  const showGraph = sparklineData.some((row) => row.value != null)
+  const partialCoverage =
+    window.days > 1 &&
+    (
+      ['inboundCount', 'escalatedCount', 'actionedCount', 'actionRate'] as const
+    ).some((key) => (coverage[key] ?? 0) < window.days)
 
   if (isError) {
     return (
@@ -246,7 +243,7 @@ export function StatsCard({ group }: { group: StatGroup }) {
 
       {isLoading ? (
         <div className="text-xs text-gray-400">Loading...</div>
-      ) : !stats ? (
+      ) : !rows.length && !lastUpdated ? (
         <div className="text-xs text-gray-400">No data</div>
       ) : (
         <>
@@ -275,6 +272,19 @@ export function StatsCard({ group }: { group: StatGroup }) {
               }
             />
           </div>
+          <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
+            {window.label} (UTC) · Pending is current
+            {lastUpdated
+              ? ` as of ${new Date(lastUpdated).toISOString().replace('T', ' ').slice(0, 19)} UTC`
+              : ''}
+            .
+          </p>
+          {partialCoverage && (
+            <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">
+              Some daily metrics are unavailable; totals and rates use available
+              days.
+            </p>
+          )}
 
           <div className="h-32 w-full">
             {showGraph ? (
@@ -285,7 +295,8 @@ export function StatsCard({ group }: { group: StatGroup }) {
                     dataKey="value"
                     stroke="#3b82f6"
                     strokeWidth={2}
-                    dot={false}
+                    dot={{ r: 2 }}
+                    connectNulls={false}
                   />
                 </LineChart>
               </ResponsiveContainer>

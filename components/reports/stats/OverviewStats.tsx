@@ -1,35 +1,45 @@
 import { formatDuration } from '@/lib/util'
-import { useLiveStats } from './useReportStats'
+import { dailyAverage, type StatsWindow } from './statsWindow'
+import type { WindowStats } from './useStatsWindow'
 
-export function OverviewStats() {
-  const { data: stats, isLoading, isError, refetch } = useLiveStats()
+export function OverviewStats({
+  window,
+  data,
+}: {
+  window: StatsWindow
+  data: WindowStats
+}) {
+  const { stats, rows, coverage, lastUpdated, isLoading, isError, refetch } =
+    data
 
   if (isLoading) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        Loading current stats...
+        Loading stats...
       </p>
     )
   }
   if (isError) {
     return (
       <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-        Failed to load current stats.{' '}
+        Failed to load stats.{' '}
         <button onClick={() => refetch()} className="underline">
           Retry
         </button>
       </p>
     )
   }
-  if (!stats?.lastUpdated) {
+  if (!lastUpdated && !rows.length) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
-        No current data available yet.
+        No stats available yet.
       </p>
     )
   }
 
   const count = (value?: number) => value?.toLocaleString() ?? '—'
+  const average = (key: 'inboundCount' | 'closedCount' | 'escalatedCount') =>
+    dailyAverage(rows, key, window.endDate.slice(0, 10))
   const hasTargets =
     stats.closureTargetMetCount != null &&
     stats.closureTargetMissedCount != null
@@ -41,12 +51,18 @@ export function OverviewStats() {
     : undefined
   const cards = [
     {
+      key: 'inboundCount' as const,
       label: 'Inbound',
       value: count(stats.inboundCount),
-      description: 'New reports received today',
+      description:
+        window.period === 'Today'
+          ? 'New reports received today'
+          : 'New reports received in this period',
+      average: average('inboundCount'),
       accent: 'bg-blue-300 dark:bg-blue-400',
     },
     {
+      key: 'pendingCount' as const,
       label: 'Pending',
       value: count(stats.pendingCount),
       description:
@@ -56,21 +72,31 @@ export function OverviewStats() {
       accent: 'bg-rose-500 dark:bg-rose-400',
     },
     {
+      key: 'closedCount' as const,
       label: 'Closed',
       value: count(stats.closedCount),
       description:
-        stats.acknowledgedCount != null && stats.actionedCount != null
+        stats.acknowledgedCount != null &&
+        stats.actionedCount != null &&
+        stats.acknowledgedCount + stats.actionedCount === stats.closedCount
           ? `${count(stats.acknowledgedCount)} acknowledged · ${count(stats.actionedCount)} actioned`
           : 'Closure breakdown unavailable',
+      average: average('closedCount'),
       accent: 'bg-blue-600 dark:bg-blue-400',
     },
     {
+      key: 'escalatedCount' as const,
       label: 'Escalated',
       value: count(stats.escalatedCount),
-      description: 'Escalation events today',
+      description:
+        window.period === 'Today'
+          ? 'Escalation events today'
+          : 'Escalation events in this period',
+      average: average('escalatedCount'),
       accent: 'bg-purple-500 dark:bg-purple-400',
     },
     {
+      key: 'avgHandlingTimeSec' as const,
       label: 'Avg handling time',
       value:
         stats.avgHandlingTimeSec != null
@@ -80,6 +106,7 @@ export function OverviewStats() {
       accent: 'bg-slate-500 dark:bg-slate-400',
     },
     {
+      key: 'closureTargetMetRate' as const,
       label: 'Closure Target',
       value: targetRate != null ? `${targetRate}%` : '—',
       description: targetCount
@@ -95,19 +122,11 @@ export function OverviewStats() {
     <section aria-label="Overview metrics" data-cy="overview-metrics">
       <div className="mb-3 flex flex-wrap items-baseline justify-between gap-2">
         <h2 className="font-medium text-gray-900 dark:text-gray-100">
-          Today (UTC)
+          {window.label} (UTC)
         </h2>
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          Pending is the current unmuted backlog. Updated{' '}
-          {new Date(stats.lastUpdated)
-            .toISOString()
-            .replace('T', ' ')
-            .slice(0, 19)}{' '}
-          UTC.
-        </p>
       </div>
       <dl className="grid grid-cols-2 gap-3 md:grid-cols-3 xl:grid-cols-6">
-        {cards.map(({ label, value, description, accent }) => (
+        {cards.map(({ key, label, value, description, accent, average }) => (
           <div
             key={label}
             className="flex min-w-0 flex-col gap-2 rounded-xl border border-gray-200 bg-white px-4 py-4 dark:border-slate-700 dark:bg-slate-800"
@@ -121,6 +140,22 @@ export function OverviewStats() {
             <dd className="text-xs text-gray-600 dark:text-gray-300">
               {description}
             </dd>
+            {average && (
+              <dd className="text-xs text-gray-500 dark:text-gray-400">
+                {average.value.toLocaleString(undefined, {
+                  maximumFractionDigits: 1,
+                })}{' '}
+                avg/day · {average.days} complete{' '}
+                {average.days === 1 ? 'day' : 'days'}
+              </dd>
+            )}
+            {window.days > 1 &&
+              key !== 'pendingCount' &&
+              (coverage[key] ?? 0) < window.days && (
+                <dd className="text-xs text-amber-700 dark:text-amber-300">
+                  Available for {coverage[key] ?? 0} of {window.days} days.
+                </dd>
+              )}
             <div
               aria-hidden="true"
               className={`mt-auto h-1 rounded-full ${accent}`}

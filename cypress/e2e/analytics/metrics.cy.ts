@@ -166,6 +166,7 @@ describe('Report analytics metrics', () => {
     cy.get('[aria-label="Chart metrics"]')
       .contains('button', 'Closure targets')
       .click()
+    cy.contains('No closure targets data for this range.').scrollIntoView()
     cy.contains('No closure targets data for this range.').should('be.visible')
   })
 

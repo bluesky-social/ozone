@@ -6,7 +6,6 @@ const ACTIONS = [
     label: 'Label',
     color: 'bg-purple-500 dark:bg-purple-400',
   },
-  { key: 'tagActionCount', label: 'Tag', color: 'bg-slate-400' },
   {
     key: 'takedownActionCount',
     label: 'Takedown',
@@ -17,12 +16,14 @@ const ACTIONS = [
 export function ClosureBreakdown({
   stats,
   days,
+  periodLabel,
   isLoading,
   isError,
   onRetry,
 }: {
   stats: HistoricalReportStats[]
   days: number
+  periodLabel: string
   isLoading: boolean
   isError: boolean
   onRetry: () => void
@@ -56,7 +57,7 @@ export function ClosureBreakdown({
     >
       <h2 className="font-semibold">Closed: acknowledged vs actioned</h2>
       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        Last {days} UTC days · Today is partial.
+        {periodLabel} (UTC) · Today is partial.
       </p>
       {isLoading ? (
         <p
