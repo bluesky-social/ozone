@@ -1,11 +1,10 @@
 'use client'
-import { PaginatedGrid } from '@/common/PaginatedGrid'
-import { useQueueList } from '@/queues/useQueues'
 import { REPORT_CATEGORIES } from '@/reports/stats'
 import { OverviewActivity } from '@/reports/stats/OverviewActivity'
 import { OverviewStats } from '@/reports/stats/OverviewStats'
 import { ReportTypePanels } from '@/reports/stats/ReportTypePanels'
 import { QueueAging } from '@/reports/stats/QueueAging'
+import { QueueStatsTable } from '@/reports/stats/QueueStatsTable'
 import { StatsCard } from '@/reports/stats/Stats'
 import {
   getStatsWindow,
@@ -19,9 +18,28 @@ import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
 import { useMemo, useState } from 'react'
 import { useInterval, useTitle } from 'react-use'
 import Link from 'next/link'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+
+const ANALYTICS_TABS = [
+  { key: 'overview', label: 'Overview' },
+  { key: 'queues', label: 'Queues' },
+  { key: 'categories', label: 'Categories' },
+]
 
 export function AnalyticsPageContent() {
   useTitle('Analytics')
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const selectedTab = Math.max(
+    0,
+    ANALYTICS_TABS.findIndex((tab) => tab.key === searchParams.get('tab')),
+  )
+  const selectTab = (index: number) => {
+    const params = new URLSearchParams(searchParams)
+    params.set('tab', ANALYTICS_TABS[index].key)
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
   const [period, setPeriod] = useState<StatsPeriod>('Today')
   const [today, setToday] = useState(() =>
     new Date().toISOString().slice(0, 10),
@@ -71,14 +89,14 @@ export function AnalyticsPageContent() {
         </div>
       </div>
 
-      <TabGroup>
+      <TabGroup selectedIndex={selectedTab} onChange={selectTab}>
         <TabList
           aria-label="Analytics views"
           className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-slate-700"
         >
-          {['Overview', 'Queues', 'Categories'].map((label) => (
+          {ANALYTICS_TABS.map(({ key, label }) => (
             <Tab
-              key={label}
+              key={key}
               className="whitespace-nowrap border-b-[3px] border-transparent pb-3 pt-1 text-[15px] font-medium tracking-tight text-gray-500 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:font-semibold data-[selected]:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 dark:text-gray-400 dark:hover:text-gray-100 dark:data-[selected]:border-blue-400 dark:data-[selected]:text-gray-100"
             >
               {label}
@@ -90,7 +108,7 @@ export function AnalyticsPageContent() {
             <Overview window={window} />
           </TabPanel>
           <TabPanel>
-            <QueueStats window={window} />
+            <QueueStatsTable window={window} />
           </TabPanel>
           <TabPanel>
             <div className="mb-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
@@ -122,56 +140,5 @@ function Overview({ window }: { window: StatsWindow }) {
       <ReportTypePanels window={window} />
       <QueueAging />
     </>
-  )
-}
-
-function QueueStats({ window }: { window: StatsWindow }) {
-  const { data, hasNextPage, fetchNextPage, isLoading, isError, refetch } =
-    useQueueList()
-  const queues = useMemo(
-    () => data?.pages.flatMap((page) => page.queues) ?? [],
-    [data],
-  )
-
-  if (isLoading) {
-    return (
-      <p role="status" className="text-sm text-gray-500 dark:text-gray-400">
-        Loading queues...
-      </p>
-    )
-  }
-  if (isError) {
-    return (
-      <p role="alert" className="text-sm text-red-600 dark:text-red-400">
-        Failed to load queues.{' '}
-        <button type="button" onClick={() => refetch()} className="underline">
-          Retry
-        </button>
-      </p>
-    )
-  }
-  if (!queues.length) {
-    return (
-      <p className="text-sm text-gray-500 dark:text-gray-400">
-        No queues available.
-      </p>
-    )
-  }
-
-  return (
-    <div className="mb-6">
-      <PaginatedGrid
-        items={queues}
-        hasNextPage={hasNextPage}
-        fetchNextPage={fetchNextPage}
-        renderItem={(queue) => (
-          <StatsCard
-            key={queue.id}
-            group={{ title: queue.name, queueId: queue.id }}
-            window={window}
-          />
-        )}
-      />
-    </div>
   )
 }

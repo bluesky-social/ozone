@@ -234,6 +234,166 @@ describe('Queue aging', () => {
   })
 })
 
+describe('Queue statistics table', () => {
+  it('shows distinct queue metrics, zero and unavailable results, and readable rows in both themes and on mobile', () => {
+    cy.viewport(1280, 900)
+    visitOverview(snapshot, [], 'Today', [
+      {
+        ...queueSnapshot(1, 'Review queue'),
+        description: 'Reports awaiting review',
+      },
+      queueSnapshot(2, 'Empty queue'),
+      queueSnapshot(3, 'Legacy queue'),
+    ])
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.report.getLiveStats*`,
+      (req) => {
+        req.reply({
+          stats:
+            req.query.queueId === '2'
+              ? {
+                  lastUpdated: snapshot.lastUpdated,
+                  inboundCount: 0,
+                  pendingCount: 0,
+                  closureTargetOverdueCount: 0,
+                  closedCount: 0,
+                  acknowledgedCount: 0,
+                  actionedCount: 0,
+                  escalatedCount: 0,
+                  closureTargetMetCount: 0,
+                  closureTargetMissedCount: 0,
+                }
+              : req.query.queueId === '3'
+                ? {
+                    lastUpdated: snapshot.lastUpdated,
+                    inboundCount: 9,
+                    pendingCount: 12,
+                    actionedCount: 30,
+                  }
+                : snapshot,
+        })
+      },
+    )
+    cy.contains('[role="tab"]', 'Queues').click()
+    cy.get('[data-cy="queue-stats-table"]').within(() => {
+      cy.get('thead th').then((headers) => {
+        expect([...headers].map((header) => header.textContent)).to.deep.equal([
+          'Queue',
+          'Inbound',
+          'Pending',
+          'Closed · ack / action',
+          'Escalated',
+          'Avg handling',
+          'Closure Target',
+        ])
+      })
+      cy.contains('tr', 'Review queue').within(() => {
+        cy.contains('Reports awaiting review')
+        cy.get('[data-cy="queue-inbound"]').should('have.text', '375')
+        cy.get('[data-cy="queue-closed"]').should('have.text', '100 closed')
+        cy.get('[data-cy="queue-outcomes"]').should(
+          'have.text',
+          '70 ack / 30 action',
+        )
+        cy.get('[data-cy="queue-escalated"]').should('have.text', '4')
+        cy.get('[data-cy="queue-handling"]').should('have.text', '16m')
+        cy.get('[data-cy="queue-target-rate"]').should('have.text', '75%')
+        cy.contains('a', 'Review queue')
+          .should('have.attr', 'href')
+          .and('include', 'queueId=1')
+      })
+      cy.contains('tr', 'Empty queue').within(() => {
+        cy.get('[data-cy="queue-pending"]').should('have.text', '0')
+        cy.get('[data-cy="queue-overdue"]').should('have.text', '0 past target')
+        cy.get('[data-cy="queue-outcomes"]').should(
+          'have.text',
+          '0 ack / 0 action',
+        )
+        cy.get('[data-cy="queue-handling"]').should('have.text', '—')
+        cy.get('[data-cy="queue-target-rate"]').should('have.text', '—')
+        cy.contains('No targeted closures')
+      })
+      cy.contains('tr', 'Legacy queue').within(() => {
+        cy.get('[data-cy="queue-inbound"]').should('have.text', '9')
+        cy.get('[data-cy="queue-overdue"]').should('have.text', '— past target')
+        cy.get('[data-cy="queue-closed"]').should('have.text', '— closed')
+        cy.get('[data-cy="queue-escalated"]').should('have.text', '—')
+        cy.get('[data-cy="queue-handling"]').should('have.text', '—')
+        cy.contains('Breakdown unavailable')
+        cy.contains('Target results unavailable')
+      })
+    })
+    cy.get('[data-cy="queue-stats-table"]').should('be.visible')
+    cy.screenshot('queue-table-light', { capture: 'viewport' })
+    cy.document().then((doc) => doc.documentElement.classList.add('dark'))
+    cy.get('[data-cy="queue-stats-table"] h2').should(
+      'have.css',
+      'color',
+      'rgb(243, 244, 246)',
+    )
+    cy.screenshot('queue-table-dark', { capture: 'viewport' })
+    cy.viewport(375, 812)
+    cy.get('[data-cy="queue-stats-table"]').then(($el) => {
+      expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth)
+    })
+    cy.get('[data-cy="queue-stats-table"]').should('be.visible')
+    cy.screenshot('queue-table-mobile', { capture: 'viewport' })
+  })
+
+  it('retries failed row stats without navigating and shows loaded queues after pagination', () => {
+    visitOverview(snapshot, [], 'Today', [queueSnapshot(1, 'Review queue')])
+    cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.getLiveStats*`, {
+      statusCode: 500,
+      body: { error: 'InternalServerError', message: 'Unavailable' },
+    })
+    cy.contains('[role="tab"]', 'Queues').click()
+    cy.contains('[data-cy="queue-stats-table"]', 'Stats unavailable.', {
+      timeout: 15000,
+    }).should('be.visible')
+    cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.getLiveStats*`, {
+      stats: snapshot,
+    })
+    cy.contains('[data-cy="queue-stats-table"] button', 'Retry').click()
+    cy.get('[data-cy="queue-stats-table"] [data-cy="queue-inbound"]').should(
+      'have.text',
+      '375',
+    )
+    cy.location('pathname').should('equal', '/analytics')
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.queue.listQueues*`,
+      (req) => {
+        req.reply(
+          req.query.cursor
+            ? { queues: [queueSnapshot(2, 'Next queue')] }
+            : {
+                queues: [queueSnapshot(1, 'Review queue')],
+                cursor: 'next-page',
+              },
+        )
+      },
+    ).as('tableQueues')
+    cy.reload()
+    cy.wait('@tableQueues')
+    cy.contains(
+      '[data-cy="queue-stats-table"] button',
+      'Load more queues',
+    ).click()
+    cy.wait('@tableQueues')
+      .its('request.query.cursor')
+      .should('equal', 'next-page')
+    cy.get('[data-cy="queue-stats-table"] tbody tr').should('have.length', 2)
+    cy.contains('[data-cy="queue-stats-table"] tr', 'Next queue').should(
+      'be.visible',
+    )
+    cy.contains(
+      '[data-cy="queue-stats-table"] button',
+      'Load more queues',
+    ).should('not.exist')
+  })
+})
+
 describe('Analytics overview cards', () => {
   it('shows the current backlog and target attainment among targeted closures, in both themes and on mobile', () => {
     cy.viewport(1280, 900)
@@ -458,12 +618,24 @@ describe('Overview activity panels', () => {
       endDate: '2026-10-14T00:00:00.000Z',
       limit: '7',
     })
-    cy.contains('a', 'Review queue').within(() => {
-      cy.contains('140Inbound')
-      cy.contains('2400Pending')
-      cy.contains('83Actioned (83%)')
-      cy.contains('Last 7 days (UTC)')
-    })
+    cy.contains('[data-cy="queue-stats-table"] tr', 'Review queue').within(
+      () => {
+        cy.get('[data-cy="queue-inbound"]').should('have.text', '140')
+        cy.get('[data-cy="queue-pending"]').should('have.text', '2,400')
+        cy.get('[data-cy="queue-overdue"]').should(
+          'have.text',
+          '250 past target',
+        )
+        cy.get('[data-cy="queue-closed"]').should('have.text', '100 closed')
+        cy.get('[data-cy="queue-outcomes"]').should(
+          'have.text',
+          '17 ack / 83 action',
+        )
+        cy.get('[data-cy="queue-handling"]').should('have.text', '2m')
+        cy.get('[data-cy="queue-target-rate"]').should('have.text', '95%')
+        cy.contains('2 of 7 days')
+      },
+    )
     cy.contains('[role="tab"]', 'Categories').click()
     cy.wait('@categoryHistory')
       .its('request.query')
@@ -480,6 +652,27 @@ describe('Overview activity panels', () => {
     )
     cy.get('[data-cy="overview-metrics"]').within(() =>
       expectMetric('Inbound', '140'),
+    )
+    cy.contains('[role="tab"]', 'Queues').click()
+    cy.contains('[data-cy="queue-stats-table"] tr', 'Review queue')
+      .find('[data-cy="queue-inbound"]')
+      .click()
+    cy.location('pathname').should('equal', '/analytics/detail')
+    cy.location('search').should((search) => {
+      expect(Object.fromEntries(new URLSearchParams(search))).to.deep.equal({
+        grouping: 'queue',
+        queueId: '2',
+        preset: 'custom',
+        startDate: '2026-10-08T00:00:00.000Z',
+        endDate: '2026-10-14T00:00:00.000Z',
+      })
+    })
+    cy.get('[data-cy="stats-summary"]').should('be.visible')
+    cy.go('back')
+    cy.contains('[role="tab"]', 'Queues').should(
+      'have.attr',
+      'aria-selected',
+      'true',
     )
   })
 
