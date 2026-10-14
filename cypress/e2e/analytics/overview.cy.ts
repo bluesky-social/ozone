@@ -107,7 +107,10 @@ describe('Analytics overview cards', () => {
     cy.get('[data-cy="overview-metrics"]').then(($el) => {
       expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth)
     })
-    cy.get('[data-cy="overview-metrics"]').screenshot('overview-cards-mobile')
+    cy.get('[data-cy="overview-metrics"]').scrollIntoView()
+    cy.get('[data-cy="overview-metrics"]')
+      .should('be.visible')
+      .screenshot('overview-cards-mobile')
   })
 
   it('shows unavailable metrics for a legacy snapshot', () => {
