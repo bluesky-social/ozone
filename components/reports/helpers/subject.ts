@@ -151,7 +151,7 @@ export const getCollectionName = (collection: string) => {
     return 'Conversation'
   }
   if (collection === CollectionId.StandardDocument) {
-    return 'Document'
+    return 'Standard Site Document'
   }
   // If the collection is a string with ., use the last two segments as the title
   // so app.bsky.graph.list -> graph list
