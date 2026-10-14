@@ -68,6 +68,7 @@ import { EmailComposerFields } from 'components/email/Composer'
 import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
+import { PriorityBadge } from 'components/setting/report-priority/PriorityBadge'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import {
   ActivityTimeline,
@@ -180,6 +181,7 @@ function ReportInfoPanel({
       <div className="flex flex-row flex-wrap items-center gap-2 mb-3">
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
+        <PriorityBadge report={report} />
         <MutedBadge isMuted={report.isMuted} />
         <AutomatedBadge report={report} />
         <QueueBadge reportId={report.id} queue={report.queue} />

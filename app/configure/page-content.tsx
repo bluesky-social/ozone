@@ -19,6 +19,7 @@ import { ProtectedTagsConfig } from '@/config/ProtectedTags'
 import { PoliciesConfig } from '@/config/Policies'
 import { SafelinkConfig } from '@/config/Safelink'
 import { QueuesConfig } from '@/queues/configure/index'
+import { ReportPrioritiesConfig } from '@/config/ReportPriorities'
 
 enum Views {
   Configure,
@@ -28,6 +29,7 @@ enum Views {
   ProtectedTags,
   Policies,
   Queues,
+  ReportPriorities,
 }
 
 const TabKeys = {
@@ -38,6 +40,7 @@ const TabKeys = {
   protectedTags: Views.ProtectedTags,
   policies: Views.Policies,
   queues: Views.Queues,
+  reportPriorities: Views.ReportPriorities,
 }
 
 export default function ConfigurePageContent() {
@@ -102,16 +105,28 @@ export default function ConfigurePageContent() {
       view: Views.Queues,
       label: 'Queues',
     },
+    {
+      view: Views.ReportPriorities,
+      label: 'Priority Levels',
+    },
   ]
 
   return (
-    <div className="w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2 mx-auto my-4 dark:text-gray-100">
-      <Tabs
-        currentView={currentView}
-        onSetCurrentView={setCurrentView}
-        views={views}
-        fullWidth
-      />
+    <div
+      className={`mx-auto my-4 dark:text-gray-100 ${
+        currentView === Views.ReportPriorities
+          ? 'w-11/12 max-w-5xl'
+          : 'w-5/6 sm:w-3/4 md:w-2/3 lg:w-1/2'
+      }`}
+    >
+      <div className="overflow-x-auto">
+        <Tabs
+          currentView={currentView}
+          onSetCurrentView={setCurrentView}
+          views={views}
+          fullWidth
+        />
+      </div>
       {currentView === Views.Configure && <LabelerConfig />}
       {currentView === Views.Members && <MemberConfig />}
       {currentView === Views.Sets && <SetsConfig />}
@@ -119,6 +134,7 @@ export default function ConfigurePageContent() {
       {currentView === Views.ProtectedTags && <ProtectedTagsConfig />}
       {currentView === Views.Policies && <PoliciesConfig />}
       {currentView === Views.Queues && <QueuesConfig />}
+      {currentView === Views.ReportPriorities && <ReportPrioritiesConfig />}
 
       <ModActionPanelQuick
         open={!!quickOpenParam}
