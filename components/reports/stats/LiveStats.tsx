@@ -48,7 +48,11 @@ export function LiveStatsCards({
   const { data: stats, isLoading, isError, refetch } = useLiveStats(params)
 
   if (isLoading)
-    return <p className="text-sm text-gray-500">Loading current stats...</p>
+    return (
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        Loading current stats...
+      </p>
+    )
   if (isError) {
     return (
       <p className="text-sm text-red-600 dark:text-red-400">
@@ -61,7 +65,9 @@ export function LiveStatsCards({
   }
   if (!stats?.lastUpdated)
     return (
-      <p className="text-sm text-gray-500">No current data available yet.</p>
+      <p className="text-sm text-gray-500 dark:text-gray-400">
+        No current data available yet.
+      </p>
     )
 
   return (

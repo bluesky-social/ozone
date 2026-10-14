@@ -154,18 +154,28 @@ export function StatCard({
   const displayValue = typeof value !== 'string' ? numberToString(value) : value
 
   return (
-    <div
-      className={twMerge(
-        'rounded-lg border border-gray-200 dark:border-slate-700 px-4 py-3 flex flex-col gap-1',
-        classNamePreset ? STATS_PRESETS[classNamePreset] : '',
-      )}
-    >
-      <span className="text-xs font-medium opacity-80">{label}</span>
-      <span className="text-2xl font-bold leading-tight break-words tabular-nums">
+    <div className="rounded-xl border border-gray-200 bg-white dark:border-slate-700 dark:bg-slate-800 px-4 py-4 flex flex-col gap-2 min-w-0">
+      <span className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
+        {classNamePreset && (
+          <span
+            aria-hidden="true"
+            className={twMerge(
+              'h-2 w-2 shrink-0 rounded-full',
+              STATS_PRESETS[classNamePreset],
+            )}
+          />
+        )}
+        {label}
+      </span>
+      <span className="text-2xl font-bold leading-tight tracking-tight break-words tabular-nums text-gray-900 dark:text-gray-100">
         {displayValue}
         {suffix && <span className="text-sm font-medium ml-1">{suffix}</span>}
       </span>
-      {description && <span className="text-xs opacity-80">{description}</span>}
+      {description && (
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          {description}
+        </span>
+      )}
     </div>
   )
 }

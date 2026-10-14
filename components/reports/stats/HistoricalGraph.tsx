@@ -89,7 +89,7 @@ export function HistoricalGraph({
     return <p className="py-12 text-center text-sm">Loading data...</p>
   if (isError)
     return (
-      <p className="py-12 text-center text-sm text-red-600">
+      <p className="py-12 text-center text-sm text-red-600 dark:text-red-400">
         Failed to load data.{' '}
         {onRetry && (
           <button onClick={onRetry} className="underline">

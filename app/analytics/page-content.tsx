@@ -2,7 +2,7 @@
 import { PaginatedGrid } from '@/common/PaginatedGrid'
 import { useQueueList } from '@/queues/useQueues'
 import { REPORT_CATEGORIES } from '@/reports/stats'
-import { LiveStatsCards } from '@/reports/stats/LiveStats'
+import { OverviewStats } from '@/reports/stats/OverviewStats'
 import { StatsCard } from '@/reports/stats/Stats'
 import { useMemo } from 'react'
 import { useTitle } from 'react-use'
@@ -18,13 +18,13 @@ export function AnalyticsPageContent() {
   )
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4">
+    <div className="px-4 sm:px-6 lg:px-8 py-4 text-gray-900 dark:text-gray-100">
       <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-4">
         Analytics
       </h1>
 
       <div className="mb-6">
-        <LiveStatsCards />
+        <OverviewStats />
         <Link
           href="/analytics/detail?grouping=aggregate"
           className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"
