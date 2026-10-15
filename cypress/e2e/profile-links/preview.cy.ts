@@ -106,21 +106,6 @@ describe('Profile link previews and snapshots', () => {
         statusCode: 200,
         body: auth.getLabelerRecordResponse,
       })
-      const header = btoa(JSON.stringify({ alg: 'HS256', typ: 'JWT' }))
-      const claims = btoa(
-        JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 3600 }),
-      )
-      auth.createSessionResponse.accessJwt = `${header}.${claims}.test-signature`
-      cy.intercept(
-        'POST',
-        `${SERVER_URL}/com.atproto.server.refreshSession`,
-        auth.createSessionResponse,
-      )
-      cy.intercept(
-        'GET',
-        `${SERVER_URL}/com.atproto.server.getSession`,
-        auth.createSessionResponse,
-      )
       cy.visit(
         `http://127.0.0.1:3000/reports?quickOpen=${encodeURIComponent(uri)}`,
       )

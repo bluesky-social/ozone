@@ -7,7 +7,23 @@ import {
   mockServerConfigResponse,
   API_URL,
   mockLabelerServiceRecordResponse,
+  SERVER_URL,
 } from './api'
+
+function sessionToken(did: string, scope: string) {
+  const now = Math.floor(Date.now() / 1000)
+  const encode = (value: object) =>
+    btoa(JSON.stringify(value))
+      .replace(/\+/g, '-')
+      .replace(/\//g, '_')
+      .replace(/=+$/, '')
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({
+    sub: did,
+    scope,
+    iat: now,
+    exp: now + 3600,
+  })}.test-signature`
+}
 
 Cypress.Commands.add(
   'login',
@@ -20,11 +36,29 @@ Cypress.Commands.add(
     ozoneDidDataResponse: any
     ozoneServerConfigResponse: any
   }) => {
+    const session = {
+      ...authFixture.createSessionResponse,
+      accessJwt: sessionToken(
+        authFixture.createSessionResponse.did,
+        'com.atproto.access',
+      ),
+      refreshJwt: sessionToken(
+        authFixture.createSessionResponse.did,
+        'com.atproto.refresh',
+      ),
+    }
     // Setup the auth response
     mockAuthResponse({
       statusCode: 200,
-      body: authFixture.createSessionResponse,
-    })
+      body: session,
+    }).as('login')
+    // Reloads restore the saved session through both endpoints.
+    cy.intercept(
+      'POST',
+      `${SERVER_URL}/com.atproto.server.refreshSession`,
+      session,
+    )
+    cy.intercept('GET', `${SERVER_URL}/com.atproto.server.getSession`, session)
     mockServerConfigResponse({
       statusCode: 200,
       body: authFixture.ozoneServerConfigResponse,
@@ -52,10 +86,13 @@ Cypress.Commands.add(
 
     // The login form mounts after @atproto/oauth-client-browser import
     // Allow a timeout for the import to complete
-    cy.get('#service-url', { timeout: 10000 }).clear().type(API_URL)
+    cy.get('#service-url', { timeout: 10000 }).clear()
+    cy.get('#service-url').type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()
+    cy.wait('@login').its('response.statusCode').should('eq', 200)
+    cy.get('header input[type="search"]', { timeout: 10000 }).should('be.visible')
   },
 )
 
@@ -63,7 +100,7 @@ Cypress.Commands.add('openCommandPalette', (input?: string) => {
   const comboKey = Cypress.platform === 'darwin' ? '{cmd}k' : '{ctrl}k'
   cy.get('body').type(comboKey)
   if (input) {
-    cy.get('[aria-controls="kbar-listbox"]').clear().type(input)
-    cy.wait(300)
+    cy.get('[aria-controls="kbar-listbox"]').clear()
+    cy.get('[aria-controls="kbar-listbox"]').type(input)
   }
 })
