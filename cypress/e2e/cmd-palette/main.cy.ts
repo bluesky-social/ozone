@@ -10,7 +10,7 @@ describe('Command Palette', () => {
       'GET',
       `${SERVER_URL}/tools.ozone.moderation.queryStatuses*`,
       response,
-    )
+    ).as('moderationReports')
 
   const mockResolveHandleResponse = (response: Record<string, any>) =>
     cy.intercept(
@@ -38,6 +38,7 @@ describe('Command Palette', () => {
       })
     })
     cy.location('pathname').should('eq', '/reports')
+    cy.wait('@moderationReports')
   })
 
   it('Shows post options from bsky app post url', () => {
@@ -45,7 +46,7 @@ describe('Command Palette', () => {
     cy.contains('#kbar-listbox [role="option"]', 'Take action on Post').click()
     cy.location('href').should((href) => {
       expect(decodeURIComponent(href)).to.include(
-        `quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a`,
+        'quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a',
       )
     })
   })
@@ -58,7 +59,7 @@ describe('Command Palette', () => {
     ).click()
     cy.location('href').should((href) => {
       expect(decodeURIComponent(href)).to.include(
-        `quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst`,
+        'quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst',
       )
     })
   })
