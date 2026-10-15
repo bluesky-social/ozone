@@ -13,7 +13,7 @@ export function ProfileLinkCard({ value }: { value: unknown }) {
     value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Record<string, unknown>)
       : {}
-  const destination = typeof record.uri === 'string' ? record.uri : null
+  const destination = typeof record.url === 'string' ? record.url : null
   const title = typeof record.title === 'string' ? record.title : null
   const createdAt =
     typeof record.createdAt === 'string' ? record.createdAt : null
