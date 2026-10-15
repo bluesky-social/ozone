@@ -1,42 +1,60 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import type {
+  Agent,
   ToolsOzoneReportGetLiveStats,
   ToolsOzoneReportGetHistoricalStats,
 } from '@atproto/api'
 import { useQuery } from '@tanstack/react-query'
+import { normalizeStats } from './reportStats'
 
 export type LiveStatsParams = ToolsOzoneReportGetLiveStats.QueryParams
 export type HistoricalStatsParams =
   ToolsOzoneReportGetHistoricalStats.QueryParams
 
-export const useLiveStats = (params?: LiveStatsParams) => {
-  const labelerAgent = useLabelerAgent()
+export const liveStatsQueryOptions = (
+  labelerAgent: Agent,
+  params?: LiveStatsParams,
+) => ({
+  queryKey: ['report', 'getLiveStats', params],
+  queryFn: async () => {
+    const { data } = await labelerAgent.tools.ozone.report.getLiveStats(
+      params ?? {},
+    )
+    return normalizeStats(data.stats)
+  },
+  refetchInterval: 5 * 60 * 1000,
+})
 
-  return useQuery({
-    queryKey: ['report', 'getLiveStats', params],
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.report.getLiveStats(
-        params ?? {},
-      )
-      return data.stats
-    },
-    refetchInterval: 5 * 60 * 1000,
+export const useLiveStats = (
+  params?: LiveStatsParams,
+  options: { enabled?: boolean } = {},
+) =>
+  useQuery({
+    ...liveStatsQueryOptions(useLabelerAgent(), params),
+    ...options,
   })
-}
 
-export const useHistoricalStats = (params?: HistoricalStatsParams) => {
-  const labelerAgent = useLabelerAgent()
-
-  return useQuery({
-    queryKey: ['report', 'getHistoricalStats', params],
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.report.getHistoricalStats(
-        params ?? {},
-      )
-      return {
-        stats: data.stats,
-        cursor: data.cursor,
-      }
-    },
+export const useHistoricalStats = (
+  params?: HistoricalStatsParams,
+  options: { enabled?: boolean; refetchInterval?: number } = {},
+) =>
+  useQuery({
+    ...historicalStatsQueryOptions(useLabelerAgent(), params),
+    ...options,
   })
-}
+
+export const historicalStatsQueryOptions = (
+  labelerAgent: Agent,
+  params?: HistoricalStatsParams,
+) => ({
+  queryKey: ['report', 'getHistoricalStats', params],
+  queryFn: async () => {
+    const { data } = await labelerAgent.tools.ozone.report.getHistoricalStats(
+      params ?? {},
+    )
+    return {
+      stats: data.stats.map(normalizeStats),
+      cursor: data.cursor,
+    }
+  },
+})

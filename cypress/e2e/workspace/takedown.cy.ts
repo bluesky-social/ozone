@@ -64,7 +64,7 @@ describe('Workspace -> Takedown', () => {
   it('Does not allow takedowns without policy', () => {
     // open
     cy.openCommandPalette('workspace')
-    cy.get('#kbar-listbox-item-0').click()
+    cy.contains('#kbar-listbox [role="option"]', 'Open Workspace').click()
     cy.get('input[name="items"]').type(`${seedFixture.carla.repo.did}{enter}`)
     cy.get('input[name="workspaceItem"]').click()
 
@@ -87,7 +87,7 @@ describe('Workspace -> Takedown', () => {
   it('Allows takedowns with policy', () => {
     // open
     cy.openCommandPalette('workspace')
-    cy.get('#kbar-listbox-item-0').click()
+    cy.contains('#kbar-listbox [role="option"]', 'Open Workspace').click()
     cy.get('input[name="items"]').type(`${seedFixture.carla.repo.did}{enter}`)
     cy.get('input[name="workspaceItem"]').click()
 

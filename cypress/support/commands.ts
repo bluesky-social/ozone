@@ -92,13 +92,17 @@ Cypress.Commands.add(
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()
     cy.wait('@login').its('response.statusCode').should('eq', 200)
-    cy.get('header input[type="search"]', { timeout: 10000 }).should('be.visible')
+    cy.get('header input[type="search"]', { timeout: 10000 }).should(
+      'be.visible',
+    )
   },
 )
 
 Cypress.Commands.add('openCommandPalette', (input?: string) => {
-  const comboKey = Cypress.platform === 'darwin' ? '{cmd}k' : '{ctrl}k'
-  cy.get('body').type(comboKey)
+  cy.contains('button', /^Ctrl Panel$/, { timeout: 10000 })
+    .should('be.visible')
+    .click()
+  cy.get('[aria-controls="kbar-listbox"]').should('be.visible')
   if (input) {
     cy.get('[aria-controls="kbar-listbox"]').clear()
     cy.get('[aria-controls="kbar-listbox"]').type(input)

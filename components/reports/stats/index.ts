@@ -5,7 +5,6 @@ export interface StatGroup {
   description?: string
   category?: keyof typeof statReasonTypes
   queueId?: number
-  moderatorDid?: string
 }
 
 export function getHrefFromGroup(group: StatGroup): string {

@@ -29,10 +29,14 @@ export type UpdateQueueInput = ToolsOzoneQueueUpdateQueue.InputSchema & {
   recommendedLabels?: string[]
 }
 
-export const useQueueList = (filters?: QueueListFilters) => {
+export const useQueueList = (
+  filters?: QueueListFilters,
+  options: { refetchInterval?: number } = {},
+) => {
   const labelerAgent = useLabelerAgent()
 
   return useInfiniteQuery({
+    ...options,
     queryKey: ['queues', filters],
     queryFn: async ({ pageParam }) => {
       const { data } = await labelerAgent.tools.ozone.queue.listQueues({

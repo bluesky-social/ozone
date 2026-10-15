@@ -69,6 +69,7 @@ import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
 import { PriorityBadge } from 'components/setting/report-priority/PriorityBadge'
+import { ClosureResult } from '@/reports/ClosureResult'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import {
   ActivityTimeline,
@@ -192,6 +193,8 @@ function ReportInfoPanel({
           {formatDistanceToNow(createdAt, { addSuffix: true })}
         </span>
       </div>
+
+      <ClosureResult report={report} />
 
       {/* Reporter */}
       <div className="flex flex-row items-center gap-2">
