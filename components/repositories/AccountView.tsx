@@ -5,6 +5,9 @@ import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { CheckboxesModal } from '@/common/modals/checkboxes'
 import { Tabs, TabView } from '@/common/Tabs'
+import { ActionedSubjectsPreview, ReportsPreview } from './inbox/InboxPreview'
+import { NotificationsPreview } from './inbox/NotificationsPreview'
+import type { InboxSection } from './inbox/api'
 import { InviteCodesTable } from '@/invites/InviteCodesTable'
 import { buildBlueSkyAppUrl, truncate } from '@/lib/util'
 import { ModEventList } from '@/mod-event/EventList'
@@ -28,6 +31,7 @@ import {
   ToolsOzoneModerationGetRepo as GetRepo,
 } from '@atproto/api'
 import {
+  ChevronDownIcon,
   ChevronLeftIcon,
   EnvelopeIcon,
   ExclamationCircleIcon,
@@ -36,6 +40,7 @@ import {
   UserCircleIcon,
   XCircleIcon,
 } from '@heroicons/react/20/solid'
+import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react'
 import { useQuery } from '@tanstack/react-query'
 import { Followers } from 'components/graph/Followers'
 import { Follows } from 'components/graph/Follows'
@@ -84,6 +89,7 @@ enum Views {
   Manage,
   Lists,
   RelatedAccounts,
+  Inbox,
 }
 
 const TabKeys = {
@@ -97,6 +103,7 @@ const TabKeys = {
   events: Views.Events,
   manage: Views.Manage,
   related: Views.RelatedAccounts,
+  inbox: Views.Inbox,
 }
 
 export function AccountView({
@@ -106,6 +113,7 @@ export function AccountView({
   id,
   onSubmit,
   onShowActionPanel,
+  inboxSection,
 }: {
   id: string
   repo?: GetRepo.OutputSchema
@@ -113,18 +121,28 @@ export function AccountView({
   error?: unknown
   onSubmit: (vals: any) => Promise<void>
   onShowActionPanel: (subject: string) => void
+  inboxSection?: InboxSection
 }) {
   const searchParams = useSearchParams()
-  const currentView =
-    TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
-  const setCurrentView = (view: Views) => {
-    const newParams = new URLSearchParams(searchParams)
-    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
-    newParams.set('tab', newTab || 'details')
-    router.push((pathname ?? '') + '?' + newParams.toString())
-  }
+  const currentView = inboxSection
+    ? Views.Inbox
+    : TabKeys[searchParams.get('tab') || 'details'] ?? TabKeys.details
   const pathname = usePathname()
   const router = useRouter()
+  const setCurrentView = (view: Views) => {
+    const newParams = new URLSearchParams(searchParams)
+    const basePath = `/repositories/${encodeURIComponent(repo?.did || id)}`
+    if (view === Views.Inbox) {
+      newParams.delete('tab')
+      router.push(
+        `${basePath}/inbox/${inboxSection || 'reports'}${newParams.size ? `?${newParams}` : ''}`,
+      )
+      return
+    }
+    const newTab = Object.entries(TabKeys).find(([, v]) => v === view)?.[0]
+    newParams.set('tab', newTab || 'details')
+    router.push(`${basePath}?${newParams}`)
+  }
   const reportUri = searchParams.get('reportUri') || undefined
   const setReportUri = (uri?: string) => {
     const newParams = new URLSearchParams(searchParams)
@@ -148,23 +166,33 @@ export function AccountView({
       0,
     )
 
-    const views: TabView<Views>[] = [{ view: Views.Details, label: 'Profile' }]
+    const views: TabView<Views>[] = [
+      { view: Views.Details, label: 'Profile' },
+      {
+        view: Views.Posts,
+        label: 'Posts',
+        sublabel:
+          profile?.postsCount != null ? String(profile.postsCount) : undefined,
+      },
+      { view: Views.Manage, label: 'Manage' },
+    ]
     if (profile) {
       views.push(
         {
-          view: Views.Posts,
-          label: 'Posts',
-          sublabel: String(profile.postsCount),
-        },
-        {
           view: Views.Follows,
           label: 'Follows',
-          sublabel: String(profile.followsCount),
+          sublabel:
+            profile.followsCount != null
+              ? String(profile.followsCount)
+              : undefined,
         },
         {
           view: Views.Followers,
           label: 'Followers',
-          sublabel: String(profile.followersCount),
+          sublabel:
+            profile.followersCount != null
+              ? String(profile.followersCount)
+              : undefined,
         },
         {
           view: Views.Blocks,
@@ -189,10 +217,18 @@ export function AccountView({
       { view: Views.Events, label: 'Events' },
     )
 
-    views.push({ view: Views.Manage, label: 'Manage' })
+    views.push({ view: Views.Inbox, label: 'Mod Inbox' })
 
     return views
   }
+  const tabViews = getTabViews()
+  const primaryViews = [Views.Details, Views.Posts, Views.Manage]
+  const visibleViews = tabViews.filter(
+    ({ view }) => primaryViews.includes(view) || view === currentView,
+  )
+  const moreViews = tabViews.filter(
+    ({ view }) => !primaryViews.includes(view) && view !== currentView,
+  )
 
   return (
     <div className="flex h-full bg-white dark:bg-slate-900">
@@ -233,8 +269,40 @@ export function AccountView({
                 <>
                   <Tabs
                     currentView={currentView}
-                    views={getTabViews()}
+                    views={visibleViews}
                     onSetCurrentView={setCurrentView}
+                    endAdornment={
+                      <Menu as="div" className="relative shrink-0">
+                        <MenuButton className="inline-flex items-center gap-1 whitespace-nowrap border-b-2 border-transparent px-1 py-4 text-sm font-medium text-gray-500 hover:border-gray-300 hover:text-gray-700 dark:text-gray-100 dark:hover:border-teal-300 dark:hover:text-teal-200">
+                          More{' '}
+                          <ChevronDownIcon
+                            className="h-4 w-4"
+                            aria-hidden="true"
+                          />
+                        </MenuButton>
+                        <MenuItems
+                          anchor="bottom end"
+                          className="z-50 mt-1 w-48 rounded-md bg-white py-1 shadow-lg ring-1 ring-black/5 focus:outline-none dark:bg-slate-800 dark:shadow-slate-900"
+                        >
+                          {moreViews.map(({ view, label, sublabel }) => (
+                            <MenuItem key={view}>
+                              <button
+                                type="button"
+                                onClick={() => setCurrentView(view)}
+                                className="flex w-full items-center justify-between gap-3 px-4 py-2 text-left text-sm text-gray-700 data-[focus]:bg-gray-100 dark:text-gray-100 dark:data-[focus]:bg-slate-700"
+                              >
+                                {label}
+                                {sublabel != null && (
+                                  <span className="text-xs font-bold text-gray-400">
+                                    {sublabel}
+                                  </span>
+                                )}
+                              </button>
+                            </MenuItem>
+                          ))}
+                        </MenuItems>
+                      </Menu>
+                    }
                   />
                   {currentView === Views.Details && (
                     <Details profile={profile} repo={repo} id={id} />
@@ -267,6 +335,15 @@ export function AccountView({
                   {currentView === Views.Manage && (
                     <ManageView repo={repo} did={repo.did} />
                   )}
+                  {currentView === Views.Inbox && (
+                    inboxSection === 'actioned-subjects' ? (
+                      <ActionedSubjectsPreview did={repo.did} />
+                    ) : inboxSection === 'notifications' ? (
+                      <NotificationsPreview did={repo.did} />
+                    ) : (
+                      <ReportsPreview did={repo.did} />
+                    )
+                  )}
                 </>
               ) : (
                 <div className="py-8 mx-auto max-w-5xl px-4 sm:px-6 lg:px-12 text-xl">
@@ -284,6 +361,11 @@ export function AccountView({
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
+})
+
+const profileCountFormatter = new Intl.NumberFormat('en-US', {
+  notation: 'compact',
+  maximumFractionDigits: 1,
 })
 
 function ProfileHeaderImage({
@@ -432,6 +514,13 @@ function Header({
     })
   }
 
+  const accountPath = `/repositories/${encodeURIComponent(repo?.did || profile?.did || id)}`
+  const statistics = [
+    { tab: 'followers', label: 'followers', count: profile?.followersCount },
+    { tab: 'follows', label: 'following', count: profile?.followsCount },
+    { tab: 'posts', label: 'posts', count: profile?.postsCount },
+  ]
+
   return (
     <div>
       {(repo?.did || profile?.did) && (
@@ -444,16 +533,16 @@ function Header({
       )}
       <ProfileHeaderImage profile={profile} />
       <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
-        <div className="-mt-12 sm:-mt-16 sm:flex sm:items-end sm:space-x-5">
+        <div className="-mt-12 sm:-mt-16 sm:flex sm:items-start sm:space-x-5">
           <div className="flex">
             <ProfileAvatar
               className="h-24 w-24 rounded-full ring-4 ring-white sm:h-32 sm:w-32"
               {...{ profile, repo }}
             />
           </div>
-          <div className="mt-6 sm:flex sm:min-w-0 sm:flex-1 sm:items-center sm:justify-end sm:space-x-6 sm:pb-1">
-            <div className="mt-6 min-w-0 flex-1 sm:hidden 2xl:block">
-              <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-gray-200">
+          <div className="mt-3 flex min-w-0 flex-1 flex-wrap items-end gap-x-4 gap-y-2 sm:mt-0 sm:pb-1 sm:pt-16">
+            <div className="min-w-0 flex-1 basis-64">
+              <h1 className="truncate text-lg font-bold text-gray-900 dark:text-gray-200 sm:text-xl">
                 <a
                   href={buildBlueSkyAppUrl({
                     did: repo?.did || profile?.did || '',
@@ -467,8 +556,31 @@ function Header({
                   <SubjectReviewStateBadge subjectStatus={subjectStatus} />
                 )}
               </h1>
+              {statistics.some(({ count }) => count != null) && (
+                <div
+                  aria-label="Account statistics"
+                  className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400"
+                >
+                  {statistics.map(({ tab, label, count }) =>
+                    count != null ? (
+                      <Link
+                        key={tab}
+                        href={`${accountPath}?tab=${tab}`}
+                        className="whitespace-nowrap hover:underline"
+                        title={`${count.toLocaleString('en-US')} ${label}`}
+                        aria-label={`${count.toLocaleString('en-US')} ${label}`}
+                      >
+                        <span className="font-bold text-gray-900 dark:text-gray-100">
+                          {profileCountFormatter.format(count)}
+                        </span>{' '}
+                        {label}
+                      </Link>
+                    ) : null,
+                  )}
+                </div>
+              )}
             </div>
-            <div className="justify-stretch mt-6 flex flex-row space-x-3">
+            <div className="flex shrink-0 flex-row space-x-3">
               {!!reportOptions.length && (
                 <Dropdown
                   className="inline-flex justify-center rounded-md border border-gray-300 bg-white dark:bg-slate-800 px-4 py-2 text-sm font-medium text-gray-700 dark:text-gray-100 shadow-sm hover:bg-gray-50 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2"
@@ -483,21 +595,6 @@ function Header({
               )}
             </div>
           </div>
-        </div>
-        <div className="mt-6 hidden min-w-0 flex-1 sm:block 2xl:hidden">
-          <h1 className="truncate text-2xl font-bold text-gray-900 dark:text-gray-200">
-            <a
-              href={buildBlueSkyAppUrl({
-                did: repo?.did || profile?.did || '',
-              })}
-              target="_blank"
-            >
-              {displayActorName}
-            </a>{' '}
-            {subjectStatus && (
-              <SubjectReviewStateBadge subjectStatus={subjectStatus} />
-            )}
-          </h1>
         </div>
       </div>
     </div>

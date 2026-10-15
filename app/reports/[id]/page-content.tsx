@@ -68,6 +68,7 @@ import { EmailComposerFields } from 'components/email/Composer'
 import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
+import { PriorityBadge } from 'components/setting/report-priority/PriorityBadge'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import {
   ActivityTimeline,
@@ -180,6 +181,7 @@ function ReportInfoPanel({
       <div className="flex flex-row flex-wrap items-center gap-2 mb-3">
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
+        <PriorityBadge report={report} />
         <MutedBadge isMuted={report.isMuted} />
         <AutomatedBadge report={report} />
         <QueueBadge reportId={report.id} queue={report.queue} />
@@ -481,6 +483,7 @@ export function ReportDetailPageContent() {
             }
             const eventId = (result as any)?.id
             const isCascaded =
+              vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&
               vals.subject.$type === 'com.atproto.admin.defs#repoRef'
             if (isCascaded && eventId) {
@@ -728,7 +731,11 @@ function ReportDetailLayout(props: {
             eventType !== MOD_EVENTS.RESOLVE_APPEAL
           ) {
             await resolveAppealForReport(finalVals.createdBy, actionComment)
-            if (eventType !== MOD_EVENTS.LABEL || !targetsCurrentReport) {
+            if (
+              (eventType !== MOD_EVENTS.LABEL &&
+                eventType !== MOD_EVENTS.REVERSE_TAKEDOWN) ||
+              !targetsCurrentReport
+            ) {
               await closeCurrentReport()
             }
           }
@@ -1068,6 +1075,7 @@ function ReportDetailLayout(props: {
                       },
                       createdBy: labelerAgent.assertDid,
                       event: emailEvent,
+                      reportAction: { ids: [report.id] },
                     })
                   }
                 : undefined

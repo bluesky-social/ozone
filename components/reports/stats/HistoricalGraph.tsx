@@ -18,6 +18,7 @@ const SERIES = [
   { key: 'inboundCount', name: 'Inbound', color: '#3b82f6' },
   { key: 'pendingCount', name: 'Pending', color: '#eab308' },
   { key: 'escalatedCount', name: 'Escalated', color: '#ef4444' },
+  { key: 'closedCount', name: 'Closed', color: '#14b8a6' },
   { key: 'actionedCount', name: 'Actioned', color: '#22c55e' },
 ] as const
 
@@ -87,6 +88,7 @@ export function HistoricalGraph({
       actionedCount: s.actionedCount,
       pendingCount: s.pendingCount,
       escalatedCount: s.escalatedCount,
+      closedCount: s.closedCount,
     }))
 
   const dark = isDarkModeEnabled()
@@ -129,7 +131,7 @@ export function HistoricalGraph({
                       key={key}
                       type="button"
                       aria-pressed={!hidden}
-                      className="flex items-center gap-1.5 select-none"
+                      className="flex items-center gap-1.5 select-none text-gray-700 dark:text-gray-200"
                       style={{ opacity: hidden ? 0.45 : 1 }}
                       onClick={() => toggleSeries(key)}
                     >

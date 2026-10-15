@@ -54,12 +54,14 @@ export function StatsDetailPageContent() {
         inboundCount: total.inboundCount + (day.inboundCount ?? 0),
         pendingCount: total.pendingCount + (day.pendingCount ?? 0),
         escalatedCount: total.escalatedCount + (day.escalatedCount ?? 0),
+        closedCount: total.closedCount + (day.closedCount ?? 0),
         actionedCount: total.actionedCount + (day.actionedCount ?? 0),
       }),
       {
         inboundCount: 0,
         pendingCount: 0,
         escalatedCount: 0,
+        closedCount: 0,
         actionedCount: 0,
       },
     )
@@ -67,8 +69,8 @@ export function StatsDetailPageContent() {
     return {
       ...summed,
       actionRate:
-        summed.inboundCount > 0
-          ? Math.round((summed.actionedCount / summed.inboundCount) * 100)
+        summed.closedCount > 0
+          ? Math.round((summed.actionedCount / summed.closedCount) * 100)
           : undefined,
     }
   }, [historicalStats])
