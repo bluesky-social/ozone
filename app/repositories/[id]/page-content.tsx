@@ -2,6 +2,7 @@
 
 import { ToolsOzoneModerationEmitEvent } from '@atproto/api'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { useQueryClient } from '@tanstack/react-query'
 import { useTitle } from 'react-use'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { WorkspacePanel } from '@/workspace/Panel'
@@ -37,7 +38,13 @@ const buildPageTitle = ({
 
   return titleFragments.join(' - ')
 }
-export function RepositoryViewPageContent({ id }: { id: string }) {
+export function RepositoryViewPageContent({
+  id,
+  inboxSection,
+}: {
+  id: string
+  inboxSection?: 'reports' | 'actioned-subjects' | 'notifications'
+}) {
   const {
     error,
     data: { repo, profile } = {},
@@ -47,6 +54,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
 
   const createReport = useCreateReport()
   const emitEvent = useEmitEvent()
+  const queryClient = useQueryClient()
   const searchParams = useSearchParams()
   const router = useRouter()
   const pathname = usePathname()
@@ -60,7 +68,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
     }
     router.push((pathname ?? '') + '?' + newParams.toString())
   }
-  const tab = searchParams.get('tab')
+  const tab = inboxSection ? 'Mod Inbox' : searchParams.get('tab')
   const { toggleWorkspacePanel, isWorkspaceOpen } = useWorkspaceOpener()
 
   const pageTitle = buildPageTitle({
@@ -87,6 +95,16 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           refetch()
+          await queryClient.invalidateQueries({
+            queryKey: ['moderatorInboxPreview'],
+          })
+          await queryClient.invalidateQueries({ queryKey: ['inboxActionDetail'] })
+          await queryClient.invalidateQueries({ queryKey: ['inboxReportDetail'] })
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['inboxAccountStatus'] }),
+            queryClient.invalidateQueries({ queryKey: ['inboxUnreadCounts'] }),
+            queryClient.invalidateQueries({ queryKey: ['inboxNotifications'] }),
+          ])
         }}
       />
       <AccountView
@@ -99,6 +117,7 @@ export function RepositoryViewPageContent({ id }: { id: string }) {
         onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
         error={error}
         id={id}
+        inboxSection={inboxSection}
       />
     </>
   )

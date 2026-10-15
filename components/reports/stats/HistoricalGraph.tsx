@@ -180,7 +180,7 @@ export function HistoricalGraph({
                           key={key}
                           type="button"
                           aria-pressed={!hidden}
-                          className="flex items-center gap-1.5"
+                          className="flex items-center gap-1.5 select-none text-gray-700 dark:text-gray-200"
                           style={{ opacity: hidden ? 0.45 : 1 }}
                           onClick={() => toggleSeries(key)}
                         >
