@@ -2,6 +2,39 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+      :root {
+            color-scheme: light;
+            --scrollbar-thumb: theme(colors.gray.400);
+      }
+
+      :root.dark {
+            color-scheme: dark;
+            --scrollbar-thumb: theme(colors.slate.500);
+      }
+
+      * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--scrollbar-thumb) transparent;
+      }
+
+      /* Fallback for browsers without standard scrollbar styling. */
+      ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+      }
+
+      ::-webkit-scrollbar-track,
+      ::-webkit-scrollbar-corner {
+            background: transparent;
+      }
+
+      ::-webkit-scrollbar-thumb {
+            background-color: var(--scrollbar-thumb);
+            border-radius: 9999px;
+      }
+}
+
 .wmde-markdown-var[data-color-mode*='dark'] {
       --color-canvas-default: theme(colors.slate.800) !important;
       --color-border-default: theme(colors.teal.500) !important;
