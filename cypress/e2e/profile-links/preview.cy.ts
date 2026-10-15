@@ -114,12 +114,15 @@ describe('Profile link previews and snapshots', () => {
     cy.wait('@snapshots')
   })
 
-  it('uses saved raw values and CID while a different live record exists, then resets to live', () => {
+  it('shows the link above the profile and switches between saved and live values', () => {
     cy.contains('Reported profile link')
     cy.contains('Current portfolio')
+    cy.get('article[aria-label="Profile link"]')
+      .next()
+      .should('contain.text', 'Carla')
     if (Cypress.env('captureProfileLinks')) {
-      cy.contains('p', 'Current portfolio')
-        .closest('div.border')
+      cy.contains('p', 'Reported profile link')
+        .parent()
         .should('be.visible')
         .screenshot('profile-link-live')
     }
@@ -127,12 +130,20 @@ describe('Profile link previews and snapshots', () => {
     cy.contains('button', `CID: ${snapshotCid}`).click()
     cy.contains('Archived portfolio')
     cy.contains('Current portfolio').should('not.exist')
-    cy.contains('dd', snapshotCid)
+    cy.get('article[aria-label="Profile link"] time').should(
+      'have.attr',
+      'datetime',
+      snapshot.value.createdAt,
+    )
     cy.contains('a', 'Open URL').should('have.attr', 'href', snapshot.value.uri)
     cy.contains('button', 'click to view live version').click()
     cy.contains('Current portfolio')
     cy.contains('Archived portfolio').should('not.exist')
-    cy.contains('dd', liveCid)
+    cy.get('article[aria-label="Profile link"] time').should(
+      'have.attr',
+      'datetime',
+      '2026-10-12T09:00:00Z',
+    )
   })
 
   it('renders an archived link when the live record has been deleted', () => {
@@ -144,7 +155,11 @@ describe('Profile link previews and snapshots', () => {
     cy.contains('button', '1 snapshot').click()
     cy.contains('button', `CID: ${snapshotCid}`).click()
     cy.contains('Archived portfolio')
-    cy.contains('dd', snapshotCid)
+    cy.get('article[aria-label="Profile link"] time').should(
+      'have.attr',
+      'datetime',
+      snapshot.value.createdAt,
+    )
     cy.contains('a', 'Open URL').should('have.attr', 'href', snapshot.value.uri)
   })
 })

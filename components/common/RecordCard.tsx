@@ -80,27 +80,19 @@ export function RecordCard(props: {
     return (
       <RecordWithSnapshots key={uri} uri={uri} className="pl-0">
         {(snapshot) => (
-          <>
-            <RepoCard did={parsed.did} />
+          <div className="space-y-3">
             {snapshot ? (
-              <ProfileLinkCard
-                uri={uri}
-                cid={snapshot.cid}
-                value={snapshot.value}
-              />
+              <ProfileLinkCard value={snapshot.value} />
             ) : (
               <BaseRecordCard
                 uri={uri}
                 renderRecord={(record) => (
-                  <ProfileLinkCard
-                    uri={record.uri}
-                    cid={record.cid}
-                    value={record.value}
-                  />
+                  <ProfileLinkCard value={record.value} />
                 )}
               />
             )}
-          </>
+            <RepoCard did={parsed.did} />
+          </div>
         )}
       </RecordWithSnapshots>
     )

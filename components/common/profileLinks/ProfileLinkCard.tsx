@@ -8,15 +8,7 @@ import { CopyButton } from '../CopyButton'
 
 // The link lexicon is still a draft. Read defensively so malformed records
 // remain reviewable, including raw Aether snapshots without an ozoneValue.
-export function ProfileLinkCard({
-  uri,
-  cid,
-  value,
-}: {
-  uri: string
-  cid: string
-  value: unknown
-}) {
+export function ProfileLinkCard({ value }: { value: unknown }) {
   const record =
     value && typeof value === 'object' && !Array.isArray(value)
       ? (value as Record<string, unknown>)
@@ -56,15 +48,15 @@ export function ProfileLinkCard({
   }
 
   return (
-    <div className="bg-white dark:bg-slate-800 p-3 rounded border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-200">
-      <div className="flex items-start gap-2 mb-3">
-        <LinkIcon className="h-5 w-5 shrink-0 mt-0.5 text-gray-400" />
+    <article
+      aria-label="Profile link"
+      className="bg-white dark:bg-slate-800 p-3 rounded border border-gray-200 dark:border-slate-700 text-sm text-gray-700 dark:text-gray-200"
+    >
+      <div className="flex items-start gap-2 mb-2">
+        <LinkIcon className="h-4 w-4 shrink-0 mt-0.5 text-gray-400" />
         <div className="min-w-0 flex-1">
           <p className="font-semibold break-words whitespace-pre-wrap">
             <bdi>{title || 'Untitled link'}</bdi>
-          </p>
-          <p className="text-xs text-gray-500 dark:text-gray-400">
-            Profile link
           </p>
         </div>
         {url && (
@@ -80,13 +72,13 @@ export function ProfileLinkCard({
         )}
       </div>
       {warnings.length > 0 && (
-        <ul className="mb-3 space-y-1 text-amber-800 dark:text-amber-200">
+        <ul className="mb-2 space-y-1 text-xs text-amber-800 dark:text-amber-200">
           {warnings.map((warning) => (
             <li key={warning}>{warning}</li>
           ))}
         </ul>
       )}
-      <dl className="space-y-3">
+      <dl className="space-y-1 text-xs">
         <LinkDetail
           label="URL"
           text={destination ?? 'Missing or invalid URL'}
@@ -94,7 +86,7 @@ export function ProfileLinkCard({
         />
         {url && <LinkDetail label="Hostname" text={url.hostname} copy />}
         {url?.port && <LinkDetail label="Port" text={url.port} />}
-        <div>
+        <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
           <dt className="text-xs text-gray-500 dark:text-gray-400">
             Created at
           </dt>
@@ -106,21 +98,8 @@ export function ProfileLinkCard({
             )}
           </dd>
         </div>
-        <LinkDetail label="Record URI" text={uri} copy />
-        <LinkDetail label="CID" text={cid} copy />
       </dl>
-      <details className="mt-3">
-        <summary className="cursor-pointer text-xs text-gray-500 dark:text-gray-400">
-          Raw record
-        </summary>
-        <pre
-          className="mt-2 text-xs whitespace-pre-wrap break-all max-h-64 overflow-auto"
-          dir="ltr"
-        >
-          {JSON.stringify(value, null, 2)}
-        </pre>
-      </details>
-    </div>
+    </article>
   )
 }
 
@@ -134,9 +113,9 @@ function LinkDetail({
   copy?: boolean
 }) {
   return (
-    <div>
+    <div className="grid grid-cols-[4.5rem_minmax(0,1fr)] gap-2">
       <dt className="text-xs text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className="flex items-start gap-2">
+      <dd className="flex min-w-0 items-start gap-1">
         <span
           className="min-w-0 break-all font-mono text-xs whitespace-pre-wrap"
           dir="ltr"
@@ -149,7 +128,7 @@ function LinkDetail({
             labelText={`${label.toLowerCase()} `}
             aria-label={`Copy ${label.toLowerCase()}`}
             title={`Copy ${label.toLowerCase()}`}
-            className="shrink-0 p-1 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+            className="shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
           />
         )}
       </dd>
