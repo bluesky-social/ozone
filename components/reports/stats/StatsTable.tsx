@@ -47,7 +47,7 @@ export function StatsTable({
           {grouping === 'queue' ? 'Queues' : 'Categories'}
         </h2>
         <p className="text-xs text-gray-500 dark:text-gray-400">
-          {window.label} (UTC) · Select a row to view details
+          {window.label} · Select a row to view details
         </p>
       </div>
       {status ?? (

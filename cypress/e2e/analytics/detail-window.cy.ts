@@ -119,7 +119,7 @@ describe('Report statistics date windows', () => {
     cy.contains('[aria-label="Statistics period"] button', 'Day').click()
     cy.get('[aria-label="Selected time window"]').should(
       'have.text',
-      'Jun 30, 2026 (UTC)',
+      'Jun 30, 2026',
     )
     cy.contains('[aria-label="Statistics period"] button', 'Week').click()
     cy.get('[aria-label="Selected time window"]').should(

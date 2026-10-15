@@ -96,8 +96,8 @@ export function OverviewActivity({
             <h2 className="font-semibold">Inbound vs closed</h2>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {chartWindow.label} · {formatDate(dates[0])}
-              {chartWindow.days > 1 ? ` – ${formatDate(today)}` : ''} (UTC).
-              Today is partial.
+              {chartWindow.days > 1 ? ` – ${formatDate(today)}` : ''}. Today is
+              partial.
             </p>
           </div>
           <div role="group" aria-label="Chart series" className="flex gap-4">
@@ -186,7 +186,7 @@ export function OverviewActivity({
                         return (
                           <div className="rounded-lg border border-gray-200 bg-white p-3 text-xs text-gray-900 shadow-sm dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100">
                             <p className="mb-2 font-medium">
-                              {row.date} (UTC)
+                              {row.date}
                               {row.date === today ? ' · Partial day' : ''}
                             </p>
                             {SERIES.filter(
@@ -224,7 +224,7 @@ export function OverviewActivity({
               </p>
             )}
             <table className="sr-only">
-              <caption>Daily inbound and closed report counts (UTC)</caption>
+              <caption>Daily inbound and closed report counts</caption>
               <thead>
                 <tr>
                   <th scope="col">Date</th>

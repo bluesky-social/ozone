@@ -102,7 +102,7 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
       >
         <h2 className="font-semibold">Report type</h2>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Grouped report reasons · {window.label} (UTC)
+          Grouped report reasons · {window.label}
         </p>
         <div className="mt-5 overflow-x-auto">
           <table className="w-full text-sm">
@@ -195,7 +195,7 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
       >
         <h2 className="font-semibold">Closure target by report type</h2>
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-          Closed reports · {window.label} (UTC)
+          Closed reports · {window.label}
         </p>
         <div className="mt-5 overflow-x-auto">
           <table className="w-full min-w-[30rem] text-sm">

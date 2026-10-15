@@ -1,6 +1,6 @@
+import { Hover } from '@/common/Hover'
 import { formatDuration } from '@/lib/util'
-import { ClockIcon } from '@heroicons/react/24/outline'
-import { dailyAverage } from './statsWindow'
+import { ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import type {
   HistoricalReportStats,
   ReportStats,
@@ -62,8 +62,6 @@ export function OverviewStats({
   }
 
   const count = (value?: number) => value?.toLocaleString() ?? '—'
-  const average = (key: 'inboundCount' | 'closedCount' | 'escalatedCount') =>
-    dailyAverage(rows, key, new Date().toISOString().slice(0, 10))
   const hasTargets =
     stats.closureTargetMetCount != null &&
     stats.closureTargetMissedCount != null
@@ -71,7 +69,7 @@ export function OverviewStats({
     ? stats.closureTargetMetCount! + stats.closureTargetMissedCount!
     : undefined
   const targetRate = targetCount
-    ? Math.round((stats.closureTargetMetCount! / targetCount) * 100)
+    ? Math.floor((stats.closureTargetMetCount! * 100) / targetCount)
     : undefined
   const inboundCard = {
     key: 'inboundCount' as const,
@@ -81,7 +79,6 @@ export function OverviewStats({
       periodLabel === 'Today'
         ? 'New reports received today'
         : 'New reports received in this period',
-    average: average('inboundCount'),
   }
   const escalatedCard = {
     key: 'escalatedCount' as const,
@@ -91,7 +88,6 @@ export function OverviewStats({
       periodLabel === 'Today'
         ? 'Escalation events today'
         : 'Escalation events in this period',
-    average: average('escalatedCount'),
   }
   const expandedCards = [
     inboundCard,
@@ -101,9 +97,22 @@ export function OverviewStats({
       value: count(stats.pendingCount),
       description:
         stats.closureTargetOverdueCount != null ? (
-          <span className={STATS_COLORS.closureTargetOverdueCount.text}>
-            {count(stats.closureTargetOverdueCount)} past closure target
-          </span>
+          <div className="flex items-center gap-1">
+            <span className={STATS_COLORS.closureTargetOverdueCount.text}>
+              {count(stats.closureTargetOverdueCount)} past closure target
+            </span>
+            <Hover
+              className="shrink-0 cursor-help [&>div]:left-auto [&>div]:right-0"
+              panelClassName="text-xs text-gray-600 dark:text-gray-300"
+              content="Unmuted reports still awaiting closure whose time since creation exceeds their assigned closure target, measured at the last stats update. Reports without a target are excluded. This current snapshot is independent of the selected date range."
+            >
+              <InformationCircleIcon
+                aria-hidden="true"
+                className="h-4 w-4 text-gray-400 dark:text-gray-500"
+              />
+              <span className="sr-only">About past closure target</span>
+            </Hover>
+          </div>
         ) : (
           'Unmuted backlog'
         ),
@@ -124,11 +133,16 @@ export function OverviewStats({
             <span className={STATS_COLORS.actionedCount.text}>
               {count(stats.actionedCount)} actioned
             </span>
+            {stats.actionRate != null && (
+              <span className="text-gray-500 dark:text-gray-400">
+                {' '}
+                ({stats.actionRate}%)
+              </span>
+            )}
           </>
         ) : (
           'Closure breakdown unavailable'
         ),
-      average: average('closedCount'),
     },
     escalatedCard,
     {
@@ -138,7 +152,18 @@ export function OverviewStats({
         stats.avgHandlingTimeSec != null
           ? formatDuration(stats.avgHandlingTimeSec)
           : '—',
-      description: 'Assignment to closure',
+      description: (
+        <>
+          Assignment to closure
+          <span className="mt-2 block">
+            Avg Resolution time:{' '}
+            {stats.avgResolutionTimeSec != null
+              ? formatDuration(stats.avgResolutionTimeSec)
+              : '—'}{' '}
+            (from open to close)
+          </span>
+        </>
+      ),
     },
     {
       key: 'closureTargetMetRate' as const,
@@ -239,7 +264,7 @@ export function OverviewStats({
     >
       {periodLabel && periodLabel !== 'Today' && (
         <h2 className="mb-3 font-medium text-gray-900 dark:text-gray-100">
-          {periodLabel} (UTC)
+          {periodLabel}
         </h2>
       )}
       <dl
@@ -247,7 +272,6 @@ export function OverviewStats({
       >
         {visibleCards.map((card) => {
           const { key, label, value, description } = card
-          const average = 'average' in card ? card.average : undefined
           return (
             <div
               key={key}
@@ -271,15 +295,6 @@ export function OverviewStats({
               <dd className="text-xs text-gray-600 dark:text-gray-300">
                 {description}
               </dd>
-              {average && (
-                <dd className="text-xs text-gray-500 dark:text-gray-400">
-                  {average.value.toLocaleString(undefined, {
-                    maximumFractionDigits: 1,
-                  })}{' '}
-                  avg/day · {average.days} complete{' '}
-                  {average.days === 1 ? 'day' : 'days'}
-                </dd>
-              )}
               {days > 1 &&
                 key !== 'pendingCount' &&
                 (coverage[key] ?? 0) < days && (

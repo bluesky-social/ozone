@@ -78,7 +78,7 @@ export function AnalyticsPageContent() {
                 key={value}
                 type="button"
                 aria-pressed={period === value}
-                title={value === 'QTD' ? 'Quarter to date (UTC)' : undefined}
+                title={value === 'QTD' ? 'Quarter to date' : undefined}
                 onClick={() => setPeriod(value)}
                 className={`rounded-full px-3 py-1.5 text-sm focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 sm:px-4 ${period === value ? 'bg-white font-semibold text-gray-900 shadow-sm dark:bg-slate-600 dark:text-gray-100' : 'text-gray-600 hover:text-gray-900 dark:text-gray-400 dark:hover:text-gray-100'}`}
               >

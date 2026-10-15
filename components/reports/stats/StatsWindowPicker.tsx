@@ -72,8 +72,7 @@ export function StatsWindowPicker({
         <span aria-label="Selected time window" className="text-center">
           {formatDate(value.startDate)}
           {value.startDate?.slice(0, 10) !== value.endDate?.slice(0, 10) &&
-            ` – ${formatDate(value.endDate)}`}{' '}
-          (UTC)
+            ` – ${formatDate(value.endDate)}`}
         </span>
         <button
           type="button"

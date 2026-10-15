@@ -671,7 +671,7 @@ describe('Overview activity panels', () => {
     )
   })
 
-  it('weights range metrics, averages completed days, and keeps the window across tabs', () => {
+  it('weights range metrics and keeps the window across tabs', () => {
     visitOverview(
       snapshot,
       [
@@ -727,7 +727,6 @@ describe('Overview activity panels', () => {
       expectMetric('Avg handling time', '2m')
       expectMetric('Closure Target', '95%')
       cy.contains('250 past closure target')
-      cy.contains('20 avg/day · 1 complete day')
       cy.contains('Available for 2 of 7 days.')
     })
     cy.get('[data-cy="closure-action-rate"]').should('have.text', '83%')

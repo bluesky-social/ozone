@@ -171,7 +171,7 @@ export function StatsDetailPageContent() {
         className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"
         aria-label="Daily trends"
       >
-        <h2 className="mb-3 font-medium">Daily trends (UTC)</h2>
+        <h2 className="mb-3 font-medium">Daily trends</h2>
         <HistoricalGraph
           stats={data?.stats}
           isLoading={isLoading}

@@ -58,7 +58,7 @@ export function ClosureBreakdown({
     >
       <h2 className="font-semibold">Closed: acknowledged vs actioned</h2>
       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        {periodLabel} (UTC) · Today is partial.
+        {periodLabel} · Today is partial.
       </p>
       {isLoading ? (
         <p

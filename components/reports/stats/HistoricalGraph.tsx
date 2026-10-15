@@ -219,7 +219,7 @@ export function HistoricalGraph({
               />
               <Tooltip
                 formatter={(value: number) => display(value)}
-                labelFormatter={(date) => `${date} (UTC)`}
+                labelFormatter={(date) => `${date}`}
                 contentStyle={{
                   backgroundColor: dark ? '#1e293b' : '#ffffff',
                   borderColor: dark ? '#475569' : '#e5e7eb',

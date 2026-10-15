@@ -35,23 +35,6 @@ export function getStatsWindow(period: StatsPeriod, today: string) {
   }
 }
 
-export function dailyAverage(
-  rows: HistoricalReportStats[],
-  key: 'inboundCount' | 'closedCount' | 'escalatedCount',
-  today: string,
-) {
-  const completeDays = rows.filter(
-    (row) => row.date < today && row[key] != null,
-  )
-  if (!completeDays.length) return undefined
-  return {
-    value:
-      completeDays.reduce((sum, row) => sum + row[key]!, 0) /
-      completeDays.length,
-    days: completeDays.length,
-  }
-}
-
 export function resolveStatsWindow(
   window: StatsWindow,
   live?: ReportStats,
