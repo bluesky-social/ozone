@@ -58,7 +58,7 @@ export function QueueFilterBar({
           <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
             <OverviewStats
               stats={normalizeStats(queue.stats)}
-              mode="compact"
+              layout="compact"
               periodLabel="Today"
             />
           </div>

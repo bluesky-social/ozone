@@ -6,7 +6,7 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
   return (
     <OverviewStats
       stats={stats ?? {}}
-      mode="compact"
+      layout="compact"
       periodLabel="Today"
       isLoading={isLoading}
       isError={isError}

@@ -11,14 +11,13 @@ import {
   ResponsiveContainer,
 } from 'recharts'
 import { isDarkModeEnabled } from '@/common/useColorScheme'
-import { formatDuration } from '@/lib/util'
 import { HistoricalReportStats, summarizeStats } from './reportStats'
 
 import { STATS_COLORS } from './statsColors'
 
 const VIEWS = {
-  activity: {
-    label: 'Activity',
+  trends: {
+    label: 'Trends',
     series: [
       {
         key: 'inboundCount',
@@ -62,50 +61,23 @@ const VIEWS = {
       },
     ],
   },
-  rates: {
-    label: 'Rates',
-    series: [
-      {
-        key: 'actionRate',
-        name: 'Action rate',
-        color: STATS_COLORS.actionRate.color,
-      },
-      {
-        key: 'closureTargetMetRate',
-        name: 'Target met rate',
-        color: STATS_COLORS.closureTargetMetRate.color,
-      },
-    ],
-  },
-  durations: {
-    label: 'Time to close',
-    series: [
-      {
-        key: 'avgHandlingTimeSec',
-        name: 'Average handling time',
-        color: STATS_COLORS.avgHandlingTimeSec.color,
-      },
-      {
-        key: 'avgResolutionTimeSec',
-        name: 'Average resolution time',
-        color: STATS_COLORS.avgResolutionTimeSec.color,
-      },
-    ],
-  },
 } as const
 
+export type HistoricalStatsView = keyof typeof VIEWS
+
 export function HistoricalGraph({
+  view,
   stats,
   isLoading,
   isError,
   onRetry,
 }: {
+  view: HistoricalStatsView
   stats?: HistoricalReportStats[]
   isLoading: boolean
   isError?: boolean
   onRetry?: () => void
 }) {
-  const [view, setView] = useState<keyof typeof VIEWS>('activity')
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
   const toggleSeries = (key: string) =>
     setHiddenSeries((current) => {
@@ -142,35 +114,13 @@ export function HistoricalGraph({
   const dark = isDarkModeEnabled()
   const axisColor = dark ? '#9ca3af' : '#6b7280'
   const series = VIEWS[view].series
-  const display = (value: number) =>
-    view === 'durations'
-      ? formatDuration(value)
-      : view === 'rates'
-        ? `${value}%`
-        : value.toLocaleString()
+  const display = (value: number) => value.toLocaleString()
   const hasValues = data.some((day) =>
     series.some(({ key }) => day[key] != null),
   )
 
   return (
     <div className="w-full space-y-4" data-cy="historical-stats">
-      <div
-        className="flex flex-wrap gap-2"
-        role="group"
-        aria-label="Chart metrics"
-      >
-        {(Object.keys(VIEWS) as (keyof typeof VIEWS)[]).map((key) => (
-          <button
-            key={key}
-            type="button"
-            aria-pressed={view === key}
-            onClick={() => setView(key)}
-            className={`rounded-full px-3 py-1 text-sm ${view === key ? 'bg-blue-600 text-white' : 'bg-gray-100 dark:bg-slate-700'}`}
-          >
-            {VIEWS[key].label}
-          </button>
-        ))}
-      </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Missing values are unavailable. Pending and overdue appear in the
         summary above.
@@ -206,7 +156,7 @@ export function HistoricalGraph({
               <YAxis
                 width={80}
                 tickFormatter={display}
-                domain={view === 'rates' ? [0, 100] : [0, 'auto']}
+                domain={[0, 'auto']}
                 allowDecimals={false}
                 tick={{ fontSize: 12, fill: axisColor }}
               />

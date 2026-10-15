@@ -4,11 +4,14 @@ import { ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
 import type { HistoricalReportStats, ReportStats } from './reportStats'
 import { STATS_COLORS } from './statsColors'
 
+export type OverviewStatsMode = 'trends' | 'targets'
+
 export function OverviewStats({
   stats,
   rows = [],
   periodLabel,
-  mode = 'expanded',
+  mode = 'trends',
+  layout = 'expanded',
   showPending = true,
   lastUpdated = stats.lastUpdated,
   isLoading = false,
@@ -18,14 +21,15 @@ export function OverviewStats({
   stats: ReportStats
   rows?: HistoricalReportStats[]
   periodLabel?: string
-  mode?: 'expanded' | 'compact'
+  mode?: OverviewStatsMode
+  layout?: 'expanded' | 'compact'
   showPending?: boolean
   lastUpdated?: string
   isLoading?: boolean
   isError?: boolean
   refetch?: () => unknown
 }) {
-  const compact = mode === 'compact'
+  const compact = layout === 'compact'
   if (isLoading) {
     return (
       <p className="text-sm text-gray-500 dark:text-gray-400">
@@ -81,7 +85,84 @@ export function OverviewStats({
         ? 'Escalation events today'
         : 'Escalation events in this period',
   }
-  const expandedCards = [
+  const handlingCard = {
+    key: 'avgHandlingTimeSec' as const,
+    label: 'Avg handling time',
+    value:
+      stats.avgHandlingTimeSec != null
+        ? formatDuration(stats.avgHandlingTimeSec)
+        : '—',
+    description:
+      mode === 'targets' ? (
+        'Assignment to closure'
+      ) : (
+        <div className="relative flex items-center gap-1">
+          <span>Assignment to closure</span>
+          <Hover
+            className="!static shrink-0 cursor-help"
+            panelClassName="text-xs text-gray-600 dark:text-gray-300"
+            content={
+              <>
+                Avg resolution time:{' '}
+                {stats.avgResolutionTimeSec != null
+                  ? formatDuration(stats.avgResolutionTimeSec)
+                  : '—'}{' '}
+                (time from open to close)
+              </>
+            }
+          >
+            <InformationCircleIcon
+              aria-hidden="true"
+              className="h-4 w-4 text-gray-400 dark:text-gray-500"
+            />
+            <span className="sr-only">Average resolution time</span>
+          </Hover>
+        </div>
+      ),
+  }
+  const resolutionCard = {
+    key: 'avgResolutionTimeSec' as const,
+    label: 'Avg resolution time',
+    value:
+      stats.avgResolutionTimeSec != null
+        ? formatDuration(stats.avgResolutionTimeSec)
+        : '—',
+    description: 'Time from open to close',
+  }
+  const targetRateCard = {
+    key: 'closureTargetMetRate' as const,
+    label: mode === 'targets' ? 'Target met rate' : 'Closure Target',
+    value: targetRate != null ? `${targetRate}%` : '—',
+    description: targetCount
+      ? `${count(stats.closureTargetMetCount)} of ${count(targetCount)} targeted closures met`
+      : targetCount === 0
+        ? 'No closed reports with a target'
+        : 'Target results unavailable',
+  }
+  const targetCards = [
+    handlingCard,
+    resolutionCard,
+    {
+      key: 'closureTargetMetCount' as const,
+      label: 'Target met',
+      value: count(stats.closureTargetMetCount),
+      description: 'Closed within their assigned target',
+    },
+    {
+      key: 'closureTargetMissedCount' as const,
+      label: 'Target missed',
+      value: count(stats.closureTargetMissedCount),
+      description: 'Closed after their assigned target',
+    },
+    targetRateCard,
+    {
+      key: 'closureTargetOverdueCount' as const,
+      label: 'Past target',
+      value: count(stats.closureTargetOverdueCount),
+      description: 'Currently pending, unmuted reports past their target',
+    },
+  ]
+  const trendCards = [
     inboundCard,
     {
       key: 'pendingCount' as const,
@@ -137,86 +218,41 @@ export function OverviewStats({
         ),
     },
     escalatedCard,
-    {
-      key: 'avgHandlingTimeSec' as const,
-      label: 'Avg handling time',
-      value:
-        stats.avgHandlingTimeSec != null
-          ? formatDuration(stats.avgHandlingTimeSec)
-          : '—',
-      description: (
-        <div className="relative flex items-center gap-1">
-          <span>Assignment to closure</span>
-          <Hover
-            className="!static shrink-0 cursor-help"
-            panelClassName="text-xs text-gray-600 dark:text-gray-300"
-            content={
-              <>
-                Avg resolution time:{' '}
-                {stats.avgResolutionTimeSec != null
-                  ? formatDuration(stats.avgResolutionTimeSec)
-                  : '—'}{' '}
-                (time from open to close)
-              </>
-            }
-          >
-            <InformationCircleIcon
-              aria-hidden="true"
-              className="h-4 w-4 text-gray-400 dark:text-gray-500"
-            />
-            <span className="sr-only">Average resolution time</span>
-          </Hover>
-        </div>
-      ),
-    },
-    {
-      key: 'closureTargetMetRate' as const,
-      label: 'Closure Target',
-      value: targetRate != null ? `${targetRate}%` : '—',
-      description: targetCount
-        ? `${count(stats.closureTargetMetCount)} of ${count(targetCount)} targeted closures met`
-        : targetCount === 0
-          ? 'No closed reports with a target'
-          : 'Target results unavailable',
-    },
+    handlingCard,
+    targetRateCard,
   ]
 
-  const cards = compact
-    ? [
-        inboundCard,
-        {
-          key: 'pendingCount' as const,
-          label: 'Pending',
-          value: count(stats.pendingCount),
-          description: 'Current unmuted backlog',
-        },
-        {
-          key: 'acknowledgedCount' as const,
-          label: 'Acknowledged',
-          value: count(stats.acknowledgedCount),
-          description: 'Reports closed without an action',
-        },
-        {
-          key: 'actionedCount' as const,
-          label: 'Actioned',
-          value: count(stats.actionedCount),
-          description: 'Reports closed with an action',
-        },
-        escalatedCard,
-        {
-          key: 'avgResolutionTimeSec' as const,
-          label: 'Avg resolution time',
-          value:
-            stats.avgResolutionTimeSec != null
-              ? formatDuration(stats.avgResolutionTimeSec)
-              : '—',
-          description: 'Report creation to closure',
-        },
-      ]
-    : expandedCards
+  const compactCards = [
+    inboundCard,
+    {
+      key: 'pendingCount' as const,
+      label: 'Pending',
+      value: count(stats.pendingCount),
+      description: 'Current unmuted backlog',
+    },
+    {
+      key: 'acknowledgedCount' as const,
+      label: 'Acknowledged',
+      value: count(stats.acknowledgedCount),
+      description: 'Reports closed without an action',
+    },
+    {
+      key: 'actionedCount' as const,
+      label: 'Actioned',
+      value: count(stats.actionedCount),
+      description: 'Reports closed with an action',
+    },
+    escalatedCard,
+    resolutionCard,
+  ]
+
+  const cards =
+    mode === 'targets' ? targetCards : compact ? compactCards : trendCards
 
   const visibleCards = cards.filter(
-    ({ key }) => showPending || key !== 'pendingCount',
+    ({ key }) =>
+      showPending ||
+      (key !== 'pendingCount' && key !== 'closureTargetOverdueCount'),
   )
 
   if (compact) {
@@ -227,7 +263,8 @@ export function OverviewStats({
       <section
         aria-label="Overview metrics"
         data-cy="overview-metrics"
-        data-mode="compact"
+        data-mode={mode}
+        data-layout="compact"
         className="flex flex-wrap items-center gap-2"
       >
         <dl className="flex flex-wrap items-center gap-2">
@@ -264,7 +301,8 @@ export function OverviewStats({
     <section
       aria-label="Overview metrics"
       data-cy="overview-metrics"
-      data-mode="expanded"
+      data-mode={mode}
+      data-layout="expanded"
     >
       {periodLabel && periodLabel !== 'Today' && (
         <h2 className="mb-3 font-medium text-gray-900 dark:text-gray-100">

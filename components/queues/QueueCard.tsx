@@ -196,7 +196,7 @@ export function QueueCard({
         <div className="mt-3 border-t border-gray-100 pt-3 dark:border-slate-700">
           <OverviewStats
             stats={normalizeStats(queue.stats)}
-            mode="compact"
+            layout="compact"
             periodLabel="Today"
           />
         </div>

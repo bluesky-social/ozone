@@ -4,8 +4,10 @@ import { useQueueById } from '@/queues/useQueues'
 import { statReasonTypes } from '@/reports/helpers/getType'
 import { REPORT_CATEGORIES } from '@/reports/stats'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
-import { StatsSummary } from '@/reports/stats/StatsSummary'
-import { OverviewStats } from '@/reports/stats/OverviewStats'
+import {
+  OverviewStats,
+  type OverviewStatsMode,
+} from '@/reports/stats/OverviewStats'
 import { StatsWindowPicker } from '@/reports/stats/StatsWindowPicker'
 import { summarizeStats } from '@/reports/stats/reportStats'
 import { useParamStatsFilters } from '@/reports/stats/useParamStatsFilters'
@@ -15,11 +17,17 @@ import {
   useLiveStats,
 } from '@/reports/stats/useReportStats'
 import { usePermission } from '@/shell/ConfigurationContext'
-import { ArrowLeftIcon, ChevronDownIcon } from '@heroicons/react/24/solid'
+import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
+
+const VIEW_MODES = [
+  { value: 'trends', label: 'Trends' },
+  { value: 'targets', label: 'Closure Targets' },
+] as const
 
 export function StatsDetailPageContent() {
+  const [mode, setMode] = useState<OverviewStatsMode>('trends')
   const canViewModeratorStats = usePermission('canViewModeratorStats')
   const { filters, handleFilterChange } = useParamStatsFilters()
   // Select exactly one dimension, including when filters arrive via a URL.
@@ -60,16 +68,6 @@ export function StatsDetailPageContent() {
     limit: 100,
   })
   const summary = useMemo(() => summarizeStats(data?.stats ?? []), [data])
-  const start = filters.dateRange.startDate?.slice(0, 10)
-  const end = filters.dateRange.endDate?.slice(0, 10)
-  const rangeDays =
-    start && end
-      ? Math.round((Date.parse(end) - Date.parse(start)) / 86400000) + 1
-      : 0
-  const expectedDays = Math.max(
-    data?.stats.length ?? 0,
-    Number.isFinite(rangeDays) ? rangeDays : 0,
-  )
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden text-gray-900 dark:text-gray-100">
@@ -92,6 +90,27 @@ export function StatsDetailPageContent() {
           </div>
         </div>
         <div className="flex flex-wrap items-start gap-3 lg:justify-end">
+          <div
+            role="radiogroup"
+            aria-label="Analytics view"
+            className="flex rounded-full bg-gray-100 p-1 dark:bg-slate-800"
+          >
+            {VIEW_MODES.map(({ value, label }) => (
+              <label key={value} className="cursor-pointer">
+                <input
+                  type="radio"
+                  name="stats-view"
+                  value={value}
+                  checked={mode === value}
+                  onChange={() => setMode(value)}
+                  className="peer sr-only"
+                />
+                <span className="block whitespace-nowrap rounded-full px-3 py-1.5 text-sm text-gray-600 transition-colors hover:text-gray-900 peer-checked:bg-white peer-checked:font-semibold peer-checked:text-gray-900 peer-checked:shadow-sm peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-blue-500 dark:text-gray-400 dark:hover:text-gray-100 dark:peer-checked:bg-slate-600 dark:peer-checked:text-gray-100">
+                  {label}
+                </span>
+              </label>
+            ))}
+          </div>
           <StatsWindowPicker
             value={filters.dateRange}
             onChange={(dateRange) =>
@@ -131,7 +150,7 @@ export function StatsDetailPageContent() {
               rows={data?.stats ?? []}
               lastUpdated={live.data?.lastUpdated}
               showPending={!scope.moderatorDid}
-              mode="expanded"
+              mode={mode}
             />
           ) : (
             <p>No data for the selected range.</p>
@@ -167,37 +186,19 @@ export function StatsDetailPageContent() {
           ))}
         <section
           className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"
-          aria-label="Daily trends"
+          aria-label={mode === 'trends' ? 'Daily trends' : 'Closure targets'}
         >
-          <h2 className="mb-3 font-medium">Daily trends</h2>
+          <h2 className="mb-3 font-medium">
+            {mode === 'trends' ? 'Daily trends' : 'Closure Targets'}
+          </h2>
           <HistoricalGraph
+            view={mode}
             stats={data?.stats}
             isLoading={isLoading}
             isError={isError}
             onRetry={() => refetch()}
           />
         </section>
-        {!isLoading && !isError && !!data?.stats.length && (
-          <details
-            className="group rounded-xl border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
-            data-cy="detailed-metrics"
-          >
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 font-medium [&::-webkit-details-marker]:hidden">
-              Detailed metrics
-              <ChevronDownIcon className="h-4 w-4 text-gray-500 transition-transform group-open:rotate-180 dark:text-gray-400" />
-            </summary>
-            <div className="mt-5">
-              <StatsSummary
-                {...summary}
-                days={expectedDays}
-                showPending={!scope.moderatorDid}
-                pendingCount={
-                  live.isError ? undefined : live.data?.pendingCount
-                }
-              />
-            </div>
-          </details>
-        )}
       </div>
     </div>
   )

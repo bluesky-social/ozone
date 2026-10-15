@@ -70,7 +70,7 @@ it('reuses the compact summary in queue lists and keeps it visible above queue r
   })
   cy.get('[data-cy="overview-metrics"]').should('have.length', 2)
   cy.get('[data-cy="overview-metrics"]').each(($summary) => {
-    cy.wrap($summary).should('have.attr', 'data-mode', 'compact')
+    cy.wrap($summary).should('have.attr', 'data-layout', 'compact')
     cy.wrap($summary).within(() => {
       cy.get('dt').should('have.length', 6)
       cy.contains('Today (UTC)').should('not.exist')
@@ -105,7 +105,7 @@ it('reuses the compact summary in queue lists and keeps it visible above queue r
   cy.screenshot('queue-summaries-dark', { capture: 'viewport' })
   cy.viewport(375, 812)
   cy.get('[data-cy="queue-card"] h3').should('be.visible')
-  cy.get('[data-mode="compact"]')
+  cy.get('[data-layout="compact"]')
     .first()
     .find('[data-metric]')
     .then(($metrics) => {
@@ -124,7 +124,7 @@ it('reuses the compact summary in queue lists and keeps it visible above queue r
   cy.get('[data-cy="overview-metrics"]')
     .should('have.length', 1)
     .and('be.visible')
-    .and('have.attr', 'data-mode', 'compact')
+    .and('have.attr', 'data-layout', 'compact')
   cy.get('[data-cy="overview-metrics"]')
     .should('contain', '2,400')
     .and('contain', '2h')
