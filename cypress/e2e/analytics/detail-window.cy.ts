@@ -101,6 +101,7 @@ describe('Report statistics date windows', () => {
       'contain',
       'Jul 1, 2026 – Sep 23, 2026',
     )
+    cy.location('search').should('contain', 'startDate=2026-07-01')
     cy.go('back')
     cy.get('[aria-label="Selected time window"]').should(
       'contain',

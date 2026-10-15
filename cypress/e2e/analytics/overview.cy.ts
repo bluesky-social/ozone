@@ -213,6 +213,7 @@ describe('Queue aging', () => {
     cy.wait('@agingQueues')
     cy.get('[data-cy="queue-aging"]').scrollIntoView()
     cy.get('[data-cy="queue-aging"]').within(() => {
+      cy.contains('li', 'First queue').scrollIntoView()
       cy.contains('li', 'First queue').should('be.visible')
       cy.contains('button', 'Load more queues').click()
     })
@@ -515,6 +516,7 @@ describe('Category statistics table', () => {
         grouping: 'category',
         category: 'Child Safety',
         preset: 'custom',
+        period: 'day',
         startDate: '2026-10-14T00:00:00.000Z',
         endDate: '2026-10-14T00:00:00.000Z',
       })
@@ -573,20 +575,18 @@ describe('Analytics overview cards', () => {
     cy.get('[data-cy="overview-metrics"] dd')
       .first()
       .should('have.css', 'color', 'rgb(147, 197, 253)')
-    cy.get('[data-cy="overview-metrics"] h2').should(
-      'have.css',
-      'color',
-      'rgb(243, 244, 246)',
-    )
+    cy.get('[data-cy="overview-metrics"] h2').should('not.exist')
+    cy.get('[data-cy="overview-metrics"] dt')
+      .first()
+      .should('have.css', 'color', 'rgb(156, 163, 175)')
     cy.get('[data-cy="overview-metrics"]').screenshot('overview-cards-dark')
     cy.viewport(375, 812)
     cy.get('[data-cy="overview-metrics"]').then(($el) => {
       expect($el[0].scrollWidth).to.be.at.most($el[0].clientWidth)
     })
     cy.get('[data-cy="overview-metrics"]').scrollIntoView()
-    cy.get('[data-cy="overview-metrics"]')
-      .should('be.visible')
-      .screenshot('overview-cards-mobile')
+    cy.get('[data-cy="overview-metrics"]').should('be.visible')
+    cy.screenshot('overview-cards-mobile', { capture: 'viewport' })
   })
 
   it('shows unavailable metrics for a legacy snapshot', () => {
@@ -823,7 +823,8 @@ describe('Overview activity panels', () => {
         grouping: 'queue',
         queueId: '2',
         preset: 'custom',
-        startDate: '2026-10-08T00:00:00.000Z',
+        period: 'week',
+        startDate: '2026-10-12T00:00:00.000Z',
         endDate: '2026-10-14T00:00:00.000Z',
       })
     })

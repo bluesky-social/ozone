@@ -7,6 +7,7 @@ import {
   mockServerConfigResponse,
   API_URL,
   mockLabelerServiceRecordResponse,
+  SERVER_URL,
 } from './api'
 
 Cypress.Commands.add(
@@ -23,6 +24,12 @@ Cypress.Commands.add(
     // Setup the auth response
     mockAuthResponse({
       statusCode: 200,
+      body: authFixture.createSessionResponse,
+    })
+    cy.intercept('POST', `${SERVER_URL}/com.atproto.server.refreshSession`, {
+      body: authFixture.createSessionResponse,
+    })
+    cy.intercept('GET', `${SERVER_URL}/com.atproto.server.getSession`, {
       body: authFixture.createSessionResponse,
     })
     mockServerConfigResponse({
