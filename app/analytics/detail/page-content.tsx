@@ -2,7 +2,7 @@
 
 import { statReasonTypes } from '@/reports/helpers/getType'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
-import { LiveStatsCards } from '@/reports/stats/LiveStats'
+import { LiveBacklogSummary } from '@/reports/stats/LiveStats'
 import { StatsSummary } from '@/reports/stats/StatsSummary'
 import { summarizeStats } from '@/reports/stats/reportStats'
 import {
@@ -73,7 +73,7 @@ export function StatsDetailPageContent() {
         }
         onChange={handleFilterChange}
       />
-      {!scope.moderatorDid && <LiveStatsCards params={scope} backlogOnly />}
+      {!scope.moderatorDid && <LiveBacklogSummary params={scope} />}
       <section aria-label="Selected date range" className="space-y-4">
         <div>
           <h2 className="text-lg font-semibold">Selected date range</h2>

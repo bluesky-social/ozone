@@ -1,5 +1,5 @@
 import { StatValues } from './Stats'
-import { BacklogSummary, StatsSummary } from './StatsSummary'
+import { BacklogSummary } from './StatsSummary'
 import { LiveStatsParams, useLiveStats } from './useReportStats'
 
 export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
@@ -38,13 +38,7 @@ export function LiveStatsPanel({ params }: { params?: LiveStatsParams }) {
   return <StatValues stats={stats} />
 }
 
-export function LiveStatsCards({
-  params,
-  backlogOnly = false,
-}: {
-  params?: LiveStatsParams
-  backlogOnly?: boolean
-}) {
+export function LiveBacklogSummary({ params }: { params?: LiveStatsParams }) {
   const { data: stats, isLoading, isError, refetch } = useLiveStats(params)
 
   if (isLoading)
@@ -70,21 +64,5 @@ export function LiveStatsCards({
       </p>
     )
 
-  return (
-    <div className="space-y-6">
-      {!params?.moderatorDid && <BacklogSummary stats={stats} />}
-      {!backlogOnly && (
-        <section aria-label="Today’s activity">
-          <h2 className="mb-3 text-lg font-semibold">Today (UTC)</h2>
-          {stats.closedCount == null && (
-            <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
-              Today’s statistics use older metric definitions. Outcome counts
-              and timings are unavailable until recomputed.
-            </p>
-          )}
-          <StatsSummary stats={stats} />
-        </section>
-      )}
-    </div>
-  )
+  return !params?.moderatorDid ? <BacklogSummary stats={stats} /> : null
 }

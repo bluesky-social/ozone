@@ -1,18 +1,10 @@
 import { numberToString } from '@/lib/util'
 import { ClockIcon } from '@heroicons/react/24/outline'
 import { formatDistanceToNow } from 'date-fns'
-import Link from 'next/link'
-import { Line, LineChart, ResponsiveContainer } from 'recharts'
 import { twMerge } from 'tailwind-merge'
-import { getHrefFromGroup, StatGroup } from '.'
-import { statReasonTypes } from '../helpers/getType'
 import type { ReportStats } from './reportStats'
-export type { ReportStats } from './reportStats'
-import { LiveStatsParams } from './useReportStats'
-import type { StatsWindow } from './statsWindow'
-import { useStatsWindow } from './useStatsWindow'
 
-export const STATS_PRESETS = {
+const STATS_PRESETS = {
   inbound: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300',
   pending: 'bg-gray-100 text-gray-800 dark:bg-gray-700/50 dark:text-gray-300',
   escalated:
@@ -29,7 +21,7 @@ export const STATS_PRESETS = {
 
 export type StatsValuePreset = keyof typeof STATS_PRESETS
 
-export function StatValue({
+function StatValue({
   label,
   value,
   classNamePreset,
@@ -174,142 +166,5 @@ export function StatCard({
         </span>
       )}
     </div>
-  )
-}
-
-export function StatsCard({
-  group,
-  window,
-}: {
-  group: StatGroup
-  window: StatsWindow
-}) {
-  const filterParams: LiveStatsParams = {
-    reportTypes: group.category ? statReasonTypes[group.category] : undefined,
-    queueId: group.queueId,
-    moderatorDid: group.moderatorDid,
-  }
-
-  const { stats, rows, coverage, lastUpdated, isLoading, isError, refetch } =
-    useStatsWindow(window, filterParams)
-
-  const byDate = new Map(rows.map((row) => [row.date, row]))
-  const sparklineData = window.dates.map((date) => ({
-    date,
-    value: byDate.get(date)?.inboundCount,
-  }))
-  const showGraph = sparklineData.some((row) => row.value != null)
-  const partialCoverage =
-    window.days > 1 &&
-    (
-      ['inboundCount', 'escalatedCount', 'actionedCount', 'actionRate'] as const
-    ).some((key) => (coverage[key] ?? 0) < window.days)
-
-  if (isError) {
-    return (
-      <div className="rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 mb-2">
-          {group.title}
-        </h3>
-        <div className="text-sm text-red-600 dark:text-red-400">
-          Failed to load stats.{' '}
-          <button
-            onClick={(e) => {
-              e.preventDefault()
-              refetch()
-            }}
-            className="underline hover:no-underline"
-          >
-            Retry
-          </button>
-        </div>
-      </div>
-    )
-  }
-
-  return (
-    <Link
-      href={getHrefFromGroup(group)}
-      className="block rounded-lg shadow bg-white dark:bg-slate-800 p-4 dark:shadow-slate-700 hover:shadow-md transition-shadow"
-    >
-      <h2 className="font-semibold text-gray-900 dark:text-gray-100 mb-1">
-        {group.title}
-      </h2>
-      {group.description && (
-        <p className="text-xs text-gray-500 dark:text-gray-400 mb-3">
-          {group.description}
-        </p>
-      )}
-
-      {isLoading ? (
-        <div className="text-xs text-gray-400">Loading...</div>
-      ) : !rows.length && !lastUpdated ? (
-        <div className="text-xs text-gray-400">No data</div>
-      ) : (
-        <>
-          <div className="flex flex-wrap gap-2 mb-3">
-            <StatValue
-              label="Inbound"
-              value={stats.inboundCount}
-              classNamePreset="inbound"
-            />
-            <StatValue
-              label="Pending"
-              value={stats.pendingCount}
-              classNamePreset="pending"
-            />
-            <StatValue
-              label="Escalated"
-              value={stats.escalatedCount}
-              classNamePreset="escalated"
-            />
-            <StatValue
-              label="Actioned"
-              value={stats.actionedCount}
-              classNamePreset="actioned"
-              suffix={
-                stats.actionRate != null ? ` (${stats.actionRate}%)` : undefined
-              }
-            />
-          </div>
-          <p className="mb-2 text-xs text-gray-500 dark:text-gray-400">
-            {window.label} (UTC) · Pending is current
-            {lastUpdated
-              ? ` as of ${new Date(lastUpdated).toISOString().replace('T', ' ').slice(0, 19)} UTC`
-              : ''}
-            .
-          </p>
-          {partialCoverage && (
-            <p className="mb-2 text-xs text-amber-700 dark:text-amber-300">
-              Some daily metrics are unavailable; totals and rates use available
-              days.
-            </p>
-          )}
-
-          <div className="h-32 w-full">
-            {showGraph ? (
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={sparklineData}>
-                  <Line
-                    type="monotone"
-                    dataKey="value"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ r: 2 }}
-                    connectNulls={false}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : (
-              <div className="w-full h-full flex justify-center items-center">
-                <p className="text-xs text-gray-500 dark:text-gray-400">
-                  No data to show
-                </p>
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </Link>
   )
 }

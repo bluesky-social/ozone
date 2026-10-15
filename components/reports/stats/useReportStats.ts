@@ -3,7 +3,6 @@ import type { Agent } from '@atproto/api'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useState } from 'react'
 import { normalizeStats } from './reportStats'
-export type { HistoricalReportStats } from './reportStats'
 
 export type LiveStatsParams = {
   queueId?: number
