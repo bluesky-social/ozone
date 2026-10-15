@@ -445,11 +445,17 @@ describe('Report priority badges', () => {
     cy.intercept('GET', `${SERVER_URL}/tools.ozone.queue.listQueues*`, {
       queues: [],
     })
-    cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.queryReports*`, {
-      reports: [report],
-    }).as('reports')
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.report.queryReports*`,
+      (req) => {
+        // Refetches can repeat the previous sort before navigation completes.
+        req.alias = `reports-${req.query.sortField}-${req.query.sortDirection}`
+        req.reply({ reports: [report] })
+      },
+    )
     login('/reports/beta')
-    cy.wait('@reports').then(({ request }) => {
+    cy.wait('@reports-createdAt-asc').then(({ request }) => {
       expect(request.query.sortField).to.equal('createdAt')
       expect(request.query.sortDirection).to.equal('asc')
     })
@@ -459,12 +465,12 @@ describe('Report priority badges', () => {
     )
     cy.get('[aria-label="Report order"]').should('not.exist')
     cy.get('thead').contains('a', 'Report').click()
-    cy.wait('@reports').then(({ request }) => {
+    cy.wait('@reports-createdAt-desc').then(({ request }) => {
       expect(request.query.sortField).to.equal('createdAt')
       expect(request.query.sortDirection).to.equal('desc')
     })
     cy.get('thead').contains('a', 'Last Update').click()
-    cy.wait('@reports').then(({ request }) => {
+    cy.wait('@reports-updatedAt-asc').then(({ request }) => {
       expect(request.query.sortField).to.equal('updatedAt')
       expect(request.query.sortDirection).to.equal('asc')
     })
