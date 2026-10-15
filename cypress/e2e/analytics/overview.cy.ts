@@ -301,7 +301,10 @@ describe('Queue statistics table', () => {
         cy.get('[data-cy="queue-target-rate"]').should('have.text', '75%')
         cy.contains('a', 'Review queue')
           .should('have.attr', 'href')
-          .and('include', 'queueId=1')
+          .and(
+            'equal',
+            '/analytics/detail?grouping=queue&queueId=1&period=week',
+          )
       })
       cy.contains('tr', 'Empty queue').within(() => {
         cy.get('[data-cy="queue-pending"]').should('have.text', '0')
@@ -727,14 +730,14 @@ describe('Overview activity panels', () => {
       expectMetric('Avg handling time', '2m')
       expectMetric('Closure Target', '95%')
       cy.contains('250 past closure target')
-      cy.contains('Available for 2 of 7 days.')
+      cy.contains('Available for 2 of 7 days.').should('not.exist')
     })
     cy.get('[data-cy="closure-action-rate"]').should('have.text', '83%')
     cy.get('[data-cy="report-type-panel"]').within(() => {
       cy.contains('tr', 'Violence & Welfare').within(() => {
         cy.get('[data-cy="type-inbound"]').should('have.text', '140')
         cy.get('[data-cy="type-action-rate"]').should('have.text', '83%')
-        cy.contains('2 of 7 days')
+        cy.contains('2 of 7 days').should('not.exist')
       })
     })
     cy.get('[data-cy="report-type-targets"]').within(() => {
@@ -767,7 +770,7 @@ describe('Overview activity panels', () => {
         )
         cy.get('[data-cy="queue-handling"]').should('have.text', '2m')
         cy.get('[data-cy="queue-target-rate"]').should('have.text', '95%')
-        cy.contains('2 of 7 days')
+        cy.contains('2 of 7 days').should('not.exist')
       },
     )
     cy.contains('[role="tab"]', 'Categories').click()
@@ -791,7 +794,7 @@ describe('Overview activity panels', () => {
       )
       cy.get('[data-cy="category-handling"]').should('have.text', '2m')
       cy.get('[data-cy="category-target-rate"]').should('have.text', '95%')
-      cy.contains('2 of 7 days')
+      cy.contains('2 of 7 days').should('not.exist')
       cy.contains('a', 'Violence & Welfare')
         .should('have.attr', 'href')
         .then((href) => {
@@ -894,7 +897,7 @@ describe('Overview activity panels', () => {
       limit: '30',
     })
     cy.get('[data-cy="inbound-closed-chart"]').within(() => {
-      cy.contains('Last 30 days').should('contain', 'Today is partial')
+      cy.contains('Last 30 days').should('not.contain', 'Today is partial')
       cy.get('tbody tr')
         .should('have.length', 30)
         .first()
@@ -955,7 +958,7 @@ describe('Overview activity panels', () => {
     )
   })
 
-  it('preserves missing and legacy values and labels matching outcome coverage', () => {
+  it('preserves missing and legacy values with matching outcome coverage', () => {
     visitOverview(
       snapshot,
       [
@@ -1003,9 +1006,9 @@ describe('Overview activity panels', () => {
       cy.get('[data-cy="closure-action-rate"]').should('have.text', '83%')
       cy.contains(
         'Comparable closure outcomes available for 2 of 30 days.',
-      ).should('be.visible')
+      ).should('not.exist')
       cy.contains('Action types available for 2 of 30 days.').should(
-        'be.visible',
+        'not.exist',
       )
       cy.contains('dt', /^Label$/)
         .siblings('dd')

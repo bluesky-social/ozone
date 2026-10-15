@@ -96,8 +96,7 @@ export function OverviewActivity({
             <h2 className="font-semibold">Inbound vs closed</h2>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {chartWindow.label} · {formatDate(dates[0])}
-              {chartWindow.days > 1 ? ` – ${formatDate(today)}` : ''}. Today is
-              partial.
+              {chartWindow.days > 1 ? ` – ${formatDate(today)}` : ''}
             </p>
           </div>
           <div role="group" aria-label="Chart series" className="flex gap-4">
@@ -150,6 +149,7 @@ export function OverviewActivity({
               <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
+                    className="[&_.recharts-surface:focus:not(:focus-visible)]:outline-none"
                     data={rows}
                     margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
                     barGap={2}
@@ -251,7 +251,6 @@ export function OverviewActivity({
       </section>
       <ClosureBreakdown
         stats={data.rows}
-        days={window.days}
         periodLabel={window.label}
         isLoading={data.isLoading}
         isError={data.isError}

@@ -49,8 +49,8 @@ export function AnalyticsPageContent() {
   const { data: currentStats } = useLiveStats()
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 py-4 text-gray-900 dark:text-gray-100">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="flex min-h-0 flex-1 flex-col overflow-hidden text-gray-900 dark:text-gray-100">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6 lg:px-8">
         <h1 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
           Analytics
         </h1>
@@ -89,10 +89,14 @@ export function AnalyticsPageContent() {
         </div>
       </div>
 
-      <TabGroup selectedIndex={selectedTab} onChange={selectTab}>
+      <TabGroup
+        selectedIndex={selectedTab}
+        onChange={selectTab}
+        className="flex min-h-0 flex-1 flex-col"
+      >
         <TabList
           aria-label="Analytics views"
-          className="mb-6 flex gap-6 overflow-x-auto border-b border-gray-200 dark:border-slate-700"
+          className="mx-4 flex shrink-0 gap-6 overflow-x-auto border-b border-gray-200 dark:border-slate-700 sm:mx-6 lg:mx-8"
         >
           {ANALYTICS_TABS.map(({ key, label }) => (
             <Tab
@@ -103,14 +107,14 @@ export function AnalyticsPageContent() {
             </Tab>
           ))}
         </TabList>
-        <TabPanels>
-          <TabPanel>
+        <TabPanels className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+          <TabPanel className="[&:focus:not(:focus-visible)]:outline-none">
             <Overview window={window} />
           </TabPanel>
-          <TabPanel>
+          <TabPanel className="[&:focus:not(:focus-visible)]:outline-none">
             <QueueStatsTable window={window} />
           </TabPanel>
-          <TabPanel>
+          <TabPanel className="[&:focus:not(:focus-visible)]:outline-none">
             <StatsTable
               grouping="category"
               groups={REPORT_CATEGORIES}
@@ -128,12 +132,7 @@ function Overview({ window }: { window: StatsWindow }) {
   return (
     <>
       <div className="mb-6">
-        <OverviewStats
-          {...data}
-          days={window.days}
-          periodLabel={window.label}
-          mode="expanded"
-        />
+        <OverviewStats {...data} periodLabel={window.label} mode="expanded" />
         <Link
           href="/analytics/detail?grouping=aggregate"
           className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"

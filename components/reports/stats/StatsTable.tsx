@@ -12,15 +12,6 @@ type StatsGrouping = 'queue' | 'category'
 
 const count = (value?: number) => value?.toLocaleString() ?? '—'
 
-function Coverage({ count, days }: { count?: number; days: number }) {
-  if (days === 1 || (count ?? 0) >= days) return null
-  return (
-    <span className="mt-1 block text-[11px] font-normal text-amber-700 dark:text-amber-300">
-      {count ?? 0} of {days} days
-    </span>
-  )
-}
-
 export function StatsTable({
   grouping,
   groups,
@@ -127,7 +118,7 @@ function StatsTableRow({
   window: StatsWindow
 }) {
   const router = useRouter()
-  const { stats, rows, coverage, isLoading, isError, refetch } = useStatsWindow(
+  const { stats, rows, isLoading, isError, refetch } = useStatsWindow(
     window,
     grouping === 'queue'
       ? { queueId: group.queueId }
@@ -137,17 +128,15 @@ function StatsTableRow({
             : undefined,
         },
   )
-  const params = new URLSearchParams({
-    grouping,
-    preset: 'custom',
-    startDate: window.startDate,
-    endDate: window.endDate,
-  })
-  if (grouping === 'queue' && group.queueId != null) {
-    params.set('queueId', String(group.queueId))
-  }
-  if (grouping === 'category' && group.category) {
-    params.set('category', group.category)
+  const params = new URLSearchParams({ grouping })
+  if (grouping === 'queue') {
+    if (group.queueId != null) params.set('queueId', String(group.queueId))
+    params.set('period', 'week')
+  } else {
+    params.set('preset', 'custom')
+    params.set('startDate', window.startDate)
+    params.set('endDate', window.endDate)
+    if (group.category) params.set('category', group.category)
   }
   const href = `/analytics/detail?${params.toString()}`
   const closedRows = rows.filter((row) => row.closedCount != null)
@@ -234,7 +223,6 @@ function StatsTableRow({
             >
               {count(stats.inboundCount)}
             </span>
-            <Coverage count={coverage.inboundCount} days={window.days} />
           </td>
           <td className="px-3 py-4 text-right tabular-nums">
             <span
@@ -294,7 +282,6 @@ function StatsTableRow({
                 Breakdown unavailable
               </p>
             )}
-            <Coverage count={coverage.closedCount} days={window.days} />
           </td>
           <td className="px-3 py-4 text-right tabular-nums">
             <span
@@ -303,7 +290,6 @@ function StatsTableRow({
             >
               {count(stats.escalatedCount)}
             </span>
-            <Coverage count={coverage.escalatedCount} days={window.days} />
           </td>
           <td className="px-3 py-4 text-right tabular-nums">
             <span
@@ -314,7 +300,6 @@ function StatsTableRow({
                 ? formatDuration(stats.avgHandlingTimeSec)
                 : '—'}
             </span>
-            <Coverage count={coverage.avgHandlingTimeSec} days={window.days} />
           </td>
           <td className="px-5 py-4 text-right tabular-nums">
             <span
@@ -330,10 +315,6 @@ function StatsTableRow({
                   ? 'No targeted closures'
                   : `${count(stats.closureTargetMetCount)} / ${count(targeted)} met`}
             </p>
-            <Coverage
-              count={coverage.closureTargetMetCount}
-              days={window.days}
-            />
           </td>
         </>
       )}

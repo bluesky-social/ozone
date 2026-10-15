@@ -50,15 +50,6 @@ function useReportTypeStats(window: StatsWindow) {
 
 type TypeStats = ReturnType<typeof useReportTypeStats>[number]
 
-function Coverage({ count, days }: { count?: number; days: number }) {
-  if (days === 1 || (count ?? 0) >= days) return null
-  return (
-    <span className="mt-1 block text-[11px] font-normal text-amber-700 dark:text-amber-300">
-      {count ?? 0} of {days} days
-    </span>
-  )
-}
-
 function RowStatus({ row, columns }: { row: TypeStats; columns: number }) {
   return (
     <td
@@ -161,10 +152,6 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                             {row.stats.inboundCount?.toLocaleString() ?? '—'}
                           </span>
                         </div>
-                        <Coverage
-                          count={row.coverage.inboundCount}
-                          days={window.days}
-                        />
                       </td>
                       <td className="py-3 text-right text-xs tabular-nums">
                         <span data-cy="type-action-rate">
@@ -172,10 +159,6 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                             ? `${row.stats.actionRate}%`
                             : '—'}
                         </span>
-                        <Coverage
-                          count={row.coverage.actionRate}
-                          days={window.days}
-                        />
                       </td>
                     </>
                   )}
@@ -253,10 +236,6 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                               ? formatDuration(stats.avgHandlingTimeSec)
                               : '—'}
                           </span>
-                          <Coverage
-                            count={row.coverage.avgHandlingTimeSec}
-                            days={window.days}
-                          />
                         </td>
                         <td className="px-2 py-3 text-right text-xs tabular-nums">
                           <span data-cy="type-resolution-time">
@@ -264,10 +243,6 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                               ? formatDuration(stats.avgResolutionTimeSec)
                               : '—'}
                           </span>
-                          <Coverage
-                            count={row.coverage.avgResolutionTimeSec}
-                            days={window.days}
-                          />
                         </td>
                         <td className="px-2 py-3 text-right text-xs tabular-nums">
                           <span data-cy="type-target-samples">
@@ -275,10 +250,6 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                               ? `${stats.closureTargetMetCount!.toLocaleString()} / ${targeted.toLocaleString()}`
                               : '—'}
                           </span>
-                          <Coverage
-                            count={row.coverage.closureTargetMetCount}
-                            days={window.days}
-                          />
                         </td>
                         <td className="py-3 text-right text-xs tabular-nums">
                           <span

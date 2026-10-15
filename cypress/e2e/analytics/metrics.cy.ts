@@ -190,7 +190,7 @@ describe('Report analytics metrics', () => {
     cy.get('[data-cy="detailed-metrics"]').should('not.exist')
   })
 
-  it('labels partial metric coverage without mixing legacy outcome definitions', () => {
+  it('keeps partial metrics compatible and leaves coverage details in detailed metrics', () => {
     visitStats([
       day,
       {
@@ -206,7 +206,7 @@ describe('Report analytics metrics', () => {
       expectHighlight('Closure Target', '50%')
       cy.contains('dt', 'Closed')
         .parent()
-        .should('contain', 'Available for 1 of 2 days.')
+        .should('not.contain', 'Available for 1 of 2 days.')
     })
     openDetails()
     cy.get('[data-cy="stats-summary"]').within(() => {
@@ -235,8 +235,7 @@ describe('Report analytics metrics', () => {
       expectCard('Target met rate', '—')
       expectCard('Average handling time', '—')
     })
-    cy.contains('1 of 2 daily snapshots available').scrollIntoView()
-    cy.contains('1 of 2 daily snapshots available').should('be.visible')
+    cy.contains('1 of 2 daily snapshots available').should('not.exist')
     cy.get('[aria-label="Chart metrics"]')
       .contains('button', 'Closure targets')
       .click()

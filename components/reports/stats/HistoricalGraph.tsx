@@ -139,7 +139,6 @@ export function HistoricalGraph({
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
     .map((day) => ({ date: day.date, ...summarizeStats([day]).stats }))
-  const legacyDays = stats.filter((day) => day.closedCount == null).length
   const dark = isDarkModeEnabled()
   const axisColor = dark ? '#9ca3af' : '#6b7280'
   const series = VIEWS[view].series
@@ -155,13 +154,6 @@ export function HistoricalGraph({
 
   return (
     <div className="w-full space-y-4" data-cy="historical-stats">
-      {legacyDays > 0 && (
-        <p className="text-sm text-amber-700 dark:text-amber-300">
-          {legacyDays} of {stats.length} daily snapshots use older metric
-          definitions. Outcome and escalation counts include refreshed days
-          only.
-        </p>
-      )}
       <div
         className="flex flex-wrap gap-2"
         role="group"
@@ -191,6 +183,7 @@ export function HistoricalGraph({
         <div className="h-[400px]">
           <ResponsiveContainer width="100%" height="100%">
             <LineChart
+              className="[&_.recharts-surface:focus:not(:focus-visible)]:outline-none"
               data={data}
               margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
               accessibilityLayer

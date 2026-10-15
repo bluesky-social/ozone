@@ -1,18 +1,12 @@
 import { Hover } from '@/common/Hover'
 import { formatDuration } from '@/lib/util'
 import { ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
-import type {
-  HistoricalReportStats,
-  ReportStats,
-  StatsCoverage,
-} from './reportStats'
+import type { HistoricalReportStats, ReportStats } from './reportStats'
 import { STATS_COLORS } from './statsColors'
 
 export function OverviewStats({
   stats,
   rows = [],
-  coverage = {},
-  days = 1,
   periodLabel,
   mode = 'expanded',
   showPending = true,
@@ -23,8 +17,6 @@ export function OverviewStats({
 }: {
   stats: ReportStats
   rows?: HistoricalReportStats[]
-  coverage?: StatsCoverage
-  days?: number
   periodLabel?: string
   mode?: 'expanded' | 'compact'
   showPending?: boolean
@@ -153,16 +145,28 @@ export function OverviewStats({
           ? formatDuration(stats.avgHandlingTimeSec)
           : '—',
       description: (
-        <>
-          Assignment to closure
-          <span className="mt-2 block">
-            Avg Resolution time:{' '}
-            {stats.avgResolutionTimeSec != null
-              ? formatDuration(stats.avgResolutionTimeSec)
-              : '—'}{' '}
-            (from open to close)
-          </span>
-        </>
+        <div className="relative flex items-center gap-1">
+          <span>Assignment to closure</span>
+          <Hover
+            className="!static shrink-0 cursor-help"
+            panelClassName="text-xs text-gray-600 dark:text-gray-300"
+            content={
+              <>
+                Avg resolution time:{' '}
+                {stats.avgResolutionTimeSec != null
+                  ? formatDuration(stats.avgResolutionTimeSec)
+                  : '—'}{' '}
+                (time from open to close)
+              </>
+            }
+          >
+            <InformationCircleIcon
+              aria-hidden="true"
+              className="h-4 w-4 text-gray-400 dark:text-gray-500"
+            />
+            <span className="sr-only">Average resolution time</span>
+          </Hover>
+        </div>
       ),
     },
     {
@@ -295,13 +299,6 @@ export function OverviewStats({
               <dd className="text-xs text-gray-600 dark:text-gray-300">
                 {description}
               </dd>
-              {days > 1 &&
-                key !== 'pendingCount' &&
-                (coverage[key] ?? 0) < days && (
-                  <dd className="text-xs text-amber-700 dark:text-amber-300">
-                    Available for {coverage[key] ?? 0} of {days} days.
-                  </dd>
-                )}
             </div>
           )
         })}

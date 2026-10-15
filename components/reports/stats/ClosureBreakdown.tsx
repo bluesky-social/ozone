@@ -16,14 +16,12 @@ const ACTIONS = [
 
 export function ClosureBreakdown({
   stats,
-  days,
   periodLabel,
   isLoading,
   isError,
   onRetry,
 }: {
   stats: HistoricalReportStats[]
-  days: number
   periodLabel: string
   isLoading: boolean
   isError: boolean
@@ -58,7 +56,7 @@ export function ClosureBreakdown({
     >
       <h2 className="font-semibold">Closed: acknowledged vs actioned</h2>
       <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-        {periodLabel} · Today is partial.
+        {periodLabel}
       </p>
       {isLoading ? (
         <p
@@ -141,12 +139,6 @@ export function ClosureBreakdown({
               </div>
             ))}
           </dl>
-          {closureDays.length < days && (
-            <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
-              Comparable closure outcomes available for {closureDays.length} of{' '}
-              {days} days.
-            </p>
-          )}
           <div className="mt-5 border-t border-gray-200 pt-4 dark:border-slate-700">
             <h3 className="text-[11px] font-semibold uppercase tracking-wider text-gray-500 dark:text-gray-400">
               Action type
@@ -182,11 +174,6 @@ export function ClosureBreakdown({
                 </div>
               ))}
             </dl>
-            {actionDays.length < days && (
-              <p className="mt-3 text-xs text-amber-700 dark:text-amber-300">
-                Action types available for {actionDays.length} of {days} days.
-              </p>
-            )}
           </div>
         </>
       )}
