@@ -14,36 +14,66 @@ import { isDarkModeEnabled } from '@/common/useColorScheme'
 import { formatDuration } from '@/lib/util'
 import { HistoricalReportStats, summarizeStats } from './reportStats'
 
+import { STATS_COLORS } from './statsColors'
+
 const VIEWS = {
   activity: {
     label: 'Activity',
     series: [
-      { key: 'inboundCount', name: 'Inbound', color: '#3b82f6' },
-      { key: 'closedCount', name: 'Closed', color: '#64748b' },
-      { key: 'actionedCount', name: 'Actioned', color: '#22c55e' },
-      { key: 'acknowledgedCount', name: 'Acknowledged', color: '#06b6d4' },
-      { key: 'escalatedCount', name: 'Escalated', color: '#ef4444' },
+      {
+        key: 'inboundCount',
+        name: 'Inbound',
+        color: STATS_COLORS.inboundCount.color,
+      },
+      {
+        key: 'closedCount',
+        name: 'Closed',
+        color: STATS_COLORS.closedCount.color,
+      },
+      {
+        key: 'actionedCount',
+        name: 'Actioned',
+        color: STATS_COLORS.actionedCount.color,
+      },
+      {
+        key: 'acknowledgedCount',
+        name: 'Acknowledged',
+        color: STATS_COLORS.acknowledgedCount.color,
+      },
+      {
+        key: 'escalatedCount',
+        name: 'Escalated',
+        color: STATS_COLORS.escalatedCount.color,
+      },
     ],
   },
   targets: {
     label: 'Closure targets',
     series: [
-      { key: 'closureTargetMetCount', name: 'Target met', color: '#22c55e' },
+      {
+        key: 'closureTargetMetCount',
+        name: 'Target met',
+        color: STATS_COLORS.closureTargetMetCount.color,
+      },
       {
         key: 'closureTargetMissedCount',
         name: 'Target missed',
-        color: '#f59e0b',
+        color: STATS_COLORS.closureTargetMissedCount.color,
       },
     ],
   },
   rates: {
     label: 'Rates',
     series: [
-      { key: 'actionRate', name: 'Action rate', color: '#3b82f6' },
+      {
+        key: 'actionRate',
+        name: 'Action rate',
+        color: STATS_COLORS.actionRate.color,
+      },
       {
         key: 'closureTargetMetRate',
         name: 'Target met rate',
-        color: '#22c55e',
+        color: STATS_COLORS.closureTargetMetRate.color,
       },
     ],
   },
@@ -53,12 +83,12 @@ const VIEWS = {
       {
         key: 'avgHandlingTimeSec',
         name: 'Average handling time',
-        color: '#a855f7',
+        color: STATS_COLORS.avgHandlingTimeSec.color,
       },
       {
         key: 'avgResolutionTimeSec',
         name: 'Average resolution time',
-        color: '#06b6d4',
+        color: STATS_COLORS.avgResolutionTimeSec.color,
       },
     ],
   },
@@ -151,7 +181,7 @@ export function HistoricalGraph({
       </div>
       <p className="text-xs text-gray-500 dark:text-gray-400">
         Missing values are unavailable. Pending and overdue appear in the
-        current backlog above.
+        summary above.
       </p>
       {!hasValues ? (
         <p className="py-12 text-center text-sm">

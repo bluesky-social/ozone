@@ -13,9 +13,19 @@ import { getStatsWindow, type StatsWindow } from './statsWindow'
 import { useHistoricalStats } from './useReportStats'
 import type { WindowStats } from './useStatsWindow'
 
+import { STATS_COLORS } from './statsColors'
+
 const SERIES = [
-  { key: 'inboundCount', label: 'Inbound', color: '#93c5fd' },
-  { key: 'closedCount', label: 'Closed', color: '#2563eb' },
+  {
+    key: 'inboundCount',
+    label: 'Inbound',
+    color: STATS_COLORS.inboundCount.color,
+  },
+  {
+    key: 'closedCount',
+    label: 'Closed',
+    color: STATS_COLORS.closedCount.color,
+  },
 ] as const
 
 const formatDate = (date: string) =>

@@ -1,3 +1,4 @@
+import { STATS_COLORS } from './statsColors'
 import { formatDuration } from '@/lib/util'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -227,24 +228,33 @@ function StatsTableRow({
       ) : (
         <>
           <td className="px-3 py-4 text-right tabular-nums">
-            <span data-cy={`${grouping}-inbound`}>
+            <span
+              data-cy={`${grouping}-inbound`}
+              className={STATS_COLORS.inboundCount.text}
+            >
               {count(stats.inboundCount)}
             </span>
             <Coverage count={coverage.inboundCount} days={window.days} />
           </td>
           <td className="px-3 py-4 text-right tabular-nums">
-            <span data-cy={`${grouping}-pending`}>
+            <span
+              data-cy={`${grouping}-pending`}
+              className={STATS_COLORS.pendingCount.text}
+            >
               {count(stats.pendingCount)}
             </span>
             <p
               data-cy={`${grouping}-overdue`}
-              className={`mt-1 whitespace-nowrap text-xs ${stats.closureTargetOverdueCount ? 'font-semibold text-rose-600 dark:text-rose-400' : 'text-gray-500 dark:text-gray-400'}`}
+              className={`mt-1 whitespace-nowrap text-xs ${stats.closureTargetOverdueCount ? `font-semibold ${STATS_COLORS.closureTargetOverdueCount.text}` : 'text-gray-500 dark:text-gray-400'}`}
             >
               {count(stats.closureTargetOverdueCount)} past target
             </p>
           </td>
           <td className="px-3 py-4 tabular-nums">
-            <p data-cy={`${grouping}-closed`}>
+            <p
+              data-cy={`${grouping}-closed`}
+              className={STATS_COLORS.closedCount.text}
+            >
               {count(stats.closedCount)} closed
             </p>
             {hasBreakdown ? (
@@ -253,16 +263,26 @@ function StatsTableRow({
                   data-cy={`${grouping}-outcomes`}
                   className="mt-1 whitespace-nowrap text-xs text-gray-600 dark:text-gray-300"
                 >
-                  {count(acknowledged)} ack / {count(actioned)} action
+                  <span className={STATS_COLORS.acknowledgedCount.text}>
+                    {count(acknowledged)} ack
+                  </span>{' '}
+                  /{' '}
+                  <span className={STATS_COLORS.actionedCount.text}>
+                    {count(actioned)} action
+                  </span>
                 </p>
                 {stats.closedCount! > 0 && (
                   <div
                     aria-hidden="true"
-                    className="mt-2 h-1.5 max-w-[11rem] overflow-hidden rounded-full bg-slate-300 dark:bg-slate-600"
+                    className="mt-2 h-1.5 max-w-[11rem] overflow-hidden rounded-full"
+                    style={{
+                      backgroundColor: STATS_COLORS.acknowledgedCount.color,
+                    }}
                   >
                     <div
-                      className="h-full bg-blue-600 dark:bg-blue-400"
+                      className="h-full"
                       style={{
+                        backgroundColor: STATS_COLORS.actionedCount.color,
                         width: `${(actioned / stats.closedCount!) * 100}%`,
                       }}
                     />
@@ -277,13 +297,19 @@ function StatsTableRow({
             <Coverage count={coverage.closedCount} days={window.days} />
           </td>
           <td className="px-3 py-4 text-right tabular-nums">
-            <span data-cy={`${grouping}-escalated`}>
+            <span
+              data-cy={`${grouping}-escalated`}
+              className={STATS_COLORS.escalatedCount.text}
+            >
               {count(stats.escalatedCount)}
             </span>
             <Coverage count={coverage.escalatedCount} days={window.days} />
           </td>
           <td className="px-3 py-4 text-right tabular-nums">
-            <span data-cy={`${grouping}-handling`}>
+            <span
+              data-cy={`${grouping}-handling`}
+              className={STATS_COLORS.avgHandlingTimeSec.text}
+            >
               {stats.avgHandlingTimeSec != null
                 ? formatDuration(stats.avgHandlingTimeSec)
                 : '—'}
@@ -293,7 +319,7 @@ function StatsTableRow({
           <td className="px-5 py-4 text-right tabular-nums">
             <span
               data-cy={`${grouping}-target-rate`}
-              className="inline-block rounded-full bg-blue-50 px-2.5 py-1 text-xs font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+              className={`inline-block rounded-full bg-green-50 px-2.5 py-1 text-xs font-semibold dark:bg-green-900/30 ${STATS_COLORS.closureTargetMetRate.text}`}
             >
               {targetRate != null ? `${targetRate}%` : '—'}
             </span>

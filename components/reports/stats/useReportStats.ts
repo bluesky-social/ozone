@@ -1,7 +1,6 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import type { Agent } from '@atproto/api'
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { normalizeStats } from './reportStats'
 
 export type LiveStatsParams = {
@@ -34,8 +33,14 @@ export const liveStatsQueryOptions = (
   refetchInterval: 5 * 60 * 1000,
 })
 
-export const useLiveStats = (params?: LiveStatsParams) =>
-  useQuery(liveStatsQueryOptions(useLabelerAgent(), params))
+export const useLiveStats = (
+  params?: LiveStatsParams,
+  options: { enabled?: boolean } = {},
+) =>
+  useQuery({
+    ...liveStatsQueryOptions(useLabelerAgent(), params),
+    ...options,
+  })
 
 export const useHistoricalStats = (
   params?: HistoricalStatsParams,
@@ -61,68 +66,3 @@ export const historicalStatsQueryOptions = (
     }
   },
 })
-
-export const MAX_STATS_REFRESH_DAYS = 7
-
-export function getStatsRefreshDates(startDate?: string, endDate?: string) {
-  const start = startDate?.split('T')[0] ?? ''
-  const end = endDate?.split('T')[0] ?? ''
-  const dates = [start, end].map((date) => new Date(`${date}T00:00:00.000Z`))
-  if (
-    [start, end].some(
-      (date, i) =>
-        !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
-        !Number.isFinite(dates[i].getTime()) ||
-        dates[i].toISOString().slice(0, 10) !== date,
-    )
-  ) {
-    return []
-  }
-  const days = (dates[1].getTime() - dates[0].getTime()) / 86400000 + 1
-  if (days < 1) return []
-  const refreshDays = Math.min(days, MAX_STATS_REFRESH_DAYS)
-  const refreshStart = dates[1].getTime() - (refreshDays - 1) * 86400000
-  return Array.from({ length: refreshDays }, (_, i) =>
-    new Date(refreshStart + i * 86400000).toISOString().slice(0, 10),
-  )
-}
-
-export function useRefreshStats() {
-  const labelerAgent = useLabelerAgent()
-  const queryClient = useQueryClient()
-  const [progress, setProgress] = useState({ completed: 0, total: 0 })
-  const mutation = useMutation({
-    retry: false,
-    mutationFn: async (range: { startDate: string; endDate: string }) => {
-      const dates = getStatsRefreshDates(range.startDate, range.endDate)
-      if (!dates.length) throw new Error('Select a valid start and end date.')
-      setProgress({ completed: 0, total: dates.length })
-      for (const [i, date] of dates.entries()) {
-        try {
-          // Refresh every group together so queue and aggregate totals agree.
-          await labelerAgent.tools.ozone.report.refreshStats({
-            startDate: date,
-            endDate: date,
-          })
-        } catch (error) {
-          const reason =
-            error instanceof Error ? error.message : 'Request failed'
-          throw new Error(
-            `Recomputation stopped on ${date}. ${i} of ${dates.length} days completed. ${reason}`,
-          )
-        }
-        setProgress({ completed: i + 1, total: dates.length })
-      }
-    },
-    onSettled: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['report', 'getLiveStats'] }),
-        queryClient.invalidateQueries({
-          queryKey: ['report', 'getHistoricalStats'],
-        }),
-        queryClient.invalidateQueries({ queryKey: ['queues'] }),
-      ])
-    },
-  })
-  return { ...mutation, progress }
-}

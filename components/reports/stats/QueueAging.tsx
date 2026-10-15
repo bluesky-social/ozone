@@ -1,3 +1,4 @@
+import { STATS_COLORS } from './statsColors'
 import { useQueueList } from '@/queues/useQueues'
 
 export function QueueAging() {
@@ -33,14 +34,18 @@ export function QueueAging() {
           <span className="flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="h-2.5 w-2.5 rounded-sm bg-rose-500 dark:bg-rose-400"
+              className="h-2.5 w-2.5 rounded-sm"
+              style={{
+                backgroundColor: STATS_COLORS.closureTargetOverdueCount.color,
+              }}
             />
             Past target
           </span>
           <span className="flex items-center gap-1.5">
             <span
               aria-hidden="true"
-              className="h-2.5 w-2.5 rounded-sm bg-blue-300 dark:bg-blue-400"
+              className="h-2.5 w-2.5 rounded-sm"
+              style={{ backgroundColor: STATS_COLORS.pendingCount.color }}
             />
             Other pending
           </span>
@@ -99,12 +104,19 @@ export function QueueAging() {
                           style={{ width: `${(pending / maxPending) * 100}%` }}
                         >
                           <div
-                            className="h-full bg-rose-500 dark:bg-rose-400"
+                            className="h-full"
                             style={{
+                              backgroundColor:
+                                STATS_COLORS.closureTargetOverdueCount.color,
                               width: `${pending ? (overdue / pending) * 100 : 0}%`,
                             }}
                           />
-                          <div className="h-full flex-1 bg-blue-300 dark:bg-blue-400" />
+                          <div
+                            className="h-full flex-1"
+                            style={{
+                              backgroundColor: STATS_COLORS.pendingCount.color,
+                            }}
+                          />
                         </div>
                       </div>
                     ) : (
@@ -117,7 +129,7 @@ export function QueueAging() {
                     <p
                       className={
                         overdue
-                          ? 'font-semibold text-rose-600 dark:text-rose-400'
+                          ? `font-semibold ${STATS_COLORS.closureTargetOverdueCount.text}`
                           : 'text-gray-600 dark:text-gray-300'
                       }
                       data-cy="queue-overdue"

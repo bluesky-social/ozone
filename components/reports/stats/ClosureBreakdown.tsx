@@ -1,15 +1,16 @@
+import { STATS_COLORS } from './statsColors'
 import { HistoricalReportStats, summarizeStats } from './reportStats'
 
 const ACTIONS = [
   {
     key: 'labelActionCount',
     label: 'Label',
-    color: 'bg-purple-500 dark:bg-purple-400',
+    color: STATS_COLORS.labelActionCount.color,
   },
   {
     key: 'takedownActionCount',
     label: 'Takedown',
-    color: 'bg-rose-500 dark:bg-rose-400',
+    color: STATS_COLORS.takedownActionCount.color,
   },
 ] as const
 
@@ -99,11 +100,12 @@ export function ClosureBreakdown({
           {showSplit && (
             <div
               aria-hidden="true"
-              className="mt-4 flex h-3 overflow-hidden rounded-full bg-slate-300 dark:bg-slate-600"
+              className="mt-4 flex h-3 overflow-hidden rounded-full"
+              style={{ backgroundColor: STATS_COLORS.acknowledgedCount.color }}
             >
               <div
-                className="bg-blue-600 dark:bg-blue-400"
                 style={{
+                  backgroundColor: STATS_COLORS.actionedCount.color,
                   width: `${(totals.actionedCount! / totals.closedCount!) * 100}%`,
                 }}
               />
@@ -115,12 +117,12 @@ export function ClosureBreakdown({
                 {
                   key: 'actionedCount',
                   label: 'Actioned',
-                  color: 'bg-blue-600 dark:bg-blue-400',
+                  color: STATS_COLORS.actionedCount.color,
                 },
                 {
                   key: 'acknowledgedCount',
                   label: 'Acknowledged',
-                  color: 'bg-slate-300 dark:bg-slate-600',
+                  color: STATS_COLORS.acknowledgedCount.color,
                 },
               ] as const
             ).map(({ key, label, color }) => (
@@ -128,7 +130,8 @@ export function ClosureBreakdown({
                 <dt className="flex items-center gap-1.5 text-xs text-gray-600 dark:text-gray-300">
                   <span
                     aria-hidden="true"
-                    className={`h-2.5 w-2.5 rounded-sm ${color}`}
+                    className="h-2.5 w-2.5 rounded-sm"
+                    style={{ backgroundColor: color }}
                   />
                   {label}
                 </dt>
@@ -164,8 +167,9 @@ export function ClosureBreakdown({
                     >
                       {actions[key] != null && (
                         <div
-                          className={`h-full rounded-full ${color}`}
+                          className="h-full rounded-full"
                           style={{
+                            backgroundColor: color,
                             width: `${(actions[key]! / maxActionCount) * 100}%`,
                           }}
                         />

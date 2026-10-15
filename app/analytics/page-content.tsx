@@ -128,7 +128,12 @@ function Overview({ window }: { window: StatsWindow }) {
   return (
     <>
       <div className="mb-6">
-        <OverviewStats window={window} data={data} />
+        <OverviewStats
+          {...data}
+          days={window.days}
+          periodLabel={window.label}
+          mode="expanded"
+        />
         <Link
           href="/analytics/detail?grouping=aggregate"
           className="mt-3 inline-block text-sm text-blue-600 hover:underline dark:text-blue-400"

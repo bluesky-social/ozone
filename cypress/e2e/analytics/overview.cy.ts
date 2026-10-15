@@ -563,13 +563,13 @@ describe('Analytics overview cards', () => {
       cy.contains('250 past closure target').should('be.visible')
       cy.contains('70 acknowledged · 30 actioned').should('be.visible')
       cy.contains('6 of 8 targeted closures met').should('be.visible')
-      cy.get('dd').first().should('have.css', 'color', 'rgb(17, 24, 39)')
+      cy.get('dd').first().should('have.css', 'color', 'rgb(29, 78, 216)')
     })
     cy.get('[data-cy="overview-metrics"]').screenshot('overview-cards-light')
     cy.document().then((doc) => doc.documentElement.classList.add('dark'))
     cy.get('[data-cy="overview-metrics"] dd')
       .first()
-      .should('have.css', 'color', 'rgb(243, 244, 246)')
+      .should('have.css', 'color', 'rgb(147, 197, 253)')
     cy.get('[data-cy="overview-metrics"] h2').should(
       'have.css',
       'color',
@@ -825,7 +825,7 @@ describe('Overview activity panels', () => {
         endDate: '2026-10-14T00:00:00.000Z',
       })
     })
-    cy.get('[data-cy="stats-summary"]').should('be.visible')
+    cy.get('[data-cy="overview-metrics"]').should('be.visible')
     cy.go('back')
     cy.contains('[role="tab"]', 'Queues').should(
       'have.attr',

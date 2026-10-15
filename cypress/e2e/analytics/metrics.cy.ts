@@ -90,15 +90,60 @@ function expectCard(label: string, value: string) {
     .should('have.text', value)
 }
 
+function expectHighlight(label: string, value: string) {
+  cy.contains('dt', label)
+    .parent()
+    .find('[data-cy="metric-value"]')
+    .should('have.text', value)
+}
+
+function openDetails() {
+  cy.get('[data-cy="detailed-metrics"] summary').click()
+  cy.get('[data-cy="stats-summary"]').scrollIntoView()
+  cy.get('[data-cy="stats-summary"]').should('be.visible')
+}
+
 describe('Report analytics metrics', () => {
   it('shows live backlog separately from weighted range totals and daily charts', () => {
+    cy.viewport(1280, 900)
     visitStats()
-    cy.get('[data-cy="current-backlog"]').within(() => {
-      expectCard('Pending', '17')
-      expectCard('Past closure target', '3')
-      cy.contains('2026-10-12 11:50:00 UTC').should('be.visible')
+    cy.get('time').should('have.attr', 'datetime', '2026-10-12T11:50:00.000Z')
+    cy.get('[data-cy="overview-metrics"]').within(() => {
+      expectHighlight('Inbound', '20')
+      expectHighlight('Closed', '100')
+      expectHighlight('Pending', '17')
+      cy.contains('[data-metric="pendingCount"]', '3 past closure target')
+      cy.contains(
+        '[data-metric="closedCount"]',
+        '17 acknowledged · 83 actioned',
+      )
+      expectHighlight('Closure Target', '95%')
     })
+    cy.get('[data-cy="detailed-metrics"]').should('not.have.attr', 'open')
+    cy.get('[aria-label="Daily trends"]').then(($chart) => {
+      expect($chart[0].getBoundingClientRect().top).to.be.lessThan(500)
+    })
+    cy.document().then((doc) => doc.documentElement.classList.remove('dark'))
+    cy.get('[data-cy="overview-metrics"]').should('be.visible')
+    cy.screenshot('analytics-detail-light', { capture: 'viewport' })
+    cy.document().then((doc) => doc.documentElement.classList.add('dark'))
+    cy.get('[data-cy="overview-metrics"]').should('be.visible')
+    cy.screenshot('analytics-detail-dark', { capture: 'viewport' })
+    openDetails()
     cy.get('[data-cy="stats-summary"]').within(() => {
+      cy.get('section').then(($sections) => {
+        expect(
+          [...$sections].map((section) => section.getAttribute('aria-label')),
+        ).to.deep.equal([
+          'Intake and backlog',
+          'Resolved reports',
+          'Time and closure targets',
+        ])
+      })
+      expectCard('Pending', '17')
+      cy.contains('span', /^Pending$/)
+        .parent()
+        .should('contain', 'Current snapshot')
       expectCard('Closed', '100')
       expectCard('Action rate', '83%')
       expectCard('Target met', '19')
@@ -106,8 +151,8 @@ describe('Report analytics metrics', () => {
       expectCard('Target met rate', '95%')
       expectCard('Average handling time', '2m')
       expectCard('Average resolution time', '3m')
-      cy.contains('span', /^Pending$/).should('not.exist')
     })
+    cy.get('[data-cy="detailed-metrics"] summary').click()
     cy.get('[data-cy="historical-stats"]').within(() => {
       cy.contains('button', 'Pending').should('not.exist')
       cy.contains('button', /^Inbound$/).click()
@@ -121,14 +166,28 @@ describe('Report analytics metrics', () => {
       cy.contains('button', /^Rates$/).click()
       cy.contains('button', /^Target met rate$/).should('be.visible')
     })
-    cy.get('[data-cy="stats-summary"]').scrollIntoView()
-    cy.get('[data-cy="stats-summary"]').should('be.visible')
-    cy.screenshot('analytics-summary-desktop', { capture: 'viewport' })
     cy.viewport(375, 812)
-    cy.get('[data-cy="stats-summary"]').should('be.visible')
+    cy.get('h1').scrollIntoView()
+    cy.get('[aria-label="Daily trends"]').then(($chart) => {
+      expect($chart[0].getBoundingClientRect().top).to.be.lessThan(1100)
+    })
+    cy.document().then((doc) =>
+      expect(doc.documentElement.scrollWidth).to.be.at.most(375),
+    )
     cy.get('[aria-label="Chart metrics"]').scrollIntoView()
     cy.get('[aria-label="Chart metrics"]').should('be.visible')
-    cy.screenshot('analytics-chart-mobile', { capture: 'viewport' })
+    cy.get('h1').scrollIntoView()
+    cy.screenshot('analytics-detail-mobile', { capture: 'viewport' })
+  })
+
+  it('keeps the current pending snapshot when no historical rows are available', () => {
+    visitStats([])
+    cy.get('[data-cy="overview-metrics"]').within(() => {
+      expectHighlight('Pending', '17')
+      expectHighlight('Inbound', '—')
+      expectHighlight('Closed', '—')
+    })
+    cy.get('[data-cy="detailed-metrics"]').should('not.exist')
   })
 
   it('labels partial metric coverage without mixing legacy outcome definitions', () => {
@@ -141,6 +200,15 @@ describe('Report analytics metrics', () => {
         avgHandlingTimeSec: 9999,
       },
     ])
+    cy.get('[data-cy="overview-metrics"]').within(() => {
+      expectHighlight('Inbound', '110')
+      expectHighlight('Closed', '10')
+      expectHighlight('Closure Target', '50%')
+      cy.contains('dt', 'Closed')
+        .parent()
+        .should('contain', 'Available for 1 of 2 days.')
+    })
+    openDetails()
     cy.get('[data-cy="stats-summary"]').within(() => {
       expectCard('Inbound', '110')
       expectCard('Action rate', '20%')
@@ -156,12 +224,18 @@ describe('Report analytics metrics', () => {
 
   it('keeps unavailable legacy metrics distinct from zero', () => {
     visitStats([{ date: '2026-10-10', inboundCount: 5, actionedCount: 10 }])
+    cy.get('[data-cy="overview-metrics"]').within(() => {
+      expectHighlight('Closed', '—')
+      expectHighlight('Closure Target', '—')
+    })
+    openDetails()
     cy.get('[data-cy="stats-summary"]').within(() => {
       expectCard('Closed', '—')
       expectCard('Target met', '—')
       expectCard('Target met rate', '—')
       expectCard('Average handling time', '—')
     })
+    cy.contains('1 of 2 daily snapshots available').scrollIntoView()
     cy.contains('1 of 2 daily snapshots available').should('be.visible')
     cy.get('[aria-label="Chart metrics"]')
       .contains('button', 'Closure targets')
@@ -200,7 +274,14 @@ describe('Report analytics metrics', () => {
         expect(query.moderatorDid).to.equal('did:plc:other')
         expect(query).not.to.have.property('queueId')
       })
-    cy.get('[data-cy="current-backlog"]').should('not.exist')
+    cy.get('[data-cy="overview-metrics"] [data-metric="pendingCount"]').should(
+      'not.exist',
+    )
+    cy.get('@liveStats.all').should('have.length', 0)
+    openDetails()
+    cy.get('[data-cy="stats-summary"]')
+      .contains('span', /^Pending$/)
+      .should('not.exist')
     cy.get('[data-cy="stats-summary"]').within(() =>
       expectCard('Target met', '1'),
     )

@@ -5,7 +5,8 @@ import { Card } from '@/common/Card'
 import { Hover } from '@/common/Hover'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { ReasonBadge } from '@/reports/ReasonBadge'
-import { StatValues } from '@/reports/stats/Stats'
+import { OverviewStats } from '@/reports/stats/OverviewStats'
+import { normalizeStats } from '@/reports/stats/reportStats'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import Link from 'next/link'
 import { ReactNode } from 'react'
@@ -102,8 +103,8 @@ export function QueueCard({
 
   return (
     <Card data-cy="queue-card" className="relative px-4 py-3">
-      <div className="grid grid-cols-[1fr_1fr_auto] lg:grid-cols-[1fr_1fr_1fr_auto] gap-x-4 items-start text-sm">
-        {/* Column 1 */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start text-sm">
+        {/* Queue details */}
         <div className="space-y-2 min-w-0">
           <div className="flex items-center gap-2">
             <h3
@@ -136,13 +137,6 @@ export function QueueCard({
               </div>
             </Hover>
           )}
-        </div>
-
-        {/* Column 2 */}
-        <div className="flex flex-col">
-          {!hiddenFields?.includes('stats') && (
-            <StatValues stats={queue.stats} className="flex-col items-start" />
-          )}
           {!hideViewReports && (
             <Link
               href={`/reports/beta?queueId=${queue.id}`}
@@ -153,7 +147,7 @@ export function QueueCard({
           )}
         </div>
 
-        {/* Column 3 */}
+        {/* Assignments */}
         <div className="space-y-2">
           <div
             className="flex flex-col gap-1"
@@ -198,6 +192,15 @@ export function QueueCard({
         {/* Actions */}
         {actions && <div className="w-fit">{actions}</div>}
       </div>
+      {!hiddenFields?.includes('stats') && (
+        <div className="mt-3 border-t border-gray-100 pt-3 dark:border-slate-700">
+          <OverviewStats
+            stats={normalizeStats(queue.stats)}
+            mode="compact"
+            periodLabel="Today"
+          />
+        </div>
+      )}
     </Card>
   )
 }

@@ -1,3 +1,5 @@
+import { OverviewStats } from '@/reports/stats/OverviewStats'
+import { normalizeStats } from '@/reports/stats/reportStats'
 import { QueueCard } from '@/queues/QueueCard'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import { XMarkIcon } from '@heroicons/react/24/outline'
@@ -43,11 +45,6 @@ export function QueueFilterBar({
             >
               {queue.enabled ? 'Enabled' : 'Disabled'}
             </span>
-            {queue.stats.pendingCount !== undefined && (
-              <span className="text-xs text-gray-500 dark:text-gray-400">
-                <strong>{queue.stats.pendingCount}</strong> pending
-              </span>
-            )}
             <div className="ml-auto">
               <button
                 onClick={onClear}
@@ -58,11 +55,18 @@ export function QueueFilterBar({
               </button>
             </div>
           </div>
+          <div className="border-t border-gray-200 px-4 py-3 dark:border-gray-700">
+            <OverviewStats
+              stats={normalizeStats(queue.stats)}
+              mode="compact"
+              periodLabel="Today"
+            />
+          </div>
           {isExpanded && (
             <div className="border-t border-gray-200 dark:border-gray-700">
               <QueueCard
                 queue={queue}
-                hiddenFields={['name', 'enabled']}
+                hiddenFields={['name', 'enabled', 'stats']}
                 hideViewReports
               />
             </div>

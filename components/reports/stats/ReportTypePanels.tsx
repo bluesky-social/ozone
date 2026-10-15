@@ -1,3 +1,4 @@
+import { STATS_COLORS } from './statsColors'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { formatDuration } from '@/lib/util'
 import { useQueries } from '@tanstack/react-query'
@@ -144,8 +145,10 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                           >
                             {row.stats.inboundCount != null && (
                               <div
-                                className="h-full rounded-full bg-blue-600 dark:bg-blue-400"
+                                className="h-full rounded-full"
                                 style={{
+                                  backgroundColor:
+                                    STATS_COLORS.inboundCount.color,
                                   width: `${(row.stats.inboundCount / maxInbound) * 100}%`,
                                 }}
                               />
@@ -280,7 +283,7 @@ export function ReportTypePanels({ window }: { window: StatsWindow }) {
                         <td className="py-3 text-right text-xs tabular-nums">
                           <span
                             data-cy="type-target-rate"
-                            className="inline-block rounded-full bg-blue-50 px-2 py-1 font-semibold text-blue-700 dark:bg-blue-900/30 dark:text-blue-300"
+                            className={`inline-block rounded-full bg-green-50 px-2 py-1 font-semibold dark:bg-green-900/30 ${STATS_COLORS.closureTargetMetRate.text}`}
                           >
                             {rate != null ? `${rate}%` : '—'}
                           </span>
