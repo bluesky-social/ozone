@@ -95,6 +95,7 @@ export function RepositoryViewPageContent({
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
           )
           refetch()
+          await queryClient.invalidateQueries({ queryKey: ['betaReports'] })
           await queryClient.invalidateQueries({
             queryKey: ['moderatorInboxPreview'],
           })
@@ -113,6 +114,7 @@ export function RepositoryViewPageContent({
         onSubmit={async (vals) => {
           await createReport(vals)
           refetch()
+          await queryClient.invalidateQueries({ queryKey: ['betaReports'] })
         }}
         onShowActionPanel={(subject) => setQuickActionPanelSubject(subject)}
         error={error}
