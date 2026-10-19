@@ -77,6 +77,7 @@ import { AccountPreferences } from './AccountPreferences'
 import { Country } from './Country'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { ManageView } from './ManageView'
+import { ReportsReceived } from './ReportsReceived'
 
 enum Views {
   Details,
@@ -90,6 +91,7 @@ enum Views {
   Lists,
   RelatedAccounts,
   Inbox,
+  Reportee,
 }
 
 const TabKeys = {
@@ -104,6 +106,7 @@ const TabKeys = {
   manage: Views.Manage,
   related: Views.RelatedAccounts,
   inbox: Views.Inbox,
+  reportee: Views.Reportee,
 }
 
 export function AccountView({
@@ -215,6 +218,7 @@ export function AccountView({
     views.push(
       { view: Views.Invites, label: 'Invites', sublabel: String(numInvited) },
       { view: Views.Events, label: 'Events' },
+      { view: Views.Reportee, label: 'Reports received' },
     )
 
     views.push({ view: Views.Inbox, label: 'Mod Inbox' })
@@ -268,6 +272,7 @@ export function AccountView({
               {repo ? (
                 <>
                   <Tabs
+                    wrap
                     currentView={currentView}
                     views={visibleViews}
                     onSetCurrentView={setCurrentView}
@@ -331,6 +336,9 @@ export function AccountView({
                   {currentView === Views.Blocks && <Blocks did={id} />}
                   {currentView === Views.Events && (
                     <EventsView did={repo.did} />
+                  )}
+                  {currentView === Views.Reportee && (
+                    <ReportsReceived did={repo.did} />
                   )}
                   {currentView === Views.Manage && (
                     <ManageView repo={repo} did={repo.did} />

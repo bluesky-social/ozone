@@ -20,12 +20,14 @@ export function Tabs<ViewName>({
   views,
   fullWidth,
   endAdornment,
+  wrap,
 }: {
   currentView: ViewName
   onSetCurrentView: (v: ViewName) => void
   views: TabView<ViewName>[]
   fullWidth?: boolean
   endAdornment?: ReactNode
+  wrap?: boolean
 }) {
   return (
     <div className="mt-6 sm:mt-2 2xl:mt-5">
@@ -35,7 +37,10 @@ export function Tabs<ViewName>({
             fullWidth ? '' : 'px-4 sm:px-6 lg:px-8'
           }`}
         >
-          <nav className="-mb-px flex space-x-8" aria-label="Tabs">
+          <nav
+            className={classNames('-mb-px flex gap-x-8', wrap ? 'flex-wrap' : '')}
+            aria-label="Tabs"
+          >
             {views.map(({ view, label, sublabel }) => (
               <Tab
                 key={label}

@@ -127,6 +127,7 @@ export function BetaReportsFilters() {
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         {/* Status */}
         <select
+          aria-label="Report status"
           className={`${selectBase} ${status !== ReportStatuses.QUEUED ? selectActive : selectDefault}`}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -140,6 +141,7 @@ export function BetaReportsFilters() {
 
         {/* Muted */}
         <select
+          aria-label="Muted reports"
           className={`${selectBase} ${mute !== '' ? selectActive : selectDefault}`}
           value={mute}
           onChange={(e) => setMute(e.target.value)}
@@ -153,6 +155,7 @@ export function BetaReportsFilters() {
 
         {/* Subject type */}
         <select
+          aria-label="Subject type"
           className={`${selectBase} ${subjectType !== '' ? selectActive : selectDefault}`}
           value={subjectType}
           onChange={(e) => setSubjectType(e.target.value)}
