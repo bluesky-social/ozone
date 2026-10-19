@@ -2,13 +2,9 @@ import type { ToolsOzoneSafelinkDefs } from '@atproto/api'
 
 export const DEFAULT_SAFELINK_SOURCE = 'ozone/default'
 
-export type SafelinkRule = ToolsOzoneSafelinkDefs.UrlRule & {
-  source?: string
-}
+export type SafelinkRule = ToolsOzoneSafelinkDefs.UrlRule
 
-export type SafelinkEvent = ToolsOzoneSafelinkDefs.Event & {
-  source?: string
-}
+export type SafelinkEvent = ToolsOzoneSafelinkDefs.Event
 
 export type SafelinkRuleData = Pick<
   ToolsOzoneSafelinkDefs.UrlRule,
