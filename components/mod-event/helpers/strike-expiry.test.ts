@@ -22,6 +22,42 @@ const levels = (expiryInDays?: number) => ({
 
 describe('frontend strike expiry', () => {
   it.each([
+    ['sev-1', 1],
+    ['sev-2', 2],
+    ['sev-4', 4],
+  ] as const)(
+    'uses the saved 180-day policy for %s on actions and reversals',
+    (severityLevel, amount) => {
+      const settings = Object.fromEntries(
+        ['sev-1', 'sev-2', 'sev-4'].map((name) => [
+          name,
+          { name, expiryInDays: 180 },
+        ]),
+      )
+      for (const [type, strikeCount] of [
+        ['modEventTakedown', amount],
+        ['modEventEmail', amount],
+        ['modEventReverseTakedown', -amount],
+      ] as const) {
+        const result = withStrikeExpiry(
+          input({
+            $type: `tools.ozone.moderation.defs#${type}`,
+            severityLevel,
+            strikeCount,
+          }),
+          settings,
+          now,
+        )
+        expect(result.event).toMatchObject({
+          strikeCount,
+          strikeExpiresAt: new Date(now + 180 * DAY).toISOString(),
+        })
+        expect(result.modTool?.meta).toMatchObject({ strikeExpiryDays: 180 })
+      }
+    },
+  )
+
+  it.each([
     ['modEventTakedown', 2],
     ['modEventEmail', 1],
     ['modEventReverseTakedown', -2],
