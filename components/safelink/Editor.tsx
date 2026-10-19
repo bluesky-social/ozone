@@ -1,13 +1,12 @@
 'use client'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
-import { FormEvent, useState, useEffect } from 'react'
+import { FormEvent, useState } from 'react'
 import {
   useSafelinkAdd,
-  useSafelinkUpdate,
+  useSafelinkReplace,
   useSafelinkRules,
+  useSafelinkUpdate,
 } from './useSafelinkRules'
-import { useQueryClient } from '@tanstack/react-query'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   ActionTypeNames,
   createSafelinkPageLink,
@@ -21,11 +20,20 @@ import { FormLabel, Input, Select, Textarea } from '@/common/forms'
 import { ArrowLeftIcon } from '@heroicons/react/24/solid'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
+import { SafelinkSource } from './Shared'
+import {
+  DEFAULT_SAFELINK_SOURCE,
+  getSafelinkSource,
+  type SafelinkRule,
+} from './types'
 
 const getSubmitButtonText = (
-  rule: ToolsOzoneSafelinkDefs.UrlRule | null | undefined,
+  rule: SafelinkRule | null | undefined,
   isSubmitting: boolean,
 ) => {
+  if (rule && getSafelinkSource(rule) !== DEFAULT_SAFELINK_SOURCE) {
+    return isSubmitting ? 'Dropping & Replacing...' : 'Drop & Replace Rule'
+  }
   if (!isSubmitting) {
     return !!rule ? 'Update Rule' : 'Add Rule'
   }
@@ -41,6 +49,7 @@ const useSafelinkEditor = () => {
   const router = useRouter()
   const addRule = useSafelinkAdd()
   const updateRule = useSafelinkUpdate()
+  const replaceRule = useSafelinkReplace()
 
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
@@ -84,12 +93,19 @@ const useSafelinkEditor = () => {
       }
 
       if (isUpdate && rule) {
-        await updateRule.mutateAsync({
-          ...rule,
-          ...ruleData,
-        })
+        if (getSafelinkSource(rule) === DEFAULT_SAFELINK_SOURCE) {
+          await updateRule.mutateAsync({
+            ...ruleData,
+            source: DEFAULT_SAFELINK_SOURCE,
+          })
+        } else {
+          await replaceRule.mutateAsync({
+            currentRule: rule,
+            replacement: ruleData,
+          })
+        }
       } else {
-        await addRule.mutateAsync(ruleData as ToolsOzoneSafelinkDefs.UrlRule)
+        await addRule.mutateAsync(ruleData)
       }
 
       setSubmission({ isSubmitting: false, error: '' })
@@ -227,6 +243,16 @@ export function SafelinkEditor() {
                 : 'Domain applies to entire domain, URL applies to specific URL'}
             </div>
           </div>
+
+          {rule && <SafelinkSource rule={rule} />}
+
+          {rule && getSafelinkSource(rule) !== DEFAULT_SAFELINK_SOURCE && (
+            <Alert
+              type="warning"
+              title="Replace imported rule"
+              body="Submitting removes this rule and adds a new ozone/default rule. Rules from other sources will not override this after replacing the rule."
+            />
+          )}
 
           <div>
             <FormLabel label="Action" htmlFor="action" />

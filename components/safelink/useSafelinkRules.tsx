@@ -8,6 +8,8 @@ import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { toast } from 'react-toastify'
 import { validatePatternInput } from './helpers'
+import { replaceSafelinkRule } from './replaceRule'
+import type { SafelinkRule, SafelinkRuleData } from './types'
 
 export interface SafelinkQueryParams {
   cursor?: string
@@ -68,9 +70,8 @@ export const useSafelinkRules = ({
         queryParams.createdBy = createdBy
       }
 
-      const { data } = await labelerAgent.tools.ozone.safelink.queryRules(
-        queryParams,
-      )
+      const { data } =
+        await labelerAgent.tools.ozone.safelink.queryRules(queryParams)
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
@@ -114,7 +115,7 @@ export const useSafelinkAdd = () => {
   const queryClient = useQueryClient()
 
   return useMutation({
-    mutationFn: async (rule: ToolsOzoneSafelinkDefs.UrlRule) => {
+    mutationFn: async (rule: SafelinkRuleData) => {
       const validation = validatePatternInput(rule.url, rule.pattern)
       if (!validation.isValid) {
         throw new Error(validation.error)
@@ -139,14 +140,7 @@ export const useSafelinkUpdate = () => {
 
   return useMutation({
     mutationKey: ['safelink-update-rule'],
-    mutationFn: async (rule: {
-      url: string
-      pattern: ToolsOzoneSafelinkDefs.PatternType
-      action: ToolsOzoneSafelinkDefs.ActionType
-      reason: ToolsOzoneSafelinkDefs.ReasonType
-      comment?: string
-      createdBy?: string
-    }) => {
+    mutationFn: async (rule: SafelinkRuleData & { source?: string }) => {
       const validation = validatePatternInput(rule.url, rule.pattern)
       if (!validation.isValid) {
         throw new Error(validation.error)
@@ -161,6 +155,38 @@ export const useSafelinkUpdate = () => {
     },
     onError: (error: any) => {
       toast.error(`Failed to update rule: ${error.message}`)
+    },
+  })
+}
+
+export const useSafelinkReplace = () => {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationKey: ['safelink-replace-rule'],
+    mutationFn: async ({
+      currentRule,
+      replacement,
+    }: {
+      currentRule: SafelinkRule
+      replacement: SafelinkRuleData
+    }) => {
+      await replaceSafelinkRule(
+        labelerAgent.tools.ozone.safelink,
+        currentRule,
+        replacement,
+      )
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['safelink-rules'] })
+      queryClient.invalidateQueries({ queryKey: ['safelink-events'] })
+    },
+    onSuccess: () => {
+      toast.success('Safelink rule replaced successfully')
+    },
+    onError: (error: Error) => {
+      toast.error(`Failed to replace rule: ${error.message}`)
     },
   })
 }
