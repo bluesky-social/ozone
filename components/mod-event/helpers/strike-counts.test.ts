@@ -19,13 +19,21 @@ describe('stored strike expiries', () => {
     })
   })
 
-  it('expires the reversal with its original strike, even if the reversal was later', () => {
-    const events = [event(2, expiry), event(-2, expiry)]
+  it("uses each signed adjustment's own saved expiry", () => {
+    const reversalExpiry = now + 86_400_000
+    const events = [
+      event(2, expiry),
+      event(-2, new Date(reversalExpiry).toISOString()),
+    ]
     expect(countStrikes(events, now - 1)).toEqual({
       activeStrikeCount: 0,
       totalStrikeCount: 0,
     })
     expect(countStrikes(events, now)).toEqual({
+      activeStrikeCount: -2,
+      totalStrikeCount: 0,
+    })
+    expect(countStrikes(events, reversalExpiry)).toEqual({
       activeStrikeCount: 0,
       totalStrikeCount: 0,
     })
