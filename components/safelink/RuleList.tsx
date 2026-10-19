@@ -14,6 +14,7 @@ import {
   SafelinkAction,
   SafelinkPattern,
   SafelinkReason,
+  SafelinkSource,
   SafelinkUrl,
 } from './Shared'
 import {
@@ -22,17 +23,20 @@ import {
   getPatternText,
 } from './helpers'
 import Link from 'next/link'
+import {
+  DEFAULT_SAFELINK_SOURCE,
+  getSafelinkSource,
+  type SafelinkRule,
+} from './types'
 
 export function SafelinkRuleList() {
   const pathname = usePathname()
   const searchParams = useSearchParams()
   const urls = searchParams.get('urls')?.split(',').filter(Boolean) || []
   const pattern = searchParams.get('pattern') as
-    | ToolsOzoneSafelinkDefs.PatternType
-    | undefined
+    ToolsOzoneSafelinkDefs.PatternType | undefined
   const actions = searchParams.get('actions')?.split(',').filter(Boolean) as
-    | ToolsOzoneSafelinkDefs.ActionType[]
-    | undefined
+    ToolsOzoneSafelinkDefs.ActionType[] | undefined
   const getQuickActionPanelLink = (subject: string) =>
     `${pathname}?${
       searchParams.toString() ? searchParams.toString() + '&' : ''
@@ -54,10 +58,9 @@ export function SafelinkRuleList() {
   const removeFormRef = useRef<HTMLFormElement>(null)
   const removeRule = useSafelinkRemove()
   const [removingRule, setRemovingRule] = useState<string | null>(null)
-  const [ruleToRemove, setRuleToRemove] =
-    useState<ToolsOzoneSafelinkDefs.UrlRule | null>(null)
+  const [ruleToRemove, setRuleToRemove] = useState<SafelinkRule | null>(null)
 
-  const handleRemove = (rule: ToolsOzoneSafelinkDefs.UrlRule) => {
+  const handleRemove = (rule: SafelinkRule) => {
     setRuleToRemove(rule)
   }
 
@@ -137,6 +140,7 @@ export function SafelinkRuleList() {
                   </div>
 
                   <SafelinkUrl rule={rule} />
+                  <SafelinkSource rule={rule} />
 
                   {rule.comment && (
                     <div className="text-sm text-gray-600 dark:text-gray-400">
@@ -164,15 +168,17 @@ export function SafelinkRuleList() {
                     <PencilIcon className="h-3 w-3" />
                   </LinkButton>
 
-                  <ActionButton
-                    size="xs"
-                    appearance="outlined"
-                    onClick={() => handleRemove(rule)}
-                    disabled={isRemoving}
-                    title="Remove rule"
-                  >
-                    <TrashIcon className="h-3 w-3" />
-                  </ActionButton>
+                  {getSafelinkSource(rule) === DEFAULT_SAFELINK_SOURCE && (
+                    <ActionButton
+                      size="xs"
+                      appearance="outlined"
+                      onClick={() => handleRemove(rule)}
+                      disabled={isRemoving}
+                      title="Remove rule"
+                    >
+                      <TrashIcon className="h-3 w-3" />
+                    </ActionButton>
+                  )}
                 </div>
               </div>
 

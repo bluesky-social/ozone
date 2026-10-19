@@ -10,6 +10,7 @@ import {
   SafelinkEventType,
   SafelinkPattern,
   SafelinkReason,
+  SafelinkSource,
   SafelinkUrl,
 } from './Shared'
 import { LabelChip } from '@/common/labels/List'
@@ -22,8 +23,7 @@ export function SafelinkEventList() {
   const searchParams = useSearchParams()
   const urls = searchParams.get('urls')?.split(',').filter(Boolean) || []
   const pattern = searchParams.get('pattern') as
-    | ToolsOzoneSafelinkDefs.PatternType
-    | undefined
+    ToolsOzoneSafelinkDefs.PatternType | undefined
 
   const getQuickActionPanelLink = (subject: string) =>
     `${pathname}?${
@@ -111,6 +111,7 @@ export function SafelinkEventList() {
 
             <div>
               <SafelinkUrl rule={event} />
+              <SafelinkSource rule={event} />
               {event.comment && (
                 <div className="text-sm text-gray-600 dark:text-gray-400">
                   Note: {event.comment}
