@@ -28,6 +28,12 @@ import {
 } from '@/lib/constants'
 import { getBatchId } from '@/lib/batchId'
 import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
+import { severityLevelQueryOptions } from '@/setting/severity-level/useSeverityLevel'
+import {
+  needsStrikeExpiry,
+  StrikeEventInput,
+  withStrikeExpiry,
+} from './strike-expiry'
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
 
@@ -64,10 +70,26 @@ export const hydrateModToolInfo = (
   return { ...event, modTool: buildModToolInfo(panel, meta) }
 }
 
+function usePrepareStrikeEvent() {
+  const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
+  return useCallback(
+    async (input: StrikeEventInput, eventTime?: number) => {
+      if (!needsStrikeExpiry(input.event)) return input
+      const setting = await queryClient.fetchQuery(
+        severityLevelQueryOptions(labelerAgent),
+      )
+      return withStrikeExpiry(input, setting?.value, eventTime)
+    },
+    [labelerAgent, queryClient],
+  )
+}
+
 export function useEmitEvent() {
   const labelerAgent = useLabelerAgent()
   const queryClient = useQueryClient()
   const refetchOnlineModerators = useRefetchOnlineModerators()
+  const prepareStrikeEvent = usePrepareStrikeEvent()
 
   const pendingTimeoutRef = useRef<number | null>(null)
 
@@ -84,8 +106,11 @@ export function useEmitEvent() {
 
       // Define the actual emit event function to reuse
       const emitModerationEventAsync = async () => {
-        const { data } =
-          await labelerAgent.tools.ozone.moderation.emitEvent(vals)
+        const prepared = await prepareStrikeEvent(vals)
+        const { data } = await labelerAgent.tools.ozone.moderation.emitEvent({
+          ...vals,
+          ...prepared,
+        })
         return data
       }
 
@@ -222,7 +247,7 @@ export function useEmitEvent() {
         }, DELAY_DURATION_MS)
       })
     },
-    [labelerAgent, queryClient],
+    [labelerAgent, queryClient, prepareStrikeEvent, refetchOnlineModerators],
   )
 }
 
@@ -275,6 +300,7 @@ const emitEventsInBulk = async ({
   subjectData,
   modTool,
   scheduling,
+  prepareStrikeEvent,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
@@ -283,6 +309,7 @@ const emitEventsInBulk = async ({
   subjectData: WorkspaceListData
   modTool?: ToolsOzoneModerationEmitEvent.InputSchema['modTool']
   scheduling?: ToolsOzoneModerationScheduleAction.SchedulingConfig
+  prepareStrikeEvent: ReturnType<typeof usePrepareStrikeEvent>
 }) => {
   const toastId = 'workspace-bulk-action'
   try {
@@ -298,14 +325,19 @@ const emitEventsInBulk = async ({
       ToolsOzoneModerationDefs.isModEventTakedown(eventData.event) &&
       scheduling
     ) {
+      const executionTime = scheduling.executeAt ?? scheduling.executeAfter
+      const prepared = await prepareStrikeEvent(
+        { ...eventData, modTool },
+        executionTime ? Date.parse(executionTime) : undefined,
+      )
       actions = labelerAgent.tools.ozone.moderation
         .scheduleAction({
           subjects,
-          modTool,
+          modTool: prepared.modTool,
           scheduling,
           createdBy: labelerAgent.assertDid,
           action: {
-            ...eventData.event,
+            ...prepared.event,
             $type: 'tools.ozone.moderation.scheduleAction#takedown',
           },
         })
@@ -327,11 +359,14 @@ const emitEventsInBulk = async ({
         subjects.map(async (sub) => {
           try {
             const { subject } = await createSubjectFromId(sub)
-            await labelerAgent.tools.ozone.moderation.emitEvent({
+            const prepared = await prepareStrikeEvent({
               ...eventForSubject(eventData, subjectData[sub]),
+              modTool,
+            })
+            await labelerAgent.tools.ozone.moderation.emitEvent({
+              ...prepared,
               subject,
               createdBy: labelerAgent.assertDid,
-              modTool,
             })
             results.succeeded.push(sub)
           } catch (err) {
@@ -372,6 +407,7 @@ const emitEventsInBulk = async ({
 export const useActionSubjects = () => {
   const createSubjectFromId = useCreateSubjectFromId()
   const labelerAgent = useLabelerAgent()
+  const prepareStrikeEvent = usePrepareStrikeEvent()
 
   return useCallback(
     async (
@@ -418,6 +454,7 @@ export const useActionSubjects = () => {
           subjectData,
           modTool,
           scheduling,
+          prepareStrikeEvent,
         })
 
         results.succeeded.push(...succeeded)
@@ -432,7 +469,7 @@ export const useActionSubjects = () => {
 
       return results
     },
-    [labelerAgent, createSubjectFromId],
+    [labelerAgent, createSubjectFromId, prepareStrikeEvent],
   )
 }
 

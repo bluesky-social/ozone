@@ -39,7 +39,7 @@ describe('stored strike expiries', () => {
     })
   })
 
-  it('uses stored expiry after policy reconciliation and preserves explicit expiries', () => {
+  it('uses saved expiry after a manual repair and preserves explicit expiries', () => {
     const events = [
       event(1, '2026-10-14T12:00:00.000Z'),
       event(2, '2030-01-01T00:00:00.000Z'),
