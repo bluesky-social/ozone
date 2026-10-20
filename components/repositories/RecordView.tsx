@@ -32,6 +32,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { CollectionId } from '@/reports/helpers/subject'
 import ListAccounts from 'components/list/Accounts'
 import { useCopyRecordDetails } from './useCopyRecordDetails'
+import { ReportsReceived } from './ReportsReceived'
 
 enum Views {
   Details,
@@ -41,6 +42,7 @@ enum Views {
   ModEvents,
   Likes,
   Reposts,
+  ReportsReceived,
 }
 
 const TabKeys = {
@@ -51,6 +53,7 @@ const TabKeys = {
   modevents: Views.ModEvents,
   likes: Views.Likes,
   reposts: Views.Reposts,
+  reportee: Views.ReportsReceived,
 }
 
 /**
@@ -136,6 +139,9 @@ export function RecordView({
       },
       { view: Views.ModEvents, label: 'Mod Events' },
     )
+    if (uri) {
+      views.push({ view: Views.ReportsReceived, label: 'Reports received' })
+    }
 
     return views
   }
@@ -172,6 +178,7 @@ export function RecordView({
                 views={getTabViews()}
                 currentView={currentView}
                 onSetCurrentView={setCurrentView}
+                wrap
               />
               {currentView === Views.Details && (
                 <Details record={record} fallback={fallback} />
@@ -205,6 +212,9 @@ export function RecordView({
                 <div className="flex flex-col mx-auto mt-6 max-w-5xl px-4 sm:px-6 lg:px-8 text-gray-500 dark:text-gray-50 text-sm">
                   <ModEventList subject={uri} />
                 </div>
+              )}
+              {currentView === Views.ReportsReceived && uri && (
+                <ReportsReceived uri={uri} />
               )}
             </article>
           </main>

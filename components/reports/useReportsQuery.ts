@@ -25,7 +25,13 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
   return { sortField, sortDirection }
 }
 
-export function useReportsQuery(did?: string) {
+export function useReportsQuery({
+  did,
+  subject: fixedSubject,
+}: {
+  did?: string
+  subject?: string
+} = {}) {
   const labelerAgent = useLabelerAgent()
   const params = useSearchParams()
 
@@ -39,8 +45,8 @@ export function useReportsQuery(did?: string) {
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject: searchSubject } =
     useFluentReportSearchParams()
-  // Profile report lists are scoped by the resolved repository DID, never a search term.
-  const subject = did ? undefined : searchSubject
+  // Account and record report lists keep their route scope when filters change.
+  const subject = fixedSubject ?? (did ? undefined : searchSubject)
 
   const query = useInfiniteQuery({
     queryKey: [
