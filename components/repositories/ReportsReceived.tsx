@@ -5,9 +5,12 @@ import { BetaReportsFilters } from '@/reports/Filters'
 import { ReportTable } from '@/reports/table'
 import { useReportsQuery } from '@/reports/useReportsQuery'
 
-export function ReportsReceived({ did }: { did: string }) {
+export function ReportsReceived({
+  did,
+  uri,
+}: { did: string; uri?: never } | { uri: string; did?: never }) {
   const { reports, fetchNextPage, hasNextPage, isInitialLoading, error } =
-    useReportsQuery(did)
+    useReportsQuery({ did, subject: uri })
 
   return (
     <section aria-label="Reports received" className="py-4">
@@ -16,10 +19,12 @@ export function ReportsReceived({ did }: { did: string }) {
           Reports received
         </h2>
         <p className="text-sm text-gray-500 dark:text-gray-400">
-          Reports about this account and its records.
+          {uri
+            ? 'Reports about this record.'
+            : 'Reports about this account and its records.'}
         </p>
       </div>
-      <BetaReportsFilters />
+      <BetaReportsFilters fixedSubject={!!uri} />
       {error ? (
         <LoadingFailed error={error} />
       ) : (
