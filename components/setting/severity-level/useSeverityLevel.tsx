@@ -10,31 +10,32 @@ import { getTrimmedInput } from '@/common/forms'
 
 const SeverityLevelSettingKey = 'tools.ozone.setting.severityLevels'
 
-export const useSeverityLevelSetting = (labelerAgent: Agent) => {
-  return useQuery({
-    queryKey: ['severity-level'],
-    // Set a high cache time since severity levels change infrequently but we read this value very frequently
-    cacheTime: 10 * MINUTE,
-    staleTime: 10 * MINUTE,
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.setting.listOptions({
-        scope: 'instance',
-        keys: [SeverityLevelSettingKey],
-      })
+export const severityLevelQueryOptions = (labelerAgent: Agent) => ({
+  queryKey: ['severity-level'],
+  // Set a high cache time since severity levels change infrequently but we read this value very frequently
+  cacheTime: 10 * MINUTE,
+  staleTime: 10 * MINUTE,
+  queryFn: async () => {
+    const { data } = await labelerAgent.tools.ozone.setting.listOptions({
+      scope: 'instance',
+      keys: [SeverityLevelSettingKey],
+    })
 
-      const severityLevelSetting = data.options.find(
-        (option) => option.key === SeverityLevelSettingKey,
-      )
+    const severityLevelSetting = data.options.find(
+      (option) => option.key === SeverityLevelSettingKey,
+    )
 
-      return severityLevelSetting
-        ? {
-            ...severityLevelSetting,
-            value: severityLevelSetting.value as SeverityLevelListSetting,
-          }
-        : null
-    },
-  })
-}
+    return severityLevelSetting
+      ? {
+          ...severityLevelSetting,
+          value: severityLevelSetting.value as SeverityLevelListSetting,
+        }
+      : null
+  },
+})
+
+export const useSeverityLevelSetting = (labelerAgent: Agent) =>
+  useQuery(severityLevelQueryOptions(labelerAgent))
 
 export const useSeverityLevelEditor = () => {
   const queryClient = useQueryClient()
