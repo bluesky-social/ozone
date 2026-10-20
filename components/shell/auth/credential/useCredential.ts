@@ -19,12 +19,22 @@ export function useCredential() {
   const [session, setSession] = useState<null | CredentialSession>(null)
 
   useEffect(() => {
-    const prev = loadSession()
-    if (!prev) return
+    async function restoreSession() {
+      const prev = loadSession()
+      if (!prev) return
 
-    const session = createSession(prev.service)
-    session.resumeSession(prev).then(() => setSession((s) => s || session))
-  }, [])
+      try {
+        const session = createSession(prev.service)
+        await session.resumeSession(prev)
+        setSession((s) => s || session)
+      } catch {
+        // Leave sign-in available. The SDK clears expired credentials and keeps
+        // saved credentials on temporary refresh failures so they can be retried.
+      }
+    }
+
+    void restoreSession()
+  }, [createSession])
 
   const signIn = useCallback(
     async ({
