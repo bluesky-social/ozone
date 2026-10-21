@@ -328,19 +328,27 @@ Once you've successfully started running your service, there is a final step to 
 
 ### Manually updating Ozone
 
-If you use use Docker `compose.yaml` file in this repo, Ozone will automatically update at midnight UTC when new releases are available. To manually update to the latest version use the following commands.
+If you use the Docker `compose.yaml` file in this repo, Ozone will automatically update at midnight UTC when new releases are available. To manually update the image configured for both Ozone and its daemon, use the following commands.
 
 **Pull the latest Ozone container image:**
 
 ```bash
-sudo docker pull ghcr.io/bluesky-social/ozone:latest
+sudo docker compose --file /ozone/compose.yaml --profile daemon pull ozone ozone-daemon
 ```
 
 **Restart Ozone with the new container image:**
 
 ```bash
-sudo systemctl restart ozone
+sudo docker compose --file /ozone/compose.yaml --profile daemon up --detach --force-recreate ozone ozone-daemon
 ```
+
+The image enables an eMudhra TLS mitigation for the packaged frontend, backend,
+and daemon. It rejects certificate chains containing the eight compromised
+intermediate public keys, including cross-signed variants. Preserve the image's
+`NODE_OPTIONS` preload if you customize that environment variable. Existing
+containers need to be recreated with the patched image to receive the mitigation;
+installations pinned to a release tag or digest must select a patched release.
+HTTPS requests made by a moderator's browser use the browser's certificate policy.
 
 ## Ozone environment variables
 
