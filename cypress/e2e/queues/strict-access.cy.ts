@@ -41,13 +41,22 @@ describe('Queue matching and strict access', () => {
     })
   })
 
-  it('creates a strict queue with accessible field help', () => {
+  it('creates a strict tagged queue with every report type and accessible field help', () => {
     cy.fixture('queues.json').then(({ spamQueue }) => {
       cy.intercept(
         'POST',
         `${SERVER_URL}/tools.ozone.queue.createQueue`,
         (request) => {
           expect(request.body.strictAccess).to.equal(true)
+          expect(request.body.reporterTags).to.deep.equal([
+            'team:alpha',
+            'team:beta',
+          ])
+          expect(request.body.accountTags).to.deep.equal(['needs-review'])
+          expect(request.body.reportTypes.length).to.be.greaterThan(25)
+          expect(new Set(request.body.reportTypes).size).to.equal(
+            request.body.reportTypes.length,
+          )
           request.reply({ queue: { ...spamQueue, ...request.body } })
         },
       ).as('create')
@@ -57,19 +66,29 @@ describe('Queue matching and strict access', () => {
     cy.get('#name').type('Tagged queue')
     cy.get('#subjectTypes-account').check()
     cy.get('#strictAccess').check()
-    cy.get('[aria-label="About strict access"]').focus()
-    cy.get('[aria-label="About strict access"]').then(($button) => {
+    cy.contains('button', 'Select all available types').click()
+    cy.get('#reporterTags').type('team:alpha, team:beta, team:alpha')
+    cy.get('#accountTags').type('needs-review')
+    cy.get('[aria-label="About reporter tags"]').focus()
+    cy.get('[aria-label="About reporter tags"]').then(($button) => {
       cy.get(`[id="${$button.attr('aria-describedby')}"]`)
         .should('be.visible')
-        .and('contain', 'Other roles need an active queue assignment')
+        .and('contain', 'account submitting the report')
     })
-    cy.get('[aria-label="About strict access"]').type('{esc}')
-    cy.get('[aria-label="About strict access"]').then(($button) => {
+    cy.get('[aria-label="About reporter tags"]').type('{esc}')
+    cy.get('[aria-label="About reporter tags"]').then(($button) => {
       cy.get(`[id="${$button.attr('aria-describedby')}"]`).should(
         'not.be.visible',
       )
     })
     cy.get('#name').focus()
+    cy.get('[aria-label="About account tags"]').trigger('mouseover')
+    cy.get('[aria-label="About account tags"]').then(($button) => {
+      cy.get(`[id="${$button.attr('aria-describedby')}"]`)
+        .should('be.visible')
+        .and('contain', 'account that owns the content')
+    })
+    cy.get('#name').click()
     cy.get('[data-cy="submit-queue-button"]').click()
     cy.wait('@create')
     cy.contains('Queue created successfully').should('be.visible')
@@ -80,6 +99,8 @@ describe('Queue matching and strict access', () => {
       const queue = {
         ...spamQueue,
         strictAccess: true,
+        reporterTags: ['team:alpha'],
+        accountTags: ['needs-review'],
       }
       cy.intercept('GET', `${SERVER_URL}/tools.ozone.queue.listQueues*`, {
         queues: [queue],
@@ -101,17 +122,22 @@ describe('Queue matching and strict access', () => {
     cy.get('button[title="Edit queue"]').click()
     cy.get('#strictAccess').should('not.exist')
     cy.contains('Strict access: Enabled').should('be.visible')
+    cy.get('#reporterTags').should('not.exist')
+    cy.get('#accountTags').should('not.exist')
+    cy.contains('Both tag conditions must match.').scrollIntoView()
+    cy.contains('Both tag conditions must match.').should('be.visible')
     cy.get('#name').clear()
     cy.get('#name').type('Renamed queue')
     cy.get('[data-cy="submit-queue-button"]').click()
     cy.wait('@update')
   })
 
-  it('lets an admin disable strict access without changing matching criteria', () => {
+  it('lets an admin disable strict access without changing tag criteria', () => {
     cy.fixture('queues.json').then(({ spamQueue }) => {
       const queue = {
         ...spamQueue,
         strictAccess: true,
+        accountTags: ['needs-review'],
       }
       cy.intercept('GET', `${SERVER_URL}/tools.ozone.queue.listQueues*`, {
         queues: [queue],

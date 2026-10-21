@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { ToolsOzoneQueueDefs, ToolsOzoneTeamDefs } from '@atproto/api'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { toast } from 'react-toastify'
-import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
+import {
+  useLabelerAgent,
+  usePermission,
+  useServerConfig,
+} from '@/shell/ConfigurationContext'
 import { displayError } from '@/common/Loader'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
@@ -21,6 +25,7 @@ export function QueueAssigneeStatus({
   strictAccess = false,
   assignments,
 }: QueueAssigneeStatusProps) {
+  const canManageQueues = usePermission('canManageQueues')
   const { role } = useServerConfig()
   const isAdmin = role === ToolsOzoneTeamDefs.ROLEADMIN
   const myDid = useLabelerAgent().did
@@ -75,7 +80,7 @@ export function QueueAssigneeStatus({
           did={a.did}
           profile={a.moderator?.profile}
           onRemove={
-            isAdmin || a.did === myDid
+            canManageQueues && (isAdmin || a.did === myDid)
               ? () => handleAssigneeClick(a)
               : undefined
           }

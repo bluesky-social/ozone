@@ -4,19 +4,23 @@ import { useQueueAssignments } from '@/assignments/useAssignments'
 import { Card } from '@/common/Card'
 import { Hover } from '@/common/Hover'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
-import { ReasonBadge } from '@/reports/ReasonBadge'
 import { OverviewStats } from '@/reports/stats/OverviewStats'
 import { normalizeStats } from '@/reports/stats/reportStats'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
 import Link from 'next/link'
 import { ReactNode } from 'react'
+import { matchesAutomatically, MatchSummary } from './MatchSummary'
+import type { ToolsOzoneQueueDefs } from '@atproto/api'
 import { LockClosedIcon } from '@heroicons/react/24/outline'
 import { QueueHelp, QUEUE_HELP } from './QueueHelp'
 
 export type QueueCardField =
   | Exclude<
       keyof ToolsOzoneQueueDefs.QueueView,
-      'subjectTypes' | 'collection' | 'reportTypes'
+      | 'subjectTypes'
+      | 'collection'
+      | 'reportTypes'
+      | 'reporterTags'
+      | 'accountTags'
     >
   | 'filters'
 
@@ -36,8 +40,7 @@ export function QueueCard({
     queueIds: [queue.id],
   })
 
-  const hasNoCriteria =
-    !queue.subjectTypes?.length && !queue.reportTypes?.length
+  const manualOnly = !matchesAutomatically(queue)
 
   const assigneeCount = assignments?.length ?? 0
 
@@ -48,60 +51,11 @@ export function QueueCard({
       `${subjectCount} subject type${subjectCount === 1 ? '' : 's'}`,
     reportCount > 0 &&
       `${reportCount} report type${reportCount === 1 ? '' : 's'}`,
+    !!queue.reporterTags?.length && 'Reporter tags',
+    !!queue.accountTags?.length && 'Account tags',
   ]
     .filter(Boolean)
     .join(' · ')
-
-  const filters = () => {
-    if (hasNoCriteria) {
-      return (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          This queue has no matching criteria. Reports are never auto-matched to
-          it and only land here when assigned explicitly.
-        </p>
-      )
-    }
-
-    return (
-      <>
-        <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
-            Subject Types
-          </p>
-          <div className="flex flex-wrap items-center gap-1">
-            {queue.subjectTypes?.map((type) => (
-              <span
-                key={type}
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-              >
-                {type}
-              </span>
-            ))}
-          </div>
-        </div>
-        {!!queue.collection && (
-          <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              Collection
-            </p>
-            <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-              {queue.collection}
-            </code>
-          </div>
-        )}
-        <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
-            Report Types
-          </p>
-          <div className="flex flex-wrap items-center gap-1">
-            {queue.reportTypes?.map((type) => (
-              <ReasonBadge key={type} reasonType={type} />
-            ))}
-          </div>
-        </div>
-      </>
-    )
-  }
 
   return (
     <Card data-cy="queue-card" className="relative px-4 py-3">
@@ -139,10 +93,14 @@ export function QueueCard({
             </span>
           </div>
           {!hiddenFields?.includes('filters') && (
-            <Hover content={filters()}>
-              <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
+            <Hover
+              content={<MatchSummary {...queue} />}
+              className="max-w-full"
+              panelClassName="max-h-96 overflow-y-auto"
+            >
+              <div className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
                 <span className="text-gray-500 dark:text-gray-400">
-                  {hasNoCriteria ? 'None' : filterSummary}
+                  {manualOnly ? 'Explicit routing only' : filterSummary}
                 </span>
               </div>
             </Hover>

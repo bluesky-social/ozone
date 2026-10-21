@@ -26,7 +26,7 @@ describe('strict queue card', () => {
     expect(markup).toContain('aria-describedby=')
     expect(markup).toContain('role="tooltip"')
     expect(markup).toContain(
-      'Strict access: visible to admins and assigned queue members.',
+      'Strict access: visible only to admins and assigned queue members.',
     )
     for (const strictAccess of [false, undefined]) {
       const unrestricted = renderToStaticMarkup(

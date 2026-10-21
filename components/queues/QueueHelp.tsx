@@ -2,10 +2,11 @@ import { useId, useState, type ReactNode } from 'react'
 import { QuestionMarkCircleIcon } from '@heroicons/react/24/outline'
 
 export const QUEUE_HELP = {
-  strictAccess:
-    'Admins can always access this queue and its reports. Other roles need an active queue assignment. General report searches and moderation history keep their existing permissions.',
+  reporterTags: 'Match any listed tag on the account submitting the report.',
+  accountTags:
+    'Match tags on the account or the account that owns the content. Will match if any listed tag is on the account.',
   strictIndicator:
-    'Strict access: visible to admins and assigned queue members.',
+    'Strict access: visible only to admins and assigned queue members.',
 }
 
 export function QueueHelp({
