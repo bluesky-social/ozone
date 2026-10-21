@@ -5,7 +5,7 @@
   "description": "Moderation admin interface for atproto services",
   "license": "MIT or Apache 2.0",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   },
   "packageManager": "yarn@4.8.1",
   "scripts": {
@@ -72,6 +72,6 @@
     "@types/react-dom": "19.2.3"
   },
   "volta": {
-    "node": "20.9.0"
+    "node": "24.22.1"
   }
 }
