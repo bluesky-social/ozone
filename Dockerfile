@@ -1,4 +1,4 @@
-FROM node:22.23.2-alpine3.23 AS build
+FROM node:22.23.3-alpine3.23 AS build
 
 COPY service/emudhra-preload.mjs /opt/mitigations/emudhra-preload.mjs
 ENV NODE_OPTIONS="--import=/opt/mitigations/emudhra-preload.mjs"
@@ -17,7 +17,7 @@ RUN yarn
 
 # final stage
 
-FROM node:22.23.2-alpine3.23
+FROM node:22.23.3-alpine3.23
 
 COPY service/emudhra-preload.mjs /opt/mitigations/emudhra-preload.mjs
 ENV NODE_OPTIONS="--import=/opt/mitigations/emudhra-preload.mjs"
