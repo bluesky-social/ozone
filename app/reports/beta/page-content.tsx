@@ -16,6 +16,10 @@ import { useQueueById } from '@/queues/useQueues'
 import { useReportsQuery } from '@/reports/useReportsQuery'
 import { BetaReportsFilters } from '@/reports/Filters'
 import { QueueFilterBar } from './QueueFilterBar'
+import { isQueueUnavailable } from '@/queues/access'
+import { Loading, LoadingFailed } from '@/common/Loader'
+import { ActionButton } from '@/common/buttons'
+import Link from 'next/link'
 
 export const BetaReportsPageContent = () => {
   const emitEvent = useEmitEvent()
@@ -48,11 +52,45 @@ export const BetaReportsPageContent = () => {
     router.push((pathname ?? '') + '?' + searchParams.toString())
   }
 
-  const { reports, fetchNextPage, hasNextPage, refetch, isInitialLoading } =
-    useReportsQuery()
+  const {
+    reports,
+    fetchNextPage,
+    hasNextPage,
+    refetch,
+    isInitialLoading,
+    isFetching,
+    isFetchedAfterMount,
+    error,
+  } = useReportsQuery()
   const subjectOptions = unique(reports.map((report) => report.subject.subject))
 
   useTitle(queue ? `${queue.name} - Reports (Beta)` : 'Queue - Reports (Beta)')
+
+  if (isQueueUnavailable(error)) {
+    return (
+      <div role="status" className="p-6">
+        <h1 className="text-lg font-medium">Queue unavailable</h1>
+        <p className="mt-2 text-gray-500 dark:text-gray-400">
+          This queue does not exist or you no longer have access to it. Ask an
+          admin if you need a queue assignment.
+        </p>
+        <Link href="/queues" className="mt-3 inline-block underline">
+          Back to queues
+        </Link>
+      </div>
+    )
+  }
+
+  if (rawQueueId && !isFetchedAfterMount && isFetching) return <Loading />
+  if (error)
+    return (
+      <div className="p-6">
+        <LoadingFailed error={error} />
+        <ActionButton appearance="outlined" onClick={() => refetch()}>
+          Retry
+        </ActionButton>
+      </div>
+    )
 
   return (
     <>

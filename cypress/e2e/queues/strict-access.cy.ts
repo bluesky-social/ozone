@@ -245,4 +245,63 @@ describe('Queue matching and strict access', () => {
     cy.contains('No queues found.').should('be.visible')
     cy.get('[data-cy="queue-card"]').should('not.exist')
   })
+
+  it('keeps an inaccessible queue URL and shows an unavailable state without falling back to all reports', () => {
+    cy.intercept(
+      'GET',
+      `${SERVER_URL}/tools.ozone.report.queryReports*`,
+      (request) => {
+        expect(request.query.queueId).to.equal('12')
+        request.reply({
+          statusCode: 400,
+          body: { error: 'QueueNotFound', message: 'Queue not found' },
+        })
+      },
+    ).as('reports')
+    login('/reports/beta?queueId=12', 'roleModerator')
+    cy.wait('@reports')
+    cy.contains('Queue unavailable').should('be.visible')
+    cy.get('table').should('not.exist')
+    cy.location('search').should('include', 'queueId=12')
+    cy.get('@reports.all').should('have.length', 1)
+  })
+
+  it('rechecks access before displaying an individual report cached in the list', () => {
+    const report = {
+      id: 91,
+      eventId: 1001,
+      status: 'queued',
+      reportType: 'com.atproto.moderation.defs#reasonSpam',
+      reportedBy: did,
+      reporter: { type: 'account', subject: did },
+      subject: { type: 'account', subject: did },
+      createdAt: '2026-10-01T00:00:00.000Z',
+      comment: 'Cached report detail',
+    }
+    cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.queryReports*`, {
+      reports: [report],
+    })
+    cy.intercept('GET', `${SERVER_URL}/tools.ozone.report.getReport*`, {
+      statusCode: 400,
+      delay: 400,
+      body: { error: 'NotFound', message: 'Report not found' },
+    }).as('report')
+    const assignments: unknown[] = []
+    cy.intercept(
+      'POST',
+      `${SERVER_URL}/tools.ozone.report.assignModerator`,
+      (request) => {
+        assignments.push(request.body)
+        request.reply({ statusCode: 503 })
+      },
+    )
+    login('/reports/beta', 'roleModerator')
+    cy.get('a[href="/reports/91"]').filter(':visible').first().click()
+    cy.contains('Cached report detail').should('not.exist')
+    cy.wait('@report')
+    cy.contains('Report unavailable').should('be.visible')
+    cy.contains('Cached report detail').should('not.exist')
+    cy.get('@report.all').should('have.length', 1)
+    cy.then(() => expect(assignments).to.have.length(0))
+  })
 })

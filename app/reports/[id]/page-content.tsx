@@ -90,6 +90,9 @@ import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
 import { ReportBatchLink } from 'components/reports/ReportBatchLink'
 import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
+import { useReport } from '@/reports/useReport'
+import { isReportUnavailable } from '@/queues/access'
+import { LoadingFailed } from '@/common/Loader'
 import {
   getVideoTimestampSeconds,
   ReportedVideoTimestamp,
@@ -110,6 +113,7 @@ import {
 } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
+import Link from 'next/link'
 
 const FORM_ID = 'report-detail-action-panel'
 
@@ -349,39 +353,30 @@ export function ReportDetailPageContent() {
     router.push((pathname ?? '') + '?' + nextParams.toString())
   }
 
-  const {
-    report: cachedReport,
-    prevReportId,
-    nextReportId,
-  } = useReports(reportId)
+  const { prevReportId, nextReportId } = useReports(reportId)
 
-  // Register this session as a viewer (temporary, non-permanent assignment).
+  const { report, isFetching, isFetchedAfterMount, error, refetch } =
+    useReport(reportId)
+
+  // Register this session as a viewer only after the report read succeeds.
   useEffect(() => {
+    if (!report) return
     labelerAgent.tools.ozone.report
       .assignModerator({ reportId })
       .then(() => refetchOnlineModerators())
       .catch(() => {})
-  }, [reportId])
+  }, [reportId, !!report]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  const { data: report, isLoading } = useQuery({
-    queryKey: ['report', reportId],
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.report.getReport({
-        id: reportId,
-      })
-      return data
-    },
-    initialData: cachedReport ?? undefined,
-  })
-
-  const [subject, setSubject] = useState(report?.subject.subject ?? '')
-
-  const reportSubject = report?.subject.subject
-  useEffect(() => {
-    if (reportSubject && !subject) {
-      setSubject(reportSubject)
-    }
-  }, [reportSubject, subject])
+  const [subjectOverride, setSubjectOverride] = useState<{
+    reportId: number
+    subject: string
+  }>()
+  const subject =
+    subjectOverride?.reportId === reportId
+      ? subjectOverride.subject
+      : (report?.subject.subject ?? '')
+  const setSubject = (subject: string) =>
+    setSubjectOverride({ reportId, subject })
 
   const { viewers } = useAssignmentPolling({
     reportId,
@@ -391,7 +386,12 @@ export function ReportDetailPageContent() {
 
   const createActivity = useCreateActivity()
 
-  if (!report && isLoading) {
+  if (
+    !report &&
+    (isFetching || (!isFetchedAfterMount && !error)) &&
+    Number.isSafeInteger(reportId) &&
+    reportId > 0
+  ) {
     return (
       <div className="flex flex-col items-center justify-center h-64">
         <Loading />
@@ -402,10 +402,29 @@ export function ReportDetailPageContent() {
     )
   }
 
-  if (!report && !isLoading) {
+  if (!report) {
     return (
       <div className="px-4 sm:px-6 lg:px-8 pt-6">
-        <p className="text-gray-500">Report not found.</p>
+        {isReportUnavailable(error) ||
+        !Number.isSafeInteger(reportId) ||
+        reportId <= 0 ? (
+          <div role="status">
+            <h1 className="text-lg font-medium">Report unavailable</h1>
+            <p className="mt-2 text-gray-500 dark:text-gray-400">
+              This report does not exist or you no longer have access to it.
+            </p>
+            <Link href="/reports/beta" className="mt-3 inline-block underline">
+              Back to reports
+            </Link>
+          </div>
+        ) : (
+          <div>
+            <LoadingFailed error={error} />
+            <ActionButton appearance="outlined" onClick={() => refetch()}>
+              Retry
+            </ActionButton>
+          </div>
+        )}
       </div>
     )
   }
@@ -514,7 +533,7 @@ export function ReportDetailPageContent() {
         setSubject={setQuickActionPanelSubject}
         subject={quickOpenParam}
         subjectOptions={subject ? [subject] : [quickOpenParam]}
-        isInitialLoading={isLoading}
+        isInitialLoading={isFetching && !report}
         onSubmit={async (vals: ToolsOzoneModerationEmitEvent.InputSchema) => {
           await emitEvent(
             hydrateModToolInfo(vals, ActionPanelNames.QuickAction),
