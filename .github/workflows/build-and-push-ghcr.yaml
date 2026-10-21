@@ -3,7 +3,10 @@ on:
   pull_request:
     paths:
       - Dockerfile
-      - service/emudhra-preload.mjs
+      - package.json
+      - yarn.lock
+      - service/package.json
+      - service/yarn.lock
       - tests/emudhra/**
       - .github/workflows/build-and-push-ghcr.yaml
   push:
@@ -78,12 +81,10 @@ jobs:
           cache-from: type=gha,scope=${{ matrix.cache-scope }}
           cache-to: type=gha,scope=${{ matrix.cache-scope }},mode=min
 
-      - name: Verify packaged TLS mitigation
+      - name: Verify native TLS security fix
         if: github.event_name == 'pull_request'
         run: |
           docker run --rm -v "$GITHUB_WORKSPACE:/workspace:ro" -w /workspace local/ozone:tls-test sh -ec '
-            cmp service/emudhra-preload.mjs /opt/mitigations/emudhra-preload.mjs
-            node --input-type=module -e '\''import assert from "node:assert/strict"; import tls from "node:tls"; assert(tls.connect.toString().includes("checkKeys(peer)"), "image must enable the preload by default")'\''
             node --test tests/emudhra/mitigation.mjs
           '
 
