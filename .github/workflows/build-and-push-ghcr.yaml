@@ -3,6 +3,10 @@ on:
   pull_request:
     paths:
       - Dockerfile
+      - package.json
+      - yarn.lock
+      - service/package.json
+      - service/yarn.lock
       - tests/emudhra/**
       - .github/workflows/build-and-push-ghcr.yaml
   push:
