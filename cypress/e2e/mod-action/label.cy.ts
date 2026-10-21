@@ -1,7 +1,10 @@
 /// <reference types="cypress" />"
 
 import {
+  mockLabelerServiceRecordResponse,
   mockModerationReportsResponse,
+  mockOzoneDidDataResponse,
+  mockOzoneMetaResponse,
   mockRepoResponse,
   SERVER_URL,
 } from '../../support/api'
@@ -12,9 +15,17 @@ describe('Mod Action -> Label', () => {
   let seedFixture
 
   beforeEach(() => {
-    cy.visit('http://127.0.0.1:3000')
     cy.fixture('auth.json').then((data) => {
       authFixture = data
+      mockOzoneMetaResponse({ statusCode: 200, body: data.ozoneMetaResponse })
+      mockOzoneDidDataResponse({
+        statusCode: 200,
+        body: data.ozoneDidDataResponse,
+      })
+      mockLabelerServiceRecordResponse({
+        statusCode: 200,
+        body: data.getLabelerRecordResponse,
+      })
     })
     cy.fixture('statuses.json').then((data) => {
       statusesFixture = data
@@ -28,6 +39,7 @@ describe('Mod Action -> Label', () => {
       mockRepoResponse({ statusCode: 200, body: seedFixture.carla.repo })
     })
 
+    cy.visit('http://127.0.0.1:3000')
     cy.then(() => {
       cy.login(authFixture)
     })

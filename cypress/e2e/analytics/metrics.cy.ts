@@ -120,7 +120,27 @@ describe('Report analytics metrics', () => {
     cy.get('[data-cy="overview-metrics"]').should('be.visible')
     cy.screenshot('analytics-detail-dark', { capture: 'viewport' })
     cy.get('[data-cy="historical-stats"]').within(() => {
-      cy.contains('button', 'Pending').should('not.exist')
+      cy.get('.recharts-yAxis').should('have.length', 2)
+      cy.contains('tbody th', '2026-10-10')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', '100')
+      cy.contains('tbody th', '2026-10-11')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', '1')
+      cy.contains('button', /^Pending$/).click()
+      cy.contains('button', /^Pending$/).should(
+        'have.attr',
+        'aria-pressed',
+        'false',
+      )
+      cy.contains('button', /^Pending$/).click()
+      cy.contains('button', /^Pending$/).should(
+        'have.attr',
+        'aria-pressed',
+        'true',
+      )
       cy.contains('button', /^Inbound$/).click()
       cy.contains('button', /^Inbound$/).should(
         'have.attr',
@@ -149,6 +169,7 @@ describe('Report analytics metrics', () => {
         ).should('not.exist')
       })
     cy.get('[data-cy="historical-stats"]').within(() => {
+      cy.contains('button', /^Pending$/).should('not.exist')
       cy.contains('button', /^Inbound$/).should('not.exist')
       cy.contains('button', /^Target met$/).should('be.visible')
       cy.contains('button', /^Target missed$/).should('be.visible')
@@ -202,6 +223,7 @@ describe('Report analytics metrics', () => {
       {
         date: '2026-10-11',
         inboundCount: 100,
+        pendingCount: 0,
         actionedCount: 900,
         avgHandlingTimeSec: 9999,
       },
@@ -213,6 +235,12 @@ describe('Report analytics metrics', () => {
       cy.contains('dt', 'Closed')
         .parent()
         .should('not.contain', 'Available for 1 of 2 days.')
+    })
+    cy.get('[data-cy="historical-stats"]').within(() => {
+      cy.contains('tbody th', '2026-10-11')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', '0')
     })
     cy.contains(
       '[aria-label="Analytics view"] label',
@@ -232,6 +260,12 @@ describe('Report analytics metrics', () => {
     cy.get('[data-cy="overview-metrics"]').within(() => {
       expectHighlight('Closed', '—')
       expectHighlight('Closure Target', '—')
+    })
+    cy.get('[data-cy="historical-stats"]').within(() => {
+      cy.contains('tbody th', '2026-10-10')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', 'Unavailable')
     })
     cy.contains(
       '[aria-label="Analytics view"] label',
@@ -283,6 +317,10 @@ describe('Report analytics metrics', () => {
       'not.exist',
     )
     cy.get('@liveStats.all').should('have.length', 0)
+    cy.get('[data-cy="historical-stats"]').within(() => {
+      cy.contains('button', /^Pending$/).should('not.exist')
+      cy.contains('thead th', /^Pending$/).should('not.exist')
+    })
     cy.contains(
       '[aria-label="Analytics view"] label',
       'Closure Targets',

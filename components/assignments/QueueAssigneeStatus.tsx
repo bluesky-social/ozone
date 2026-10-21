@@ -4,7 +4,11 @@ import { useState } from 'react'
 import { ToolsOzoneQueueDefs, ToolsOzoneTeamDefs } from '@atproto/api'
 import { formatDistanceToNowStrict } from 'date-fns'
 import { toast } from 'react-toastify'
-import { useServerConfig } from '@/shell/ConfigurationContext'
+import {
+  useLabelerAgent,
+  usePermission,
+  useServerConfig,
+} from '@/shell/ConfigurationContext'
 import { displayError } from '@/common/Loader'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
@@ -12,15 +16,19 @@ import { useUnassignQueue } from './useAssignments'
 
 interface QueueAssigneeStatusProps {
   queueId: number
+  strictAccess?: boolean
   assignments: ToolsOzoneQueueDefs.AssignmentView[]
 }
 
 export function QueueAssigneeStatus({
   queueId,
+  strictAccess = false,
   assignments,
 }: QueueAssigneeStatusProps) {
+  const canManageQueues = usePermission('canManageQueues')
   const { role } = useServerConfig()
   const isAdmin = role === ToolsOzoneTeamDefs.ROLEADMIN
+  const myDid = useLabelerAgent().did
 
   const [pendingUnassign, setPendingUnassign] =
     useState<ToolsOzoneQueueDefs.AssignmentView | null>(null)
@@ -31,6 +39,7 @@ export function QueueAssigneeStatus({
       pendingUnassign.moderator?.profile?.handle ||
       pendingUnassign.did
     : ''
+  const isLeaving = pendingUnassign?.did === myDid && !isAdmin
 
   const { mutate: unassignQueue, isLoading: isUnassigning } = useUnassignQueue({
     onSuccess: () => {
@@ -70,7 +79,11 @@ export function QueueAssigneeStatus({
           key={a.id}
           did={a.did}
           profile={a.moderator?.profile}
-          onRemove={isAdmin ? () => handleAssigneeClick(a) : undefined}
+          onRemove={
+            canManageQueues && (isAdmin || a.did === myDid)
+              ? () => handleAssigneeClick(a)
+              : undefined
+          }
         />
       ))}
       {assignments.length === 0 && (
@@ -80,7 +93,7 @@ export function QueueAssigneeStatus({
       <ConfirmationModal
         isOpen={!!pendingUnassign}
         setIsOpen={handleCloseModal}
-        title="Unassign moderator"
+        title={isLeaving ? 'Leave queue' : 'Unassign moderator'}
         description={
           pendingUnassign ? (
             <>
@@ -94,10 +107,30 @@ export function QueueAssigneeStatus({
               </strong>
               ? They have been assigned for{' '}
               {formatDistanceToNowStrict(new Date(pendingUnassign.startAt))}.
+              {strictAccess && isLeaving ? (
+                <p className="mt-2">
+                  Leaving removes your access to this queue and its individual
+                  reports. An admin must assign you again to restore access.
+                </p>
+              ) : (
+                strictAccess && (
+                  <p className="mt-2">
+                    Removing this assignment removes their access to this queue
+                    and its individual reports unless they are an admin. An
+                    admin must add them again to restore access.
+                  </p>
+                )
+              )}
             </>
           ) : undefined
         }
-        confirmButtonText={isUnassigning ? 'Unassigning…' : 'Unassign'}
+        confirmButtonText={
+          isUnassigning
+            ? 'Unassigning…'
+            : isLeaving
+              ? 'Leave queue'
+              : 'Unassign'
+        }
         confirmButtonDisabled={isUnassigning}
         onConfirm={handleConfirmUnassign}
         error={unassignError}
