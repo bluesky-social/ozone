@@ -4,12 +4,14 @@ import { CollectionAutocomplete } from '../../common/CollectionAutocomplete'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
-import { useState } from 'react'
+import { ToolsOzoneQueueDefs, ToolsOzoneTeamDefs } from '@atproto/api'
+import { useRef, useState } from 'react'
 import { Tooltip } from '@/common/Tooltip'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
 import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
 import { LabelSelector } from '@/common/labels/Selector'
+import { useServerConfig } from '@/shell/ConfigurationContext'
+import { QUEUE_HELP, QueueHelp } from '../QueueHelp'
 
 type QueueWithRecommendedLabels = ToolsOzoneQueueDefs.QueueView & {
   recommendedLabels?: string[]
@@ -93,6 +95,7 @@ export function QueueForm({
   onSuccess: () => void
 }) {
   const isEditMode = !!queue
+  const isAdmin = useServerConfig().role === ToolsOzoneTeamDefs.ROLEADMIN
   const createMutation = useCreateQueue()
   const updateMutation = useUpdateQueue()
   const isLoading = createMutation.isLoading || updateMutation.isLoading
@@ -103,6 +106,12 @@ export function QueueForm({
     queue?.description,
   )
   const [showToggleDialog, setShowToggleDialog] = useState(false)
+  const initialStrictAccess = useRef(queue?.strictAccess ?? false).current
+  const [strictAccess, setStrictAccess] = useState(initialStrictAccess)
+  const strictAccessInput =
+    isAdmin && (!isEditMode || strictAccess !== initialStrictAccess)
+      ? { strictAccess }
+      : {}
   const [subjectTypes, setSubjectTypes] = useState<Set<string>>(
     new Set(queue?.subjectTypes ?? []),
   )
@@ -185,6 +194,7 @@ export function QueueForm({
           description,
           recommendedPolicies,
           recommendedLabels,
+          ...strictAccessInput,
         },
         { onSuccess },
       )
@@ -198,6 +208,7 @@ export function QueueForm({
           collection: collectionSanitized,
           recommendedPolicies,
           recommendedLabels,
+          ...strictAccessInput,
         },
         { onSuccess },
       )
@@ -229,6 +240,34 @@ export function QueueForm({
           <p className="text-red-500 text-xs mt-1">{errors.name}</p>
         )}
       </FormLabel>
+
+      <div>
+        <div className="flex items-center gap-2">
+          {isAdmin ? (
+            <Checkbox
+              id="strictAccess"
+              checked={strictAccess}
+              onChange={(event) => setStrictAccess(event.target.checked)}
+              label="Strict access"
+              aria-describedby="strictAccess-help"
+            />
+          ) : (
+            <span className="text-sm">
+              Strict access: {queue?.strictAccess ? 'Enabled' : 'Disabled'}
+            </span>
+          )}
+          <QueueHelp
+            id="strictAccess-help"
+            label="About strict access"
+            description={QUEUE_HELP.strictAccess}
+          />
+        </div>
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          {isAdmin
+            ? 'Only admins can change strict access or add members to a strict queue.'
+            : 'Only admins can change strict access.'}
+        </p>
+      </div>
 
       <FormLabel label="Recommended takedown policies" className="mb-3">
         <ActionPoliciesSelector

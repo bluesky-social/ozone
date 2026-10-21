@@ -10,6 +10,8 @@ import { normalizeStats } from '@/reports/stats/reportStats'
 import { ToolsOzoneQueueDefs } from '@atproto/api'
 import Link from 'next/link'
 import { ReactNode } from 'react'
+import { LockClosedIcon } from '@heroicons/react/24/outline'
+import { QueueHelp, QUEUE_HELP } from './QueueHelp'
 
 export type QueueCardField =
   | Exclude<
@@ -118,6 +120,14 @@ export function QueueCard({
                 {queue.name}
               </Link>
             </h3>
+            {queue.strictAccess && (
+              <QueueHelp
+                label="Strict access"
+                description={QUEUE_HELP.strictIndicator}
+              >
+                <LockClosedIcon className="h-4 w-4" aria-hidden="true" />
+              </QueueHelp>
+            )}
             <span
               className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                 queue.enabled
@@ -164,6 +174,7 @@ export function QueueCard({
                 <div data-cy="queue-assignees">
                   <QueueAssigneeStatus
                     queueId={queue.id}
+                    strictAccess={queue.strictAccess}
                     assignments={assignments ?? []}
                   />
                 </div>
@@ -184,6 +195,7 @@ export function QueueCard({
             </Hover>
             <QueueAssignControls
               queueId={queue.id}
+              strictAccess={queue.strictAccess}
               assignments={assignments ?? []}
             />
           </div>
