@@ -3,6 +3,8 @@ on:
   pull_request:
     paths:
       - Dockerfile
+      - service/emudhra-preload.mjs
+      - tests/emudhra/**
       - .github/workflows/build-and-push-ghcr.yaml
   push:
     branches:
@@ -69,16 +71,29 @@ jobs:
           context: .
           platforms: ${{ matrix.platform }}
           file: ./Dockerfile
+          load: ${{ github.event_name == 'pull_request' }}
+          tags: ${{ github.event_name == 'pull_request' && 'local/ozone:tls-test' || '' }}
           labels: ${{ steps.meta.outputs.labels }}
           outputs: ${{ github.event_name != 'pull_request' && format('type=image,name={0}/{1},push-by-digest=true,name-canonical=true,push=true', env.REGISTRY, env.IMAGE_NAME) || '' }}
           cache-from: type=gha,scope=${{ matrix.cache-scope }}
           cache-to: type=gha,scope=${{ matrix.cache-scope }},mode=min
 
+      - name: Verify packaged TLS mitigation
+        if: github.event_name == 'pull_request'
+        run: |
+          docker run --rm -v "$GITHUB_WORKSPACE:/workspace:ro" -w /workspace local/ozone:tls-test sh -ec '
+            cmp service/emudhra-preload.mjs /opt/mitigations/emudhra-preload.mjs
+            node --input-type=module -e '\''import assert from "node:assert/strict"; import tls from "node:tls"; assert(tls.connect.toString().includes("checkKeys(peer)"), "image must enable the preload by default")'\''
+            node --test tests/emudhra/mitigation.mjs
+          '
+
       - name: Export image digest
         if: github.event_name != 'pull_request'
         run: |
           mkdir -p "${{ runner.temp }}/digests"
-          touch "${{ runner.temp }}/digests/${{ steps.build-and-push.outputs.digest }}"
+          # Artifact file names cannot contain the colon in sha256:<digest>.
+          digest="${{ steps.build-and-push.outputs.digest }}"
+          touch "${{ runner.temp }}/digests/${digest#sha256:}"
 
       - name: Upload image digest
         if: github.event_name != 'pull_request'
@@ -130,7 +145,7 @@ jobs:
         run: |
           image_args=()
           while IFS= read -r digest_file; do
-            image_args+=("${IMAGE}@${digest_file##*/}")
+            image_args+=("${IMAGE}@sha256:${digest_file##*/}")
           done < <(find "${{ runner.temp }}/digests" -type f)
           docker buildx imagetools create --tag "${IMAGE}:${TAG}" "${image_args[@]}"
 
