@@ -49,6 +49,8 @@ import {
 import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
 import {
   ComAtprotoModerationDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneReportDefs,
 } from '@atproto/api'
@@ -66,6 +68,8 @@ import { EmailComposerFields } from 'components/email/Composer'
 import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
 import { QueueBadge } from 'components/reports/QueueBadge'
+import { PriorityBadge } from 'components/setting/report-priority/PriorityBadge'
+import { ClosureResult } from '@/reports/ClosureResult'
 import { ReasonBadge } from 'components/reports/ReasonBadge'
 import {
   ActivityTimeline,
@@ -86,7 +90,15 @@ import { useAssignmentPolling } from 'components/reports/useAssignmentPolling'
 import { ModToolContextPanel } from 'components/reports/ModToolContextPanel'
 import { ReportBatchLink } from 'components/reports/ReportBatchLink'
 import { useReportCreationEvent } from 'components/reports/useReportCreationEvent'
-import { getHandleFromSubjectView } from 'components/reports/utils'
+import {
+  getVideoTimestampSeconds,
+  ReportedVideoTimestamp,
+} from 'components/reports/ReportedVideoTimestamp'
+import { VideoTimestampProvider } from '@/common/video/TimestampContext'
+import {
+  getDefaultReportTypes,
+  getHandleFromSubjectView,
+} from 'components/reports/utils'
 import { SubjectTagList } from 'components/tags/SubjectTagList'
 import { WorkspacePanel } from 'components/workspace/Panel'
 import { formatDistanceToNow } from 'date-fns'
@@ -96,7 +108,7 @@ import {
   useRouter,
   useSearchParams,
 } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-toastify'
 
 const FORM_ID = 'report-detail-action-panel'
@@ -170,6 +182,7 @@ function ReportInfoPanel({
       <div className="flex flex-row flex-wrap items-center gap-2 mb-3">
         <ReasonBadge reasonType={report.reportType} />
         <ReportStatusBadge status={report.status} />
+        <PriorityBadge report={report} />
         <MutedBadge isMuted={report.isMuted} />
         <AutomatedBadge report={report} />
         <QueueBadge reportId={report.id} queue={report.queue} />
@@ -180,6 +193,8 @@ function ReportInfoPanel({
           {formatDistanceToNow(createdAt, { addSuffix: true })}
         </span>
       </div>
+
+      <ClosureResult report={report} />
 
       {/* Reporter */}
       <div className="flex flex-row items-center gap-2">
@@ -215,10 +230,14 @@ function ReportInfoPanel({
           </p>
           <TextWithLinks
             text={report.comment}
-            className="text-sm text-gray-700 dark:text-gray-200 break-words"
+            className="text-sm text-gray-700 dark:text-gray-200 [overflow-wrap:anywhere]"
           />
         </div>
       )}
+
+      <ReportedVideoTimestamp
+        seconds={getVideoTimestampSeconds(creationEvent?.modTool)}
+      />
 
       {/* Batch actions link, shown for any report whose creating event carries
           a modTool batchId (not just registered intake tools). */}
@@ -344,10 +363,6 @@ export function ReportDetailPageContent() {
       .catch(() => {})
   }, [reportId])
 
-  // If no cached report exists, getReport will be called and returns fresh assignment data.
-  // In that case we skip the initial assignment poll and start it after the first interval.
-  const calledGetReport = !cachedReport
-
   const { data: report, isLoading } = useQuery({
     queryKey: ['report', reportId],
     queryFn: async () => {
@@ -372,7 +387,6 @@ export function ReportDetailPageContent() {
     reportId,
     hasReport: !!report,
     initialAssigneeDid: report?.assignment?.did,
-    skipInitialPoll: calledGetReport,
   })
 
   const createActivity = useCreateActivity()
@@ -454,8 +468,25 @@ export function ReportDetailPageContent() {
             const result = await emitEvent(
               hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
+            if (vals.event.$type === MOD_EVENTS.RESOLVE_APPEAL) {
+              try {
+                await emitEvent(
+                  hydrateModToolInfo(
+                    {
+                      subject: vals.subject,
+                      createdBy: vals.createdBy,
+                      event: { $type: MOD_EVENTS.ACKNOWLEDGE },
+                    },
+                    ActionPanelNames.ReportPage,
+                  ),
+                )
+              } finally {
+                queryClient.invalidateQueries({ queryKey: ['modSubjectStatus'] })
+              }
+            }
             const eventId = (result as any)?.id
             const isCascaded =
+              vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&
               vals.subject.$type === 'com.atproto.admin.defs#repoRef'
             if (isCascaded && eventId) {
@@ -525,23 +556,103 @@ function ReportDetailLayout(props: {
   const subjectOptions = [subject]
 
   const router = useRouter()
+  const labelerAgent = useLabelerAgent()
+  const closeReport = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
   const [reportActionScope, setReportActionScope] = useState<
     'current' | 'all' | 'types'
   >('current')
-  const [reportActionTypes, setReportActionTypes] = useState<string[]>(() => {
-    // If the queue has report types, default to those
-    if (report.queue?.reportTypes && report.queue.reportTypes.length > 0) {
-      return report.queue.reportTypes
-    }
-    // Otherwise, fall back to the current report's type
-    return report.reportType ? [report.reportType] : []
-  })
+  const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
+    getDefaultReportTypes(report),
+  )
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
+  const appealLabelActionStarted = useRef(false)
   const [applyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
+
+  const resolveAppealForReport = async (createdBy: string, comment?: string) => {
+    const { data: creationEvent } =
+      await labelerAgent.tools.ozone.moderation.getEvent({ id: report.eventId })
+    const subjectView = creationEvent.subject
+    let appealSubject: ToolsOzoneModerationEmitEvent.InputSchema['subject']
+    if (
+      report.subject.type === 'account' &&
+      (ToolsOzoneModerationDefs.isRepoView(subjectView) ||
+        ToolsOzoneModerationDefs.isRepoViewNotFound(subjectView))
+    ) {
+      appealSubject = {
+        $type: 'com.atproto.admin.defs#repoRef',
+        did: subjectView.did,
+      }
+    } else if (ToolsOzoneModerationDefs.isRecordView(subjectView)) {
+      appealSubject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: subjectView.uri,
+        cid: subjectView.cid,
+      }
+    } else if (ToolsOzoneModerationDefs.isConvoView(subjectView)) {
+      appealSubject = {
+        $type: 'chat.bsky.convo.defs#convoRef',
+        did: subjectView.did,
+        convoId: subjectView.convoId,
+      } as ToolsOzoneModerationEmitEvent.InputSchema['subject']
+    } else {
+      const reportUri = report.subject.subject
+      const reportStatusSubject = report.subject.status?.subject
+
+      // getReport may omit subject status when the record can no longer be
+      // hydrated. queryStatuses still returns the stored strong reference for
+      // deleted records, which is needed to resolve an appeal on that record.
+      if (
+        ComAtprotoRepoStrongRef.isMain(reportStatusSubject) &&
+        reportStatusSubject.uri === reportUri
+      ) {
+        appealSubject = reportStatusSubject
+      } else if (
+        report.subject.record?.uri === reportUri &&
+        report.subject.record.cid
+      ) {
+        appealSubject = {
+          $type: 'com.atproto.repo.strongRef',
+          uri: reportUri,
+          cid: report.subject.record.cid,
+        }
+      } else {
+        const { data } =
+          await labelerAgent.api.tools.ozone.moderation.queryStatuses({
+            subject: reportUri,
+            includeMuted: true,
+            limit: 1,
+          })
+        const statusSubject = data.subjectStatuses[0]?.subject
+        if (
+          ComAtprotoRepoStrongRef.isMain(statusSubject) &&
+          statusSubject.uri === reportUri
+        ) {
+          appealSubject = statusSubject
+        } else {
+          throw new Error('Cannot determine the appeal subject for this report')
+        }
+      }
+    }
+    await onSubmit({
+      subject: appealSubject,
+      createdBy,
+      event: {
+        $type: MOD_EVENTS.RESOLVE_APPEAL,
+        comment: comment?.trim() ? comment : '[RESOLVING_APPEAL]',
+      },
+    })
+  }
+
+  const closeCurrentReport = async () => {
+    await closeReport.mutateAsync({
+      reportId: report.id,
+      activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+    })
+  }
 
   const wrappedOnSubmit = async (
     vals: ToolsOzoneModerationEmitEvent.InputSchema,
@@ -565,65 +676,89 @@ function ReportDetailLayout(props: {
     const subj = (finalVals as any).subject
     const event = finalVals.event
     const eventType = event?.$type as string | undefined
+    const actionComment =
+      event && 'comment' in event && typeof event.comment === 'string'
+        ? event.comment
+        : undefined
+    const isAppealLabel =
+      isAppealReport(report.reportType) && eventType === MOD_EVENTS.LABEL
+    const isFirstAppealLabel = isAppealLabel && !appealLabelActionStarted.current
+    if (isAppealLabel) {
+      if (appealLabelActionStarted.current) {
+        // A label removal can emit one event per record CID. Only the first
+        // event should close the report and resolve the appeal.
+        await onSubmit(finalVals)
+        return
+      }
+      appealLabelActionStarted.current = true
+    }
     // check if event was cascaded to the owning account
     const isCascaded =
       report.subject.type !== 'account' &&
       subj.$type === 'com.atproto.admin.defs#repoRef'
 
-    if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-      if (isCascaded) {
-        // Send original event without a report action
-        await onSubmit(finalVals)
-      } else {
-        const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
-        if (reportActionScope === 'current') {
-          reportAction.ids = [report.id]
-        } else if (reportActionScope === 'all') {
-          reportAction.all = true
-        } else if (reportActionTypes.length > 0) {
-          reportAction.types = reportActionTypes
-        }
-        await onSubmit({ ...finalVals, reportAction })
-
-        // For appeal reports: emit resolveAppeal after the primary action (revert takedown or label)
-        if (
-          isAppealReport(report.reportType) &&
-          eventType !== MOD_EVENTS.RESOLVE_APPEAL
-        ) {
+    try {
+      if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+        if (isCascaded) {
+          // Send original event without a report action
+          await onSubmit(finalVals)
+          if (
+            isAppealReport(report.reportType) &&
+            eventType !== MOD_EVENTS.RESOLVE_APPEAL
+          ) {
+            await resolveAppealForReport(finalVals.createdBy, actionComment)
+            await closeCurrentReport()
+          }
+        } else {
+          const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+          const targetsCurrentReport =
+            reportActionScope === 'current' ||
+            reportActionScope === 'all' ||
+            reportActionTypes.includes(report.reportType)
+          if (reportActionScope === 'current') {
+            reportAction.ids = [report.id]
+          } else if (reportActionScope === 'all') {
+            reportAction.all = true
+          } else if (reportActionTypes.length > 0) {
+            reportAction.types = reportActionTypes
+          }
           await onSubmit({
             ...finalVals,
-            event: {
-              $type: MOD_EVENTS.RESOLVE_APPEAL,
-              comment: '[RESOLVING_APPEAL]',
-            },
-            reportAction: { ids: [report.id] },
+            reportAction: Object.keys(reportAction).length
+              ? reportAction
+              : undefined,
           })
-        }
-      }
 
-      setSelectedAction(null) // Reset after successful submission
-    } else {
-      await onSubmit(finalVals)
+          if (
+            isAppealReport(report.reportType) &&
+            eventType !== MOD_EVENTS.RESOLVE_APPEAL
+          ) {
+            await resolveAppealForReport(finalVals.createdBy, actionComment)
+            if (
+              (eventType !== MOD_EVENTS.LABEL &&
+                eventType !== MOD_EVENTS.REVERSE_TAKEDOWN) ||
+              !targetsCurrentReport
+            ) {
+              await closeCurrentReport()
+            }
+          }
+        }
+
+        setSelectedAction(null) // Reset after successful submission
+      } else {
+        await onSubmit(finalVals)
+      }
+    } catch (err) {
+      if (isFirstAppealLabel) {
+        appealLabelActionStarted.current = false
+      }
+      throw err
     }
   }
 
   const handleCancelAction = () => {
     setSelectedAction(null)
   }
-
-  // Sync selectedAction and reportActionScope with modEventType
-  useEffect(() => {
-    if (selectedAction === 'label') {
-      setModEventType(MOD_EVENTS.LABEL)
-      setReportActionScope('types')
-    } else if (selectedAction === 'takedown') {
-      setModEventType(MOD_EVENTS.TAKEDOWN)
-      setReportActionScope('types')
-    } else if (selectedAction === 'revert-takedown') {
-      setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
-      setReportActionScope('current')
-    }
-  }, [selectedAction])
 
   const {
     submission,
@@ -654,6 +789,7 @@ function ReportDetailLayout(props: {
     submitButton,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    handleManualSeverityLevelSelect,
     targetServices,
     setTargetServices,
     config,
@@ -667,6 +803,9 @@ function ReportDetailLayout(props: {
     setEmailContent,
     onEmailTemplateSelect,
     emailSubjectField,
+    showRecordAgeWarning,
+    recordAgeWarningText,
+    preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
     onSubmit: wrappedOnSubmit,
@@ -674,6 +813,21 @@ function ReportDetailLayout(props: {
     setSubject,
     subjectOptions,
   })
+
+  // Sync the selected action with its event type and report closing scope.
+  useEffect(() => {
+    appealLabelActionStarted.current = false
+    if (selectedAction === 'label') {
+      setModEventType(MOD_EVENTS.LABEL)
+      setReportActionScope('types')
+    } else if (selectedAction === 'takedown') {
+      setModEventType(MOD_EVENTS.TAKEDOWN)
+      setReportActionScope('types')
+    } else if (selectedAction === 'revert-takedown') {
+      setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
+      setReportActionScope('current')
+    }
+  }, [selectedAction, report.reportType, setModEventType])
 
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
@@ -683,8 +837,9 @@ function ReportDetailLayout(props: {
     report.subject.repo?.did || profile?.did || repo?.did || record?.repo.did
 
   return (
-    <div className="dark:text-gray-50">
-      <div className="flex flex-col lg:flex-row gap-6">
+    <VideoTimestampProvider>
+      <div className="dark:text-gray-50">
+        <div className="flex flex-col lg:flex-row gap-6">
         {/* Left col */}
         <div className="flex-1 min-w-0">
           {/* Subject preview */}
@@ -898,27 +1053,32 @@ function ReportDetailLayout(props: {
 
           <ReportActionsBar
             report={report}
+            currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
             subjectStatus={subjectStatus}
             onResolveAppeal={
               isAppealReport(report.reportType)
-                ? async () => {
-                    const reportAction: ToolsOzoneModerationEmitEvent.ReportAction =
-                      { ids: [report.id] }
-                    await onSubmit({
+                ? (comment) => resolveAppealForReport(config.did, comment)
+                : undefined
+            }
+            onSendEmail={
+              isAppealReport(report.reportType)
+                ? async (emailEvent) => {
+                    const did = report.subject.subject.startsWith('did:')
+                      ? report.subject.subject
+                      : getDidFromUri(report.subject.subject)
+                    if (!did) {
+                      throw new Error('Cannot determine the email recipient')
+                    }
+                    return onSubmit({
                       subject: {
                         $type: 'com.atproto.admin.defs#repoRef',
-                        did: subject.startsWith('at://')
-                          ? getDidFromUri(subject)!
-                          : subject,
+                        did,
                       },
-                      createdBy: config.did,
-                      event: {
-                        $type: MOD_EVENTS.RESOLVE_APPEAL,
-                        comment: '[RESOLVING_APPEAL]',
-                      },
-                      reportAction,
+                      createdBy: labelerAgent.assertDid,
+                      event: emailEvent,
+                      reportAction: { ids: [report.id] },
                     })
                   }
                 : undefined
@@ -958,6 +1118,12 @@ function ReportDetailLayout(props: {
                   policyDetails={policyDetails}
                   handlePolicySelect={handlePolicySelect}
                   handleSeverityLevelSelect={handleSeverityLevelSelect}
+                  preferredDefaultSeverityLevel={
+                    isTakedownEvent ? preferredSeverityLevelName : undefined
+                  }
+                  onSeverityLevelUserSelect={
+                    isTakedownEvent ? handleManualSeverityLevelSelect : undefined
+                  }
                   severityLevelStrikeCount={severityLevelStrikeCount}
                   defaultSeverityLevel={selectedSeverityLevelName}
                   currentStrikes={currentStrikes}
@@ -968,6 +1134,7 @@ function ReportDetailLayout(props: {
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
                   isSubjectDid={isSubjectDid}
+                  recommendedPolicies={report.queue?.recommendedPolicies}
                 />
               )}
 
@@ -1086,6 +1253,16 @@ function ReportDetailLayout(props: {
                 </div>
               )}
 
+              {showRecordAgeWarning && (
+                <div className="mb-3">
+                  <Alert
+                    showIcon
+                    type="warning"
+                    title="Record age notice"
+                    body={recordAgeWarningText}
+                  />
+                </div>
+              )}
               <div className="mt-4 flex flex-row justify-between">
                 <ButtonSecondary
                   className="px-4"
@@ -1112,7 +1289,7 @@ function ReportDetailLayout(props: {
                 Actions on this report
               </h4>
               <ModToolProvider>
-                {report.actions.map((modEvent) => (
+                {[...report.actions].reverse().map((modEvent) => (
                   <ModEventItem
                     key={modEvent.id}
                     modEvent={modEvent}
@@ -1127,7 +1304,8 @@ function ReportDetailLayout(props: {
 
           <ActivityTimeline reportId={report.id} />
         </div>
+        </div>
       </div>
-    </div>
+    </VideoTimestampProvider>
   )
 }

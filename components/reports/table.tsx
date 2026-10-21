@@ -1,4 +1,3 @@
-import { ButtonGroup } from '@/common/buttons'
 import { classNames, pluralize } from '@/lib/util'
 import {
   asPredicate,
@@ -6,13 +5,6 @@ import {
   ToolsOzoneReportDefs,
 } from '@atproto/api'
 import {
-  Popover,
-  PopoverButton,
-  PopoverPanel,
-  Transition,
-} from '@headlessui/react'
-import {
-  Bars3BottomLeftIcon,
   CheckCircleIcon,
   ChevronDownIcon,
   ChevronRightIcon,
@@ -27,7 +19,7 @@ import {
 import { formatDistanceToNow } from 'date-fns'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Fragment, HTMLAttributes, useState } from 'react'
+import { HTMLAttributes, useState } from 'react'
 import { LoadMoreButton } from '../common/LoadMoreButton'
 import { Loading } from '../common/Loader'
 import { TextWithLinks } from '../common/TextWithLinks'
@@ -42,6 +34,7 @@ import { StatView } from '../subject/Summary'
 import { SubjectTagList } from '../tags/SubjectTagList'
 import { AutomatedBadge } from './AutomatedBadge'
 import { MutedBadge } from './MutedBadge'
+import { PriorityBadge } from '../setting/report-priority/PriorityBadge'
 
 const useSortOrder = () => {
   const searchParams = useSearchParams()
@@ -49,8 +42,10 @@ const useSortOrder = () => {
 
   const directionKey = 'sortDirection'
   const fieldKey = 'sortField'
-  const sortDirection = searchParams.get(directionKey)
-  const sortField = searchParams.get(fieldKey)
+  const sortDirection =
+    searchParams.get(directionKey) === 'desc' ? 'desc' : 'asc'
+  const sortField =
+    searchParams.get(fieldKey) === 'updatedAt' ? 'updatedAt' : 'createdAt'
 
   function getToggleReverseOrderLink(field: string, newDirection?: string) {
     const params = new URLSearchParams(searchParams)
@@ -195,7 +190,10 @@ export const ReporterComment = ({ comment }: { comment: string }) => {
   if (!isLong || expanded) {
     return (
       <div>
-        <TextWithLinks text={comment} className="text-sm break-words" />
+        <TextWithLinks
+          text={comment}
+          className="text-sm [overflow-wrap:anywhere]"
+        />
         {isLong && (
           <button
             onClick={() => setExpanded(false)}
@@ -210,7 +208,7 @@ export const ReporterComment = ({ comment }: { comment: string }) => {
 
   return (
     <div>
-      <p className="text-sm break-words">
+      <p className="text-sm [overflow-wrap:anywhere]">
         {comment.slice(0, COMMENT_TRUNCATE_AT).trimEnd()}…{' '}
         <button
           onClick={() => setExpanded(true)}
@@ -297,6 +295,7 @@ function ReportRow({
             />
           )}
         </div>
+        <PriorityBadge report={report} />
         <dl className="font-normal">
           <div className="flex items-center flex-row">
             <dt>Status:</dt>
@@ -383,6 +382,7 @@ function ReportRow({
             </Link>
           )}
           <ReportStatusBadge status={report.status} />
+          <PriorityBadge report={report} />
           <MutedBadge isMuted={report.isMuted} />
           <AutomatedBadge report={report} />
         </div>
@@ -504,114 +504,6 @@ function ReportRow({
   )
 }
 
-const ToggleSortButtonGroup = ({
-  currentSortDirection,
-  currentSortField,
-  sortField,
-  title,
-}: {
-  currentSortDirection: string | null
-  currentSortField: string | null
-  sortField: string
-  title: string
-}) => {
-  const router = useRouter()
-  const { getToggleReverseOrderLink } = useSortOrder()
-
-  return (
-    <div className="pb-2">
-      <p>{title}</p>
-      <ButtonGroup
-        size="xs"
-        leftAligned
-        appearance="primary"
-        items={[
-          {
-            id: 'asc',
-            text: 'Ascending',
-            onClick: () => {
-              router.push(getToggleReverseOrderLink(sortField, 'asc'))
-            },
-            isActive:
-              currentSortField === sortField && currentSortDirection === 'asc',
-          },
-          {
-            id: 'desc',
-            text: 'Descending',
-            onClick: () => {
-              router.push(getToggleReverseOrderLink(sortField, 'desc'))
-            },
-            isActive:
-              currentSortField === sortField && currentSortDirection === 'desc',
-          },
-        ]}
-      />
-    </div>
-  )
-}
-
-const SummaryColumnHeader = () => {
-  const { sortDirection, sortField } = useSortOrder()
-  const hasSort =
-    sortField &&
-    ['reportedRecordsCount', 'takendownRecordsCount', 'priorityScore'].includes(
-      sortField,
-    )
-
-  return (
-    <Popover className="relative">
-      <PopoverButton
-        className=" flex flex-row items-center gap-1"
-        type="button"
-      >
-        Summary
-        {hasSort ? (
-          sortDirection === 'asc' ? (
-            <ChevronUpIcon className="h-4 w-4" />
-          ) : (
-            <ChevronDownIcon className="h-4 w-4" />
-          )
-        ) : (
-          <Bars3BottomLeftIcon className="h-4 w-4" />
-        )}
-      </PopoverButton>
-
-      <Transition
-        as={Fragment}
-        enter="transition ease-out duration-200"
-        enterFrom="opacity-0 translate-y-1"
-        enterTo="opacity-100 translate-y-0"
-        leave="transition ease-in duration-150"
-        leaveFrom="opacity-100 translate-y-0"
-        leaveTo="opacity-0 translate-y-1"
-      >
-        <PopoverPanel className="absolute z-10 rounded p-4">
-          <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
-            <ToggleSortButtonGroup
-              title="Reported records count"
-              currentSortDirection={sortDirection}
-              sortField="reportedRecordsCount"
-              currentSortField={sortField}
-            />
-            <ToggleSortButtonGroup
-              title="Takendown records count"
-              currentSortDirection={sortDirection}
-              sortField="takendownRecordsCount"
-              currentSortField={sortField}
-            />
-            <ToggleSortButtonGroup
-              currentSortDirection={sortDirection}
-              currentSortField={sortField}
-              sortField="priorityScore"
-              title="Priority score"
-            />
-          </div>
-        </PopoverPanel>
-      </Transition>
-    </Popover>
-  )
-}
-
 function ReportRowHead() {
   const { sortDirection, sortField, getToggleReverseOrderLink } = useSortOrder()
 
@@ -629,10 +521,10 @@ function ReportRowHead() {
       >
         <Link
           prefetch={false}
-          href={getToggleReverseOrderLink('lastReportedAt')}
+          href={getToggleReverseOrderLink('createdAt')}
         >
           Report
-          {sortField === 'lastReportedAt' &&
+          {sortField === 'createdAt' &&
             (sortDirection === 'asc' ? (
               <ChevronUpIcon className="h-4 w-4 inline-block align-text-bottom" />
             ) : (
@@ -650,7 +542,7 @@ function ReportRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        <SummaryColumnHeader />
+        Summary
       </th>
       <th
         scope="col"
@@ -658,10 +550,10 @@ function ReportRowHead() {
       >
         <Link
           prefetch={false}
-          href={getToggleReverseOrderLink('lastReviewedAt')}
+          href={getToggleReverseOrderLink('updatedAt')}
         >
           Last Update
-          {sortField === 'lastReviewedAt' &&
+          {sortField === 'updatedAt' &&
             (sortDirection === 'asc' ? (
               <ChevronUpIcon className="h-4 w-4 inline-block align-text-bottom" />
             ) : (

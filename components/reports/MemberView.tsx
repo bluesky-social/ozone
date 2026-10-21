@@ -1,4 +1,6 @@
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
+import { useQuery } from '@tanstack/react-query'
 import { formatDistanceToNow } from 'date-fns'
 
 const ROLE_LABELS: Record<string, string> = {
@@ -44,7 +46,23 @@ export function MemberView({
   sinceLabel?: string
   onClickDid?: (did: string) => void
 }) {
-  const profile = member.profile
+  const labelerAgent = useLabelerAgent()
+  const { data: fetchedProfile } = useQuery({
+    queryKey: ['user', member.did],
+    queryFn: async () => {
+      const { data } = await labelerAgent.app.bsky.actor.getProfile({
+        actor: member.did,
+      })
+      return data
+    },
+    enabled: !member.profile && !!member.did,
+    retry: false,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  // Report assignment responses do not always include the expanded profile.
+  // Resolve it from the moderator DID so the assignee is still identifiable.
+  const profile = member.profile ?? fetchedProfile
   const handle = profile?.handle
   const displayName = profile?.displayName
   const avatar = profile?.avatar

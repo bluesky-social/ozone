@@ -63,7 +63,12 @@ const CollectionLink = ({
 
   return (
     <>
-      <Link href={`/repositories/${repoUrl}`} target="_blank" prefetch={false}>
+      <Link
+        href={`/repositories/${repoUrl}`}
+        target="_blank"
+        prefetch={false}
+        className="text-gray-600 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-300"
+      >
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>
       <Link
@@ -260,6 +265,7 @@ export function SubjectOverview(props: {
         href={`/repositories/${summary.did}`}
         prefetch={false}
         target="_blank"
+        className="text-gray-600 hover:text-gray-900 dark:text-gray-100 dark:hover:text-gray-300"
       >
         <ArrowTopRightOnSquareIcon className="inline-block h-4 w-4 mr-1" />
       </Link>

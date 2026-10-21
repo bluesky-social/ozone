@@ -12,6 +12,8 @@
     "stats": {
       "pendingCount": 5,
       "actionedCount": 10,
+      "closedCount": 12,
+      "acknowledgedCount": 2,
       "escalatedCount": 0,
       "lastUpdated": "2026-03-02T15:49:30.681Z"
     }
@@ -29,6 +31,8 @@
     "stats": {
       "pendingCount": 2,
       "actionedCount": 4,
+      "closedCount": 6,
+      "acknowledgedCount": 2,
       "escalatedCount": 0,
       "lastUpdated": "2026-03-02T15:49:30.681Z"
     }
@@ -47,6 +51,8 @@
     "stats": {
       "pendingCount": 12,
       "actionedCount": 45,
+      "closedCount": 47,
+      "acknowledgedCount": 2,
       "escalatedCount": 3,
       "lastUpdated": "2026-03-02T15:49:30.681Z"
     }

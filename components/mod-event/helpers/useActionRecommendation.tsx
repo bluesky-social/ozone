@@ -12,7 +12,7 @@ import {
   SeverityLevelDetail,
   SeverityLevelListSetting,
 } from '@/setting/severity-level/types'
-import { nameToKey } from '@/setting/policy/utils'
+import { countStrikes } from './strike-counts'
 
 // We're modelling this after the ToolsOzoneModerationDefs.AccountStrike and rebuilding that data because
 // when only records by a user has been reviewed but never the account, the account never gets a status
@@ -41,6 +41,9 @@ export type ActionRecommendation = {
 }
 
 const getStrikeEvents = async (labelerAgent: Agent, did: string) => {
+  // Without a DID, queryEvents would return strike events across the entire service
+  if (!did) return []
+
   let cursor: string | undefined = undefined
   const events: ToolsOzoneModerationDefs.ModEventView[] = []
 
@@ -73,22 +76,24 @@ const useStrikeEvents = (
   subject: string,
   severityLevelSettings?: SeverityLevelListSetting | null,
 ) => {
+  // Resolves to '' for invalid/partially-typed subjects (the panel's subject input
+  // updates on every keystroke), in which case we must not query at all
+  const did = subject.startsWith('did:') ? subject : getDidFromUri(subject)
+
   return useQuery({
-    queryKey: ['strikeEvents', subject, severityLevelSettings],
+    queryKey: ['strikeEvents', did, severityLevelSettings],
+    refetchInterval: 60_000,
     queryFn: async () => {
       let lastAccountSuspensionEvent:
-        | ToolsOzoneModerationDefs.ModEventView
-        | undefined
+        ToolsOzoneModerationDefs.ModEventView | undefined
 
       let lastAccountTakedownEvent:
-        | ToolsOzoneModerationDefs.ModEventView
-        | undefined
+        ToolsOzoneModerationDefs.ModEventView | undefined
 
       let lastReverseTakedownEvent:
-        | ToolsOzoneModerationDefs.ModEventView
-        | undefined
+        ToolsOzoneModerationDefs.ModEventView | undefined
 
-      if (!subject) {
+      if (!did) {
         return {
           totalStrikeCount: 0,
           activeStrikeCount: 0,
@@ -99,12 +104,9 @@ const useStrikeEvents = (
         }
       }
 
-      const did = subject.startsWith('did:') ? subject : getDidFromUri(subject)
       const strikeEvents = await getStrikeEvents(labelerAgent, did)
 
-      const now = new Date()
-      let totalStrikeCount = 0
-      let activeStrikeCount = 0
+      const { totalStrikeCount, activeStrikeCount } = countStrikes(strikeEvents)
 
       for (const event of strikeEvents) {
         // Events are already sorted in reverse chronological order
@@ -127,33 +129,6 @@ const useStrikeEvents = (
           !lastReverseTakedownEvent
         ) {
           lastReverseTakedownEvent = event
-        }
-
-        if (!('strikeCount' in event.event) || !event.event.strikeCount) {
-          continue
-        }
-        // Check if this strike has expired
-        const eventDate = new Date(event.createdAt)
-        let isExpired = false
-
-        // If the event has a severity level, check its expiry
-        if (event.event.severityLevel && severityLevelSettings) {
-          const severityLevelKey = nameToKey(event.event.severityLevel)
-          const severityLevel = severityLevelSettings[severityLevelKey]
-
-          if (severityLevel?.expiryInDays) {
-            const expiryDate = new Date(eventDate)
-            expiryDate.setDate(
-              expiryDate.getDate() + severityLevel.expiryInDays,
-            )
-            isExpired = now > expiryDate
-          }
-        }
-
-        totalStrikeCount += event.event.strikeCount
-        // Only count strikes that haven't expired
-        if (!isExpired) {
-          activeStrikeCount += event.event.strikeCount
         }
       }
 
@@ -178,7 +153,7 @@ const useStrikeEvents = (
             : false,
       }
     },
-    enabled: !!subject,
+    enabled: !!did,
   })
 }
 

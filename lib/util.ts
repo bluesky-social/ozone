@@ -166,20 +166,18 @@ export const getFragmentsFromBlueSkyAppUrl = (url: string) => {
 export const buildAtUriFromFragments = (
   fragments: BlueSkyAppUrlFragments | null,
 ) => {
-  if (fragments?.did || fragments?.handle) {
-    try {
-      const uri = AtUri.make(
-        `${fragments?.did || fragments?.handle}`,
-        fragments.collection,
-        fragments.rkey,
-      )
-      return uri.toString()
-    } catch (e) {
-      return ''
-    }
-  }
+  if (!fragments) return ''
+  const actor = fragments.did || fragments.handle
+  if (!actor) return ''
 
-  return ''
+  try {
+    const uri = fragments.collection
+      ? AtUri.make(actor, fragments.collection, fragments.rkey)
+      : AtUri.make(actor)
+    return uri.toString()
+  } catch (e) {
+    return ''
+  }
 }
 
 export const isValidDid = (did?: string | null) => did?.startsWith('did:')

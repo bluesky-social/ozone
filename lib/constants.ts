@@ -38,6 +38,95 @@ export const STARTER_PACK_OG_CARD_URL = `https://ogcard.cdn.bsky.app/start`
 
 export const IMAGE_SEARCH_API_URL = process.env.NEXT_PUBLIC_IMAGE_SEARCH_API_URL
 
+type SubjectAgeWarningSettings = {
+  thresholdDays?: number
+  severityLevel?: string
+  includedPolicies: string[]
+}
+
+type SubjectAgeWarningConfig = {
+  record: SubjectAgeWarningSettings
+}
+
+const parseIncludedPolicies = (value: unknown): string[] => {
+  let policies: unknown[] = []
+  if (typeof value === 'string') {
+    policies = value.split('|')
+  } else if (Array.isArray(value)) {
+    policies = value
+  }
+
+  return [
+    ...new Set(
+      policies
+        .filter((policy): policy is string => typeof policy === 'string')
+        .map((policy) => policy.trim())
+        .filter(Boolean),
+    ),
+  ]
+}
+
+const parseSubjectAgeWarningSettings = (
+  value: unknown,
+): SubjectAgeWarningSettings => {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
+    return { includedPolicies: [] }
+  }
+
+  const settings = value as Record<string, unknown>
+  const thresholdDays = settings.thresholdDays
+  const severityLevel =
+    typeof settings.severityLevel === 'string'
+      ? settings.severityLevel.trim() || undefined
+      : undefined
+
+  return {
+    ...(typeof thresholdDays === 'number' &&
+      Number.isSafeInteger(thresholdDays) &&
+      thresholdDays > 0 && { thresholdDays }),
+    ...(severityLevel && { severityLevel }),
+    includedPolicies: parseIncludedPolicies(settings.includedPolicies),
+  }
+}
+
+const parseSubjectAgeWarningConfig = (
+  value: string | undefined,
+): SubjectAgeWarningConfig => {
+  const emptyConfig = { record: { includedPolicies: [] } }
+  if (!value?.trim()) return emptyConfig
+
+  try {
+    const config: unknown = JSON.parse(value)
+    if (
+      typeof config !== 'object' ||
+      config === null ||
+      Array.isArray(config)
+    ) {
+      return emptyConfig
+    }
+
+    const settings = config as Record<string, unknown>
+    return {
+      record: parseSubjectAgeWarningSettings(settings.record),
+    }
+  } catch {
+    return emptyConfig
+  }
+}
+
+const SUBJECT_AGE_WARNING_CONFIG = parseSubjectAgeWarningConfig(
+  process.env.NEXT_PUBLIC_SUBJECT_AGE_WARNING_CONFIG,
+)
+
+export const RECORD_AGE_THRESHOLD_DAYS =
+  SUBJECT_AGE_WARNING_CONFIG.record.thresholdDays
+
+export const RECORD_AGE_SEVERITY_LEVEL =
+  SUBJECT_AGE_WARNING_CONFIG.record.severityLevel
+
+export const SUBJECT_AGE_WARNING_INCLUDED_POLICIES =
+  SUBJECT_AGE_WARNING_CONFIG.record.includedPolicies
+
 export const IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS = process.env
   .NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS
   ? parseInt(process.env.NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS)

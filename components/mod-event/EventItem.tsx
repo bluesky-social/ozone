@@ -31,6 +31,10 @@ import { CopyButton } from '@/common/CopyButton'
 
 import { useState, type JSX } from 'react'
 import { UserAgent } from '@/common/UserAgent'
+import {
+  getVideoTimestampSeconds,
+  ReportedVideoTimestamp,
+} from '@/reports/ReportedVideoTimestamp'
 
 const LinkToAuthor = ({
   creatorHandle,
@@ -384,8 +388,14 @@ const Report = ({
         </div>
       </div>
       {modEvent.event.comment && (
-        <TextWithLinks text={modEvent.event.comment} />
+        <TextWithLinks
+          text={modEvent.event.comment}
+          className="[overflow-wrap:anywhere]"
+        />
       )}
+      <ReportedVideoTimestamp
+        seconds={getVideoTimestampSeconds(modEvent.modTool)}
+      />
 
       {ChatBskyConvoDefs.isMessageRef(modEvent.subject) && (
         <MessageContext className="mt-3" subject={modEvent.subject} />

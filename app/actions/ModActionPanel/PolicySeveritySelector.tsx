@@ -20,10 +20,12 @@ type PolicySeveritySelectorProps = {
   } | null
   handlePolicySelect: (policyName: string) => void
   handleSeverityLevelSelect: (levelName: string) => void
+  onSeverityLevelUserSelect?: () => void
 
   // Optional props for REVERSE_TAKEDOWN auto-selection
   defaultPolicy?: string
   defaultSeverityLevel?: string
+  preferredDefaultSeverityLevel?: string
 
   // Optional props for strike display
   severityLevelStrikeCount: number | null
@@ -35,6 +37,7 @@ type PolicySeveritySelectorProps = {
   selectedSeverityLevel?: string
   severityLevelSetting?: SeverityLevelListSetting
   isSubjectDid?: boolean
+  recommendedPolicies?: string[]
 
   // Variant-specific behavior
   variant?: 'takedown' | 'email' | 'reverse-takedown'
@@ -44,8 +47,10 @@ export function PolicySeveritySelector({
   policyDetails,
   handlePolicySelect,
   handleSeverityLevelSelect,
+  onSeverityLevelUserSelect,
   defaultPolicy,
   defaultSeverityLevel,
+  preferredDefaultSeverityLevel,
   severityLevelStrikeCount,
   currentStrikes = 0,
   actionRecommendation,
@@ -53,6 +58,7 @@ export function PolicySeveritySelector({
   setTargetServices,
   variant = 'takedown',
   isSubjectDid,
+  recommendedPolicies,
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
   const showFullRecommendation = variant === 'takedown' || variant === 'email'
@@ -71,6 +77,7 @@ export function PolicySeveritySelector({
           name="policies"
           defaultPolicy={defaultPolicy}
           onSelect={handlePolicySelect}
+          recommendedPolicies={recommendedPolicies}
         />
       </div>
       {policyDetails && (
@@ -78,8 +85,10 @@ export function PolicySeveritySelector({
           <ActionSeverityLevelSelector
             name="severityLevel"
             defaultSeverityLevel={defaultSeverityLevel}
+            preferredDefaultSeverityLevel={preferredDefaultSeverityLevel}
             policySeverityLevels={policyDetails.severityLevels}
             onSelect={handleSeverityLevelSelect}
+            onUserSelect={onSeverityLevelUserSelect}
           />
           {severityLevelStrikeCount !== null && (
             <input

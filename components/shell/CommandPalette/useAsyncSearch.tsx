@@ -65,6 +65,8 @@ const buildItemForDid = ({
   did: string
   handle?: string
 }): Action[] => {
+  if (!did) return []
+
   const actions = [
     {
       id: `show-action-for-did`,
@@ -88,6 +90,20 @@ const buildItemForDid = ({
       priority: 5,
       perform: () => {
         addToWorkspace([did])
+      },
+    },
+    {
+      id: `view-reports-received-by-did`,
+      name: `View reports received`,
+      keywords: `${search},view,reports,received,did`,
+      icon: <LifebuoyIcon className={iconClassName} />,
+      subtitle: `Reports about ${handle || did} and their records`,
+      section: ActionSections.reports,
+      perform: async () => {
+        const reportDid = isValidDid(did) ? did : await getDidFromHandle(did)
+        if (reportDid) {
+          router.push(`/repositories/${reportDid}?tab=reportee`)
+        }
       },
     },
     {

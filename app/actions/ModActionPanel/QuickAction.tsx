@@ -12,6 +12,7 @@ import {
 import { isSelfLabel } from '@/common/labels/util'
 import { FullScreenActionPanel } from '@/common/FullScreenActionPanel'
 import { PreviewCard } from '@/common/PreviewCard'
+import { VideoTimestampProvider } from '@/common/video/TimestampContext'
 import { createBreakpoint } from 'react-use'
 import {
   ArrowLeftIcon,
@@ -187,6 +188,7 @@ function Form(
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    handleManualSeverityLevelSelect,
     targetServices,
     setTargetServices,
     config,
@@ -202,6 +204,9 @@ function Form(
     emailSubjectField,
     selectedAgeAssuranceState,
     setSelectedAgeAssuranceState,
+    showRecordAgeWarning,
+    recordAgeWarningText,
+    preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
     onSubmit,
@@ -218,7 +223,7 @@ function Form(
   }
 
   return (
-    <>
+    <VideoTimestampProvider>
       {/* The inline styling is not ideal but there's no easy way to set calc() values in tailwind  */}
       {/* We are basically telling the browser to leave 180px at the bottom of the container to make room for navigation arrows and use the remaining vertical space for the main content where scrolling will be allowed if content overflows */}
       {/* @ts-ignore */}
@@ -487,6 +492,12 @@ function Form(
                       policyDetails={policyDetails}
                       handlePolicySelect={handlePolicySelect}
                       handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      preferredDefaultSeverityLevel={
+                        preferredSeverityLevelName
+                      }
+                      onSeverityLevelUserSelect={
+                        handleManualSeverityLevelSelect
+                      }
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       currentStrikes={currentStrikes}
@@ -740,8 +751,11 @@ function Form(
                       label={
                         <span className="leading-4">
                           {isEscalated
-                            ? `De-escalate the subject and acknowledge all open reports after this action`
-                            : `Acknowledge all open reports after this action`}
+                            ? `De-escalate the subject and close its review after this action`
+                            : `Close this subject's review after this action`}
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Reports in queues remain open.
+                          </span>
                         </span>
                       }
                     />
@@ -755,8 +769,12 @@ function Form(
                       className="mb-3 flex items-center leading-3"
                       label={
                         <span className="leading-4">
-                          Acknowledge all open/escalated/appealed reports on
-                          subjects created by this user
+                          Close open or escalated subject reviews for content
+                          created by this account.
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Also resolves appeals on those subjects. Reports in
+                            queues remain open.
+                          </span>
                         </span>
                       }
                     />
@@ -771,7 +789,10 @@ function Form(
                       className="mb-3 flex items-center leading-3"
                       label={
                         <span className="leading-4">
-                          Resolve appeal from the user
+                          Resolve this subject&apos;s appeal
+                          <span className="block text-xs text-gray-500 dark:text-gray-400">
+                            Appeal reports in queues remain open.
+                          </span>
                         </span>
                       }
                     />
@@ -783,6 +804,16 @@ function Form(
                     </div>
                   )}
 
+                  {showRecordAgeWarning && (
+                    <div className="my-2">
+                      <Alert
+                        showIcon
+                        type="warning"
+                        title="Record age notice"
+                        body={recordAgeWarningText}
+                      />
+                    </div>
+                  )}
                   {!isEmailEvent && (
                     <div className="mt-auto flex flex-row justify-between">
                       <div>
@@ -865,6 +896,6 @@ function Form(
           </ButtonSecondary>
         </div>
       )}
-    </>
+    </VideoTimestampProvider>
   )
 }

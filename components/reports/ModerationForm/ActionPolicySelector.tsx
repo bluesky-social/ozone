@@ -16,18 +16,31 @@ import {
 } from '@heroicons/react/24/solid'
 import { Fragment, useEffect, useState } from 'react'
 
+type PolicyOption = {
+  key: string
+  name: string
+  description?: string
+}
+
+const policyOptions = (
+  value: Record<string, any> | undefined,
+): PolicyOption[] =>
+  Object.entries(value ?? {}).map(([key, policy]) => ({ key, ...policy }))
+
 export const ActionPolicySelector = ({
   defaultPolicy,
   onSelect,
   name = 'policies',
+  recommendedPolicies = [],
 }: {
   name?: string
   defaultPolicy?: string
   onSelect?: (name: string) => void
+  recommendedPolicies?: string[]
 }) => {
   const { data, isLoading } = usePolicyListSetting()
   const [selected, setSelected] = useState(defaultPolicy)
-  const policyList = Object.values(data?.value || {})
+  const policyList = policyOptions(data?.value)
 
   // If defaultPolicy changes from outside, update selected state
   useEffect(() => {
@@ -44,7 +57,10 @@ export const ActionPolicySelector = ({
           onSelect?.(selectedPolicy || '')
         }}
       >
-        <ActionPolicyList policyList={policyList} />
+        <ActionPolicyList
+          policyList={policyList}
+          recommendedPolicies={recommendedPolicies}
+        />
       </Combobox>
       {/* Hidden input to ensure value is submitted with form */}
       <input type="hidden" name={name} value={selected || ''} />
@@ -56,14 +72,16 @@ export const ActionPoliciesSelector = ({
   defaultPolicies,
   onSelect,
   name = 'policies',
+  usePolicyKeys = false,
 }: {
   name?: string
   defaultPolicies?: string[]
   onSelect?: (names: string[]) => void
+  usePolicyKeys?: boolean
 }) => {
   const { data, isLoading } = usePolicyListSetting()
   const [selected, setSelected] = useState(defaultPolicies)
-  const policyList = Object.values(data?.value || {})
+  const policyList = policyOptions(data?.value)
 
   return (
     <>
@@ -77,13 +95,24 @@ export const ActionPoliciesSelector = ({
         }}
         name={name}
       >
-        <ActionPolicyList policyList={policyList} />
+        <ActionPolicyList
+          policyList={policyList}
+          usePolicyKeys={usePolicyKeys}
+        />
       </Combobox>
     </>
   )
 }
 
-const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
+const ActionPolicyList = ({
+  policyList,
+  recommendedPolicies = [],
+  usePolicyKeys = false,
+}: {
+  policyList: PolicyOption[]
+  recommendedPolicies?: string[]
+  usePolicyKeys?: boolean
+}) => {
   const [query, setQuery] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const matchingPolicies = policyList
@@ -95,6 +124,21 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
       return true
     })
     .sort((prev, next) => prev.name.localeCompare(next.name))
+  const recommended = new Set(recommendedPolicies)
+  const sections = [
+    {
+      label: 'Recommended for this queue',
+      policies: matchingPolicies.filter((policy) =>
+        recommended.has(policy.key),
+      ),
+    },
+    {
+      label: recommended.size ? 'All other policies' : undefined,
+      policies: matchingPolicies.filter(
+        (policy) => !recommended.has(policy.key),
+      ),
+    },
+  ].filter((section) => section.policies.length)
 
   return (
     <div className="relative mt-1 w-full">
@@ -109,10 +153,17 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
             return isFocused
               ? ''
               : // when blurred, selected values may be an array of strings or just a string
-              // when array, we apply the OR condition between multiple policies so show that
-              Array.isArray(values)
-              ? values.join(' OR ')
-              : values || ''
+                // when array, we apply the OR condition between multiple policies so show that
+                Array.isArray(values)
+                ? values
+                    .map((value) =>
+                      usePolicyKeys
+                        ? policyList.find((policy) => policy.key === value)
+                            ?.name ?? value
+                        : value,
+                    )
+                    .join(' OR ')
+                : values || ''
           }}
           placeholder="Select policy. Type or click arrows to see all policies"
         />
@@ -134,50 +185,61 @@ const ActionPolicyList = ({ policyList }: { policyList: any[] }) => {
           {!matchingPolicies?.length ? (
             <NoPolicyOption query={query} />
           ) : (
-            matchingPolicies?.map((tpl) => (
-              <ComboboxOption
-                key={tpl.name}
-                className={({ focus }) =>
-                  `relative cursor-default select-none py-2 pl-10 pr-4 ${
-                    focus
-                      ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
-                      : 'text-gray-900 dark:text-gray-200'
-                  }`
-                }
-                value={tpl.name}
-                // Force focus away so that selection is shown in the input field
-                // Combobox input will automatically bring focus back
-                onClick={() => setIsFocused(false)}
-              >
-                {({ selected, focus }) => (
-                  <>
-                    {selected ? (
-                      <span
-                        className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
-                          focus ? 'text-indigo-900' : 'text-indigo-600'
-                        }`}
-                      >
-                        <CheckIcon
-                          className="h-5 w-5 dark:text-gray-50"
-                          aria-hidden="true"
-                        />
-                      </span>
-                    ) : null}
-                    <div className="flex flex-row">
-                      <div>
-                        <p
-                          className={`block truncate ${
-                            selected ? 'font-medium' : 'font-normal'
-                          }`}
-                        >
-                          {tpl.name}
-                        </p>
-                        <p className="text-xs dark:text-gray-400 text-gray-500">{tpl.description}</p>
-                      </div>
-                    </div>
-                  </>
+            sections.map((section) => (
+              <Fragment key={section.label ?? 'policies'}>
+                {section.label && (
+                  <div className="px-3 py-1.5 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                    {section.label}
+                  </div>
                 )}
-              </ComboboxOption>
+                {section.policies.map((tpl) => (
+                  <ComboboxOption
+                    key={tpl.key}
+                    className={({ focus }) =>
+                      `relative cursor-default select-none py-2 pl-10 pr-4 ${
+                        focus
+                          ? 'bg-gray-100 dark:bg-slate-600 text-gray-900 dark:text-gray-200'
+                          : 'text-gray-900 dark:text-gray-200'
+                      }`
+                    }
+                    value={usePolicyKeys ? tpl.key : tpl.name}
+                    // Force focus away so that selection is shown in the input field
+                    // Combobox input will automatically bring focus back
+                    onClick={() => setIsFocused(false)}
+                  >
+                    {({ selected, focus }) => (
+                      <>
+                        {selected ? (
+                          <span
+                            className={`absolute inset-y-0 left-0 flex items-center pl-3 ${
+                              focus ? 'text-indigo-900' : 'text-indigo-600'
+                            }`}
+                          >
+                            <CheckIcon
+                              className="h-5 w-5 dark:text-gray-50"
+                              aria-hidden="true"
+                            />
+                          </span>
+                        ) : null}
+                        <div className="flex flex-row">
+                          <div>
+                            <p
+                              className={`block truncate ${
+                                selected ? 'font-medium' : 'font-normal'
+                              }`}
+                            >
+                              {tpl.name}
+                            </p>
+                            <p className="text-xs dark:text-gray-400 text-gray-500">
+                              {tpl.description}
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    )}
+                  </ComboboxOption>
+                ))}
+              </Fragment>
             ))
           )}
         </ComboboxOptions>

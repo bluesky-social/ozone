@@ -32,6 +32,9 @@ export type ModToolConfig = {
   // these (non-empty) fields are shown as a table and the full meta is offered
   // behind a "raw" toggle. When absent, all meta entries are auto-rendered.
   fields?: ModToolFieldConfig[]
+  // Dot-path in modTool.meta containing the reported video's timestamp in
+  // seconds. Defaults to "videoTimestampSeconds" when omitted.
+  videoTimestampPath?: string
 }
 
 export type ModToolRegistry = Record<string, ModToolConfig>
@@ -101,6 +104,19 @@ export function resolvePath(obj: unknown, path: string): unknown {
     }
     return undefined
   }, obj)
+}
+
+export function resolveVideoTimestampSeconds(
+  meta: Record<string, unknown> | undefined,
+  config?: ModToolConfig,
+): number | undefined {
+  const value = resolvePath(
+    meta,
+    config?.videoTimestampPath ?? 'videoTimestampSeconds',
+  )
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : undefined
 }
 
 // Build an admin deep link from a template + meta. Returns undefined unless a

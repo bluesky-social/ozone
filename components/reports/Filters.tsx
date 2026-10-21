@@ -65,7 +65,11 @@ function useFiltersUpdater() {
   return updateParam
 }
 
-export function BetaReportsFilters() {
+export function BetaReportsFilters({
+  fixedSubject = false,
+}: {
+  fixedSubject?: boolean
+}) {
   const params = useSearchParams()
   const updateParam = useFiltersUpdater()
 
@@ -127,6 +131,7 @@ export function BetaReportsFilters() {
       <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
         {/* Status */}
         <select
+          aria-label="Report status"
           className={`${selectBase} ${status !== ReportStatuses.QUEUED ? selectActive : selectDefault}`}
           value={status}
           onChange={(e) => setStatus(e.target.value)}
@@ -140,6 +145,7 @@ export function BetaReportsFilters() {
 
         {/* Muted */}
         <select
+          aria-label="Muted reports"
           className={`${selectBase} ${mute !== '' ? selectActive : selectDefault}`}
           value={mute}
           onChange={(e) => setMute(e.target.value)}
@@ -152,17 +158,20 @@ export function BetaReportsFilters() {
         </select>
 
         {/* Subject type */}
-        <select
-          className={`${selectBase} ${subjectType !== '' ? selectActive : selectDefault}`}
-          value={subjectType}
-          onChange={(e) => setSubjectType(e.target.value)}
-        >
-          {SUBJECT_TYPE_OPTIONS.map((opt) => (
-            <option key={opt.id} value={opt.value}>
-              {opt.text}
-            </option>
-          ))}
-        </select>
+        {!fixedSubject && (
+          <select
+            aria-label="Subject type"
+            className={`${selectBase} ${subjectType !== '' ? selectActive : selectDefault}`}
+            value={subjectType}
+            onChange={(e) => setSubjectType(e.target.value)}
+          >
+            {SUBJECT_TYPE_OPTIONS.map((opt) => (
+              <option key={opt.id} value={opt.value}>
+                {opt.text}
+              </option>
+            ))}
+          </select>
+        )}
 
         {/* My Assignments */}
         <button
@@ -182,7 +191,7 @@ export function BetaReportsFilters() {
       </div>
 
       {/* Collections row — only when subject type is record */}
-      {subjectType === 'record' && (
+      {!fixedSubject && subjectType === 'record' && (
         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pl-px">
           <span className="text-xs text-gray-500 dark:text-gray-400 shrink-0">
             Collections

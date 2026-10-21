@@ -4,6 +4,7 @@ import Hls from 'hls.js/light'
 import { useEffect, useId, useRef, useState } from 'react'
 import { GraphicMediaFilterPreference } from '@/config/useLocalPreferences'
 import { classNames } from '@/lib/util'
+import { useVideoTimestamp } from './TimestampContext'
 
 export default function VideoPlayer({
   source,
@@ -23,6 +24,12 @@ export default function VideoPlayer({
   const [isHovered, setIsHovered] = useState(false)
   const figId = useId()
   const ref = useRef<HTMLVideoElement>(null)
+  const videoTimestamp = useVideoTimestamp()
+
+  useEffect(() => {
+    if (!ref.current || !videoTimestamp) return
+    return videoTimestamp.registerVideo(ref.current)
+  }, [videoTimestamp])
 
   useEffect(() => {
     if (ref.current && Hls.isSupported()) {
