@@ -1,7 +1,4 @@
-FROM node:22.23.2-alpine3.23 AS build
-
-COPY service/emudhra-preload.mjs /opt/mitigations/emudhra-preload.mjs
-ENV NODE_OPTIONS="--import=/opt/mitigations/emudhra-preload.mjs"
+FROM node:24.22.1-alpine3.23 AS build
 
 WORKDIR /usr/src/ozone
 
@@ -17,10 +14,7 @@ RUN yarn
 
 # final stage
 
-FROM node:22.23.2-alpine3.23
-
-COPY service/emudhra-preload.mjs /opt/mitigations/emudhra-preload.mjs
-ENV NODE_OPTIONS="--import=/opt/mitigations/emudhra-preload.mjs"
+FROM node:24.22.1-alpine3.23
 
 RUN apk add --update dumb-init
 ENV TZ=Etc/UTC

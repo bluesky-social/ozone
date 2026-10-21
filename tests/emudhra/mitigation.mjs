@@ -10,25 +10,14 @@ import { test } from 'node:test'
 import { promisify } from 'node:util'
 
 const run = promisify(execFile)
-const preload = new URL('../../service/emudhra-preload.mjs', import.meta.url)
 // Fixtures copied unchanged from atproto fc60876949cca1ca28e98273ecfc97a151d3ebfc.
 const fixture = JSON.parse(await readFile(new URL('./tls.json', import.meta.url)))
 
-test('preload rejects compromised chains before sending HTTP and preserves sibling trust', async (t) => {
+test('native TLS verifier rejects compromised chains before sending HTTP and preserves sibling trust', async (t) => {
   const directory = await mkdtemp(join(tmpdir(), 'ozone-emudhra-'))
   t.after(() => rm(directory, { recursive: true, force: true }))
-  const source = await readFile(preload, 'utf8')
-  // Pin the complete upstream file, including all eight production SPKI hashes.
-  assert.equal(createHash('sha256').update(source).digest('hex'),
-    '8d59119e16974525d0590ca0db6debd27e968e674b6cf9446b54cf55fd7873e2',
-    'preload must match atproto fc60876949cca1ca28e98273ecfc97a151d3ebfc')
-  const hashes = source.match(/'[a-f0-9]{64}'/g)
-  assert.equal(hashes.length, 8)
   const spki = new X509Certificate(fixture.blocked.intermediate).publicKey.export({ type: 'spki', format: 'der' })
   const blockedHash = createHash('sha256').update(spki).digest('hex')
-  const testPreload = join(directory, 'preload.mjs')
-  // Substitute a test-only CA key; the compromised private keys are not needed.
-  await writeFile(testPreload, source.replace(hashes[0], `'${blockedHash}'`))
   const ca = join(directory, 'root.pem')
   await writeFile(ca, fixture.root)
 
@@ -53,6 +42,13 @@ test('preload rejects compromised chains before sending HTTP and preserves sibli
   async function request(client, url, { enabled = true, trust = true, hostname = false } = {}) {
     const script = `
       import { request } from 'node:https'
+      import { createRequire } from 'node:module'
+      // This test-only Node hook changes the native blocklist in this child
+      // process. Production never uses --expose-internals or a JS preload.
+      if (${enabled}) {
+        const { internalBinding } = createRequire(import.meta.url)('internal/test/binding')
+        internalBinding('crypto').addBlockedSPKIForTesting(Buffer.from('${blockedHash}', 'hex'))
+      }
       try {
         let body
         if (${JSON.stringify(client)} === 'fetch') {
@@ -79,11 +75,11 @@ test('preload rejects compromised chains before sending HTTP and preserves sibli
         console.log(JSON.stringify({code: error.cause?.code ?? error.code}))
       }
     `
-    const { stdout } = await run(process.execPath, ['--input-type=module', '--eval', script], {
+    const { stdout } = await run(process.execPath, ['--expose-internals', '--input-type=module', '--eval', script], {
       timeout: 10000,
       env: {
         ...process.env,
-        NODE_OPTIONS: enabled ? `--import=${testPreload}` : '',
+        NODE_OPTIONS: '',
         NODE_EXTRA_CA_CERTS: trust ? ca : '',
         NODE_TLS_REJECT_UNAUTHORIZED: '1',
       },
