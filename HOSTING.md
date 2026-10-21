@@ -328,6 +328,8 @@ Once you've successfully started running your service, there is a final step to 
 
 ### Manually updating Ozone
 
+If your local Compose file predates the Ozone healthcheck, copy the `ozone.healthcheck` block from [service/compose.yaml](service/compose.yaml) into its `ozone` service before updating with the daemon enabled. The daemon waits for this check to pass; pulling an image does not update your local Compose file.
+
 If you use the Docker `compose.yaml` file in this repo, Ozone will automatically update at midnight UTC when new releases are available. To manually update the image configured for both Ozone and its daemon, use the following commands.
 
 **Pull the latest Ozone container image:**
