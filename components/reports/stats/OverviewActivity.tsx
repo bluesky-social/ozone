@@ -1,8 +1,9 @@
 import { useMemo, useState } from 'react'
 import {
   Bar,
-  BarChart,
+  ComposedChart,
   CartesianGrid,
+  Line,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -20,11 +21,19 @@ const SERIES = [
     key: 'inboundCount',
     label: 'Inbound',
     color: STATS_COLORS.inboundCount.color,
+    kind: 'bar',
   },
   {
     key: 'closedCount',
     label: 'Closed',
     color: STATS_COLORS.closedCount.color,
+    kind: 'bar',
+  },
+  {
+    key: 'pendingCount',
+    label: 'Pending',
+    color: STATS_COLORS.pendingCount.color,
+    kind: 'line',
   },
 ] as const
 
@@ -75,31 +84,34 @@ export function OverviewActivity({
       date,
       inboundCount: byDate.get(date)?.inboundCount,
       closedCount: byDate.get(date)?.closedCount,
+      pendingCount: byDate.get(date)?.pendingCount,
     }))
   }, [history, dates])
-  const hasData = rows.some(
-    (row) => row.inboundCount != null || row.closedCount != null,
-  )
-  const partialCoverage = rows.some(
-    (row) => row.inboundCount == null || row.closedCount == null,
+  const hasData = rows.some((row) => SERIES.some(({ key }) => row[key] != null))
+  const partialCoverage = rows.some((row) =>
+    SERIES.some(({ key }) => row[key] == null),
   )
 
   return (
     <div className="mb-6 grid items-stretch gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)]">
       <section
-        aria-label="Inbound vs closed"
+        aria-label="Report counts over time"
         data-cy="inbound-closed-chart"
         className="flex min-w-0 flex-col rounded-xl border border-gray-200 bg-white p-4 text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100 sm:p-5"
       >
         <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h2 className="font-semibold">Inbound vs closed</h2>
+            <h2 className="font-semibold">Report counts over time</h2>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               {chartWindow.label} · {formatDate(dates[0])}
               {chartWindow.days > 1 ? ` – ${formatDate(today)}` : ''}
             </p>
           </div>
-          <div role="group" aria-label="Chart series" className="flex gap-4">
+          <div
+            role="group"
+            aria-label="Chart series"
+            className="flex flex-wrap gap-x-4 gap-y-2"
+          >
             {SERIES.map(({ key, label, color }) => (
               <button
                 key={key}
@@ -148,7 +160,7 @@ export function OverviewActivity({
             <div className="relative min-h-[16rem] flex-1 text-gray-500 dark:text-gray-400">
               <div className="absolute inset-0">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
+                  <ComposedChart
                     className="[&_.recharts-surface:focus:not(:focus-visible)]:outline-none"
                     data={rows}
                     margin={{ top: 8, right: 4, left: 0, bottom: 0 }}
@@ -169,12 +181,28 @@ export function OverviewActivity({
                       axisLine={false}
                     />
                     <YAxis
+                      yAxisId="flow"
                       width={52}
                       allowDecimals={false}
                       tickFormatter={(value: number) =>
                         value.toLocaleString(undefined, { notation: 'compact' })
                       }
                       tick={{ fill: 'currentColor', fontSize: 11 }}
+                      tickLine={false}
+                      axisLine={false}
+                    />
+                    <YAxis
+                      yAxisId="pending"
+                      orientation="right"
+                      width={52}
+                      allowDecimals={false}
+                      tickFormatter={(value: number) =>
+                        value.toLocaleString(undefined, { notation: 'compact' })
+                      }
+                      tick={{
+                        fill: STATS_COLORS.pendingCount.color,
+                        fontSize: 11,
+                      }}
                       tickLine={false}
                       axisLine={false}
                     />
@@ -201,51 +229,81 @@ export function OverviewActivity({
                         )
                       }}
                     />
-                    {SERIES.map(({ key, label, color }) => (
-                      <Bar
-                        key={key}
-                        dataKey={key}
-                        name={label}
-                        fill={color}
-                        radius={[3, 3, 0, 0]}
-                        maxBarSize={20}
-                        hide={hiddenSeries.has(key)}
-                        isAnimationActive={false}
-                      />
-                    ))}
-                  </BarChart>
+                    {SERIES.map(({ key, label, color, kind }) =>
+                      kind === 'line' ? (
+                        <Line
+                          key={key}
+                          yAxisId="pending"
+                          dataKey={key}
+                          name={label}
+                          stroke={color}
+                          strokeWidth={2}
+                          dot={{ r: 2.5 }}
+                          activeDot={{ r: 4 }}
+                          connectNulls={false}
+                          hide={hiddenSeries.has(key)}
+                          isAnimationActive={false}
+                        />
+                      ) : (
+                        <Bar
+                          key={key}
+                          yAxisId="flow"
+                          dataKey={key}
+                          name={label}
+                          fill={color}
+                          radius={[3, 3, 0, 0]}
+                          maxBarSize={20}
+                          hide={hiddenSeries.has(key)}
+                          isAnimationActive={false}
+                        />
+                      ),
+                    )}
+                  </ComposedChart>
                 </ResponsiveContainer>
               </div>
             </div>
+            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+              Daily inbound and closed counts use the left axis. Pending uses
+              the right axis: unmuted backlog at the end of each UTC day, or the
+              latest snapshot for today.
+            </p>
             {partialCoverage && (
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                 Some daily counts are unavailable. Hover or focus a date to
                 inspect its values.
               </p>
             )}
-            <table className="sr-only">
-              <caption>Daily inbound and closed report counts</caption>
-              <thead>
-                <tr>
-                  <th scope="col">Date</th>
-                  <th scope="col">Inbound</th>
-                  <th scope="col">Closed</th>
-                </tr>
-              </thead>
-              <tbody>
-                {rows.map((row) => (
-                  <tr key={row.date}>
-                    <th scope="row">{row.date}</th>
-                    <td>
-                      {row.inboundCount?.toLocaleString() ?? 'Unavailable'}
-                    </td>
-                    <td>
-                      {row.closedCount?.toLocaleString() ?? 'Unavailable'}
-                    </td>
+            <div className="sr-only">
+              <table>
+                <caption>
+                  Daily inbound, closed, and pending report counts
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Date</th>
+                    <th scope="col">Inbound</th>
+                    <th scope="col">Closed</th>
+                    <th scope="col">Pending</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {rows.map((row) => (
+                    <tr key={row.date}>
+                      <th scope="row">{row.date}</th>
+                      <td>
+                        {row.inboundCount?.toLocaleString() ?? 'Unavailable'}
+                      </td>
+                      <td>
+                        {row.closedCount?.toLocaleString() ?? 'Unavailable'}
+                      </td>
+                      <td>
+                        {row.pendingCount?.toLocaleString() ?? 'Unavailable'}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </>
         )}
       </section>

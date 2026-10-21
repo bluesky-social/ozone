@@ -30,6 +30,11 @@ const VIEWS = {
         color: STATS_COLORS.closedCount.color,
       },
       {
+        key: 'pendingCount',
+        name: 'Pending',
+        color: STATS_COLORS.pendingCount.color,
+      },
+      {
         key: 'actionedCount',
         name: 'Actioned',
         color: STATS_COLORS.actionedCount.color,
@@ -71,12 +76,14 @@ export function HistoricalGraph({
   isLoading,
   isError,
   onRetry,
+  showPending = true,
 }: {
   view: HistoricalStatsView
   stats?: HistoricalReportStats[]
   isLoading: boolean
   isError?: boolean
   onRetry?: () => void
+  showPending?: boolean
 }) {
   const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
   const toggleSeries = (key: string) =>
@@ -110,10 +117,17 @@ export function HistoricalGraph({
   const data = stats
     .slice()
     .sort((a, b) => a.date.localeCompare(b.date))
-    .map((day) => ({ date: day.date, ...summarizeStats([day]).stats }))
+    .map((day) => ({
+      date: day.date,
+      ...summarizeStats([day]).stats,
+      pendingCount: day.pendingCount,
+    }))
   const dark = isDarkModeEnabled()
   const axisColor = dark ? '#9ca3af' : '#6b7280'
-  const series = VIEWS[view].series
+  const series = VIEWS[view].series.filter(
+    ({ key }) => key !== 'pendingCount' || showPending,
+  )
+  const hasPendingSeries = series.some(({ key }) => key === 'pendingCount')
   const display = (value: number) => value.toLocaleString()
   const hasValues = data.some((day) =>
     series.some(({ key }) => day[key] != null),
@@ -122,8 +136,9 @@ export function HistoricalGraph({
   return (
     <div className="w-full space-y-4" data-cy="historical-stats">
       <p className="text-xs text-gray-500 dark:text-gray-400">
-        Missing values are unavailable. Pending and overdue appear in the
-        summary above.
+        {hasPendingSeries
+          ? 'Daily activity uses the left axis. Pending uses the right axis: unmuted backlog at the end of each UTC day, or the latest snapshot for today. Missing values are unavailable.'
+          : 'Missing values are unavailable.'}
       </p>
       {!hasValues ? (
         <p className="py-12 text-center text-sm">
@@ -154,12 +169,24 @@ export function HistoricalGraph({
                 tick={{ fontSize: 12, fill: axisColor }}
               />
               <YAxis
+                yAxisId="flow"
                 width={80}
                 tickFormatter={display}
                 domain={[0, 'auto']}
                 allowDecimals={false}
                 tick={{ fontSize: 12, fill: axisColor }}
               />
+              {hasPendingSeries && (
+                <YAxis
+                  yAxisId="pending"
+                  orientation="right"
+                  width={80}
+                  tickFormatter={display}
+                  domain={[0, 'auto']}
+                  allowDecimals={false}
+                  tick={{ fontSize: 12, fill: STATS_COLORS.pendingCount.color }}
+                />
+              )}
               <Tooltip
                 formatter={(value: number) => display(value)}
                 labelFormatter={(date) => `${date}`}
@@ -200,6 +227,7 @@ export function HistoricalGraph({
                   key={s.key}
                   type="linear"
                   dataKey={s.key}
+                  yAxisId={s.key === 'pendingCount' ? 'pending' : 'flow'}
                   name={s.name}
                   stroke={s.color}
                   strokeWidth={2}
@@ -213,6 +241,33 @@ export function HistoricalGraph({
           </ResponsiveContainer>
         </div>
       )}
+      <div className="sr-only">
+        <table>
+          <caption>{VIEWS[view].label} by UTC date</caption>
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              {series.map(({ key, name }) => (
+                <th key={key} scope="col">
+                  {name}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((day) => (
+              <tr key={day.date}>
+                <th scope="row">{day.date}</th>
+                {series.map(({ key }) => (
+                  <td key={key}>
+                    {day[key]?.toLocaleString() ?? 'Unavailable'}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   )
 }

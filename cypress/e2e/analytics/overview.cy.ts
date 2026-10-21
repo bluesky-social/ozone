@@ -623,6 +623,7 @@ describe('Analytics overview cards', () => {
 const history = Array.from({ length: 30 }, (_, i) => ({
   date: new Date(Date.UTC(2026, 8, 15 + i)).toISOString().slice(0, 10),
   inboundCount: 100 + (i % 7) * 30,
+  pendingCount: i === 28 ? 0 : 2000 + i * 10,
   closedCount: i === 29 ? 400 : 40,
   actionedCount: i === 29 ? 370 : 10,
   acknowledgedCount: 30,
@@ -904,6 +905,25 @@ describe('Overview activity panels', () => {
         .first()
         .should('contain', '2026-09-15')
       cy.get('.recharts-bar').should('have.length', 2)
+      cy.get('.recharts-line').should('have.length', 1)
+      cy.get('.recharts-yAxis').should('have.length', 2)
+      cy.contains('tbody th', '2026-09-15')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', '2,000')
+      cy.contains('tbody th', '2026-10-13')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', '0')
+      cy.contains('button', /^Pending$/).click()
+      cy.contains('button', /^Pending$/).should(
+        'have.attr',
+        'aria-pressed',
+        'false',
+      )
+      cy.get('.recharts-line').should('not.exist')
+      cy.contains('button', /^Pending$/).click()
+      cy.get('.recharts-line').should('have.length', 1)
       cy.contains('button', /^Closed$/).click()
       cy.contains('button', /^Closed$/).should(
         'have.attr',
@@ -967,6 +987,7 @@ describe('Overview activity panels', () => {
         {
           date: '2026-10-13',
           inboundCount: 0,
+          pendingCount: 0,
           closedCount: 10,
           actionedCount: 2,
           acknowledgedCount: 8,
@@ -997,9 +1018,17 @@ describe('Overview activity panels', () => {
         .siblings('td')
         .first()
         .should('have.text', 'Unavailable')
+      cy.contains('tbody th', '2026-09-16')
+        .siblings('td')
+        .eq(2)
+        .should('have.text', 'Unavailable')
       cy.contains('tbody th', '2026-10-13')
         .siblings('td')
         .first()
+        .should('have.text', '0')
+      cy.contains('tbody th', '2026-10-13')
+        .siblings('td')
+        .eq(2)
         .should('have.text', '0')
     })
     cy.get('[data-cy="closure-breakdown"]').scrollIntoView()

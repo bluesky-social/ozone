@@ -193,6 +193,7 @@ export function StatsDetailPageContent() {
           </h2>
           <HistoricalGraph
             view={mode}
+            showPending={!scope.moderatorDid}
             stats={data?.stats}
             isLoading={isLoading}
             isError={isError}
