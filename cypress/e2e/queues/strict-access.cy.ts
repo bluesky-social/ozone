@@ -193,7 +193,7 @@ describe('Queue matching and strict access', () => {
     cy.get('[aria-label="Strict access"]').then(($button) => {
       cy.get(`[id="${$button.attr('aria-describedby')}"]`)
         .should('be.visible')
-        .and('contain', 'visible to admins and assigned queue members')
+        .and('contain', 'visible only to admins and assigned queue members')
     })
   })
 
