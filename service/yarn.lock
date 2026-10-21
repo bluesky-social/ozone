@@ -3535,7 +3535,6 @@ __metadata:
     "@atproto/ozone": "npm:0.4.2"
     next: "npm:15.5.28"
     react: "npm:19.2.5"
-    sharp: "npm:0.35.5"
   languageName: unknown
   linkType: soft
 
@@ -4124,7 +4123,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sharp@npm:0.35.5, sharp@npm:^0.34.3 || ^0.35.5":
+"sharp@npm:^0.34.3 || ^0.35.5":
   version: 0.35.5
   resolution: "sharp@npm:0.35.5"
   dependencies:

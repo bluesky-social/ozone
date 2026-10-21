@@ -7711,7 +7711,6 @@ __metadata:
     recharts: "npm:^2.15.3"
     remark: "npm:^14.0.3"
     remark-html: "npm:^15.0.2"
-    sharp: "npm:0.35.5"
     tailwind-merge: "npm:^3.5.0"
     tailwindcss: "npm:^3.2.4"
     typescript: "npm:^5.4.5"
@@ -9086,7 +9085,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"sharp@npm:0.35.5, sharp@npm:^0.34.3 || ^0.35.5":
+"sharp@npm:^0.34.3 || ^0.35.5":
   version: 0.35.5
   resolution: "sharp@npm:0.35.5"
   dependencies:
