@@ -30,6 +30,7 @@ export function ReportsReceived({
       ) : (
         <ReportTable
           reports={reports}
+          showQueue
           showLoadMore={!!hasNextPage}
           onLoadMore={fetchNextPage}
           isInitialLoading={isInitialLoading}

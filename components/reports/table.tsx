@@ -67,6 +67,7 @@ export function ReportTable(
     showLoadMore: boolean
     isInitialLoading: boolean
     onLoadMore: () => void
+    showQueue?: boolean
   } & HTMLAttributes<HTMLDivElement>,
 ) {
   const {
@@ -74,6 +75,7 @@ export function ReportTable(
     showLoadMore,
     onLoadMore,
     isInitialLoading,
+    showQueue = false,
     className,
     ...rest
   } = props
@@ -92,7 +94,11 @@ export function ReportTable(
               />
             )}
             {reports.map((report) => (
-              <ReportRow key={report.id} report={report} />
+              <ReportRow
+                key={report.id}
+                report={report}
+                showQueue={showQueue}
+              />
             ))}
           </tbody>
         </table>
@@ -235,9 +241,11 @@ import { getHandleFromSubjectView } from 'components/reports/utils'
 
 function ReportRow({
   report,
+  showQueue,
   ...others
 }: {
   report: ToolsOzoneReportDefs.ReportView
+  showQueue: boolean
 } & HTMLAttributes<HTMLTableRowElement>) {
   const router = useRouter()
   const subjectStatus = report.subject.status
@@ -249,6 +257,16 @@ function ReportRow({
   const reporterHandle = getHandleFromSubjectView(report.reporter)
   const reporterStatus = report.reporter.status
   const reportUrl = `/reports/${report.id}`
+  const queueLink = report.queue ? (
+    <Link
+      href={`/reports/beta?queueId=${report.queue.id}`}
+      className="text-indigo-600 hover:underline dark:text-indigo-300 [overflow-wrap:anywhere]"
+    >
+      {report.queue.name}
+    </Link>
+  ) : (
+    'No queue'
+  )
 
   // Labels and tags for the Subject column
   const isAccountSubject = report.subject.subject.startsWith('did:')
@@ -303,6 +321,14 @@ function ReportRow({
               {report.status}
             </dd>
           </div>
+          {showQueue && (
+            <div className="flex items-baseline flex-row gap-1">
+              <dt>Queue:</dt>
+              <dd className="min-w-0 text-gray-700 dark:text-gray-100">
+                {queueLink}
+              </dd>
+            </div>
+          )}
           {report.isMuted && (
             <div className="flex items-center flex-row">
               <dt>Muted:</dt>
@@ -386,6 +412,11 @@ function ReportRow({
           <MutedBadge isMuted={report.isMuted} />
           <AutomatedBadge report={report} />
         </div>
+        {showQueue && (
+          <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+            Queue: {queueLink}
+          </div>
+        )}
         {!!report.comment && (
           <div className="mb-1">
             <ReporterComment comment={report.comment} />
