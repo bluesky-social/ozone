@@ -158,6 +158,7 @@ describe('Settings custom actions', () => {
     cy.contains('button', 'Confirm and run').should('not.exist')
   })
   it('uses refreshed definitions for selection while keeping started runs fixed', () => {
+    cy.clock(Date.now(), ['Date'])
     cy.visit(`${origin}/reports/123`)
     selectCustom()
     const updated = {
@@ -173,6 +174,7 @@ describe('Settings custom actions', () => {
     cy.then(() => {
       configuration.customActions = [updated]
     })
+    cy.tick(5 * 60 * 1000)
     cy.window().then((win) => win.dispatchEvent(new win.Event('focus')))
     cy.get('[data-cy="custom-action-panel"]')
       .should('contain.text', updated.name)
@@ -201,6 +203,7 @@ describe('Settings custom actions', () => {
     cy.then(() => {
       configuration.customActions = [{ ...workflow, name: 'Later workflow' }]
     })
+    cy.tick(5 * 60 * 1000)
     cy.window().then((win) => win.dispatchEvent(new win.Event('focus')))
     cy.contains('button', updated.name).click()
     cy.contains('[role="menuitem"]', 'Later workflow').should('be.visible')
@@ -217,11 +220,13 @@ describe('Settings custom actions', () => {
     )
   })
   it('clears an unstarted selection when its setting is removed', () => {
+    cy.clock(Date.now(), ['Date'])
     cy.visit(`${origin}/reports/123`)
     selectCustom()
     cy.then(() => {
       configuration = null
     })
+    cy.tick(5 * 60 * 1000)
     cy.window().then((win) => win.dispatchEvent(new win.Event('focus')))
     cy.get('[data-cy="custom-action-panel"]').should('not.exist')
     cy.contains('button', 'Confirm and run').should('not.exist')
@@ -512,6 +517,9 @@ describe('Settings custom actions', () => {
     cy.contains('aside', 'has unfinished work').should('not.exist')
     cy.go('back')
     cy.location('pathname').should('equal', '/reports/123')
+    cy.contains('button', /^Action$/).scrollIntoView().should('be.visible')
+    cy.contains('Loading custom actions…').should('not.exist')
+    cy.get('@customActionSettings.all').should('have.length', 1)
     cy.get('[data-cy="custom-operation-status"]').should('not.exist')
     cy.then(() => expect(sends).to.equal(1))
     cy.reload()
@@ -760,7 +768,10 @@ describe('Settings custom actions', () => {
     cy.then(() => expect(storageWrites).not.to.have.been.called)
   })
   it('edits and saves settings with pinned scope and manager role', () => {
-    cy.visit(`${origin}/configure`)
+    cy.visit(`${origin}/reports/123`)
+    cy.wait('@customActionSettings')
+    cy.get('a[href="/configure"]').filter(':visible').first().click()
+    cy.location('pathname').should('equal', '/configure')
     const replacement = {
       version: 1,
       customActions: [{ ...workflow, name: 'Reviewed workflow' }],
@@ -799,6 +810,14 @@ describe('Settings custom actions', () => {
     cy.contains('button', 'Save replacement').click()
     cy.wait('@saveSettings')
     cy.contains('Custom actions saved.').should('be.visible')
+    cy.wait('@customActionSettings')
+      .its('response.body.options.0.value')
+      .should('deep.equal', replacement)
+    cy.go('back')
+    cy.location('pathname').should('equal', '/reports/123')
+    cy.contains('button', /^Action$/).click()
+    cy.contains('[role="menuitem"]', 'Reviewed workflow').should('be.visible')
+    cy.get('@customActionSettings.all').should('have.length', 2)
   })
   it('removes management controls after role loss', () => {
     cy.intercept('GET', `${SERVER_URL}/tools.ozone.server.getConfig*`, {
@@ -843,8 +862,22 @@ describe('Settings custom actions', () => {
       configuration = null
     })
     cy.visit(`${origin}/reports/123`)
+    cy.wait('@customActionSettings')
     cy.contains('button', /^Action$/).click()
     cy.contains('[role="menuitem"]', 'Label').should('be.visible')
     cy.contains('[role="menuitem"]', workflow.name).should('not.exist')
+    cy.contains('button', /^Action$/).click()
+    cy.get('a[href="/configure"]').filter(':visible').first().click()
+    cy.get('#custom-actions-json').should(
+      'have.value',
+      JSON.stringify({ version: 1, customActions: [] }, null, 2),
+    )
+    cy.go('back')
+    cy.location('pathname').should('equal', '/reports/123')
+    cy.contains('button', /^Action$/).click()
+    cy.contains('[role="menuitem"]', 'Label').should('be.visible')
+    cy.contains('[role="menuitem"]', workflow.name).should('not.exist')
+    cy.contains('Loading custom actions…').should('not.exist')
+    cy.get('@customActionSettings.all').should('have.length', 1)
   })
 })
