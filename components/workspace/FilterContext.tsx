@@ -26,6 +26,16 @@ const toggleItemCheck = (item: string, select: boolean = true) => {
   }
 }
 
+const toggleAllItemsCheck = (select: boolean) => {
+  document
+    .querySelectorAll<HTMLInputElement>(
+      '#mod-workspace input[type="checkbox"][name="workspaceItem"]',
+    )
+    .forEach((checkbox) => {
+      checkbox.checked = select
+    })
+}
+
 export const FilterProvider = ({
   children,
   listData,
@@ -37,19 +47,9 @@ export const FilterProvider = ({
     { filters: [] },
   ])
 
-  const selectAll = () => {
-    if (!listData) return
-    Object.keys(listData).forEach((uri) => {
-      toggleItemCheck(uri)
-    })
-  }
+  const selectAll = () => toggleAllItemsCheck(true)
 
-  const unselectAll = () => {
-    if (!listData) return
-    Object.keys(listData).forEach((uri) => {
-      toggleItemCheck(uri, false)
-    })
-  }
+  const unselectAll = () => toggleAllItemsCheck(false)
 
   const toggleFilteredItems = (select: boolean) => {
     if (!listData) return
