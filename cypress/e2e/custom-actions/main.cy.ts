@@ -48,6 +48,7 @@ describe('Settings custom actions', () => {
     })
     cy.intercept('GET', '**/xrpc/tools.ozone.setting.listOptions*', (req) => {
       const keys = new URL(req.url).searchParams.getAll('keys')
+      if (keys.includes(KEY)) req.alias = 'customActionSettings'
       req.reply({
         options:
           keys.includes(KEY) && configuration
@@ -117,21 +118,14 @@ describe('Settings custom actions', () => {
         statusCode: 200,
         body: auth.getLabelerRecordResponse,
       })
-      cy.intercept(
-        'GET',
-        '**/xrpc/com.atproto.server.getSession',
-        auth.createSessionResponse,
-      )
-      cy.intercept(
-        'POST',
-        '**/xrpc/com.atproto.server.refreshSession',
-        auth.createSessionResponse,
-      )
       cy.visit(origin)
       cy.login(auth)
     })
   })
   function selectCustom() {
+    cy.wait('@customActionSettings')
+      .its('response.statusCode')
+      .should('eq', 200)
     cy.contains('button', /^Action$|^Acknowledge$/)
       .first()
       .click()
