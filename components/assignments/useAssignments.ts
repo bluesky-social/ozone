@@ -4,6 +4,7 @@ import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'react-toastify'
 import { MINUTE } from '@/lib/util'
+import { refreshQueueAccess } from '@/queues/access'
 import {
   ToolsOzoneQueueAssignModerator,
   ToolsOzoneQueueDefs,
@@ -44,8 +45,11 @@ export const useAssignQueue = () => {
       return data
     },
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [ASSIGNMENTS_QUERY_KEY] })
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: [ASSIGNMENTS_QUERY_KEY] }),
+          refreshQueueAccess(queryClient),
+        ])
       },
       onError: (err) => {
         toast.error(displayError(err))
@@ -65,8 +69,11 @@ export const useUnassignQueue = (options?: {
       await labelerAgent.tools.ozone.queue.unassignModerator(input)
     },
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: [ASSIGNMENTS_QUERY_KEY] })
+      onSuccess: async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: [ASSIGNMENTS_QUERY_KEY] }),
+          refreshQueueAccess(queryClient),
+        ])
         options?.onSuccess?.()
       },
       onError: (err) => {

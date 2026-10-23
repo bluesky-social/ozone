@@ -1,6 +1,12 @@
 /// <reference types="cypress" />"
 
-import { HANDLE_RESOLVER_URL, SERVER_URL } from '../../support/api'
+import {
+  HANDLE_RESOLVER_URL,
+  mockLabelerServiceRecordResponse,
+  mockOzoneDidDataResponse,
+  mockOzoneMetaResponse,
+  SERVER_URL,
+} from '../../support/api'
 
 describe('Command Palette', () => {
   let statusesFixture
@@ -24,18 +30,29 @@ describe('Command Palette', () => {
     'https://bsky.app/profile/alice.test/post/3kozf56ocx32a'
 
   beforeEach(() => {
-    cy.visit('http://127.0.0.1:3000')
-    cy.fixture('statuses.json').then((data) => {
-      statusesFixture = data
-      mockModerationReportsResponse(statusesFixture.multiCidLabeledProfile)
-    })
     cy.fixture('auth.json').then((data) => {
       authFixture = data
-      cy.login(data)
+      mockOzoneMetaResponse({ statusCode: 200, body: data.ozoneMetaResponse })
+      mockOzoneDidDataResponse({
+        statusCode: 200,
+        body: data.ozoneDidDataResponse,
+      })
+      mockLabelerServiceRecordResponse({
+        statusCode: 200,
+        body: data.getLabelerRecordResponse,
+      })
       mockResolveHandleResponse({
         statusCode: 200,
         body: data.createResolveHandleResponse,
       })
+    })
+    cy.fixture('statuses.json').then((data) => {
+      statusesFixture = data
+      mockModerationReportsResponse(statusesFixture.multiCidLabeledProfile)
+    })
+    cy.visit('http://127.0.0.1:3000')
+    cy.then(() => {
+      cy.login(authFixture)
     })
     cy.location('pathname').should('eq', '/reports')
     cy.wait('@moderationReports')

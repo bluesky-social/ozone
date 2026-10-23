@@ -22,6 +22,16 @@ services:
     image: ghcr.io/bluesky-social/ozone:0.1
     network_mode: host
     restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "fetch('http://127.0.0.1:' + (process.env.OZONE_PORT || '3000') + '/xrpc/_health', { signal: AbortSignal.timeout(4000) }).then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"
+      interval: 10s
+      timeout: 5s
+      start_period: 60s
+      retries: 12
     depends_on:
       postgres:
         condition: service_healthy

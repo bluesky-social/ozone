@@ -1,6 +1,7 @@
 'use client'
 import { ActionButton, ButtonGroup } from '@/common/buttons'
 import { DataField } from '@/common/DataField'
+import { ProfileLinks } from '@/common/profileLinks/ProfileLinks'
 import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { EmptyDataset } from '@/common/feeds/EmptyFeed'
 import { CheckboxesModal } from '@/common/modals/checkboxes'
@@ -748,6 +749,16 @@ function Details({
             </dt>
             <dd className="mt-1 max-w-prose space-y-5 text-sm text-gray-900 dark:text-gray-200">
               {profile.description}
+            </dd>
+          </div>
+        )}
+        {!!profile?.links?.length && (
+          <div className="sm:col-span-2">
+            <dt className="text-sm font-medium text-gray-500 dark:text-gray-50">
+              Profile links
+            </dt>
+            <dd>
+              <ProfileLinks links={profile.links} />
             </dd>
           </div>
         )}

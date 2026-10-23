@@ -12,6 +12,7 @@ import { AssigneeSearchPopover } from './AssigneeSearchPopover'
 
 interface QueueAssignControlsProps {
   queueId: number
+  strictAccess?: boolean
   assignments: ToolsOzoneQueueDefs.AssignmentView[]
 }
 
@@ -19,6 +20,7 @@ interface QueueAssignControlsProps {
 // admins, or a self-assign shortcut for moderators with queue permissions.
 export function QueueAssignControls({
   queueId,
+  strictAccess = false,
   assignments,
 }: QueueAssignControlsProps) {
   const canManageQueues = usePermission('canManageQueues')
@@ -29,7 +31,8 @@ export function QueueAssignControls({
   const { mutate: assignQueue } = useAssignQueue()
 
   const isAssignedToMe = assignments.some((a) => a.did === myDid)
-  const showAssignSelf = !isAdmin && !isAssignedToMe && canManageQueues && myDid
+  const showAssignSelf =
+    !strictAccess && !isAdmin && !isAssignedToMe && canManageQueues && myDid
 
   if (isAdmin) {
     return (

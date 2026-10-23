@@ -4,11 +4,16 @@ import {
   usePathname,
   useSearchParams,
 } from 'next/navigation'
-import { useInfiniteQuery } from '@tanstack/react-query'
+import { useInfiniteQuery, useQueryClient } from '@tanstack/react-query'
 import { ToolsOzoneReportQueryReports } from '@atproto/api'
 import { useFluentReportSearchParams } from './useFluentReportSearch'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { persistReportListIds } from './useReports'
+import {
+  clearQueryData,
+  isQueueUnavailable,
+  refreshQueueList,
+} from '@/queues/access'
 
 const getSortParams = (params: ReadonlyURLSearchParams) => {
   let sortField = params.get('sortField')
@@ -25,8 +30,15 @@ const getSortParams = (params: ReadonlyURLSearchParams) => {
   return { sortField, sortDirection }
 }
 
-export function useReportsQuery(did?: string) {
+export function useReportsQuery({
+  did,
+  subject: fixedSubject,
+}: {
+  did?: string
+  subject?: string
+} = {}) {
   const labelerAgent = useLabelerAgent()
+  const queryClient = useQueryClient()
   const params = useSearchParams()
 
   const subjectType = params.get('subjectType')
@@ -39,28 +51,38 @@ export function useReportsQuery(did?: string) {
   const { sortField, sortDirection } = getSortParams(params)
   const { lastReviewedBy, subject: searchSubject } =
     useFluentReportSearchParams()
-  // Profile report lists are scoped by the resolved repository DID, never a search term.
-  const subject = did ? undefined : searchSubject
+  // Account and record report lists keep their route scope when filters change.
+  const subject = fixedSubject ?? (did ? undefined : searchSubject)
 
+  const queryKey = [
+    'betaReports',
+    {
+      did,
+      subject,
+      sortField,
+      sortDirection,
+      status,
+      reportTypes,
+      lastReviewedBy,
+      subjectType,
+      collections,
+      queueId,
+      mute,
+      assignedTo,
+    },
+  ]
   const query = useInfiniteQuery({
-    queryKey: [
-      'betaReports',
-      {
-        did,
-        subject,
-        sortField,
-        sortDirection,
-        status,
-        reportTypes,
-        lastReviewedBy,
-        subjectType,
-        collections,
-        queueId,
-        mute,
-        assignedTo,
-      },
-    ],
-    queryFn: async ({ pageParam }) => {
+    queryKey,
+    refetchOnMount: 'always',
+    retry: (count, error) => !isQueueUnavailable(error) && count < 2,
+    onError: (error) => {
+      if (isQueueUnavailable(error)) {
+        clearQueryData(queryClient, queryKey)
+        persistReportListIds([])
+        void refreshQueueList(queryClient)
+      }
+    },
+    queryFn: async ({ pageParam, signal }) => {
       const queryParams: ToolsOzoneReportQueryReports.QueryParams = {
         cursor: pageParam,
         status,
@@ -113,17 +135,23 @@ export function useReportsQuery(did?: string) {
         queryParams.isMuted = false
       }
 
-      const { data } = await labelerAgent.tools.ozone.report.queryReports({
-        limit: 100,
-        ...queryParams,
-      })
+      const { data } = await labelerAgent.tools.ozone.report.queryReports(
+        {
+          limit: 100,
+          ...queryParams,
+        },
+        { signal },
+      )
 
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
   })
 
-  const reports = query.data?.pages.flatMap((page) => page.reports) ?? []
+  const reports =
+    query.isError || (queueId && !query.isFetchedAfterMount)
+      ? []
+      : (query.data?.pages.flatMap((page) => page.reports) ?? [])
   const reportIdsKey = reports.map((report) => report.id).join(',')
   const hasData = !!query.data
 

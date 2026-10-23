@@ -1,4 +1,6 @@
-export const API_URL = 'http://localhost:2583'
+// Keep mocked API requests on the app origin, matching the fixture service URLs.
+// This avoids cross-origin preflights to a port with no backend in CI.
+export const API_URL = 'http://127.0.0.1:3000'
 export const SERVER_URL = `${API_URL}/xrpc`
 export const PLC_URL = 'https://plc.directory'
 export const HANDLE_RESOLVER_URL = 'https://api.bsky.app/xrpc'
