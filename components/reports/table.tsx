@@ -249,6 +249,16 @@ function ReportRow({
   const reporterHandle = getHandleFromSubjectView(report.reporter)
   const reporterStatus = report.reporter.status
   const reportUrl = `/reports/${report.id}`
+  const queueLink = report.queue ? (
+    <Link
+      href={`/reports/beta?queueId=${report.queue.id}`}
+      className="text-indigo-600 hover:underline dark:text-indigo-300 [overflow-wrap:anywhere]"
+    >
+      {report.queue.name}
+    </Link>
+  ) : (
+    'No queue'
+  )
 
   // Labels and tags for the Subject column
   const isAccountSubject = report.subject.subject.startsWith('did:')
@@ -301,6 +311,12 @@ function ReportRow({
             <dt>Status:</dt>
             <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
               {report.status}
+            </dd>
+          </div>
+          <div className="flex items-baseline flex-row gap-1">
+            <dt>Queue:</dt>
+            <dd className="min-w-0 text-gray-700 dark:text-gray-100">
+              {queueLink}
             </dd>
           </div>
           {report.isMuted && (
@@ -385,6 +401,9 @@ function ReportRow({
           <PriorityBadge report={report} />
           <MutedBadge isMuted={report.isMuted} />
           <AutomatedBadge report={report} />
+        </div>
+        <div className="mb-1 text-xs text-gray-500 dark:text-gray-400">
+          Queue: {queueLink}
         </div>
         {!!report.comment && (
           <div className="mb-1">
