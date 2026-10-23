@@ -188,6 +188,7 @@ function Form(
     handleEmailSubmit,
     handlePolicySelect,
     handleSeverityLevelSelect,
+    handleManualSeverityLevelSelect,
     targetServices,
     setTargetServices,
     config,
@@ -203,6 +204,9 @@ function Form(
     emailSubjectField,
     selectedAgeAssuranceState,
     setSelectedAgeAssuranceState,
+    showRecordAgeWarning,
+    recordAgeWarningText,
+    preferredSeverityLevelName,
   } = useQuickAction({
     onCancel,
     onSubmit,
@@ -488,6 +492,12 @@ function Form(
                       policyDetails={policyDetails}
                       handlePolicySelect={handlePolicySelect}
                       handleSeverityLevelSelect={handleSeverityLevelSelect}
+                      preferredDefaultSeverityLevel={
+                        preferredSeverityLevelName
+                      }
+                      onSeverityLevelUserSelect={
+                        handleManualSeverityLevelSelect
+                      }
                       severityLevelStrikeCount={severityLevelStrikeCount}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       currentStrikes={currentStrikes}
@@ -794,6 +804,16 @@ function Form(
                     </div>
                   )}
 
+                  {showRecordAgeWarning && (
+                    <div className="my-2">
+                      <Alert
+                        showIcon
+                        type="warning"
+                        title="Record age notice"
+                        body={recordAgeWarningText}
+                      />
+                    </div>
+                  )}
                   {!isEmailEvent && (
                     <div className="mt-auto flex flex-row justify-between">
                       <div>

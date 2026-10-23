@@ -60,9 +60,10 @@ export function ModeratorBadge({
       </Link>
       {onRemove && (
         <button
+          type="button"
           onClick={onRemove}
           title="Unassign moderator"
-          className="hidden group-hover/badge:inline-flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-100"
+          className="hidden group-hover/badge:inline-flex group-focus-within/badge:inline-flex items-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-100"
         >
           <XMarkIcon className="h-3 w-3" />
         </button>

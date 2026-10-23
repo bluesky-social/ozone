@@ -38,6 +38,8 @@ import {
 import type { JSX } from 'react'
 import { VerificationBadge } from 'components/verification/Badge'
 import { RecordWithSnapshots } from './snapshots/RecordWithSnapshots'
+import { ProfileLinkCard } from './profileLinks/ProfileLinkCard'
+import { StandardDocumentCard } from './standardDocuments/StandardDocumentCard'
 
 export function RecordCard(props: {
   uri: string
@@ -73,6 +75,32 @@ export function RecordCard(props: {
   }
   if (parsed.collection === CollectionId.StarterPack) {
     return <StarterPackRecordCard uri={uri} />
+  }
+  if (parsed.collection === CollectionId.ProfileLink) {
+    return (
+      <RecordWithSnapshots key={uri} uri={uri} className="pl-0">
+        {(snapshot) => (
+          <div className="space-y-3">
+            {snapshot ? (
+              <ProfileLinkCard value={snapshot.value} />
+            ) : (
+              <BaseRecordCard
+                uri={uri}
+                renderRecord={(record) => (
+                  <ProfileLinkCard value={record.value} />
+                )}
+              />
+            )}
+            <RepoCard did={parsed.did} />
+          </div>
+        )}
+      </RecordWithSnapshots>
+    )
+  }
+  if (parsed.collection === CollectionId.StandardDocument) {
+    return (
+      <StandardDocumentRecordCard key={uri} uri={uri} authorDid={parsed.did} />
+    )
   }
   if (parsed.collection === CollectionId.Convo) {
     return (
@@ -299,6 +327,70 @@ function PostCard({
   )
 }
 
+function useRecordCardQuery(uri: string) {
+  const labelerAgent = useLabelerAgent()
+  return useQuery({
+    retry: false,
+    queryKey: ['recordCard', { uri }],
+    queryFn: async () => {
+      const { data } = await labelerAgent.tools.ozone.moderation.getRecord({
+        uri,
+      })
+      return data
+    },
+  })
+}
+
+function StandardDocumentRecordCard({
+  uri,
+  authorDid,
+}: {
+  uri: string
+  authorDid: string
+}) {
+  const { data: record, error } = useRecordCardQuery(uri)
+
+  return (
+    <RecordWithSnapshots uri={uri} className="pl-0">
+      {(snapshot) => {
+        const selected = snapshot ?? (error ? undefined : record)
+        // Keep current moderation labels when viewing historical content. If the
+        // record was deleted, use any labels retained with the archived view.
+        const labels = record?.labels ?? snapshot?.ozoneValue?.labels
+        const labelValues = Array.isArray(labels)
+          ? labels
+              .filter(
+                (label) => label && typeof label.val === 'string' && !label.neg,
+              )
+              .map(({ val }) => val)
+          : []
+        return (
+          <>
+            <RepoCard did={authorDid} />
+            {selected ? (
+              <StandardDocumentCard
+                uri={uri}
+                cid={selected.cid}
+                value={selected.value}
+                authorDid={authorDid}
+                labels={labelValues}
+              />
+            ) : error ? (
+              <LoadingFailedDense
+                className="text-gray-600 mb-2"
+                error={error}
+                noPadding
+              />
+            ) : (
+              <LoadingDense />
+            )}
+          </>
+        )
+      }}
+    </RecordWithSnapshots>
+  )
+}
+
 function BaseRecordCard({
   uri,
   renderRecord,
@@ -310,18 +402,7 @@ function BaseRecordCard({
   ) => JSX.Element
   fallbackRecord?: ToolsOzoneModerationDefs.RecordViewDetail
 }) {
-  const labelerAgent = useLabelerAgent()
-
-  const { data: record, error } = useQuery({
-    retry: false,
-    queryKey: ['recordCard', { uri }],
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.moderation.getRecord({
-        uri,
-      })
-      return data
-    },
-  })
+  const { data: record, error } = useRecordCardQuery(uri)
   if (error) {
     // If we have a fallback record (e.g., from snapshot), use it instead of showing error
     if (fallbackRecord) {

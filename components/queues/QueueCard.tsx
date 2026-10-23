@@ -4,16 +4,23 @@ import { useQueueAssignments } from '@/assignments/useAssignments'
 import { Card } from '@/common/Card'
 import { Hover } from '@/common/Hover'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
-import { ReasonBadge } from '@/reports/ReasonBadge'
-import { StatValues } from '@/reports/stats/Stats'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
+import { OverviewStats } from '@/reports/stats/OverviewStats'
+import { normalizeStats } from '@/reports/stats/reportStats'
 import Link from 'next/link'
 import { ReactNode } from 'react'
+import { matchesAutomatically, MatchSummary } from './MatchSummary'
+import type { ToolsOzoneQueueDefs } from '@atproto/api'
+import { LockClosedIcon } from '@heroicons/react/24/outline'
+import { QueueHelp, QUEUE_HELP } from './QueueHelp'
 
 export type QueueCardField =
   | Exclude<
       keyof ToolsOzoneQueueDefs.QueueView,
-      'subjectTypes' | 'collection' | 'reportTypes'
+      | 'subjectTypes'
+      | 'collection'
+      | 'reportTypes'
+      | 'reporterTags'
+      | 'accountTags'
     >
   | 'filters'
 
@@ -33,8 +40,7 @@ export function QueueCard({
     queueIds: [queue.id],
   })
 
-  const hasNoCriteria =
-    !queue.subjectTypes?.length && !queue.reportTypes?.length
+  const manualOnly = !matchesAutomatically(queue)
 
   const assigneeCount = assignments?.length ?? 0
 
@@ -45,65 +51,16 @@ export function QueueCard({
       `${subjectCount} subject type${subjectCount === 1 ? '' : 's'}`,
     reportCount > 0 &&
       `${reportCount} report type${reportCount === 1 ? '' : 's'}`,
+    !!queue.reporterTags?.length && 'Reporter tags',
+    !!queue.accountTags?.length && 'Account tags',
   ]
     .filter(Boolean)
     .join(' · ')
 
-  const filters = () => {
-    if (hasNoCriteria) {
-      return (
-        <p className="text-xs text-gray-500 dark:text-gray-400">
-          This queue has no matching criteria. Reports are never auto-matched to
-          it and only land here when assigned explicitly.
-        </p>
-      )
-    }
-
-    return (
-      <>
-        <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
-            Subject Types
-          </p>
-          <div className="flex flex-wrap items-center gap-1">
-            {queue.subjectTypes?.map((type) => (
-              <span
-                key={type}
-                className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-blue-50 text-blue-700 dark:bg-blue-900 dark:text-blue-200"
-              >
-                {type}
-              </span>
-            ))}
-          </div>
-        </div>
-        {!!queue.collection && (
-          <div className="flex flex-col gap-1">
-            <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              Collection
-            </p>
-            <code className="text-xs bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-1.5 py-0.5 rounded w-fit">
-              {queue.collection}
-            </code>
-          </div>
-        )}
-        <div className="flex flex-col gap-1">
-          <p className="text-[11px] font-medium uppercase tracking-wide text-gray-400 dark:text-gray-500">
-            Report Types
-          </p>
-          <div className="flex flex-wrap items-center gap-1">
-            {queue.reportTypes?.map((type) => (
-              <ReasonBadge key={type} reasonType={type} />
-            ))}
-          </div>
-        </div>
-      </>
-    )
-  }
-
   return (
     <Card data-cy="queue-card" className="relative px-4 py-3">
-      <div className="grid grid-cols-[1fr_1fr_auto] lg:grid-cols-[1fr_1fr_1fr_auto] gap-x-4 items-start text-sm">
-        {/* Column 1 */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] items-start text-sm">
+        {/* Queue details */}
         <div className="space-y-2 min-w-0">
           <div className="flex items-center gap-2">
             <h3
@@ -117,6 +74,14 @@ export function QueueCard({
                 {queue.name}
               </Link>
             </h3>
+            {queue.strictAccess && (
+              <QueueHelp
+                label="Strict access"
+                description={QUEUE_HELP.strictIndicator}
+              >
+                <LockClosedIcon className="h-4 w-4" aria-hidden="true" />
+              </QueueHelp>
+            )}
             <span
               className={`shrink-0 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
                 queue.enabled
@@ -128,20 +93,17 @@ export function QueueCard({
             </span>
           </div>
           {!hiddenFields?.includes('filters') && (
-            <Hover content={filters()}>
-              <div className="inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
+            <Hover
+              content={<MatchSummary {...queue} />}
+              className="max-w-full"
+              panelClassName="max-h-96 overflow-y-auto"
+            >
+              <div className="inline-flex max-w-full items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/40 px-2.5 py-1 text-xs">
                 <span className="text-gray-500 dark:text-gray-400">
-                  {hasNoCriteria ? 'None' : filterSummary}
+                  {manualOnly ? 'Explicit routing only' : filterSummary}
                 </span>
               </div>
             </Hover>
-          )}
-        </div>
-
-        {/* Column 2 */}
-        <div className="flex flex-col">
-          {!hiddenFields?.includes('stats') && (
-            <StatValues stats={queue.stats} className="flex-col items-start" />
           )}
           {!hideViewReports && (
             <Link
@@ -153,7 +115,7 @@ export function QueueCard({
           )}
         </div>
 
-        {/* Column 3 */}
+        {/* Assignments */}
         <div className="space-y-2">
           <div
             className="flex flex-col gap-1"
@@ -170,6 +132,7 @@ export function QueueCard({
                 <div data-cy="queue-assignees">
                   <QueueAssigneeStatus
                     queueId={queue.id}
+                    strictAccess={queue.strictAccess}
                     assignments={assignments ?? []}
                   />
                 </div>
@@ -190,6 +153,7 @@ export function QueueCard({
             </Hover>
             <QueueAssignControls
               queueId={queue.id}
+              strictAccess={queue.strictAccess}
               assignments={assignments ?? []}
             />
           </div>
@@ -198,6 +162,15 @@ export function QueueCard({
         {/* Actions */}
         {actions && <div className="w-fit">{actions}</div>}
       </div>
+      {!hiddenFields?.includes('stats') && (
+        <div className="mt-3 border-t border-gray-100 pt-3 dark:border-slate-700">
+          <OverviewStats
+            stats={normalizeStats(queue.stats)}
+            layout="compact"
+            periodLabel="Today"
+          />
+        </div>
+      )}
     </Card>
   )
 }

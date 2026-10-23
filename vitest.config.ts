@@ -2,13 +2,11 @@ import { fileURLToPath } from 'node:url'
 import { defineConfig } from 'vitest/config'
 
 export default defineConfig({
+  esbuild: { jsx: 'automatic' },
   resolve: {
     alias: {
-      '@/reports': fileURLToPath(
-        new URL('components/reports', import.meta.url),
-      ),
-      '@/lib': fileURLToPath(new URL('lib', import.meta.url)),
-      '@': fileURLToPath(new URL('.', import.meta.url)),
+      '@/lib': fileURLToPath(new URL('./lib', import.meta.url)),
+      '@': fileURLToPath(new URL('./components', import.meta.url)),
     },
   },
   test: {

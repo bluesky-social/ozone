@@ -1,13 +1,30 @@
 /// <reference types="cypress" />"
 
-import { API_URL, mockAuthResponse } from '../../support/api'
+import {
+  API_URL,
+  mockAuthResponse,
+  mockLabelerServiceRecordResponse,
+  mockOzoneDidDataResponse,
+  mockOzoneMetaResponse,
+} from '../../support/api'
 
 describe('Authentication', () => {
   let authFixture
 
   beforeEach(() => {
+    cy.fixture('auth.json').then((data) => {
+      authFixture = data
+      mockOzoneMetaResponse({ statusCode: 200, body: data.ozoneMetaResponse })
+      mockOzoneDidDataResponse({
+        statusCode: 200,
+        body: data.ozoneDidDataResponse,
+      })
+      mockLabelerServiceRecordResponse({
+        statusCode: 200,
+        body: data.getLabelerRecordResponse,
+      })
+    })
     cy.visit('http://127.0.0.1:3000')
-    cy.fixture('auth.json').then((data) => (authFixture = data))
   })
 
   it('Displays error when authentication fails', () => {
@@ -21,7 +38,7 @@ describe('Authentication', () => {
       },
     })
 
-    cy.get('#service-url').clear()
+    cy.get('#service-url', { timeout: 10000 }).should('be.visible').clear()
     cy.get('#service-url').type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')

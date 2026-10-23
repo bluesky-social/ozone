@@ -1,12 +1,19 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useEffect } from 'react'
 import {
   ToolsOzoneQueueCreateQueue,
   ToolsOzoneQueueDeleteQueue,
   ToolsOzoneQueueRouteReports,
   ToolsOzoneQueueUpdateQueue,
 } from '@atproto/api'
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQuery,
+  useQueryClient,
+} from '@tanstack/react-query'
 import { toast } from 'react-toastify'
+import { refreshQueueAccess } from './access'
 
 export type QueueListFilters = {
   enabled?: boolean
@@ -16,39 +23,64 @@ export type QueueListFilters = {
   limit?: number
 }
 
-export const useQueueList = (filters?: QueueListFilters) => {
+export type CreateQueueInput = ToolsOzoneQueueCreateQueue.InputSchema
+
+export type UpdateQueueInput = ToolsOzoneQueueUpdateQueue.InputSchema
+
+export const useQueueList = (
+  filters?: QueueListFilters,
+  options: { refetchInterval?: number } = {},
+) => {
   const labelerAgent = useLabelerAgent()
 
-  return useInfiniteQuery({
+  const query = useInfiniteQuery({
+    ...options,
     queryKey: ['queues', filters],
-    queryFn: async ({ pageParam }) => {
-      const { data } = await labelerAgent.tools.ozone.queue.listQueues({
-        limit: 25,
-        cursor: pageParam,
-        ...filters,
-      })
+    queryFn: async ({ pageParam, signal }) => {
+      const { data } = await labelerAgent.tools.ozone.queue.listQueues(
+        {
+          limit: 25,
+          cursor: pageParam,
+          ...filters,
+        },
+        { signal },
+      )
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,
-    staleTime: 10 * 60 * 1000, // 10 minutes
+    staleTime: 0,
+    refetchOnMount: 'always',
   })
+
+  return {
+    ...query,
+    data: query.isFetchedAfterMount && !query.isError ? query.data : undefined,
+    isLoading:
+      query.isLoading || (!query.isFetchedAfterMount && query.isFetching),
+  }
 }
 
 export const useQueueById = (id: number | null) => {
-  const { data, isLoading } = useQueueList()
+  const { data, isLoading, isFetching, hasNextPage, fetchNextPage } =
+    useQueueList()
+  const queue = data?.pages
+    .flatMap((page) => page.queues)
+    .find((q) => q.id === id)
+
+  useEffect(() => {
+    if (id !== null && id > 0 && !queue && hasNextPage && !isFetching) {
+      void fetchNextPage()
+    }
+  }, [id, queue, hasNextPage, isFetching, fetchNextPage])
 
   if (id === null || isNaN(id)) {
     return { queue: undefined, isLoading: false, notFound: false }
   }
 
-  const queue = data?.pages
-    .flatMap((page) => page.queues)
-    .find((q) => q.id === id)
-
   return {
     queue,
-    isLoading,
-    notFound: !isLoading && !queue,
+    isLoading: isLoading || (!queue && !!hasNextPage),
+    notFound: !isLoading && !hasNextPage && !queue,
   }
 }
 
@@ -58,7 +90,7 @@ export const useCreateQueue = () => {
 
   return useMutation({
     mutationKey: ['queues', 'create'],
-    mutationFn: async (input: ToolsOzoneQueueCreateQueue.InputSchema) => {
+    mutationFn: async (input: CreateQueueInput) => {
       const { data } = await labelerAgent.tools.ozone.queue.createQueue(input)
       return data
     },
@@ -82,12 +114,16 @@ export const useUpdateQueue = () => {
 
   return useMutation({
     mutationKey: ['queues', 'update'],
-    mutationFn: async (input: ToolsOzoneQueueUpdateQueue.InputSchema) => {
+    mutationFn: async (input: UpdateQueueInput) => {
       const { data } = await labelerAgent.tools.ozone.queue.updateQueue(input)
       return data
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['queues'] })
+    onSuccess: async (_data, input) => {
+      if (input.strictAccess !== undefined) {
+        await refreshQueueAccess(queryClient)
+      } else {
+        await queryClient.invalidateQueries({ queryKey: ['queues'] })
+      }
       toast.success('Queue updated successfully')
     },
     onError: (error) => {

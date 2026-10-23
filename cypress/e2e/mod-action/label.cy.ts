@@ -1,7 +1,10 @@
 /// <reference types="cypress" />"
 
 import {
+  mockLabelerServiceRecordResponse,
   mockModerationReportsResponse,
+  mockOzoneDidDataResponse,
+  mockOzoneMetaResponse,
   mockRepoResponse,
   SERVER_URL,
 } from '../../support/api'
@@ -12,18 +15,32 @@ describe('Mod Action -> Label', () => {
   let seedFixture
 
   beforeEach(() => {
-    cy.visit('http://127.0.0.1:3000')
+    cy.fixture('auth.json').then((data) => {
+      authFixture = data
+      mockOzoneMetaResponse({ statusCode: 200, body: data.ozoneMetaResponse })
+      mockOzoneDidDataResponse({
+        statusCode: 200,
+        body: data.ozoneDidDataResponse,
+      })
+      mockLabelerServiceRecordResponse({
+        statusCode: 200,
+        body: data.getLabelerRecordResponse,
+      })
+    })
     cy.fixture('statuses.json').then((data) => {
       statusesFixture = data
       mockModerationReportsResponse(statusesFixture.onlyRepo)
     })
     cy.fixture('seed.json').then((data) => {
-      seedFixture = data
+      seedFixture = structuredClone(data)
+      seedFixture.carla.repo.labels = seedFixture.carla.repo.labels.map(
+        (label) => ({ ...label, src: authFixture.ozoneDidDataResponse.did }),
+      )
       mockRepoResponse({ statusCode: 200, body: seedFixture.carla.repo })
     })
 
-    cy.fixture('auth.json').then((data) => {
-      authFixture = data
+    cy.visit('http://127.0.0.1:3000')
+    cy.then(() => {
       cy.login(authFixture)
     })
   })
@@ -43,8 +60,6 @@ describe('Mod Action -> Label', () => {
     cy.get(
       `[data-cy="label-selector-buttons"] span:contains("${NUDITY_LABEL}")`,
     ).click()
-    cy.get('#mod-action-panel button[type="submit"]').click()
-
     cy.intercept(
       'POST',
       `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
@@ -55,7 +70,7 @@ describe('Mod Action -> Label', () => {
         )
 
         req.reply({
-          statusCode: 204,
+          statusCode: 200,
           body: {
             id: 7,
             event: {
@@ -73,7 +88,9 @@ describe('Mod Action -> Label', () => {
           },
         })
       },
-    )
+    ).as('emitLabelEvent')
+    cy.get('#mod-action-panel button[type="submit"]').click()
+    cy.wait('@emitLabelEvent')
   })
 
   it('Allows searching and adding custom label', () => {
@@ -88,8 +105,6 @@ describe('Mod Action -> Label', () => {
       .contains(`Click here to add ${TEST_LABEL} as a label.`)
       .click()
     cy.get('[data-cy="label-selector-buttons"] span').contains(TEST_LABEL)
-    cy.get('#mod-action-panel button[type="submit"]').click()
-
     cy.intercept(
       'POST',
       `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
@@ -97,7 +112,7 @@ describe('Mod Action -> Label', () => {
         expect(req.body.event.createLabelVals).to.include(TEST_LABEL)
 
         req.reply({
-          statusCode: 204,
+          statusCode: 200,
           body: {
             id: 7,
             event: {
@@ -115,6 +130,8 @@ describe('Mod Action -> Label', () => {
           },
         })
       },
-    )
+    ).as('emitLabelEvent')
+    cy.get('#mod-action-panel button[type="submit"]').click()
+    cy.wait('@emitLabelEvent')
   })
 })

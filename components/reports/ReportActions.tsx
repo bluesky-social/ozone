@@ -8,6 +8,8 @@ import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
 import { Checkbox, Select, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
+import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
+import { getDidFromUri } from '@/lib/util'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
@@ -23,13 +25,23 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   CpuChipIcon,
+  EnvelopeIcon,
   NoSymbolIcon,
+  UserMinusIcon,
 } from '@heroicons/react/24/outline'
 import { formatDistanceToNow } from 'date-fns'
 import { useState } from 'react'
 import { toast } from 'react-toastify'
-import { useCloseReports, useCreateActivity, useListActivities } from './hooks'
+import { EmailComposer } from 'components/email/Composer'
+import type { EmailComposerData } from 'components/email/helpers'
+import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import {
+  useCloseReports,
+  useCreateActivity,
+  useListActivities,
+} from './hooks'
 import { useReports } from './useReports'
+import { getDefaultReportTypes } from './utils'
 
 export type ReportActionType = 'label' | 'takedown' | 'revert-takedown' | null
 
@@ -100,31 +112,46 @@ function TransitionConfirmPanel({
   action: ActionType
   report: ToolsOzoneReportDefs.ReportView
   onDone: () => void
-  onResolveAppeal?: () => Promise<void>
+  onResolveAppeal?: (comment?: string) => Promise<void>
 }) {
   const [note, setNote] = useState('')
-  const [scope, setScope] = useState<'current' | 'all' | 'types'>('current')
-  const [reportTypes, setReportTypes] = useState<string[]>(() =>
-    report.queue?.reportTypes?.length
-      ? report.queue.reportTypes
-      : report.reportType
-        ? [report.reportType]
-        : [],
+  const [scope, setScope] = useState<'current' | 'all' | 'types'>(() =>
+    report.queue?.reportTypes?.length &&
+    getDefaultReportTypes(report).includes(report.reportType)
+      ? 'types'
+      : 'current',
   )
+  const [reportTypes, setReportTypes] = useState<string[]>(() =>
+    getDefaultReportTypes(report),
+  )
+  const [isResolving, setIsResolving] = useState(false)
   const createActivity = useCreateActivity()
   const closeReports = useCloseReports()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
   const isBulkNoAction = action === 'no-action' && scope !== 'current'
-  const isPending = createActivity.isPending || closeReports.isPending
+  const isPending =
+    isResolving || createActivity.isPending || closeReports.isPending
 
   const handleConfirm = async () => {
+    setIsResolving(true)
     try {
+      if (action === 'no-action') {
+        await onResolveAppeal?.(note.trim())
+      }
       if (isBulkNoAction) {
         const result = await closeReports.mutateAsync({
           subject: report.subject.subject,
           reportTypes: scope === 'types' ? reportTypes : undefined,
           internalNote: note.trim() || undefined,
         })
+        if (result.closedCount === 0) {
+          toast.info(
+            scope === 'types'
+              ? 'No open reports matched the selected types. Choose different types or close this report only.'
+              : 'No reports were closed for this subject.',
+          )
+          return
+        }
         toast.success(
           `Closed ${result.closedCount} ${result.closedCount === 1 ? 'report' : 'reports'} as no-action`,
         )
@@ -139,12 +166,11 @@ function TransitionConfirmPanel({
           internalNote: note.trim() || undefined,
         })
       }
-      if (action === 'no-action' && onResolveAppeal) {
-        await onResolveAppeal()
-      }
       onDone()
     } catch (e) {
       toast.error(`Error actioning: ${displayError(e)}`)
+    } finally {
+      setIsResolving(false)
     }
   }
 
@@ -192,7 +218,12 @@ function TransitionConfirmPanel({
         <ActionButton
           appearance="primary"
           size="sm"
-          disabled={isPending || (scope === 'types' && !reportTypes.length)}
+          disabled={
+            isPending ||
+            (action === 'no-action' &&
+              scope === 'types' &&
+              reportTypes.length === 0)
+          }
           onClick={handleConfirm}
         >
           {isPending ? 'Saving…' : confirmLabel}
@@ -267,30 +298,41 @@ export function ReportActionsBar({
   onActionSelect,
   subjectStatus,
   onResolveAppeal,
+  onSendEmail,
 }: {
   report: ToolsOzoneReportDefs.ReportView
   currentUserDid?: string
   selectedAction: ReportActionType
   onActionSelect: (action: ReportActionType) => void
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
-  onResolveAppeal?: () => Promise<void>
+  onResolveAppeal?: (comment?: string) => Promise<void>
+  onSendEmail?: (emailData: EmailComposerData) => Promise<void>
 }) {
   const custom = useCustomActionPanel(report.subject.subject, report)
   const customItems = customMenuItems(custom, () => {
     onActionSelect(null)
     setPendingAction(null)
     setShowNote(false)
+    setShowEmailComposer(false)
   })
   const { autoAdvance, setAutoAdvance, nextReportId } = useReports(report.id)
 
   const [pendingAction, setPendingAction] = useState<ActionType | null>(null)
   const [showNote, setShowNote] = useState(false)
+  const [showEmailComposer, setShowEmailComposer] = useState(false)
   const canLabel = usePermission('canLabel')
   const canTakedown = usePermission('canTakedown')
+  const canSendEmail = usePermission('canSendEmail')
   const isAppeal =
     report.reportType === ComAtprotoModerationDefs.REASONAPPEAL ||
     report.reportType === 'tools.ozone.report.defs#reasonAppeal'
   const isSubjectTakendown = !!subjectStatus?.takendown
+  const emailDid = report.subject.subject.startsWith('did:')
+    ? report.subject.subject
+    : getDidFromUri(report.subject.subject)
+  const { cantReceive: cantReceiveEmail } = useEmailRecipientStatus(
+    showEmailComposer ? emailDid : undefined,
+  )
 
   const status = report.status
   const canEscalate = canTransitionTo(status, 'escalated')
@@ -305,12 +347,14 @@ export function ReportActionsBar({
     custom.setSelection(null)
     onActionSelect(null)
     setShowNote(false)
+    setShowEmailComposer(false)
     setPendingAction((prev) => (prev === action ? null : action))
   }
 
   const handleNoteClick = () => {
     custom.setSelection(null)
     setPendingAction(null)
+    setShowEmailComposer(false)
     setShowNote((v) => !v)
   }
 
@@ -318,7 +362,16 @@ export function ReportActionsBar({
     custom.setSelection(null)
     setPendingAction(null)
     setShowNote(false)
+    setShowEmailComposer(false)
     onActionSelect(action)
+  }
+
+  const handleEmailClick = () => {
+    custom.setSelection(null)
+    setPendingAction(null)
+    setShowNote(false)
+    onActionSelect(null)
+    setShowEmailComposer((isOpen) => !isOpen)
   }
 
   const actionButtonText = selectedAction
@@ -440,6 +493,16 @@ export function ReportActionsBar({
             Re-open
           </ActionButton>
         )}
+        {isAppeal && canSendEmail && emailDid && onSendEmail && (
+          <ActionButton
+            appearance={showEmailComposer ? 'primary' : 'outlined'}
+            size="sm"
+            onClick={handleEmailClick}
+          >
+            <EnvelopeIcon className="h-3.5 w-3.5 mr-1" />
+            Email
+          </ActionButton>
+        )}
 
         <span className="flex-1" />
 
@@ -476,6 +539,40 @@ export function ReportActionsBar({
       {showNote && !pendingAction && (
         <NoteComposer reportId={report.id} onDone={() => setShowNote(false)} />
       )}
+
+      {showEmailComposer && emailDid && onSendEmail && (
+        <div className="mt-2 rounded-md bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="text-sm font-medium text-gray-800 dark:text-gray-100">
+              Email user
+            </h3>
+            <button
+              type="button"
+              className="text-xs text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+              onClick={() => setShowEmailComposer(false)}
+            >
+              Close
+            </button>
+          </div>
+          {cantReceiveEmail ? (
+            <p className="text-sm text-amber-700 dark:text-amber-300">
+              This user&apos;s account is hosted on a PDS that does not allow
+              sending emails.
+            </p>
+          ) : (
+            <EmailComposer
+              did={emailDid}
+              handleSubmit={async (emailData) => {
+                await toast.promise(onSendEmail(emailData), {
+                  pending: 'Sending email...',
+                  success: 'Email sent to user',
+                  error: 'Error sending email',
+                })
+              }}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }
@@ -499,10 +596,29 @@ function ActivityItem({
   const payload = (activity as unknown as { activity: ActivityPayload })
     .activity
   const activityType = payload?.$type ?? ''
-  const toStatus = ACTIVITY_TO_STATUS[activityType]
-  const isStateChange = !!toStatus
-  const noteText = (activity as unknown as { internalNote?: string })
-    .internalNote
+  const unassignment = ToolsOzoneReportDefs.isUnassignmentActivity(
+    activity.activity,
+  )
+    ? activity.activity
+    : undefined
+  const isUnassignment = !!unassignment
+  const toStatus = unassignment?.nextStatus ?? ACTIVITY_TO_STATUS[activityType]
+  const showStatus =
+    !!toStatus && (!isUnassignment || payload.previousStatus !== toStatus)
+  const unassignedFrom =
+    isUnassignment && typeof activity.meta?.unassignedFrom === 'string'
+      ? activity.meta.unassignedFrom
+      : undefined
+  const ActivityIcon = isUnassignment
+    ? UserMinusIcon
+    : showStatus
+      ? ArrowRightIcon
+      : ChatBubbleLeftIcon
+  const noteText =
+    unassignedFrom &&
+    activity.internalNote === `Report unassigned from ${unassignedFrom}.`
+      ? undefined
+      : activity.internalNote
   const timeAgo = formatDistanceToNow(new Date(activity.createdAt), {
     addSuffix: true,
   })
@@ -518,33 +634,35 @@ function ActivityItem({
       <div className="flex flex-col items-center">
         <div
           className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full ${
-            isStateChange
+            showStatus
               ? 'bg-blue-100 dark:bg-blue-900 text-blue-600 dark:text-blue-300'
               : 'bg-gray-100 dark:bg-gray-800 text-gray-500 dark:text-gray-400'
           }`}
         >
-          {isStateChange ? (
-            <ArrowRightIcon className="h-3.5 w-3.5" />
-          ) : (
-            <ChatBubbleLeftIcon className="h-3.5 w-3.5" />
-          )}
+          <ActivityIcon className="h-3.5 w-3.5" />
         </div>
       </div>
 
       <div className="flex-1 pb-4 min-w-0">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          {isStateChange && (
+          {isUnassignment && !showStatus && (
+            <span className="text-gray-500 dark:text-gray-400 font-medium">
+              Unassigned
+            </span>
+          )}
+          {showStatus && (
             <>
-              {payload.previousStatus && (
-                <>
-                  <StatusChip status={payload.previousStatus} />
-                  <ArrowRightIcon className="h-3 w-3 text-gray-400 shrink-0" />
-                </>
-              )}
+              {payload.previousStatus &&
+                payload.previousStatus !== toStatus && (
+                  <>
+                    <StatusChip status={payload.previousStatus} />
+                    <ArrowRightIcon className="h-3 w-3 text-gray-400 shrink-0" />
+                  </>
+                )}
               <StatusChip status={toStatus} />
             </>
           )}
-          {!isStateChange && (
+          {!showStatus && !isUnassignment && (
             <span className="text-gray-500 dark:text-gray-400 font-medium">
               Note
             </span>
@@ -557,6 +675,11 @@ function ActivityItem({
           )}
         </div>
 
+        {unassignedFrom && (
+          <div className="mt-0.5 flex flex-wrap items-center gap-1.5 text-base text-gray-700 dark:text-gray-300">
+            Unassigned from <ModeratorBadge did={unassignedFrom} />
+          </div>
+        )}
         {noteText && (
           <p className="mt-0.5 text-base text-gray-700 dark:text-gray-300 whitespace-pre-wrap break-words">
             {noteText}

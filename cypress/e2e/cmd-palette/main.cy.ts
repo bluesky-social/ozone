@@ -1,6 +1,12 @@
 /// <reference types="cypress" />"
 
-import { HANDLE_RESOLVER_URL, SERVER_URL } from '../../support/api'
+import {
+  HANDLE_RESOLVER_URL,
+  mockLabelerServiceRecordResponse,
+  mockOzoneDidDataResponse,
+  mockOzoneMetaResponse,
+  SERVER_URL,
+} from '../../support/api'
 
 describe('Command Palette', () => {
   let statusesFixture
@@ -10,7 +16,7 @@ describe('Command Palette', () => {
       'GET',
       `${SERVER_URL}/tools.ozone.moderation.queryStatuses*`,
       response,
-    )
+    ).as('moderationReports')
 
   const mockResolveHandleResponse = (response: Record<string, any>) =>
     cy.intercept(
@@ -24,41 +30,53 @@ describe('Command Palette', () => {
     'https://bsky.app/profile/alice.test/post/3kozf56ocx32a'
 
   beforeEach(() => {
-    cy.visit('http://127.0.0.1:3000')
-    cy.fixture('statuses.json').then((data) => {
-      statusesFixture = data
-      mockModerationReportsResponse(statusesFixture.multiCidLabeledProfile)
-    })
     cy.fixture('auth.json').then((data) => {
       authFixture = data
-      cy.login(data)
+      mockOzoneMetaResponse({ statusCode: 200, body: data.ozoneMetaResponse })
+      mockOzoneDidDataResponse({
+        statusCode: 200,
+        body: data.ozoneDidDataResponse,
+      })
+      mockLabelerServiceRecordResponse({
+        statusCode: 200,
+        body: data.getLabelerRecordResponse,
+      })
       mockResolveHandleResponse({
         statusCode: 200,
         body: data.createResolveHandleResponse,
       })
     })
+    cy.fixture('statuses.json').then((data) => {
+      statusesFixture = data
+      mockModerationReportsResponse(statusesFixture.multiCidLabeledProfile)
+    })
+    cy.visit('http://127.0.0.1:3000')
+    cy.then(() => {
+      cy.login(authFixture)
+    })
+    cy.location('pathname').should('eq', '/reports')
+    cy.wait('@moderationReports')
   })
 
   it('Shows post options from bsky app post url', () => {
-    cy.wait(500)
     cy.openCommandPalette(bskyPostUrlWithHandle)
-    cy.get('#kbar-listbox-item-1').contains('Take action on Post').click()
-    cy.wait(500)
-    cy.location('href').then((href) => {
+    cy.contains('#kbar-listbox [role="option"]', 'Take action on Post').click()
+    cy.location('href').should((href) => {
       expect(decodeURIComponent(href)).to.include(
-        `quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a`,
+        'quickOpen=at://did:plc:56ud7t6bqdkwblmzwmkcetst/app.bsky.feed.post/3kozf56ocx32a',
       )
     })
   })
 
   it('Shows user options from bsky app post url', () => {
-    cy.wait(500)
     cy.openCommandPalette(bskyPostUrlWithHandle)
-    cy.get('#kbar-listbox-item-2').contains('Take action on alice.test').click()
-    cy.wait(500)
-    cy.location('href').then((href) => {
+    cy.contains(
+      '#kbar-listbox [role="option"]',
+      'Take action on alice.test',
+    ).click()
+    cy.location('href').should((href) => {
       expect(decodeURIComponent(href)).to.include(
-        `quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst`,
+        'quickOpen=did:plc:56ud7t6bqdkwblmzwmkcetst',
       )
     })
   })

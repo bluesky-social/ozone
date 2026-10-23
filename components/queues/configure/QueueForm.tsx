@@ -2,81 +2,19 @@ import { ActionButton } from '@/common/buttons'
 import { Checkbox, FormLabel, Input, Textarea } from '@/common/forms'
 import { CollectionAutocomplete } from '../../common/CollectionAutocomplete'
 import { ConfirmationModal } from '@/common/modals/confirmation'
-import { ReasonBadge } from '@/reports/ReasonBadge'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
-import { ToolsOzoneQueueDefs } from '@atproto/api'
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { Tooltip } from '@/common/Tooltip'
 import { useCreateQueue, useUpdateQueue } from '../useQueues'
 import { ActionPoliciesSelector } from '@/reports/ModerationForm/ActionPolicySelector'
+import { LabelSelector } from '@/common/labels/Selector'
+import { useServerConfig } from '@/shell/ConfigurationContext'
+import { ToolsOzoneQueueDefs, ToolsOzoneTeamDefs } from '@atproto/api'
+import { reasonTypeOptions } from '@/reports/helpers/getType'
+import { QUEUE_HELP, QueueHelp } from '../QueueHelp'
 
-function MatchSummary({
-  subjectTypes,
-  collection,
-  reportTypes,
-}: {
-  subjectTypes: Set<string>
-  collection: string | undefined
-  reportTypes: string[]
-}) {
-  const subjectList = Array.from(subjectTypes)
-
-  if (subjectTypes.size === 0 || reportTypes.length === 0) {
-    return (
-      <div className="rounded-md bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 p-3 text-sm text-yellow-900 dark:text-yellow-200">
-        No reports will match this queue automatically. Reports must be routed
-        to this queue explicitly.
-      </div>
-    )
-  }
-
-  const nonRecordTypes = subjectList.filter((t) => t !== 'record')
-
-  return (
-    <div>
-      <h2 className="text-lg">Summary</h2>
-      <p className="mb-2 text-sm">How a report matches this queue:</p>
-      <div className="rounded-md bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 p-3 text-sm text-blue-900 dark:text-blue-200">
-        <div className="space-y-1">
-          <div>
-            <span>Report reason</span> is one of:
-            <div className="flex flex-wrap gap-1 mt-1 pl-3">
-              {reportTypes.map((t) => (
-                <ReasonBadge key={t} reasonType={t} />
-              ))}
-            </div>
-          </div>
-          <p className="pl-16 py-4 opacity-70">AND</p>
-          <div>
-            <span>Subject</span> is one of:
-            <ul className="list-disc list-inside pl-3 mt-0.5 space-y-0.5">
-              {nonRecordTypes.map((t) => (
-                <li key={t}>
-                  <strong>{t}</strong>
-                </li>
-              ))}
-              {subjectTypes.has('record') && (
-                <li>
-                  {collection ? (
-                    <span>
-                      {' '}
-                      <strong>record</strong> with collection{' '}
-                      <strong>{collection}</strong>
-                    </span>
-                  ) : (
-                    <span>
-                      <strong>record</strong>
-                    </span>
-                  )}
-                </li>
-              )}
-            </ul>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
+import { MatchSummary } from '../MatchSummary'
+import { parseQueueTags } from './matching'
 
 export function QueueForm({
   queue,
@@ -88,6 +26,7 @@ export function QueueForm({
   onSuccess: () => void
 }) {
   const isEditMode = !!queue
+  const isAdmin = useServerConfig().role === ToolsOzoneTeamDefs.ROLEADMIN
   const createMutation = useCreateQueue()
   const updateMutation = useUpdateQueue()
   const isLoading = createMutation.isLoading || updateMutation.isLoading
@@ -98,6 +37,12 @@ export function QueueForm({
     queue?.description,
   )
   const [showToggleDialog, setShowToggleDialog] = useState(false)
+  const initialStrictAccess = useRef(queue?.strictAccess ?? false).current
+  const [strictAccess, setStrictAccess] = useState(initialStrictAccess)
+  const strictAccessInput =
+    isAdmin && (!isEditMode || strictAccess !== initialStrictAccess)
+      ? { strictAccess }
+      : {}
   const [subjectTypes, setSubjectTypes] = useState<Set<string>>(
     new Set(queue?.subjectTypes ?? []),
   )
@@ -111,8 +56,19 @@ export function QueueForm({
   const [reportTypes, setReportTypes] = useState<string[]>(
     queue?.reportTypes ?? [],
   )
+  const [reporterTagsInput, setReporterTagsInput] = useState(
+    queue?.reporterTags?.join(', ') ?? '',
+  )
+  const [accountTagsInput, setAccountTagsInput] = useState(
+    queue?.accountTags?.join(', ') ?? '',
+  )
+  const reporterTags = parseQueueTags(reporterTagsInput)
+  const accountTags = parseQueueTags(accountTagsInput)
   const [recommendedPolicies, setRecommendedPolicies] = useState<string[]>(
     queue?.recommendedPolicies ?? [],
+  )
+  const [recommendedLabels, setRecommendedLabels] = useState<string[]>(
+    queue?.recommendedLabels ?? [],
   )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
@@ -124,6 +80,7 @@ export function QueueForm({
         name: queue.name,
         description: queue.description,
         recommendedPolicies,
+        recommendedLabels,
         enabled: !queue.enabled,
       },
       {
@@ -155,8 +112,11 @@ export function QueueForm({
     }
 
     if (!isEditMode) {
-      if (reportTypes.length > 25) {
-        newErrors.reportTypes = 'Maximum 25 report types allowed'
+      if (reporterTags.length > 25) {
+        newErrors.reporterTags = 'Maximum 25 reporter tags allowed'
+      }
+      if (accountTags.length > 25) {
+        newErrors.accountTags = 'Maximum 25 account tags allowed'
       }
     }
 
@@ -175,6 +135,8 @@ export function QueueForm({
           name,
           description,
           recommendedPolicies,
+          recommendedLabels,
+          ...strictAccessInput,
         },
         { onSuccess },
       )
@@ -185,8 +147,12 @@ export function QueueForm({
           description,
           subjectTypes: Array.from(subjectTypes),
           reportTypes,
+          reporterTags,
+          accountTags,
           collection: collectionSanitized,
           recommendedPolicies,
+          recommendedLabels,
+          ...strictAccessInput,
         },
         { onSuccess },
       )
@@ -194,14 +160,14 @@ export function QueueForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form id="queue-form" onSubmit={handleSubmit} className="space-y-4">
       {!isEditMode && (
         <p className="text-sm text-gray-400">
           Create a queue to route reports to. Matching criteria cannot be
-          modified after creation. To change the filtering logic (subject types,
-          report types, collection), create a new queue and migrate reports to
-          it. Leave the matching criteria empty to create a queue that only
-          receives reports routed to it explicitly.
+          modified after creation. To change the subjects, reasons, or tags,
+          create a new queue and migrate reports to it. Leave the matching
+          criteria empty to create a queue that only receives reports routed to
+          it explicitly.
         </p>
       )}
       <FormLabel label="Name" htmlFor="name" required className="mb-3">
@@ -219,6 +185,36 @@ export function QueueForm({
         )}
       </FormLabel>
 
+      <div>
+        <div className="flex items-center gap-2">
+          {isAdmin ? (
+            <Checkbox
+              id="strictAccess"
+              checked={strictAccess}
+              onChange={(event) => setStrictAccess(event.target.checked)}
+              label="Strict access"
+              aria-describedby="strictAccess-help"
+            />
+          ) : (
+            <span className="text-sm">
+              Strict access: {queue?.strictAccess ? 'Enabled' : 'Disabled'}
+            </span>
+          )}
+        </div>
+        <p
+          id="strictAccess-help"
+          className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+        >
+          Enabling this will only allow assigned moderators to access it. Admins
+          can always access it.
+        </p>
+        {!isAdmin && (
+          <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+            Only admins can change strict access.
+          </p>
+        )}
+      </div>
+
       <FormLabel label="Recommended takedown policies" className="mb-3">
         <ActionPoliciesSelector
           defaultPolicies={recommendedPolicies}
@@ -228,6 +224,20 @@ export function QueueForm({
         />
         <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
           These policies appear first when actioning reports in this queue.
+        </p>
+      </FormLabel>
+
+      <FormLabel label="Recommended labels" className="mb-3">
+        <LabelSelector
+          id="recommendedLabels"
+          name="recommendedLabels"
+          form="queue-form"
+          defaultLabels={recommendedLabels}
+          onChange={setRecommendedLabels}
+        />
+        <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+          These labels are recommended for this queue and route label appeals
+          here when no source queue is known.
         </p>
       </FormLabel>
 
@@ -314,23 +324,138 @@ export function QueueForm({
           </FormLabel>
 
           <FormLabel label="Report Type(s)" className="mb-3">
+            <div className="mb-2 flex gap-3 text-xs">
+              <button
+                type="button"
+                className="text-indigo-600 dark:text-teal-400 hover:underline"
+                onClick={() =>
+                  setReportTypes((selected) => [
+                    ...new Set([
+                      ...selected,
+                      ...Object.keys(reasonTypeOptions),
+                    ]),
+                  ])
+                }
+              >
+                Select all available types
+              </button>
+              <button
+                type="button"
+                className="text-indigo-600 dark:text-teal-400 hover:underline"
+                onClick={() => setReportTypes([])}
+              >
+                Clear selection
+              </button>
+            </div>
             <ReportTypeMultiselect
               value={reportTypes}
-              limit={25}
+              limit={Infinity}
               onChange={setReportTypes}
               data-cy="report-types-input"
             />
+            <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+              Only selected report types match, including when tags are
+              configured. Select every available type to cover all current
+              reasons. Leave empty for explicit routing only.
+            </p>
             {errors.reportTypes && (
               <p className="text-red-500 text-xs mt-1">{errors.reportTypes}</p>
             )}
           </FormLabel>
+
+          <FormLabel
+            label="Reporter tags"
+            htmlFor="reporterTags"
+            extraLabel={
+              <QueueHelp
+                id="reporterTags-tooltip"
+                label="About reporter tags"
+                description={QUEUE_HELP.reporterTags}
+              />
+            }
+          >
+            <Input
+              id="reporterTags"
+              name="reporterTags"
+              value={reporterTagsInput}
+              onChange={(e) => setReporterTagsInput(e.target.value)}
+              placeholder="Comma-separated tags"
+              className="block w-full"
+              aria-describedby="reporterTags-tooltip reporterTags-help"
+              aria-invalid={!!errors.reporterTags}
+            />
+            <p
+              id="reporterTags-help"
+              className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            >
+              Match any listed tag on the account submitting the report. Leave
+              empty for no reporter tag restriction. Maximum 25 tags.
+            </p>
+            {errors.reporterTags && (
+              <p role="alert" className="text-red-500 text-xs mt-1">
+                {errors.reporterTags}
+              </p>
+            )}
+          </FormLabel>
+
+          <FormLabel
+            label="Account tags"
+            htmlFor="accountTags"
+            extraLabel={
+              <QueueHelp
+                id="accountTags-tooltip"
+                label="About account tags"
+                description={QUEUE_HELP.accountTags}
+              />
+            }
+          >
+            <Input
+              id="accountTags"
+              name="accountTags"
+              value={accountTagsInput}
+              onChange={(e) => setAccountTagsInput(e.target.value)}
+              placeholder="Comma-separated tags"
+              className="block w-full"
+              aria-describedby="accountTags-tooltip accountTags-help"
+              aria-invalid={!!errors.accountTags}
+            />
+            <p
+              id="accountTags-help"
+              className="mt-1 text-xs text-gray-500 dark:text-gray-400"
+            >
+              Match tags on the account that is being reported against. For
+              content reports, use the author&apos;s account tags. Match any
+              listed tag; leave empty for no account tag restriction. Maximum 25
+              tags. If both tag lists are populated, both must match.
+            </p>
+            {errors.accountTags && (
+              <p role="alert" className="text-red-500 text-xs mt-1">
+                {errors.accountTags}
+              </p>
+            )}
+          </FormLabel>
+
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            All configured conditions must match. Tool destinations take
+            precedence. Otherwise, the lowest matching queue ID wins, regardless
+            of tags.
+          </p>
         </>
       )}
 
+      {isEditMode && (
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          Matching criteria are read-only. To change them, create a new queue
+          and migrate reports to it.
+        </p>
+      )}
+      <h2 className="text-lg">Matching criteria</h2>
       <MatchSummary
-        subjectTypes={subjectTypes}
+        subjectTypes={Array.from(subjectTypes)}
         collection={collectionSanitized}
         reportTypes={reportTypes}
+        reporterTags={reporterTags}
+        accountTags={accountTags}
       />
 
       <div className="flex gap-2 pt-2">

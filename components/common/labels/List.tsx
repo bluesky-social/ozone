@@ -1,4 +1,4 @@
-import { OZONE_SERVICE_DID } from '@/lib/constants'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { buildBlueSkyAppUrl, classNames } from '@/lib/util'
 import { AppBskyActorDefs, ComAtprotoLabelDefs } from '@atproto/api'
 import {
@@ -117,7 +117,8 @@ export const ModerationLabel = ({
 } & ComponentProps<'span'>) => {
   const { data: labelerServiceDef } = useLabelerDefinitionQuery(label.src)
   const labelGroups = useLabelGroups()
-  const isFromCurrentService = label.src === OZONE_SERVICE_DID
+  const { config } = useConfigurationContext()
+  const isFromCurrentService = label.src === config.did
 
   const labelVal = toLabelVal(label, recordAuthorDid)
   const isSelfLabeled = isSelfLabel(labelVal)

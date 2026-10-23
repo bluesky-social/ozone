@@ -28,9 +28,8 @@ export const useSafelinkEvents = ({
         queryParams.patternType = pattern
       }
 
-      const { data } = await labelerAgent.tools.ozone.safelink.queryEvents(
-        queryParams,
-      )
+      const { data } =
+        await labelerAgent.tools.ozone.safelink.queryEvents(queryParams)
       return data
     },
     getNextPageParam: (lastPage) => lastPage.cursor,

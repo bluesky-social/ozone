@@ -8,6 +8,7 @@ import {
 } from './helpers'
 import { ToolsOzoneSafelinkDefs } from '@atproto/api'
 import { CopyButton } from '@/common/CopyButton'
+import { getSafelinkSource } from './types'
 
 export const SafelinkPattern = ({
   rule,
@@ -42,6 +43,14 @@ export const SafelinkReason = ({
     <span className="text-gray-600 dark:text-gray-400">
       {getReasonText(rule.reason)}
     </span>
+  )
+}
+
+export const SafelinkSource = ({ rule }: { rule: { source?: string } }) => {
+  return (
+    <div className="text-xs text-gray-600 dark:text-gray-400">
+      Source: <span className="font-medium">{getSafelinkSource(rule)}</span>
+    </div>
   )
 }
 
