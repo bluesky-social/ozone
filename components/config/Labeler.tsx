@@ -1,3 +1,4 @@
+import { CustomActionSettingsEditor } from '../custom-actions/SettingsEditor'
 import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useMutation } from '@tanstack/react-query'
@@ -42,6 +43,7 @@ export function LabelerConfig() {
       <QueueSetting />
       <ActionTemplateConfig />
       <LabelGroupsConfig />
+      <CustomActionSettingsEditor />
       <LocalPreferences />
       <ExternalLabelerConfig />
     </div>

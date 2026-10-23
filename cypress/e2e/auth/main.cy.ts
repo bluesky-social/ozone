@@ -36,13 +36,14 @@ describe('Authentication', () => {
         error: 'AuthenticationRequired',
         message: errorMessage,
       },
-    })
+    }).as('failedLogin')
 
     cy.get('#service-url', { timeout: 10000 }).should('be.visible').clear()
     cy.get('#service-url').type(API_URL)
     cy.get('#account-handle').type('alice.test')
     cy.get('#password').type('hunter2')
     cy.get("button[type='submit']").click()
+    cy.wait('@failedLogin').its('response.statusCode').should('eq', 401)
 
     // Assert that the error message is displayed in the UI
     cy.get('form').should('include.text', errorMessage)

@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "customActions": [
+    {
+      "name": "Label post and action report",
+      "id": "label-post",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["record"],
+      "collections": ["app.bsky.feed.post"],
+      "actions": [
+        {
+          "id": "apply-label",
+          "type": "event",
+          "target": "subject",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventLabel",
+            "createLabelVals": ["rude"],
+            "negateLabelVals": []
+          },
+          "reportAction": {
+            "scope": "current"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Take down post for 24 hours",
+      "id": "temporary-post-takedown",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["record"],
+      "collections": ["app.bsky.feed.post"],
+      "actions": [
+        {
+          "id": "take-down-post",
+          "type": "event",
+          "target": "subject",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventTakedown",
+            "durationInHours": 24,
+            "comment": "Temporary moderation action."
+          },
+          "reportAction": {
+            "scope": "current"
+          }
+        }
+      ]
+    }
+  ]
+}
