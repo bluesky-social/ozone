@@ -19,8 +19,6 @@ import {
   AppBskyEmbedRecord,
   asPredicate,
   AtUri,
-  ComAtprotoAdminDefs,
-  ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
   ToolsOzoneTeamDefs,
 } from '@atproto/api'
@@ -181,51 +179,47 @@ type ExportableObject = {
 
 const getExportFieldsFromWorkspaceListItem = (
   item: ToolsOzoneModerationDefs.SubjectView,
-): ExportableObject | null => {
-  let exportableObject: ExportableObject | null = null
+): ExportableObject => {
+  let exportableObject: ExportableObject
   if (item.repo) {
     const { repo } = item
     const profile = getProfileFromRepo(repo.relatedRecords)
     exportableObject = {
       did: repo.did,
-      uri: repo.did,
+      uri: item.subject,
       handle: repo.handle,
       email: repo.email,
       ip: 'Unknown',
       name: profile?.displayName || '',
       tags: repo.moderation.subjectStatus?.tags?.join('|') || 'Unknown',
       bskyUrl: buildBlueSkyAppUrl({ did: repo.did }),
-      ozoneUrl: buildOzoneUrl(repo.did),
+      ozoneUrl: buildOzoneUrl(item.subject),
       // @ts-expect-error - Un-spec'd field returned by PDS
       ip: ifString(repo.ip) ?? 'Unknown',
       labels: repo.labels?.map(({ val }) => val).join('|') || 'Unknown',
       createdAt: ifString(repo.indexedAt) ?? '',
     }
-  } else if (item.status) {
-    const did = ComAtprotoRepoStrongRef.isMain(item.status.subject)
-      ? new AtUri(item.status.subject.uri).host
-      : ComAtprotoAdminDefs.isRepoRef(item.status.subject)
-        ? item.status.subject.did
-        : ''
-    const uri = ComAtprotoRepoStrongRef.isMain(item.status.subject)
-      ? item.status.subject.uri
-      : did
+  } else {
+    const did = item.subject.startsWith('did:')
+      ? item.subject
+      : new AtUri(item.subject).host
+    const uri = item.subject
     exportableObject = {
       did,
       uri,
-      handle: item.status.subjectRepoHandle,
+      handle: item.status?.subjectRepoHandle,
       relatedRecords: [] as {}[],
       email: 'Unknown',
       ip: 'Unknown',
       labels: 'None',
       name: 'Unknown',
-      tags: item.status.tags?.join('|'),
+      tags: item.status?.tags?.join('|'),
       bskyUrl: buildBlueSkyAppUrl({ did }),
       ozoneUrl: buildOzoneUrl(uri),
     }
   }
 
-  if (item.record && exportableObject) {
+  if (item.record) {
     try {
       const record = new AtUri(item.record.uri)
       const recordData = {
@@ -302,23 +296,13 @@ export const useWorkspaceExport = () => {
           filename,
           headers: exportHeaders,
           lines: Object.values(items)
+            .filter(isNonNullable)
             .map((item) => {
-              if (!item) return ''
-
               const exportFields = getExportFieldsFromWorkspaceListItem(item)
-              if (!exportFields) return ''
-
-              const line: Array<string | undefined> = []
-
-              exportHeaders.forEach((header) => {
-                if (header in exportFields) {
-                  line.push(exportFields[header])
-                }
-              })
-
-              return line.filter(isNonNullable).map(escapeCSVValue).join(',')
-            })
-            .filter(Boolean),
+              return exportHeaders
+                .map((header) => escapeCSVValue(exportFields[header] ?? ''))
+                .join(',')
+            }),
         }),
       )
     },
