@@ -5,7 +5,7 @@ import { ActionButton } from '@/common/buttons'
 import { PlusIcon, XMarkIcon } from '@heroicons/react/20/solid'
 import { toast } from 'react-toastify'
 import { buildItemsSummary, groupSubjects } from './utils'
-import { getDidFromHandleInBatch } from '@/lib/identity'
+import { prepareWorkspaceItems } from './import'
 import { ArrowPathIcon, PaperClipIcon } from '@heroicons/react/24/solid'
 
 interface WorkspaceItemCreatorProps {
@@ -38,35 +38,7 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
         return false
       }
 
-      const isDid = (item) => item.startsWith('did:')
-      const isAtUri = (item) => item.startsWith('at://')
-      // if it's not did or at-uri but contains .s it's possibly a handle
-      const isPossiblyHandle = (item) =>
-        item.includes('.') && !isDid(item) && !isAtUri(item)
-
-      const itemList = items
-        .split(',')
-        .map((item) => item.trim())
-        .filter(
-          (item) => isDid(item) || isAtUri(item) || isPossiblyHandle(item),
-        )
-
-      const handleList = itemList.filter(isPossiblyHandle)
-
-      // If there are handles in the list, we need to resolve them to DIDs and replace the handles with dids before placing them in the workspace
-      if (handleList.length > 0) {
-        const handleToDid = await getDidFromHandleInBatch(handleList)
-        Object.keys(handleToDid).forEach((handle) => {
-          // If we couldn't find the did, we don't want to replace the handle in the list
-          if (handleToDid[handle] === null) {
-            return
-          }
-          const handleIndex = itemList.indexOf(handle)
-          if (handleIndex !== -1) {
-            itemList[handleIndex] = handleToDid[handle]
-          }
-        })
-      }
+      const itemList = await prepareWorkspaceItems(items.split(','))
 
       const groupedItems = groupSubjects(itemList)
 
@@ -107,7 +79,7 @@ const WorkspaceItemCreator: React.FC<WorkspaceItemCreatorProps> = ({
             e.stopPropagation()
           }
         }}
-        placeholder="Enter DID/AT-URI items separated by commas"
+        placeholder="Enter DIDs, AT-URIs, handles or profile/post URLs, separated by commas"
         className={`block ${size === 'sm' ? 'p-1' : 'p-2'} w-full`}
       />
       <ActionButton
