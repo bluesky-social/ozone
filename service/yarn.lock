@@ -371,9 +371,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atproto/ozone@npm:0.10.5":
-  version: 0.10.5
-  resolution: "@atproto/ozone@npm:0.10.5"
+"@atproto/ozone@npm:0.10.9":
+  version: 0.10.9
+  resolution: "@atproto/ozone@npm:0.10.9"
   dependencies:
     "@atproto-labs/fetch-node": "npm:^0.4.3"
     "@atproto-labs/opentelemetry-node": "npm:^0.3.1"
@@ -384,7 +384,7 @@ __metadata:
     "@atproto/lex-password-session": "npm:^0.3.0"
     "@atproto/syntax": "npm:^0.7.7"
     "@atproto/ws-client": "npm:^0.2.1"
-    "@atproto/xrpc-server": "npm:^0.13.5"
+    "@atproto/xrpc-server": "npm:^0.13.6"
     "@did-plc/lib": "npm:^0.0.1"
     "@opentelemetry/instrumentation-pg": "npm:^0.72.0"
     compression: "npm:^1.7.4"
@@ -402,7 +402,7 @@ __metadata:
     uint8arrays: "npm:^5.0.0"
     undici: "npm:^8.12.2"
     ws: "npm:^8.12.0"
-  checksum: 10c0/128c92a9b8a3ab2220f016b8543439dac20445a9e36f49dcfa96912c835515e43c8e6b82123cb6584b31b1c5c660bc0c55c9fe26c07f83e0be7629ca379195d6
+  checksum: 10c0/2aee39cc21433d0edab5736c0d3c12c3746be83029450451e096d35fe035f0e27feb03c8e35ba1ea4a66a12d6e6158e961dafd631b606be52b212430088e52b6
   languageName: node
   linkType: hard
 
@@ -441,9 +441,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"@atproto/xrpc-server@npm:^0.13.5":
-  version: 0.13.5
-  resolution: "@atproto/xrpc-server@npm:0.13.5"
+"@atproto/xrpc-server@npm:^0.13.6":
+  version: 0.13.6
+  resolution: "@atproto/xrpc-server@npm:0.13.6"
   dependencies:
     "@atproto/common": "npm:^0.8.6"
     "@atproto/crypto": "npm:^0.5.7"
@@ -455,12 +455,13 @@ __metadata:
     "@atproto/lexicon": "npm:^0.7.17"
     "@atproto/ws-client": "npm:^0.2.1"
     "@atproto/xrpc": "npm:^0.8.16"
+    body-parser: "npm:^1.20.9"
     express: "npm:^4.17.2"
     http-errors: "npm:^2.0.0"
     mime-types: "npm:^3.0.2"
     rate-limiter-flexible: "npm:^2.4.1"
     ws: "npm:^8.12.0"
-  checksum: 10c0/3701ef40066873518d6981855f08d3895cbd650dfd85d3d98d1dbaabb136f61030eef630b473b60969cf11d2b3533dad522d212518fe0501231aa68f4d25640e
+  checksum: 10c0/b1d1ae57158838b37adb889e423e36b84886249a6619f77ae2639106519d2593c00bf5700956254dbd64cf8c5c3cd2c2f713b9ea28a2fc91fd224b94ba1693d7
   languageName: node
   linkType: hard
 
@@ -2375,9 +2376,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"body-parser@npm:~1.20.3":
-  version: 1.20.4
-  resolution: "body-parser@npm:1.20.4"
+"body-parser@npm:^1.20.9, body-parser@npm:~1.20.3":
+  version: 1.20.9
+  resolution: "body-parser@npm:1.20.9"
   dependencies:
     bytes: "npm:~3.1.2"
     content-type: "npm:~1.0.5"
@@ -2387,11 +2388,11 @@ __metadata:
     http-errors: "npm:~2.0.1"
     iconv-lite: "npm:~0.4.24"
     on-finished: "npm:~2.4.1"
-    qs: "npm:~6.14.0"
+    qs: "npm:~6.16.0"
     raw-body: "npm:~2.5.3"
     type-is: "npm:~1.6.18"
     unpipe: "npm:~1.0.0"
-  checksum: 10c0/569c1e896297d1fcd8f34026c8d0ab70b90d45343c15c5d8dff5de2bad08125fc1e2f8c2f3f4c1ac6c0caaad115218202594d37dcb8d89d9b5dcae1c2b736aa9
+  checksum: 10c0/685d3208335377a3dfc6d7bc8b2af6d40d38b9a72e25bab4d9f7aff19d059729d5b1b3a9f5561274f460020bb9166c211d5302abe0b45452665420ca5e16013b
   languageName: node
   linkType: hard
 
@@ -3572,7 +3573,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "ozone-service@workspace:."
   dependencies:
-    "@atproto/ozone": "npm:0.10.5"
+    "@atproto/ozone": "npm:0.10.9"
     next: "npm:15.5.28"
     react: "npm:19.2.5"
   languageName: unknown
@@ -3980,6 +3981,16 @@ __metadata:
   languageName: node
   linkType: hard
 
+"qs@npm:~6.16.0":
+  version: 6.16.1
+  resolution: "qs@npm:6.16.1"
+  dependencies:
+    es-define-property: "npm:^1.0.1"
+    side-channel: "npm:^1.1.1"
+  checksum: 10c0/84ee9124b251ab2953132fbea1d70c966aa6e6496cccabedbbb83afa412bf4177bddebc779ca3ddafe23da83b2f593d530b41be6a726e971404fabb20ff22c94
+  languageName: node
+  linkType: hard
+
 "quick-format-unescaped@npm:^4.0.3":
   version: 4.0.4
   resolution: "quick-format-unescaped@npm:4.0.4"
@@ -4269,7 +4280,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"side-channel-list@npm:^1.0.0":
+"side-channel-list@npm:^1.0.0, side-channel-list@npm:^1.0.1":
   version: 1.0.1
   resolution: "side-channel-list@npm:1.0.1"
   dependencies:
@@ -4314,6 +4325,19 @@ __metadata:
     side-channel-map: "npm:^1.0.1"
     side-channel-weakmap: "npm:^1.0.2"
   checksum: 10c0/cb20dad41eb032e6c24c0982e1e5a24963a28aa6122b4f05b3f3d6bf8ae7fd5474ef382c8f54a6a3ab86e0cac4d41a23bd64ede3970e5bfb50326ba02a7996e6
+  languageName: node
+  linkType: hard
+
+"side-channel@npm:^1.1.1":
+  version: 1.1.1
+  resolution: "side-channel@npm:1.1.1"
+  dependencies:
+    es-errors: "npm:^1.3.0"
+    object-inspect: "npm:^1.13.4"
+    side-channel-list: "npm:^1.0.1"
+    side-channel-map: "npm:^1.0.1"
+    side-channel-weakmap: "npm:^1.0.2"
+  checksum: 10c0/dc0ab81d67f61bda9247d053ce93f41c3fd8ad2bdcb9cf9d8d2f8540d488f26d87a5e99ebfc07eea49ec025867b2452b705442d974b1478f0395e69f6bfb3270
   languageName: node
   linkType: hard
 
