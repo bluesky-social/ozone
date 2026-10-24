@@ -12,7 +12,7 @@ import {
   pluralize,
 } from '@/lib/util'
 import { regenerateBatchId } from '@/lib/batchId'
-import { useServerConfig } from '@/shell/ConfigurationContext'
+import { useLabelerAgent, useServerConfig } from '@/shell/ConfigurationContext'
 import {
   AppBskyEmbedGallery,
   AppBskyEmbedImages,
@@ -25,7 +25,10 @@ import {
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useRef, useState } from 'react'
 import { toast } from 'react-toastify'
-import { WorkspaceListData } from './useWorkspaceListData'
+import {
+  repairWorkspaceListData,
+  WorkspaceListData,
+} from './useWorkspaceListData'
 import { getProfileFromRepo } from '@/repositories/helpers'
 
 const WORKSPACE_LIST_KEY = 'workspace_list'
@@ -50,13 +53,14 @@ export const useWorkspaceList = () => {
 
 export const useWorkspaceAddItemsMutation = () => {
   const queryClient = useQueryClient()
+  const labelerAgent = useLabelerAgent()
   const toastId = useRef<number | string | null>(null)
   const mutation = useMutation<string[], unknown, string[], unknown>(
     async (items) => {
       return addToList(items)
     },
     {
-      onSuccess: (allItems, addedItems) => {
+      onSuccess: async (allItems, addedItems) => {
         const message = `Attempted to add ${pluralize(
           addedItems.length,
           'subject',
@@ -73,7 +77,10 @@ export const useWorkspaceAddItemsMutation = () => {
           toastId.current = toast.success(message)
         }
 
-        queryClient.invalidateQueries({ queryKey: [WORKSPACE_LIST_QUERY_KEY] })
+        await repairWorkspaceListData(queryClient, labelerAgent, allItems)
+        await queryClient.invalidateQueries({
+          queryKey: [WORKSPACE_LIST_QUERY_KEY],
+        })
       },
     },
   )
@@ -328,7 +335,7 @@ export const useWorkspaceImport = () => {
         acceptedFiles.map((file) => processFileForWorkspaceImport(file)),
       )
       const items = results.flat()
-      addToWorkspace(items)
+      await addToWorkspace(items)
     } catch (error) {
       toast.error(
         `Failed to import items to workspace. ${(error as Error).message}`,
