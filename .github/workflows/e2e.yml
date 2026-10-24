@@ -62,7 +62,7 @@ jobs:
       # Upload screenshots if either test type fails
       - name: Upload Screenshots on Failure
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: cypress-screenshots
           path: cypress/screenshots
