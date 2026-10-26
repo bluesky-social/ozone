@@ -17,6 +17,8 @@ import {
   AppBskyEmbedGallery,
   AppBskyEmbedImages,
   AppBskyEmbedRecord,
+  AppBskyEmbedRecordWithMedia,
+  AppBskyEmbedVideo,
   asPredicate,
   AtUri,
   ToolsOzoneModerationDefs,
@@ -141,6 +143,7 @@ export const WORKSPACE_EXPORT_FIELDS = [
   'text',
   'langs',
   'embeds',
+  'altText',
 ]
 export const ADMIN_ONLY_WORKSPACE_EXPORT_FIELDS = ['email', 'ip']
 const filterExportFields = (fields: string[], isAdmin: boolean) => {
@@ -182,6 +185,7 @@ type ExportableObject = {
   text?: string
   langs?: string
   embeds?: string
+  altText?: string
 }
 
 const getExportFieldsFromWorkspaceListItem = (
@@ -236,6 +240,7 @@ const getExportFieldsFromWorkspaceListItem = (
         labels:
           item.record.labels?.map(({ val }) => val).join('|') || 'Unknown',
         text: ifString(item.record.value.text) ?? '',
+        altText: getEmbedAltText(item.record.value.embed),
         langs: Array.isArray(item.record.value.langs)
           ? item.record.value.langs.join('|')
           : '',
@@ -261,6 +266,29 @@ const getExportFieldsFromWorkspaceListItem = (
   }
 
   return exportableObject
+}
+
+const getEmbedAltText = (embed: unknown): string => {
+  if (asPredicate(AppBskyEmbedImages.validateMain)(embed)) {
+    return embed.images
+      .map(({ alt }) => alt)
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (asPredicate(AppBskyEmbedGallery.validateMain)(embed)) {
+    return embed.items
+      .filter(AppBskyEmbedGallery.isImage)
+      .map(({ alt }) => alt)
+      .filter(Boolean)
+      .join('\n')
+  }
+  if (asPredicate(AppBskyEmbedVideo.validateMain)(embed)) {
+    return embed.alt ?? ''
+  }
+  if (asPredicate(AppBskyEmbedRecordWithMedia.validateMain)(embed)) {
+    return getEmbedAltText(embed.media)
+  }
+  return ''
 }
 
 const getEmbedValues = (embed: unknown): string => {
