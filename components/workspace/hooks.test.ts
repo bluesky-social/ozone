@@ -1,5 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { ToolsOzoneModerationDefs, ToolsOzoneTeamDefs } from '@atproto/api'
+import {
+  jsonToLex,
+  ToolsOzoneModerationDefs,
+  ToolsOzoneTeamDefs,
+} from '@atproto/api'
 import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { useWorkspaceExport } from './hooks'
@@ -92,10 +96,7 @@ describe('workspace CSV export', () => {
       { type: 'account', subject: did },
       { type: 'record', subject: uri },
     ])
-    expect(csv.body.split('\n')).toEqual([
-      `${did},${did},,`,
-      `${did},${uri},,`,
-    ])
+    expect(csv.body.split('\n')).toEqual([`${did},${did},,`, `${did},${uri},,`])
   })
 
   it('keeps empty optional fields aligned with the full header row', async () => {
@@ -124,7 +125,11 @@ describe('workspace CSV export', () => {
         subject: uri,
         status: {
           id: 1,
-          subject: { $type: 'com.atproto.repo.strongRef', uri, cid: record.cid },
+          subject: {
+            $type: 'com.atproto.repo.strongRef',
+            uri,
+            cid: record.cid,
+          },
           subjectRepoHandle: 'example.test',
           tags: ['example-tag'],
           reviewState: ToolsOzoneModerationDefs.REVIEWOPEN,
@@ -161,7 +166,7 @@ describe('workspace CSV export', () => {
     'preserves the permitted fields for %s',
     async (role) => {
       state.role = role
-      state.columns = ['did', 'email', 'ip', 'text']
+      state.columns = ['did', 'email', 'ip', 'text', 'altText']
       const account = {
         ...repo,
         email: 'example@example.test',
@@ -171,11 +176,11 @@ describe('workspace CSV export', () => {
         { type: 'account', subject: did, repo: account },
       ])
       if (role === ToolsOzoneTeamDefs.ROLEADMIN) {
-        expect(csv.headerRow).toBe('did,email,ip,text\n')
-        expect(csv.body).toBe(`${did},example@example.test,192.0.2.1,`)
+        expect(csv.headerRow).toBe('did,email,ip,text,altText\n')
+        expect(csv.body).toBe(`${did},example@example.test,192.0.2.1,,`)
       } else {
-        expect(csv.headerRow).toBe('did,text\n')
-        expect(csv.body).toBe(`${did},`)
+        expect(csv.headerRow).toBe('did,text,altText\n')
+        expect(csv.body).toBe(`${did},,`)
       }
     },
   )
@@ -193,5 +198,184 @@ describe('workspace CSV export', () => {
     subjects.forEach((subject, i) => {
       expect(lines[i]).toBe(`${did},${subject.subject}`)
     })
+  })
+})
+
+describe('workspace alt text CSV export', () => {
+  const image = jsonToLex({
+    $type: 'blob',
+    ref: { $link: record.cid },
+    mimeType: 'image/jpeg',
+    size: 100,
+  })
+  const videoBlob = jsonToLex({
+    $type: 'blob',
+    ref: { $link: record.cid },
+    mimeType: 'video/mp4',
+    size: 100,
+  })
+  const images = {
+    $type: 'app.bsky.embed.images',
+    images: [
+      { image, alt: 'First, "image"\r\ndescription' },
+      { image, alt: '' },
+      { image, alt: 'Second image' },
+    ],
+  }
+  const gallery = {
+    $type: 'app.bsky.embed.gallery',
+    items: [
+      {
+        $type: 'app.bsky.embed.gallery#image',
+        image,
+        alt: 'First gallery image',
+        aspectRatio: { width: 1, height: 1 },
+      },
+      { $type: 'example.gallery#other' },
+      {
+        $type: 'app.bsky.embed.gallery#image',
+        image,
+        alt: 'Second gallery image',
+        aspectRatio: { width: 1, height: 1 },
+      },
+    ],
+  }
+  const video = {
+    $type: 'app.bsky.embed.video',
+    video: videoBlob,
+    alt: 'A video description',
+  }
+  const quoteWithMedia = (media: unknown) => ({
+    $type: 'app.bsky.embed.recordWithMedia',
+    record: {
+      $type: 'app.bsky.embed.record',
+      record: { uri, cid: record.cid },
+    },
+    media,
+  })
+
+  it.each([
+    ['images', images, 'First, "image"\r\ndescription\nSecond image'],
+    ['gallery', gallery, 'First gallery image\nSecond gallery image'],
+    ['video', video, 'A video description'],
+    [
+      'quoted post with images',
+      quoteWithMedia(images),
+      'First, "image"\r\ndescription\nSecond image',
+    ],
+    [
+      'quoted post with gallery',
+      quoteWithMedia(gallery),
+      'First gallery image\nSecond gallery image',
+    ],
+    ['quoted post with video', quoteWithMedia(video), 'A video description'],
+  ])(
+    'exports alt text for %s with correct escaping',
+    async (_, embed, expected) => {
+      state.columns = ['uri', 'createdAt', 'text', 'altText']
+      const csv = await exportSubjects([
+        {
+          type: 'record',
+          subject: uri,
+          record: { ...record, value: { ...record.value, embed } },
+        },
+      ])
+      expect(csv.headerRow).toBe('uri,createdAt,text,altText\n')
+      const cell = expected.includes('\n')
+        ? `"${expected.replaceAll('"', '""')}"`
+        : expected
+      expect(csv.body).toBe(`${uri},${createdAt},Example post,${cell}`)
+    },
+  )
+
+  it.each([
+    ['no embed', undefined],
+    ['unknown embed', { $type: 'example.embed' }],
+    ['invalid images', { $type: 'app.bsky.embed.images' }],
+    [
+      'external link',
+      {
+        $type: 'app.bsky.embed.external',
+        external: {
+          uri: 'https://example.test',
+          title: 'Example',
+          description: 'Not alt text',
+        },
+      },
+    ],
+    [
+      'quoted record only',
+      { $type: 'app.bsky.embed.record', record: { uri, cid: record.cid } },
+    ],
+    [
+      'video without alt text',
+      { $type: 'app.bsky.embed.video', video: videoBlob },
+    ],
+    [
+      'empty image alts',
+      {
+        ...images,
+        images: [
+          { image, alt: '' },
+          { image, alt: '' },
+        ],
+      },
+    ],
+  ])('leaves alt text empty for %s', async (_, embed) => {
+    state.columns = ['uri', 'altText']
+    const csv = await exportSubjects([
+      {
+        type: 'record',
+        subject: uri,
+        record: { ...record, value: { ...record.value, embed } },
+      },
+    ])
+    expect(csv.headerRow).toBe('uri,altText\n')
+    expect(csv.body).toBe(`${uri},`)
+  })
+
+  it('keeps accounts and missing record details aligned', async () => {
+    state.columns = ['uri', 'altText']
+    const csv = await exportSubjects([
+      { type: 'account', subject: did, repo },
+      { type: 'record', subject: uri, repo },
+      { type: 'record', subject: `${uri}2` },
+    ])
+    expect(csv.body).toBe(`${did},\n${uri},\n${uri}2,`)
+  })
+
+  it.each([ToolsOzoneTeamDefs.ROLEMODERATOR, ToolsOzoneTeamDefs.ROLEADMIN])(
+    'includes altText by default for %s',
+    async (role) => {
+      state.role = role
+      const csv = await exportSubjects([
+        {
+          type: 'record',
+          subject: uri,
+          record: { ...record, value: { ...record.value, embed: video } },
+        },
+      ])
+      const headers = csv.headerRow.trim().split(',')
+      expect(headers.at(-1)).toBe('altText')
+      expect(headers).not.toContain('copyInfo')
+      expect(csv.body.endsWith(',A video description')).toBe(true)
+      expect(headers.includes('email')).toBe(
+        role === ToolsOzoneTeamDefs.ROLEADMIN,
+      )
+      expect(headers.includes('ip')).toBe(role === ToolsOzoneTeamDefs.ROLEADMIN)
+    },
+  )
+
+  it('allows exporting only the altText column', async () => {
+    state.columns = ['altText']
+    const csv = await exportSubjects([
+      {
+        type: 'record',
+        subject: uri,
+        record: { ...record, value: { ...record.value, embed: video } },
+      },
+    ])
+    expect(csv.headerRow).toBe('altText\n')
+    expect(csv.body).toBe('A video description')
   })
 })
