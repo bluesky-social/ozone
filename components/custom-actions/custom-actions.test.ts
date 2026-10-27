@@ -839,52 +839,117 @@ describe('API receipts', () => {
     ).rejects.toThrow()
     expect(emitEvent).not.toHaveBeenCalled()
   })
-  it('retains report activity receipts and passes the abort signal', async () => {
+  it.each([
+    'closeActivity',
+    'reopenActivity',
+    'escalationActivity',
+    'noteActivity',
+  ] as const)(
+    'attaches workflow metadata to %s and retains its receipt',
+    async (activityType) => {
+      const a = action()
+      a.actions = [
+        {
+          id: 'report-step',
+          type: 'activity',
+          target: 'report',
+          activity: { $type: `tools.ozone.report.defs#${activityType}` },
+          internalNote: 'Reviewed',
+          publicNote: 'Review complete',
+        },
+      ]
+      const run = createRun(a, snapshot())
+      const signal = new AbortController().signal
+      const createActivity = vi.fn().mockResolvedValue({
+        data: {
+          activity: {
+            id: 33,
+            reportId: 123,
+            activity: {
+              $type: `tools.ozone.report.defs#${activityType}`,
+              previousStatus: 'open',
+            },
+            internalNote: 'Reviewed',
+            createdBy: moderator,
+            createdAt: new Date().toISOString(),
+          },
+        },
+      })
+      const receipt = await dispatch(
+        agentWith({ report: { createActivity } }),
+        run,
+        run.operations[0],
+        signal,
+      )
+      expect(receipt).toMatchObject({
+        kind: 'report-activity',
+        activityId: 33,
+        reportId: 123,
+        previousStatus: 'open',
+        internalNote: 'Reviewed',
+      })
+      expect(createActivity).toHaveBeenCalledTimes(1)
+      expect(createActivity).toHaveBeenCalledWith(
+        {
+          reportId: 123,
+          activity: { $type: `tools.ozone.report.defs#${activityType}` },
+          isAutomated: false,
+          internalNote: 'Reviewed',
+          publicNote: 'Review complete',
+          meta: {
+            source: 'ozone-ui/custom-action/review',
+            workflowId: 'review',
+            batchId: run.batchId,
+            stepId: 'report-step',
+            operationId: 'report-step',
+            reportId: 123,
+          },
+        },
+        { signal },
+      )
+    },
+  )
+  it('correlates event and activity steps within each run and separates later runs', async () => {
     const a = action()
     a.actions = [
+      tag(),
       {
         id: 'close',
         type: 'activity',
         target: 'report',
         activity: { $type: 'tools.ozone.report.defs#closeActivity' },
-        internalNote: 'Reviewed',
       },
     ]
-    const run = createRun(a, snapshot())
-    const signal = new AbortController().signal
+    const emitEvent = vi.fn().mockResolvedValue({ data: { id: 19 } })
     const createActivity = vi.fn().mockResolvedValue({
       data: {
         activity: {
           id: 33,
           reportId: 123,
-          activity: {
-            $type: 'tools.ozone.report.defs#closeActivity',
-            previousStatus: 'open',
-          },
-          internalNote: 'Reviewed',
+          activity: { $type: 'tools.ozone.report.defs#closeActivity' },
           createdBy: moderator,
           createdAt: new Date().toISOString(),
         },
       },
     })
-    const receipt = await dispatch(
-      agentWith({ report: { createActivity } }),
-      run,
-      run.operations[0],
-      signal,
+    const agent = agentWith({
+      moderation: { emitEvent },
+      report: { createActivity },
+    })
+    for (let i = 0; i < 2; i++) {
+      const run = createRun(a, snapshot())
+      for (const op of run.operations) await dispatch(agent, run, op)
+      const { name, meta } = emitEvent.mock.calls[i][0].modTool
+      expect(createActivity.mock.calls[i][0].meta).toEqual({
+        ...meta,
+        source: name,
+        stepId: 'close',
+        operationId: 'close',
+      })
+    }
+    expect(createActivity.mock.calls[0][0].meta.batchId).not.toBe(
+      createActivity.mock.calls[1][0].meta.batchId,
     )
-    expect(receipt).toMatchObject({
-      kind: 'report-activity',
-      activityId: 33,
-      reportId: 123,
-      previousStatus: 'open',
-      internalNote: 'Reviewed',
-    })
-    expect(createActivity.mock.calls[0][0]).toMatchObject({
-      reportId: 123,
-      isAutomated: false,
-    })
-    expect(createActivity.mock.calls[0][1].signal).toBe(signal)
   })
   it('rejects empty verification grants and mismatched existing profiles', async () => {
     const a = action()
