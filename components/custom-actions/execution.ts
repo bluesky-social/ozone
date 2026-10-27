@@ -139,8 +139,13 @@ export async function dispatch(
     }
   }
   if (request.endpoint === 'tools.ozone.report.createActivity') {
+    const { name, meta } = eventMetadata(run, op)
     const { data } = await agent.tools.ozone.report.createActivity(
-      request.body,
+      {
+        ...request.body,
+        // Match the flat metadata on activities derived from moderation events.
+        meta: { ...meta, source: name },
+      },
       { signal },
     )
     return activityReceipt(data.activity, op, run.context.uiOrigin)
