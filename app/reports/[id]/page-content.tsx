@@ -730,15 +730,19 @@ function ReportDetailLayout(props: {
           }
         } else {
           const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
-          const targetsCurrentReport =
+          if (
             reportActionScope === 'current' ||
-            reportActionScope === 'all' ||
-            reportActionTypes.includes(report.reportType)
-          if (reportActionScope === 'current') {
+            (eventType !== MOD_EVENTS.ESCALATE &&
+              eventType !== MOD_EVENTS.RESOLVE_APPEAL)
+          ) {
             reportAction.ids = [report.id]
-          } else if (reportActionScope === 'all') {
+          }
+          if (reportActionScope === 'all') {
             reportAction.all = true
-          } else if (reportActionTypes.length > 0) {
+          } else if (
+            reportActionScope === 'types' &&
+            reportActionTypes.length > 0
+          ) {
             reportAction.types = reportActionTypes
           }
           await onSubmit({
@@ -754,9 +758,8 @@ function ReportDetailLayout(props: {
           ) {
             await resolveAppealForReport(finalVals.createdBy, actionComment)
             if (
-              (eventType !== MOD_EVENTS.LABEL &&
-                eventType !== MOD_EVENTS.REVERSE_TAKEDOWN) ||
-              !targetsCurrentReport
+              eventType !== MOD_EVENTS.LABEL &&
+              eventType !== MOD_EVENTS.REVERSE_TAKEDOWN
             ) {
               await closeCurrentReport()
             }
