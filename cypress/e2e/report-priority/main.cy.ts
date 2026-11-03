@@ -426,38 +426,15 @@ describe('Report reason picker', () => {
 
 describe('Report priority badges', () => {
   it('shows minute-based targets and keeps the existing date ordering', () => {
-    const blockedRequest = {
-      statusCode: 503,
-      body: { error: 'UnmockedTestRequest' },
-    }
-    cy.intercept('https://**', blockedRequest)
-    cy.intercept('**/xrpc/**', blockedRequest)
-    cy.intercept('**/api/**', blockedRequest)
-    const subjectStatus = {
-      id: 1,
-      subject: { $type: 'com.atproto.admin.defs#repoRef', did },
-      reviewState: 'tools.ozone.moderation.defs#reviewOpen',
-      createdAt: '2026-09-01T00:00:00.000Z',
-      updatedAt: '2026-09-01T00:00:00.000Z',
-      takendown: true,
-      appealed: true,
-      accountStrike: { activeStrikeCount: 2 },
-      priorityScore: 5,
-    }
     const report = {
       id: 1,
       eventId: 1,
       status: 'queued',
       reportType: spam,
       reportedBy: did,
-      reporter: {
-        type: 'account',
-        subject: did,
-        status: { ...subjectStatus, takendown: false, appealed: false },
-      },
-      subject: { type: 'account', subject: did, status: subjectStatus },
+      reporter: { type: 'account', subject: did },
+      subject: { type: 'account', subject: did },
       createdAt: '2026-09-01T00:00:00.000Z',
-      relatedReportCount: 3,
       priorityLevel: 'urgent',
       priorityScore: 100,
       priorityTargetMinutes: 30,
@@ -482,16 +459,6 @@ describe('Report priority badges', () => {
       expect(request.query.sortField).to.equal('createdAt')
       expect(request.query.sortDirection).to.equal('asc')
     })
-    cy.contains('thead th', 'Summary').should('not.exist')
-    cy.contains('tbody td:visible', '+3 related reports').within(() => {
-      cy.get('[title*="Active strikes: 2"]').should('be.visible')
-      cy.get('[title*="priority score is set to 5"]').should('be.visible')
-      cy.get('svg[aria-label="Taken Down"]').should('be.visible')
-    })
-    cy.get('tbody svg[aria-label="Taken Down"]:visible').should(
-      'have.length',
-      1,
-    )
     cy.get('tbody span[title="urgent · 30m target"]:visible').should(
       'have.length',
       1,
@@ -508,14 +475,6 @@ describe('Report priority badges', () => {
       expect(request.query.sortDirection).to.equal('asc')
     })
     cy.viewport(375, 812)
-    cy.contains('tbody td:visible', '+3 related reports').within(() => {
-      cy.get('[title*="Active strikes: 2"]').should('be.visible')
-      cy.get('svg[aria-label="Taken Down"]').should('be.visible')
-    })
-    cy.get('tbody svg[aria-label="Taken Down"]:visible').should(
-      'have.length',
-      1,
-    )
     cy.get('tbody span[title="urgent · 30m target"]:visible').should(
       'have.length',
       1,

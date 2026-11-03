@@ -89,15 +89,14 @@ describe('Subject-status report sorting', () => {
     cy.contains('thead button', 'Subject').click()
     cy.contains('button', 'Ascending').should('not.exist')
 
-    for (const [title, field] of [
-      ['Priority score', 'priorityScore'],
-    ]) {
-      cy.contains('p', title).parent().contains('button', 'Descending').click()
-      cy.wait('@queryStatuses')
-        .its('request.query.sortField')
-        .should('equal', field)
-      cy.location('search').should('include', 'sortDirection=desc')
-    }
+    cy.contains('p', 'Priority score')
+      .parent()
+      .contains('button', 'Descending')
+      .click()
+    cy.wait('@queryStatuses')
+      .its('request.query.sortField')
+      .should('equal', 'priorityScore')
+    cy.location('search').should('include', 'sortDirection=desc')
   })
 
   for (const field of [
