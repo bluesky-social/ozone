@@ -78,8 +78,8 @@ describe('report table subject summary', () => {
     }
     const desktopCell =
       subjectCells.find((cell) => cell.includes('Subject tags')) || ''
-    expect(desktopCell.indexOf('Subject tags')).toBeLessThan(
-      desktopCell.indexOf('Active strikes: 2'),
+    expect(desktopCell.indexOf('Active strikes: 2')).toBeLessThan(
+      desktopCell.indexOf('Subject tags'),
     )
   })
 

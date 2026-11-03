@@ -453,6 +453,10 @@ function ReportRow({
             <SubjectOverview subject={subjectObj} subjectRepoHandle={subjectHandle} />
           )}
         </div>
+        <SubjectSummary
+          subjectStatus={subjectStatus}
+          relatedReportCount={report.relatedReportCount}
+        />
         {!!subjectLabels?.length && (
           <LabelList className="flex-wrap gap-0.5 mt-1">
             {subjectLabels.map((label) => (
@@ -474,10 +478,6 @@ function ReportRow({
             />
           </div>
         )}
-        <SubjectSummary
-          subjectStatus={subjectStatus}
-          relatedReportCount={report.relatedReportCount}
-        />
       </td>
       {/* Last Update column: links to report detail */}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
