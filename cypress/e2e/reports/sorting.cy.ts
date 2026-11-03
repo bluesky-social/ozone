@@ -85,8 +85,8 @@ describe('Subject-status report sorting', () => {
     cy.location('search').should('include', 'sortDirection=desc')
   })
 
-  it('offers only descending summary sorts', () => {
-    cy.contains('thead button', 'Summary').click()
+  it('offers only descending priority score sorting', () => {
+    cy.contains('thead button', 'Status').click()
     cy.contains('button', 'Ascending').should('not.exist')
 
     for (const [title, field] of [

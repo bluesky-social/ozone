@@ -4,6 +4,7 @@ import {
   CheckCircleIcon,
   ChevronDownIcon,
   Bars3BottomLeftIcon,
+  ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
@@ -12,7 +13,6 @@ import { SubjectOverview } from '../reports/SubjectOverview'
 import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { Fragment, HTMLAttributes } from 'react'
-import { ReviewStateIcon } from './ReviewStateMarker'
 import {
   Popover,
   Transition,
@@ -119,11 +119,36 @@ const HostingStateIcon = ({
   ) {
     if (hosting.status === 'deleted') {
       return (
-        <TrashIcon className="text-red-500 inline-block w-6 h-6 align-text-bottom" />
+        <TrashIcon
+          title="Deleted"
+          aria-label="Deleted"
+          aria-hidden={false}
+          className="text-red-500 inline-block w-6 h-6 align-text-bottom"
+        />
       )
     }
   }
 }
+
+const SubjectIndicators = ({
+  subjectStatus,
+}: {
+  subjectStatus: SubjectStatus
+}) => (
+  <div className="flex shrink-0 items-center justify-end gap-1 empty:hidden">
+    <PriorityScore size="sm" priorityScore={subjectStatus.priorityScore || 0} />
+    <AccountStrike size="sm" accountStrike={subjectStatus.accountStrike} />
+    {subjectStatus.takendown && (
+      <ShieldExclamationIcon
+        title="Taken Down"
+        aria-label="Taken Down"
+        aria-hidden={false}
+        className="h-5 w-5 shrink-0 text-red-800 dark:text-red-600"
+      />
+    )}
+    <HostingStateIcon hosting={subjectStatus.hosting} />
+  </div>
+)
 
 function SubjectRow({
   subjectStatus,
@@ -139,11 +164,8 @@ function SubjectRow({
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
-        <div className="flex flex-row items-center pb-1">
-          <ReviewStateIcon
-            subjectStatus={subjectStatus}
-            className="h-4 w-4 mr-1"
-          />{' '}
+        <div className="flex flex-row items-center gap-1 pb-1">
+          <SubjectIndicators subjectStatus={subjectStatus} />
           <SubjectOverview
             subject={subjectStatus.subject}
             subjectRepoHandle={subjectStatus.subjectRepoHandle}
@@ -178,19 +200,12 @@ function SubjectRow({
         </dl>
       </td>
       <td className="hidden text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <ReviewStateIcon subjectStatus={subjectStatus} className="h-5 w-5" />
-        <HostingStateIcon hosting={subjectStatus.hosting} />
+        <SubjectIndicators subjectStatus={subjectStatus} />
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
         <SubjectOverview
           subject={subjectStatus.subject}
           subjectRepoHandle={subjectStatus.subjectRepoHandle}
-        />
-      </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <SubjectSummaryColumn
-          accountStrike={subjectStatus.accountStrike}
-          priorityScore={subjectStatus.priorityScore}
         />
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-sm">
@@ -251,17 +266,17 @@ const SortButtonGroup = ({
   )
 }
 
-const SummaryColumnHeader = () => {
+const StatusColumnHeader = () => {
   const { sortField } = useSortOrder()
   const hasSort = sortField === 'priorityScore'
 
   return (
     <Popover className="relative">
       <PopoverButton
-        className=" flex flex-row items-center gap-1"
+        className="ml-auto flex flex-row items-center gap-1"
         type="button"
       >
-        Summary
+        Status
         {hasSort ? (
           <ChevronDownIcon className="h-4 w-4" />
         ) : (
@@ -307,19 +322,13 @@ function SubjectRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        Status
+        <StatusColumnHeader />
       </th>
       <th
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
         Subject
-      </th>
-      <th
-        scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
-      >
-        <SummaryColumnHeader />
       </th>
       <th
         scope="col"
@@ -356,7 +365,7 @@ function EmptyRows({
 }) {
   return (
     <tr>
-      <td colSpan={6} className="text-center">
+      <td colSpan={4} className="text-center">
         {isInitialLoading ? (
           <>
             <Loading />
