@@ -300,9 +300,6 @@ function useModerationQueueQuery() {
   const subjectType = params.get('subjectType')
   const collections = params.get('collections')
   const hostingStatuses = params.get('hostingStatuses')
-  const minAccountSuspendCount = params.get('minAccountSuspendCount')
-  const minReportedRecordsCount = params.get('minReportedRecordsCount')
-  const minTakendownRecordsCount = params.get('minTakendownRecordsCount')
   const minPriorityScore = params.get('minPriorityScore')
   const ageAssuranceState = params.get('ageAssuranceState')
   const { sortField, sortDirection } = getSubjectStatusSortParams(params)
@@ -329,9 +326,6 @@ function useModerationQueueQuery() {
         onlyMuted,
         subjectType,
         collections,
-        minAccountSuspendCount,
-        minReportedRecordsCount,
-        minTakendownRecordsCount,
         minPriorityScore,
         ageAssuranceState,
         hostingStatuses,
@@ -388,18 +382,6 @@ function useModerationQueueQuery() {
 
       if (excludeTags) {
         queryParams.excludeTags = excludeTags.split(',')
-      }
-
-      if (minAccountSuspendCount) {
-        queryParams.minAccountSuspendCount = Number(minAccountSuspendCount)
-      }
-
-      if (minReportedRecordsCount) {
-        queryParams.minReportedRecordsCount = Number(minReportedRecordsCount)
-      }
-
-      if (minTakendownRecordsCount) {
-        queryParams.minTakendownRecordsCount = Number(minTakendownRecordsCount)
       }
 
       if (minPriorityScore) {

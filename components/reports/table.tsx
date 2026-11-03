@@ -11,8 +11,6 @@ import {
   ChevronUpIcon,
 } from '@heroicons/react/20/solid'
 import {
-  FlagIcon,
-  ShieldExclamationIcon,
   TrashIcon,
   UserIcon,
 } from '@heroicons/react/24/solid'
@@ -30,7 +28,6 @@ import { SubjectOverview } from '../reports/SubjectOverview'
 import { AccountStrike } from '../subject/AccountStrike'
 import { PriorityScore } from '../subject/PriorityScore'
 import { ReviewStateIcon } from '../subject/ReviewStateMarker'
-import { StatView } from '../subject/Summary'
 import { SubjectTagList } from '../tags/SubjectTagList'
 import { AutomatedBadge } from './AutomatedBadge'
 import { MutedBadge } from './MutedBadge'
@@ -114,55 +111,15 @@ export function ReportTable(
 
 export const SubjectSummaryColumn = ({
   accountStrike,
-  recordStats,
-  accountStats,
   priorityScore,
 }: {
   priorityScore?: number
   accountStrike?: ToolsOzoneModerationDefs.AccountStrike
-  recordStats?: ToolsOzoneModerationDefs.RecordsStats
-  accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
-  const { takendownCount, reportedCount, totalReports } = recordStats || {}
-  const { suspendCount } = accountStats || {}
-
   return (
     <div className="flex flex-row gap-1 items-center">
       <AccountStrike size="sm" accountStrike={accountStrike} />
       <PriorityScore size="sm" priorityScore={priorityScore || 0} />
-      {!!suspendCount && (
-        <StatView
-          appearance="danger"
-          count={suspendCount}
-          Icon={ShieldExclamationIcon}
-          title={`account suspended ${pluralize(suspendCount, 'time')}`}
-        />
-      )}
-      {!!reportedCount && (
-        <StatView
-          appearance="info"
-          count={reportedCount}
-          Icon={FlagIcon}
-          title={`${pluralize(
-            reportedCount,
-            'record',
-          )} authored by this user reported ${pluralize(
-            totalReports || 0,
-            'time',
-          )}`}
-        />
-      )}
-      {!!takendownCount && (
-        <StatView
-          appearance="danger"
-          count={takendownCount}
-          Icon={ShieldExclamationIcon}
-          title={`${pluralize(
-            takendownCount,
-            'record',
-          )} authored by this account has been taken down`}
-        />
-      )}
     </div>
   )
 }
@@ -480,8 +437,6 @@ function ReportRow({
           <SubjectSummaryColumn
             accountStrike={subjectStatus.accountStrike}
             priorityScore={subjectStatus.priorityScore}
-            recordStats={subjectStatus.recordsStats}
-            accountStats={subjectStatus.accountStats}
           />
         )}
         {report.relatedReportCount !== undefined &&

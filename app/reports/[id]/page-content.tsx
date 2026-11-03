@@ -1022,8 +1022,6 @@ function ReportDetailLayout(props: {
               subject={subject}
               stats={{
                 accountStrike: subjectStatus?.accountStrike ?? strikeData,
-                accountStats: subjectStatus?.accountStats,
-                recordsStats: subjectStatus?.recordsStats,
               }}
             />
           </div>

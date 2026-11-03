@@ -90,8 +90,6 @@ describe('Subject-status report sorting', () => {
     cy.contains('button', 'Ascending').should('not.exist')
 
     for (const [title, field] of [
-      ['Reported records count', 'reportedRecordsCount'],
-      ['Takendown records count', 'takendownRecordsCount'],
       ['Priority score', 'priorityScore'],
     ]) {
       cy.contains('p', title).parent().contains('button', 'Descending').click()
@@ -105,8 +103,6 @@ describe('Subject-status report sorting', () => {
   for (const field of [
     'lastReportedAt',
     'lastReviewedAt',
-    'reportedRecordsCount',
-    'takendownRecordsCount',
     'priorityScore',
   ]) {
     it(`uses descending ${field} for old ascending URLs and pagination`, () => {

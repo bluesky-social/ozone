@@ -7,7 +7,7 @@ import {
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { classNames, pluralize } from '@/lib/util'
+import { classNames } from '@/lib/util'
 import { SubjectOverview } from '../reports/SubjectOverview'
 import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
@@ -21,12 +21,7 @@ import {
 } from '@headlessui/react'
 import { ButtonGroup } from '@/common/buttons'
 import { asPredicate, ToolsOzoneModerationDefs } from '@atproto/api'
-import { StatView } from './Summary'
-import {
-  FlagIcon,
-  ShieldExclamationIcon,
-  TrashIcon,
-} from '@heroicons/react/24/solid'
+import { TrashIcon } from '@heroicons/react/24/solid'
 import { PriorityScore } from './PriorityScore'
 import { AccountStrike } from './AccountStrike'
 import { getSubjectStatusSortParams } from '@/lib/subject-status-sort'
@@ -97,55 +92,15 @@ export function SubjectTable(
 
 export const SubjectSummaryColumn = ({
   accountStrike,
-  recordStats,
-  accountStats,
   priorityScore,
 }: {
   priorityScore?: number
   accountStrike?: ToolsOzoneModerationDefs.AccountStrike
-  recordStats?: ToolsOzoneModerationDefs.RecordsStats
-  accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
-  const { takendownCount, reportedCount, totalReports } = recordStats || {}
-  const { suspendCount } = accountStats || {}
-
   return (
     <div className="flex flex-row gap-1 items-center">
       <AccountStrike size="sm" accountStrike={accountStrike} />
       <PriorityScore size="sm" priorityScore={priorityScore || 0} />
-      {!!suspendCount && (
-        <StatView
-          appearance="danger"
-          count={suspendCount}
-          Icon={ShieldExclamationIcon}
-          title={`account suspended ${pluralize(suspendCount, 'time')}`}
-        />
-      )}
-      {!!reportedCount && (
-        <StatView
-          appearance="info"
-          count={reportedCount}
-          Icon={FlagIcon}
-          title={`${pluralize(
-            reportedCount,
-            'record',
-          )} authored by this user reported ${pluralize(
-            totalReports || 0,
-            'time',
-          )}`}
-        />
-      )}
-      {!!takendownCount && (
-        <StatView
-          appearance="danger"
-          count={takendownCount}
-          Icon={ShieldExclamationIcon}
-          title={`${pluralize(
-            takendownCount,
-            'record',
-          )} authored by this account has been taken down`}
-        />
-      )}
     </div>
   )
 }
@@ -236,8 +191,6 @@ function SubjectRow({
         <SubjectSummaryColumn
           accountStrike={subjectStatus.accountStrike}
           priorityScore={subjectStatus.priorityScore}
-          recordStats={subjectStatus.recordsStats}
-          accountStats={subjectStatus.accountStats}
         />
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-sm">
@@ -300,11 +253,7 @@ const SortButtonGroup = ({
 
 const SummaryColumnHeader = () => {
   const { sortField } = useSortOrder()
-  const hasSort =
-    sortField &&
-    ['reportedRecordsCount', 'takendownRecordsCount', 'priorityScore'].includes(
-      sortField,
-    )
+  const hasSort = sortField === 'priorityScore'
 
   return (
     <Popover className="relative">
@@ -331,16 +280,6 @@ const SummaryColumnHeader = () => {
       >
         <PopoverPanel className="absolute z-10 rounded p-4">
           <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
-            <SortButtonGroup
-              title="Reported records count"
-              sortField="reportedRecordsCount"
-              currentSortField={sortField}
-            />
-            <SortButtonGroup
-              title="Takendown records count"
-              sortField="takendownRecordsCount"
-              currentSortField={sortField}
-            />
             <SortButtonGroup
               currentSortField={sortField}
               sortField="priorityScore"

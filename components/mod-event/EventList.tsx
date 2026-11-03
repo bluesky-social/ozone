@@ -1,5 +1,6 @@
 import {
   ModEventListQueryOptions,
+  getTakedownHistoryFilters,
   useModEventList,
   WorkspaceConfirmationOptions,
 } from './useModEventList'
@@ -22,8 +23,7 @@ import {
 import { EventFilterPanel } from './FilterPanel'
 import { ConfirmationModal } from '@/common/modals/confirmation'
 import { ToolsOzoneModerationDefs } from '@atproto/api'
-import { SubjectSummary } from '@/subject/Summary'
-import { MOD_EVENTS } from './constants'
+import { AccountStrike } from '@/subject/AccountStrike'
 import { ModToolProvider } from './ModToolContext'
 import { Loading, LoadingFailed } from '@/common/Loader'
 
@@ -137,8 +137,6 @@ export const ModEventList = (
     batchId?: string
     stats?: {
       accountStrike?: ToolsOzoneModerationDefs.AccountStrike
-      accountStats?: ToolsOzoneModerationDefs.AccountStats
-      recordsStats?: ToolsOzoneModerationDefs.RecordsStats
     }
     /** Enable syncing to global context */
     global?: boolean
@@ -207,21 +205,36 @@ export const ModEventList = (
     },
   ]
 
+  const shortcutSubject = props.createdBy || props.batchId ? undefined : subject
+  const allTakedowns = getTakedownHistoryFilters(shortcutSubject, true)
+  const accountTakedowns = getTakedownHistoryFilters(shortcutSubject, false)
+  if (allTakedowns && accountTakedowns) {
+    eventActions.push(
+      { text: 'All takedowns', onClick: () => applyFilterMacro(allTakedowns) },
+      {
+        text: 'Account takedowns',
+        onClick: () => applyFilterMacro(accountTakedowns),
+      },
+    )
+  }
+
+  const clearFilters = () => {
+    resetListFilters()
+    if (props.subject) {
+      changeListFilter({ field: 'subject', value: props.subject })
+    }
+    if (props.createdBy) {
+      changeListFilter({ field: 'createdBy', value: props.createdBy })
+    }
+    if (props.batchId) {
+      changeListFilter({ field: 'batchId', value: props.batchId })
+    }
+  }
+
   if (hasFilter) {
     eventActions.push({
       text: 'Clear filters',
-      onClick: () => {
-        resetListFilters()
-        if (props.subject) {
-          changeListFilter({ field: 'subject', value: props.subject })
-        }
-        if (props.createdBy) {
-          changeListFilter({ field: 'createdBy', value: props.createdBy })
-        }
-        if (props.batchId) {
-          changeListFilter({ field: 'batchId', value: props.batchId })
-        }
-      },
+      onClick: clearFilters,
     })
   }
 
@@ -252,35 +265,16 @@ export const ModEventList = (
 
   return (
     <div className="mr-1">
-      {!!props.stats && (
-        <SubjectSummary
-          onAccountTakedownClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.TAKEDOWN] })
-          }}
-          onAccountAppealClick={() => {
-            changeListFilter({ field: 'types', value: [MOD_EVENTS.APPEAL] })
-          }}
-          onRecordTakedownClick={() => {
-            applyFilterMacro({
-              includeAllUserRecords: true,
-              types: [MOD_EVENTS.TAKEDOWN],
-              subjectType: 'record',
-            })
-          }}
-          onRecordEscalationClick={() => {
-            applyFilterMacro({
-              includeAllUserRecords: true,
-              types: [MOD_EVENTS.ESCALATE],
-              subjectType: 'record',
-            })
-          }}
-          onAccountStrikeClick={() => {
+      {!!props.stats?.accountStrike && (
+        <AccountStrike
+          size="detailed"
+          accountStrike={props.stats.accountStrike}
+          onClick={() => {
             applyFilterMacro({
               includeAllUserRecords: true,
               withStrike: true,
             })
           }}
-          stats={props.stats}
         />
       )}
       <div className="flex flex-row justify-between items-center">
@@ -395,7 +389,10 @@ export const ModEventList = (
               <a
                 className="underline"
                 href="#"
-                onClick={() => resetListFilters()}
+                onClick={(event) => {
+                  event.preventDefault()
+                  clearFilters()
+                }}
               >
                 Clear all filters
               </a>{' '}

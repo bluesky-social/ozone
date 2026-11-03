@@ -25,10 +25,7 @@ import { useModEventContext } from './ModEventContext'
 import { MOD_EVENT_TITLES, MOD_EVENTS } from './constants'
 
 export type WorkspaceConfirmationOptions =
-  | 'subjects'
-  | 'creators'
-  | 'subject-authors'
-  | null
+  'subjects' | 'creators' | 'subject-authors' | null
 
 export type ModEventListQueryOptions = {
   queryOptions?: {
@@ -217,6 +214,29 @@ const eventListReducer = (state: EventListState, action: EventListAction) => {
       return { ...state, showContentPreview: !state.showContentPreview }
     default:
       return state
+  }
+}
+
+export function getTakedownHistoryFilters(
+  subject: string | undefined,
+  includeAllUserRecords: boolean,
+): Partial<EventListState> | undefined {
+  if (!subject) return
+  let did = subject.trim()
+  if (did.startsWith('at://')) {
+    try {
+      did = new AtUri(did).host
+    } catch {
+      return
+    }
+  }
+  if (!did.startsWith('did:')) return
+  return {
+    ...initialListState,
+    createdBefore: formatDateForInput(addDays(new Date(), 1)),
+    subject: did,
+    includeAllUserRecords,
+    types: [MOD_EVENTS.TAKEDOWN, MOD_EVENTS.REVERSE_TAKEDOWN],
   }
 }
 
