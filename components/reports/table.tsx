@@ -125,7 +125,7 @@ const SubjectSummary = ({
   }
 
   return (
-    <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-600 dark:text-gray-400">
+    <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-600 dark:text-gray-400 [&>span:first-child]:ml-0">
       <AccountStrike size="sm" accountStrike={subjectStatus?.accountStrike} />
       <PriorityScore
         size="sm"
