@@ -135,7 +135,7 @@ const SubjectIndicators = ({
 }: {
   subjectStatus: SubjectStatus
 }) => (
-  <div className="flex shrink-0 items-center justify-end gap-1 empty:hidden">
+  <div className="flex shrink-0 items-center gap-1 empty:hidden">
     <PriorityScore size="sm" priorityScore={subjectStatus.priorityScore || 0} />
     <AccountStrike size="sm" accountStrike={subjectStatus.accountStrike} />
     {subjectStatus.takendown && (
@@ -199,14 +199,14 @@ function SubjectRow({
           )}
         </dl>
       </td>
-      <td className="hidden text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <SubjectIndicators subjectStatus={subjectStatus} />
-      </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <SubjectOverview
-          subject={subjectStatus.subject}
-          subjectRepoHandle={subjectStatus.subjectRepoHandle}
-        />
+        <div className="flex flex-row items-center gap-1">
+          <SubjectIndicators subjectStatus={subjectStatus} />
+          <SubjectOverview
+            subject={subjectStatus.subject}
+            subjectRepoHandle={subjectStatus.subjectRepoHandle}
+          />
+        </div>
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-sm">
         {lastReviewedAt && (
@@ -266,17 +266,17 @@ const SortButtonGroup = ({
   )
 }
 
-const StatusColumnHeader = () => {
+const SubjectColumnHeader = () => {
   const { sortField } = useSortOrder()
   const hasSort = sortField === 'priorityScore'
 
   return (
     <Popover className="relative">
       <PopoverButton
-        className="ml-auto flex flex-row items-center gap-1"
+        className="flex flex-row items-center gap-1"
         type="button"
       >
-        Status
+        Subject
         {hasSort ? (
           <ChevronDownIcon className="h-4 w-4" />
         ) : (
@@ -320,15 +320,9 @@ function SubjectRowHead() {
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
-      >
-        <StatusColumnHeader />
-      </th>
-      <th
-        scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        Subject
+        <SubjectColumnHeader />
       </th>
       <th
         scope="col"
@@ -365,7 +359,7 @@ function EmptyRows({
 }) {
   return (
     <tr>
-      <td colSpan={4} className="text-center">
+      <td colSpan={3} className="text-center">
         {isInitialLoading ? (
           <>
             <Loading />

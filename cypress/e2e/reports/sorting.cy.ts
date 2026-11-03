@@ -86,7 +86,7 @@ describe('Subject-status report sorting', () => {
   })
 
   it('offers only descending priority score sorting', () => {
-    cy.contains('thead button', 'Status').click()
+    cy.contains('thead button', 'Subject').click()
     cy.contains('button', 'Ascending').should('not.exist')
 
     for (const [title, field] of [

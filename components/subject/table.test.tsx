@@ -40,6 +40,7 @@ describe('reports subject table', () => {
         ...status,
         takendown: true,
         appealed: true,
+        priorityScore: 5,
         accountStrike: { activeStrikeCount: 2, totalStrikeCount: 3 },
       },
     ])
@@ -50,13 +51,25 @@ describe('reports subject table', () => {
     expect(
       markup.match(/Active strikes: 2[\s\S]*?aria-label="Taken Down"/g),
     ).toHaveLength(2)
+    const cells = markup.match(/<td\b[\s\S]*?<\/td>/g) || []
+    const subjectCells = cells.filter((cell) => cell.includes('Active strikes: 2'))
+    expect(subjectCells).toHaveLength(2)
+    for (const cell of subjectCells) {
+      expect(cell.indexOf('priority score is set to 5')).toBeLessThan(
+        cell.indexOf('Active strikes: 2'),
+      )
+      expect(cell.indexOf('aria-label="Taken Down"')).toBeLessThan(
+        cell.indexOf('<span>Subject</span>'),
+      )
+    }
     expect(markup).not.toContain('Appealed')
   })
 
   it('keeps priority scores and their sorting control', () => {
     const markup = renderTable([{ ...status, priorityScore: 5 }])
     expect(markup.match(/priority score is set to 5 out of 100/g)).toHaveLength(2)
-    expect(markup).toContain('Status')
+    expect(markup).toMatch(/<button[^>]*>Subject/)
+    expect(markup).not.toContain('>Status<')
   })
 
   it('omits review-state icons for subjects that are not taken down', () => {
@@ -87,6 +100,6 @@ describe('reports subject table', () => {
       },
     ])
     expect(markup.match(/aria-label="Deleted"/g)).toHaveLength(2)
-    expect(renderTable([])).toContain('colSpan="4"')
+    expect(renderTable([])).toContain('colSpan="3"')
   })
 })
