@@ -4,7 +4,6 @@ import {
   CheckCircleIcon,
   ChevronDownIcon,
   Bars3BottomLeftIcon,
-  ShieldExclamationIcon,
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
@@ -24,6 +23,7 @@ import { asPredicate, ToolsOzoneModerationDefs } from '@atproto/api'
 import { TrashIcon } from '@heroicons/react/24/solid'
 import { PriorityScore } from './PriorityScore'
 import { AccountStrike } from './AccountStrike'
+import { TakedownIcon } from './TakedownIcon'
 import { getSubjectStatusSortParams } from '@/lib/subject-status-sort'
 
 const useSortOrder = () => {
@@ -138,14 +138,10 @@ const SubjectIndicators = ({
   <div className="flex shrink-0 items-center gap-1 empty:hidden">
     <PriorityScore size="sm" priorityScore={subjectStatus.priorityScore || 0} />
     <AccountStrike size="sm" accountStrike={subjectStatus.accountStrike} />
-    {subjectStatus.takendown && (
-      <ShieldExclamationIcon
-        title="Taken Down"
-        aria-label="Taken Down"
-        aria-hidden={false}
-        className="h-5 w-5 shrink-0 text-red-800 dark:text-red-600"
-      />
-    )}
+    <TakedownIcon
+      takendown={subjectStatus.takendown}
+      className="h-5 w-5 shrink-0"
+    />
     <HostingStateIcon hosting={subjectStatus.hosting} />
   </div>
 )
