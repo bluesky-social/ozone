@@ -11,8 +11,6 @@ import {
   ChevronUpIcon,
 } from '@heroicons/react/20/solid'
 import {
-  FlagIcon,
-  ShieldExclamationIcon,
   TrashIcon,
   UserIcon,
 } from '@heroicons/react/24/solid'
@@ -29,8 +27,7 @@ import { ReportStatusBadge } from '../reports/ReportStatusBadge'
 import { SubjectOverview } from '../reports/SubjectOverview'
 import { AccountStrike } from '../subject/AccountStrike'
 import { PriorityScore } from '../subject/PriorityScore'
-import { ReviewStateIcon } from '../subject/ReviewStateMarker'
-import { StatView } from '../subject/Summary'
+import { TakedownIcon } from '../subject/TakedownIcon'
 import { SubjectTagList } from '../tags/SubjectTagList'
 import { AutomatedBadge } from './AutomatedBadge'
 import { MutedBadge } from './MutedBadge'
@@ -112,56 +109,33 @@ export function ReportTable(
   )
 }
 
-export const SubjectSummaryColumn = ({
-  accountStrike,
-  recordStats,
-  accountStats,
-  priorityScore,
+const SubjectSummary = ({
+  subjectStatus,
+  relatedReportCount,
 }: {
-  priorityScore?: number
-  accountStrike?: ToolsOzoneModerationDefs.AccountStrike
-  recordStats?: ToolsOzoneModerationDefs.RecordsStats
-  accountStats?: ToolsOzoneModerationDefs.AccountStats
+  subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView
+  relatedReportCount?: number
 }) => {
-  const { takendownCount, reportedCount, totalReports } = recordStats || {}
-  const { suspendCount } = accountStats || {}
+  if (
+    !subjectStatus?.accountStrike?.activeStrikeCount &&
+    !subjectStatus?.priorityScore &&
+    !(relatedReportCount && relatedReportCount > 0)
+  ) {
+    return null
+  }
 
   return (
-    <div className="flex flex-row gap-1 items-center">
-      <AccountStrike size="sm" accountStrike={accountStrike} />
-      <PriorityScore size="sm" priorityScore={priorityScore || 0} />
-      {!!suspendCount && (
-        <StatView
-          appearance="danger"
-          count={suspendCount}
-          Icon={ShieldExclamationIcon}
-          title={`account suspended ${pluralize(suspendCount, 'time')}`}
-        />
-      )}
-      {!!reportedCount && (
-        <StatView
-          appearance="info"
-          count={reportedCount}
-          Icon={FlagIcon}
-          title={`${pluralize(
-            reportedCount,
-            'record',
-          )} authored by this user reported ${pluralize(
-            totalReports || 0,
-            'time',
-          )}`}
-        />
-      )}
-      {!!takendownCount && (
-        <StatView
-          appearance="danger"
-          count={takendownCount}
-          Icon={ShieldExclamationIcon}
-          title={`${pluralize(
-            takendownCount,
-            'record',
-          )} authored by this account has been taken down`}
-        />
+    <div className="mt-1 flex flex-wrap items-center gap-1 text-xs text-gray-600 dark:text-gray-400 [&>span:first-child]:ml-0">
+      <AccountStrike size="sm" accountStrike={subjectStatus?.accountStrike} />
+      <PriorityScore
+        size="sm"
+        priorityScore={subjectStatus?.priorityScore || 0}
+      />
+      {relatedReportCount !== undefined && relatedReportCount > 0 && (
+        <span>
+          +{relatedReportCount} related{' '}
+          {pluralize(relatedReportCount, 'report', { includeCount: false })}
+        </span>
       )}
     </div>
   )
@@ -181,7 +155,12 @@ const HostingStateIcon = ({
   ) {
     if (hosting.status === 'deleted') {
       return (
-        <TrashIcon className="text-red-500 inline-block w-6 h-6 align-text-bottom" />
+        <TrashIcon
+          title="Deleted"
+          aria-label="Deleted"
+          aria-hidden={false}
+          className="text-red-500 inline-block w-6 h-6 align-text-bottom"
+        />
       )
     }
   }
@@ -301,7 +280,10 @@ function ReportRow({
         <div className="flex flex-row items-center pb-1 gap-1">
           {subjectStatus && (
             <>
-              <ReviewStateIcon subjectStatus={subjectStatus} className="h-4 w-4" />
+              <TakedownIcon
+                takendown={subjectStatus.takendown}
+                className="h-4 w-4 shrink-0"
+              />
               <HostingStateIcon hosting={subjectStatus.hosting} />
             </>
           )}
@@ -313,6 +295,10 @@ function ReportRow({
             />
           )}
         </div>
+        <SubjectSummary
+          subjectStatus={subjectStatus}
+          relatedReportCount={report.relatedReportCount}
+        />
         <PriorityBadge report={report} />
         <dl className="font-normal">
           <div className="flex items-center flex-row">
@@ -339,7 +325,16 @@ function ReportRow({
           )}
           <div className="flex items-center flex-row gap-1">
             <dt>Reporter:</dt>
-            <dd className="ml-1 truncate text-gray-700 dark:text-gray-100">
+            <dd className="ml-1 flex min-w-0 items-center gap-1 truncate text-gray-700 dark:text-gray-100">
+              {reporterStatus && (
+                <>
+                  <TakedownIcon
+                    takendown={reporterStatus.takendown}
+                    className="h-4 w-4 shrink-0"
+                  />
+                  <HostingStateIcon hosting={reporterStatus.hosting} />
+                </>
+              )}
               {reporterObj && (
                 <SubjectOverview
                   subject={reporterObj}
@@ -430,7 +425,10 @@ function ReportRow({
         <div className="flex flex-row items-center gap-1">
           {reporterStatus && (
             <>
-              <ReviewStateIcon subjectStatus={reporterStatus} className="h-4 w-4 shrink-0" />
+              <TakedownIcon
+                takendown={reporterStatus.takendown}
+                className="h-4 w-4 shrink-0"
+              />
               <HostingStateIcon hosting={reporterStatus.hosting} />
             </>
           )}
@@ -444,7 +442,10 @@ function ReportRow({
         <div className="flex flex-row items-center gap-1">
           {subjectStatus && (
             <>
-              <ReviewStateIcon subjectStatus={subjectStatus} className="h-4 w-4 shrink-0" />
+              <TakedownIcon
+                takendown={subjectStatus.takendown}
+                className="h-4 w-4 shrink-0"
+              />
               <HostingStateIcon hosting={subjectStatus.hosting} />
             </>
           )}
@@ -452,6 +453,10 @@ function ReportRow({
             <SubjectOverview subject={subjectObj} subjectRepoHandle={subjectHandle} />
           )}
         </div>
+        <SubjectSummary
+          subjectStatus={subjectStatus}
+          relatedReportCount={report.relatedReportCount}
+        />
         {!!subjectLabels?.length && (
           <LabelList className="flex-wrap gap-0.5 mt-1">
             {subjectLabels.map((label) => (
@@ -473,24 +478,6 @@ function ReportRow({
             />
           </div>
         )}
-      </td>
-      {/* Summary */}
-      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        {subjectStatus && (
-          <SubjectSummaryColumn
-            accountStrike={subjectStatus.accountStrike}
-            priorityScore={subjectStatus.priorityScore}
-            recordStats={subjectStatus.recordsStats}
-            accountStats={subjectStatus.accountStats}
-          />
-        )}
-        {report.relatedReportCount !== undefined &&
-          report.relatedReportCount > 0 && (
-            <div className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              +{report.relatedReportCount} related{' '}
-              {pluralize(report.relatedReportCount, 'report')}
-            </div>
-          )}
       </td>
       {/* Last Update column: links to report detail */}
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
@@ -573,12 +560,6 @@ function ReportRowHead() {
         scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        Summary
-      </th>
-      <th
-        scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
-      >
         <Link
           prefetch={false}
           href={getToggleReverseOrderLink('updatedAt')}
@@ -608,7 +589,7 @@ function EmptyRows({
 }) {
   return (
     <tr>
-      <td colSpan={6} className="text-center">
+      <td colSpan={4} className="text-center">
         {isInitialLoading ? (
           <>
             <Loading />

@@ -126,18 +126,6 @@ export const useQueueFilter = () => {
     updateFilters({ tags: [] })
   }
 
-  const setMinAccountSuspendCount = (minAccountSuspendCount?: number) => {
-    updateFilters({ minAccountSuspendCount })
-  }
-
-  const setMinReportedRecordsCount = (minReportedRecordsCount?: number) => {
-    updateFilters({ minReportedRecordsCount })
-  }
-
-  const setMinTakendownRecordsCount = (minTakendownRecordsCount?: number) => {
-    updateFilters({ minTakendownRecordsCount })
-  }
-
   const setMinPriorityScore = (minPriorityScore?: number) => {
     updateFilters({ minPriorityScore })
   }
@@ -160,9 +148,6 @@ export const useQueueFilter = () => {
     toggleSubjectType,
     clearSubjectType,
     clearTags,
-    setMinAccountSuspendCount,
-    setMinReportedRecordsCount,
-    setMinTakendownRecordsCount,
     setMinPriorityScore,
     setAgeAssuranceState,
     toggleHostingStatus,

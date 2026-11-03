@@ -7,12 +7,11 @@ import {
 } from '@heroicons/react/20/solid'
 import { SubjectStatus } from '@/lib/types'
 import { LoadMoreButton } from '../common/LoadMoreButton'
-import { classNames, pluralize } from '@/lib/util'
+import { classNames } from '@/lib/util'
 import { SubjectOverview } from '../reports/SubjectOverview'
 import { Loading } from '../common/Loader'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { Fragment, HTMLAttributes } from 'react'
-import { ReviewStateIcon } from './ReviewStateMarker'
 import {
   Popover,
   Transition,
@@ -21,14 +20,10 @@ import {
 } from '@headlessui/react'
 import { ButtonGroup } from '@/common/buttons'
 import { asPredicate, ToolsOzoneModerationDefs } from '@atproto/api'
-import { StatView } from './Summary'
-import {
-  FlagIcon,
-  ShieldExclamationIcon,
-  TrashIcon,
-} from '@heroicons/react/24/solid'
+import { TrashIcon } from '@heroicons/react/24/solid'
 import { PriorityScore } from './PriorityScore'
 import { AccountStrike } from './AccountStrike'
+import { TakedownIcon } from './TakedownIcon'
 import { getSubjectStatusSortParams } from '@/lib/subject-status-sort'
 
 const useSortOrder = () => {
@@ -97,55 +92,15 @@ export function SubjectTable(
 
 export const SubjectSummaryColumn = ({
   accountStrike,
-  recordStats,
-  accountStats,
   priorityScore,
 }: {
   priorityScore?: number
   accountStrike?: ToolsOzoneModerationDefs.AccountStrike
-  recordStats?: ToolsOzoneModerationDefs.RecordsStats
-  accountStats?: ToolsOzoneModerationDefs.AccountStats
 }) => {
-  const { takendownCount, reportedCount, totalReports } = recordStats || {}
-  const { suspendCount } = accountStats || {}
-
   return (
     <div className="flex flex-row gap-1 items-center">
       <AccountStrike size="sm" accountStrike={accountStrike} />
       <PriorityScore size="sm" priorityScore={priorityScore || 0} />
-      {!!suspendCount && (
-        <StatView
-          appearance="danger"
-          count={suspendCount}
-          Icon={ShieldExclamationIcon}
-          title={`account suspended ${pluralize(suspendCount, 'time')}`}
-        />
-      )}
-      {!!reportedCount && (
-        <StatView
-          appearance="info"
-          count={reportedCount}
-          Icon={FlagIcon}
-          title={`${pluralize(
-            reportedCount,
-            'record',
-          )} authored by this user reported ${pluralize(
-            totalReports || 0,
-            'time',
-          )}`}
-        />
-      )}
-      {!!takendownCount && (
-        <StatView
-          appearance="danger"
-          count={takendownCount}
-          Icon={ShieldExclamationIcon}
-          title={`${pluralize(
-            takendownCount,
-            'record',
-          )} authored by this account has been taken down`}
-        />
-      )}
     </div>
   )
 }
@@ -164,11 +119,32 @@ const HostingStateIcon = ({
   ) {
     if (hosting.status === 'deleted') {
       return (
-        <TrashIcon className="text-red-500 inline-block w-6 h-6 align-text-bottom" />
+        <TrashIcon
+          title="Deleted"
+          aria-label="Deleted"
+          aria-hidden={false}
+          className="text-red-500 inline-block w-6 h-6 align-text-bottom"
+        />
       )
     }
   }
 }
+
+const SubjectIndicators = ({
+  subjectStatus,
+}: {
+  subjectStatus: SubjectStatus
+}) => (
+  <div className="flex shrink-0 items-center gap-1 empty:hidden">
+    <PriorityScore size="sm" priorityScore={subjectStatus.priorityScore || 0} />
+    <AccountStrike size="sm" accountStrike={subjectStatus.accountStrike} />
+    <TakedownIcon
+      takendown={subjectStatus.takendown}
+      className="h-5 w-5 shrink-0"
+    />
+    <HostingStateIcon hosting={subjectStatus.hosting} />
+  </div>
+)
 
 function SubjectRow({
   subjectStatus,
@@ -184,11 +160,8 @@ function SubjectRow({
   return (
     <tr {...others}>
       <td className="w-full max-w-0 py-4 pl-4 pr-3 text-sm font-medium text-gray-900 dark:text-gray-200 sm:w-auto sm:max-w-none sm:pl-6 sm:hidden">
-        <div className="flex flex-row items-center pb-1">
-          <ReviewStateIcon
-            subjectStatus={subjectStatus}
-            className="h-4 w-4 mr-1"
-          />{' '}
+        <div className="flex flex-row items-center gap-1 pb-1">
+          <SubjectIndicators subjectStatus={subjectStatus} />
           <SubjectOverview
             subject={subjectStatus.subject}
             subjectRepoHandle={subjectStatus.subjectRepoHandle}
@@ -222,23 +195,14 @@ function SubjectRow({
           )}
         </dl>
       </td>
-      <td className="hidden text-center px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <ReviewStateIcon subjectStatus={subjectStatus} className="h-5 w-5" />
-        <HostingStateIcon hosting={subjectStatus.hosting} />
-      </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <SubjectOverview
-          subject={subjectStatus.subject}
-          subjectRepoHandle={subjectStatus.subjectRepoHandle}
-        />
-      </td>
-      <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell">
-        <SubjectSummaryColumn
-          accountStrike={subjectStatus.accountStrike}
-          priorityScore={subjectStatus.priorityScore}
-          recordStats={subjectStatus.recordsStats}
-          accountStats={subjectStatus.accountStats}
-        />
+        <div className="flex flex-row items-center gap-1">
+          <SubjectIndicators subjectStatus={subjectStatus} />
+          <SubjectOverview
+            subject={subjectStatus.subject}
+            subjectRepoHandle={subjectStatus.subjectRepoHandle}
+          />
+        </div>
       </td>
       <td className="hidden px-3 py-4 text-sm text-gray-500 dark:text-gray-100 sm:table-cell max-w-sm">
         {lastReviewedAt && (
@@ -298,21 +262,17 @@ const SortButtonGroup = ({
   )
 }
 
-const SummaryColumnHeader = () => {
+const SubjectColumnHeader = () => {
   const { sortField } = useSortOrder()
-  const hasSort =
-    sortField &&
-    ['reportedRecordsCount', 'takendownRecordsCount', 'priorityScore'].includes(
-      sortField,
-    )
+  const hasSort = sortField === 'priorityScore'
 
   return (
     <Popover className="relative">
       <PopoverButton
-        className=" flex flex-row items-center gap-1"
+        className="flex flex-row items-center gap-1"
         type="button"
       >
-        Summary
+        Subject
         {hasSort ? (
           <ChevronDownIcon className="h-4 w-4" />
         ) : (
@@ -331,16 +291,6 @@ const SummaryColumnHeader = () => {
       >
         <PopoverPanel className="absolute z-10 rounded p-4">
           <div className="flex-auto w-auto rounded bg-white dark:bg-slate-800 p-4 text-sm leading-6 shadow-lg dark:shadow-slate-900 ring-1 ring-gray-900/5">
-            <SortButtonGroup
-              title="Reported records count"
-              sortField="reportedRecordsCount"
-              currentSortField={sortField}
-            />
-            <SortButtonGroup
-              title="Takendown records count"
-              sortField="takendownRecordsCount"
-              currentSortField={sortField}
-            />
             <SortButtonGroup
               currentSortField={sortField}
               sortField="priorityScore"
@@ -366,21 +316,9 @@ function SubjectRowHead() {
       </th>
       <th
         scope="col"
-        className="hidden px-3 py-3.5 text-center text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
-      >
-        Status
-      </th>
-      <th
-        scope="col"
         className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
       >
-        Subject
-      </th>
-      <th
-        scope="col"
-        className="hidden px-3 py-3.5 text-left text-sm font-semibold text-gray-900 dark:text-gray-200 sm:table-cell"
-      >
-        <SummaryColumnHeader />
+        <SubjectColumnHeader />
       </th>
       <th
         scope="col"
@@ -417,7 +355,7 @@ function EmptyRows({
 }) {
   return (
     <tr>
-      <td colSpan={6} className="text-center">
+      <td colSpan={3} className="text-center">
         {isInitialLoading ? (
           <>
             <Loading />

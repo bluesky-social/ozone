@@ -85,28 +85,23 @@ describe('Subject-status report sorting', () => {
     cy.location('search').should('include', 'sortDirection=desc')
   })
 
-  it('offers only descending summary sorts', () => {
-    cy.contains('thead button', 'Summary').click()
+  it('offers only descending priority score sorting', () => {
+    cy.contains('thead button', 'Subject').click()
     cy.contains('button', 'Ascending').should('not.exist')
 
-    for (const [title, field] of [
-      ['Reported records count', 'reportedRecordsCount'],
-      ['Takendown records count', 'takendownRecordsCount'],
-      ['Priority score', 'priorityScore'],
-    ]) {
-      cy.contains('p', title).parent().contains('button', 'Descending').click()
-      cy.wait('@queryStatuses')
-        .its('request.query.sortField')
-        .should('equal', field)
-      cy.location('search').should('include', 'sortDirection=desc')
-    }
+    cy.contains('p', 'Priority score')
+      .parent()
+      .contains('button', 'Descending')
+      .click()
+    cy.wait('@queryStatuses')
+      .its('request.query.sortField')
+      .should('equal', 'priorityScore')
+    cy.location('search').should('include', 'sortDirection=desc')
   })
 
   for (const field of [
     'lastReportedAt',
     'lastReviewedAt',
-    'reportedRecordsCount',
-    'takendownRecordsCount',
     'priorityScore',
   ]) {
     it(`uses descending ${field} for old ascending URLs and pagination`, () => {

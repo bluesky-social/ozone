@@ -429,8 +429,6 @@ function Form(
                     subject={subject}
                     stats={{
                       accountStrike: subjectStatus?.accountStrike || strikeData,
-                      accountStats: subjectStatus?.accountStats,
-                      recordsStats: subjectStatus?.recordsStats,
                     }}
                   />
                 </>
@@ -869,8 +867,6 @@ function Form(
             <ModEventList
               stats={{
                 accountStrike: subjectStatus?.accountStrike || strikeData,
-                accountStats: subjectStatus?.accountStats,
-                recordsStats: subjectStatus?.recordsStats,
               }}
               subject={subject}
             />

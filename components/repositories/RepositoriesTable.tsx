@@ -190,8 +190,8 @@ function RepoRow(props: {
           {formatDistanceToNow(indexedAt, { addSuffix: true })}
         </span>
         <SubjectSummaryColumn
-          accountStats={subjectStatus?.accountStats}
-          recordStats={subjectStatus?.recordsStats}
+          accountStrike={subjectStatus?.accountStrike}
+          priorityScore={subjectStatus?.priorityScore}
         />
       </td>
     </tr>

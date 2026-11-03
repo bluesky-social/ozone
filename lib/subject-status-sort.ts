@@ -7,8 +7,6 @@ export const getSubjectStatusSortParams = (
     ![
       'lastReportedAt',
       'lastReviewedAt',
-      'reportedRecordsCount',
-      'takendownRecordsCount',
       'priorityScore',
     ].includes(sortField ?? '')
   ) {
