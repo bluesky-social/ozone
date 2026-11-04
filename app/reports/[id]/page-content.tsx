@@ -32,13 +32,17 @@ import { AutomatedBadge } from '@/reports/AutomatedBadge'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { canTargetAllOwned } from '@/reports/allOwnedScope'
 import {
   useReportArrowKeyNavigation,
   useReportAutoAdvance,
   useReports,
 } from '@/reports/useReports'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import {
+  useConfigurationContext,
+  useLabelerAgent,
+} from '@/shell/ConfigurationContext'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
@@ -478,6 +482,7 @@ export function ReportDetailPageContent() {
 
       {subject && report && (
         <ReportDetailLayout
+          key={report.id}
           report={report}
           subject={subject}
           setSubject={setSubject}
@@ -508,7 +513,12 @@ export function ReportDetailPageContent() {
               vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&
               vals.subject.$type === 'com.atproto.admin.defs#repoRef'
-            if (isCascaded && eventId) {
+            const linkedAllOwned = (
+              vals.reportAction as
+                | (ToolsOzoneModerationEmitEvent.ReportAction & { allOwned?: boolean })
+                | undefined
+            )?.allOwned
+            if (isCascaded && eventId && !linkedAllOwned) {
               await createActivity.mutateAsync({
                 reportId: report.id,
                 activity: {
@@ -576,12 +586,26 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const labelerAgent = useLabelerAgent()
+  const { config: labelerConfig } = useConfigurationContext()
+  const { data: supportsAllOwned = false } = useQuery({
+    queryKey: ['reportActionAllOwned', labelerConfig.did],
+    queryFn: async ({ signal }) => {
+      const { data } = await labelerAgent.tools.ozone.server.getCapabilities(
+        {},
+        { signal },
+      )
+      return (data as typeof data & { reportActionAllOwned?: boolean })
+        .reportActionAllOwned === true
+    },
+    retry: false,
+    staleTime: 60_000,
+  })
   const closeReport = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
   const [reportActionScope, setReportActionScope] = useState<
-    'current' | 'all' | 'types'
+    'current' | 'all' | 'types' | 'allOwned'
   >('current')
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
     getDefaultReportTypes(report),
@@ -718,7 +742,17 @@ function ReportDetailLayout(props: {
 
     try {
       if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-        if (isCascaded) {
+        if (
+          reportActionScope === 'allOwned' &&
+          !canTargetAllOwned(
+            supportsAllOwned,
+            subj.$type === 'com.atproto.admin.defs#repoRef',
+            eventType,
+          )
+        ) {
+          throw new Error('Choose a report closure scope for this action')
+        }
+        if (isCascaded && reportActionScope !== 'allOwned') {
           // Send original event without a report action
           await onSubmit(finalVals)
           if (
@@ -729,7 +763,9 @@ function ReportDetailLayout(props: {
             await closeCurrentReport()
           }
         } else {
-          const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+          const reportAction: ToolsOzoneModerationEmitEvent.ReportAction & {
+            allOwned?: boolean
+          } = {}
           if (
             reportActionScope === 'current' ||
             (eventType !== MOD_EVENTS.ESCALATE &&
@@ -739,6 +775,8 @@ function ReportDetailLayout(props: {
           }
           if (reportActionScope === 'all') {
             reportAction.all = true
+          } else if (reportActionScope === 'allOwned') {
+            reportAction.allOwned = true
           } else if (
             reportActionScope === 'types' &&
             reportActionTypes.length > 0
@@ -759,7 +797,8 @@ function ReportDetailLayout(props: {
             await resolveAppealForReport(finalVals.createdBy, actionComment)
             if (
               eventType !== MOD_EVENTS.LABEL &&
-              eventType !== MOD_EVENTS.REVERSE_TAKEDOWN
+              eventType !== MOD_EVENTS.REVERSE_TAKEDOWN &&
+              reportActionScope !== 'allOwned'
             ) {
               await closeCurrentReport()
             }
@@ -854,6 +893,19 @@ function ReportDetailLayout(props: {
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
   )
+  const showAllOwned = canTargetAllOwned(
+    supportsAllOwned,
+    !isSubjectRecord || applyToAccount,
+    modEventType,
+  )
+
+  useEffect(() => {
+    if (!showAllOwned) {
+      setReportActionScope((scope) =>
+        scope === 'allOwned' ? 'current' : scope,
+      )
+    }
+  }, [showAllOwned])
 
   const subjectDid =
     report.subject.repo?.did || profile?.did || repo?.did || record?.repo.did
@@ -1127,7 +1179,12 @@ function ReportDetailLayout(props: {
                   name="applyToAccount"
                   className="mb-3 flex items-center"
                   checked={applyToAccount}
-                  onChange={(e) => setApplyToAccount(e.target.checked)}
+                  onChange={(e) => {
+                    setApplyToAccount(e.target.checked)
+                    if (!e.target.checked && reportActionScope === 'allOwned') {
+                      setReportActionScope('current')
+                    }
+                  }}
                   label="Apply action to account"
                 />
               )}
@@ -1243,10 +1300,14 @@ function ReportDetailLayout(props: {
                 <div className="mt-2 mb-3 space-y-2">
                   <Select
                     className="w-full"
-                    value={reportActionScope}
+                    value={
+                      reportActionScope === 'allOwned' && !showAllOwned
+                        ? 'current'
+                        : reportActionScope
+                    }
                     onChange={(e) =>
                       setReportActionScope(
-                        e.target.value as 'current' | 'all' | 'types',
+                        e.target.value as 'current' | 'all' | 'types' | 'allOwned',
                       )
                     }
                   >
@@ -1257,7 +1318,18 @@ function ReportDetailLayout(props: {
                     <option value="types">
                       Close reports of specific types
                     </option>
+                    {showAllOwned && (
+                      <option value="allOwned">
+                        Close open reports on account and all owned subjects
+                      </option>
+                    )}
                   </Select>
+                  {reportActionScope === 'allOwned' && showAllOwned && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      Assigned and escalated reports are excluded, except this
+                      report.
+                    </p>
+                  )}
                   {reportActionScope === 'types' && (
                     <ReportTypeMultiselect
                       value={reportActionTypes}
