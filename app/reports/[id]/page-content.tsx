@@ -39,10 +39,7 @@ import {
   useReports,
 } from '@/reports/useReports'
 import { HighProfileWarning } from '@/repositories/HighProfileWarning'
-import {
-  useConfigurationContext,
-  useLabelerAgent,
-} from '@/shell/ConfigurationContext'
+import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import { LastReviewedTimestamp } from '@/subject/LastReviewedTimestamp'
 import { PriorityScore } from '@/subject/PriorityScore'
 import { RecordAuthorStatus } from '@/subject/RecordAuthorStatus'
@@ -586,20 +583,6 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const labelerAgent = useLabelerAgent()
-  const { config: labelerConfig } = useConfigurationContext()
-  const { data: supportsAllOwned = false } = useQuery({
-    queryKey: ['reportActionAllOwned', labelerConfig.did],
-    queryFn: async ({ signal }) => {
-      const { data } = await labelerAgent.tools.ozone.server.getCapabilities(
-        {},
-        { signal },
-      )
-      return (data as typeof data & { reportActionAllOwned?: boolean })
-        .reportActionAllOwned === true
-    },
-    retry: false,
-    staleTime: 60_000,
-  })
   const closeReport = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
@@ -745,7 +728,6 @@ function ReportDetailLayout(props: {
         if (
           reportActionScope === 'allOwned' &&
           !canTargetAllOwned(
-            supportsAllOwned,
             subj.$type === 'com.atproto.admin.defs#repoRef',
             eventType,
           )
@@ -894,7 +876,6 @@ function ReportDetailLayout(props: {
     modEventType,
   )
   const showAllOwned = canTargetAllOwned(
-    supportsAllOwned,
     !isSubjectRecord || applyToAccount,
     modEventType,
   )
