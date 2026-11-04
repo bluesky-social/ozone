@@ -20,7 +20,11 @@ import { ButtonGroup } from '@/common/buttons'
 import { Loading, LoadingFailed } from '@/common/Loader'
 import { ReasonBadge } from '@/reports/ReasonBadge'
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { usePdsAgent } from '@/shell/AuthContext'
+import {
+  useConfigurationContext,
+  useLabelerAgent,
+} from '@/shell/ConfigurationContext'
 import {
   ActionedSubject,
   ActionedSubjectDetail,
@@ -47,6 +51,12 @@ import {
   isAppealableAction,
   mergeActions,
   countGraphemes,
+  accountPreview,
+  subjectActionCopy,
+  accountActionDate,
+  accountNoticeTitle,
+  accountSubjectNotice,
+  sanitizeAccountName,
 } from './presentation'
 
 type Hydrated = Record<string, ToolsOzoneModerationDefs.SubjectView>
@@ -97,12 +107,17 @@ function SubjectContent({
   subject,
   hydrated,
   record,
+  accountDetail,
 }: {
   subject: SubjectRef
   hydrated?: ToolsOzoneModerationDefs.SubjectView
   record?: unknown
+  accountDetail?: ActionedSubjectDetail
 }) {
   const key = subjectKey(subject)
+  if (key?.startsWith('did:') && accountDetail) {
+    return <AccountContent did={key} accountDetail={accountDetail} />
+  }
   const value =
     record && typeof record === 'object' && !Array.isArray(record)
       ? (record as Record<string, unknown>)
@@ -162,6 +177,45 @@ function SubjectContent({
   )
 }
 
+function AccountContent({
+  did,
+  accountDetail,
+}: {
+  did: string
+  accountDetail: ActionedSubjectDetail
+}) {
+  const agent = usePdsAgent()
+  const profile = useQuery({
+    queryKey: ['inboxAccountProfile', did],
+    queryFn: async ({ signal }) =>
+      (await agent.app.bsky.actor.getProfile({ actor: did }, { signal })).data,
+    staleTime: 60_000,
+    retry: false,
+  })
+  const snapshot = accountPreview(accountDetail)
+  const handle = profile.data ? profile.data.handle : snapshot?.handle
+  const name = profile.data
+    ? sanitizeAccountName(profile.data.displayName)
+    : snapshot?.displayName
+  return (
+    <div className="overflow-x-auto rounded-lg border border-gray-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+      <p className="font-medium text-gray-900 dark:text-gray-100">
+        {name || 'Account'}
+      </p>
+      <p
+        dir="ltr"
+        className="mt-1 break-all text-sm text-gray-600 dark:text-gray-300"
+      >
+        {handle === 'handle.invalid'
+          ? '⚠Invalid Handle'
+          : handle
+            ? `@${handle.toLocaleLowerCase()}`
+            : did}
+      </p>
+    </div>
+  )
+}
+
 function Timeline({ events }: { events: { label: string; at?: string }[] }) {
   return (
     <section className={cardClass}>
@@ -199,7 +253,7 @@ export function useHydratedSubjects(
   items: { subject: SubjectRef }[],
   did: string,
 ) {
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   const keys = useMemo(
     () =>
       [
@@ -220,7 +274,7 @@ export function useHydratedSubjects(
     [items, did],
   )
   return useQuery<Hydrated>({
-    queryKey: ['inboxSubjectHydration', keys],
+    queryKey: ['inboxSubjectHydration', keys, config.did],
     enabled: keys.length > 0,
     staleTime: 60_000,
     queryFn: async () => {
@@ -301,9 +355,9 @@ export function ReportRow({
   useEffect(() => {
     if (selected) setOpen(true)
   }, [selected])
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   const detail = useQuery<ReportDetail, Error>({
-    queryKey: ['inboxReportDetail', did, item.id],
+    queryKey: ['inboxReportDetail', did, item.id, config.did],
     enabled: open,
     staleTime: 15_000,
     queryFn: ({ signal }) =>
@@ -503,18 +557,27 @@ export function ActionedRow({
   item,
   did,
   hydrated,
+  action,
   selected = false,
+  selectedCurrent = false,
 }: {
   item: ActionedSubject | ActionedSubjectDetail
   did: string
   hydrated?: ToolsOzoneModerationDefs.SubjectView
+  action?: InboxAction
   selected?: boolean
+  selectedCurrent?: boolean
 }) {
   const [open, setOpen] = useState(selected)
+  const [showCurrent, setShowCurrent] = useState(selectedCurrent)
   useEffect(() => {
-    if (selected) setOpen(true)
-  }, [selected])
+    if (selected) {
+      setOpen(true)
+      setShowCurrent(selectedCurrent)
+    }
+  }, [selected, selectedCurrent])
   const [showAppeal, setShowAppeal] = useState(false)
+  const { config } = useConfigurationContext()
   const key = subjectKey(item.subject)
   const detail = useActionedSubjectDetail(did, key, open)
   const subject = detail.data?.pages[0] || item
@@ -524,32 +587,185 @@ export function ActionedRow({
       ? [item.latestAction]
       : []
   const appealAction = actions.find(isAppealableAction)
+  const selectedAction = action && !showCurrent ? action : undefined
+  const rowAction =
+    action ?? ('latestAction' in item ? item.latestAction : undefined)
+  const label = rowAction?.labels?.[0]
+  const definition =
+    item.src === config.did
+      ? config.labeler?.policies.labelValueDefinitions?.find(
+          (value) => value.identifier === label,
+        )
+      : undefined
+  const builtinNames: Record<string, string> = {
+    '!hide': 'Content Blocked',
+    '!warn': 'Content Warning',
+    '!no-unauthenticated': 'Sign-in Required',
+    porn: 'Adult Content',
+    sexual: 'Sexually Suggestive',
+    nudity: 'Non-sexual Nudity',
+    'graphic-media': 'Graphic Media',
+    gore: 'Graphic Media',
+  }
+  const labelName = label
+    ? (definition?.locales.find((locale) => /^en(?:-|$)/i.test(locale.lang))
+        ?.name ??
+      definition?.locales[0]?.name ??
+      builtinNames[label] ??
+      label)
+    : undefined
+  const actionCopy =
+    rowAction && subjectActionCopy(rowAction, item.subject, labelName)
+  const accountNotice =
+    key?.startsWith('did:') && detail.data?.pages[0]
+      ? accountSubjectNotice(detail.data.pages[0])
+      : undefined
   const state =
     subject.appeal?.state === 'pending'
       ? 'Appeal under review'
       : subject.appeal?.state === 'resolved'
         ? `Appeal ${appealLabel(subject.appeal).toLowerCase()} · ${enforcementLabel(subject.enforcement.state)}`
         : enforcementLabel(subject.enforcement.state)
+  const rowProps = {
+    title: actionCopy?.title || subjectTitle(item.subject, hydrated),
+    subtitle: rowAction
+      ? [actionCopy?.summary, accountActionDate(rowAction)]
+          .filter(Boolean)
+          .join(' · ')
+      : `${state} · Updated ${date(subject.updatedAt)}`,
+    isRead:
+      action && 'latestAction' in item
+        ? item.isRead || action.id !== item.latestAction?.id
+        : subject.isRead,
+    open,
+    onToggle: () => {
+      if (open) setShowCurrent(false)
+      setOpen(!open)
+    },
+  }
+  if (selectedAction) {
+    return (
+      <Row {...rowProps}>
+        {detail.isLoading && <Loading message="Loading action history" />}
+        {detail.isError && (
+          <QueryError error={detail.error} retry={() => void detail.refetch()} />
+        )}
+        {detail.data && (
+          <section className={cardClass}>
+            <h3 className="font-semibold">
+              {accountNoticeTitle(selectedAction)}
+            </h3>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+              {new Date(
+                selectedAction.reversedAt || selectedAction.createdAt,
+              ).toLocaleString(undefined, {
+                dateStyle: 'medium',
+                timeStyle: 'short',
+              })}
+            </p>
+            <h4 className="mb-3 mt-4 font-semibold">
+              {subject.enforcement.state === 'takendown' ||
+              subject.enforcement.state === 'suspended'
+                ? 'Limited profile'
+                : 'Your account'}
+            </h4>
+            <SubjectContent
+              subject={subject.subject}
+              hydrated={hydrated}
+              accountDetail={key === did ? detail.data.pages[0] : undefined}
+            />
+            {(selectedAction.type === 'labelApplied' ||
+              selectedAction.type === 'labelRemoved') &&
+              actionCopy?.summary && (
+                <p className="mt-3 text-sm">{actionCopy.summary}</p>
+              )}
+            {selectedAction.policies?.length ? (
+              <div className="mt-4 text-sm">
+                <p>
+                  {selectedAction.policies.length === 1
+                    ? 'Rule violated:'
+                    : 'Rules violated:'}
+                </p>
+                {selectedAction.policies.map((policy) => (
+                  <p key={policy.key}>
+                    <a
+                      href={
+                        /^https?:\/\//i.test(policy.link)
+                          ? policy.link
+                          : undefined
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className={linkClass}
+                    >
+                      {policy.displayName}
+                    </a>
+                  </p>
+                ))}
+              </div>
+            ) : null}
+            {['accountTakedown', 'accountSuspended', 'labelApplied'].includes(
+              selectedAction.type,
+            ) &&
+              subject.appeal?.state === 'pending' && (
+                <p className="mt-3 text-sm">
+                  An appeal for this account is under review.
+                </p>
+              )}
+            {['accountTakedown', 'accountSuspended', 'labelApplied'].includes(
+              selectedAction.type,
+            ) &&
+              subject.appeal?.state === 'resolved' && (
+                <p className="mt-3 text-sm">
+                  {appealLabel(subject.appeal) === 'Approved'
+                    ? 'Your most recent account appeal was approved.'
+                    : appealLabel(subject.appeal) === 'Denied'
+                      ? 'Your most recent account appeal was denied.'
+                      : 'Your most recent account appeal was reviewed.'}
+                </p>
+              )}
+            {subject.availableActions?.includes('appeal') && (
+              <button
+                type="button"
+                onClick={() => setShowCurrent(true)}
+                className="mt-4 rounded-md border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400"
+              >
+                View current appeal options
+              </button>
+            )}
+          </section>
+        )}
+      </Row>
+    )
+  }
   return (
-    <Row
-      title={subjectTitle(item.subject, hydrated)}
-      subtitle={`${state} · Updated ${date(subject.updatedAt)}`}
-      isRead={subject.isRead}
-      open={open}
-      onToggle={() => setOpen(!open)}
-    >
+    <Row {...rowProps}>
       {detail.isLoading && <Loading message="Loading action history" />}
       {detail.isError && (
         <QueryError error={detail.error} retry={() => void detail.refetch()} />
       )}
+      {accountNotice && (
+        <section className={cardClass}>
+          <h3 className="font-semibold">{accountNotice.title}</h3>
+          {accountNotice.description && (
+            <p className="mt-2 text-sm">{accountNotice.description}</p>
+          )}
+        </section>
+      )}
       <section className={cardClass}>
         <h3 className="mb-3 font-semibold text-gray-900 dark:text-gray-100">
-          Your {key?.startsWith('did:') ? 'account' : 'content'}
+          {key?.startsWith('did:')
+            ? subject.enforcement.state === 'takendown' ||
+              subject.enforcement.state === 'suspended'
+              ? 'Limited profile'
+              : 'Your account'
+            : 'Your content'}
         </h3>
         <SubjectContent
           subject={subject.subject}
           hydrated={hydrated}
           record={detail.data?.pages[0].record}
+          accountDetail={key === did ? detail.data?.pages[0] : undefined}
         />
         <dl className="mt-4 grid gap-3 text-sm text-gray-900 dark:text-gray-100 sm:grid-cols-2">
           <div>
@@ -866,11 +1082,11 @@ export function QueryError({
 }
 
 function useActionedSubjectDetail(did: string, key?: string, enabled = true) {
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   return useInfiniteQuery<ActionedSubjectDetail, Error>({
-    queryKey: ['inboxActionDetail', did, key],
+    queryKey: ['inboxActionDetail', did, key, config.did],
     enabled: enabled && !!key && did.startsWith('did:'),
-    staleTime: 15_000,
+    staleTime: 60_000,
     queryFn: ({ signal, pageParam }) =>
       fetchInboxDetail(
         agent,
@@ -957,9 +1173,9 @@ function InboxControls({
 }
 
 function LinkedReport({ did, id }: { did: string; id: number }) {
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   const detail = useQuery<ReportDetail, Error>({
-    queryKey: ['inboxReportDetail', did, id],
+    queryKey: ['inboxReportDetail', did, id, config.did],
     enabled: did.startsWith('did:'),
     staleTime: 15_000,
     queryFn: ({ signal }) =>
@@ -1095,6 +1311,64 @@ export function ReportsPreview({ did }: { did: string }) {
   )
 }
 
+export function AccountActionRows({
+  item,
+  did,
+  hydrated,
+  selected,
+  selectedActionId,
+}: {
+  item: ActionedSubject
+  did: string
+  hydrated?: ToolsOzoneModerationDefs.SubjectView
+  selected: boolean
+  selectedActionId?: number
+}) {
+  const key = subjectKey(item.subject)
+  const detail = useActionedSubjectDetail(did, key)
+  const actions = detail.data
+    ? mergeActions(detail.data.pages)
+    : item.latestAction
+      ? [item.latestAction]
+      : []
+  return (
+    <>
+      {actions.map((action) => (
+        <ActionedRow
+          key={action.id}
+          item={item}
+          did={did}
+          hydrated={hydrated}
+          action={action}
+          selected={
+            selected &&
+            action.id ===
+              (selectedActionId ?? item.latestAction?.id ?? actions[0]?.id)
+          }
+          selectedCurrent={
+            selected &&
+            selectedActionId === undefined &&
+            action.id === (item.latestAction?.id ?? actions[0]?.id)
+          }
+        />
+      ))}
+      {detail.isError && (
+        <QueryError error={detail.error} retry={() => void detail.refetch()} />
+      )}
+      {detail.hasNextPage && (
+        <button
+          type="button"
+          disabled={detail.isFetchingNextPage}
+          onClick={() => void detail.fetchNextPage()}
+          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100"
+        >
+          Load older account actions
+        </button>
+      )}
+    </>
+  )
+}
+
 export function ActionedSubjectsPreview({ did }: { did: string }) {
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [sort, setSort] = useState<InboxSort>({
@@ -1103,6 +1377,9 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
   })
   const searchParams = useSearchParams()
   const selected = searchParams.get('subject')
+  const actionId = Number(searchParams.get('actionId'))
+  const selectedActionId =
+    Number.isSafeInteger(actionId) && actionId > 0 ? actionId : undefined
   const query = useInboxPreview(did, 'actioned-subjects', filter, sort)
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) || [],
@@ -1139,15 +1416,27 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
             <p className={cardClass}>No actioned subjects match this filter.</p>
           )}
           <div className="space-y-2">
-            {items.map((item) => (
-              <ActionedRow
-                key={subjectKey(item.subject) || JSON.stringify(item.subject)}
-                item={item}
-                did={did}
-                selected={subjectKey(item.subject) === selected}
-                hydrated={hydrated.data?.[subjectKey(item.subject) || '']}
-              />
-            ))}
+            {items.map((item) => {
+              const key = subjectKey(item.subject)
+              const props = {
+                item,
+                did,
+                selected: key === selected,
+                hydrated: hydrated.data?.[key || ''],
+              }
+              return key?.startsWith('did:') ? (
+                <AccountActionRows
+                  key={`${item.src}:${key}`}
+                  {...props}
+                  selectedActionId={selectedActionId}
+                />
+              ) : (
+                <ActionedRow
+                  key={`${item.src}:${key || JSON.stringify(item.subject)}`}
+                  {...props}
+                />
+              )
+            })}
           </div>
           {query.isError && (
             <QueryError

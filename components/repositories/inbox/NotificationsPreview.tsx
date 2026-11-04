@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { useMemo, useState } from 'react'
 import { Loading } from '@/common/Loader'
 import { SubjectOverview } from '@/reports/SubjectOverview'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import {
   fetchNotificationPreferences,
   fetchNotificationsPage,
@@ -30,11 +30,11 @@ import {
 } from './presentation'
 
 export function NotificationsPreview({ did }: { did: string }) {
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   const [filters, setFilters] = useState<NotificationFilters>({})
   const enabled = did.startsWith('did:')
   const query = useInfiniteQuery({
-    queryKey: ['inboxNotifications', did, filters],
+    queryKey: ['inboxNotifications', did, filters, config.did],
     enabled,
     queryFn: ({ pageParam, signal }) =>
       fetchNotificationsPage(
@@ -47,7 +47,7 @@ export function NotificationsPreview({ did }: { did: string }) {
     getNextPageParam: (page) => page.cursor || undefined,
   })
   const preferences = useQuery({
-    queryKey: ['inboxNotificationPreferences', did],
+    queryKey: ['inboxNotificationPreferences', did, config.did],
     enabled,
     queryFn: ({ signal }) => fetchNotificationPreferences(agent, did, signal),
   })

@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from '@tanstack/react-query'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import {
   fetchInboxPreviewPage,
   type InboxKind,
@@ -15,9 +15,9 @@ export function useInboxPreview<K extends InboxKind>(
   filter: ReportFilter = 'all',
   sort: InboxSort = { sortField: 'updatedAt', sortDirection: 'desc' },
 ) {
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   return useInfiniteQuery({
-    queryKey: ['moderatorInboxPreview', kind, did, filter, sort],
+    queryKey: ['moderatorInboxPreview', kind, did, filter, sort, config.did],
     enabled: did.startsWith('did:'),
     queryFn: ({ pageParam, signal }) =>
       fetchInboxPreviewPage(

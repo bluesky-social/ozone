@@ -120,7 +120,7 @@ export async function fetchInboxPreviewPage<K extends InboxKind>(
 ): Promise<InboxPage<InboxItemFor<K>>> {
   const params = {
     did,
-    limit: 50,
+    limit: kind === 'actioned-subjects' ? 30 : 50,
     cursor,
     filter: filter === 'all' ? undefined : filter,
     ...sort,

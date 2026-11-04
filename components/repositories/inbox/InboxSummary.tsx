@@ -1,58 +1,61 @@
 'use client'
 
 import { useQuery } from '@tanstack/react-query'
-import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { useConfigurationContext } from '@/shell/ConfigurationContext'
 import { fetchAccountStatus, fetchUnreadCounts } from './api'
-import { date, standingLabel } from './presentation'
+import { accountStatusCopy } from './presentation'
 
 export function InboxSummary({ did }: { did: string }) {
-  const agent = useLabelerAgent()
+  const { labelerAgent: agent, config } = useConfigurationContext()
   const enabled = did.startsWith('did:')
   const standing = useQuery({
-    queryKey: ['inboxAccountStatus', did],
+    queryKey: ['inboxAccountStatus', did, config.did],
     enabled,
     queryFn: ({ signal }) => fetchAccountStatus(agent, did, signal),
   })
   const unread = useQuery({
-    queryKey: ['inboxUnreadCounts', did],
+    queryKey: ['inboxUnreadCounts', did, config.did],
     enabled,
     queryFn: ({ signal }) => fetchUnreadCounts(agent, did, signal),
   })
+  const copy = standing.data && accountStatusCopy(standing.data)
   return (
     <div className="mb-5 grid gap-3 sm:grid-cols-2">
-      <section className="rounded-lg border border-gray-200 bg-white p-4 text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100">
-        <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
-          Account standing
-        </h3>
-        {standing.data ? (
-          <>
+      {(!standing.data || copy) && (
+        <section className="rounded-lg border border-gray-200 bg-white p-4 text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100">
+          {copy ? (
+            <details>
+              <summary
+                className={`cursor-pointer text-lg font-semibold ${copy.serious ? 'text-red-600 dark:text-red-400' : 'text-amber-700 dark:text-amber-400'}`}
+              >
+                {copy.title}
+              </summary>
+              <p className="mt-3 text-sm">{copy.description}</p>
+              {copy.expiry && (
+                <p className="mt-2 text-sm">
+                  Scheduled end:{' '}
+                  {new Date(copy.expiry).toLocaleString(undefined, {
+                    dateStyle: 'medium',
+                    timeStyle: 'short',
+                  })}
+                </p>
+              )}
+              {copy.disclaimer && (
+                <p className="mt-2 text-sm">{copy.disclaimer}</p>
+              )}
+            </details>
+          ) : (
             <p
-              className={`mt-1 text-lg font-semibold ${standing.data.standing === 'atRisk' ? 'text-red-600 dark:text-red-400' : standing.data.standing === 'warning' ? 'text-amber-700 dark:text-amber-400' : 'text-gray-900 dark:text-gray-100'}`}
+              className="mt-1 text-sm"
+              role={standing.isError ? 'alert' : undefined}
             >
-              {standingLabel(standing.data.standing)}
+              {standing.isError
+                ? 'Account standing unavailable.'
+                : 'Loading account standing…'}
             </p>
-            {Date.parse(standing.data.updatedAt) > 0 && (
-              <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                Latest account activity {date(standing.data.updatedAt, true)}
-              </p>
-            )}
-            {standing.data.expiresAt && (
-              <p className="mt-1 text-sm">
-                Suspension expires {date(standing.data.expiresAt, true)}
-              </p>
-            )}
-          </>
-        ) : (
-          <p
-            className="mt-1 text-sm"
-            role={standing.isError ? 'alert' : undefined}
-          >
-            {standing.isError
-              ? 'Account standing unavailable.'
-              : 'Loading account standing…'}
-          </p>
-        )}
-      </section>
+          )}
+        </section>
+      )}
       <section className="rounded-lg border border-gray-200 bg-white p-4 text-gray-900 dark:border-slate-700 dark:bg-slate-800 dark:text-gray-100">
         <h3 className="text-sm font-medium text-gray-500 dark:text-gray-400">
           Unread notifications
