@@ -120,7 +120,11 @@ export enum CollectionId {
   StarterPack = 'app.bsky.graph.starterpack',
   ProfileStatus = 'app.bsky.actor.status',
   ProfileLink = 'app.bsky.actor.link',
-  StandardDocument = 'site.standard.document',
+  SiteStandardDocument = 'site.standard.document',
+  SiteStandardPublication = 'site.standard.publication',
+  SocialGrainGallery = 'social.grain.gallery',
+  SocialGrainPhoto = 'social.grain.photo',
+  PlaceStreamLivestream = 'place.stream.livestream',
   Convo = 'chat.bsky.convo',
 }
 export const getProfileUriForDid = (did: string) =>
@@ -154,8 +158,20 @@ export const getCollectionName = (collection: string) => {
   if (collection === CollectionId.Convo) {
     return 'Conversation'
   }
-  if (collection === CollectionId.StandardDocument) {
+  if (collection === CollectionId.SiteStandardDocument) {
     return 'Standard Site Document'
+  }
+  if (collection === CollectionId.SiteStandardPublication) {
+    return 'Standard Site Publication'
+  }
+  if (collection === CollectionId.SocialGrainGallery) {
+    return 'Grain Gallery'
+  }
+  if (collection === CollectionId.SocialGrainPhoto) {
+    return 'Grain Photo'
+  }
+  if (collection === CollectionId.PlaceStreamLivestream) {
+    return 'Livestream'
   }
   // If the collection is a string with ., use the last two segments as the title
   // so app.bsky.graph.list -> graph list
