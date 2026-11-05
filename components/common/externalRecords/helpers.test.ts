@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { jsonToLex } from '@atproto/api'
-import { coverImageCid, documentUrl, recordReference } from './helpers'
+import { imageBlobCid, documentUrl, recordReference, safeHttpUrl } from './helpers'
+
+describe('safeHttpUrl', () => {
+  it.each([
+    'javascript:alert(1)',
+    'https://user:pw@example.com',
+    'ftp://example.com',
+    '//example.com',
+    'https://',
+    null,
+    42,
+  ])('rejects unsafe or malformed URLs: %j', (value) => {
+    expect(safeHttpUrl(value)).toBeNull()
+  })
+})
 
 describe('Standard document references', () => {
   it('joins the site and document path without discarding publication base paths', () => {
@@ -81,8 +95,8 @@ describe('Standard document covers', () => {
   }
 
   it('reads both raw snapshot blobs and decoded live XRPC blobs', () => {
-    expect(coverImageCid(blob)).toBe(cid)
-    expect(coverImageCid(jsonToLex(blob))).toBe(cid)
+    expect(imageBlobCid(blob)).toBe(cid)
+    expect(imageBlobCid(jsonToLex(blob))).toBe(cid)
   })
 
   it.each([
@@ -91,6 +105,6 @@ describe('Standard document covers', () => {
     { ...blob, ref: { $link: 'invalid' } },
     { ...blob, mimeType: 'text/html' },
   ])('ignores malformed or non-image blobs: %j', (value) => {
-    expect(coverImageCid(value)).toBeNull()
+    expect(imageBlobCid(value)).toBeNull()
   })
 })

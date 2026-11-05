@@ -13,7 +13,11 @@ const PreviewTitleMap = {
   [CollectionId.StarterPack]: 'Reported starter pack',
   [CollectionId.ProfileStatus]: 'Reported profile status',
   [CollectionId.ProfileLink]: 'Reported profile link',
-  [CollectionId.StandardDocument]: 'Reported document',
+  [CollectionId.SiteStandardDocument]: 'Reported document',
+  [CollectionId.SiteStandardPublication]: 'Reported publication',
+  [CollectionId.SocialGrainGallery]: 'Reported gallery',
+  [CollectionId.SocialGrainPhoto]: 'Reported photo',
+  [CollectionId.PlaceStreamLivestream]: 'Reported livestream',
   [CollectionId.Convo]: 'Reported conversation',
 }
 

@@ -7,19 +7,23 @@ const ResultItem = (
     active,
     currentRootActionId,
   }: {
-    action: ActionImpl
+    action: ActionImpl | undefined
     active: boolean
     currentRootActionId?: string | null
   },
   ref: React.Ref<HTMLDivElement>,
 ) => {
   const ancestors = React.useMemo(() => {
-    if (!currentRootActionId) return action.ancestors
-    const index = action.ancestors.findIndex(
+    const actionAncestors = action?.ancestors ?? []
+    if (!currentRootActionId) return actionAncestors
+    const index = actionAncestors.findIndex(
       (ancestor) => ancestor.id === currentRootActionId,
     )
-    return action.ancestors.slice(index + 1)
-  }, [action.ancestors, currentRootActionId])
+    return actionAncestors.slice(index + 1)
+  }, [action?.ancestors, currentRootActionId])
+
+  // The virtualizer can briefly retain a row after async results shrink.
+  if (!action) return null
 
   return (
     <div
