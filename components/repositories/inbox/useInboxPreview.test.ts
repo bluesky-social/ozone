@@ -167,6 +167,14 @@ describe('moderator inbox preview requests', () => {
         id: 27,
       },
     })
+    const fallback = mockAgent({ ...inbox.item, appeal: { state: 'pending' } })
+    await submitInboxAppeal(fallback.agent, subject, '', undefined, true)
+    expect(
+      await new Response(fallback.fetch.mock.calls[0][1].body).json(),
+    ).toEqual({
+      subject,
+      action: { $type: 'tools.ozone.inbox.appealActionedSubject#takedownRef' },
+    })
   })
 
   it('rejects malformed notification pages using the released lexicon', async () => {
