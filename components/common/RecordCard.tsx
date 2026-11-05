@@ -39,7 +39,12 @@ import type { JSX } from 'react'
 import { VerificationBadge } from 'components/verification/Badge'
 import { RecordWithSnapshots } from './snapshots/RecordWithSnapshots'
 import { ProfileLinkCard } from './profileLinks/ProfileLinkCard'
-import { StandardDocumentCard } from './standardDocuments/StandardDocumentCard'
+import { SiteStandardDocument } from './externalRecords/SiteStandardDocument'
+import { SiteStandardPublication } from './externalRecords/SiteStandardPublication'
+import { SocialGrainGallery } from './externalRecords/SocialGrainGallery'
+import { SocialGrainPhoto } from './externalRecords/SocialGrainPhoto'
+import { PlaceStreamLivestream } from './externalRecords/PlaceStreamLivestream'
+import type { SimpleRecordProps } from './externalRecords/SimpleRecord'
 
 export function RecordCard(props: {
   uri: string
@@ -97,9 +102,15 @@ export function RecordCard(props: {
       </RecordWithSnapshots>
     )
   }
-  if (parsed.collection === CollectionId.StandardDocument) {
+  const ExternalRecord = ExternalRecordRenderers.get(parsed.collection ?? '')
+  if (ExternalRecord) {
     return (
-      <StandardDocumentRecordCard key={uri} uri={uri} authorDid={parsed.did} />
+      <ExternalRecordCard
+        key={uri}
+        uri={uri}
+        authorDid={parsed.did}
+        Renderer={ExternalRecord}
+      />
     )
   }
   if (parsed.collection === CollectionId.Convo) {
@@ -341,12 +352,25 @@ function useRecordCardQuery(uri: string) {
   })
 }
 
-function StandardDocumentRecordCard({
+const ExternalRecordRenderers = new Map<
+  string,
+  (props: SimpleRecordProps) => JSX.Element
+>([
+  [CollectionId.SiteStandardDocument, SiteStandardDocument],
+  [CollectionId.SiteStandardPublication, SiteStandardPublication],
+  [CollectionId.SocialGrainGallery, SocialGrainGallery],
+  [CollectionId.SocialGrainPhoto, SocialGrainPhoto],
+  [CollectionId.PlaceStreamLivestream, PlaceStreamLivestream],
+])
+
+function ExternalRecordCard({
   uri,
   authorDid,
+  Renderer,
 }: {
   uri: string
   authorDid: string
+  Renderer: (props: SimpleRecordProps) => JSX.Element
 }) {
   const { data: record, error } = useRecordCardQuery(uri)
 
@@ -368,7 +392,7 @@ function StandardDocumentRecordCard({
           <>
             <RepoCard did={authorDid} />
             {selected ? (
-              <StandardDocumentCard
+              <Renderer
                 uri={uri}
                 cid={selected.cid}
                 value={selected.value}
