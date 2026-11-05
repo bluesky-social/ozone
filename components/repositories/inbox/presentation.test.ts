@@ -10,6 +10,8 @@ import {
   notificationLabel,
   notificationSubject,
   scopeLabel,
+  accountStatusCopy,
+  subjectActionCopy,
 } from './presentation'
 import type { InboxAction, InboxNotification } from './api'
 
@@ -30,6 +32,91 @@ const notification = (
 })
 
 describe('inbox presentation', () => {
+  it('matches app account status copy while distinguishing strikes from enforcement', () => {
+    expect(accountStatusCopy({ standing: 'good' })).toBeUndefined()
+    expect(
+      accountStatusCopy({
+        standing: 'warning',
+        enforcement: { state: 'none' },
+        hasActiveStrikes: true,
+      }),
+    ).toMatchObject({
+      title: 'Your account has strikes against it',
+      description: expect.stringContaining(
+        'strikes have been added to your record',
+      ),
+      disclaimer: expect.stringContaining(
+        'Strikes come off your record over time.',
+      ),
+    })
+    expect(
+      accountStatusCopy({
+        standing: 'atRisk',
+        enforcement: { state: 'none' },
+        hasActiveStrikes: true,
+      }),
+    ).toMatchObject({
+      title: 'Your account is at risk of permanent suspension',
+      description: expect.stringContaining(
+        'Your record now carries enough strikes',
+      ),
+    })
+    expect(
+      accountStatusCopy({
+        standing: 'atRisk',
+        enforcement: { state: 'takendown' },
+        hasActiveStrikes: false,
+      }),
+    ).toMatchObject({
+      title: 'Your account has been suspended',
+      disclaimer: undefined,
+    })
+    expect(
+      accountStatusCopy({
+        standing: 'atRisk',
+        enforcement: { state: 'suspended', expiresAt: '2026-10-01T00:00:00Z' },
+        hasActiveStrikes: true,
+      }),
+    ).toMatchObject({
+      title: 'Your account is temporarily suspended',
+      expiry: '2026-10-01T00:00:00Z',
+      disclaimer: expect.stringContaining(
+        'Strikes come off your record over time.',
+      ),
+    })
+    expect(accountStatusCopy({ standing: 'atRisk' })?.title).toBe(
+      'Your account may be suspended or at risk of suspension',
+    )
+    expect(
+      accountStatusCopy({
+        standing: 'warning',
+        expiresAt: '2026-10-01T00:00:00Z',
+      })?.expiry,
+    ).toBe('2026-10-01T00:00:00Z')
+  })
+
+  it('uses the current action for record notice copy', () => {
+    const action = (type: string): InboxAction => ({
+      id: 1,
+      type,
+      createdAt: '2026-10-01T00:00:00Z',
+    })
+    const subject = {
+      $type: 'com.atproto.repo.strongRef' as const,
+      uri: 'at://did:plc:owner/app.bsky.feed.post/123',
+      cid: 'bafyreid',
+    }
+    expect(subjectActionCopy(action('contentRestored'), subject).title).toBe(
+      'Your post was restored',
+    )
+    expect(
+      subjectActionCopy(action('labelRemoved'), subject, 'Adult Content'),
+    ).toEqual({
+      title: 'A label was removed from your post',
+      summary: 'Label: Adult Content',
+    })
+  })
+
   it('keeps day-only report summary dates in UTC in western time zones', () => {
     process.env.TZ = 'America/Los_Angeles'
     expect(date('2026-10-01T00:00:00Z', false, true)).toBe(

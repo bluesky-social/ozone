@@ -55,7 +55,7 @@ describe('moderator inbox preview requests', () => {
       )
       expect(Object.fromEntries(request(fetch).searchParams)).toEqual({
         did: inbox.did,
-        limit: '50',
+        limit: '30',
         cursor: 'previous',
         filter,
         sortField: 'createdAt',
@@ -66,8 +66,12 @@ describe('moderator inbox preview requests', () => {
   )
 
   it('paginates action history with the same subject and preview account', async () => {
-    const { agent, fetch } = mockAgent(detail)
-    await fetchInboxDetail(
+    const account = {
+      handle: 'user.test',
+      profile: { $type: 'app.bsky.actor.profile', displayName: 'User' },
+    }
+    const { agent, fetch } = mockAgent({ ...detail, account })
+    const result = await fetchInboxDetail(
       agent,
       inbox.did,
       'actioned-subjects',
@@ -75,6 +79,7 @@ describe('moderator inbox preview requests', () => {
       undefined,
       'older::100',
     )
+    expect(result).toMatchObject({ account })
     expect(Object.fromEntries(request(fetch).searchParams)).toEqual({
       did: inbox.did,
       subject: inbox.did,
@@ -89,6 +94,8 @@ describe('moderator inbox preview requests', () => {
       {
         src: inbox.item.src,
         standing: 'warning',
+        enforcement: { state: 'none' },
+        hasActiveStrikes: true,
         updatedAt: '2026-10-01T00:00:00Z',
       },
       { unreadCounts: { total: 4, reports: 2, subjects: 1, accountStatus: 1 } },
@@ -96,6 +103,8 @@ describe('moderator inbox preview requests', () => {
     )
     expect(await fetchAccountStatus(agent, inbox.did)).toMatchObject({
       standing: 'warning',
+      enforcement: { state: 'none' },
+      hasActiveStrikes: true,
     })
     expect(await fetchUnreadCounts(agent, inbox.did)).toMatchObject({
       total: 4,
