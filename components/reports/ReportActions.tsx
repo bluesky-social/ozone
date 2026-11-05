@@ -6,11 +6,10 @@ import {
 } from '../custom-actions/Panel'
 import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
-import { Checkbox, Select, Textarea } from '@/common/forms'
+import { Checkbox, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { getDidFromUri } from '@/lib/util'
-import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
   ComAtprotoModerationDefs,
@@ -35,11 +34,12 @@ import { toast } from 'react-toastify'
 import { EmailComposer } from 'components/email/Composer'
 import type { EmailComposerData } from 'components/email/helpers'
 import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
+import { useCloseReports, useCreateActivity, useListActivities } from './hooks'
+import { closeAllOwnedReports } from './closeAllOwnedReports'
 import {
-  useCloseReports,
-  useCreateActivity,
-  useListActivities,
-} from './hooks'
+  ReportClosureScope,
+  ReportClosureScopeSelector,
+} from './ReportClosureScope'
 import { useReports } from './useReports'
 import { getDefaultReportTypes } from './utils'
 
@@ -115,7 +115,7 @@ function TransitionConfirmPanel({
   onResolveAppeal?: (comment?: string) => Promise<void>
 }) {
   const [note, setNote] = useState('')
-  const [scope, setScope] = useState<'current' | 'all' | 'types'>(() =>
+  const [scope, setScope] = useState<ReportClosureScope>(() =>
     report.queue?.reportTypes?.length &&
     getDefaultReportTypes(report).includes(report.reportType)
       ? 'types'
@@ -125,6 +125,7 @@ function TransitionConfirmPanel({
     getDefaultReportTypes(report),
   )
   const [isResolving, setIsResolving] = useState(false)
+  const [appealResolved, setAppealResolved] = useState(false)
   const createActivity = useCreateActivity()
   const closeReports = useCloseReports()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
@@ -135,10 +136,34 @@ function TransitionConfirmPanel({
   const handleConfirm = async () => {
     setIsResolving(true)
     try {
-      if (action === 'no-action') {
-        await onResolveAppeal?.(note.trim())
+      if (action === 'no-action' && !appealResolved && onResolveAppeal) {
+        await onResolveAppeal(note.trim())
+        setAppealResolved(true)
       }
-      if (isBulkNoAction) {
+      if (isBulkNoAction && scope === 'allOwned') {
+        const result = await closeAllOwnedReports({
+          subject: report.subject.subject,
+          reportId: report.id,
+          internalNote: note.trim() || undefined,
+          closeReports: closeReports.mutateAsync,
+          closeCurrentReport: () =>
+            createActivity.mutateAsync({
+              reportId: report.id,
+              activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+              internalNote: note.trim() || undefined,
+            }),
+        })
+        if (!result.currentClosed) {
+          setScope('current')
+          toast.error(
+            `Closed ${result.closedCount} other reports, but could not close this report: ${displayError(result.error)}. Check this report and retry.`,
+          )
+          return
+        }
+        toast.success(
+          `Closed ${result.closedCount} ${result.closedCount === 1 ? 'report' : 'reports'} as no-action`,
+        )
+      } else if (isBulkNoAction) {
         const result = await closeReports.mutateAsync({
           subject: report.subject.subject,
           reportTypes: scope === 'types' ? reportTypes : undefined,
@@ -185,26 +210,13 @@ function TransitionConfirmPanel({
         onChange={(e) => setNote(e.target.value)}
       />
       {action === 'no-action' && (
-        <div className="space-y-2">
-          <Select
-            aria-label="Report closure scope"
-            className="w-full"
-            value={scope}
-            onChange={(e) =>
-              setScope(e.target.value as 'current' | 'all' | 'types')
-            }
-          >
-            <option value="current">Close this report only</option>
-            <option value="all">Close all open reports on subject</option>
-            <option value="types">Close reports of specific types</option>
-          </Select>
-          {scope === 'types' && (
-            <ReportTypeMultiselect
-              value={reportTypes}
-              onChange={setReportTypes}
-            />
-          )}
-        </div>
+        <ReportClosureScopeSelector
+          scope={scope}
+          onScopeChange={setScope}
+          reportTypes={reportTypes}
+          onReportTypesChange={setReportTypes}
+          subject={report.subject}
+        />
       )}
       <div className="flex justify-end gap-1.5">
         <button

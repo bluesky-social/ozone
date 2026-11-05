@@ -101,6 +101,7 @@ export function useCloseReports(options?: {
       subject: string
       reportTypes?: string[]
       internalNote?: string
+      includeAllOwned?: boolean
     }) => {
       const { data } = await labelerAgent.tools.ozone.report.closeReports(input)
       return data
