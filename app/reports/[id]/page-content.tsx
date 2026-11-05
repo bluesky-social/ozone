@@ -32,6 +32,7 @@ import { AutomatedBadge } from '@/reports/AutomatedBadge'
 import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
+import { canTargetAllOwned } from '@/reports/allOwnedScope'
 import {
   useReportArrowKeyNavigation,
   useReportAutoAdvance,
@@ -478,6 +479,7 @@ export function ReportDetailPageContent() {
 
       {subject && report && (
         <ReportDetailLayout
+          key={report.id}
           report={report}
           subject={subject}
           setSubject={setSubject}
@@ -508,7 +510,12 @@ export function ReportDetailPageContent() {
               vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&
               vals.subject.$type === 'com.atproto.admin.defs#repoRef'
-            if (isCascaded && eventId) {
+            const linkedAllOwned = (
+              vals.reportAction as
+                | (ToolsOzoneModerationEmitEvent.ReportAction & { allOwned?: boolean })
+                | undefined
+            )?.allOwned
+            if (isCascaded && eventId && !linkedAllOwned) {
               await createActivity.mutateAsync({
                 reportId: report.id,
                 activity: {
@@ -580,9 +587,12 @@ function ReportDetailLayout(props: {
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
-  const [reportActionScope, setReportActionScope] = useState<
+  const [defaultReportActionScope, setDefaultReportActionScope] = useState<
     'current' | 'all' | 'types'
   >('current')
+  const [chosenReportActionScope, setChosenReportActionScope] = useState<
+    'current' | 'all' | 'types' | 'allOwned' | null
+  >(null)
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
     getDefaultReportTypes(report),
   )
@@ -718,7 +728,29 @@ function ReportDetailLayout(props: {
 
     try {
       if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-        if (isCascaded) {
+        // The record event must not close the report before the permanent
+        // account takedown can link it and the other owned reports.
+        if (
+          reportActionScope === 'allOwned' &&
+          willPermanentlyTakedownAccount &&
+          !applyToAccount &&
+          report.subject.type === 'record' &&
+          subj.$type === 'com.atproto.repo.strongRef' &&
+          eventType === MOD_EVENTS.TAKEDOWN
+        ) {
+          await onSubmit(finalVals)
+          return
+        }
+        if (
+          reportActionScope === 'allOwned' &&
+          !canTargetAllOwned(
+            subj.$type === 'com.atproto.admin.defs#repoRef',
+            eventType,
+          )
+        ) {
+          throw new Error('Choose a report closure scope for this action')
+        }
+        if (isCascaded && reportActionScope !== 'allOwned') {
           // Send original event without a report action
           await onSubmit(finalVals)
           if (
@@ -729,7 +761,9 @@ function ReportDetailLayout(props: {
             await closeCurrentReport()
           }
         } else {
-          const reportAction: ToolsOzoneModerationEmitEvent.ReportAction = {}
+          const reportAction: ToolsOzoneModerationEmitEvent.ReportAction & {
+            allOwned?: boolean
+          } = {}
           if (
             reportActionScope === 'current' ||
             (eventType !== MOD_EVENTS.ESCALATE &&
@@ -739,6 +773,8 @@ function ReportDetailLayout(props: {
           }
           if (reportActionScope === 'all') {
             reportAction.all = true
+          } else if (reportActionScope === 'allOwned') {
+            reportAction.allOwned = true
           } else if (
             reportActionScope === 'types' &&
             reportActionTypes.length > 0
@@ -759,7 +795,8 @@ function ReportDetailLayout(props: {
             await resolveAppealForReport(finalVals.createdBy, actionComment)
             if (
               eventType !== MOD_EVENTS.LABEL &&
-              eventType !== MOD_EVENTS.REVERSE_TAKEDOWN
+              eventType !== MOD_EVENTS.REVERSE_TAKEDOWN &&
+              reportActionScope !== 'allOwned'
             ) {
               await closeCurrentReport()
             }
@@ -805,6 +842,7 @@ function ReportDetailLayout(props: {
     strikeDataError,
     currentStrikes,
     actionRecommendation,
+    willPermanentlyTakedownAccount,
     severityLevelStrikeCount,
     selectedPolicyName,
     durationSelectorRef,
@@ -839,21 +877,48 @@ function ReportDetailLayout(props: {
   // Sync the selected action with its event type and report closing scope.
   useEffect(() => {
     appealLabelActionStarted.current = false
+    setChosenReportActionScope(null)
     if (selectedAction === 'label') {
       setModEventType(MOD_EVENTS.LABEL)
-      setReportActionScope('types')
+      setDefaultReportActionScope('types')
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
-      setReportActionScope('types')
+      setDefaultReportActionScope('types')
     } else if (selectedAction === 'revert-takedown') {
       setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
-      setReportActionScope('current')
+      setDefaultReportActionScope('current')
     }
   }, [selectedAction, report.reportType, setModEventType])
 
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
   )
+  const permanentAccountTakedownFromRecord =
+    selectedAction === 'takedown' &&
+    report.subject.type === 'record' &&
+    isSubjectRecord &&
+    !applyToAccount &&
+    willPermanentlyTakedownAccount
+  const showAllOwned = canTargetAllOwned(
+    !isSubjectRecord || applyToAccount || permanentAccountTakedownFromRecord,
+    modEventType,
+  )
+
+  const reportActionScope =
+    chosenReportActionScope === 'allOwned' && !showAllOwned
+      ? defaultReportActionScope
+      : (chosenReportActionScope ??
+        (permanentAccountTakedownFromRecord
+          ? 'allOwned'
+          : defaultReportActionScope))
+
+  useEffect(() => {
+    if (!showAllOwned) {
+      setChosenReportActionScope((scope) =>
+        scope === 'allOwned' ? null : scope,
+      )
+    }
+  }, [showAllOwned])
 
   const subjectDid =
     report.subject.repo?.did || profile?.did || repo?.did || record?.repo.did
@@ -1127,7 +1192,9 @@ function ReportDetailLayout(props: {
                   name="applyToAccount"
                   className="mb-3 flex items-center"
                   checked={applyToAccount}
-                  onChange={(e) => setApplyToAccount(e.target.checked)}
+                  onChange={(e) => {
+                    setApplyToAccount(e.target.checked)
+                  }}
                   label="Apply action to account"
                 />
               )}
@@ -1244,11 +1311,17 @@ function ReportDetailLayout(props: {
                   <Select
                     className="w-full"
                     value={reportActionScope}
-                    onChange={(e) =>
-                      setReportActionScope(
-                        e.target.value as 'current' | 'all' | 'types',
-                      )
-                    }
+                    onChange={(e) => {
+                      const scope = e.target.value as
+                        | 'current'
+                        | 'all'
+                        | 'types'
+                        | 'allOwned'
+                      setChosenReportActionScope(scope)
+                      if (scope !== 'allOwned') {
+                        setDefaultReportActionScope(scope)
+                      }
+                    }}
                   >
                     <option value="current">Close this report only</option>
                     <option value="all">
@@ -1257,7 +1330,20 @@ function ReportDetailLayout(props: {
                     <option value="types">
                       Close reports of specific types
                     </option>
+                    {showAllOwned && (
+                      <option value="allOwned">
+                        Close open reports on account and all owned subjects
+                      </option>
+                    )}
                   </Select>
+                  {reportActionScope === 'allOwned' && showAllOwned && (
+                    <p className="text-xs text-gray-500 dark:text-gray-400">
+                      {permanentAccountTakedownFromRecord &&
+                        'Reports will be linked to the permanent account takedown. '}
+                      Other assigned, escalated, or actively assigned reports
+                      remain open.
+                    </p>
+                  )}
                   {reportActionScope === 'types' && (
                     <ReportTypeMultiselect
                       value={reportActionTypes}
