@@ -1,8 +1,8 @@
 'use client'
 import Link from 'next/link'
 import { DocumentTextIcon } from '@heroicons/react/24/outline'
+import { DataField } from '../DataField'
 import {
-  Detail,
   ExternalUrl,
   PostReferenceDetail,
   RecordDate,
@@ -38,7 +38,7 @@ export function SiteStandardDocument(props: SimpleRecordProps) {
       title={asText(record.title) || 'Untitled document'}
       details={
         <>
-          <Detail label="Site">
+          <DataField label="Site">
             {site || 'Not provided'}
             {publicationRef && (
               <Link
@@ -48,16 +48,16 @@ export function SiteStandardDocument(props: SimpleRecordProps) {
                 View publication
               </Link>
             )}
-          </Detail>
+          </DataField>
           {record.path !== undefined && (
-            <Detail label="Path">
+            <DataField label="Path">
               {asText(record.path) ?? 'Invalid path'}
-            </Detail>
+            </DataField>
           )}
           {source && (
-            <Detail label="Source URL">
+            <DataField label="Source URL">
               <ExternalUrl value={source} />
-            </Detail>
+            </DataField>
           )}
           <PostReferenceDetail
             label="Bluesky post"

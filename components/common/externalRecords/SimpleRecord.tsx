@@ -1,10 +1,11 @@
 'use client'
 import { ReactNode } from 'react'
 import Link from 'next/link'
+import { isDatetimeString } from '@atproto/syntax'
 import { useGraphicMediaPreferences } from '@/config/useLocalPreferences'
 import { classNames } from '@/lib/util'
 import { useBlobUrl } from '../BlobListLightbox'
-import { CopyButton } from '../CopyButton'
+import { DataField } from '../DataField'
 import { ImageList } from '../posts/ImageList'
 import {
   asObject,
@@ -54,24 +55,18 @@ export function SimpleRecord({
         </div>
       </div>
       {children}
-      <dl className="space-y-2 border-t border-gray-100 dark:border-slate-700 pt-3">
+      <dl
+        dir="ltr"
+        className="space-y-2 whitespace-pre-wrap border-t border-gray-100 dark:border-slate-700 pt-3"
+      >
         {details}
-        <Detail label="Record URI">
-          {uri}
-          <CopyButton
-            text={uri}
-            labelText="record URI "
-            className="ml-2 inline-block"
-          />
-        </Detail>
-        <Detail label="CID">
-          {cid}
-          <CopyButton
-            text={cid}
-            labelText="CID "
-            className="ml-2 inline-block"
-          />
-        </Detail>
+        <DataField
+          label="Record URI"
+          value={uri}
+          labelText="record URI "
+          showCopyButton
+        />
+        <DataField label="CID" value={cid} labelText="CID " showCopyButton />
       </dl>
       <details className="mt-3">
         <summary className="cursor-pointer text-xs text-gray-500 dark:text-gray-400">
@@ -85,23 +80,6 @@ export function SimpleRecord({
         </pre>
       </details>
     </article>
-  )
-}
-
-export function Detail({
-  label,
-  children,
-}: {
-  label: string
-  children: ReactNode
-}) {
-  return (
-    <div>
-      <dt className="text-xs text-gray-500 dark:text-gray-400">{label}</dt>
-      <dd className="break-all whitespace-pre-wrap" dir="ltr">
-        {children}
-      </dd>
-    </div>
   )
 }
 
@@ -128,11 +106,11 @@ export function RecordDate({
   value: unknown
 }) {
   const text = asText(value)
-  const date = text ? new Date(text) : null
+  const date = isDatetimeString(text) ? new Date(text) : null
   return (
     <span>
       {label}:{' '}
-      {date && Number.isFinite(date.getTime()) ? (
+      {date ? (
         <time dateTime={text} title={text}>
           {date.toLocaleString()}
         </time>
@@ -188,14 +166,14 @@ export function PostReferenceDetail({
   const post = recordReference(uri, 'app.bsky.feed.post')
   if (!post) return null
   return (
-    <Detail label={label}>
+    <DataField label={label}>
       <Link
         href={`/repositories/${encodeURIComponent(post.host)}/app.bsky.feed.post/${encodeURIComponent(post.rkey)}`}
         className="text-blue-600 dark:text-blue-400 hover:underline"
       >
         View associated post
       </Link>
-    </Detail>
+    </DataField>
   )
 }
 

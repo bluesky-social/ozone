@@ -1,8 +1,8 @@
 'use client'
 import { NewspaperIcon } from '@heroicons/react/24/outline'
 import { asObject, asText } from './helpers'
+import { DataField } from '../DataField'
 import {
-  Detail,
   ExternalUrl,
   RecordDescription,
   RecordImage,
@@ -21,13 +21,13 @@ export function SiteStandardPublication(props: SimpleRecordProps) {
       icon={<NewspaperIcon />}
       title={asText(record.name) || 'Unnamed publication'}
       details={
-        <Detail label="URL">
+        <DataField label="URL">
           {record.url === undefined ? (
             'Not provided'
           ) : (
             <ExternalUrl value={record.url} />
           )}
-        </Detail>
+        </DataField>
       }
     >
       <RecordImage record={props} blob={record.icon} alt="Publication icon" />

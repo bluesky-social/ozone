@@ -1,8 +1,8 @@
 'use client'
 import { VideoCameraIcon } from '@heroicons/react/24/outline'
 import { asObject, asText, textList } from './helpers'
+import { DataField } from '../DataField'
 import {
-  Detail,
   ExternalUrl,
   PostReferenceDetail,
   RecordDate,
@@ -27,16 +27,16 @@ export function PlaceStreamLivestream(props: SimpleRecordProps) {
       details={
         <>
           {record.canonicalUrl !== undefined && (
-            <Detail label="Canonical (viewing) URL">
+            <DataField label="Canonical (viewing) URL">
               <ExternalUrl value={record.canonicalUrl} />
-            </Detail>
+            </DataField>
           )}
           {record.url !== undefined && (
-            <Detail label="Replication URL">
+            <DataField label="Replication URL">
               <ExternalUrl value={record.url} />
-            </Detail>
+            </DataField>
           )}
-          {agent && <Detail label="Agent">{agent}</Detail>}
+          {agent && <DataField label="Agent">{agent}</DataField>}
           <PostReferenceDetail
             label="Announcing post"
             uri={asObject(record.post).uri}

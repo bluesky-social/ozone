@@ -7,6 +7,7 @@ import { PlaceStreamLivestream } from './PlaceStreamLivestream'
 import { SocialGrainPhoto } from './SocialGrainPhoto'
 import { SiteStandardPublication } from './SiteStandardPublication'
 import { safeHttpUrl } from './helpers'
+import { RecordDate } from './SimpleRecord'
 
 const mediaFilters = vi.hoisted(() => ({ labels: [] as string[][] }))
 
@@ -75,11 +76,44 @@ describe('simple record shell', () => {
       />,
     )
     expect(html).toContain('Simple record')
+    expect(html).toContain(
+      `data-copy-text="${base('social.grain.gallery').uri}"`,
+    )
     expect(html).toContain('data-copy-text="bafyrecord"')
     expect(html).toContain('Raw record')
     expect(html).toContain('&lt;script&gt;')
     expect(html).not.toContain('<script>')
   })
+})
+
+describe('RecordDate', () => {
+  it.each(['2026-01-01T12:30:00Z', '2026-01-01T12:30:00-06:00'])(
+    'formats a valid timestamp and keeps its original value: %s',
+    (value) => {
+      const html = render(<RecordDate label="Created" value={value} />)
+      expect(html).toContain(`dateTime="${value}"`)
+      expect(html).toContain(`title="${value}"`)
+      expect(html).toContain(new Date(value).toLocaleString())
+    },
+  )
+
+  it.each(['2026-01-01', '2026-01-01T12:30:00'])(
+    'keeps a non-protocol date visible without interpreting it: %s',
+    (value) => {
+      const html = render(<RecordDate label="Created" value={value} />)
+      expect(html).toContain(`Created: ${value}`)
+      expect(html).not.toContain('<time')
+    },
+  )
+
+  it.each([undefined, null, 42])(
+    'handles a missing or non-string date: %s',
+    (value) => {
+      const html = render(<RecordDate label="Created" value={value} />)
+      expect(html).toContain('Created: Not provided')
+      expect(html).not.toContain('<time')
+    },
+  )
 })
 
 describe('SiteStandardDocument', () => {

@@ -1,8 +1,8 @@
 'use client'
 import { PhotoIcon } from '@heroicons/react/24/outline'
 import { asObject, asText } from './helpers'
+import { DataField } from '../DataField'
 import {
-  Detail,
   RecordDate,
   RecordDates,
   RecordImage,
@@ -23,9 +23,9 @@ export function SocialGrainPhoto(props: SimpleRecordProps) {
       title="Photo"
       details={
         hasRatio && (
-          <Detail label="Aspect ratio">
+          <DataField label="Aspect ratio">
             {String(width)} × {String(height)}
-          </Detail>
+          </DataField>
         )
       }
     >
