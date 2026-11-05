@@ -3,6 +3,7 @@ import type {
   ToolsOzoneReportDefs,
   ToolsOzoneVerificationDefs,
 } from '@atproto/api'
+import { ResponseType, XRPCError } from '@atproto/xrpc'
 import { prepare } from './compile'
 import type { CustomAction, Operation, Receipt, Run, Snapshot } from './types'
 
@@ -240,12 +241,29 @@ export async function executeRun(
       current = op
       op.status = 'running'
       notify()
-      op.receipt = await abortable(signal, () => deps.dispatch(run, op, signal))
-      op.status = 'succeeded'
+      try {
+        op.receipt = await abortable(signal, () =>
+          deps.dispatch(run, op, signal),
+        )
+        op.status = 'succeeded'
+      } catch (error) {
+        if (
+          signal.aborted ||
+          !op.continueOnError ||
+          (error instanceof XRPCError &&
+            (error.status === ResponseType.AuthenticationRequired ||
+              error.status === ResponseType.Forbidden))
+        )
+          throw error
+        op.status = 'failed'
+      }
       current = undefined
       notify()
     }
-    run.status = 'succeeded'
+    signal.throwIfAborted()
+    run.status = run.operations.some((op) => op.status === 'failed')
+      ? 'completed-with-errors'
+      : 'succeeded'
   } catch {
     run.status = signal.aborted
       ? signal.reason?.name === 'TimeoutError'

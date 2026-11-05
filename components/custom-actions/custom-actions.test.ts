@@ -1,4 +1,5 @@
 import type { Agent } from '@atproto/api'
+import { XRPCError } from '@atproto/xrpc'
 import { webcrypto } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { parseServerConfig } from '../../lib/server-config'
@@ -11,8 +12,16 @@ import {
   RUN_TIMEOUT_MS,
 } from './execution'
 import settingsFixture from './fixtures/settings.json'
+import exampleSettings from './fixtures/examples.json'
 import { loadSettings, manageSettings } from './useSettings'
-import type { CustomAction, Receipt, Run, Snapshot, Subject } from './types'
+import type {
+  CustomAction,
+  ModerationEvent,
+  Receipt,
+  Run,
+  Snapshot,
+  Subject,
+} from './types'
 import {
   ADMIN_ROLE,
   importSettings,
@@ -66,6 +75,7 @@ function snapshot(): Snapshot {
       report: {
         id: 123,
         url: 'https://ozone.example/reports/123',
+        queueId: 7,
       },
     },
     config: parseServerConfig({
@@ -104,6 +114,137 @@ function agentWith(api: object) {
 describe('configuration contract', () => {
   it('validates the specification settings fixture', () => {
     expect(validateSettings(settingsFixture)).toEqual(settingsFixture)
+    expect(validateSettings(exampleSettings)).toEqual(exampleSettings)
+  })
+  it.each([true, false])(
+    'accepts and preserves continueOnError=%s on tag and label steps',
+    (continueOnError) => {
+      const a = action()
+      a.actions = [
+        { ...tag(), continueOnError },
+        {
+          ...tag('label'),
+          continueOnError,
+          event: {
+            $type: 'tools.ozone.moderation.defs#modEventLabel',
+            createLabelVals: [],
+            negateLabelVals: ['spam'],
+          },
+          reportAction: { scope: 'current' },
+        },
+      ]
+      const value = { version: 1, customActions: [a] }
+      expect(importSettings(JSON.stringify(value))).toEqual(value)
+      const operations = prepare(a, snapshot())
+      expect(operations.map((op) => op.continueOnError)).toEqual([
+        continueOnError,
+        continueOnError,
+      ])
+      expect(JSON.stringify(operations.map((op) => op.request))).not.toContain(
+        'continueOnError',
+      )
+    },
+  )
+  it.each([
+    'modEventTakedown',
+    'modEventAcknowledge',
+    'modEventComment',
+    'modEventEscalate',
+    'activity',
+    'verify',
+  ])('rejects continueOnError on %s steps, even when false', (kind) => {
+    const step =
+      kind === 'verify'
+        ? { id: 'verify', type: 'verify', target: 'account' }
+        : kind === 'activity'
+          ? {
+              id: 'close',
+              type: 'activity',
+              target: 'report',
+              activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+            }
+          : {
+              ...tag(),
+              event: { $type: `tools.ozone.moderation.defs#${kind}` },
+            }
+    for (const continueOnError of [true, false]) {
+      expect(() =>
+        validateSettings({
+          version: 1,
+          customActions: [
+            { ...action(), actions: [{ ...step, continueOnError }] },
+          ],
+        }),
+      ).toThrow()
+    }
+  })
+  it.each(['true', 1, null])(
+    'rejects nonboolean continueOnError: %s',
+    (value) => {
+      expect(() =>
+        validateSettings({
+          version: 1,
+          customActions: [
+            { ...action(), actions: [{ ...tag(), continueOnError: value }] },
+          ],
+        }),
+      ).toThrow()
+    },
+  )
+  it.each([
+    { queueIds: [7, 12, -1] },
+    { allowedModeratorDids: [moderator] },
+    { allowedModeratorDids: [moderator, 'did:web:moderator.example'] },
+    { queueIds: [7], allowedModeratorDids: [moderator] },
+  ])(
+    'preserves optional scope restrictions on import and export: %j',
+    (scope) => {
+      const value = { version: 1, customActions: [{ ...action(), ...scope }] }
+      expect(importSettings(JSON.stringify(value))).toEqual(value)
+    },
+  )
+  it.each(
+    [
+      [],
+      [0],
+      [-2],
+      [1.5],
+      ['7'],
+      [7, 7],
+      [null],
+      [Number.MAX_SAFE_INTEGER + 1],
+    ].map((queueIds) => ({ queueIds })),
+  )('rejects invalid queue allowlists: %j', ({ queueIds }) => {
+    expect(() =>
+      validateSettings({
+        version: 1,
+        customActions: [{ ...action(), queueIds }],
+      }),
+    ).toThrow()
+  })
+  it.each(
+    [
+      [],
+      [moderator, moderator],
+      [''],
+      ['moderator.example'],
+      ['did:'],
+      ['did:plc:'],
+      ['DID:plc:abc'],
+      ['did:PLC:abc'],
+      ['did:plc:has space'],
+      ['did:web:example.com/path'],
+      ['did:web:example.com#fragment'],
+      ['did:web:example.com:'],
+      [`did:web:${'a'.repeat(2048)}`],
+    ].map((allowedModeratorDids) => ({ allowedModeratorDids })),
+  )('rejects invalid moderator allowlists: %j', ({ allowedModeratorDids }) => {
+    expect(() =>
+      validateSettings({
+        version: 1,
+        customActions: [{ ...action(), allowedModeratorDids }],
+      }),
+    ).toThrow()
   })
   it.each([
     'admin',
@@ -329,6 +470,132 @@ describe('settings API boundary', () => {
 })
 
 describe('preparation', () => {
+  it.each([7, -1])(
+    'requires the current report to match queue %s',
+    (queueId) => {
+      const state = snapshot()
+      state.context.report!.queueId = queueId
+      const workflow = { ...action(), queueIds: [queueId] }
+      expect(prepare(workflow, state)).toHaveLength(2)
+      state.context.report!.queueId = 8
+      expect(() => prepare(workflow, state)).toThrow('current queue')
+      state.context.report = null
+      expect(() => prepare(workflow, state)).toThrow('current queue')
+      expect(prepare(action(), state)).toHaveLength(2)
+    },
+  )
+  it('matches moderator DIDs exactly and does not match the subject DID', () => {
+    const state = snapshot()
+    const workflow = { ...action(), allowedModeratorDids: [moderator] }
+    expect(prepare(workflow, state)).toHaveLength(2)
+    state.context.moderator.did = did
+    expect(() => prepare(workflow, state)).toThrow('this moderator')
+    workflow.allowedModeratorDids = [did]
+    state.context.moderator.did = moderator
+    expect(() => prepare(workflow, state)).toThrow('this moderator')
+  })
+  it('requires both scope filters and retains role and operation permissions', () => {
+    const state = snapshot()
+    const workflow: CustomAction = {
+      ...action(),
+      queueIds: [7],
+      allowedModeratorDids: [moderator],
+      actions: [
+        {
+          id: 'label',
+          type: 'event',
+          target: 'subject',
+          event: {
+            $type: 'tools.ozone.moderation.defs#modEventLabel',
+            createLabelVals: ['spam'],
+            negateLabelVals: [],
+          },
+        },
+      ],
+    }
+    expect(prepare(workflow, state)).toHaveLength(1)
+    state.context.report!.queueId = 8
+    expect(() => prepare(workflow, state)).toThrow('current queue')
+    state.context.report!.queueId = 7
+    state.context.moderator.did = did
+    expect(() => prepare(workflow, state)).toThrow('this moderator')
+    state.context.moderator.did = moderator
+    state.config.permissions.canLabel = false
+    expect(() => prepare(workflow, state)).toThrow('Label permission')
+    state.config.role = 'tools.ozone.team.defs#roleTriage'
+    expect(() => prepare(workflow, state)).toThrow('not enabled for your role')
+  })
+  it.each([7, undefined])(
+    'reads queue context from the current report: %s',
+    async (queueId) => {
+      const agent = agentWith({
+        server: {
+          getConfig: vi
+            .fn()
+            .mockResolvedValue({ data: { viewer: { role: ADMIN_ROLE } } }),
+        },
+        moderation: {
+          getRepo: vi.fn().mockResolvedValue({ data: { moderation: {} } }),
+        },
+        setting: {
+          listOptions: vi.fn().mockResolvedValue({ data: { options: [] } }),
+        },
+        report: {
+          getReport: vi.fn().mockResolvedValue({
+            data: {
+              id: 123,
+              subject: { subject: did },
+              ...(queueId && { queue: { id: queueId } }),
+            },
+          }),
+        },
+      })
+      const state = await readSnapshot(
+        agent,
+        serviceDid,
+        'https://ozone.example',
+        did,
+        123,
+      )
+      expect(state.context.report?.queueId).toBe(queueId ?? -1)
+    },
+  )
+  it('stops before writes if the report leaves the allowed queue during preflight', async () => {
+    const workflow = { ...action(), queueIds: [7] }
+    const { run, deps, controller } = runnerFixture(workflow)
+    const agent = agentWith({
+      server: {
+        getConfig: vi
+          .fn()
+          .mockResolvedValue({ data: { viewer: { role: ADMIN_ROLE } } }),
+      },
+      moderation: {
+        getRepo: vi.fn().mockResolvedValue({ data: { moderation: {} } }),
+      },
+      setting: {
+        listOptions: vi.fn().mockResolvedValue({ data: { options: [] } }),
+      },
+      report: {
+        getReport: vi.fn().mockResolvedValue({
+          data: { id: 123, subject: { subject: did }, queue: { id: 8 } },
+        }),
+      },
+    })
+    deps.prepare.mockImplementation(async () => {
+      const fresh = await readSnapshot(
+        agent,
+        serviceDid,
+        'https://ozone.example',
+        did,
+        123,
+      )
+      prepare(workflow, fresh)
+    })
+    await executeRun(run, deps, controller)
+    expect(run.status).toBe('failed')
+    expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
+    expect(deps.dispatch).not.toHaveBeenCalled()
+  })
   it('compares record references by URI and CID regardless of property order', async () => {
     const subject: Subject = {
       cid: 'bafyexample',
@@ -622,24 +889,193 @@ describe('bounded one-shot execution', () => {
     await execute()
     expect(deps.dispatch).toHaveBeenCalledTimes(2)
   })
-  it.each([403, 500])('stops on HTTP %s and never retries', async (status) => {
+  it.each([
+    { status: 403, continueOnError: undefined },
+    { status: 500, continueOnError: undefined },
+    { status: 500, continueOnError: false },
+  ])(
+    'stops on error by default and never retries: %j',
+    async ({ status, continueOnError }) => {
+      const a = action()
+      a.actions[1] = { ...tag('tag-again'), continueOnError }
+      a.actions.push(tag('unsent'))
+      const { execute, deps, run } = runnerFixture(a)
+      deps.dispatch
+        .mockResolvedValueOnce(eventReceipt())
+        .mockRejectedValueOnce({ status })
+      await execute()
+      expect(run.status).toBe('failed')
+      expect(run.operations.map((o) => o.status)).toEqual([
+        'succeeded',
+        'failed',
+        'skipped',
+      ])
+      expect(run.operations[0].receipt).toEqual(eventReceipt())
+      await execute()
+      expect(deps.dispatch).toHaveBeenCalledTimes(2)
+    },
+  )
+  it.each([
+    {
+      $type: 'tools.ozone.moderation.defs#modEventTag',
+      add: ['review:example'],
+      remove: [],
+    },
+    {
+      $type: 'tools.ozone.moderation.defs#modEventTag',
+      add: [],
+      remove: ['review:example'],
+    },
+    {
+      $type: 'tools.ozone.moderation.defs#modEventLabel',
+      createLabelVals: ['spam'],
+      negateLabelVals: [],
+    },
+    {
+      $type: 'tools.ozone.moderation.defs#modEventLabel',
+      createLabelVals: [],
+      negateLabelVals: ['spam'],
+    },
+  ] satisfies ModerationEvent[])(
+    'continues after an opted-in tag/label failure: %j',
+    async (event) => {
+      const a = action()
+      a.actions[1] = { ...tag('optional'), continueOnError: true, event }
+      a.actions.push({
+        id: 'close',
+        type: 'activity',
+        target: 'report',
+        activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+      })
+      const { execute, deps, run } = runnerFixture(a)
+      const activity: Receipt = {
+        kind: 'report-activity',
+        activityId: 2,
+        reportId: 123,
+        activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+        createdBy: moderator,
+        createdAt: new Date().toISOString(),
+        url: 'https://ozone.example/reports/123',
+      }
+      deps.dispatch
+        .mockResolvedValueOnce(eventReceipt())
+        .mockRejectedValueOnce(new Error('Authorization: Bearer secret'))
+        .mockResolvedValueOnce(activity)
+      await execute()
+      expect(run.status).toBe('completed-with-errors')
+      expect(run.operations.map((op) => op.status)).toEqual([
+        'succeeded',
+        'failed',
+        'succeeded',
+      ])
+      expect(run.operations.map((op) => op.receipt)).toEqual([
+        eventReceipt(),
+        undefined,
+        activity,
+      ])
+      expect(deps.dispatch.mock.calls.map((call) => call[1].stepId)).toEqual([
+        'tag',
+        'optional',
+        'close',
+      ])
+      expect(JSON.stringify(run)).not.toContain('secret')
+      expect(
+        deps.changed.mock.calls.some(
+          ([progress]) =>
+            progress.operations[1].status === 'failed' &&
+            progress.operations[2].status === 'pending',
+        ),
+      ).toBe(true)
+      await execute()
+      expect(deps.dispatch).toHaveBeenCalledTimes(3)
+    },
+  )
+  it('completes with errors when the last opted-in step fails', async () => {
     const a = action()
-    a.actions.push(tag('unsent'))
+    a.actions[1] = { ...tag('optional'), continueOnError: true }
     const { execute, deps, run } = runnerFixture(a)
     deps.dispatch
       .mockResolvedValueOnce(eventReceipt())
-      .mockRejectedValueOnce({ status })
+      .mockRejectedValueOnce(new Error('No event receipt'))
+    await execute()
+    expect(run.status).toBe('completed-with-errors')
+    expect(run.operations.map((op) => op.status)).toEqual([
+      'succeeded',
+      'failed',
+    ])
+    expect(run.operations[1].receipt).toBeUndefined()
+  })
+  it('keeps a fully successful opted-in run successful', async () => {
+    const a = action()
+    a.actions[0] = { ...tag(), continueOnError: true }
+    const { execute, run } = runnerFixture(a)
+    await execute()
+    expect(run.status).toBe('succeeded')
+  })
+  it('stops on a later required failure after an optional failure', async () => {
+    const a = action()
+    a.actions[1] = { ...tag('optional'), continueOnError: true }
+    a.actions.push(tag('required'), tag('unsent'))
+    const { execute, deps, run } = runnerFixture(a)
+    deps.dispatch
+      .mockResolvedValueOnce(eventReceipt())
+      .mockRejectedValue(new Error('Failed'))
     await execute()
     expect(run.status).toBe('failed')
-    expect(run.operations.map((o) => o.status)).toEqual([
+    expect(run.operations.map((op) => op.status)).toEqual([
       'succeeded',
+      'failed',
       'failed',
       'skipped',
     ])
     expect(run.operations[0].receipt).toEqual(eventReceipt())
-    await execute()
-    expect(deps.dispatch).toHaveBeenCalledTimes(2)
+    expect(deps.dispatch).toHaveBeenCalledTimes(3)
   })
+  it.each([401, 403])(
+    'stops even an opted-in step on HTTP %s',
+    async (status) => {
+      const a = action()
+      a.actions[0] = { ...tag(), continueOnError: true }
+      const { execute, deps, run } = runnerFixture(a)
+      deps.dispatch.mockRejectedValue(new XRPCError(status))
+      await execute()
+      expect(run.status).toBe('failed')
+      expect(run.operations.map((op) => op.status)).toEqual([
+        'failed',
+        'skipped',
+      ])
+      expect(deps.dispatch).toHaveBeenCalledTimes(1)
+    },
+  )
+  it.each(['tag', 'label'])(
+    'still preflights permissions for optional %s steps',
+    async (kind) => {
+      const a = action()
+      a.actions[1] = {
+        ...tag('optional'),
+        continueOnError: true,
+        ...(kind === 'label' && {
+          event: {
+            $type: 'tools.ozone.moderation.defs#modEventLabel' as const,
+            createLabelVals: [],
+            negateLabelVals: ['spam'],
+          },
+        }),
+      }
+      const state = snapshot()
+      const { execute, deps, run } = runnerFixture(a)
+      if (kind === 'tag')
+        state.protectedTags = { 'review:example': { moderators: [] } }
+      else state.config.permissions.canLabel = false
+      deps.prepare.mockImplementation(async () => {
+        prepare(a, state)
+      })
+      await execute()
+      expect(run.status).toBe('failed')
+      expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
+      expect(deps.dispatch).not.toHaveBeenCalled()
+    },
+  )
   it('does not duplicate the same run when execute is called concurrently', async () => {
     const { execute, deps } = runnerFixture()
     await Promise.all([execute(), execute()])
@@ -656,6 +1092,7 @@ describe('bounded one-shot execution', () => {
     vi.useFakeTimers()
     const a = action()
     a.actions.push(tag('unsent'))
+    a.actions[1] = { ...tag('tag-again'), continueOnError: true }
     const { execute, deps, run } = runnerFixture(a)
     let finishLate: (receipt: Receipt) => void = () => {
       throw new Error('Not started')
@@ -739,6 +1176,7 @@ describe('bounded one-shot execution', () => {
       vi.useFakeTimers()
       const a = action()
       a.actions.push(tag('unsent'))
+      a.actions[1] = { ...tag('tag-again'), continueOnError: true }
       const { execute, deps, run, controller } = runnerFixture(a)
       let finishLate!: () => void
       deps.dispatch

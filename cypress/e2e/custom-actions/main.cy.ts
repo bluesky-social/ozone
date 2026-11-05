@@ -517,7 +517,8 @@ describe('Settings custom actions', () => {
     cy.contains('aside', 'has unfinished work').should('not.exist')
     cy.go('back')
     cy.location('pathname').should('equal', '/reports/123')
-    cy.contains('button', /^Action$/).scrollIntoView().should('be.visible')
+    cy.contains('button', /^Action$/).scrollIntoView()
+    cy.contains('button', /^Action$/).should('be.visible')
     cy.contains('Loading custom actions…').should('not.exist')
     cy.get('@customActionSettings.all').should('have.length', 1)
     cy.get('[data-cy="custom-operation-status"]').should('not.exist')
@@ -776,6 +777,12 @@ describe('Settings custom actions', () => {
       version: 1,
       customActions: [{ ...workflow, name: 'Reviewed workflow' }],
     }
+    cy.get('section[aria-label="Custom action settings"]').scrollIntoView()
+    cy.get('section[aria-label="Custom action settings"]').within(() => {
+      cy.contains('button', workflow.name).should('be.visible')
+      cy.get('textarea').should('not.exist')
+      cy.contains('button', 'Edit raw JSON').click()
+    })
     cy.get('section[aria-label="Custom action settings"] textarea')
       .should('have.value', JSON.stringify(configuration, null, 2))
       .clear()
@@ -809,6 +816,7 @@ describe('Settings custom actions', () => {
     ).as('saveSettings')
     cy.contains('button', 'Save replacement').click()
     cy.wait('@saveSettings')
+    cy.contains('Custom actions saved.').scrollIntoView()
     cy.contains('Custom actions saved.').should('be.visible')
     cy.wait('@customActionSettings')
       .its('response.body.options.0.value')
@@ -868,6 +876,12 @@ describe('Settings custom actions', () => {
     cy.contains('[role="menuitem"]', workflow.name).should('not.exist')
     cy.contains('button', /^Action$/).click()
     cy.get('a[href="/configure"]').filter(':visible').first().click()
+    cy.get('section[aria-label="Custom action settings"]').scrollIntoView()
+    cy.get('section[aria-label="Custom action settings"]').within(() => {
+      cy.contains('No custom actions configured.').should('be.visible')
+      cy.get('textarea').should('not.exist')
+      cy.contains('button', 'Edit raw JSON').click()
+    })
     cy.get('#custom-actions-json').should(
       'have.value',
       JSON.stringify({ version: 1, customActions: [] }, null, 2),

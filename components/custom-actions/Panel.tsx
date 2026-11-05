@@ -9,13 +9,15 @@ import { useConfigurationContext } from '../shell/ConfigurationContext'
 import { useCustomActionSettings } from './useSettings'
 import { useCustomActionRun } from './useRun'
 import { readSnapshot, subjectId } from './compile'
+import { scopeError } from './scope'
 import type { CustomAction, Subject, Step } from './types'
 
 export function useCustomActionPanel(
   subject: string | Subject,
-  report?: Pick<ToolsOzoneReportDefs.ReportView, 'id'>,
+  report?: Pick<ToolsOzoneReportDefs.ReportView, 'id' | 'queue'>,
 ) {
   const reportId = report?.id
+  const queueId = report ? (report.queue?.id ?? -1) : undefined
   const { config, labelerAgent, serverConfig } = useConfigurationContext()
   const settings = useCustomActionSettings()
   const [selectionId, setLocalSelection] = useState<string | null>(null)
@@ -36,6 +38,7 @@ export function useCustomActionPanel(
       serverConfig.role,
       subjectKey,
       reportId,
+      queueId,
       settings.dataUpdatedAt,
     ],
     enabled: settings.actions.length > 0,
@@ -68,6 +71,13 @@ export function useCustomActionPanel(
       a.enabled !== false &&
       !!serverConfig.role &&
       a.allowedRoles.includes(serverConfig.role) &&
+      !scopeError(a, {
+        moderatorDid: labelerAgent.did,
+        queueId:
+          report && !state.isError
+            ? state.data?.context.report?.queueId
+            : undefined,
+      }) &&
       a.subjectTypes.includes(id.startsWith('did:') ? 'account' : 'record') &&
       (!a.collections || a.collections.includes(id.split('/')[3])),
   )
@@ -227,15 +237,22 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
           <p role="status" aria-live="polite">
             {run.status === 'succeeded'
               ? 'Custom action completed.'
-              : run.status === 'timed-out'
-                ? 'Custom action timed out. Remaining steps were skipped.'
-                : run.status === 'failed'
-                  ? 'Custom action stopped after an error. Remaining steps were skipped.'
-                  : run.status === 'cancelled'
-                    ? 'Custom action cancelled. Remaining steps were skipped.'
-                    : 'Running custom action…'}
+              : run.status === 'completed-with-errors'
+                ? 'Custom action completed with errors. Review failed steps and history.'
+                : run.status === 'timed-out'
+                  ? 'Custom action timed out. Remaining steps were skipped.'
+                  : run.status === 'failed'
+                    ? 'Custom action stopped after an error. Remaining steps were skipped.'
+                    : run.status === 'cancelled'
+                      ? 'Custom action cancelled. Remaining steps were skipped.'
+                      : 'Running custom action…'}
           </p>
-          {['failed', 'timed-out', 'cancelled'].includes(run.status) && (
+          {[
+            'completed-with-errors',
+            'failed',
+            'timed-out',
+            'cancelled',
+          ].includes(run.status) && (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               Completed steps were kept. A request already sent may still
               complete on the server. Review history or escalate if needed.
@@ -278,6 +295,8 @@ function StepEffects({ step }: { step: Step }) {
   let changes: { text: string; values: string[]; isTag?: boolean }[] = []
   if (step.type === 'event') {
     const event = step.event
+    if (step.continueOnError)
+      effects.push('Continue to the next step if this change fails')
     if (event.comment) notes.push(event.comment)
     if (step.reportAction?.note)
       notes.push(`Report note: ${step.reportAction.note}`)
