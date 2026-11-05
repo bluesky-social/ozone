@@ -20,18 +20,18 @@ export type ModerationEvent =
   | (M.ModEventComment & { $type: NonNullable<M.ModEventComment['$type']> })
   | (M.ModEventEscalate & { $type: NonNullable<M.ModEventEscalate['$type']> })
 export type ReportActivity = {
-  // narrowed to supported activity types 
+  // narrowed to supported activity types
   $type: `tools.ozone.report.defs#${'closeActivity' | 'reopenActivity' | 'escalationActivity' | 'noteActivity'}`
 }
 export type Subject =
-  | $Typed<ComAtprotoAdminDefs.RepoRef>
-  | $Typed<ComAtprotoRepoStrongRef.Main>
+  $Typed<ComAtprotoAdminDefs.RepoRef> | $Typed<ComAtprotoRepoStrongRef.Main>
 export type Step = { id: string } & (
   | {
       type: 'event'
       target: 'subject' | 'account'
       event: ModerationEvent
       reportAction?: { scope: 'current'; note?: string }
+      continueOnError?: boolean
     }
   | {
       type: 'activity'
@@ -49,6 +49,8 @@ export type CustomAction = {
   description?: string
   enabled?: boolean
   allowedRoles: NonNullable<ServerConfig['role']>[]
+  allowedModeratorDids?: string[]
+  queueIds?: number[]
   subjectTypes: ('account' | 'record')[]
   collections?: string[]
   when?: {
@@ -111,15 +113,17 @@ export type Receipt =
       handle: string
       displayName: string
     }
-export type RunStatus =
+type ExecutionStatus =
   'pending' | 'running' | 'succeeded' | 'failed' | 'cancelled' | 'timed-out'
+export type RunStatus = ExecutionStatus | 'completed-with-errors'
 export type Operation = {
   id: string
   stepId: string
   target: Step['target']
   subject: Subject
   request: Request
-  status: RunStatus | 'skipped'
+  status: ExecutionStatus | 'skipped'
+  continueOnError?: boolean
   receipt?: Receipt
 }
 export type Context = {
@@ -128,6 +132,7 @@ export type Context = {
   report: {
     id: number
     url: string
+    queueId: number
   } | null
   moderator: { did: string }
   subject: Subject

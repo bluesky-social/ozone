@@ -89,6 +89,62 @@
           }
         }
       ]
+    },
+    {
+      "id": "optional-cleanup-and-note",
+      "name": "Remove review tag and add note",
+      "helpText": "Try removing review:example, then add an internal report note even if that cleanup fails. Review any failed step in history.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["account", "record"],
+      "actions": [
+        {
+          "id": "remove-review-tag",
+          "type": "event",
+          "target": "subject",
+          "continueOnError": true,
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventTag",
+            "add": [],
+            "remove": ["review:example"]
+          }
+        },
+        {
+          "id": "add-report-note",
+          "type": "activity",
+          "target": "report",
+          "activity": {
+            "$type": "tools.ozone.report.defs#noteActivity"
+          },
+          "internalNote": "Cleanup attempted; review its event history for the outcome."
+        }
+      ]
+    },
+    {
+      "id": "scoped-account-review",
+      "name": "Scoped account review",
+      "helpText": "Add review:example to an account, only in queues 1 or 2 and only for the listed moderator. Replace the example queue IDs and moderator DID before use.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "allowedModeratorDids": ["did:plc:bbbbbbbbbbbbbbbbbbbbbbbb"],
+      "queueIds": [1, 2],
+      "subjectTypes": ["account"],
+      "actions": [
+        {
+          "id": "tag-account",
+          "type": "event",
+          "target": "subject",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventTag",
+            "add": ["review:example"],
+            "remove": []
+          }
+        }
+      ]
     }
   ]
 }

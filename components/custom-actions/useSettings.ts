@@ -8,6 +8,11 @@ import {
   validateSettings,
 } from './validation'
 import type { Settings } from './types'
+import {
+  readSettingsDraft,
+  SettingsConflictError,
+  type SettingsDraft,
+} from './settings-editor'
 
 export async function loadSettings(
   agent: Agent,
@@ -61,6 +66,30 @@ export async function manageSettings(
       value: next,
     })
   }
+}
+
+export async function saveSettingsDraft(
+  agent: Agent,
+  role: string | undefined,
+  draft: SettingsDraft,
+): Promise<Settings> {
+  if (role !== ADMIN_ROLE)
+    throw new Error('Only admins can manage custom actions')
+  let value = readSettingsDraft(draft)
+  if (draft.actionId || draft.isNew) {
+    // Retain unrelated edits and ordering made since this action was opened.
+    const latest = (await loadSettings(agent)) ?? EMPTY_SETTINGS
+    try {
+      value = readSettingsDraft(draft, latest)
+    } catch (error) {
+      if (error instanceof SettingsConflictError) throw error
+      throw new SettingsConflictError(
+        `The latest configuration conflicts with your edits: ${(error as Error).message}. Your edits are preserved.`,
+      )
+    }
+  }
+  await manageSettings(agent, role, 'save', value)
+  return value
 }
 
 export function useCustomActionSettings() {

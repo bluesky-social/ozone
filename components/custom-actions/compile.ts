@@ -12,6 +12,7 @@ import type {
   Subject,
 } from './types'
 import { validateSettings } from './validation'
+import { scopeError } from './scope'
 
 const permissionValidator = new Ajv().compile({
   type: 'object',
@@ -118,6 +119,7 @@ export async function readSnapshot(
         ? {
             id: report.data.id,
             url: `${uiOrigin}/reports/${report.data.id}`,
+            queueId: report.data.queue?.id ?? -1,
           }
         : null,
       moderator: { did: agent.did! },
@@ -163,6 +165,11 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
     !action.allowedRoles.includes(config.role)
   )
     throw new Error('This custom action is not enabled for your role')
+  const restriction = scopeError(action, {
+    moderatorDid: context.moderator.did,
+    queueId: context.report?.queueId,
+  })
+  if (restriction) throw new Error(restriction)
   if (!action.subjectTypes.includes(type))
     throw new Error('This custom action does not support this subject type')
   const collection =
@@ -314,6 +321,10 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
       subject,
       request,
       status: 'pending',
+      ...(step.type === 'event' &&
+        step.continueOnError !== undefined && {
+          continueOnError: step.continueOnError,
+        }),
     }
   })
 }

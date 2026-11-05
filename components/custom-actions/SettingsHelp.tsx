@@ -60,7 +60,7 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
               </ActionButton>
             </div>
             <Description className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Configure ordered moderation workflows with the JSON editor.
+              Browse moderation workflows and edit their JSON definitions.
             </Description>
           </div>
           <div className="min-h-0 overflow-y-auto p-4 space-y-5 text-sm select-text">
@@ -69,6 +69,16 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                 Custom actions appear in the moderation dropdown and run their
                 steps in order. Use <code>version: 1</code> and a{' '}
                 <code>customActions</code> array containing your workflows.
+              </p>
+              <p className="mt-2">
+                Settings show a list of workflows. Select a workflow to edit its
+                JSON, then choose Save action. Choose Add to start a new
+                workflow in the same editor; the starter action is disabled
+                until you enable it in the JSON. Saving appends it to the list.
+                Other workflows keep their definitions and order. Use Edit raw
+                JSON to edit or import the full configuration, including adding,
+                removing, or reordering workflows. Unsaved edits require an
+                explicit discard before returning to the list.
               </p>
               <ul className="mt-2 list-disc pl-5 space-y-2">
                 <li>
@@ -80,6 +90,20 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   <code>allowedRoles</code> uses full role identifiers; include
                   admins explicitly. <code>subjectTypes</code> allows accounts,
                   records, or both. Existing step permissions still apply.
+                </li>
+                <li>
+                  Optional <code>queueIds</code> limits a workflow to specific
+                  report queues. Use numeric queue IDs and <code>-1</code> for
+                  unassigned reports. Omit it for all queues. Scoped actions
+                  require a current report and its queue is checked again before
+                  execution. Empty lists are invalid.
+                </li>
+                <li>
+                  Optional <code>allowedModeratorDids</code> limits who can run
+                  a workflow, in addition to <code>allowedRoles</code>. Use a
+                  one-item list for one moderator, or omit it for everyone with
+                  an allowed role. These are moderator DIDs, not the account
+                  being reviewed. Existing API permissions still apply.
                 </li>
                 <li>
                   <code>actions</code> lists steps in execution order, each with
@@ -95,12 +119,25 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   <code>publicNote</code> and <code>reportAction.note</code> are
                   visible to the reporter.
                 </li>
+                <li>
+                  Steps stop the workflow on error by default. Tag and label
+                  steps can opt in with <code>continueOnError: true</code> to
+                  continue after a failed request or an unconfirmed response,
+                  without retrying. Failed steps stay visible and the result
+                  says “Completed with errors.” Validation, permission checks,
+                  authentication or permission failures (HTTP 401/403),
+                  cancellation, and the time limit still stop execution. If a
+                  label step also uses <code>reportAction</code>, the option
+                  applies to the whole request, including report closure. Review
+                  history before running the workflow again.
+                </li>
               </ul>
               <p className="mt-3">
                 Copy the example configuration below, adjust its workflows,
-                tags, and labels, then paste it into the editor. Save
-                replacement replaces the full configuration. Saving does not run
-                actions; moderators select one and choose Confirm and run.
+                tags, and labels, then choose Edit raw JSON and paste it into
+                the editor. Save replacement replaces the full configuration.
+                Saving does not run actions; moderators select one and choose
+                Confirm and run.
               </p>
             </section>
             <section aria-labelledby="custom-action-examples-title">
