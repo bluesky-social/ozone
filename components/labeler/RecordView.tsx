@@ -4,7 +4,6 @@ import {
   AppBskyLabelerDefs,
   AppBskyLabelerService,
   ComAtprotoLabelDefs,
-  ComAtprotoModerationDefs,
 } from '@atproto/api'
 import {
   ExclamationCircleIcon,
@@ -14,18 +13,8 @@ import {
 import { useState } from 'react'
 import { LabelDefinitionEditor } from './DefinitionEditor'
 import { Checkbox, Textarea } from '@/common/forms'
-import { reasonTypeOptions } from '@/reports/helpers/getType'
 import { ActionButton } from '@/common/buttons'
-
-const reasonTypes = [
-  ComAtprotoModerationDefs.REASONSPAM,
-  ComAtprotoModerationDefs.REASONMISLEADING,
-  ComAtprotoModerationDefs.REASONRUDE,
-  ComAtprotoModerationDefs.REASONSEXUAL,
-  ComAtprotoModerationDefs.REASONVIOLATION,
-  ComAtprotoModerationDefs.REASONOTHER,
-  ComAtprotoModerationDefs.REASONAPPEAL,
-]
+import { ReportTypesEditor } from './ReportTypesEditor'
 
 const subjectTypes = ['account', 'record', 'chat']
 
@@ -220,25 +209,6 @@ export const LabelerRecordView = ({
       })
     }
 
-  const handleReportTypeChange =
-    (reasonType: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-      let newReasonTypes =
-        record.reasonTypes === undefined
-          ? [...reasonTypes]
-          : [...record.reasonTypes]
-      if (e.target.checked) {
-        newReasonTypes.push(reasonType)
-      } else {
-        newReasonTypes = newReasonTypes.filter((type) => type !== reasonType)
-      }
-
-      if (newReasonTypes.length === 0) {
-        onUpdate({ ...record, reasonTypes: undefined })
-      } else {
-        onUpdate({ ...record, reasonTypes: newReasonTypes })
-      }
-    }
-
   const handleSubjectTypeChange =
     (subjectType: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
       let newSubjectTypes =
@@ -282,33 +252,11 @@ export const LabelerRecordView = ({
           />
         </div>
       ))}
+      <ReportTypesEditor
+        value={record.reasonTypes}
+        onChange={(reasonTypes) => onUpdate({ ...record, reasonTypes })}
+      />
       <div className="flex flex-row gap-3">
-        <div>
-          <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
-            Report Types
-          </h3>
-          {reasonTypes.map((reasonType) => {
-            return (
-              <div key={reasonType}>
-                <Checkbox
-                  value={reasonType}
-                  defaultChecked={
-                    !record.reasonTypes ||
-                    record.reasonTypes?.includes(reasonType)
-                  }
-                  name={`reasonType-${reasonType}`}
-                  className="mb-3 flex items-center leading-3"
-                  onChange={handleReportTypeChange(reasonType)}
-                  label={
-                    <span className="capitalize">
-                      {reasonTypeOptions[reasonType]}
-                    </span>
-                  }
-                />
-              </div>
-            )
-          })}
-        </div>
         <div>
           <h3 className="border-b border-gray-300 dark:border-gray-700 pb-1 mb-2">
             Subject Types

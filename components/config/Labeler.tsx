@@ -16,6 +16,10 @@ import { LocalPreferences } from './LocalPreferences'
 import { QueueSetting } from 'components/setting/Queue'
 import { toast } from 'react-toastify'
 import { LabelerRecordView } from 'components/labeler/RecordView'
+import {
+  createInitialLabelerRecord,
+  getEditableLabelerFields,
+} from 'components/labeler/record'
 import { ActionTemplateConfig } from 'components/communication-template/action-template'
 import { LabelGroupsConfig } from './LabelGroups'
 
@@ -98,7 +102,7 @@ const LabelerConfigDescription = () => {
             <b>
               <code>reasonTypes</code>
             </b>
-            : such as `com.atproto.moderation.defs#reasonOther`, specifying the
+            : such as `tools.ozone.report.defs#reasonOther`, specifying the
             report {'"'}reason types{'"'} that can be reported by users.
           </li>
         </ul>
@@ -183,22 +187,6 @@ function ConfigureDetails() {
   )
 }
 
-const getEditableLabelerFields = (record: AppBskyLabelerService.Record) => {
-  const editableRecord: Partial<AppBskyLabelerService.Record> = {
-    policies: record.policies,
-  }
-  if (record.reasonTypes) {
-    editableRecord.reasonTypes = record.reasonTypes
-  }
-  if (record.subjectTypes) {
-    editableRecord.subjectTypes = record.subjectTypes
-  }
-  if (record.subjectCollections) {
-    editableRecord.subjectCollections = record.subjectCollections
-  }
-  return editableRecord
-}
-
 function RecordInitStep({ repo }: { repo: string }) {
   const [checked, setChecked] = useState(false)
   const pdsAgent = usePdsAgent()
@@ -211,20 +199,7 @@ function RecordInitStep({ repo }: { repo: string }) {
         repo,
         collection: 'app.bsky.labeler.service',
         rkey: 'self',
-        record: {
-          createdAt: new Date().toISOString(),
-          policies: { labelValues: [] },
-          subjectTypes: ['account', 'record'],
-          subjectCollections: ['app.bsky.feed.post', 'app.bsky.actor.profile'],
-          reasonTypes: [
-            'com.atproto.moderation.defs#reasonSpam',
-            'com.atproto.moderation.defs#reasonMisleading',
-            'com.atproto.moderation.defs#reasonSexual',
-            'com.atproto.moderation.defs#reasonRude',
-            'com.atproto.moderation.defs#reasonAppeal',
-            'com.atproto.moderation.defs#reasonOther',
-          ],
-        },
+        record: createInitialLabelerRecord(),
       })
       await reconfigure()
     },
@@ -303,9 +278,9 @@ function RecordEditStep({
   })
   return (
     <div>
-      {isPlainTextInvalid && editorMode === 'json' && (
+      {isPlainTextInvalid && (
         <ErrorInfo type="warn" className="mb-2">
-          Invalid JSON input. Your changes can not be saved.
+          Invalid service record JSON. Your changes cannot be saved.
         </ErrorInfo>
       )}
       {editorMode === 'json' ? (
@@ -316,10 +291,17 @@ function RecordEditStep({
             onChange={(ev) => {
               setPlainTextRecord(ev.target.value)
               try {
-                setRecordVal({
+                const updatedRecord = {
                   ...recordVal,
-                  ...(JSON.parse(ev.target.value) as any),
-                })
+                  ...getEditableLabelerFields(JSON.parse(ev.target.value)),
+                }
+                const validation =
+                  AppBskyLabelerService.validateRecord(updatedRecord)
+                if (!validation.success) {
+                  setIsPlainTextInvalid(true)
+                  return
+                }
+                setRecordVal(updatedRecord)
                 setIsPlainTextInvalid(false)
               } catch (e) {
                 setIsPlainTextInvalid(true)
@@ -334,6 +316,13 @@ function RecordEditStep({
           onUpdate={(updatedRecord) => {
             try {
               setRecordVal(updatedRecord)
+              setPlainTextRecord(
+                JSON.stringify(
+                  getEditableLabelerFields(updatedRecord),
+                  null,
+                  2,
+                ),
+              )
               setIsPlainTextInvalid(false)
             } catch (e) {
               setIsPlainTextInvalid(true)
@@ -350,7 +339,13 @@ function RecordEditStep({
           appearance="outlined"
           type="button"
           size="sm"
-          onClick={() => setRecordVal(record)}
+          onClick={() => {
+            setRecordVal(record)
+            setPlainTextRecord(
+              JSON.stringify(getEditableLabelerFields(record), null, 2),
+            )
+            setIsPlainTextInvalid(false)
+          }}
         >
           Reset
         </ActionButton>
@@ -359,7 +354,7 @@ function RecordEditStep({
           size="sm"
           type="button"
           onClick={() => updateRecord.mutate()}
-          disabled={!!invalid || updateRecord.isLoading}
+          disabled={isPlainTextInvalid || !!invalid || updateRecord.isLoading}
         >
           Save
         </ActionButton>
