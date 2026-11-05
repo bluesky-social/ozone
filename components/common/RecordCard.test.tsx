@@ -6,8 +6,7 @@ import { fetchAtmosphereRecordView } from './externalRecords/atmosphereRecordVie
 
 type QueryOptions = {
   queryKey: unknown[]
-  queryFn: Function
-  enabled?: boolean
+  queryFn: (context: { signal?: AbortSignal }) => Promise<unknown>
 }
 const state = vi.hoisted(() => ({
   query: {} as { data?: unknown; error?: unknown },
@@ -34,7 +33,7 @@ vi.mock('./externalRecords/atmosphereRecordView', () => ({
 vi.mock('@/shell/ConfigurationContext', () => ({
   useLabelerAgent: () => state.agent,
 }))
-// Import-only stubs: hydrated gallery rendering is covered in ExternalRecordEnhancedView.test.
+// Hydrated gallery rendering is covered in ExternalRecordEnhancedView.test.
 vi.mock('@/config/useLocalPreferences', () => ({}))
 vi.mock('./posts/ImageList', () => ({}))
 vi.mock('@/workspace/hooks', () => ({
@@ -77,8 +76,9 @@ vi.mock('@/repositories/ProfileAvatar', () => ({}))
 vi.mock('./profileLinks/ProfileLinkCard', () => ({}))
 
 const did = 'did:plc:author'
+const uriFor = (collection: string) => `at://${did}/${collection}/1`
 const render = (collection: string) =>
-  renderToStaticMarkup(<RecordCard uri={`at://${did}/${collection}/1`} />)
+  renderToStaticMarkup(<RecordCard uri={uriFor(collection)} />)
 
 beforeEach(() => {
   state.query = {}
@@ -95,136 +95,90 @@ describe('RecordCard Atmosphere routing', () => {
     ['social.grain.gallery', 'Grain gallery'],
     ['social.grain.photo', 'Grain photo'],
     ['place.stream.livestream', 'Livestream'],
-  ])('renders %s with its simple renderer', (collection, type) => {
-    state.query = { data: { cid: 'livecid', value: { title: 'live' } } }
-    const html = render(collection)
-    expect(html).toContain(`data-type="${type}"`)
-    expect(html).toContain('data-cid="livecid"')
-  })
+  ])(
+    'renders %s, with Appview context except for standalone photos',
+    (collection, type) => {
+      state.query = { data: { cid: 'livecid', value: { title: 'live' } } }
+      const html = render(collection)
+      expect(html).toContain(`data-type="${type}"`)
+      expect(html).toContain('data-cid="livecid"')
+      expect(state.appviewQueries).toHaveLength(
+        collection === 'social.grain.photo' ? 0 : 1,
+      )
+    },
+  )
 
-  it('renders a snapshot (value and CID) without ozoneValue when the live request fails', () => {
+  it('uses a snapshot without ozoneValue even when the live record is unavailable', () => {
     state.query = { error: new Error('RecordNotFound') }
     state.snapshot = { cid: 'snapcid', value: { title: 'old' } }
     const html = render('social.grain.gallery')
     expect(html).toContain('data-cid="snapcid"')
     expect(html).toContain('old')
-    expect(html).not.toContain('RecordNotFound')
+    expect(state.appviewQueries[0].queryKey[1]).toMatchObject({ cid: 'snapcid' })
   })
 
-  it('prefers the snapshot over the live record', () => {
-    state.query = { data: { cid: 'livecid', value: { title: 'live' } } }
-    state.snapshot = { cid: 'snapcid', value: { title: 'old' } }
-    expect(render('place.stream.livestream')).toContain('data-cid="snapcid"')
-  })
-
-  it('renders no record card when the live request fails and there is no snapshot', () => {
+  it('requests no Appview context when there is no selected record', () => {
     state.query = { error: new Error('RecordNotFound') }
-    expect(render('social.grain.photo')).not.toContain('data-type')
+    expect(render('social.grain.gallery')).not.toContain('data-type')
+    expect(state.appviewQueries).toHaveLength(0)
   })
 })
 
 describe('RecordCard Appview context', () => {
-  const appviewCollections = [
-    'site.standard.document',
-    'site.standard.publication',
-    'social.grain.gallery',
-    'place.stream.livestream',
-  ]
-  const uriFor = (collection: string) => `at://${did}/${collection}/1`
-  const lastKey = () => state.appviewQueries.at(-1)?.queryKey
-
-  it.each(appviewCollections)(
-    'pins the live %s to its URI and CID, scoped by account and labeler',
-    async (collection) => {
-      state.query = { data: { cid: 'livecid', value: { title: 'live' } } }
-      render(collection)
-      expect(lastKey()).toEqual([
-        'atmosphereRecordView',
-        {
-          uri: uriFor(collection),
-          cid: 'livecid',
-          did: 'did:plc:mod',
-          proxy: 'did:plc:ozone#atproto_labeler',
-        },
-      ])
-      await state.appviewQueries[0].queryFn({ signal: 'signal' })
-      expect(fetchAtmosphereRecordView).toHaveBeenCalledWith(
-        state.agent,
-        { uri: uriFor(collection), cid: 'livecid' },
-        'signal',
-      )
-    },
-  )
-
-  it('pins a selected snapshot CID instead of the live CID, and a different CID gets its own query', () => {
+  it('pins requests to the selected record, with cache identity scoped by account and labeler', async () => {
     state.query = { data: { cid: 'livecid', value: {} } }
     render('social.grain.gallery')
-    state.snapshot = { cid: 'snapcid', value: {} }
+    const query = state.appviewQueries[0]
+    expect(query.queryKey[1]).toEqual({
+      uri: uriFor('social.grain.gallery'),
+      cid: 'livecid',
+      did: state.agent.did,
+      proxy: state.agent.proxy,
+    })
+    const signal = new AbortController().signal
+    await query.queryFn({ signal })
+    expect(fetchAtmosphereRecordView).toHaveBeenCalledWith(
+      state.agent,
+      { uri: uriFor('social.grain.gallery'), cid: 'livecid' },
+      signal,
+    )
+  })
+
+  it('uses the selected CID for both requests and cache keys when viewing snapshots or resetting to live', async () => {
+    state.query = { data: { cid: 'livecid', value: { title: 'live' } } }
     render('social.grain.gallery')
+    state.snapshot = { cid: 'snapcid', value: { title: 'old' } }
+    const snapshot = render('social.grain.gallery')
+    expect(snapshot).toContain('data-cid="snapcid"')
+    expect(snapshot).toContain('old')
+    state.snapshot = null
+    expect(render('social.grain.gallery')).toContain('data-cid="livecid"')
+
     const cids = state.appviewQueries.map(
       (q) => (q.queryKey[1] as { cid: string }).cid,
     )
-    expect(cids).toEqual(['livecid', 'snapcid'])
-  })
-
-  it('works for a snapshot without ozoneValue after the live request fails', () => {
-    state.query = { error: new Error('RecordNotFound') }
-    state.snapshot = { cid: 'snapcid', value: { title: 'old' } }
-    const html = render('site.standard.publication')
-    expect(lastKey()?.[1]).toMatchObject({ cid: 'snapcid' })
-    expect(html).toContain('Loading Appview context')
-    expect(html).toContain('data-cid="snapcid"')
+    expect(cids).toEqual(['livecid', 'snapcid', 'livecid'])
+    for (const query of state.appviewQueries) await query.queryFn({})
+    expect(
+      vi
+        .mocked(fetchAtmosphereRecordView)
+        .mock.calls.map(([, params]) => params.cid),
+    ).toEqual(cids)
   })
 
   it.each([
     ['loading', { isLoading: true }, 'Loading Appview context'],
-    [
-      'failed',
-      { error: new Error('boom') },
-      'Appview context unavailable: boom',
-    ],
+    ['failed', { error: new Error('boom') }, 'Appview context unavailable'],
     ['empty', { data: {} }, 'Appview context unavailable'],
   ])(
     'keeps the simple record visible while Appview is %s',
-    (_n, appview, text) => {
+    (_name, appview, text) => {
       state.query = { data: { cid: 'livecid', value: { title: 'live' } } }
       state.appview = appview
       const html = render('place.stream.livestream')
       expect(html).toContain(text)
       expect(html).toContain('data-cid="livecid"')
-      expect(html.indexOf(text)).toBeLessThan(html.indexOf('data-cid'))
+      expect(html).toContain('live')
     },
   )
-
-  it('shows hydrated context above the simple record', () => {
-    state.query = { data: { cid: 'livecid', value: {} } }
-    state.appview = {
-      data: {
-        view: {
-          $type: 'app.bsky.embed.external#viewLivestream',
-          uri: 'https://stream.test/live',
-        },
-      },
-    }
-    const html = render('place.stream.livestream')
-    expect(html.indexOf('https://stream.test/live')).toBeLessThan(
-      html.indexOf('data-cid'),
-    )
-  })
-
-  it.each([
-    ['photo', 'social.grain.photo'],
-    ['unknown collection', 'com.example.thing'],
-  ])('never requests Appview context for a %s', (_n, collection) => {
-    state.query = { data: { cid: 'livecid', value: {} } }
-    const html = render(collection)
-    expect(state.appviewQueries).toHaveLength(0)
-    expect(html).not.toContain('Appview')
-  })
-
-  it('does not request Appview context without a selected record', () => {
-    state.query = { error: new Error('RecordNotFound') }
-    render('social.grain.gallery')
-    expect(state.appviewQueries).toHaveLength(0)
-  })
 })

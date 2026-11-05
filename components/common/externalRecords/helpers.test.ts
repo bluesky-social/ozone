@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest'
 import { jsonToLex } from '@atproto/api'
-import { imageBlobCid, documentUrl, recordReference } from './helpers'
+import { imageBlobCid, documentUrl, recordReference, safeHttpUrl } from './helpers'
+
+describe('safeHttpUrl', () => {
+  it.each([
+    'javascript:alert(1)',
+    'https://user:pw@example.com',
+    'ftp://example.com',
+    '//example.com',
+    'https://',
+    null,
+    42,
+  ])('rejects unsafe or malformed URLs: %j', (value) => {
+    expect(safeHttpUrl(value)).toBeNull()
+  })
+})
 
 describe('Standard document references', () => {
   it('joins the site and document path without discarding publication base paths', () => {
