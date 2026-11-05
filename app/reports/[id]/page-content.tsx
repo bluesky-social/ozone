@@ -587,9 +587,12 @@ function ReportDetailLayout(props: {
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
-  const [reportActionScope, setReportActionScope] = useState<
-    'current' | 'all' | 'types' | 'allOwned'
+  const [defaultReportActionScope, setDefaultReportActionScope] = useState<
+    'current' | 'all' | 'types'
   >('current')
+  const [chosenReportActionScope, setChosenReportActionScope] = useState<
+    'current' | 'all' | 'types' | 'allOwned' | null
+  >(null)
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
     getDefaultReportTypes(report),
   )
@@ -725,6 +728,19 @@ function ReportDetailLayout(props: {
 
     try {
       if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+        // The record event must not close the report before the permanent
+        // account takedown can link it and the other owned reports.
+        if (
+          reportActionScope === 'allOwned' &&
+          willPermanentlyTakedownAccount &&
+          !applyToAccount &&
+          report.subject.type === 'record' &&
+          subj.$type === 'com.atproto.repo.strongRef' &&
+          eventType === MOD_EVENTS.TAKEDOWN
+        ) {
+          await onSubmit(finalVals)
+          return
+        }
         if (
           reportActionScope === 'allOwned' &&
           !canTargetAllOwned(
@@ -826,6 +842,7 @@ function ReportDetailLayout(props: {
     strikeDataError,
     currentStrikes,
     actionRecommendation,
+    willPermanentlyTakedownAccount,
     severityLevelStrikeCount,
     selectedPolicyName,
     durationSelectorRef,
@@ -860,30 +877,45 @@ function ReportDetailLayout(props: {
   // Sync the selected action with its event type and report closing scope.
   useEffect(() => {
     appealLabelActionStarted.current = false
+    setChosenReportActionScope(null)
     if (selectedAction === 'label') {
       setModEventType(MOD_EVENTS.LABEL)
-      setReportActionScope('types')
+      setDefaultReportActionScope('types')
     } else if (selectedAction === 'takedown') {
       setModEventType(MOD_EVENTS.TAKEDOWN)
-      setReportActionScope('types')
+      setDefaultReportActionScope('types')
     } else if (selectedAction === 'revert-takedown') {
       setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
-      setReportActionScope('current')
+      setDefaultReportActionScope('current')
     }
   }, [selectedAction, report.reportType, setModEventType])
 
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
   )
+  const permanentAccountTakedownFromRecord =
+    selectedAction === 'takedown' &&
+    report.subject.type === 'record' &&
+    isSubjectRecord &&
+    !applyToAccount &&
+    willPermanentlyTakedownAccount
   const showAllOwned = canTargetAllOwned(
-    !isSubjectRecord || applyToAccount,
+    !isSubjectRecord || applyToAccount || permanentAccountTakedownFromRecord,
     modEventType,
   )
 
+  const reportActionScope =
+    chosenReportActionScope === 'allOwned' && !showAllOwned
+      ? defaultReportActionScope
+      : (chosenReportActionScope ??
+        (permanentAccountTakedownFromRecord
+          ? 'allOwned'
+          : defaultReportActionScope))
+
   useEffect(() => {
     if (!showAllOwned) {
-      setReportActionScope((scope) =>
-        scope === 'allOwned' ? 'current' : scope,
+      setChosenReportActionScope((scope) =>
+        scope === 'allOwned' ? null : scope,
       )
     }
   }, [showAllOwned])
@@ -1162,9 +1194,6 @@ function ReportDetailLayout(props: {
                   checked={applyToAccount}
                   onChange={(e) => {
                     setApplyToAccount(e.target.checked)
-                    if (!e.target.checked && reportActionScope === 'allOwned') {
-                      setReportActionScope('current')
-                    }
                   }}
                   label="Apply action to account"
                 />
@@ -1281,16 +1310,18 @@ function ReportDetailLayout(props: {
                 <div className="mt-2 mb-3 space-y-2">
                   <Select
                     className="w-full"
-                    value={
-                      reportActionScope === 'allOwned' && !showAllOwned
-                        ? 'current'
-                        : reportActionScope
-                    }
-                    onChange={(e) =>
-                      setReportActionScope(
-                        e.target.value as 'current' | 'all' | 'types' | 'allOwned',
-                      )
-                    }
+                    value={reportActionScope}
+                    onChange={(e) => {
+                      const scope = e.target.value as
+                        | 'current'
+                        | 'all'
+                        | 'types'
+                        | 'allOwned'
+                      setChosenReportActionScope(scope)
+                      if (scope !== 'allOwned') {
+                        setDefaultReportActionScope(scope)
+                      }
+                    }}
                   >
                     <option value="current">Close this report only</option>
                     <option value="all">
@@ -1307,8 +1338,10 @@ function ReportDetailLayout(props: {
                   </Select>
                   {reportActionScope === 'allOwned' && showAllOwned && (
                     <p className="text-xs text-gray-500 dark:text-gray-400">
-                      Assigned and escalated reports are excluded, except this
-                      report.
+                      {permanentAccountTakedownFromRecord &&
+                        'Reports will be linked to the permanent account takedown. '}
+                      Other assigned, escalated, or actively assigned reports
+                      remain open.
                     </p>
                   )}
                   {reportActionScope === 'types' && (

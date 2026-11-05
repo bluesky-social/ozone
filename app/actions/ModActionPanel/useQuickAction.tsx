@@ -343,6 +343,16 @@ export const useQuickAction = (
         )
       : null
 
+  const willTakedownAccount = !!(
+    isTakedownEvent &&
+    !isSubjectDid &&
+    actionRecommendation?.thresholdCrossed &&
+    (actionRecommendation.isPermanent ||
+      actionRecommendation.suspensionDurationInHours !== null)
+  )
+  const willPermanentlyTakedownAccount =
+    willTakedownAccount && !!actionRecommendation?.isPermanent
+
   // When action recommendation changes, if we're taking down an account,
   // we need to automatically select the suspension duration based policy and sev level
   useEffect(() => {
@@ -563,11 +573,8 @@ export const useQuickAction = (
         // emit an additional account-level takedown event
         if (
           ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
-          !isSubjectDid &&
-          actionRecommendation &&
-          actionRecommendation.thresholdCrossed &&
-          (actionRecommendation.isPermanent ||
-            actionRecommendation.suspensionDurationInHours !== null)
+          willTakedownAccount &&
+          actionRecommendation
         ) {
           const accountEvent: $Typed<ToolsOzoneModerationDefs.ModEventTakedown> =
             {
@@ -591,14 +598,20 @@ export const useQuickAction = (
             accountEvent.targetServices = targetServices
           }
 
-          await onSubmit({
-            subject: {
-              $type: 'com.atproto.admin.defs#repoRef',
-              did: subjectDid,
-            },
-            createdBy: accountDid,
-            event: accountEvent,
-          })
+          try {
+            await onSubmit({
+              subject: {
+                $type: 'com.atproto.admin.defs#repoRef',
+                did: subjectDid,
+              },
+              createdBy: accountDid,
+              event: accountEvent,
+            })
+          } catch (error) {
+            throw new Error(
+              `The record takedown was submitted, but the account takedown or report updates may not have completed. Check both before retrying. ${error instanceof Error ? error.message : String(error)}`,
+            )
+          }
         }
 
         if (showAutomatedEmailComposer && emailContent) {
@@ -944,6 +957,7 @@ export const useQuickAction = (
     strikeDataError,
     currentStrikes,
     actionRecommendation,
+    willPermanentlyTakedownAccount,
     isAgeAssuranceOverrideEvent,
     severityLevelStrikeCount,
     isMuteReporterEvent,
