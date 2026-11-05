@@ -44,6 +44,7 @@ import { SiteStandardPublication } from './externalRecords/SiteStandardPublicati
 import { SocialGrainGallery } from './externalRecords/SocialGrainGallery'
 import { SocialGrainPhoto } from './externalRecords/SocialGrainPhoto'
 import { PlaceStreamLivestream } from './externalRecords/PlaceStreamLivestream'
+import { ExternalRecordEnhancedView } from './externalRecords/ExternalRecordEnhancedView'
 import type { SimpleRecordProps } from './externalRecords/SimpleRecord'
 
 export function RecordCard(props: {
@@ -102,13 +103,16 @@ export function RecordCard(props: {
       </RecordWithSnapshots>
     )
   }
-  const ExternalRecord = ExternalRecordRenderers.get(parsed.collection ?? '')
+  const ExternalRecord = ExternalRecordSimpleRenderers.get(
+    parsed.collection ?? '',
+  )
   if (ExternalRecord) {
     return (
       <ExternalRecordCard
         key={uri}
         uri={uri}
         authorDid={parsed.did}
+        collection={parsed.collection ?? ''}
         Renderer={ExternalRecord}
       />
     )
@@ -352,7 +356,7 @@ function useRecordCardQuery(uri: string) {
   })
 }
 
-const ExternalRecordRenderers = new Map<
+const ExternalRecordSimpleRenderers = new Map<
   string,
   (props: SimpleRecordProps) => JSX.Element
 >([
@@ -363,13 +367,23 @@ const ExternalRecordRenderers = new Map<
   [CollectionId.PlaceStreamLivestream, PlaceStreamLivestream],
 ])
 
+// Collections that get Appview context. Standalone photos stay simple-only.
+const ExternalRecordEnhancedViewCollections = new Set<string>([
+  CollectionId.SiteStandardDocument,
+  CollectionId.SiteStandardPublication,
+  CollectionId.SocialGrainGallery,
+  CollectionId.PlaceStreamLivestream,
+])
+
 function ExternalRecordCard({
   uri,
   authorDid,
+  collection,
   Renderer,
 }: {
   uri: string
   authorDid: string
+  collection: string
   Renderer: (props: SimpleRecordProps) => JSX.Element
 }) {
   const { data: record, error } = useRecordCardQuery(uri)
@@ -391,6 +405,17 @@ function ExternalRecordCard({
         return (
           <>
             <RepoCard did={authorDid} />
+            {selected &&
+              ExternalRecordEnhancedViewCollections.has(collection) && (
+                <ExternalRecordEnhancedView
+                  uri={uri}
+                  cid={selected.cid}
+                  value={selected.value}
+                  labels={labelValues}
+                  collection={collection}
+                  isSnapshot={!!snapshot}
+                />
+              )}
             {selected ? (
               <Renderer
                 uri={uri}
