@@ -6,10 +6,11 @@ import {
 } from '../custom-actions/Panel'
 import { ActionButton } from '@/common/buttons'
 import { Dropdown } from '@/common/Dropdown'
-import { Checkbox, Textarea } from '@/common/forms'
+import { Checkbox, Select, Textarea } from '@/common/forms'
 import { displayError } from '@/common/Loader'
 import { ModeratorBadge } from '@/common/profileStatus/ModeratorBadge'
 import { getDidFromUri } from '@/lib/util'
+import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { usePermission } from '@/shell/ConfigurationContext'
 import {
   ComAtprotoModerationDefs,
@@ -35,11 +36,6 @@ import { EmailComposer } from 'components/email/Composer'
 import type { EmailComposerData } from 'components/email/helpers'
 import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
 import { useCloseReports, useCreateActivity, useListActivities } from './hooks'
-import { closeAllOwnedReports } from './closeAllOwnedReports'
-import {
-  ReportClosureScope,
-  ReportClosureScopeSelector,
-} from './ReportClosureScope'
 import { useReports } from './useReports'
 import { getDefaultReportTypes } from './utils'
 
@@ -81,6 +77,7 @@ function StatusChip({ status }: { status: string }) {
 }
 
 type ActionType = 'escalate' | 'reopen' | 'no-action'
+type ReportClosureScope = 'current' | 'all' | 'types' | 'allOwned'
 
 const ACTION_CONFIG: Record<
   ActionType,
@@ -140,36 +137,32 @@ function TransitionConfirmPanel({
         await onResolveAppeal(note.trim())
         setAppealResolved(true)
       }
-      if (isBulkNoAction && scope === 'allOwned') {
-        const result = await closeAllOwnedReports({
-          subject: report.subject.subject,
-          reportId: report.id,
-          internalNote: note.trim() || undefined,
-          closeReports: closeReports.mutateAsync,
-          closeCurrentReport: () =>
-            createActivity.mutateAsync({
-              reportId: report.id,
-              activity: { $type: 'tools.ozone.report.defs#closeActivity' },
-              internalNote: note.trim() || undefined,
-            }),
-        })
-        if (!result.currentClosed) {
-          setScope('current')
-          toast.error(
-            `Closed ${result.closedCount} other reports, but could not close this report: ${displayError(result.error)}. Check this report and retry.`,
-          )
-          return
-        }
-        toast.success(
-          `Closed ${result.closedCount} ${result.closedCount === 1 ? 'report' : 'reports'} as no-action`,
-        )
-      } else if (isBulkNoAction) {
+      if (isBulkNoAction) {
         const result = await closeReports.mutateAsync({
           subject: report.subject.subject,
           reportTypes: scope === 'types' ? reportTypes : undefined,
+          includeAllOwned: scope === 'allOwned' ? true : undefined,
           internalNote: note.trim() || undefined,
         })
-        if (result.closedCount === 0) {
+        let closedCount = result.closedCount
+        // Bulk closure protects active reviews, even the selected report.
+        if (scope === 'allOwned' && !result.reportIds.includes(report.id)) {
+          try {
+            await createActivity.mutateAsync({
+              reportId: report.id,
+              activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+              internalNote: note.trim() || undefined,
+            })
+            closedCount++
+          } catch (error) {
+            setScope('current')
+            toast.error(
+              `Closed ${closedCount} other reports, but could not close this report: ${displayError(error)}. Check this report and retry.`,
+            )
+            return
+          }
+        }
+        if (closedCount === 0) {
           toast.info(
             scope === 'types'
               ? 'No open reports matched the selected types. Choose different types or close this report only.'
@@ -178,7 +171,7 @@ function TransitionConfirmPanel({
           return
         }
         toast.success(
-          `Closed ${result.closedCount} ${result.closedCount === 1 ? 'report' : 'reports'} as no-action`,
+          `Closed ${closedCount} ${closedCount === 1 ? 'report' : 'reports'} as no-action`,
         )
       } else {
         await createActivity.mutateAsync({
@@ -210,13 +203,37 @@ function TransitionConfirmPanel({
         onChange={(e) => setNote(e.target.value)}
       />
       {action === 'no-action' && (
-        <ReportClosureScopeSelector
-          scope={scope}
-          onScopeChange={setScope}
-          reportTypes={reportTypes}
-          onReportTypesChange={setReportTypes}
-          subject={report.subject}
-        />
+        <div className="space-y-2">
+          <Select
+            aria-label="Report closure scope"
+            className="w-full"
+            value={scope}
+            onChange={(e) => setScope(e.target.value as ReportClosureScope)}
+          >
+            <option value="current">Close this report only</option>
+            <option value="all">Close all open reports on subject</option>
+            <option value="types">Close reports of specific types</option>
+            {report.subject.type === 'account' &&
+              report.subject.subject.startsWith('did:') && (
+                <option value="allOwned">
+                  Close reports on this account and all its subjects
+                </option>
+              )}
+          </Select>
+          {scope === 'types' && (
+            <ReportTypeMultiselect
+              value={reportTypes}
+              onChange={setReportTypes}
+            />
+          )}
+          {scope === 'allOwned' && (
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              Other reports under active review remain open. Eligible appeal
+              reports are closed as no-action, but their subjects may still show
+              an unresolved appeal.
+            </p>
+          )}
+        </div>
       )}
       <div className="flex justify-end gap-1.5">
         <button
