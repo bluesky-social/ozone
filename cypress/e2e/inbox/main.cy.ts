@@ -95,8 +95,9 @@ describe('Moderator inbox preview', () => {
         request.reply({
           src: inbox.item.src,
           standing: 'warning',
+          enforcement: { state: 'none' },
+          hasActiveStrikes: true,
           updatedAt: '2026-10-01T14:00:00Z',
-          expiresAt: '2026-10-03T14:00:00Z',
         })
       } else if (method === 'getUnreadCount') {
         request.reply({
@@ -214,7 +215,8 @@ describe('Moderator inbox preview', () => {
     cy.contains('Unread notifications')
       .parent()
       .should('contain.text', 'Reports 1 · Subjects 1 · Account standing 1')
-    expectVisible('Latest account activity')
+    cy.contains('summary', 'Your account has strikes against it').click()
+    expectVisible('strikes have been added to your record')
     expectVisible('Appeal approved')
     expectVisible('Appeal denied')
     cy.contains('button', 'Load more').click()
