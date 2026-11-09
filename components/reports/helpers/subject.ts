@@ -126,6 +126,7 @@ export enum CollectionId {
   SocialGrainPhoto = 'social.grain.photo',
   PlaceStreamLivestream = 'place.stream.livestream',
   Convo = 'chat.bsky.convo',
+  Message = 'chat.bsky.convo.message',
 }
 export const getProfileUriForDid = (did: string) =>
   `at://${did}/${CollectionId.Profile}/self`
@@ -157,6 +158,9 @@ export const getCollectionName = (collection: string) => {
   }
   if (collection === CollectionId.Convo) {
     return 'Conversation'
+  }
+  if (collection === CollectionId.Message) {
+    return 'Message'
   }
   if (collection === CollectionId.SiteStandardDocument) {
     return 'Standard Site Document'

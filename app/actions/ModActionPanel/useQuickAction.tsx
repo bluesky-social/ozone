@@ -1019,7 +1019,9 @@ function useSubjectQuery(subject: string) {
       const isDid = subject.startsWith('did:')
       const parsed = subject.startsWith('at://') ? parseAtUri(subject) : null
       const isAtUri = !!parsed
-      const isConversation = parsed?.collection === CollectionId.Convo
+      const isChat =
+        parsed?.collection === CollectionId.Convo ||
+        parsed?.collection === CollectionId.Message
       const didFromUri = parsed?.did ?? ''
       if (isDid) {
         const [{ data: repo }, profile] = await Promise.all([
@@ -1029,7 +1031,7 @@ function useSubjectQuery(subject: string) {
           getProfile(subject),
         ])
         return { repo, profile }
-      } else if (isConversation) {
+      } else if (isChat) {
         const [{ data: repo }, profile] = await Promise.all([
           labelerAgent.tools.ozone.moderation.getRepo({
             did: didFromUri,

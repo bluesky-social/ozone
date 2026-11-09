@@ -2,6 +2,7 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { RecordCard } from './RecordCard'
+import { PreviewCard } from './PreviewCard'
 import { fetchAtmosphereRecordView } from './externalRecords/atmosphereRecordView'
 
 type QueryOptions = {
@@ -12,14 +13,33 @@ const state = vi.hoisted(() => ({
   query: {} as { data?: unknown; error?: unknown },
   appview: {} as { data?: unknown; error?: unknown; isLoading?: boolean },
   appviewQueries: [] as QueryOptions[],
+  queries: [] as QueryOptions[],
+  messageContext: {} as {
+    data?: unknown
+    error?: unknown
+    isLoading?: boolean
+  },
   snapshot: null as null | Record<string, unknown>,
-  agent: { did: 'did:plc:mod', proxy: 'did:plc:ozone#atproto_labeler' },
+  agent: {
+    did: 'did:plc:mod',
+    proxy: 'did:plc:ozone#atproto_labeler',
+    api: {
+      chat: {
+        bsky: {
+          moderation: {
+            getMessageContext: vi.fn(async () => ({ data: { messages: [] } })),
+          },
+        },
+      },
+    },
+  },
 }))
 
-// Only the record and Appview queries are controlled; repo/profile lookups
-// stay empty.
+// Repo/profile lookups stay empty.
 vi.mock('@tanstack/react-query', () => ({
   useQuery: (options: QueryOptions) => {
+    state.queries.push(options)
+    if (options.queryKey[0] === 'messageContext') return state.messageContext
     if (options.queryKey[0] === 'atmosphereRecordView') {
       state.appviewQueries.push(options)
       return state.appview
@@ -70,7 +90,9 @@ vi.mock('components/list/RecordCard', () => ({}))
 vi.mock('./feeds/RecordCard', () => ({}))
 vi.mock('./starterpacks/RecordCard', () => ({}))
 vi.mock('./profileStatus/ProfileStatusCard', () => ({}))
-vi.mock('@/dms/ConvoCard', () => ({}))
+vi.mock('@/dms/ConvoCard', () => ({
+  ConvoCard: () => <div>Conversation details</div>,
+}))
 vi.mock('components/verification/Badge', () => ({}))
 vi.mock('@/repositories/ProfileAvatar', () => ({}))
 vi.mock('./profileLinks/ProfileLinkCard', () => ({}))
@@ -84,8 +106,79 @@ beforeEach(() => {
   state.query = {}
   state.appview = { isLoading: true }
   state.appviewQueries = []
+  state.queries = []
+  state.messageContext = {}
   state.snapshot = null
+  state.agent.api.chat.bsky.moderation.getMessageContext.mockClear()
   vi.mocked(fetchAtmosphereRecordView).mockClear()
+})
+
+describe('RecordCard chat previews', () => {
+  it('renders a message report through chat context without a record lookup', async () => {
+    state.messageContext = {
+      data: [
+        {
+          $type: 'chat.bsky.convo.defs#messageView',
+          id: 'previous',
+          rev: '0',
+          text: 'Surrounding context',
+          sender: { did: 'did:plc:recipient' },
+          sentAt: '2026-01-01T00:00:00.000Z',
+        },
+        {
+          $type: 'chat.bsky.convo.defs#messageView',
+          id: '1',
+          rev: '1',
+          text: 'Message under review',
+          sender: { did },
+          sentAt: '2026-01-01T00:01:00.000Z',
+        },
+      ],
+    }
+
+    const html = renderToStaticMarkup(
+      <PreviewCard subject={uriFor('chat.bsky.convo.message')} />,
+    )
+    for (const text of [
+      'Reported message',
+      'Surrounding context',
+      'Recipient',
+      'Message under review (Reported message)',
+      'Reported User',
+    ]) {
+      expect(html).toContain(text)
+    }
+    expect(state.queries.map((query) => query.queryKey[0])).toEqual([
+      'messageContext',
+    ])
+    await state.queries[0].queryFn({})
+    expect(
+      state.agent.api.chat.bsky.moderation.getMessageContext,
+    ).toHaveBeenCalledWith({ messageId: '1' })
+  })
+
+  it.each([
+    [{ isLoading: true }, 'Loading message context...'],
+    [
+      { error: new Error('No report for requested message') },
+      'No report for requested message',
+    ],
+  ])('keeps loading and access errors in the chat preview', (context, text) => {
+    state.messageContext = context
+    expect(render('chat.bsky.convo.message')).toContain(text)
+    expect(state.queries.map((query) => query.queryKey[0])).toEqual([
+      'messageContext',
+    ])
+  })
+
+  it('keeps whole-conversation previews separate from message context', () => {
+    const html = renderToStaticMarkup(
+      <PreviewCard subject={uriFor('chat.bsky.convo')} />,
+    )
+    expect(html).toContain('Reported conversation')
+    expect(html).toContain('Conversation details')
+    expect(state.queries).toHaveLength(0)
+  })
 })
 
 describe('RecordCard Atmosphere routing', () => {
