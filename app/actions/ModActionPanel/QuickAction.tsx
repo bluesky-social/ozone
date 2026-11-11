@@ -156,11 +156,14 @@ function Form(
     canManageChat,
     currentLabels,
     allLabels,
+    messageLabelsUnavailable,
+    isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
     areLabelsLoading,
+    isMessageLabelUnavailable,
     isMuteEvent,
     isTakedownEvent,
     isPriorityScoreEvent,
@@ -360,7 +363,13 @@ function Form(
                   className="flex flex-row items-center gap-2"
                 >
                   <LabelList className="-ml-1 -mt-1 flex-wrap">
-                    {!currentLabels.length && (
+                    {messageLabelsUnavailable ? (
+                      <span>
+                        {isFetchingSubject
+                          ? 'Loading labels...'
+                          : 'Could not load message labels'}
+                      </span>
+                    ) : !currentLabels.length && (
                       <LabelListEmpty className="ml-1" />
                     )}
                     {allLabels.map((label) => {
@@ -626,23 +635,30 @@ function Form(
                   {isLabelEvent && (
                     <div className="mt-2">
                       {areLabelsLoading && <p>Refreshing labels...</p>}
-                      <LabelSelector
-                        key={JSON.stringify([
-                          subject,
-                          currentLabels,
-                          allLabels.map(({ src, val }) => [src, val]),
-                        ])}
-                        id="labels"
-                        name="labels"
-                        form={FORM_ID}
-                        defaultLabels={currentLabels.filter((label) => {
-                          // If there's a label where the source is the current labeler, it's editable
-                          const isEditableLabel = allLabels.some((l) => {
-                            return l.val === label && l.src === config.did
-                          })
-                          return !isSelfLabel(label) && isEditableLabel
-                        })}
-                      />
+                      {isMessageLabelUnavailable ? (
+                        <p>
+                          Message labels are not supported. Apply labels to the
+                          account instead.
+                        </p>
+                      ) : (
+                        <LabelSelector
+                          key={JSON.stringify([
+                            subject,
+                            currentLabels,
+                            allLabels.map(({ src, val }) => [src, val]),
+                          ])}
+                          id="labels"
+                          name="labels"
+                          form={FORM_ID}
+                          defaultLabels={currentLabels.filter((label) => {
+                            // If there's a label where the source is the current labeler, it's editable
+                            const isEditableLabel = allLabels.some((l) => {
+                              return l.val === label && l.src === config.did
+                            })
+                            return !isSelfLabel(label) && isEditableLabel
+                          })}
+                        />
+                      )}
                     </div>
                   )}
 
@@ -840,14 +856,22 @@ function Form(
                         <ButtonPrimary
                           ref={submitButton}
                           type="submit"
-                          disabled={submission.isSubmitting || areLabelsLoading}
+                          disabled={
+                            submission.isSubmitting ||
+                            areLabelsLoading ||
+                            isMessageLabelUnavailable
+                          }
                           className="mx-1 px-2 sm:px-4"
                         >
                           <span className="text-sm sm:text-base">(S)ubmit</span>
                         </ButtonPrimary>
                         <ButtonPrimary
                           type="button"
-                          disabled={submission.isSubmitting || areLabelsLoading}
+                          disabled={
+                            submission.isSubmitting ||
+                            areLabelsLoading ||
+                            isMessageLabelUnavailable
+                          }
                           onClick={submitAndGoNext}
                           className="px-2 sm:px-4"
                         >

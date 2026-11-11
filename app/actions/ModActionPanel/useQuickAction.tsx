@@ -281,13 +281,15 @@ export const useQuickAction = (
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
+  const isMessageLabelUnavailable =
+    isLabelEvent && isMessageSubject && !props.applyToAccount
   const areLabelsLoading =
     isLabelEvent &&
     (props.applyToAccount && !isSubjectDid
       ? isMessageSubject
         ? isFetchingSubject
         : isFetchingAccountForLabels
-      : isMessageSubject && isFetchingSubject)
+      : false)
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
@@ -483,17 +485,17 @@ export const useQuickAction = (
       if (areLabelsLoading) {
         throw new Error('Labels are still loading. Try again in a moment.')
       }
+      if (isMessageLabelUnavailable) {
+        throw new Error(
+          'Message labels are not supported; apply labels to the account instead',
+        )
+      }
       if (
         modEventType === MOD_EVENTS.LABEL &&
-        ((props.applyToAccount &&
-          !isSubjectDid &&
-          (!targetAccount ||
-            (isMessageSubject
-              ? subjectQueryFailed
-              : accountLabelsQueryFailed))) ||
-          (isMessageSubject &&
-            !props.applyToAccount &&
-            (!messageLabels || subjectQueryFailed)))
+        props.applyToAccount &&
+        !isSubjectDid &&
+        (!targetAccount ||
+          (isMessageSubject ? subjectQueryFailed : accountLabelsQueryFailed))
       ) {
         throw new Error('Could not load labels for the selected subject')
       }
@@ -1001,11 +1003,15 @@ export const useQuickAction = (
     canManageChat,
     currentLabels,
     allLabels,
+    messageLabelsUnavailable:
+      isMessageSubject && !props.applyToAccount && !messageLabels,
+    isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
     areLabelsLoading,
+    isMessageLabelUnavailable,
     isMuteEvent,
     isTakedownEvent,
     isAppealed,

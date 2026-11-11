@@ -841,11 +841,14 @@ function ReportDetailLayout(props: {
     canManageChat,
     currentLabels,
     allLabels,
+    messageLabelsUnavailable,
+    isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
     areLabelsLoading,
+    isMessageLabelUnavailable,
     isTakedownEvent,
     isReverseTakedownEvent,
     setModEventType,
@@ -1030,7 +1033,15 @@ function ReportDetailLayout(props: {
               className="flex flex-row items-center gap-2"
             >
               <LabelList className="-ml-1 -mt-1 flex-wrap">
-                {!currentLabels.length && <LabelListEmpty className="ml-1" />}
+                {messageLabelsUnavailable ? (
+                  <span>
+                    {isFetchingSubject
+                      ? 'Loading labels...'
+                      : 'Could not load message labels'}
+                  </span>
+                ) : !currentLabels.length && (
+                  <LabelListEmpty className="ml-1" />
+                )}
                 {allLabels.map((label) => (
                   <ModerationLabel
                     key={label.val}
@@ -1265,23 +1276,30 @@ function ReportDetailLayout(props: {
               {isLabelEvent && (
                 <div className="mt-2">
                   {areLabelsLoading && <p>Refreshing labels...</p>}
-                  <LabelSelector
-                    key={JSON.stringify([
-                      subject,
-                      applyToAccount,
-                      currentLabels,
-                      allLabels.map(({ src, val }) => [src, val]),
-                    ])}
-                    id="labels"
-                    name="labels"
-                    form={FORM_ID}
-                    defaultLabels={currentLabels.filter((label) => {
-                      const isEditableLabel = allLabels.some(
-                        (l) => l.val === label && l.src === config.did,
-                      )
-                      return !isSelfLabel(label) && isEditableLabel
-                    })}
-                  />
+                  {isMessageLabelUnavailable ? (
+                    <p>
+                      Message labels are not supported. Apply labels to the
+                      account instead.
+                    </p>
+                  ) : (
+                    <LabelSelector
+                      key={JSON.stringify([
+                        subject,
+                        applyToAccount,
+                        currentLabels,
+                        allLabels.map(({ src, val }) => [src, val]),
+                      ])}
+                      id="labels"
+                      name="labels"
+                      form={FORM_ID}
+                      defaultLabels={currentLabels.filter((label) => {
+                        const isEditableLabel = allLabels.some(
+                          (l) => l.val === label && l.src === config.did,
+                        )
+                        return !isSelfLabel(label) && isEditableLabel
+                      })}
+                    />
+                  )}
                 </div>
               )}
 
@@ -1405,7 +1423,11 @@ function ReportDetailLayout(props: {
                 <ButtonPrimary
                   ref={submitButton}
                   type="submit"
-                  disabled={submission.isSubmitting || areLabelsLoading}
+                  disabled={
+                    submission.isSubmitting ||
+                    areLabelsLoading ||
+                    isMessageLabelUnavailable
+                  }
                   className="px-4"
                 >
                   Submit
