@@ -139,7 +139,10 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonChildSafetyCSAM',
     'tools.ozone.report.defs#reasonChildSafetyGroom',
     'tools.ozone.report.defs#reasonChildSafetyPrivacy',
+    'tools.ozone.report.defs#reasonChildSafetyMinorPrivacy',
+    'tools.ozone.report.defs#reasonChildSafetyEndangerment',
     'tools.ozone.report.defs#reasonChildSafetyHarassment',
+    'tools.ozone.report.defs#reasonChildSafetyPromotion',
     'tools.ozone.report.defs#reasonChildSafetyOther',
   ],
   Harassment: [
