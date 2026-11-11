@@ -16,7 +16,7 @@ import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { ConversationSubjectWarning } from '@/dms/ConversationSubjectWarning'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
-import { getDidFromUri } from '@/lib/util'
+import { getDidFromUri, parseAtUri } from '@/lib/util'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { ModEventItem } from '@/mod-event/EventItem'
@@ -33,6 +33,7 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { canTargetAllOwned } from '@/reports/allOwnedScope'
+import { CollectionId, useCreateSubjectFromId } from '@/reports/helpers/subject'
 import {
   useReportArrowKeyNavigation,
   useReportAutoAdvance,
@@ -583,6 +584,7 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const labelerAgent = useLabelerAgent()
+  const createSubjectFromId = useCreateSubjectFromId()
   const closeReport = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
@@ -627,6 +629,15 @@ function ReportDetailLayout(props: {
         did: subjectView.did,
         convoId: subjectView.convoId,
       } as ToolsOzoneModerationEmitEvent.InputSchema['subject']
+    } else if (
+      parseAtUri(report.subject.subject)?.collection === CollectionId.Message
+    ) {
+      const result = await createSubjectFromId(report.subject.subject, {
+        subject: report.subject.subject,
+        eventId: report.eventId,
+        reportedBy: report.reportedBy,
+      })
+      appealSubject = result.subject
     } else {
       const reportUri = report.subject.subject
       const reportStatusSubject = report.subject.status?.subject
@@ -834,6 +845,7 @@ function ReportDetailLayout(props: {
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
+    areLabelsLoading,
     isTakedownEvent,
     isReverseTakedownEvent,
     setModEventType,
@@ -872,6 +884,12 @@ function ReportDetailLayout(props: {
     subject,
     setSubject,
     subjectOptions,
+    applyToAccount,
+    report: {
+      subject: report.subject.subject,
+      eventId: report.eventId,
+      reportedBy: report.reportedBy,
+    },
   })
 
   // Sync the selected action with its event type and report closing scope.
@@ -1246,7 +1264,14 @@ function ReportDetailLayout(props: {
 
               {isLabelEvent && (
                 <div className="mt-2">
+                  {areLabelsLoading && <p>Refreshing labels...</p>}
                   <LabelSelector
+                    key={JSON.stringify([
+                      subject,
+                      applyToAccount,
+                      currentLabels,
+                      allLabels.map(({ src, val }) => [src, val]),
+                    ])}
                     id="labels"
                     name="labels"
                     form={FORM_ID}
@@ -1380,7 +1405,7 @@ function ReportDetailLayout(props: {
                 <ButtonPrimary
                   ref={submitButton}
                   type="submit"
-                  disabled={submission.isSubmitting}
+                  disabled={submission.isSubmitting || areLabelsLoading}
                   className="px-4"
                 >
                   Submit

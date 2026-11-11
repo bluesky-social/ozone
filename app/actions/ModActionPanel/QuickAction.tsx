@@ -160,6 +160,7 @@ function Form(
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
+    areLabelsLoading,
     isMuteEvent,
     isTakedownEvent,
     isPriorityScoreEvent,
@@ -624,7 +625,13 @@ function Form(
 
                   {isLabelEvent && (
                     <div className="mt-2">
+                      {areLabelsLoading && <p>Refreshing labels...</p>}
                       <LabelSelector
+                        key={JSON.stringify([
+                          subject,
+                          currentLabels,
+                          allLabels.map(({ src, val }) => [src, val]),
+                        ])}
                         id="labels"
                         name="labels"
                         form={FORM_ID}
@@ -833,14 +840,14 @@ function Form(
                         <ButtonPrimary
                           ref={submitButton}
                           type="submit"
-                          disabled={submission.isSubmitting}
+                          disabled={submission.isSubmitting || areLabelsLoading}
                           className="mx-1 px-2 sm:px-4"
                         >
                           <span className="text-sm sm:text-base">(S)ubmit</span>
                         </ButtonPrimary>
                         <ButtonPrimary
                           type="button"
-                          disabled={submission.isSubmitting}
+                          disabled={submission.isSubmitting || areLabelsLoading}
                           onClick={submitAndGoNext}
                           className="px-2 sm:px-4"
                         >
