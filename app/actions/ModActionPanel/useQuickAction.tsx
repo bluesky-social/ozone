@@ -58,6 +58,7 @@ import {
   findMessageStatus,
   getActionLabels,
 } from './subjectQuery'
+import { getMessageAccountAction } from './messageAccountAction'
 
 export type QuickActionProps = {
   subject: string
@@ -114,8 +115,15 @@ export const useQuickAction = (
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+  const [modEventType, setModEventType] = useState<string>(
+    MOD_EVENTS.ACKNOWLEDGE,
+  )
 
   const subjectDid = getDidFromUri(subject)
+  const messageAccountAction = getMessageAccountAction(subject, modEventType)
+  const applyToAccount = !!props.applyToAccount || !!messageAccountAction
+  const isMessageSubject =
+    parseAtUri(subject)?.collection === CollectionId.Message
   // Extract the DID from the subject for account-level events
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
     useSubjectStatusQuery(subject, props.report)
@@ -141,15 +149,13 @@ export const useQuickAction = (
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
   const isAppealed = !!subjectStatus?.appealed
 
-  const isMessageSubject =
-    parseAtUri(subject)?.collection === CollectionId.Message
   const {
     data: accountForLabels,
     isFetching: isFetchingAccountForLabels,
     isError: accountLabelsQueryFailed,
   } = useQuery({
     queryKey: ['modActionAccountForLabels', subjectDid],
-    enabled: !!props.applyToAccount && !isSubjectDid && !isMessageSubject,
+    enabled: applyToAccount && !isSubjectDid && !isMessageSubject,
     queryFn: async () => {
       const { data } = await labelerAgent.tools.ozone.moderation.getRepo({
         did: subjectDid,
@@ -159,7 +165,7 @@ export const useQuickAction = (
   })
   const targetAccount = isMessageSubject ? repo : accountForLabels
   const allLabels = getActionLabels({
-    applyToAccount: props.applyToAccount,
+    applyToAccount,
     isSubjectDid,
     isMessageSubject,
     targetAccount,
@@ -169,9 +175,6 @@ export const useQuickAction = (
   })
   const currentLabels = allLabels.map((label) =>
     toLabelVal(label, repo?.did ?? record?.repo.did),
-  )
-  const [modEventType, setModEventType] = useState<string>(
-    MOD_EVENTS.ACKNOWLEDGE,
   )
   // Track only the details needed for UI rendering
   const [policyDetails, setPolicyDetails] = useState<{
@@ -204,7 +207,11 @@ export const useQuickAction = (
     getRecommendedAction,
     getLastContentTakedownDetails,
     strikeDataError,
-  } = useActionRecommendation(labelerAgent, subject, severityLevelData?.value)
+  } = useActionRecommendation(
+    labelerAgent,
+    messageAccountAction ? subjectDid : subject,
+    severityLevelData?.value,
+  )
 
   // Reusable handler for policy selection
   const handlePolicySelect = (policyName: string) => {
@@ -270,7 +277,7 @@ export const useQuickAction = (
     const policy = policyData?.value?.[policyKey]
     setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
 
-    if (!isSubjectDid) {
+    if (!isSubjectDid && !messageAccountAction) {
       setSelectedSeverityLevelName(lastDetails.severityLevel)
       if (lastDetails.strikeCount) {
         setSeverityLevelStrikeCount(lastDetails.strikeCount)
@@ -281,15 +288,14 @@ export const useQuickAction = (
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
-  const isMessageLabelUnavailable =
-    isLabelEvent && isMessageSubject && !props.applyToAccount
   const areLabelsLoading =
     isLabelEvent &&
-    (props.applyToAccount && !isSubjectDid
+    (applyToAccount && !isSubjectDid
       ? isMessageSubject
         ? isFetchingSubject
         : isFetchingAccountForLabels
       : false)
+  const areAccountActionsLoading = !!messageAccountAction && isFetchingSubject
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
@@ -380,7 +386,7 @@ export const useQuickAction = (
   const willTakedownAccount = !!(
     isTakedownEvent &&
     !isSubjectDid &&
-    !props.applyToAccount &&
+    !applyToAccount &&
     actionRecommendation?.thresholdCrossed &&
     (actionRecommendation.isPermanent ||
       actionRecommendation.suspensionDurationInHours !== null)
@@ -392,7 +398,7 @@ export const useQuickAction = (
   // we need to automatically select the suspension duration based policy and sev level
   useEffect(() => {
     if (
-      isSubjectDid &&
+      (isSubjectDid || !!messageAccountAction) &&
       durationSelectorRef.current &&
       actionRecommendation?.suspensionDurationInHours !== undefined
     ) {
@@ -400,7 +406,11 @@ export const useQuickAction = (
         actionRecommendation?.suspensionDurationInHours ?? 0,
       )
     }
-  }, [isSubjectDid, actionRecommendation?.suspensionDurationInHours])
+  }, [
+    isSubjectDid,
+    messageAccountAction,
+    actionRecommendation?.suspensionDurationInHours,
+  ])
 
   // Only load email template and related data if there's at least 1 template ID configured for automated emails
   const needsAutomatedEmail =
@@ -485,14 +495,12 @@ export const useQuickAction = (
       if (areLabelsLoading) {
         throw new Error('Labels are still loading. Try again in a moment.')
       }
-      if (isMessageLabelUnavailable) {
-        throw new Error(
-          'Message labels are not supported; apply labels to the account instead',
-        )
+      if (messageAccountAction && (!repo || subjectQueryFailed)) {
+        throw new Error('Could not load the account for this action')
       }
       if (
         modEventType === MOD_EVENTS.LABEL &&
-        props.applyToAccount &&
+        applyToAccount &&
         !isSubjectDid &&
         (!targetAccount ||
           (isMessageSubject ? subjectQueryFailed : accountLabelsQueryFailed))
@@ -505,7 +513,7 @@ export const useQuickAction = (
 
       const { subject: subjectInfo, record: recordInfo } =
         await createSubjectFromId(
-          props.applyToAccount &&
+          applyToAccount &&
             !isSubjectDid &&
             (isMessageSubject || modEventType === MOD_EVENTS.LABEL)
             ? subjectDid
@@ -527,7 +535,7 @@ export const useQuickAction = (
       // however, due to non account takedown, there may be account level suspension/takedown
       // where we do need to specify targetServices so let's keep the form data around to use later on
       const targetServices = coreEvent['targetServices']
-      if (!isSubjectDid && !props.applyToAccount) {
+      if (!isSubjectDid && !applyToAccount) {
         delete coreEvent['targetServices']
       }
 
@@ -541,6 +549,15 @@ export const useQuickAction = (
       ) {
         throw new Error('policy-selection-required')
       }
+
+      // The optional follow-up acts on the displayed message, not the account.
+      // Resolve it before submitting the account action to avoid a partial action.
+      const reviewSubject =
+        messageAccountAction &&
+        (formData.get('additionalAcknowledgeEvent') ||
+          formData.get('additionalResolveAppealEvent'))
+          ? (await createSubjectFromId(subject, props.report)).subject
+          : subjectInfo
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
       // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
@@ -694,7 +711,7 @@ export const useQuickAction = (
         if (
           ToolsOzoneModerationDefs.isModEventReverseTakedown(coreEvent) &&
           !isSubjectDid &&
-          !props.applyToAccount &&
+          !applyToAccount &&
           actionRecommendation?.needsReverseTakedown
         ) {
           // First, emit account-level REVERSE_TAKEDOWN to remove current suspension
@@ -743,7 +760,7 @@ export const useQuickAction = (
 
       if (formData.get('additionalAcknowledgeEvent')) {
         await onSubmit({
-          subject: subjectInfo,
+          subject: reviewSubject,
           createdBy: accountDid,
           subjectBlobCids,
           // We want the comment from label and other params like label val etc. to NOT be associated with the ack event
@@ -757,7 +774,7 @@ export const useQuickAction = (
 
       if (formData.get('additionalResolveAppealEvent')) {
         await onSubmit({
-          subject: subjectInfo,
+          subject: reviewSubject,
           createdBy: accountDid,
           subjectBlobCids,
           event: {
@@ -899,6 +916,8 @@ export const useQuickAction = (
     actionRecommendation?.isPermanent,
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
+    subject,
+    messageAccountAction,
     selectedPolicyName,
     selectedSeverityLevelName,
   ])
@@ -955,7 +974,7 @@ export const useQuickAction = (
       thresholdCrossed: actionRecommendation?.thresholdCrossed,
     })
     const content = compileTakedownEmail({
-      subjectName: isSubjectDid
+      subjectName: isSubjectDid || messageAccountAction
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
       recordContent: record?.value?.text ? `${record.value.text}` : undefined,
@@ -998,20 +1017,23 @@ export const useQuickAction = (
     onFormSubmit,
     record,
     isSubjectDid,
+    isMessageSubject,
+    applyToAccount,
+    messageAccountAction,
     profile,
     subjectStatus,
     canManageChat,
     currentLabels,
     allLabels,
     messageLabelsUnavailable:
-      isMessageSubject && !props.applyToAccount && !messageLabels,
+      isMessageSubject && !applyToAccount && !messageLabels,
     isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
     areLabelsLoading,
-    isMessageLabelUnavailable,
+    areAccountActionsLoading,
     isMuteEvent,
     isTakedownEvent,
     isAppealed,

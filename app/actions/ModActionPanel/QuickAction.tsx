@@ -150,6 +150,8 @@ function Form(
     onFormSubmit,
     record,
     isSubjectDid,
+    isMessageSubject,
+    messageAccountAction,
     profile,
     subjectStatus,
     selectedSeverityLevelName,
@@ -163,7 +165,7 @@ function Form(
     shouldShowDurationInHoursField,
     isLabelEvent,
     areLabelsLoading,
-    isMessageLabelUnavailable,
+    areAccountActionsLoading,
     isMuteEvent,
     isTakedownEvent,
     isPriorityScoreEvent,
@@ -482,6 +484,11 @@ function Form(
                     <ModEventSelectorButton
                       isSubjectDid={isSubjectDid}
                       subjectStatus={subjectStatus}
+                      takedownSubjectStatus={
+                        isMessageSubject
+                          ? (repo?.moderation.subjectStatus ?? null)
+                          : undefined
+                      }
                       selectedAction={modEventType}
                       hasBlobs={!!record?.blobs?.length}
                       setSelectedAction={(action) => setModEventType(action)}
@@ -494,6 +501,22 @@ function Form(
                       />
                     )}
                   </div>
+                  {messageAccountAction && (
+                    <div className="mt-3 space-y-2">
+                      <Alert
+                        type="warning"
+                        showIcon
+                        title="Account action"
+                        body={messageAccountAction}
+                      />
+                      <Checkbox
+                        id="messageApplyToAccount"
+                        checked
+                        disabled
+                        label="Apply action to account"
+                      />
+                    </div>
+                  )}
                   {isTakedownEvent && (
                     <PolicySeveritySelector
                       defaultPolicy={selectedPolicyName}
@@ -513,7 +536,7 @@ function Form(
                       variant="takedown"
                       targetServices={targetServices}
                       setTargetServices={setTargetServices}
-                      isSubjectDid={isSubjectDid}
+                      isSubjectDid={isSubjectDid || !!messageAccountAction}
                     />
                   )}
 
@@ -635,30 +658,23 @@ function Form(
                   {isLabelEvent && (
                     <div className="mt-2">
                       {areLabelsLoading && <p>Refreshing labels...</p>}
-                      {isMessageLabelUnavailable ? (
-                        <p>
-                          Message labels are not supported. Apply labels to the
-                          account instead.
-                        </p>
-                      ) : (
-                        <LabelSelector
-                          key={JSON.stringify([
-                            subject,
-                            currentLabels,
-                            allLabels.map(({ src, val }) => [src, val]),
-                          ])}
-                          id="labels"
-                          name="labels"
-                          form={FORM_ID}
-                          defaultLabels={currentLabels.filter((label) => {
-                            // If there's a label where the source is the current labeler, it's editable
-                            const isEditableLabel = allLabels.some((l) => {
-                              return l.val === label && l.src === config.did
-                            })
-                            return !isSelfLabel(label) && isEditableLabel
-                          })}
-                        />
-                      )}
+                      <LabelSelector
+                        key={JSON.stringify([
+                          subject,
+                          currentLabels,
+                          allLabels.map(({ src, val }) => [src, val]),
+                        ])}
+                        id="labels"
+                        name="labels"
+                        form={FORM_ID}
+                        defaultLabels={currentLabels.filter((label) => {
+                          // If there's a label where the source is the current labeler, it's editable
+                          const isEditableLabel = allLabels.some((l) => {
+                            return l.val === label && l.src === config.did
+                          })
+                          return !isSelfLabel(label) && isEditableLabel
+                        })}
+                      />
                     </div>
                   )}
 
@@ -859,7 +875,7 @@ function Form(
                           disabled={
                             submission.isSubmitting ||
                             areLabelsLoading ||
-                            isMessageLabelUnavailable
+                            areAccountActionsLoading
                           }
                           className="mx-1 px-2 sm:px-4"
                         >
@@ -870,7 +886,7 @@ function Form(
                           disabled={
                             submission.isSubmitting ||
                             areLabelsLoading ||
-                            isMessageLabelUnavailable
+                            areAccountActionsLoading
                           }
                           onClick={submitAndGoNext}
                           className="px-2 sm:px-4"

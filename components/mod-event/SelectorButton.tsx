@@ -92,6 +92,7 @@ const actionsByKey = actions.reduce((acc, action) => {
 
 export const ModEventSelectorButton = ({
   subjectStatus,
+  takedownSubjectStatus,
   selectedAction,
   setSelectedAction,
   hasBlobs,
@@ -99,6 +100,7 @@ export const ModEventSelectorButton = ({
   forceDisplayActions = [],
 }: {
   subjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
+  takedownSubjectStatus?: ToolsOzoneModerationDefs.SubjectStatusView | null
   selectedAction: string
   setSelectedAction: (action: string) => void
   hasBlobs: boolean
@@ -111,7 +113,11 @@ export const ModEventSelectorButton = ({
   const canSendEmail = usePermission('canSendEmail')
   const canVerify = usePermission('canVerify')
   const canPurgeAgeAssurance = usePermission('canPurgeAgeAssurance')
-  const { takendown, reviewState, appealed, tags } = subjectStatus || {}
+  const { reviewState, appealed, tags } = subjectStatus || {}
+  const { takendown } =
+    takedownSubjectStatus === undefined
+      ? subjectStatus || {}
+      : takedownSubjectStatus || {}
   const isMutedSubject = isSubjectMuted(subjectStatus)
   const isMutedReporter = isReporterMuted(subjectStatus)
 

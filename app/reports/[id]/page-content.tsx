@@ -600,7 +600,7 @@ function ReportDetailLayout(props: {
   )
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const appealLabelActionStarted = useRef(false)
-  const [applyToAccount, setApplyToAccount] = useState(false)
+  const [requestedApplyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
 
   const resolveAppealForReport = async (createdBy: string, comment?: string) => {
@@ -835,6 +835,9 @@ function ReportDetailLayout(props: {
     onFormSubmit,
     record,
     isSubjectDid,
+    isMessageSubject,
+    applyToAccount,
+    messageAccountAction,
     profile,
     subjectStatus,
     selectedSeverityLevelName,
@@ -848,7 +851,7 @@ function ReportDetailLayout(props: {
     shouldShowDurationInHoursField,
     isLabelEvent,
     areLabelsLoading,
-    isMessageLabelUnavailable,
+    areAccountActionsLoading,
     isTakedownEvent,
     isReverseTakedownEvent,
     setModEventType,
@@ -887,7 +890,7 @@ function ReportDetailLayout(props: {
     subject,
     setSubject,
     subjectOptions,
-    applyToAccount,
+    applyToAccount: requestedApplyToAccount,
     report: {
       subject: report.subject.subject,
       eventId: report.eventId,
@@ -926,12 +929,14 @@ function ReportDetailLayout(props: {
   )
 
   const reportActionScope =
-    chosenReportActionScope === 'allOwned' && !showAllOwned
-      ? defaultReportActionScope
-      : (chosenReportActionScope ??
-        (permanentAccountTakedownFromRecord
-          ? 'allOwned'
-          : defaultReportActionScope))
+    messageAccountAction && chosenReportActionScope !== 'allOwned'
+      ? 'current'
+      : chosenReportActionScope === 'allOwned' && !showAllOwned
+        ? defaultReportActionScope
+        : (chosenReportActionScope ??
+          (permanentAccountTakedownFromRecord
+            ? 'allOwned'
+            : defaultReportActionScope))
 
   useEffect(() => {
     if (!showAllOwned) {
@@ -1170,7 +1175,9 @@ function ReportDetailLayout(props: {
             currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
-            subjectStatus={subjectStatus}
+            subjectStatus={
+              isMessageSubject ? repo?.moderation.subjectStatus : subjectStatus
+            }
             onResolveAppeal={
               isAppealReport(report.reportType)
                 ? (comment) => resolveAppealForReport(config.did, comment)
@@ -1215,17 +1222,30 @@ function ReportDetailLayout(props: {
               </div>
 
               {isSubjectRecord && (
-                <Checkbox
-                  value="true"
-                  id="applyToAccount"
-                  name="applyToAccount"
-                  className="mb-3 flex items-center"
-                  checked={applyToAccount}
-                  onChange={(e) => {
-                    setApplyToAccount(e.target.checked)
-                  }}
-                  label="Apply action to account"
-                />
+                <>
+                  {messageAccountAction && (
+                    <div className="mb-3">
+                      <Alert
+                        type="warning"
+                        showIcon
+                        title="Account action"
+                        body={messageAccountAction}
+                      />
+                    </div>
+                  )}
+                  <Checkbox
+                    value="true"
+                    id="applyToAccount"
+                    name="applyToAccount"
+                    className="mb-3 flex items-center"
+                    checked={applyToAccount}
+                    disabled={!!messageAccountAction}
+                    onChange={(e) => {
+                      setApplyToAccount(e.target.checked)
+                    }}
+                    label="Apply action to account"
+                  />
+                </>
               )}
 
               {(isTakedownEvent || isReverseTakedownEvent) && (
@@ -1249,7 +1269,7 @@ function ReportDetailLayout(props: {
                   }
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
-                  isSubjectDid={isSubjectDid}
+                  isSubjectDid={isSubjectDid || !!messageAccountAction}
                   recommendedPolicies={report.queue?.recommendedPolicies}
                 />
               )}
@@ -1276,30 +1296,23 @@ function ReportDetailLayout(props: {
               {isLabelEvent && (
                 <div className="mt-2">
                   {areLabelsLoading && <p>Refreshing labels...</p>}
-                  {isMessageLabelUnavailable ? (
-                    <p>
-                      Message labels are not supported. Apply labels to the
-                      account instead.
-                    </p>
-                  ) : (
-                    <LabelSelector
-                      key={JSON.stringify([
-                        subject,
-                        applyToAccount,
-                        currentLabels,
-                        allLabels.map(({ src, val }) => [src, val]),
-                      ])}
-                      id="labels"
-                      name="labels"
-                      form={FORM_ID}
-                      defaultLabels={currentLabels.filter((label) => {
-                        const isEditableLabel = allLabels.some(
-                          (l) => l.val === label && l.src === config.did,
-                        )
-                        return !isSelfLabel(label) && isEditableLabel
-                      })}
-                    />
-                  )}
+                  <LabelSelector
+                    key={JSON.stringify([
+                      subject,
+                      applyToAccount,
+                      currentLabels,
+                      allLabels.map(({ src, val }) => [src, val]),
+                    ])}
+                    id="labels"
+                    name="labels"
+                    form={FORM_ID}
+                    defaultLabels={currentLabels.filter((label) => {
+                      const isEditableLabel = allLabels.some(
+                        (l) => l.val === label && l.src === config.did,
+                      )
+                      return !isSelfLabel(label) && isEditableLabel
+                    })}
+                  />
                 </div>
               )}
 
@@ -1366,13 +1379,23 @@ function ReportDetailLayout(props: {
                       }
                     }}
                   >
-                    <option value="current">Close this report only</option>
-                    <option value="all">
-                      Close all open reports on subject
+                    <option value="current">
+                      {messageAccountAction
+                        ? isAppealReport(report.reportType)
+                          ? 'Resolve and close this appeal'
+                          : 'Keep this message report open'
+                        : 'Close this report only'}
                     </option>
-                    <option value="types">
-                      Close reports of specific types
-                    </option>
+                    {!messageAccountAction && (
+                      <>
+                        <option value="all">
+                          Close all open reports on subject
+                        </option>
+                        <option value="types">
+                          Close reports of specific types
+                        </option>
+                      </>
+                    )}
                     {showAllOwned && (
                       <option value="allOwned">
                         Close open reports on account and all owned subjects
@@ -1426,7 +1449,7 @@ function ReportDetailLayout(props: {
                   disabled={
                     submission.isSubmitting ||
                     areLabelsLoading ||
-                    isMessageLabelUnavailable
+                    areAccountActionsLoading
                   }
                   className="px-4"
                 >
