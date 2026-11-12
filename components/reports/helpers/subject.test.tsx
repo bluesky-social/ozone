@@ -13,13 +13,13 @@ vi.mock('@/shell/ConfigurationContext', () => ({
   }),
 }))
 
-const did = 'did:plc:i5viqhs6ac365q24ssemwnnt'
-const messageUri = `at://${did}/chat.bsky.convo.message/3mzo7sunwc52y`
+const did = 'did:plc:alice'
+const messageUri = `at://${did}/chat.bsky.convo.message/message-123`
 const messageRef = {
   $type: 'chat.bsky.convo.defs#messageRef',
   did,
   convoId: 'convo-123',
-  messageId: '3mzo7sunwc52y',
+  messageId: 'message-123',
 }
 
 function createSubject(client = new QueryClient()) {
