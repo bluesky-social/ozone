@@ -155,6 +155,9 @@ export function useEmitEvent() {
           queryClient.invalidateQueries({
             queryKey: ['accountView', { id: vals?.subject.did }],
           })
+          queryClient.invalidateQueries({
+            queryKey: ['modActionAccountForLabels', vals.subject.did],
+          })
         }
         refetchOnlineModerators()
       }

@@ -5,12 +5,7 @@ import {
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
 import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
-import {
-  diffLabels,
-  getLabelsForSubject,
-  toLabelVal,
-  isSelfLabel,
-} from '@/common/labels/util'
+import { diffLabels, toLabelVal, isSelfLabel } from '@/common/labels/util'
 import { useKeyPressEvent } from 'react-use'
 import {
   DAY,
@@ -58,11 +53,19 @@ import {
 } from './useTakedownEmail'
 import { format } from 'date-fns'
 import { compileTemplateContent, getTemplate } from '@/email/helpers'
+import {
+  fetchModActionSubject,
+  findMessageStatus,
+  getActionLabels,
+} from './subjectQuery'
+import { getMessageAccountAction } from './messageAccountAction'
 
 export type QuickActionProps = {
   subject: string
   setSubject: (subject: string) => void
   subjectOptions?: string[]
+  report?: { subject: string; eventId: number; reportedBy: string }
+  applyToAccount?: boolean
   onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
 }
 
@@ -107,25 +110,30 @@ export const useQuickAction = (
   const accountDid = labelerAgent.assertDid
   const { theme } = useColorScheme()
 
-  const {
-    subject,
-    setSubject,
-    subjectOptions,
-    onCancel,
-    onSubmit,
-  } = props
+  const { subject, setSubject, subjectOptions, onCancel, onSubmit } = props
   const [submission, setSubmission] = useState<{
     isSubmitting: boolean
     error: string
   }>({ isSubmitting: false, error: '' })
+  const [modEventType, setModEventType] = useState<string>(
+    MOD_EVENTS.ACKNOWLEDGE,
+  )
 
   const subjectDid = getDidFromUri(subject)
+  const messageAccountAction = getMessageAccountAction(subject, modEventType)
+  const applyToAccount = !!props.applyToAccount || !!messageAccountAction
+  const isMessageSubject =
+    parseAtUri(subject)?.collection === CollectionId.Message
   // Extract the DID from the subject for account-level events
   const { data: subjectStatus, refetch: refetchSubjectStatus } =
-    useSubjectStatusQuery(subject)
+    useSubjectStatusQuery(subject, props.report)
 
-  const { data: { record, repo, profile } = {}, refetch: refetchSubject } =
-    useSubjectQuery(subject)
+  const {
+    data: { record, repo, profile, labels: messageLabels } = {},
+    refetch: refetchSubject,
+    isFetching: isFetchingSubject,
+    isError: subjectQueryFailed,
+  } = useSubjectQuery(subject)
 
   const isSubjectDid = subject.startsWith('did:')
   const recordCreatedAt =
@@ -141,12 +149,32 @@ export const useQuickAction = (
     subjectStatus?.reviewState === ToolsOzoneModerationDefs.REVIEWESCALATED
   const isAppealed = !!subjectStatus?.appealed
 
-  const allLabels = getLabelsForSubject({ repo, record })
+  const {
+    data: accountForLabels,
+    isFetching: isFetchingAccountForLabels,
+    isError: accountLabelsQueryFailed,
+  } = useQuery({
+    queryKey: ['modActionAccountForLabels', subjectDid],
+    enabled: applyToAccount && !isSubjectDid && !isMessageSubject,
+    queryFn: async () => {
+      const { data } = await labelerAgent.tools.ozone.moderation.getRepo({
+        did: subjectDid,
+      })
+      return data
+    },
+  })
+  const targetAccount = isMessageSubject ? repo : accountForLabels
+  const allLabels = getActionLabels({
+    applyToAccount,
+    isSubjectDid,
+    isMessageSubject,
+    targetAccount,
+    messageLabels,
+    repo,
+    record,
+  })
   const currentLabels = allLabels.map((label) =>
     toLabelVal(label, repo?.did ?? record?.repo.did),
-  )
-  const [modEventType, setModEventType] = useState<string>(
-    MOD_EVENTS.ACKNOWLEDGE,
   )
   // Track only the details needed for UI rendering
   const [policyDetails, setPolicyDetails] = useState<{
@@ -179,7 +207,11 @@ export const useQuickAction = (
     getRecommendedAction,
     getLastContentTakedownDetails,
     strikeDataError,
-  } = useActionRecommendation(labelerAgent, subject, severityLevelData?.value)
+  } = useActionRecommendation(
+    labelerAgent,
+    messageAccountAction ? subjectDid : subject,
+    severityLevelData?.value,
+  )
 
   // Reusable handler for policy selection
   const handlePolicySelect = (policyName: string) => {
@@ -245,7 +277,7 @@ export const useQuickAction = (
     const policy = policyData?.value?.[policyKey]
     setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
 
-    if (!isSubjectDid) {
+    if (!isSubjectDid && !messageAccountAction) {
       setSelectedSeverityLevelName(lastDetails.severityLevel)
       if (lastDetails.strikeCount) {
         setSeverityLevelStrikeCount(lastDetails.strikeCount)
@@ -256,6 +288,14 @@ export const useQuickAction = (
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
+  const areLabelsLoading =
+    isLabelEvent &&
+    (applyToAccount && !isSubjectDid
+      ? isMessageSubject
+        ? isFetchingSubject
+        : isFetchingAccountForLabels
+      : false)
+  const areAccountActionsLoading = !!messageAccountAction && isFetchingSubject
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
@@ -346,6 +386,7 @@ export const useQuickAction = (
   const willTakedownAccount = !!(
     isTakedownEvent &&
     !isSubjectDid &&
+    !applyToAccount &&
     actionRecommendation?.thresholdCrossed &&
     (actionRecommendation.isPermanent ||
       actionRecommendation.suspensionDurationInHours !== null)
@@ -357,7 +398,7 @@ export const useQuickAction = (
   // we need to automatically select the suspension duration based policy and sev level
   useEffect(() => {
     if (
-      isSubjectDid &&
+      (isSubjectDid || !!messageAccountAction) &&
       durationSelectorRef.current &&
       actionRecommendation?.suspensionDurationInHours !== undefined
     ) {
@@ -365,7 +406,11 @@ export const useQuickAction = (
         actionRecommendation?.suspensionDurationInHours ?? 0,
       )
     }
-  }, [isSubjectDid, actionRecommendation?.suspensionDurationInHours])
+  }, [
+    isSubjectDid,
+    messageAccountAction,
+    actionRecommendation?.suspensionDurationInHours,
+  ])
 
   // Only load email template and related data if there's at least 1 template ID configured for automated emails
   const needsAutomatedEmail =
@@ -447,12 +492,34 @@ export const useQuickAction = (
     const form = ev.currentTarget
     try {
       setSubmission({ isSubmitting: true, error: '' })
+      if (areLabelsLoading) {
+        throw new Error('Labels are still loading. Try again in a moment.')
+      }
+      if (messageAccountAction && (!repo || subjectQueryFailed)) {
+        throw new Error('Could not load the account for this action')
+      }
+      if (
+        modEventType === MOD_EVENTS.LABEL &&
+        applyToAccount &&
+        !isSubjectDid &&
+        (!targetAccount ||
+          (isMessageSubject ? subjectQueryFailed : accountLabelsQueryFailed))
+      ) {
+        throw new Error('Could not load labels for the selected subject')
+      }
       const formData = new FormData(form)
       const nextLabels = String(formData.get('labels'))!.split(',')
       const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
 
       const { subject: subjectInfo, record: recordInfo } =
-        await createSubjectFromId(subject)
+        await createSubjectFromId(
+          applyToAccount &&
+            !isSubjectDid &&
+            (isMessageSubject || modEventType === MOD_EVENTS.LABEL)
+            ? subjectDid
+            : subject,
+          props.report,
+        )
 
       const subjectBlobCids = formData
         .getAll('subjectBlobCids')
@@ -468,7 +535,7 @@ export const useQuickAction = (
       // however, due to non account takedown, there may be account level suspension/takedown
       // where we do need to specify targetServices so let's keep the form data around to use later on
       const targetServices = coreEvent['targetServices']
-      if (!isSubjectDid) {
+      if (!isSubjectDid && !applyToAccount) {
         delete coreEvent['targetServices']
       }
 
@@ -482,6 +549,15 @@ export const useQuickAction = (
       ) {
         throw new Error('policy-selection-required')
       }
+
+      // The optional follow-up acts on the displayed message, not the account.
+      // Resolve it before submitting the account action to avoid a partial action.
+      const reviewSubject =
+        messageAccountAction &&
+        (formData.get('additionalAcknowledgeEvent') ||
+          formData.get('additionalResolveAppealEvent'))
+          ? (await createSubjectFromId(subject, props.report)).subject
+          : subjectInfo
 
       // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
       // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
@@ -635,6 +711,7 @@ export const useQuickAction = (
         if (
           ToolsOzoneModerationDefs.isModEventReverseTakedown(coreEvent) &&
           !isSubjectDid &&
+          !applyToAccount &&
           actionRecommendation?.needsReverseTakedown
         ) {
           // First, emit account-level REVERSE_TAKEDOWN to remove current suspension
@@ -683,7 +760,7 @@ export const useQuickAction = (
 
       if (formData.get('additionalAcknowledgeEvent')) {
         await onSubmit({
-          subject: subjectInfo,
+          subject: reviewSubject,
           createdBy: accountDid,
           subjectBlobCids,
           // We want the comment from label and other params like label val etc. to NOT be associated with the ack event
@@ -697,7 +774,7 @@ export const useQuickAction = (
 
       if (formData.get('additionalResolveAppealEvent')) {
         await onSubmit({
-          subject: subjectInfo,
+          subject: reviewSubject,
           createdBy: accountDid,
           subjectBlobCids,
           event: {
@@ -707,9 +784,14 @@ export const useQuickAction = (
         })
       }
 
-      refetchSubjectStatus()
-      refetchSubject()
-      queryClient.invalidateQueries({ queryKey: ['modEventList'] })
+      await Promise.all([
+        refetchSubjectStatus(),
+        refetchSubject(),
+        queryClient.invalidateQueries({ queryKey: ['modEventList'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['modActionAccountForLabels', subjectDid],
+        }),
+      ])
 
       // After successful submission, reset the form state to clear inputs for previous submission
       form.reset()
@@ -834,6 +916,8 @@ export const useQuickAction = (
     actionRecommendation?.isPermanent,
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
+    subject,
+    messageAccountAction,
     selectedPolicyName,
     selectedSeverityLevelName,
   ])
@@ -890,7 +974,7 @@ export const useQuickAction = (
       thresholdCrossed: actionRecommendation?.thresholdCrossed,
     })
     const content = compileTakedownEmail({
-      subjectName: isSubjectDid
+      subjectName: isSubjectDid || messageAccountAction
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
       recordContent: record?.value?.text ? `${record.value.text}` : undefined,
@@ -933,15 +1017,23 @@ export const useQuickAction = (
     onFormSubmit,
     record,
     isSubjectDid,
+    isMessageSubject,
+    applyToAccount,
+    messageAccountAction,
     profile,
     subjectStatus,
     canManageChat,
     currentLabels,
     allLabels,
+    messageLabelsUnavailable:
+      isMessageSubject && !applyToAccount && !messageLabels,
+    isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
+    areLabelsLoading,
+    areAccountActionsLoading,
     isMuteEvent,
     isTakedownEvent,
     isAppealed,
@@ -1001,72 +1093,45 @@ export const useQuickAction = (
 function useSubjectQuery(subject: string) {
   const labelerAgent = useLabelerAgent()
 
-  const getProfile = async (actor: string) => {
-    try {
-      const { data: profile } = await labelerAgent.app.bsky.actor.getProfile({
-        actor,
-      })
-      return profile
-    } catch (e) {
-      return undefined
-    }
-  }
-
   return useQuery({
     // subject of the report
     queryKey: ['modActionSubject', subject],
-    queryFn: async () => {
-      const isDid = subject.startsWith('did:')
-      const parsed = subject.startsWith('at://') ? parseAtUri(subject) : null
-      const isAtUri = !!parsed
-      const isChat =
-        parsed?.collection === CollectionId.Convo ||
-        parsed?.collection === CollectionId.Message
-      const didFromUri = parsed?.did ?? ''
-      if (isDid) {
-        const [{ data: repo }, profile] = await Promise.all([
-          labelerAgent.tools.ozone.moderation.getRepo({
-            did: subject,
-          }),
-          getProfile(subject),
-        ])
-        return { repo, profile }
-      } else if (isChat) {
-        const [{ data: repo }, profile] = await Promise.all([
-          labelerAgent.tools.ozone.moderation.getRepo({
-            did: didFromUri,
-          }),
-          getProfile(didFromUri),
-        ])
-        return { repo, profile }
-      } else if (isAtUri) {
-        const [{ data: record }, profile] = await Promise.all([
-          labelerAgent.tools.ozone.moderation.getRecord({
-            uri: subject,
-          }),
-          getProfile(didFromUri),
-        ])
-        return { record, profile }
-      } else {
-        return {}
-      }
-    },
+    queryFn: () => fetchModActionSubject(labelerAgent, subject),
   })
 }
 
-function useSubjectStatusQuery(subject: string) {
+function useSubjectStatusQuery(
+  subject: string,
+  report?: QuickActionProps['report'],
+) {
   const labelerAgent = useLabelerAgent()
+  const createSubjectFromId = useCreateSubjectFromId()
   return useQuery({
     // subject of the report
-    queryKey: ['modSubjectStatus', { subject }],
+    queryKey: ['modSubjectStatus', { subject, reportEventId: report?.eventId }],
     queryFn: async () => {
+      const isMessage = parseAtUri(subject)?.collection === CollectionId.Message
       const {
         data: { subjectStatuses },
       } = await labelerAgent.api.tools.ozone.moderation.queryStatuses({
         subject,
         includeMuted: true,
-        limit: 1,
+        limit: isMessage ? 100 : 1,
       })
+      if (isMessage && subjectStatuses.length) {
+        const { subject: ref } = await createSubjectFromId(subject, report)
+        if (
+          ref.$type !== 'chat.bsky.convo.defs#messageRef' ||
+          !('messageId' in ref) ||
+          !('convoId' in ref)
+        )
+          return null
+        return findMessageStatus(subjectStatuses, {
+          did: ref.did,
+          convoId: ref.convoId,
+          messageId: ref.messageId,
+        })
+      }
       return subjectStatuses.at(0) || null
     },
   })
