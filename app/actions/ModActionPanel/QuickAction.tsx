@@ -809,8 +809,11 @@ function Form(
                           Close open or escalated subject reviews for content
                           created by this account.
                           <span className="block text-xs text-gray-500 dark:text-gray-400">
-                            Also resolves appeals on those subjects. Reports in
-                            queues remain open.
+                            Also resolves appeals and closes eligible reports on
+                            this account and its content across all queues and
+                            report types. Assigned or escalated reports stay open.
+                            {isAckEvent &&
+                              ' Closed reports show no action taken.'}
                           </span>
                         </span>
                       }
