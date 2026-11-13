@@ -86,7 +86,7 @@ export function validateSettings(value: unknown): Settings {
     const conditionGroups = [
       action.when || [],
       ...action.actions.flatMap((step) =>
-        step.type === 'event' ? [step.when || []] : [],
+        'when' in step ? [step.when || []] : [],
       ),
     ]
     for (const group of conditionGroups) {

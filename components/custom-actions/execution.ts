@@ -151,6 +151,27 @@ export async function dispatch(
     )
     return activityReceipt(data.activity, op, run.context.uiOrigin)
   }
+  if (request.endpoint === 'tools.ozone.report.closeReports') {
+    const { name, meta } = eventMetadata(run, op)
+    const { data } = await agent.tools.ozone.report.closeReports(
+      { ...request.body, meta: { ...meta, source: name } },
+      { signal },
+    )
+    if (
+      !Number.isSafeInteger(data.closedCount) ||
+      data.closedCount < 0 ||
+      !Array.isArray(data.reportIds) ||
+      data.reportIds.length !== data.closedCount ||
+      new Set(data.reportIds).size !== data.reportIds.length ||
+      data.reportIds.some((id) => !Number.isSafeInteger(id) || id <= 0)
+    )
+      throw new Error('Unexpected report closure response')
+    return {
+      kind: 'report-closure',
+      closedCount: data.closedCount,
+      reportIds: data.reportIds,
+    }
+  }
   if (run.verifierDid) {
     const existing = await findVerification(agent, op, run.verifierDid, signal)
     if (existing) return existing

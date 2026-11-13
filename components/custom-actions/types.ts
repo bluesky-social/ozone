@@ -59,6 +59,13 @@ export type Step = { id: string } & (
       internalNote?: string
       publicNote?: string
     }
+  | {
+      type: 'closeReports'
+      target: 'subject' | 'account'
+      reportTypes: string[]
+      when?: Condition[]
+      internalNote?: string
+    }
   | { type: 'verify'; target: 'account' }
 )
 export type CustomAction = {
@@ -99,6 +106,15 @@ export type Request =
       }
     }
   | {
+      endpoint: 'tools.ozone.report.closeReports'
+      body: {
+        subject: string
+        reportTypes: string[]
+        isAutomated: false
+        internalNote?: string
+      }
+    }
+  | {
       endpoint: 'tools.ozone.verification.grantVerifications'
       body: {
         verifications: {
@@ -122,6 +138,7 @@ export type Receipt =
       internalNote?: string
       publicNote?: string
     }
+  | { kind: 'report-closure'; closedCount: number; reportIds: number[] }
   | {
       kind: 'verification'
       uri: string

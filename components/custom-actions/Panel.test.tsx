@@ -130,6 +130,14 @@ describe('custom action progress', () => {
               $type: 'tools.ozone.moderation.defs#modEventResolveAppeal',
             },
           },
+          {
+            id: 'close-appeals',
+            type: 'closeReports',
+            target: 'account',
+            reportTypes: ['tools.ozone.report.defs#reasonAppeal'],
+            when: [{ target: 'account', absentLabels: ['spam'] }],
+            internalNote: 'Account reviewed.',
+          },
         ],
       },
     ]
@@ -166,6 +174,10 @@ describe('custom action progress', () => {
     expect(html).toContain('Missing labels on account: spam')
     expect(html).toContain('Resolve subject appeal')
     expect(html).toContain('Will run')
+    expect(html).toContain('Close eligible matching reports as no-action')
+    expect(html).toContain('appeal reports will be denied')
+    expect(html).toContain('actively assigned reports stay open')
+    expect(html).toContain('Account reviewed.')
     state.snapshot.accountLabels = ['spam']
     html = renderToStaticMarkup(<Harness />)
     expect(html).not.toContain('Missing labels on account: spam')

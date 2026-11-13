@@ -231,6 +231,8 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                   )}
                   {op.receipt?.kind === 'report-activity' &&
                     ` • activity ${op.receipt.activityId}`}
+                  {op.receipt?.kind === 'report-closure' &&
+                    ` • closed ${op.receipt.closedCount} reports`}
                   {op.receipt?.kind === 'verification' &&
                     ` • ${op.receipt.uri}`}
                 </p>
@@ -327,8 +329,7 @@ function StepEffects({ step }: { step: Step }) {
   const notes: string[] = []
   const effects: string[] = []
   let changes: { text: string; values: string[]; isTag?: boolean }[] = []
-  if (step.type === 'event') {
-    const event = step.event
+  if ('when' in step) {
     for (const condition of step.when || []) {
       for (const [key, label] of [
         ['requiredTags', 'Requires tags'],
@@ -348,6 +349,9 @@ function StepEffects({ step }: { step: Step }) {
             : `Requires no unresolved appeal on ${condition.target}`,
         )
     }
+  }
+  if (step.type === 'event') {
+    const event = step.event
     if (step.continueOnError)
       effects.push('Continue to the next step if this change fails')
     if (event.comment) notes.push(event.comment)
@@ -394,6 +398,12 @@ function StepEffects({ step }: { step: Step }) {
       event.sticky
     )
       effects.push('Replace the persistent subject note')
+  } else if (step.type === 'closeReports') {
+    effects.push(
+      `Report types on this target: ${step.reportTypes.map(getReasonLabel).join(', ')}`,
+      'Close eligible reports as no-action; appeal reports will be denied. Assigned, escalated, and actively assigned reports stay open. Continue if no eligible reports match.',
+    )
+    if (step.internalNote) notes.push(`Internal note: ${step.internalNote}`)
   } else if (step.type === 'activity') {
     if (step.internalNote) notes.push(`Internal note: ${step.internalNote}`)
     if (step.publicNote) notes.push(`Public note: ${step.publicNote}`)
@@ -442,6 +452,8 @@ function describeStep(step: Step, subject: string, reportId?: number) {
       ? subject.split('/')[2]
       : subject
   if (step.type === 'verify') return `Verify account: ${target}`
+  if (step.type === 'closeReports')
+    return `Close eligible matching reports as no-action: ${target}`
   const labels = {
     modEventTag: 'Update tags',
     modEventLabel: 'Update labels',

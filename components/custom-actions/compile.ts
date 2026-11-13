@@ -214,10 +214,15 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
   if (unmetCondition)
     throw new Error(`Action conditions are not met: ${unmetCondition}`)
   for (const step of action.actions) {
-    if (step.type === 'event' && conditionError(step.when, state)) continue
+    if ('when' in step && conditionError(step.when, state)) continue
     if (step.type === 'activity') {
       if (!context.report)
         throw new Error('This workflow requires a current report')
+    } else if (step.type === 'closeReports') {
+      if (!config.permissions.canLabel)
+        throw new Error(
+          'Moderator permission required to close matching reports',
+        )
     } else if (step.type === 'verify') {
       if (
         !config.permissions.canVerify ||
@@ -304,7 +309,7 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
   const { context } = state
   return action.actions.map((step): Operation => {
     const skipReason =
-      step.type === 'event' ? conditionError(step.when, state) : undefined
+      'when' in step ? conditionError(step.when, state) : undefined
     const subject =
       step.target === 'account'
         ? accountRef(context.owningAccountDid)
@@ -319,6 +324,16 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
           isAutomated: false,
           ...(step.internalNote && { internalNote: step.internalNote }),
           ...(step.publicNote && { publicNote: step.publicNote }),
+        },
+      }
+    } else if (step.type === 'closeReports') {
+      request = {
+        endpoint: 'tools.ozone.report.closeReports',
+        body: {
+          subject: subjectId(subject),
+          reportTypes: step.reportTypes,
+          isAutomated: false,
+          ...(step.internalNote && { internalNote: step.internalNote }),
         },
       }
     } else if (step.type === 'verify') {
