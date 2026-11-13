@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useConfigurationContext } from '../shell/ConfigurationContext'
-import { prepare } from './compile'
+import { prepareConfirmed } from './compile'
 import { createRun, dispatch, executeRun } from './execution'
 import { readSnapshot } from './compile'
 import type { CustomAction, Run, Snapshot } from './types'
@@ -65,7 +65,7 @@ export function useCustomActionRun(contextKey: string) {
                 signal,
               )
               signal.throwIfAborted()
-              initial.operations = prepare(action, fresh)
+              initial.operations = prepareConfirmed(action, snapshot, fresh)
               initial.verifierDid = fresh.config.verifierDid
               if (!isCurrent(task)) task.controller.abort()
             },

@@ -212,6 +212,7 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
   if (unmetCondition)
     throw new Error(`Action conditions are not met: ${unmetCondition}`)
   for (const step of action.actions) {
+    if (step.type === 'event' && conditionError(step.when, state)) continue
     if (step.type === 'activity') {
       if (!context.report)
         throw new Error('This workflow requires a current report')
@@ -300,6 +301,8 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
   assertExecutable(action, state)
   const { context } = state
   return action.actions.map((step): Operation => {
+    const skipReason =
+      step.type === 'event' ? conditionError(step.when, state) : undefined
     const subject =
       step.target === 'account'
         ? accountRef(context.owningAccountDid)
@@ -333,12 +336,13 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
           subject,
           createdBy: context.moderator.did,
           event: step.event,
-          ...(reportAction && {
-            reportAction: {
-              ids: [context.report!.id],
-              ...(reportAction.note && { note: reportAction.note }),
-            },
-          }),
+          ...(reportAction &&
+            !skipReason && {
+              reportAction: {
+                ids: [context.report!.id],
+                ...(reportAction.note && { note: reportAction.note }),
+              },
+            }),
         },
       }
     }
@@ -348,11 +352,27 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
       target: step.target,
       subject,
       request,
-      status: 'pending',
+      status: skipReason ? 'skipped' : 'pending',
+      ...(skipReason && { skipReason }),
       ...(step.type === 'event' &&
         step.continueOnError !== undefined && {
           continueOnError: step.continueOnError,
         }),
     }
   })
+}
+
+/** Require another confirmation when refreshed state selects different steps. */
+export function prepareConfirmed(
+  action: CustomAction,
+  confirmed: Snapshot,
+  fresh: Snapshot,
+): Operation[] {
+  const previous = prepare(action, confirmed)
+  const next = prepare(action, fresh)
+  if (previous.some((op, index) => op.skipReason !== next[index]?.skipReason))
+    throw new Error(
+      'Account or subject state changed. Select the action again to review its preview and confirm again.',
+    )
+  return next
 }

@@ -41,6 +41,7 @@ export type Step = { id: string } & (
       type: 'event'
       target: 'subject' | 'account'
       event: ModerationEvent
+      when?: Condition[]
       reportAction?: { scope: 'current'; note?: string }
       continueOnError?: boolean
     }
@@ -130,6 +131,7 @@ export type Operation = {
   subject: Subject
   request: Request
   status: ExecutionStatus | 'skipped'
+  skipReason?: string
   continueOnError?: boolean
   receipt?: Receipt
 }

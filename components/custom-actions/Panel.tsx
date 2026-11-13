@@ -8,7 +8,7 @@ import { SubjectTag } from '../tags/SubjectTag'
 import { useConfigurationContext } from '../shell/ConfigurationContext'
 import { useCustomActionSettings } from './useSettings'
 import { useCustomActionRun } from './useRun'
-import { readSnapshot, subjectId } from './compile'
+import { prepare, readSnapshot, subjectId } from './compile'
 import { conditionError } from './conditions'
 import { scopeError } from './scope'
 import type { CustomAction, Subject, Step } from './types'
@@ -158,6 +158,16 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
         )}
       </>
     )
+  let preview: ReturnType<typeof prepare> | undefined
+  let previewError: string | undefined
+  if (!run && model.state.data) {
+    try {
+      preview = prepare(selected, model.state.data)
+    } catch (e) {
+      previewError =
+        e instanceof Error ? e.message : 'Cannot prepare this action.'
+    }
+  }
   return (
     <section
       className="mt-2 rounded-md bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 p-2.5 space-y-2 text-sm break-words"
@@ -178,7 +188,7 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
       {selected.description && <p>{selected.description}</p>}
       <ol className="space-y-2 list-decimal pl-5">
         {selected.actions.map((step, index) => {
-          const op = run?.operations[index]
+          const op = (run?.operations || preview)?.[index]
           return (
             <li key={step.id}>
               <div className="font-medium">
@@ -190,7 +200,12 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                   className="text-xs text-gray-500 dark:text-gray-400"
                   data-cy="custom-operation-status"
                 >
-                  {op.status}
+                  {run
+                    ? op.status
+                    : op.status === 'skipped'
+                      ? 'Will skip'
+                      : 'Will run'}
+                  {op.skipReason && ` • ${op.skipReason}`}
                   {op.receipt?.kind === 'moderation-event' && (
                     <>
                       {' • '}
@@ -227,7 +242,10 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
             appearance="primary"
             size="sm"
             disabled={
-              !model.state.data || model.state.isError || model.settings.isError
+              !model.state.data ||
+              model.state.isError ||
+              model.settings.isError ||
+              !!previewError
             }
             onClick={() =>
               invoke(() => progress.start(selected, model.state.data!))
@@ -285,9 +303,9 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
           </div>
         </>
       )}
-      {error && (
+      {(error || previewError) && (
         <p role="alert" className="text-red-600 dark:text-red-400">
-          {error}
+          {error || previewError}
         </p>
       )}
     </section>
@@ -301,6 +319,25 @@ function StepEffects({ step }: { step: Step }) {
   let changes: { text: string; values: string[]; isTag?: boolean }[] = []
   if (step.type === 'event') {
     const event = step.event
+    for (const condition of step.when || []) {
+      for (const [key, label] of [
+        ['requiredTags', 'Requires tags'],
+        ['absentTags', 'Requires absent tags'],
+        ['requiredLabels', 'Requires active labels from this labeler'],
+        ['absentLabels', 'Requires absent labels from this labeler'],
+      ] as const) {
+        if (condition[key]?.length)
+          effects.push(
+            `${label} on ${condition.target}: ${condition[key]!.join(', ')}`,
+          )
+      }
+      if (condition.appealed !== undefined)
+        effects.push(
+          condition.appealed
+            ? `Requires an unresolved appeal on ${condition.target}`
+            : `Requires no unresolved appeal on ${condition.target}`,
+        )
+    }
     if (step.continueOnError)
       effects.push('Continue to the next step if this change fails')
     if (event.comment) notes.push(event.comment)

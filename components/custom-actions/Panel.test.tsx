@@ -1,7 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import type { CustomAction, Run } from './types'
+import type { CustomAction, Run, Snapshot } from './types'
 import { CustomActionPanel, useCustomActionPanel } from './Panel'
+import { parseServerConfig } from '../../lib/server-config'
+import { accountRef } from './compile'
 
 const state = vi.hoisted(() => ({
   moderatorDid: 'did:plc:bbbbbbbbbbbbbbbbbbbbbbbb' as string | undefined,
@@ -11,6 +13,7 @@ const state = vi.hoisted(() => ({
   actions: [] as CustomAction[],
   queryKey: [] as unknown[],
   run: null as Run | null,
+  snapshot: null as Snapshot | null,
 }))
 
 vi.mock('../shell/ConfigurationContext', () => ({
@@ -25,11 +28,12 @@ vi.mock('@tanstack/react-query', () => ({
     state.queryKey = options.queryKey
     return {
       data:
-        state.queueId === undefined
+        state.snapshot ||
+        (state.queueId === undefined
           ? undefined
           : {
               context: { report: { id: 123, queueId: state.queueId } },
-            },
+            }),
       isError: state.error,
     }
   },
@@ -63,6 +67,7 @@ beforeEach(() => {
   state.queueId = 7
   state.error = false
   state.run = null
+  state.snapshot = null
   const workflow: CustomAction = {
     id: 'unscoped',
     name: 'Unscoped',
@@ -99,6 +104,74 @@ beforeEach(() => {
 })
 
 describe('custom action progress', () => {
+  it('previews the applicable branch and the reason each absent flag is skipped', () => {
+    const did = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa'
+    state.actions = [
+      {
+        ...state.actions[0],
+        actions: [
+          {
+            id: 'remove-spam',
+            type: 'event',
+            target: 'account',
+            when: [{ target: 'account', requiredLabels: ['spam'] }],
+            event: {
+              $type: 'tools.ozone.moderation.defs#modEventLabel',
+              createLabelVals: [],
+              negateLabelVals: ['spam'],
+            },
+          },
+          {
+            id: 'resolve',
+            type: 'event',
+            target: 'account',
+            when: [{ target: 'account', absentLabels: ['spam'] }],
+            event: {
+              $type: 'tools.ozone.moderation.defs#modEventResolveAppeal',
+            },
+          },
+        ],
+      },
+    ]
+    state.snapshot = {
+      context: {
+        subject: accountRef(did),
+        owningAccountDid: did,
+        serviceDid: 'did:plc:service',
+        uiOrigin: 'https://ozone.example',
+        moderator: { did: state.moderatorDid! },
+        report: null,
+        confirmedInputs: {},
+      },
+      config: parseServerConfig({
+        viewer: { role: 'tools.ozone.team.defs#roleAdmin' },
+      }),
+      protectedTags: {},
+      policies: {},
+      subjectTags: [],
+      accountTags: [],
+      subjectLabels: [],
+      accountLabels: [],
+      subjectAppealed: true,
+      accountAppealed: true,
+    }
+    function Harness() {
+      const model = useCustomActionPanel(did)
+      return (
+        <CustomActionPanel model={{ ...model, selected: state.actions[0] }} />
+      )
+    }
+    let html = renderToStaticMarkup(<Harness />)
+    expect(html).toContain('Will skip')
+    expect(html).toContain('Missing labels on account: spam')
+    expect(html).toContain('Resolve subject appeal')
+    expect(html).toContain('Will run')
+    state.snapshot.accountLabels = ['spam']
+    html = renderToStaticMarkup(<Harness />)
+    expect(html).not.toContain('Missing labels on account: spam')
+    expect(html).toContain('Present labels on account: spam')
+  })
+
   it.each([
     ['succeeded', 'Custom action completed.'],
     ['completed-with-errors', 'Custom action completed with errors.'],
@@ -199,6 +272,42 @@ describe('custom action progress', () => {
 })
 
 describe('custom action menu scoping', () => {
+  it('hides actions whose action-level tag conditions are unmet or not loaded', () => {
+    const action = state.actions[0]
+    action.when = [{ target: 'account', requiredTags: ['chat-disabled'] }]
+    state.actions = [action]
+    state.queueId = undefined
+    expect(choices()).toEqual([])
+    const did = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa'
+    state.snapshot = {
+      context: {
+        subject: accountRef(did),
+        owningAccountDid: did,
+        serviceDid: 'did:plc:service',
+        uiOrigin: 'https://ozone.example',
+        moderator: { did: state.moderatorDid! },
+        report: null,
+        confirmedInputs: {},
+      },
+      config: parseServerConfig({
+        viewer: { role: 'tools.ozone.team.defs#roleAdmin' },
+      }),
+      protectedTags: {},
+      policies: {},
+      subjectTags: [],
+      accountTags: [],
+      subjectLabels: [],
+      accountLabels: [],
+      subjectAppealed: false,
+      accountAppealed: false,
+    }
+    expect(choices()).toEqual([])
+    state.snapshot.accountTags = ['chat-disabled']
+    expect(choices()).toEqual(['unscoped'])
+    state.error = true
+    expect(choices()).toEqual([])
+  })
+
   it('applies both restrictions and updates when queue or moderator changes', () => {
     expect(choices({ id: 123 })).toEqual([
       'unscoped',

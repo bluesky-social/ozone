@@ -230,6 +230,12 @@
         "event": {
           "$ref": "#/definitions/moderationEvent"
         },
+        "when": {
+          "description": "Skip this event when its conditions do not match the state read before execution.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/condition" }
+        },
         "reportAction": {
           "$ref": "#/definitions/currentReportAction"
         },

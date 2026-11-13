@@ -83,25 +83,33 @@ export function validateSettings(value: unknown): Settings {
       )
         throw new Error('Invalid record collection')
     }
-    for (const target of ['subject', 'account']) {
-      const conditions = (action.when || []).filter(
-        (c) =>
-          c.target === target ||
-          action.subjectTypes.every((t) => t === 'account'),
-      )
-      disjoint(
-        conditions.flatMap((c) => c.requiredTags || []),
-        conditions.flatMap((c) => c.absentTags || []),
-      )
-      disjoint(
-        conditions.flatMap((c) => c.requiredLabels || []),
-        conditions.flatMap((c) => c.absentLabels || []),
-      )
-      const appealed = conditions.flatMap((c) =>
-        c.appealed === undefined ? [] : [c.appealed],
-      )
-      if (appealed.includes(true) && appealed.includes(false))
-        throw new Error('Conflicting appeal conditions')
+    const conditionGroups = [
+      action.when || [],
+      ...action.actions.flatMap((step) =>
+        step.type === 'event' ? [step.when || []] : [],
+      ),
+    ]
+    for (const group of conditionGroups) {
+      for (const target of ['subject', 'account']) {
+        const conditions = group.filter(
+          (c) =>
+            c.target === target ||
+            action.subjectTypes.every((t) => t === 'account'),
+        )
+        disjoint(
+          conditions.flatMap((c) => c.requiredTags || []),
+          conditions.flatMap((c) => c.absentTags || []),
+        )
+        disjoint(
+          conditions.flatMap((c) => c.requiredLabels || []),
+          conditions.flatMap((c) => c.absentLabels || []),
+        )
+        const appealed = conditions.flatMap((c) =>
+          c.appealed === undefined ? [] : [c.appealed],
+        )
+        if (appealed.includes(true) && appealed.includes(false))
+          throw new Error('Conflicting appeal conditions')
+      }
     }
     for (const step of action.actions) {
       if (step.type !== 'event') continue

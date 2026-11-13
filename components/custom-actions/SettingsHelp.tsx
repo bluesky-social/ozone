@@ -141,6 +141,13 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   <code>closeActivity</code> step to close it as no-action.
                 </li>
                 <li>
+                  Event steps can also use <code>when</code>. Unmatched steps
+                  are skipped; the preview shows which steps will run and why
+                  others will be skipped. Conditions use the state read before
+                  execution. If refreshed state changes the selected steps,
+                  select the action again and confirm its updated preview.
+                </li>
+                <li>
                   Steps stop the workflow on error by default. Tag and label
                   steps can opt in with <code>continueOnError: true</code> to
                   continue after a failed request or an unconfirmed response,
