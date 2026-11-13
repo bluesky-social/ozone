@@ -99,6 +99,31 @@ beforeEach(() => {
 })
 
 describe('custom action progress', () => {
+  it('previews the owning account enforcement and the exact content report closure', () => {
+    const did = 'did:plc:aaaaaaaaaaaaaaaaaaaaaaaa'
+    const workflow: CustomAction = {
+      ...state.actions[0],
+      subjectTypes: ['record'],
+      actions: [
+        {
+          id: 'take-down-account',
+          type: 'event',
+          target: 'account',
+          event: { $type: 'tools.ozone.moderation.defs#modEventTakedown' },
+          reportAction: { scope: 'current' },
+        },
+      ],
+    }
+    function Harness() {
+      const model = useCustomActionPanel(`at://${did}/app.bsky.feed.post/abc`, {
+        id: 123,
+      })
+      return <CustomActionPanel model={{ ...model, selected: workflow }} />
+    }
+    const html = renderToStaticMarkup(<Harness />)
+    expect(html).toContain(`Take down: owning account ${did}`)
+    expect(html).toContain('PERMANENT • close report #123 as actioned')
+  })
   it.each([
     ['succeeded', 'Custom action completed.'],
     ['completed-with-errors', 'Custom action completed with errors.'],

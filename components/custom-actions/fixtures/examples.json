@@ -145,6 +145,29 @@
           }
         }
       ]
+    },
+    {
+      "id": "take-down-account-from-content-report",
+      "name": "Take down owning account and close report",
+      "helpText": "Take down the account that owns the reported content and close only the current report, linked to the account takedown event.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["record"],
+      "actions": [
+        {
+          "id": "take-down-account",
+          "type": "event",
+          "target": "account",
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventTakedown"
+          },
+          "reportAction": {
+            "scope": "current"
+          }
+        }
+      ]
     }
   ]
 }

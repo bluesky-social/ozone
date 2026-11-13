@@ -288,7 +288,7 @@ describe('Settings custom actions', () => {
         .click()
       cy.get('[data-cy="custom-action-panel"]').should(
         'contain.text',
-        'close current report as actioned',
+        'close report #123 as actioned',
       )
       let sends = 0
       cy.intercept(

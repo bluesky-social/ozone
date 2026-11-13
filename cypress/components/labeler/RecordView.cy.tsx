@@ -39,7 +39,9 @@ describe('<LabelerRecordView />', () => {
 
     cy.mount(<LabelerRecordView record={labelRecord} onUpdate={onUpdateSpy} />)
 
-    cy.get('label').contains('Spam').click()
+    cy.get(
+      `input[name="reasonType-${ComAtprotoModerationDefs.REASONSPAM}"]`,
+    ).uncheck()
     cy.get('@onUpdateSpy').should('have.been.called')
     cy.get('@onUpdateSpy')
       .invoke('getCalls')
