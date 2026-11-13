@@ -3,13 +3,9 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { Posts } from '../posts/Posts'
 import { useEffect, useRef, useState } from 'react'
 import { useRepoAndProfile } from '@/repositories/useRepoAndProfile'
-import {
-  Agent,
-  AppBskyEmbedRecord,
-  AppBskyFeedDefs,
-  AppBskyFeedGetAuthorFeed,
-} from '@atproto/api'
+import { Agent, AppBskyFeedDefs, AppBskyFeedGetAuthorFeed } from '@atproto/api'
 import { TypeFilterKey, TypeFiltersByKey } from '../posts/constants'
+import { isClientSideTypeFilter, matchesTypeFilter } from '../posts/typeFilter'
 import { useAppviewAgent, useLabelerAgent } from '@/shell/ConfigurationContext'
 import { ConfirmationModal } from '../modals/confirmation'
 import { ActionButton } from '../buttons'
@@ -61,12 +57,7 @@ const getAuthorFeed =
       TypeFiltersByKey.posts_no_replies.key,
       TypeFiltersByKey.posts_with_media.key,
     ].includes(typeFilter)
-    const isQuoteOrRepostFilter = [
-      TypeFiltersByKey.no_reposts.key,
-      TypeFiltersByKey.reposts.key,
-      TypeFiltersByKey.quotes.key,
-      TypeFiltersByKey.quotes_and_reposts.key,
-    ].includes(typeFilter)
+    const isClientSideFilter = isClientSideTypeFilter(typeFilter)
 
     while (filteredFeed.length < limit) {
       const authorFeedParams = {
@@ -114,30 +105,13 @@ const getAuthorFeed =
         break
       }
 
-      // Only repost/quote post filters are applied on the client side
-      if (!isQuoteOrRepostFilter) {
+      if (!isClientSideFilter) {
         return { ...data, isFromAppview }
       }
 
-      const newFilteredItems = data.feed.filter((item) => {
-        if (typeFilter === TypeFiltersByKey.reposts.key) {
-          return AppBskyFeedDefs.isReasonRepost(item.reason)
-        }
-        if (typeFilter === TypeFiltersByKey.no_reposts.key) {
-          return !AppBskyFeedDefs.isReasonRepost(item.reason)
-        }
-        if (typeFilter === TypeFiltersByKey.quotes.key) {
-          // When a quoted post is reposted, we don't want to consider that a quote post
-          return (
-            AppBskyEmbedRecord.isView(item.post.embed) &&
-            !AppBskyFeedDefs.isReasonRepost(item.reason)
-          )
-        }
-        return (
-          AppBskyFeedDefs.isReasonRepost(item.reason) ||
-          AppBskyEmbedRecord.isView(item.post.embed)
-        )
-      })
+      const newFilteredItems = data.feed.filter((item) =>
+        matchesTypeFilter(item, typeFilter),
+      )
 
       filteredFeed = [...filteredFeed, ...newFilteredItems]
 
