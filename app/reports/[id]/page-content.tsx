@@ -495,6 +495,12 @@ export function ReportDetailPageContent() {
             const result = await emitEvent(
               hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
+            const eventId = (result as { id?: number } | undefined)?.id
+            if (!eventId) {
+              throw new Error(
+                'Moderation action did not return an event ID. Check the subject and report before retrying.',
+              )
+            }
             if (vals.event.$type === MOD_EVENTS.RESOLVE_APPEAL) {
               try {
                 await emitEvent(
@@ -511,7 +517,6 @@ export function ReportDetailPageContent() {
                 queryClient.invalidateQueries({ queryKey: ['modSubjectStatus'] })
               }
             }
-            const eventId = (result as any)?.id
             const isCascaded =
               vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&

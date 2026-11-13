@@ -389,18 +389,45 @@ describe('submitting account actions from a report', () => {
     expect(props.reportActionStarted.current).toBe(false)
   })
 
-  it('does not need a returned event ID to perform report closure', async () => {
-    const props = {
-      ...submission(),
-      scope: 'types' as const,
-      reportTypes: ['com.atproto.moderation.defs#reasonSpam'],
-    }
-    props.onSubmit.mockResolvedValueOnce(undefined)
-    await submitAccountReportAction(props)
-    expect(props.onSubmit).toHaveBeenCalledOnce()
-    expect(props.onLinked).toHaveBeenCalledOnce()
-    expect(props.reportActionStarted.current).toBe(true)
-  })
+  describe.each(['current', 'types', 'allOwned'] as const)(
+    '%s closure requires a successful account event',
+    (scope) => {
+      it('stops when the account already has an active takedown', async () => {
+        const props = {
+          ...submission(),
+          scope,
+          reportTypes: ['com.atproto.moderation.defs#reasonSpam'],
+        }
+        const error = Object.assign(
+          new Error('Subject is already taken down'),
+          { error: 'InvalidRequest' },
+        )
+        props.onSubmit.mockRejectedValueOnce(error)
+        await expect(submitAccountReportAction(props)).rejects.toBe(error)
+        expect(props.onSubmit).toHaveBeenCalledOnce()
+        expect(props.onLinked).not.toHaveBeenCalled()
+        expect(props.reportActionStarted.current).toBe(false)
+      })
+
+      it.each([undefined, 0])(
+        'stops follow-up writes when no event ID is returned (%s)',
+        async (eventId) => {
+          const props = {
+            ...submission(),
+            scope,
+            reportTypes: ['com.atproto.moderation.defs#reasonSpam'],
+          }
+          props.onSubmit.mockResolvedValueOnce(eventId)
+          await expect(submitAccountReportAction(props)).rejects.toThrow(
+            'did not return an event ID',
+          )
+          expect(props.onSubmit).toHaveBeenCalledOnce()
+          expect(props.onLinked).not.toHaveBeenCalled()
+          expect(props.reportActionStarted.current).toBe(false)
+        },
+      )
+    },
+  )
 
   it('includes matching report closure only once for concurrent label events', async () => {
     const props = {

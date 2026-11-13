@@ -119,7 +119,12 @@ export async function submitAccountReportAction({
   // so a later event does not try to close the same report again.
   if (reportAction) reportActionStarted.current = true
   try {
-    await onSubmit({ ...input, reportAction })
+    const eventId = await onSubmit({ ...input, reportAction })
+    if (reportAction && !eventId) {
+      throw new Error(
+        'Account action did not return an event ID. Check the account and report before retrying.',
+      )
+    }
   } catch (err) {
     if (reportAction) reportActionStarted.current = false
     throw err
