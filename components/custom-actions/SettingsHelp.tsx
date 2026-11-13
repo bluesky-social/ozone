@@ -148,6 +148,16 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   select the action again and confirm its updated preview.
                 </li>
                 <li>
+                  <code>reportAction.scope: &quot;matching&quot;</code> selects
+                  eligible reports on the event target using a nonempty{' '}
+                  <code>types</code> list of report reasons. Assigned,
+                  escalated, and actively assigned reports remain open. Set{' '}
+                  <code>includeCurrent: true</code> to also include the current
+                  report when its exact subject and type match, including when
+                  it is assigned or escalated. An account target selects only
+                  account reports, including when run from a record report.
+                </li>
+                <li>
                   Steps stop the workflow on error by default. Tag and label
                   steps can opt in with <code>continueOnError: true</code> to
                   continue after a failed request or an unconfirmed response,

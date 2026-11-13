@@ -42,7 +42,14 @@ export type Step = { id: string } & (
       target: 'subject' | 'account'
       event: ModerationEvent
       when?: Condition[]
-      reportAction?: { scope: 'current'; note?: string }
+      reportAction?:
+        | { scope: 'current'; note?: string }
+        | {
+            scope: 'matching'
+            types: string[]
+            includeCurrent?: boolean
+            note?: string
+          }
       continueOnError?: boolean
     }
   | {
@@ -76,7 +83,9 @@ export type Request =
         subject: Subject
         createdBy: string
         event: ModerationEvent
-        reportAction?: { ids: number[]; note?: string }
+        reportAction?: ({ ids: number[] } | { types: string[] }) & {
+          note?: string
+        }
       }
     }
   | {
@@ -142,6 +151,8 @@ export type Context = {
     id: number
     url: string
     queueId: number
+    reportType?: string
+    status?: string
   } | null
   moderator: { did: string }
   subject: Subject

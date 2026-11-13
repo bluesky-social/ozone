@@ -141,6 +141,8 @@ export async function readSnapshot(
             id: report.data.id,
             url: `${uiOrigin}/reports/${report.data.id}`,
             queueId: report.data.queue?.id ?? -1,
+            reportType: report.data.reportType,
+            status: report.data.status,
           }
         : null,
       moderator: { did: agent.did! },
@@ -284,7 +286,7 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
       }
       const reportAction = step.type === 'event' ? step.reportAction : undefined
       if (
-        reportAction &&
+        reportAction?.scope === 'current' &&
         (!context.report || subjectId(subject) !== subjectId(context.subject))
       )
         throw new Error(
@@ -339,7 +341,20 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
           ...(reportAction &&
             !skipReason && {
               reportAction: {
-                ids: [context.report!.id],
+                ...(reportAction.scope === 'current'
+                  ? { ids: [context.report!.id] }
+                  : {
+                      types: reportAction.types,
+                      ...(reportAction.includeCurrent &&
+                        context.report?.reportType &&
+                        context.report.status !== 'closed' &&
+                        reportAction.types.includes(
+                          context.report.reportType,
+                        ) &&
+                        subjectId(subject) === subjectId(context.subject) && {
+                          ids: [context.report.id],
+                        }),
+                    }),
                 ...(reportAction.note && { note: reportAction.note }),
               },
             }),

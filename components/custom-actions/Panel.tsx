@@ -10,6 +10,7 @@ import { useCustomActionSettings } from './useSettings'
 import { useCustomActionRun } from './useRun'
 import { prepare, readSnapshot, subjectId } from './compile'
 import { conditionError } from './conditions'
+import { getReasonLabel } from '../reports/helpers/getType'
 import { scopeError } from './scope'
 import type { CustomAction, Subject, Step } from './types'
 
@@ -206,6 +207,15 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                       ? 'Will skip'
                       : 'Will run'}
                   {op.skipReason && ` • ${op.skipReason}`}
+                  {!run &&
+                    step.type === 'event' &&
+                    step.reportAction?.scope === 'matching' &&
+                    op.status !== 'skipped' &&
+                    op.request.endpoint ===
+                      'tools.ozone.moderation.emitEvent' &&
+                    op.request.body.reportAction &&
+                    'ids' in op.request.body.reportAction &&
+                    ` • Includes current report #${op.request.body.reportAction.ids[0]}`}
                   {op.receipt?.kind === 'moderation-event' && (
                     <>
                       {' • '}
@@ -343,6 +353,18 @@ function StepEffects({ step }: { step: Step }) {
     if (event.comment) notes.push(event.comment)
     if (step.reportAction?.note)
       notes.push(`Report note: ${step.reportAction.note}`)
+    if (step.reportAction?.scope === 'matching') {
+      effects.push(
+        `Report types on this target: ${step.reportAction.types.map(getReasonLabel).join(', ')}`,
+      )
+      effects.push(
+        'Other assigned reports, escalated reports, and reports with an active assignment are excluded from closure. Continue if no eligible reports match.',
+      )
+      if (step.reportAction.includeCurrent)
+        effects.push(
+          'Include the current report when its type and subject match, including when assigned or escalated.',
+        )
+    }
     if (event.$type === 'tools.ozone.moderation.defs#modEventTag')
       changes = [
         { text: 'Add tags:', values: event.add, isTag: true },
@@ -435,13 +457,17 @@ function describeStep(step: Step, subject: string, reportId?: number) {
       ? ` for ${event.durationInHours} hours`
       : ' — PERMANENT'
     : ''
+  const report =
+    step.reportAction?.scope === 'matching'
+      ? 'eligible matching reports'
+      : 'current report'
   const reportOutcome = step.reportAction
     ? event.$type.endsWith('#modEventEscalate')
-      ? ' • escalate current report'
+      ? ` • escalate ${report}`
       : event.$type.endsWith('#modEventLabel') ||
           event.$type.endsWith('#modEventTakedown')
-        ? ' • close current report as actioned'
-        : ' • close current report as acknowledged'
+        ? ` • close ${report} as actioned`
+        : ` • close ${report} as acknowledged`
     : ''
   return `${labels[event.$type.split('#')[1]]}: ${target}${duration}${reportOutcome}`
 }
