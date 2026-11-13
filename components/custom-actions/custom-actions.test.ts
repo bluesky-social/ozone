@@ -873,6 +873,30 @@ describe('preparation', () => {
 })
 
 describe('bounded one-shot execution', () => {
+  it.each([{ skipped: [0] }, { skipped: [1] }, { skipped: [0, 1] }])(
+    'keeps pre-skipped operations out of dispatch: $skipped',
+    async ({ skipped }) => {
+      const { execute, deps, run } = runnerFixture()
+      for (const index of skipped) run.operations[index].status = 'skipped'
+      await execute()
+      const runnable = run.operations.filter(
+        (_, index) => !skipped.includes(index),
+      )
+      expect(deps.dispatch.mock.calls.map((call) => call[1].stepId)).toEqual(
+        runnable.map((op) => op.stepId),
+      )
+      expect(run.status).toBe('succeeded')
+      for (const [index, op] of run.operations.entries()) {
+        if (skipped.includes(index)) {
+          expect(op.status).toBe('skipped')
+          expect(op.receipt).toBeUndefined()
+        } else {
+          expect(op.status).toBe('succeeded')
+          expect(op.receipt).toEqual(eventReceipt())
+        }
+      }
+    },
+  )
   it.each([
     {
       error: new Error('State changed. Review again.'),

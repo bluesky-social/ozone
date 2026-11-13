@@ -237,6 +237,7 @@ export async function executeRun(
     notify()
     await abortable(signal, () => deps.prepare(signal))
     for (const op of run.operations) {
+      if (op.status === 'skipped') continue
       signal.throwIfAborted()
       current = op
       op.status = 'running'
