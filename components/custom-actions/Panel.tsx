@@ -391,13 +391,18 @@ function describeStep(step: Step, subject: string, reportId?: number) {
       ? ` for ${event.durationInHours} hours`
       : ' — PERMANENT'
     : ''
+  const report = reportId ? `report #${reportId}` : 'current report'
   const reportOutcome = step.reportAction
     ? event.$type.endsWith('#modEventEscalate')
-      ? ' • escalate current report'
+      ? ` • escalate ${report}`
       : event.$type.endsWith('#modEventLabel') ||
           event.$type.endsWith('#modEventTakedown')
-        ? ' • close current report as actioned'
-        : ' • close current report as acknowledged'
+        ? ` • close ${report} as actioned`
+        : ` • close ${report} as acknowledged`
     : ''
-  return `${labels[event.$type.split('#')[1]]}: ${target}${duration}${reportOutcome}`
+  const targetDescription =
+    step.target === 'account' && subject.startsWith('at://')
+      ? `owning account ${target}`
+      : target
+  return `${labels[event.$type.split('#')[1]]}: ${targetDescription}${duration}${reportOutcome}`
 }
