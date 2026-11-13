@@ -212,8 +212,11 @@ export const WorkspacePanelActionForm = ({
                   accounts you are{' '}
                   {isAckEvent ? 'acknowledging' : 'taking down'}.
                   <span className="block text-xs text-gray-500 dark:text-gray-400">
-                    Also resolves appeals on those subjects. Reports in queues
-                    remain open.
+                    Also resolves appeals on those subjects. For account actions,
+                    closes eligible reports on the account and its content across
+                    all queues and report types. Assigned or escalated reports
+                    stay open.
+                    {isAckEvent && ' Closed reports show no action taken.'}
                   </span>
                 </span>
               }
