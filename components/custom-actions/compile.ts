@@ -160,6 +160,8 @@ export async function readSnapshot(
       'cid' in ref ? ref.cid : undefined,
     ),
     accountLabels: activeLabels(repo.data.labels, did),
+    subjectAppealed: !!status?.appealed,
+    accountAppealed: !!accountStatus?.appealed,
   }
 }
 

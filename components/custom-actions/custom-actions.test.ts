@@ -88,6 +88,8 @@ function snapshot(): Snapshot {
     accountTags: [],
     subjectLabels: [],
     accountLabels: [],
+    subjectAppealed: false,
+    accountAppealed: false,
     protectedTags: {},
     policies: {},
     profile: { handle: 'example.test', displayName: 'Example' },

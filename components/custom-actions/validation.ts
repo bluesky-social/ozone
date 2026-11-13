@@ -97,6 +97,11 @@ export function validateSettings(value: unknown): Settings {
         conditions.flatMap((c) => c.requiredLabels || []),
         conditions.flatMap((c) => c.absentLabels || []),
       )
+      const appealed = conditions.flatMap((c) =>
+        c.appealed === undefined ? [] : [c.appealed],
+      )
+      if (appealed.includes(true) && appealed.includes(false))
+        throw new Error('Conflicting appeal conditions')
     }
     for (const step of action.actions) {
       if (step.type !== 'event') continue

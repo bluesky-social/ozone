@@ -20,5 +20,13 @@ export function conditionError(
       if (present?.length)
         return `Present ${kind} on ${condition.target}: ${present.join(', ')}`
     }
+    if (
+      condition.appealed !== undefined &&
+      condition.appealed !==
+        (account ? state.accountAppealed : state.subjectAppealed)
+    )
+      return condition.appealed
+        ? `No unresolved appeal on ${condition.target}`
+        : `Unresolved appeal on ${condition.target}`
   }
 }

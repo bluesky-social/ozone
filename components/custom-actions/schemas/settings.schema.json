@@ -170,6 +170,9 @@
         },
         "absentLabels": {
           "$ref": "#/definitions/tags"
+        },
+        "appealed": {
+          "type": "boolean"
         }
       },
       "anyOf": [
@@ -204,6 +207,9 @@
               "minItems": 1
             }
           }
+        },
+        {
+          "required": ["appealed"]
         }
       ]
     },

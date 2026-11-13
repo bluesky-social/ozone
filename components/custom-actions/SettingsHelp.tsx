@@ -126,8 +126,12 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   <code>requiredLabels</code>, or <code>absentLabels</code> on
                   the <code>subject</code> or owning <code>account</code>. Label
                   conditions use active labels from this labeler on that exact
-                  subject. Conditions are checked again before execution;
-                  conditional actions stay hidden while state is unavailable.
+                  subject. Use <code>appealed: true</code> to require an
+                  unresolved subject appeal flag, or <code>appealed: false</code>
+                  to require that flag to be clear. This checks the subject
+                  flag, not whether an appeal report is open. Conditions are
+                  checked again before execution; conditional actions stay
+                  hidden while state is unavailable.
                 </li>
                 <li>
                   Steps stop the workflow on error by default. Tag and label

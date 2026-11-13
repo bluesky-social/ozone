@@ -25,6 +25,7 @@ export type Condition = {
   absentTags?: string[]
   requiredLabels?: string[]
   absentLabels?: string[]
+  appealed?: boolean
 }
 export type ReportActivity = {
   // narrowed to supported activity types
@@ -166,5 +167,7 @@ export type Snapshot = {
   accountTags: string[]
   subjectLabels: string[]
   accountLabels: string[]
+  subjectAppealed: boolean
+  accountAppealed: boolean
   profile?: { handle: string; displayName: string }
 }

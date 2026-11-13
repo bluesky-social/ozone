@@ -58,6 +58,8 @@ function snapshot(): Snapshot {
     accountTags: [],
     subjectLabels: [],
     accountLabels: [],
+    subjectAppealed: false,
+    accountAppealed: false,
   }
 }
 
@@ -96,6 +98,61 @@ beforeEach(() => {
 })
 
 describe('custom action visibility', () => {
+  it.each([
+    { target: 'subject', appealed: true },
+    { target: 'subject', appealed: false },
+    { target: 'account', appealed: true },
+    { target: 'account', appealed: false },
+  ] as const)(
+    'requires appealed=$appealed on the $target before showing or running an action',
+    ({ target, appealed }) => {
+      const action = state.actions[0]
+      action.when = [{ target, appealed }]
+      const field = target === 'account' ? 'accountAppealed' : 'subjectAppealed'
+      const other = target === 'account' ? 'subjectAppealed' : 'accountAppealed'
+      state.snapshot![field] = !appealed
+      state.snapshot![other] = appealed
+      expect(menu()).toEqual([])
+      expect(() => prepare(action, state.snapshot!)).toThrow('appeal')
+      state.snapshot![field] = appealed
+      state.snapshot![other] = !appealed
+      expect(menu()).toEqual(['review'])
+      expect(prepare(action, state.snapshot!)).toHaveLength(1)
+      state.snapshot![field] = !appealed
+      expect(() => prepare(action, state.snapshot!)).toThrow('appeal')
+    },
+  )
+
+  it('accepts both appeal states and rejects malformed or contradictory conditions', () => {
+    const action = state.actions[0]
+    for (const appealed of [true, false]) {
+      action.when = [{ target: 'account', appealed }]
+      expect(() =>
+        validateSettings({ version: 1, customActions: [action] }),
+      ).not.toThrow()
+    }
+    for (const appealed of ['true', 1, null]) {
+      Object.assign(action, { when: [{ target: 'account', appealed }] })
+      expect(() =>
+        validateSettings({ version: 1, customActions: [action] }),
+      ).toThrow()
+    }
+    for (const target of ['account', 'subject'] as const) {
+      action.subjectTypes = ['account']
+      action.when = [
+        { target: 'account', appealed: true },
+        { target, appealed: false },
+      ]
+      expect(() =>
+        validateSettings({ version: 1, customActions: [action] }),
+      ).toThrow('Conflicting appeal')
+    }
+    action.subjectTypes = ['record']
+    expect(() =>
+      validateSettings({ version: 1, customActions: [action] }),
+    ).not.toThrow()
+  })
+
   it.each(['subject', 'account'] as const)(
     'checks required and absent tags and labels on the %s independently',
     (target) => {
@@ -194,7 +251,7 @@ describe('label snapshots', () => {
           moderation: {
             getRepo: vi.fn().mockResolvedValue({
               data: {
-                moderation: {},
+                moderation: { subjectStatus: { appealed: true } },
                 labels: [
                   label('spam'),
                   label('spam'),
@@ -231,6 +288,8 @@ describe('label snapshots', () => {
     )
     expect(account.accountLabels).toEqual(['spam'])
     expect(account.subjectLabels).toEqual(['spam'])
+    expect(account.accountAppealed).toBe(true)
+    expect(account.subjectAppealed).toBe(true)
     expect(account.context.subject).toEqual(accountRef(did))
     const record = await readSnapshot(
       agent,
@@ -240,5 +299,7 @@ describe('label snapshots', () => {
     )
     expect(record.accountLabels).toEqual(['spam'])
     expect(record.subjectLabels).toEqual(['record-label', 'uncapped'])
+    expect(record.accountAppealed).toBe(true)
+    expect(record.subjectAppealed).toBe(false)
   })
 })
