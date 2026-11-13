@@ -181,6 +181,14 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   expand to owned subjects, or continue on failure.
                 </li>
                 <li>
+                  On a content report, an event targeting <code>account</code>
+                  can use <code>reportAction: {`{ "scope": "current" }`}</code>
+                  to close that report and link it to the owning account’s
+                  label, takedown, acknowledgement, or comment event. Other
+                  reports stay open. Escalation must target the report’s own
+                  subject or use a report activity.
+                </li>
+                <li>
                   Steps stop the workflow on error by default. Tag and label
                   steps can opt in with <code>continueOnError: true</code> to
                   continue after a failed request or an unconfirmed response,

@@ -290,12 +290,24 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
           throw new Error('A severity level requires a policy')
       }
       const reportAction = step.type === 'event' ? step.reportAction : undefined
+      const closesOwnedRecordReport =
+        'uri' in context.subject &&
+        'did' in subject &&
+        subject.did === ownerDid(context.subject) &&
+        [
+          'tools.ozone.moderation.defs#modEventLabel',
+          'tools.ozone.moderation.defs#modEventTakedown',
+          'tools.ozone.moderation.defs#modEventAcknowledge',
+          'tools.ozone.moderation.defs#modEventComment',
+        ].includes(event.$type)
       if (
         reportAction?.scope === 'current' &&
-        (!context.report || subjectId(subject) !== subjectId(context.subject))
+        (!context.report ||
+          (subjectId(subject) !== subjectId(context.subject) &&
+            !closesOwnedRecordReport))
       )
         throw new Error(
-          'Report action requires the current report on the same subject',
+          'Report action requires the current report on the same subject or a closing event on its owning account',
         )
     }
   }

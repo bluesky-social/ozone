@@ -89,6 +89,7 @@ export function useCustomActionRun(contextKey: string) {
                 'events',
                 'modEventList',
                 'modActionSubject',
+                'modActionAccountForLabels',
                 'modSubjectStatus',
                 'verification-list',
                 'custom-action-snapshot',

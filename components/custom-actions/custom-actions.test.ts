@@ -793,29 +793,122 @@ describe('preparation', () => {
       },
     ])
   })
-  it('does not let account enforcement link a record report', () => {
-    const a = action()
-    a.actions = [
-      {
-        id: 'label',
-        type: 'event',
-        target: 'account',
-        event: {
-          $type: 'tools.ozone.moderation.defs#modEventLabel',
-          createLabelVals: ['porn'],
-          negateLabelVals: [],
+  it.each([
+    {
+      $type: 'tools.ozone.moderation.defs#modEventLabel',
+      createLabelVals: ['porn'],
+      negateLabelVals: [],
+    },
+    { $type: 'tools.ozone.moderation.defs#modEventTakedown' },
+    { $type: 'tools.ozone.moderation.defs#modEventAcknowledge' },
+    {
+      $type: 'tools.ozone.moderation.defs#modEventComment',
+      comment: 'Reviewed',
+    },
+  ] satisfies ModerationEvent[])(
+    'links the owning account event $type to only the current record report',
+    (event) => {
+      const a = action()
+      a.actions = [
+        {
+          id: 'account-event',
+          type: 'event',
+          target: 'account',
+          event,
+          reportAction: { scope: 'current', note: 'Reviewed account' },
         },
-        reportAction: { scope: 'current' },
-      },
-    ]
+      ]
+      const state = snapshot()
+      state.context.subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/abc`,
+        cid: 'bafyexample',
+      }
+      expect(prepare(a, state)[0].request).toEqual({
+        endpoint: 'tools.ozone.moderation.emitEvent',
+        body: {
+          subject: accountRef(did),
+          createdBy: moderator,
+          event,
+          reportAction: { ids: [123], note: 'Reviewed account' },
+        },
+      })
+      state.context.owningAccountDid = issuer
+      expect(() => prepare(a, state)).toThrow('owning account')
+      state.context.owningAccountDid = did
+      state.context.report = null
+      expect(() => prepare(a, state)).toThrow('current report')
+    },
+  )
+  it('keeps escalation scoped to the current report subject', () => {
     const state = snapshot()
     state.context.subject = {
       $type: 'com.atproto.repo.strongRef',
       uri: `at://${did}/app.bsky.feed.post/abc`,
       cid: 'bafyexample',
     }
+    const a = action()
+    const step: CustomAction['actions'][number] = {
+      id: 'escalate',
+      type: 'event',
+      target: 'account',
+      event: { $type: 'tools.ozone.moderation.defs#modEventEscalate' },
+      reportAction: { scope: 'current' },
+    }
+    a.actions = [step]
     expect(() => prepare(a, state)).toThrow('same subject')
+    step.target = 'subject'
+    expect(prepare(a, state)[0].request.body).toMatchObject({
+      subject: state.context.subject,
+      reportAction: { ids: [123] },
+    })
+    state.context.subject = accountRef(did)
+    step.target = 'account'
+    expect(prepare(a, state)[0].request.body).toMatchObject({
+      subject: accountRef(did),
+      reportAction: { ids: [123] },
+    })
   })
+  it.each([
+    `at://${did}/app.bsky.feed.post/other`,
+    `at://${issuer}/app.bsky.feed.post/abc`,
+    did,
+  ])(
+    'rejects a report on another subject during preflight: %s',
+    async (reportSubject) => {
+      const subject: Subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/abc`,
+        cid: 'bafyexample',
+      }
+      const agent = agentWith({
+        server: {
+          getConfig: vi
+            .fn()
+            .mockResolvedValue({ data: { viewer: { role: ADMIN_ROLE } } }),
+        },
+        moderation: {
+          getRepo: vi.fn().mockResolvedValue({ data: { moderation: {} } }),
+          getRecord: vi
+            .fn()
+            .mockResolvedValue({ data: { ...subject, moderation: {} } }),
+        },
+        setting: {
+          listOptions: vi.fn().mockResolvedValue({ data: { options: [] } }),
+        },
+        report: {
+          getReport: vi
+            .fn()
+            .mockResolvedValue({
+              data: { id: 123, subject: { subject: reportSubject } },
+            }),
+        },
+      })
+      await expect(
+        readSnapshot(agent, serviceDid, 'https://ozone.example', subject, 123),
+      ).rejects.toThrow('report does not belong to this subject')
+    },
+  )
   it('expands reportAction at the request root', () => {
     const a = action()
     a.actions = [

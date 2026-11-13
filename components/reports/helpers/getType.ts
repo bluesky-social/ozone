@@ -108,15 +108,6 @@ export const reasonTypeOptions = {
 }
 
 export const groupedReasonTypes = {
-  Legacy: [
-    ComAtprotoModerationDefs.REASONSPAM,
-    ComAtprotoModerationDefs.REASONVIOLATION,
-    ComAtprotoModerationDefs.REASONMISLEADING,
-    ComAtprotoModerationDefs.REASONSEXUAL,
-    ComAtprotoModerationDefs.REASONRUDE,
-    ComAtprotoModerationDefs.REASONOTHER,
-    ComAtprotoModerationDefs.REASONAPPEAL,
-  ],
   Appeal: ['tools.ozone.report.defs#reasonAppeal'],
   Violence: [
     'tools.ozone.report.defs#reasonViolenceAnimal',
@@ -139,7 +130,10 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonChildSafetyCSAM',
     'tools.ozone.report.defs#reasonChildSafetyGroom',
     'tools.ozone.report.defs#reasonChildSafetyPrivacy',
+    'tools.ozone.report.defs#reasonChildSafetyMinorPrivacy',
+    'tools.ozone.report.defs#reasonChildSafetyEndangerment',
     'tools.ozone.report.defs#reasonChildSafetyHarassment',
+    'tools.ozone.report.defs#reasonChildSafetyPromotion',
     'tools.ozone.report.defs#reasonChildSafetyOther',
   ],
   Harassment: [
@@ -171,6 +165,15 @@ export const groupedReasonTypes = {
     'tools.ozone.report.defs#reasonSelfHarmOther',
   ],
   Other: ['tools.ozone.report.defs#reasonOther'],
+  Legacy: [
+    ComAtprotoModerationDefs.REASONSPAM,
+    ComAtprotoModerationDefs.REASONVIOLATION,
+    ComAtprotoModerationDefs.REASONMISLEADING,
+    ComAtprotoModerationDefs.REASONSEXUAL,
+    ComAtprotoModerationDefs.REASONRUDE,
+    ComAtprotoModerationDefs.REASONOTHER,
+    ComAtprotoModerationDefs.REASONAPPEAL,
+  ],
 }
 
 // Reason types for statististics.

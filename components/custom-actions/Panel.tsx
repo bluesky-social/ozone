@@ -472,7 +472,9 @@ function describeStep(step: Step, subject: string, reportId?: number) {
   const report =
     step.reportAction?.scope === 'matching'
       ? 'eligible matching reports'
-      : 'current report'
+      : reportId
+        ? `report #${reportId}`
+        : 'current report'
   const reportOutcome = step.reportAction
     ? event.$type.endsWith('#modEventEscalate')
       ? ` • escalate ${report}`
@@ -481,5 +483,9 @@ function describeStep(step: Step, subject: string, reportId?: number) {
         ? ` • close ${report} as actioned`
         : ` • close ${report} as acknowledged`
     : ''
-  return `${labels[event.$type.split('#')[1]]}: ${target}${duration}${reportOutcome}`
+  const targetDescription =
+    step.target === 'account' && subject.startsWith('at://')
+      ? `owning account ${target}`
+      : target
+  return `${labels[event.$type.split('#')[1]]}: ${targetDescription}${duration}${reportOutcome}`
 }
