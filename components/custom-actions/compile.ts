@@ -233,6 +233,11 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
       const tags =
         step.target === 'account' ? state.accountTags : state.subjectTags
       const event = step.event
+      if (
+        event.$type === 'tools.ozone.moderation.defs#modEventResolveAppeal' &&
+        !config.permissions.canLabel
+      )
+        throw new Error('Moderator permission required to resolve appeals')
       if (event.$type === 'tools.ozone.moderation.defs#modEventTag') {
         const changed = [...event.add, ...event.remove]
         assertTags(changed, state)

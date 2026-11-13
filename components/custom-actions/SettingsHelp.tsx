@@ -134,6 +134,13 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   hidden while state is unavailable.
                 </li>
                 <li>
+                  <code>modEventResolveAppeal</code> clears the appeal flag on
+                  the selected subject or account. It does not close reports
+                  and cannot use <code>reportAction</code>. To reject an appeal,
+                  resolve it first, then use a separate report{' '}
+                  <code>closeActivity</code> step to close it as no-action.
+                </li>
+                <li>
                   Steps stop the workflow on error by default. Tag and label
                   steps can opt in with <code>continueOnError: true</code> to
                   continue after a failed request or an unconfirmed response,

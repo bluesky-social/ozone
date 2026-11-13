@@ -474,6 +474,66 @@ describe('settings API boundary', () => {
 })
 
 describe('preparation', () => {
+  it.each(['subject', 'account'] as const)(
+    'prepares Resolve Appeal on the %s without closing reports',
+    (target) => {
+      const state = snapshot()
+      state.context.subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/example`,
+        cid: 'bafyexample',
+      }
+      const workflow = action()
+      workflow.actions = [
+        {
+          id: 'resolve',
+          type: 'event',
+          target,
+          event: {
+            $type: 'tools.ozone.moderation.defs#modEventResolveAppeal',
+            comment: 'Reviewed appeal.',
+          },
+        },
+      ]
+      const [op] = prepare(workflow, state)
+      expect(op.request.body).toMatchObject({
+        subject: target === 'account' ? accountRef(did) : state.context.subject,
+        event: { $type: 'tools.ozone.moderation.defs#modEventResolveAppeal' },
+      })
+      expect(op.request.body).not.toHaveProperty('reportAction')
+      state.config.permissions.canLabel = false
+      expect(() => prepare(workflow, state)).toThrow(
+        'permission required to resolve appeals',
+      )
+    },
+  )
+  it('rejects reportAction and soft failures on Resolve Appeal', () => {
+    const workflow = action()
+    const step = {
+      id: 'resolve',
+      type: 'event' as const,
+      target: 'account' as const,
+      event: {
+        $type: 'tools.ozone.moderation.defs#modEventResolveAppeal' as const,
+      },
+    }
+    workflow.actions = [step]
+    expect(() =>
+      validateSettings({ version: 1, customActions: [workflow] }),
+    ).not.toThrow()
+    for (const extra of [
+      { reportAction: { scope: 'current' } },
+      { continueOnError: true },
+      { continueOnError: false },
+    ]) {
+      workflow.actions = [
+        { ...step, ...extra } as CustomAction['actions'][number],
+      ]
+      expect(() =>
+        validateSettings({ version: 1, customActions: [workflow] }),
+      ).toThrow()
+    }
+  })
   it.each([7, -1])(
     'requires the current report to match queue %s',
     (queueId) => {

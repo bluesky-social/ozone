@@ -511,6 +511,17 @@
         }
       }
     },
+    "resolveAppealEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventResolveAppeal"
+        },
+        "comment": { "type": "string" }
+      }
+    },
     "commentEvent": {
       "type": "object",
       "additionalProperties": false,
@@ -559,6 +570,9 @@
         },
         {
           "$ref": "#/definitions/escalateEvent"
+        },
+        {
+          "$ref": "#/definitions/resolveAppealEvent"
         }
       ]
     },

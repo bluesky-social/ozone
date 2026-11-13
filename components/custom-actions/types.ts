@@ -19,6 +19,9 @@ export type ModerationEvent =
     })
   | (M.ModEventComment & { $type: NonNullable<M.ModEventComment['$type']> })
   | (M.ModEventEscalate & { $type: NonNullable<M.ModEventEscalate['$type']> })
+  | (M.ModEventResolveAppeal & {
+      $type: NonNullable<M.ModEventResolveAppeal['$type']>
+    })
 export type Condition = {
   target: 'subject' | 'account'
   requiredTags?: string[]

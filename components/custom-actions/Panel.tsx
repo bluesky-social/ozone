@@ -390,6 +390,7 @@ function describeStep(step: Step, subject: string, reportId?: number) {
     modEventAcknowledge: 'Acknowledge',
     modEventComment: 'Add comment',
     modEventEscalate: 'Escalate',
+    modEventResolveAppeal: 'Resolve subject appeal',
   }
   const event = step.event
   const duration = event.$type.endsWith('#modEventTakedown')
