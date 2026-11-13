@@ -1,4 +1,4 @@
-import type { Agent } from '@atproto/api'
+import type { Agent, ComAtprotoLabelDefs } from '@atproto/api'
 import Ajv from 'ajv'
 import { DM_DISABLE_TAG } from '../../lib/constants'
 import { parseServerConfig } from '../../lib/server-config'
@@ -13,6 +13,7 @@ import type {
 } from './types'
 import { validateSettings } from './validation'
 import { scopeError } from './scope'
+import { conditionError } from './conditions'
 
 const permissionValidator = new Ajv().compile({
   type: 'object',
@@ -111,6 +112,26 @@ export async function readSnapshot(
   }
   const accountStatus = repo.data.moderation.subjectStatus
   const status = record ? record.data.moderation.subjectStatus : accountStatus
+  const labelerDid = serviceDid.split('#')[0]
+  const now = Date.now()
+  const activeLabels = (
+    labels: ComAtprotoLabelDefs.Label[] | undefined,
+    subjectId: string,
+    cid?: string,
+  ) => [
+    ...new Set(
+      (labels || [])
+        .filter(
+          (label) =>
+            label.src === labelerDid &&
+            label.uri === subjectId &&
+            !label.neg &&
+            (!label.cid || label.cid === cid) &&
+            (!label.exp || Date.parse(label.exp) > now),
+        )
+        .map((label) => label.val),
+    ),
+  ]
   return {
     context: {
       serviceDid,
@@ -120,6 +141,8 @@ export async function readSnapshot(
             id: report.data.id,
             url: `${uiOrigin}/reports/${report.data.id}`,
             queueId: report.data.queue?.id ?? -1,
+            reportType: report.data.reportType,
+            status: report.data.status,
           }
         : null,
       moderator: { did: agent.did! },
@@ -133,6 +156,14 @@ export async function readSnapshot(
     profile,
     subjectTags: status?.tags || [],
     accountTags: accountStatus?.tags || [],
+    subjectLabels: activeLabels(
+      record ? record.data.labels : repo.data.labels,
+      id,
+      'cid' in ref ? ref.cid : undefined,
+    ),
+    accountLabels: activeLabels(repo.data.labels, did),
+    subjectAppealed: !!status?.appealed,
+    accountAppealed: !!accountStatus?.appealed,
   }
 }
 
@@ -179,19 +210,19 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
     (!collection || !action.collections.includes(collection))
   )
     throw new Error('This record collection is not supported')
-  for (const condition of action.when || []) {
-    const tags =
-      condition.target === 'account' ? state.accountTags : state.subjectTags
-    if (
-      condition.requiredTags?.some((t) => !tags.includes(t)) ||
-      condition.absentTags?.some((t) => tags.includes(t))
-    )
-      throw new Error(`Tag conditions for ${condition.target} are not met`)
-  }
+  const unmetCondition = conditionError(action.when, state)
+  if (unmetCondition)
+    throw new Error(`Action conditions are not met: ${unmetCondition}`)
   for (const step of action.actions) {
+    if ('when' in step && conditionError(step.when, state)) continue
     if (step.type === 'activity') {
       if (!context.report)
         throw new Error('This workflow requires a current report')
+    } else if (step.type === 'closeReports') {
+      if (!config.permissions.canLabel)
+        throw new Error(
+          'Moderator permission required to close matching reports',
+        )
     } else if (step.type === 'verify') {
       if (
         !config.permissions.canVerify ||
@@ -210,6 +241,11 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
       const tags =
         step.target === 'account' ? state.accountTags : state.subjectTags
       const event = step.event
+      if (
+        event.$type === 'tools.ozone.moderation.defs#modEventResolveAppeal' &&
+        !config.permissions.canLabel
+      )
+        throw new Error('Moderator permission required to resolve appeals')
       if (event.$type === 'tools.ozone.moderation.defs#modEventTag') {
         const changed = [...event.add, ...event.remove]
         assertTags(changed, state)
@@ -265,7 +301,7 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
           'tools.ozone.moderation.defs#modEventComment',
         ].includes(event.$type)
       if (
-        reportAction &&
+        reportAction?.scope === 'current' &&
         (!context.report ||
           (subjectId(subject) !== subjectId(context.subject) &&
             !closesOwnedRecordReport))
@@ -284,6 +320,8 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
   assertExecutable(action, state)
   const { context } = state
   return action.actions.map((step): Operation => {
+    const skipReason =
+      'when' in step ? conditionError(step.when, state) : undefined
     const subject =
       step.target === 'account'
         ? accountRef(context.owningAccountDid)
@@ -298,6 +336,16 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
           isAutomated: false,
           ...(step.internalNote && { internalNote: step.internalNote }),
           ...(step.publicNote && { publicNote: step.publicNote }),
+        },
+      }
+    } else if (step.type === 'closeReports') {
+      request = {
+        endpoint: 'tools.ozone.report.closeReports',
+        body: {
+          subject: subjectId(subject),
+          reportTypes: step.reportTypes,
+          isAutomated: false,
+          ...(step.internalNote && { internalNote: step.internalNote }),
         },
       }
     } else if (step.type === 'verify') {
@@ -317,12 +365,26 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
           subject,
           createdBy: context.moderator.did,
           event: step.event,
-          ...(reportAction && {
-            reportAction: {
-              ids: [context.report!.id],
-              ...(reportAction.note && { note: reportAction.note }),
-            },
-          }),
+          ...(reportAction &&
+            !skipReason && {
+              reportAction: {
+                ...(reportAction.scope === 'current'
+                  ? { ids: [context.report!.id] }
+                  : {
+                      types: reportAction.types,
+                      ...(reportAction.includeCurrent &&
+                        context.report?.reportType &&
+                        context.report.status !== 'closed' &&
+                        reportAction.types.includes(
+                          context.report.reportType,
+                        ) &&
+                        subjectId(subject) === subjectId(context.subject) && {
+                          ids: [context.report.id],
+                        }),
+                    }),
+                ...(reportAction.note && { note: reportAction.note }),
+              },
+            }),
         },
       }
     }
@@ -332,11 +394,27 @@ export function prepare(action: CustomAction, state: Snapshot): Operation[] {
       target: step.target,
       subject,
       request,
-      status: 'pending',
+      status: skipReason ? 'skipped' : 'pending',
+      ...(skipReason && { skipReason }),
       ...(step.type === 'event' &&
         step.continueOnError !== undefined && {
           continueOnError: step.continueOnError,
         }),
     }
   })
+}
+
+/** Require another confirmation when refreshed state selects different steps. */
+export function prepareConfirmed(
+  action: CustomAction,
+  confirmed: Snapshot,
+  fresh: Snapshot,
+): Operation[] {
+  const previous = prepare(action, confirmed)
+  const next = prepare(action, fresh)
+  if (previous.some((op, index) => op.skipReason !== next[index]?.skipReason))
+    throw new Error(
+      'Account or subject state changed. Select the action again to review its preview and confirm again.',
+    )
+  return next
 }

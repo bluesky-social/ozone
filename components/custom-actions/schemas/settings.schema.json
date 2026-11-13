@@ -130,6 +130,9 @@
                 "$ref": "#/definitions/activityStep"
               },
               {
+                "$ref": "#/definitions/closeReportsStep"
+              },
+              {
                 "$ref": "#/definitions/verifyEvent"
               }
             ]
@@ -164,6 +167,15 @@
         },
         "absentTags": {
           "$ref": "#/definitions/tags"
+        },
+        "requiredLabels": {
+          "$ref": "#/definitions/tags"
+        },
+        "absentLabels": {
+          "$ref": "#/definitions/tags"
+        },
+        "appealed": {
+          "type": "boolean"
         }
       },
       "anyOf": [
@@ -182,6 +194,25 @@
               "minItems": 1
             }
           }
+        },
+        {
+          "required": ["requiredLabels"],
+          "properties": {
+            "requiredLabels": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": ["absentLabels"],
+          "properties": {
+            "absentLabels": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": ["appealed"]
         }
       ]
     },
@@ -202,8 +233,17 @@
         "event": {
           "$ref": "#/definitions/moderationEvent"
         },
+        "when": {
+          "description": "Skip this event when its conditions do not match the state read before execution.",
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "#/definitions/condition" }
+        },
         "reportAction": {
-          "$ref": "#/definitions/currentReportAction"
+          "oneOf": [
+            { "$ref": "#/definitions/currentReportAction" },
+            { "$ref": "#/definitions/matchingReportAction" }
+          ]
         },
         "continueOnError": {
           "description": "Continue after a tag or label step fails, except authentication/permission failures, cancellation, or timeout. The failed step remains visible. Omit or use false to stop on error.",
@@ -483,6 +523,17 @@
         }
       }
     },
+    "resolveAppealEvent": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["$type"],
+      "properties": {
+        "$type": {
+          "const": "tools.ozone.moderation.defs#modEventResolveAppeal"
+        },
+        "comment": { "type": "string" }
+      }
+    },
     "commentEvent": {
       "type": "object",
       "additionalProperties": false,
@@ -531,8 +582,31 @@
         },
         {
           "$ref": "#/definitions/escalateEvent"
+        },
+        {
+          "$ref": "#/definitions/resolveAppealEvent"
         }
       ]
+    },
+    "matchingReportAction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "types"],
+      "properties": {
+        "scope": { "const": "matching" },
+        "includeCurrent": {
+          "description": "Explicitly include the current report when it matches the event target and one of the selected types, including assigned or escalated reports.",
+          "type": "boolean",
+          "default": false
+        },
+        "types": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "$ref": "#/definitions/text" }
+        },
+        "note": { "$ref": "#/definitions/text" }
+      }
     },
     "currentReportAction": {
       "type": "object",
@@ -543,6 +617,46 @@
           "const": "current"
         },
         "note": {
+          "$ref": "#/definitions/text"
+        }
+      }
+    },
+    "closeReportsStep": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "type",
+        "target",
+        "reportTypes"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/definitions/id"
+        },
+        "type": {
+          "const": "closeReports"
+        },
+        "target": {
+          "$ref": "#/definitions/target"
+        },
+        "reportTypes": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/text"
+          }
+        },
+        "when": {
+          "description": "Skip this closure when its conditions do not match the state read before execution.",
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/definitions/condition"
+          }
+        },
+        "internalNote": {
           "$ref": "#/definitions/text"
         }
       }

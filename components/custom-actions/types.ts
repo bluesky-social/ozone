@@ -19,6 +19,17 @@ export type ModerationEvent =
     })
   | (M.ModEventComment & { $type: NonNullable<M.ModEventComment['$type']> })
   | (M.ModEventEscalate & { $type: NonNullable<M.ModEventEscalate['$type']> })
+  | (M.ModEventResolveAppeal & {
+      $type: NonNullable<M.ModEventResolveAppeal['$type']>
+    })
+export type Condition = {
+  target: 'subject' | 'account'
+  requiredTags?: string[]
+  absentTags?: string[]
+  requiredLabels?: string[]
+  absentLabels?: string[]
+  appealed?: boolean
+}
 export type ReportActivity = {
   // narrowed to supported activity types
   $type: `tools.ozone.report.defs#${'closeActivity' | 'reopenActivity' | 'escalationActivity' | 'noteActivity'}`
@@ -30,7 +41,15 @@ export type Step = { id: string } & (
       type: 'event'
       target: 'subject' | 'account'
       event: ModerationEvent
-      reportAction?: { scope: 'current'; note?: string }
+      when?: Condition[]
+      reportAction?:
+        | { scope: 'current'; note?: string }
+        | {
+            scope: 'matching'
+            types: string[]
+            includeCurrent?: boolean
+            note?: string
+          }
       continueOnError?: boolean
     }
   | {
@@ -39,6 +58,13 @@ export type Step = { id: string } & (
       activity: ReportActivity
       internalNote?: string
       publicNote?: string
+    }
+  | {
+      type: 'closeReports'
+      target: 'subject' | 'account'
+      reportTypes: string[]
+      when?: Condition[]
+      internalNote?: string
     }
   | { type: 'verify'; target: 'account' }
 )
@@ -53,11 +79,7 @@ export type CustomAction = {
   queueIds?: number[]
   subjectTypes: ('account' | 'record')[]
   collections?: string[]
-  when?: {
-    target: 'subject' | 'account'
-    requiredTags?: string[]
-    absentTags?: string[]
-  }[]
+  when?: Condition[]
   actions: Step[]
 }
 export type Settings = { version: 1; customActions: CustomAction[] }
@@ -68,7 +90,9 @@ export type Request =
         subject: Subject
         createdBy: string
         event: ModerationEvent
-        reportAction?: { ids: number[]; note?: string }
+        reportAction?: ({ ids: number[] } | { types: string[] }) & {
+          note?: string
+        }
       }
     }
   | {
@@ -79,6 +103,15 @@ export type Request =
         isAutomated: false
         internalNote?: string
         publicNote?: string
+      }
+    }
+  | {
+      endpoint: 'tools.ozone.report.closeReports'
+      body: {
+        subject: string
+        reportTypes: string[]
+        isAutomated: false
+        internalNote?: string
       }
     }
   | {
@@ -105,6 +138,7 @@ export type Receipt =
       internalNote?: string
       publicNote?: string
     }
+  | { kind: 'report-closure'; closedCount: number; reportIds: number[] }
   | {
       kind: 'verification'
       uri: string
@@ -123,6 +157,7 @@ export type Operation = {
   subject: Subject
   request: Request
   status: ExecutionStatus | 'skipped'
+  skipReason?: string
   continueOnError?: boolean
   receipt?: Receipt
 }
@@ -133,6 +168,8 @@ export type Context = {
     id: number
     url: string
     queueId: number
+    reportType?: string
+    status?: string
   } | null
   moderator: { did: string }
   subject: Subject
@@ -148,6 +185,7 @@ export type Run = {
   context: Context
   operations: Operation[]
   status: RunStatus
+  error?: string
   verifierDid?: string
 }
 
@@ -161,5 +199,9 @@ export type Snapshot = {
   policies: PolicyListSetting
   subjectTags: string[]
   accountTags: string[]
+  subjectLabels: string[]
+  accountLabels: string[]
+  subjectAppealed: boolean
+  accountAppealed: boolean
   profile?: { handle: string; displayName: string }
 }

@@ -8,7 +8,9 @@ import { SubjectTag } from '../tags/SubjectTag'
 import { useConfigurationContext } from '../shell/ConfigurationContext'
 import { useCustomActionSettings } from './useSettings'
 import { useCustomActionRun } from './useRun'
-import { readSnapshot, subjectId } from './compile'
+import { prepare, readSnapshot, subjectId } from './compile'
+import { conditionError } from './conditions'
+import { getReasonLabel } from '../reports/helpers/getType'
 import { scopeError } from './scope'
 import type { CustomAction, Subject, Step } from './types'
 
@@ -79,6 +81,10 @@ export function useCustomActionPanel(
             : undefined,
       }) &&
       a.subjectTypes.includes(id.startsWith('did:') ? 'account' : 'record') &&
+      (!a.when?.length ||
+        (!state.isError &&
+          !!state.data &&
+          !conditionError(a.when, state.data))) &&
       (!a.collections || a.collections.includes(id.split('/')[3])),
   )
   const selection = choices.find((action) => action.id === selectionId) ?? null
@@ -153,6 +159,16 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
         )}
       </>
     )
+  let preview: ReturnType<typeof prepare> | undefined
+  let previewError: string | undefined
+  if (!run && model.state.data) {
+    try {
+      preview = prepare(selected, model.state.data)
+    } catch (e) {
+      previewError =
+        e instanceof Error ? e.message : 'Cannot prepare this action.'
+    }
+  }
   return (
     <section
       className="mt-2 rounded-md bg-white dark:bg-slate-800 border border-gray-200 dark:border-gray-600 p-2.5 space-y-2 text-sm break-words"
@@ -173,7 +189,7 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
       {selected.description && <p>{selected.description}</p>}
       <ol className="space-y-2 list-decimal pl-5">
         {selected.actions.map((step, index) => {
-          const op = run?.operations[index]
+          const op = (run?.operations || preview)?.[index]
           return (
             <li key={step.id}>
               <div className="font-medium">
@@ -185,7 +201,21 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                   className="text-xs text-gray-500 dark:text-gray-400"
                   data-cy="custom-operation-status"
                 >
-                  {op.status}
+                  {run
+                    ? op.status
+                    : op.status === 'skipped'
+                      ? 'Will skip'
+                      : 'Will run'}
+                  {op.skipReason && ` • ${op.skipReason}`}
+                  {!run &&
+                    step.type === 'event' &&
+                    step.reportAction?.scope === 'matching' &&
+                    op.status !== 'skipped' &&
+                    op.request.endpoint ===
+                      'tools.ozone.moderation.emitEvent' &&
+                    op.request.body.reportAction &&
+                    'ids' in op.request.body.reportAction &&
+                    ` • Includes current report #${op.request.body.reportAction.ids[0]}`}
                   {op.receipt?.kind === 'moderation-event' && (
                     <>
                       {' • '}
@@ -201,6 +231,8 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                   )}
                   {op.receipt?.kind === 'report-activity' &&
                     ` • activity ${op.receipt.activityId}`}
+                  {op.receipt?.kind === 'report-closure' &&
+                    ` • closed ${op.receipt.closedCount} reports`}
                   {op.receipt?.kind === 'verification' &&
                     ` • ${op.receipt.uri}`}
                 </p>
@@ -222,7 +254,10 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
             appearance="primary"
             size="sm"
             disabled={
-              !model.state.data || model.state.isError || model.settings.isError
+              !model.state.data ||
+              model.state.isError ||
+              model.settings.isError ||
+              !!previewError
             }
             onClick={() =>
               invoke(() => progress.start(selected, model.state.data!))
@@ -247,6 +282,7 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                       ? 'Custom action cancelled. Remaining steps were skipped.'
                       : 'Running custom action…'}
           </p>
+          {run.error && <p role="alert">{run.error}</p>}
           {[
             'completed-with-errors',
             'failed',
@@ -279,9 +315,9 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
           </div>
         </>
       )}
-      {error && (
+      {(error || previewError) && (
         <p role="alert" className="text-red-600 dark:text-red-400">
-          {error}
+          {error || previewError}
         </p>
       )}
     </section>
@@ -293,6 +329,27 @@ function StepEffects({ step }: { step: Step }) {
   const notes: string[] = []
   const effects: string[] = []
   let changes: { text: string; values: string[]; isTag?: boolean }[] = []
+  if ('when' in step) {
+    for (const condition of step.when || []) {
+      for (const [key, label] of [
+        ['requiredTags', 'Requires tags'],
+        ['absentTags', 'Requires absent tags'],
+        ['requiredLabels', 'Requires active labels from this labeler'],
+        ['absentLabels', 'Requires absent labels from this labeler'],
+      ] as const) {
+        if (condition[key]?.length)
+          effects.push(
+            `${label} on ${condition.target}: ${condition[key]!.join(', ')}`,
+          )
+      }
+      if (condition.appealed !== undefined)
+        effects.push(
+          condition.appealed
+            ? `Requires an unresolved appeal on ${condition.target}`
+            : `Requires no unresolved appeal on ${condition.target}`,
+        )
+    }
+  }
   if (step.type === 'event') {
     const event = step.event
     if (step.continueOnError)
@@ -300,6 +357,18 @@ function StepEffects({ step }: { step: Step }) {
     if (event.comment) notes.push(event.comment)
     if (step.reportAction?.note)
       notes.push(`Report note: ${step.reportAction.note}`)
+    if (step.reportAction?.scope === 'matching') {
+      effects.push(
+        `Report types on this target: ${step.reportAction.types.map(getReasonLabel).join(', ')}`,
+      )
+      effects.push(
+        'Other assigned reports, escalated reports, and reports with an active assignment are excluded from closure. Continue if no eligible reports match.',
+      )
+      if (step.reportAction.includeCurrent)
+        effects.push(
+          'Include the current report when its type and subject match, including when assigned or escalated.',
+        )
+    }
     if (event.$type === 'tools.ozone.moderation.defs#modEventTag')
       changes = [
         { text: 'Add tags:', values: event.add, isTag: true },
@@ -329,6 +398,12 @@ function StepEffects({ step }: { step: Step }) {
       event.sticky
     )
       effects.push('Replace the persistent subject note')
+  } else if (step.type === 'closeReports') {
+    effects.push(
+      `Report types on this target: ${step.reportTypes.map(getReasonLabel).join(', ')}`,
+      'Close eligible reports as no-action; appeal reports will be denied. Assigned, escalated, and actively assigned reports stay open. Continue if no eligible reports match.',
+    )
+    if (step.internalNote) notes.push(`Internal note: ${step.internalNote}`)
   } else if (step.type === 'activity') {
     if (step.internalNote) notes.push(`Internal note: ${step.internalNote}`)
     if (step.publicNote) notes.push(`Public note: ${step.publicNote}`)
@@ -377,6 +452,8 @@ function describeStep(step: Step, subject: string, reportId?: number) {
       ? subject.split('/')[2]
       : subject
   if (step.type === 'verify') return `Verify account: ${target}`
+  if (step.type === 'closeReports')
+    return `Close eligible matching reports as no-action: ${target}`
   const labels = {
     modEventTag: 'Update tags',
     modEventLabel: 'Update labels',
@@ -384,6 +461,7 @@ function describeStep(step: Step, subject: string, reportId?: number) {
     modEventAcknowledge: 'Acknowledge',
     modEventComment: 'Add comment',
     modEventEscalate: 'Escalate',
+    modEventResolveAppeal: 'Resolve subject appeal',
   }
   const event = step.event
   const duration = event.$type.endsWith('#modEventTakedown')
@@ -391,7 +469,12 @@ function describeStep(step: Step, subject: string, reportId?: number) {
       ? ` for ${event.durationInHours} hours`
       : ' — PERMANENT'
     : ''
-  const report = reportId ? `report #${reportId}` : 'current report'
+  const report =
+    step.reportAction?.scope === 'matching'
+      ? 'eligible matching reports'
+      : reportId
+        ? `report #${reportId}`
+        : 'current report'
   const reportOutcome = step.reportAction
     ? event.$type.endsWith('#modEventEscalate')
       ? ` • escalate ${report}`

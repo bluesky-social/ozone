@@ -86,6 +86,10 @@ function snapshot(): Snapshot {
     }),
     subjectTags: [],
     accountTags: [],
+    subjectLabels: [],
+    accountLabels: [],
+    subjectAppealed: false,
+    accountAppealed: false,
     protectedTags: {},
     policies: {},
     profile: { handle: 'example.test', displayName: 'Example' },
@@ -470,6 +474,66 @@ describe('settings API boundary', () => {
 })
 
 describe('preparation', () => {
+  it.each(['subject', 'account'] as const)(
+    'prepares Resolve Appeal on the %s without closing reports',
+    (target) => {
+      const state = snapshot()
+      state.context.subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/example`,
+        cid: 'bafyexample',
+      }
+      const workflow = action()
+      workflow.actions = [
+        {
+          id: 'resolve',
+          type: 'event',
+          target,
+          event: {
+            $type: 'tools.ozone.moderation.defs#modEventResolveAppeal',
+            comment: 'Reviewed appeal.',
+          },
+        },
+      ]
+      const [op] = prepare(workflow, state)
+      expect(op.request.body).toMatchObject({
+        subject: target === 'account' ? accountRef(did) : state.context.subject,
+        event: { $type: 'tools.ozone.moderation.defs#modEventResolveAppeal' },
+      })
+      expect(op.request.body).not.toHaveProperty('reportAction')
+      state.config.permissions.canLabel = false
+      expect(() => prepare(workflow, state)).toThrow(
+        'permission required to resolve appeals',
+      )
+    },
+  )
+  it('rejects reportAction and soft failures on Resolve Appeal', () => {
+    const workflow = action()
+    const step = {
+      id: 'resolve',
+      type: 'event' as const,
+      target: 'account' as const,
+      event: {
+        $type: 'tools.ozone.moderation.defs#modEventResolveAppeal' as const,
+      },
+    }
+    workflow.actions = [step]
+    expect(() =>
+      validateSettings({ version: 1, customActions: [workflow] }),
+    ).not.toThrow()
+    for (const extra of [
+      { reportAction: { scope: 'current' } },
+      { continueOnError: true },
+      { continueOnError: false },
+    ]) {
+      workflow.actions = [
+        { ...step, ...extra } as CustomAction['actions'][number],
+      ]
+      expect(() =>
+        validateSettings({ version: 1, customActions: [workflow] }),
+      ).toThrow()
+    }
+  })
   it.each([7, -1])(
     'requires the current report to match queue %s',
     (queueId) => {
@@ -962,6 +1026,66 @@ describe('preparation', () => {
 })
 
 describe('bounded one-shot execution', () => {
+  it.each([{ skipped: [0] }, { skipped: [1] }, { skipped: [0, 1] }])(
+    'keeps pre-skipped operations out of dispatch: $skipped',
+    async ({ skipped }) => {
+      const { execute, deps, run } = runnerFixture()
+      for (const index of skipped) run.operations[index].status = 'skipped'
+      await execute()
+      const runnable = run.operations.filter(
+        (_, index) => !skipped.includes(index),
+      )
+      expect(deps.dispatch.mock.calls.map((call) => call[1].stepId)).toEqual(
+        runnable.map((op) => op.stepId),
+      )
+      expect(run.status).toBe('succeeded')
+      for (const [index, op] of run.operations.entries()) {
+        if (skipped.includes(index)) {
+          expect(op.status).toBe('skipped')
+          expect(op.receipt).toBeUndefined()
+        } else {
+          expect(op.status).toBe('succeeded')
+          expect(op.receipt).toEqual(eventReceipt())
+        }
+      }
+    },
+  )
+  it.each([
+    {
+      error: new Error('State changed. Review again.'),
+      message: 'State changed. Review again.',
+    },
+    { error: null, message: 'Could not complete this action.' },
+  ])(
+    'publishes the preflight failure reason: $message',
+    async ({ error, message }) => {
+      const { execute, deps, run } = runnerFixture()
+      deps.prepare.mockRejectedValue(error)
+      await execute()
+      expect(run.status).toBe('failed')
+      expect(run.error).toBe(message)
+      expect(deps.changed.mock.lastCall?.[0].error).toBe(message)
+      expect(deps.dispatch).not.toHaveBeenCalled()
+      expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
+    },
+  )
+  it('retains the required-step failure reason alongside earlier confirmed receipts', async () => {
+    const workflow = action()
+    workflow.actions.push(tag('unsent'))
+    const { execute, deps, run } = runnerFixture(workflow)
+    deps.dispatch
+      .mockResolvedValueOnce(eventReceipt())
+      .mockRejectedValueOnce(new Error('Required change failed'))
+    await execute()
+    expect(run.error).toBe('Required change failed')
+    expect(run.operations.map((op) => op.status)).toEqual([
+      'succeeded',
+      'failed',
+      'skipped',
+    ])
+    expect(run.operations[0].receipt).toEqual(eventReceipt())
+    expect(deps.dispatch).toHaveBeenCalledTimes(2)
+  })
   it('runs in order and publishes running state and confirmed receipts', async () => {
     const { execute, deps, run } = runnerFixture()
     deps.dispatch.mockImplementation(async (_run, op) => {
