@@ -141,6 +141,16 @@ describe('Settings custom actions', () => {
       .contains('button', 'Confirm and run')
       .should('be.enabled')
   }
+  function expectPreview(stepCount = 1) {
+    cy.get('[data-cy="custom-operation-status"]')
+      .should('have.length', stepCount)
+      .each(($status) => {
+        expect($status).to.have.text('Will run')
+      })
+    cy.get('[data-cy="custom-action-panel"] a[href*="/events/"]').should(
+      'not.exist',
+    )
+  }
   it('keeps custom actions out of the quick-action panel', () => {
     cy.get('table').should('contain.text', seed.carla.repo.handle)
     cy.contains('button', 'Take Action').click()
@@ -425,7 +435,7 @@ describe('Settings custom actions', () => {
       .should('contain.text', 'Add report note #123')
       .and('contain.text', 'Internal note: Configured internal note')
       .and('contain.text', 'Public note: Configured public note')
-    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    expectPreview(actions.length)
     cy.contains('button', 'Confirm and run').should('be.enabled')
     cy.then(() => expect(mutations).to.equal(0))
   })
@@ -464,7 +474,7 @@ describe('Settings custom actions', () => {
     cy.get('[data-cy="custom-action-panel"]').should('not.exist')
     cy.contains('button', /^Label$/).click()
     cy.contains('[role="menuitem"]', workflow.name).click()
-    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    expectPreview()
     cy.contains('button', 'Confirm and run').click()
     cy.wait('@customEvent')
     cy.contains('Custom action completed.').should('be.visible')
@@ -475,7 +485,7 @@ describe('Settings custom actions', () => {
       'contain.text',
       nextWorkflow.helpText,
     )
-    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    expectPreview()
     cy.contains('button', 'Confirm and run').should('be.enabled')
     cy.then(() => expect(sends).to.equal(2))
     cy.window().then((win) => {
@@ -527,7 +537,7 @@ describe('Settings custom actions', () => {
     cy.get('section[aria-label="Custom action progress"]').should('not.exist')
     cy.contains('aside', 'has unfinished work').should('not.exist')
     selectCustom()
-    cy.get('[data-cy="custom-operation-status"]').should('not.exist')
+    expectPreview()
     cy.contains('button', 'Confirm and run').should('be.enabled')
     cy.then(() => expect(sends).to.equal(1))
   })
