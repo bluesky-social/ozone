@@ -152,6 +152,7 @@ export type Run = {
   context: Context
   operations: Operation[]
   status: RunStatus
+  error?: string
   verifierDid?: string
 }
 

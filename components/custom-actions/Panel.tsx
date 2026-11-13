@@ -252,6 +252,7 @@ export function CustomActionPanel({ model }: { model: PanelModel }) {
                       ? 'Custom action cancelled. Remaining steps were skipped.'
                       : 'Running custom action…'}
           </p>
+          {run.error && <p role="alert">{run.error}</p>}
           {[
             'completed-with-errors',
             'failed',

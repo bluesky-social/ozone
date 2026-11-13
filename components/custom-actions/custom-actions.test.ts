@@ -873,6 +873,42 @@ describe('preparation', () => {
 })
 
 describe('bounded one-shot execution', () => {
+  it.each([
+    {
+      error: new Error('State changed. Review again.'),
+      message: 'State changed. Review again.',
+    },
+    { error: null, message: 'Could not complete this action.' },
+  ])(
+    'publishes the preflight failure reason: $message',
+    async ({ error, message }) => {
+      const { execute, deps, run } = runnerFixture()
+      deps.prepare.mockRejectedValue(error)
+      await execute()
+      expect(run.status).toBe('failed')
+      expect(run.error).toBe(message)
+      expect(deps.changed.mock.lastCall?.[0].error).toBe(message)
+      expect(deps.dispatch).not.toHaveBeenCalled()
+      expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
+    },
+  )
+  it('retains the required-step failure reason alongside earlier confirmed receipts', async () => {
+    const workflow = action()
+    workflow.actions.push(tag('unsent'))
+    const { execute, deps, run } = runnerFixture(workflow)
+    deps.dispatch
+      .mockResolvedValueOnce(eventReceipt())
+      .mockRejectedValueOnce(new Error('Required change failed'))
+    await execute()
+    expect(run.error).toBe('Required change failed')
+    expect(run.operations.map((op) => op.status)).toEqual([
+      'succeeded',
+      'failed',
+      'skipped',
+    ])
+    expect(run.operations[0].receipt).toEqual(eventReceipt())
+    expect(deps.dispatch).toHaveBeenCalledTimes(2)
+  })
   it('runs in order and publishes running state and confirmed receipts', async () => {
     const { execute, deps, run } = runnerFixture()
     deps.dispatch.mockImplementation(async (_run, op) => {

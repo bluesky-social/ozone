@@ -264,7 +264,9 @@ export async function executeRun(
     run.status = run.operations.some((op) => op.status === 'failed')
       ? 'completed-with-errors'
       : 'succeeded'
-  } catch {
+  } catch (error) {
+    run.error =
+      error instanceof Error ? error.message : 'Could not complete this action.'
     run.status = signal.aborted
       ? signal.reason?.name === 'TimeoutError'
         ? 'timed-out'

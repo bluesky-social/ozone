@@ -132,6 +132,7 @@ describe('custom action progress', () => {
         updatedAt: '',
         action,
         status,
+        ...(status === 'failed' && { error: 'Required change failed' }),
         context: {
           serviceDid: 'did:plc:service',
           uiOrigin: 'https://ozone.example',
@@ -181,6 +182,11 @@ describe('custom action progress', () => {
       }
       const html = renderToStaticMarkup(<Harness />)
       expect(html).toContain(message)
+      if (status === 'failed') {
+        expect(html).toContain('<p role="alert">Required change failed</p>')
+      } else {
+        expect(html).not.toContain('Required change failed')
+      }
       expect(html).toContain('Continue to the next step if this change fails')
       if (status === 'completed-with-errors') {
         expect(html).toContain('>failed</p>')
