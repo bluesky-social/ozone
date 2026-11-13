@@ -19,6 +19,13 @@ export type ModerationEvent =
     })
   | (M.ModEventComment & { $type: NonNullable<M.ModEventComment['$type']> })
   | (M.ModEventEscalate & { $type: NonNullable<M.ModEventEscalate['$type']> })
+export type Condition = {
+  target: 'subject' | 'account'
+  requiredTags?: string[]
+  absentTags?: string[]
+  requiredLabels?: string[]
+  absentLabels?: string[]
+}
 export type ReportActivity = {
   // narrowed to supported activity types
   $type: `tools.ozone.report.defs#${'closeActivity' | 'reopenActivity' | 'escalationActivity' | 'noteActivity'}`
@@ -53,11 +60,7 @@ export type CustomAction = {
   queueIds?: number[]
   subjectTypes: ('account' | 'record')[]
   collections?: string[]
-  when?: {
-    target: 'subject' | 'account'
-    requiredTags?: string[]
-    absentTags?: string[]
-  }[]
+  when?: Condition[]
   actions: Step[]
 }
 export type Settings = { version: 1; customActions: CustomAction[] }
@@ -161,5 +164,7 @@ export type Snapshot = {
   policies: PolicyListSetting
   subjectTags: string[]
   accountTags: string[]
+  subjectLabels: string[]
+  accountLabels: string[]
   profile?: { handle: string; displayName: string }
 }

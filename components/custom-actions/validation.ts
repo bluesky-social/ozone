@@ -93,6 +93,10 @@ export function validateSettings(value: unknown): Settings {
         conditions.flatMap((c) => c.requiredTags || []),
         conditions.flatMap((c) => c.absentTags || []),
       )
+      disjoint(
+        conditions.flatMap((c) => c.requiredLabels || []),
+        conditions.flatMap((c) => c.absentLabels || []),
+      )
     }
     for (const step of action.actions) {
       if (step.type !== 'event') continue

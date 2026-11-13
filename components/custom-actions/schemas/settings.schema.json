@@ -164,6 +164,12 @@
         },
         "absentTags": {
           "$ref": "#/definitions/tags"
+        },
+        "requiredLabels": {
+          "$ref": "#/definitions/tags"
+        },
+        "absentLabels": {
+          "$ref": "#/definitions/tags"
         }
       },
       "anyOf": [
@@ -179,6 +185,22 @@
           "required": ["absentTags"],
           "properties": {
             "absentTags": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": ["requiredLabels"],
+          "properties": {
+            "requiredLabels": {
+              "minItems": 1
+            }
+          }
+        },
+        {
+          "required": ["absentLabels"],
+          "properties": {
+            "absentLabels": {
               "minItems": 1
             }
           }

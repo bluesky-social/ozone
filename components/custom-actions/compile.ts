@@ -1,4 +1,4 @@
-import type { Agent } from '@atproto/api'
+import type { Agent, ComAtprotoLabelDefs } from '@atproto/api'
 import Ajv from 'ajv'
 import { DM_DISABLE_TAG } from '../../lib/constants'
 import { parseServerConfig } from '../../lib/server-config'
@@ -13,6 +13,7 @@ import type {
 } from './types'
 import { validateSettings } from './validation'
 import { scopeError } from './scope'
+import { conditionError } from './conditions'
 
 const permissionValidator = new Ajv().compile({
   type: 'object',
@@ -111,6 +112,26 @@ export async function readSnapshot(
   }
   const accountStatus = repo.data.moderation.subjectStatus
   const status = record ? record.data.moderation.subjectStatus : accountStatus
+  const labelerDid = serviceDid.split('#')[0]
+  const now = Date.now()
+  const activeLabels = (
+    labels: ComAtprotoLabelDefs.Label[] | undefined,
+    subjectId: string,
+    cid?: string,
+  ) => [
+    ...new Set(
+      (labels || [])
+        .filter(
+          (label) =>
+            label.src === labelerDid &&
+            label.uri === subjectId &&
+            !label.neg &&
+            (!label.cid || label.cid === cid) &&
+            (!label.exp || Date.parse(label.exp) > now),
+        )
+        .map((label) => label.val),
+    ),
+  ]
   return {
     context: {
       serviceDid,
@@ -133,6 +154,12 @@ export async function readSnapshot(
     profile,
     subjectTags: status?.tags || [],
     accountTags: accountStatus?.tags || [],
+    subjectLabels: activeLabels(
+      record ? record.data.labels : repo.data.labels,
+      id,
+      'cid' in ref ? ref.cid : undefined,
+    ),
+    accountLabels: activeLabels(repo.data.labels, did),
   }
 }
 
@@ -179,15 +206,9 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
     (!collection || !action.collections.includes(collection))
   )
     throw new Error('This record collection is not supported')
-  for (const condition of action.when || []) {
-    const tags =
-      condition.target === 'account' ? state.accountTags : state.subjectTags
-    if (
-      condition.requiredTags?.some((t) => !tags.includes(t)) ||
-      condition.absentTags?.some((t) => tags.includes(t))
-    )
-      throw new Error(`Tag conditions for ${condition.target} are not met`)
-  }
+  const unmetCondition = conditionError(action.when, state)
+  if (unmetCondition)
+    throw new Error(`Action conditions are not met: ${unmetCondition}`)
   for (const step of action.actions) {
     if (step.type === 'activity') {
       if (!context.report)

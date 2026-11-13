@@ -120,6 +120,16 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   visible to the reporter.
                 </li>
                 <li>
+                  Optional action-level <code>when</code> conditions hide a
+                  workflow unless all conditions match. Use{' '}
+                  <code>requiredTags</code>, <code>absentTags</code>,{' '}
+                  <code>requiredLabels</code>, or <code>absentLabels</code> on
+                  the <code>subject</code> or owning <code>account</code>. Label
+                  conditions use active labels from this labeler on that exact
+                  subject. Conditions are checked again before execution;
+                  conditional actions stay hidden while state is unavailable.
+                </li>
+                <li>
                   Steps stop the workflow on error by default. Tag and label
                   steps can opt in with <code>continueOnError: true</code> to
                   continue after a failed request or an unconfirmed response,

@@ -86,6 +86,8 @@ function snapshot(): Snapshot {
     }),
     subjectTags: [],
     accountTags: [],
+    subjectLabels: [],
+    accountLabels: [],
     protectedTags: {},
     policies: {},
     profile: { handle: 'example.test', displayName: 'Example' },

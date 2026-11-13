@@ -9,6 +9,7 @@ import { useConfigurationContext } from '../shell/ConfigurationContext'
 import { useCustomActionSettings } from './useSettings'
 import { useCustomActionRun } from './useRun'
 import { readSnapshot, subjectId } from './compile'
+import { conditionError } from './conditions'
 import { scopeError } from './scope'
 import type { CustomAction, Subject, Step } from './types'
 
@@ -79,6 +80,10 @@ export function useCustomActionPanel(
             : undefined,
       }) &&
       a.subjectTypes.includes(id.startsWith('did:') ? 'account' : 'record') &&
+      (!a.when?.length ||
+        (!state.isError &&
+          !!state.data &&
+          !conditionError(a.when, state.data))) &&
       (!a.collections || a.collections.includes(id.split('/')[3])),
   )
   const selection = choices.find((action) => action.id === selectionId) ?? null
