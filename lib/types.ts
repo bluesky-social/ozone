@@ -10,14 +10,14 @@ import { ReactNode } from 'react'
 import { CollectionId } from '@/reports/helpers/subject'
 
 export type Repo =
-  | ToolsOzoneModerationDefs.RepoView
-  | ToolsOzoneModerationDefs.RepoViewDetail
+  ToolsOzoneModerationDefs.RepoView | ToolsOzoneModerationDefs.RepoViewDetail
 
 export type SubjectStatus = ToolsOzoneModerationDefs.SubjectStatusView
 
 export type InviteCode = ComAtprotoServerDefs.InviteCode
 
 const isConvoRef = asPredicate(ChatBskyConvoDefs.validateConvoRef)
+const isMessageRef = asPredicate(ChatBskyConvoDefs.validateMessageRef)
 
 export function validSubjectString(subject: SubjectStatus['subject']) {
   if (ComAtprotoAdminDefs.isRepoRef(subject)) {
@@ -26,6 +26,8 @@ export function validSubjectString(subject: SubjectStatus['subject']) {
     return subject.uri
   } else if (isConvoRef(subject)) {
     return `at://${subject.did}/${CollectionId.Convo}/${subject.convoId}`
+  } else if (isMessageRef(subject)) {
+    return `at://${subject.did}/${CollectionId.Message}/${subject.messageId}`
   }
   return null
 }
