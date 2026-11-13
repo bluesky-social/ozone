@@ -7,9 +7,17 @@ import {
 } from '@headlessui/react'
 import { ActionButton } from '@/common/buttons'
 import { copyToClipboard } from '@/common/CopyButton'
-import examples from './fixtures/examples.json'
+import basicExamples from './fixtures/examples.json'
+import legitimateAccount from './fixtures/mark-account-legitimate.json'
 import settingsSchema from './schemas/settings.schema.json'
 
+const examples = {
+  ...basicExamples,
+  customActions: [
+    ...basicExamples.customActions,
+    ...legitimateAccount.customActions,
+  ],
+}
 const exampleJson = JSON.stringify(examples, null, 2)
 const schemaJson = JSON.stringify(settingsSchema, null, 2)
 
