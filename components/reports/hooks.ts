@@ -99,6 +99,7 @@ export function useCloseReports(options?: {
   return useMutation({
     mutationFn: async (input: {
       subject: string
+      reportId?: number
       reportTypes?: string[]
       internalNote?: string
       includeAllOwned?: boolean
