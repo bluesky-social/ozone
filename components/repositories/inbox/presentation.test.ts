@@ -12,6 +12,8 @@ import {
   scopeLabel,
   accountStatusCopy,
   subjectActionCopy,
+  appealableActionForSubject,
+  accountSubjectNotice,
 } from './presentation'
 import type { InboxAction, InboxNotification } from './api'
 
@@ -115,6 +117,48 @@ describe('inbox presentation', () => {
       title: 'A label was removed from your post',
       summary: 'Label: Adult Content',
     })
+  })
+
+  it('targets an active account suspension rather than a newer label', () => {
+    const subject = {
+      subject: {
+        $type: 'com.atproto.admin.defs#repoRef',
+        did: 'did:plc:owner',
+      },
+      enforcement: { state: 'takendown' },
+    } as Parameters<typeof appealableActionForSubject>[0]
+    const label = {
+      id: 2,
+      type: 'labelApplied',
+      createdAt: '2026-01-02T00:00:00Z',
+    }
+    const takedown = {
+      id: 1,
+      type: 'accountTakedown',
+      createdAt: '2026-01-01T00:00:00Z',
+    }
+    expect(appealableActionForSubject(subject, [label, takedown])).toEqual(
+      takedown,
+    )
+    expect(appealableActionForSubject(subject, [label])).toBeUndefined()
+    expect(
+      accountSubjectNotice({
+        ...subject,
+        actions: [
+          {
+            id: 3,
+            type: 'communicationSent',
+            createdAt: '2026-01-03T00:00:00Z',
+          },
+          takedown,
+        ],
+        appeal: {
+          state: 'resolved',
+          outcome: 'denied',
+          resolvedAt: '2026-01-02T00:00:00Z',
+        },
+      } as Parameters<typeof accountSubjectNotice>[0]).title,
+    ).toBe('Appeal denied')
   })
 
   it('keeps day-only report summary dates in UTC in western time zones', () => {

@@ -48,14 +48,15 @@ import {
   enforcementLabel,
   scopeLabel,
   appealLabel,
-  isAppealableAction,
+  appealableActionForSubject,
+  isAppealDecision,
   mergeActions,
   countGraphemes,
   accountPreview,
   subjectActionCopy,
   accountActionDate,
-  accountNoticeTitle,
   accountSubjectNotice,
+  accountActionCopy,
   sanitizeAccountName,
 } from './presentation'
 
@@ -63,6 +64,38 @@ type Hydrated = Record<string, ToolsOzoneModerationDefs.SubjectView>
 const cardClass =
   'rounded-lg border border-gray-200 bg-gray-50 p-4 text-gray-900 dark:border-slate-700 dark:bg-slate-900 dark:text-gray-100'
 const linkClass = 'text-blue-600 hover:underline dark:text-blue-400'
+
+function actionLabelName(
+  action: InboxAction | undefined,
+  src: string,
+  config: ReturnType<typeof useConfigurationContext>['config'],
+) {
+  const label = action?.labels?.[0]
+  if (!label) return
+  const definition =
+    src === config.did
+      ? config.labeler?.policies.labelValueDefinitions?.find(
+          (value) => value.identifier === label,
+        )
+      : undefined
+  const builtinNames: Record<string, string> = {
+    '!hide': 'Content Blocked',
+    '!warn': 'Content Warning',
+    '!no-unauthenticated': 'Sign-in Required',
+    porn: 'Adult Content',
+    sexual: 'Sexually Suggestive',
+    nudity: 'Non-sexual Nudity',
+    'graphic-media': 'Graphic Media',
+    gore: 'Graphic Media',
+  }
+  return (
+    definition?.locales.find((locale) => /^en(?:-|$)/i.test(locale.lang))
+      ?.name ??
+    definition?.locales[0]?.name ??
+    builtinNames[label] ??
+    label
+  )
+}
 
 function recordKind(uri: string) {
   const collection = uri.slice(5).split('/')[1]
@@ -245,6 +278,70 @@ function Timeline({ events }: { events: { label: string; at?: string }[] }) {
             </li>
           ))}
       </ol>
+    </section>
+  )
+}
+
+function AccountTimeline({
+  item,
+  actions,
+  hasNextPage,
+  isFetchingNextPage,
+  fetchNextPage,
+}: {
+  item: ActionedSubject | ActionedSubjectDetail
+  actions: InboxAction[]
+  hasNextPage?: boolean
+  isFetchingNextPage: boolean
+  fetchNextPage: () => void
+}) {
+  const { config } = useConfigurationContext()
+  if (!actions.length && !hasNextPage) return null
+  return (
+    <section className={cardClass}>
+      <h3 className="font-semibold">Timeline</h3>
+      <ol className="mt-3 space-y-3 border-l-2 border-gray-200 pl-4 dark:border-slate-700">
+        {actions.map((action) => {
+          const name = actionLabelName(action, item.src, config)
+          const copy = accountActionCopy(action, name)
+          return (
+            <li key={action.id} className="relative text-sm">
+              <span className="absolute -left-[23px] top-1 h-2.5 w-2.5 rounded-full bg-blue-500 ring-2 ring-white dark:ring-slate-900" />
+              <p className="font-medium">{copy.title}</p>
+              {(action.type === 'labelApplied' ||
+                action.type === 'labelRemoved') &&
+                copy.summary && <p>{copy.summary}</p>}
+              {action.policies?.map((policy) => (
+                <p key={policy.key}>
+                  <a
+                    href={
+                      /^https?:\/\//i.test(policy.link)
+                        ? policy.link
+                        : undefined
+                    }
+                    target="_blank"
+                    rel="noreferrer"
+                    className={linkClass}
+                  >
+                    {policy.displayName}
+                  </a>
+                </p>
+              ))}
+              {action.reversedAt && <p>Action reversed</p>}
+            </li>
+          )
+        })}
+      </ol>
+      {hasNextPage && (
+        <button
+          type="button"
+          disabled={isFetchingNextPage}
+          onClick={fetchNextPage}
+          className="mt-4 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100"
+        >
+          Load older actions
+        </button>
+      )}
     </section>
   )
 }
@@ -479,7 +576,15 @@ function AppealForm({
     setPending(true)
     setError(undefined)
     try {
-      await submitInboxAppeal(agent, item.subject, reason.trim(), action?.id)
+      await submitInboxAppeal(
+        agent,
+        item.subject,
+        reason.trim(),
+        action?.id,
+        !!subjectKey(item.subject)?.startsWith('did:') &&
+          (item.enforcement.state === 'takendown' ||
+            item.enforcement.state === 'suspended'),
+      )
       await queryClient.invalidateQueries({
         queryKey: ['moderatorInboxPreview', 'actioned-subjects', did],
       })
@@ -557,25 +662,17 @@ export function ActionedRow({
   item,
   did,
   hydrated,
-  action,
   selected = false,
-  selectedCurrent = false,
 }: {
   item: ActionedSubject | ActionedSubjectDetail
   did: string
   hydrated?: ToolsOzoneModerationDefs.SubjectView
-  action?: InboxAction
   selected?: boolean
-  selectedCurrent?: boolean
 }) {
   const [open, setOpen] = useState(selected)
-  const [showCurrent, setShowCurrent] = useState(selectedCurrent)
   useEffect(() => {
-    if (selected) {
-      setOpen(true)
-      setShowCurrent(selectedCurrent)
-    }
-  }, [selected, selectedCurrent])
+    if (selected) setOpen(true)
+  }, [selected])
   const [showAppeal, setShowAppeal] = useState(false)
   const { config } = useConfigurationContext()
   const key = subjectKey(item.subject)
@@ -586,34 +683,9 @@ export function ActionedRow({
     : 'latestAction' in item && item.latestAction
       ? [item.latestAction]
       : []
-  const appealAction = actions.find(isAppealableAction)
-  const selectedAction = action && !showCurrent ? action : undefined
-  const rowAction =
-    action ?? ('latestAction' in item ? item.latestAction : undefined)
-  const label = rowAction?.labels?.[0]
-  const definition =
-    item.src === config.did
-      ? config.labeler?.policies.labelValueDefinitions?.find(
-          (value) => value.identifier === label,
-        )
-      : undefined
-  const builtinNames: Record<string, string> = {
-    '!hide': 'Content Blocked',
-    '!warn': 'Content Warning',
-    '!no-unauthenticated': 'Sign-in Required',
-    porn: 'Adult Content',
-    sexual: 'Sexually Suggestive',
-    nudity: 'Non-sexual Nudity',
-    'graphic-media': 'Graphic Media',
-    gore: 'Graphic Media',
-  }
-  const labelName = label
-    ? (definition?.locales.find((locale) => /^en(?:-|$)/i.test(locale.lang))
-        ?.name ??
-      definition?.locales[0]?.name ??
-      builtinNames[label] ??
-      label)
-    : undefined
+  const appealAction = appealableActionForSubject(subject, actions)
+  const rowAction = 'latestAction' in item ? item.latestAction : undefined
+  const labelName = actionLabelName(rowAction, item.src, config)
   const actionCopy =
     rowAction && subjectActionCopy(rowAction, item.subject, labelName)
   const accountNotice =
@@ -626,117 +698,44 @@ export function ActionedRow({
       : subject.appeal?.state === 'resolved'
         ? `Appeal ${appealLabel(subject.appeal).toLowerCase()} · ${enforcementLabel(subject.enforcement.state)}`
         : enforcementLabel(subject.enforcement.state)
+  const accountStatus = key?.startsWith('did:')
+    ? subject.enforcement.state === 'takendown'
+      ? 'Your account is suspended'
+      : subject.enforcement.state === 'suspended'
+        ? 'Your account is temporarily suspended'
+        : undefined
+    : undefined
+  const newerAction =
+    subject.appeal?.state === 'resolved' &&
+    subject.appeal.resolvedAt &&
+    rowAction &&
+    Date.parse(rowAction.createdAt) > Date.parse(subject.appeal.resolvedAt)
+  const appealStatus = key?.startsWith('did:')
+    ? subject.appeal?.state === 'pending'
+      ? 'Appeal under review'
+      : subject.appeal?.state === 'resolved' &&
+          (!newerAction || !rowAction || !isAppealDecision(rowAction))
+        ? `${newerAction ? 'Previous appeal' : 'Appeal'} ${appealLabel(subject.appeal).toLowerCase() === 'reviewed' ? 'resolved' : appealLabel(subject.appeal).toLowerCase()}`
+        : undefined
+    : undefined
   const rowProps = {
-    title: actionCopy?.title || subjectTitle(item.subject, hydrated),
-    subtitle: rowAction
-      ? [actionCopy?.summary, accountActionDate(rowAction)]
-          .filter(Boolean)
-          .join(' · ')
-      : `${state} · Updated ${date(subject.updatedAt)}`,
-    isRead:
-      action && 'latestAction' in item
-        ? item.isRead || action.id !== item.latestAction?.id
-        : subject.isRead,
+    title:
+      accountStatus ||
+      actionCopy?.title ||
+      subjectTitle(item.subject, hydrated),
+    subtitle:
+      accountStatus || appealStatus
+        ? [appealStatus, `Updated ${date(subject.updatedAt)}`]
+            .filter(Boolean)
+            .join(' · ')
+        : rowAction
+          ? [actionCopy?.summary, accountActionDate(rowAction)]
+              .filter(Boolean)
+              .join(' · ')
+          : `${state} · Updated ${date(subject.updatedAt)}`,
+    isRead: subject.isRead,
     open,
-    onToggle: () => {
-      if (open) setShowCurrent(false)
-      setOpen(!open)
-    },
-  }
-  if (selectedAction) {
-    return (
-      <Row {...rowProps}>
-        {detail.isLoading && <Loading message="Loading action history" />}
-        {detail.isError && (
-          <QueryError error={detail.error} retry={() => void detail.refetch()} />
-        )}
-        {detail.data && (
-          <section className={cardClass}>
-            <h3 className="font-semibold">
-              {accountNoticeTitle(selectedAction)}
-            </h3>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              {new Date(
-                selectedAction.reversedAt || selectedAction.createdAt,
-              ).toLocaleString(undefined, {
-                dateStyle: 'medium',
-                timeStyle: 'short',
-              })}
-            </p>
-            <h4 className="mb-3 mt-4 font-semibold">
-              {subject.enforcement.state === 'takendown' ||
-              subject.enforcement.state === 'suspended'
-                ? 'Limited profile'
-                : 'Your account'}
-            </h4>
-            <SubjectContent
-              subject={subject.subject}
-              hydrated={hydrated}
-              accountDetail={key === did ? detail.data.pages[0] : undefined}
-            />
-            {(selectedAction.type === 'labelApplied' ||
-              selectedAction.type === 'labelRemoved') &&
-              actionCopy?.summary && (
-                <p className="mt-3 text-sm">{actionCopy.summary}</p>
-              )}
-            {selectedAction.policies?.length ? (
-              <div className="mt-4 text-sm">
-                <p>
-                  {selectedAction.policies.length === 1
-                    ? 'Rule violated:'
-                    : 'Rules violated:'}
-                </p>
-                {selectedAction.policies.map((policy) => (
-                  <p key={policy.key}>
-                    <a
-                      href={
-                        /^https?:\/\//i.test(policy.link)
-                          ? policy.link
-                          : undefined
-                      }
-                      target="_blank"
-                      rel="noreferrer"
-                      className={linkClass}
-                    >
-                      {policy.displayName}
-                    </a>
-                  </p>
-                ))}
-              </div>
-            ) : null}
-            {['accountTakedown', 'accountSuspended', 'labelApplied'].includes(
-              selectedAction.type,
-            ) &&
-              subject.appeal?.state === 'pending' && (
-                <p className="mt-3 text-sm">
-                  An appeal for this account is under review.
-                </p>
-              )}
-            {['accountTakedown', 'accountSuspended', 'labelApplied'].includes(
-              selectedAction.type,
-            ) &&
-              subject.appeal?.state === 'resolved' && (
-                <p className="mt-3 text-sm">
-                  {appealLabel(subject.appeal) === 'Approved'
-                    ? 'Your most recent account appeal was approved.'
-                    : appealLabel(subject.appeal) === 'Denied'
-                      ? 'Your most recent account appeal was denied.'
-                      : 'Your most recent account appeal was reviewed.'}
-                </p>
-              )}
-            {subject.availableActions?.includes('appeal') && (
-              <button
-                type="button"
-                onClick={() => setShowCurrent(true)}
-                className="mt-4 rounded-md border border-blue-600 px-3 py-1.5 text-sm font-medium text-blue-600 hover:bg-blue-50 dark:text-blue-400"
-              >
-                View current appeal options
-              </button>
-            )}
-          </section>
-        )}
-      </Row>
-    )
+    onToggle: () => setOpen(!open),
   }
   return (
     <Row {...rowProps}>
@@ -839,97 +838,109 @@ export function ActionedRow({
           action={appealAction}
         />
       )}
-      <Timeline
-        events={[
-          ...actions
-            .slice()
-            .reverse()
-            .flatMap((action) => [
-              { label: readable(action.type), at: action.createdAt },
-              ...(action.reversedAt
-                ? [
-                    {
-                      label: `${readable(action.type)} reversed`,
-                      at: action.reversedAt,
-                    },
-                  ]
+      {key?.startsWith('did:') ? (
+        <AccountTimeline
+          item={item}
+          actions={detail.data ? actions : []}
+          hasNextPage={detail.hasNextPage}
+          isFetchingNextPage={detail.isFetchingNextPage}
+          fetchNextPage={() => void detail.fetchNextPage()}
+        />
+      ) : (
+        <>
+          <Timeline
+            events={[
+              ...actions
+                .slice()
+                .reverse()
+                .flatMap((action) => [
+                  { label: readable(action.type), at: action.createdAt },
+                  ...(action.reversedAt
+                    ? [
+                        {
+                          label: `${readable(action.type)} reversed`,
+                          at: action.reversedAt,
+                        },
+                      ]
+                    : []),
+                ]),
+              ...(subject.appeal?.appealedAt
+                ? [{ label: 'Appeal submitted', at: subject.appeal.appealedAt }]
                 : []),
-            ]),
-          ...(subject.appeal?.appealedAt
-            ? [{ label: 'Appeal submitted', at: subject.appeal.appealedAt }]
-            : []),
-          ...(subject.appeal?.resolvedAt
-            ? [{ label: 'Appeal reviewed', at: subject.appeal.resolvedAt }]
-            : []),
-        ]}
-      />
-      {(actions.length > 0 || detail.hasNextPage) && (
-        <section className={cardClass}>
-          <h3 className="font-semibold">Action history</h3>
-          <ol className="mt-3 space-y-4">
-            {actions.map((action) => (
-              <li
-                key={action.id}
-                className="border-t border-gray-200 pt-3 first:border-t-0 first:pt-0 dark:border-slate-700"
-              >
-                <p className="text-sm font-medium">
-                  {readable(action.type)}{' '}
-                  <span className="font-normal text-gray-500 dark:text-gray-400">
-                    · {date(action.createdAt, true)}
-                  </span>
-                </p>
-                {action.scope && (
-                  <p className="mt-1 text-sm">
-                    Scope: {scopeLabel(action.scope)}
-                  </p>
-                )}
-                {action.labels?.length ? (
-                  <p className="mt-1 text-sm">
-                    Labels: {action.labels.join(', ')}
-                  </p>
-                ) : null}
-                {action.reversedAt && (
-                  <p className="mt-1 text-sm">
-                    Reversed {date(action.reversedAt, true)}
-                  </p>
-                )}
-                {action.expiresAt && (
-                  <p className="mt-1 text-sm">
-                    Expires {date(action.expiresAt, true)}
-                  </p>
-                )}
-                {action.policies?.length ? (
-                  <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
-                    {action.policies.map((policy) => (
-                      <li key={policy.key}>
-                        <a
-                          href={
-                            /^https?:\/\//i.test(policy.link)
-                              ? policy.link
-                              : undefined
-                          }
-                          target="_blank"
-                          rel="noreferrer"
-                          className={linkClass}
-                        >
-                          {policy.displayName}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                ) : null}
-              </li>
-            ))}
-          </ol>
-          {detail.hasNextPage && (
-            <div className="mt-4">
-              <LoadMore
-                pending={detail.isFetchingNextPage}
-                onClick={() => void detail.fetchNextPage()}
-              />
-            </div>
+              ...(subject.appeal?.resolvedAt
+                ? [{ label: 'Appeal reviewed', at: subject.appeal.resolvedAt }]
+                : []),
+            ]}
+          />
+          {(actions.length > 0 || detail.hasNextPage) && (
+            <section className={cardClass}>
+              <h3 className="font-semibold">Action history</h3>
+              <ol className="mt-3 space-y-4">
+                {actions.map((action) => (
+                  <li
+                    key={action.id}
+                    className="border-t border-gray-200 pt-3 first:border-t-0 first:pt-0 dark:border-slate-700"
+                  >
+                    <p className="text-sm font-medium">
+                      {readable(action.type)}{' '}
+                      <span className="font-normal text-gray-500 dark:text-gray-400">
+                        · {date(action.createdAt, true)}
+                      </span>
+                    </p>
+                    {action.scope && (
+                      <p className="mt-1 text-sm">
+                        Scope: {scopeLabel(action.scope)}
+                      </p>
+                    )}
+                    {action.labels?.length ? (
+                      <p className="mt-1 text-sm">
+                        Labels: {action.labels.join(', ')}
+                      </p>
+                    ) : null}
+                    {action.reversedAt && (
+                      <p className="mt-1 text-sm">
+                        Reversed {date(action.reversedAt, true)}
+                      </p>
+                    )}
+                    {action.expiresAt && (
+                      <p className="mt-1 text-sm">
+                        Expires {date(action.expiresAt, true)}
+                      </p>
+                    )}
+                    {action.policies?.length ? (
+                      <ul className="mt-2 list-disc space-y-1 pl-5 text-sm">
+                        {action.policies.map((policy) => (
+                          <li key={policy.key}>
+                            <a
+                              href={
+                                /^https?:\/\//i.test(policy.link)
+                                  ? policy.link
+                                  : undefined
+                              }
+                              target="_blank"
+                              rel="noreferrer"
+                              className={linkClass}
+                            >
+                              {policy.displayName}
+                            </a>
+                          </li>
+                        ))}
+                      </ul>
+                    ) : null}
+                  </li>
+                ))}
+              </ol>
+              {detail.hasNextPage && (
+                <div className="mt-4">
+                  <LoadMore
+                    pending={detail.isFetchingNextPage}
+                    onClick={() => void detail.fetchNextPage()}
+                  />
+                </div>
+              )}
+            </section>
           )}
-        </section>
+        </>
       )}
       {detail.data?.pages[0].reports && (
         <section className={cardClass}>
@@ -1311,64 +1322,6 @@ export function ReportsPreview({ did }: { did: string }) {
   )
 }
 
-export function AccountActionRows({
-  item,
-  did,
-  hydrated,
-  selected,
-  selectedActionId,
-}: {
-  item: ActionedSubject
-  did: string
-  hydrated?: ToolsOzoneModerationDefs.SubjectView
-  selected: boolean
-  selectedActionId?: number
-}) {
-  const key = subjectKey(item.subject)
-  const detail = useActionedSubjectDetail(did, key)
-  const actions = detail.data
-    ? mergeActions(detail.data.pages)
-    : item.latestAction
-      ? [item.latestAction]
-      : []
-  return (
-    <>
-      {actions.map((action) => (
-        <ActionedRow
-          key={action.id}
-          item={item}
-          did={did}
-          hydrated={hydrated}
-          action={action}
-          selected={
-            selected &&
-            action.id ===
-              (selectedActionId ?? item.latestAction?.id ?? actions[0]?.id)
-          }
-          selectedCurrent={
-            selected &&
-            selectedActionId === undefined &&
-            action.id === (item.latestAction?.id ?? actions[0]?.id)
-          }
-        />
-      ))}
-      {detail.isError && (
-        <QueryError error={detail.error} retry={() => void detail.refetch()} />
-      )}
-      {detail.hasNextPage && (
-        <button
-          type="button"
-          disabled={detail.isFetchingNextPage}
-          onClick={() => void detail.fetchNextPage()}
-          className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-100"
-        >
-          Load older account actions
-        </button>
-      )}
-    </>
-  )
-}
-
 export function ActionedSubjectsPreview({ did }: { did: string }) {
   const [filter, setFilter] = useState<InboxFilter>('all')
   const [sort, setSort] = useState<InboxSort>({
@@ -1377,9 +1330,6 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
   })
   const searchParams = useSearchParams()
   const selected = searchParams.get('subject')
-  const actionId = Number(searchParams.get('actionId'))
-  const selectedActionId =
-    Number.isSafeInteger(actionId) && actionId > 0 ? actionId : undefined
   const query = useInboxPreview(did, 'actioned-subjects', filter, sort)
   const items = useMemo(
     () => query.data?.pages.flatMap((page) => page.items) || [],
@@ -1418,22 +1368,13 @@ export function ActionedSubjectsPreview({ did }: { did: string }) {
           <div className="space-y-2">
             {items.map((item) => {
               const key = subjectKey(item.subject)
-              const props = {
-                item,
-                did,
-                selected: key === selected,
-                hydrated: hydrated.data?.[key || ''],
-              }
-              return key?.startsWith('did:') ? (
-                <AccountActionRows
-                  key={`${item.src}:${key}`}
-                  {...props}
-                  selectedActionId={selectedActionId}
-                />
-              ) : (
+              return (
                 <ActionedRow
                   key={`${item.src}:${key || JSON.stringify(item.subject)}`}
-                  {...props}
+                  item={item}
+                  did={did}
+                  selected={key === selected}
+                  hydrated={hydrated.data?.[key || '']}
                 />
               )
             })}

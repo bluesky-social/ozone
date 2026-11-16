@@ -24,6 +24,7 @@ import {
 import { StarterPackRecordCard } from './starterpacks/RecordCard'
 import { ProfileStatusCard } from './profileStatus/ProfileStatusCard'
 import { ConvoCard, ConvoCardView } from '@/dms/ConvoCard'
+import { MessageContext } from '@/dms/MessageContext'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 import {
   getProfileFromRepo,
@@ -134,6 +135,15 @@ export function RecordCard(props: {
           return <ConvoCard uri={uri} />
         }}
       </RecordWithSnapshots>
+    )
+  }
+  if (parsed.collection === CollectionId.Message) {
+    if (!parsed.rkey) return null
+    return (
+      <MessageContext
+        key={uri}
+        subject={{ did: parsed.did, messageId: parsed.rkey }}
+      />
     )
   }
   if (parsed.collection === CollectionId.ProfileStatus) {

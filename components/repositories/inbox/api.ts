@@ -93,6 +93,7 @@ export async function submitInboxAppeal(
   subject: SubjectRef,
   reason: string,
   actionId?: number,
+  takedownFallback = false,
 ): Promise<ActionedSubject> {
   const { data } = await agent.tools.ozone.inbox.appealActionedSubject({
     subject,
@@ -104,7 +105,14 @@ export async function submitInboxAppeal(
             id: actionId,
           },
         }
-      : {}),
+      : // Temporary suspensions are timed takedown events in Ozone.
+        takedownFallback
+        ? {
+            action: {
+              $type: 'tools.ozone.inbox.appealActionedSubject#takedownRef',
+            },
+          }
+        : {}),
   })
   return data
 }

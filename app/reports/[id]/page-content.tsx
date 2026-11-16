@@ -16,7 +16,7 @@ import { ConfirmationModal } from '@/common/modals/confirmation'
 import { useWorkspaceOpener } from '@/common/useWorkspaceOpener'
 import { ConversationSubjectWarning } from '@/dms/ConversationSubjectWarning'
 import { MessageActorMeta } from '@/dms/MessageActorMeta'
-import { getDidFromUri } from '@/lib/util'
+import { getDidFromUri, parseAtUri } from '@/lib/util'
 import { AgeAssuranceBadge } from '@/mod-event/AgeAssuranceStateBadge'
 import { ModEventDetailsPopover } from '@/mod-event/DetailsPopover'
 import { ModEventItem } from '@/mod-event/EventItem'
@@ -33,6 +33,12 @@ import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationS
 import { ActionError } from '@/reports/ModerationForm/ActionError'
 import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { canTargetAllOwned } from '@/reports/allOwnedScope'
+import { CollectionId, useCreateSubjectFromId } from '@/reports/helpers/subject'
+import {
+  canCloseOwnedRecordReport,
+  linksReportToEvent,
+  submitAccountReportAction,
+} from '@/reports/accountReportAction'
 import {
   useReportArrowKeyNavigation,
   useReportAutoAdvance,
@@ -496,6 +502,12 @@ export function ReportDetailPageContent() {
             const result = await emitEvent(
               hydrateModToolInfo(vals, ActionPanelNames.ReportPage),
             )
+            const eventId = (result as { id?: number } | undefined)?.id
+            if (!eventId) {
+              throw new Error(
+                'Moderation action did not return an event ID. Check the subject and report before retrying.',
+              )
+            }
             if (vals.event.$type === MOD_EVENTS.RESOLVE_APPEAL) {
               try {
                 await emitEvent(
@@ -512,17 +524,15 @@ export function ReportDetailPageContent() {
                 queryClient.invalidateQueries({ queryKey: ['modSubjectStatus'] })
               }
             }
-            const eventId = (result as any)?.id
             const isCascaded =
               vals.event.$type !== MOD_EVENTS.EMAIL &&
               report.subject.type !== 'account' &&
               vals.subject.$type === 'com.atproto.admin.defs#repoRef'
-            const linkedAllOwned = (
-              vals.reportAction as
-                | (ToolsOzoneModerationEmitEvent.ReportAction & { allOwned?: boolean })
-                | undefined
-            )?.allOwned
-            if (isCascaded && eventId && !linkedAllOwned) {
+            if (
+              isCascaded &&
+              eventId &&
+              !linksReportToEvent(report.id, vals.reportAction)
+            ) {
               await createActivity.mutateAsync({
                 reportId: report.id,
                 activity: {
@@ -532,10 +542,19 @@ export function ReportDetailPageContent() {
                 isAutomated: true,
               })
             }
-            queryClient.invalidateQueries({ queryKey: ['report', reportId] })
             queryClient.invalidateQueries({
-              queryKey: ['reportActivities', reportId],
+              queryKey: vals.reportAction ? ['report'] : ['report', reportId],
             })
+            queryClient.invalidateQueries({
+              queryKey: vals.reportAction
+                ? ['reportActivities']
+                : ['reportActivities', reportId],
+            })
+            if (vals.reportAction) {
+              queryClient.invalidateQueries({ queryKey: ['betaReports'] })
+              queryClient.invalidateQueries({ queryKey: ['events'] })
+            }
+            return eventId
           }}
           onCancel={() => router.push('/reports')}
           onClickDid={setQuickActionPanelSubject}
@@ -570,7 +589,9 @@ function ReportDetailLayout(props: {
   report: ToolsOzoneReportDefs.ReportView
   subject: string
   setSubject: (subject: string) => void
-  onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
+  onSubmit: (
+    vals: ToolsOzoneModerationEmitEvent.InputSchema,
+  ) => Promise<number | void>
   onCancel: () => void
   assignment?: ToolsOzoneReportDefs.ReportAssignment
   viewers: AssignmentViewWithModerator[]
@@ -590,6 +611,7 @@ function ReportDetailLayout(props: {
 
   const router = useRouter()
   const labelerAgent = useLabelerAgent()
+  const createSubjectFromId = useCreateSubjectFromId()
   const closeReport = useCreateActivity()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
@@ -598,14 +620,15 @@ function ReportDetailLayout(props: {
     'current' | 'all' | 'types'
   >('current')
   const [chosenReportActionScope, setChosenReportActionScope] = useState<
-    'current' | 'all' | 'types' | 'allOwned' | null
+    'none' | 'current' | 'all' | 'types' | 'allOwned' | null
   >(null)
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
     getDefaultReportTypes(report),
   )
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const appealLabelActionStarted = useRef(false)
-  const [applyToAccount, setApplyToAccount] = useState(false)
+  const accountReportActionStarted = useRef(false)
+  const [requestedApplyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
 
   const resolveAppealForReport = async (createdBy: string, comment?: string) => {
@@ -634,6 +657,15 @@ function ReportDetailLayout(props: {
         did: subjectView.did,
         convoId: subjectView.convoId,
       } as ToolsOzoneModerationEmitEvent.InputSchema['subject']
+    } else if (
+      parseAtUri(report.subject.subject)?.collection === CollectionId.Message
+    ) {
+      const result = await createSubjectFromId(report.subject.subject, {
+        subject: report.subject.subject,
+        eventId: report.eventId,
+        reportedBy: report.reportedBy,
+      })
+      appealSubject = result.subject
     } else {
       const reportUri = report.subject.subject
       const reportStatusSubject = report.subject.status?.subject
@@ -735,6 +767,21 @@ function ReportDetailLayout(props: {
 
     try {
       if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
+        if (applyToAccount && report.subject.type === 'record' && isCascaded) {
+          await submitAccountReportAction({
+            report,
+            input: finalVals,
+            scope: reportActionScope,
+            reportTypes: reportActionTypes,
+            reportActionStarted: accountReportActionStarted,
+            onSubmit,
+            onLinked: isAppealReport(report.reportType)
+              ? () => resolveAppealForReport(finalVals.createdBy, actionComment)
+              : undefined,
+          })
+          setSelectedAction(null)
+          return
+        }
         // The record event must not close the report before the permanent
         // account takedown can link it and the other owned reports.
         if (
@@ -755,7 +802,9 @@ function ReportDetailLayout(props: {
             eventType,
           )
         ) {
-          throw new Error('Choose a report closure scope for this action')
+          throw new Error(
+            'Account-wide report closure requires an account label change, takedown, or takedown reversal',
+          )
         }
         if (isCascaded && reportActionScope !== 'allOwned') {
           // Send original event without a report action
@@ -831,16 +880,23 @@ function ReportDetailLayout(props: {
     onFormSubmit,
     record,
     isSubjectDid,
+    isMessageSubject,
+    applyToAccount,
+    messageAccountAction,
     profile,
     subjectStatus,
     selectedSeverityLevelName,
     canManageChat,
     currentLabels,
     allLabels,
+    messageLabelsUnavailable,
+    isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
+    areLabelsLoading,
+    areAccountActionsLoading,
     isTakedownEvent,
     isReverseTakedownEvent,
     setModEventType,
@@ -879,11 +935,18 @@ function ReportDetailLayout(props: {
     subject,
     setSubject,
     subjectOptions,
+    applyToAccount: requestedApplyToAccount,
+    report: {
+      subject: report.subject.subject,
+      eventId: report.eventId,
+      reportedBy: report.reportedBy,
+    },
   })
 
   // Sync the selected action with its event type and report closing scope.
   useEffect(() => {
     appealLabelActionStarted.current = false
+    if (selectedAction) accountReportActionStarted.current = false
     setChosenReportActionScope(null)
     if (selectedAction === 'label') {
       setModEventType(MOD_EVENTS.LABEL)
@@ -900,6 +963,14 @@ function ReportDetailLayout(props: {
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
   )
+  const showAccountReportClosure =
+    applyToAccount &&
+    isSubjectRecord &&
+    report.status !== 'closed' &&
+    canCloseOwnedRecordReport(report.subject.type, modEventType)
+  const showReportClosureScope =
+    showReportAction &&
+    (!applyToAccount || showAccountReportClosure || !!messageAccountAction)
   const permanentAccountTakedownFromRecord =
     selectedAction === 'takedown' &&
     report.subject.type === 'record' &&
@@ -907,17 +978,38 @@ function ReportDetailLayout(props: {
     !applyToAccount &&
     willPermanentlyTakedownAccount
   const showAllOwned = canTargetAllOwned(
-    !isSubjectRecord || applyToAccount || permanentAccountTakedownFromRecord,
+    isSubjectDid || applyToAccount || permanentAccountTakedownFromRecord,
     modEventType,
   )
 
-  const reportActionScope =
-    chosenReportActionScope === 'allOwned' && !showAllOwned
-      ? defaultReportActionScope
-      : (chosenReportActionScope ??
-        (permanentAccountTakedownFromRecord
-          ? 'allOwned'
-          : defaultReportActionScope))
+  const reportActionScope = messageAccountAction
+    ? chosenReportActionScope === 'allOwned' && showAllOwned
+      ? 'allOwned'
+      : 'current'
+    : applyToAccount
+      ? chosenReportActionScope === 'all' ||
+        (chosenReportActionScope === 'allOwned' && !showAllOwned)
+        ? 'types'
+        : (chosenReportActionScope ?? 'types')
+      : chosenReportActionScope === 'none' ||
+          (chosenReportActionScope === 'allOwned' && !showAllOwned)
+        ? defaultReportActionScope
+        : (chosenReportActionScope ?? defaultReportActionScope)
+
+  const reportClosureHelp = {
+    none: 'Applies the action and leaves all reports open.',
+    current: messageAccountAction
+      ? isAppealReport(report.reportType)
+        ? 'Resolves this appeal and closes this report.'
+        : 'Applies the account action and leaves this message report open.'
+      : 'Closes this report and leave other reports open.',
+    all: 'Closes this report and all eligible reports on this subject.',
+    types: applyToAccount
+      ? 'Close reports on this subject and its account that have the selected types'
+      : 'Closes this report plus eligible reports of the selected types on this subject.',
+    allOwned:
+      'Closes this report and eligible reports on the account and its subjects.',
+  }[reportActionScope]
 
   useEffect(() => {
     if (!showAllOwned) {
@@ -1019,7 +1111,15 @@ function ReportDetailLayout(props: {
               className="flex flex-row items-center gap-2"
             >
               <LabelList className="-ml-1 -mt-1 flex-wrap">
-                {!currentLabels.length && <LabelListEmpty className="ml-1" />}
+                {messageLabelsUnavailable ? (
+                  <span>
+                    {isFetchingSubject
+                      ? 'Loading labels...'
+                      : 'Could not load message labels'}
+                  </span>
+                ) : !currentLabels.length && (
+                  <LabelListEmpty className="ml-1" />
+                )}
                 {allLabels.map((label) => (
                   <ModerationLabel
                     key={label.val}
@@ -1148,7 +1248,9 @@ function ReportDetailLayout(props: {
             currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
-            subjectStatus={subjectStatus}
+            subjectStatus={
+              isMessageSubject ? repo?.moderation.subjectStatus : subjectStatus
+            }
             onResolveAppeal={
               isAppealReport(report.reportType)
                 ? (comment) => resolveAppealForReport(config.did, comment)
@@ -1163,7 +1265,7 @@ function ReportDetailLayout(props: {
                     if (!did) {
                       throw new Error('Cannot determine the email recipient')
                     }
-                    return onSubmit({
+                    await onSubmit({
                       subject: {
                         $type: 'com.atproto.admin.defs#repoRef',
                         did,
@@ -1193,17 +1295,32 @@ function ReportDetailLayout(props: {
               </div>
 
               {isSubjectRecord && (
-                <Checkbox
-                  value="true"
-                  id="applyToAccount"
-                  name="applyToAccount"
-                  className="mb-3 flex items-center"
-                  checked={applyToAccount}
-                  onChange={(e) => {
-                    setApplyToAccount(e.target.checked)
-                  }}
-                  label="Apply action to account"
-                />
+                <>
+                  {messageAccountAction && (
+                    <div className="mb-3">
+                      <Alert
+                        type="warning"
+                        showIcon
+                        title="Account action"
+                        body={messageAccountAction}
+                      />
+                    </div>
+                  )}
+                  <Checkbox
+                    value="true"
+                    id="applyToAccount"
+                    name="applyToAccount"
+                    className="mb-3 flex items-center"
+                    checked={applyToAccount}
+                    disabled={!!messageAccountAction}
+                    onChange={(e) => {
+                      setApplyToAccount(e.target.checked)
+                      setChosenReportActionScope(null)
+                      accountReportActionStarted.current = false
+                    }}
+                    label="Apply action to account"
+                  />
+                </>
               )}
 
               {(isTakedownEvent || isReverseTakedownEvent) && (
@@ -1227,7 +1344,7 @@ function ReportDetailLayout(props: {
                   }
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
-                  isSubjectDid={isSubjectDid}
+                  isSubjectDid={isSubjectDid || !!messageAccountAction}
                   recommendedPolicies={report.queue?.recommendedPolicies}
                 />
               )}
@@ -1253,7 +1370,14 @@ function ReportDetailLayout(props: {
 
               {isLabelEvent && (
                 <div className="mt-2">
+                  {areLabelsLoading && <p>Refreshing labels...</p>}
                   <LabelSelector
+                    key={JSON.stringify([
+                      subject,
+                      applyToAccount,
+                      currentLabels,
+                      allLabels.map(({ src, val }) => [src, val]),
+                    ])}
                     id="labels"
                     name="labels"
                     form={FORM_ID}
@@ -1313,44 +1437,64 @@ function ReportDetailLayout(props: {
                 </div>
               )}
 
-              {showReportAction && (
+              {showReportClosureScope && (
                 <div className="mt-2 mb-3 space-y-2">
                   <Select
                     className="w-full"
+                    aria-label="Report closure"
+                    aria-describedby="report-closure-help"
                     value={reportActionScope}
                     onChange={(e) => {
                       const scope = e.target.value as
+                        | 'none'
                         | 'current'
                         | 'all'
                         | 'types'
                         | 'allOwned'
                       setChosenReportActionScope(scope)
-                      if (scope !== 'allOwned') {
+                      if (
+                        !applyToAccount &&
+                        scope !== 'allOwned' &&
+                        scope !== 'none'
+                      ) {
                         setDefaultReportActionScope(scope)
                       }
                     }}
                   >
-                    <option value="current">Close this report only</option>
-                    <option value="all">
-                      Close all open reports on subject
+                    {applyToAccount && !messageAccountAction && (
+                      <option value="none">Keep all reports open</option>
+                    )}
+                    <option value="current">
+                      {messageAccountAction
+                        ? isAppealReport(report.reportType)
+                          ? 'Resolve and close this appeal'
+                          : 'Keep this message report open'
+                        : 'Close this report only'}
                     </option>
-                    <option value="types">
-                      Close reports of specific types
-                    </option>
+                    {!messageAccountAction && (
+                      <>
+                        {!applyToAccount && (
+                          <option value="all">
+                            Close all open reports on subject
+                          </option>
+                        )}
+                        <option value="types">
+                          Close reports of specific types
+                        </option>
+                      </>
+                    )}
                     {showAllOwned && (
                       <option value="allOwned">
-                        Close open reports on account and all owned subjects
+                        Close all reports on the account and owned subjects
                       </option>
                     )}
                   </Select>
-                  {reportActionScope === 'allOwned' && showAllOwned && (
-                    <p className="text-xs text-gray-500 dark:text-gray-400">
-                      {permanentAccountTakedownFromRecord &&
-                        'Reports will be linked to the permanent account takedown. '}
-                      Other assigned, escalated, or actively assigned reports
-                      remain open.
-                    </p>
-                  )}
+                  <p
+                    id="report-closure-help"
+                    className="text-xs text-gray-500 dark:text-gray-400"
+                  >
+                    {reportClosureHelp}
+                  </p>
                   {reportActionScope === 'types' && (
                     <ReportTypeMultiselect
                       value={reportActionTypes}
@@ -1387,7 +1531,11 @@ function ReportDetailLayout(props: {
                 <ButtonPrimary
                   ref={submitButton}
                   type="submit"
-                  disabled={submission.isSubmitting}
+                  disabled={
+                    submission.isSubmitting ||
+                    areLabelsLoading ||
+                    areAccountActionsLoading
+                  }
                   className="px-4"
                 >
                   Submit

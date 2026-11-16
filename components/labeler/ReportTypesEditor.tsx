@@ -6,6 +6,10 @@ import {
 } from '@/reports/helpers/getType'
 
 const availableReasonTypes = Object.keys(reasonTypeOptions)
+const appealReasonTypes = new Set([
+  'com.atproto.moderation.defs#reasonAppeal',
+  'tools.ozone.report.defs#reasonAppeal',
+])
 const groupedTypes = new Set(Object.values(groupedReasonTypes).flat())
 const reasonGroups: [string, string[]][] = [
   ...Object.entries(groupedReasonTypes),
@@ -62,11 +66,12 @@ export function ReportTypesEditor({
           Clear selection
         </button>
       </div>
-      {value?.length === 0 && (
-        <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
-          No report types selected. This labeler accepts no report types.
-        </p>
-      )}
+      {value !== undefined &&
+        value.every((type) => appealReasonTypes.has(type)) && (
+          <p className="text-sm text-gray-500 dark:text-gray-400 mb-3">
+            Only appeals are accepted.
+          </p>
+        )}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {groups.map(([category, types]) =>
           types.length ? (
@@ -74,26 +79,46 @@ export function ReportTypesEditor({
               <legend className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
                 {category}
               </legend>
-              {types.map((type) => (
-                <Checkbox
-                  key={type}
-                  value={type}
-                  name={`reasonType-${type}`}
-                  checked={value === undefined || value.includes(type)}
-                  onChange={(event) => {
-                    const selected = value ?? availableReasonTypes
-                    onChange(
-                      event.target.checked
-                        ? [...new Set([...selected, type])]
-                        : selected.filter(
-                            (selectedType) => selectedType !== type,
-                          ),
-                    )
-                  }}
-                  label={getReasonLabel(type)}
-                  className="flex items-center mb-1 break-words"
-                />
-              ))}
+              {types.map((type) => {
+                const isAppeal = appealReasonTypes.has(type)
+                return (
+                  <div key={type} title={type}>
+                    <Checkbox
+                      value={type}
+                      name={`reasonType-${type}`}
+                      checked={
+                        isAppeal || value === undefined || value.includes(type)
+                      }
+                      disabled={isAppeal}
+                      onChange={
+                        isAppeal
+                          ? undefined
+                          : (event) => {
+                              const selected = value ?? availableReasonTypes
+                              onChange(
+                                event.target.checked
+                                  ? [...new Set([...selected, type])]
+                                  : selected.filter(
+                                      (selectedType) => selectedType !== type,
+                                    ),
+                              )
+                            }
+                      }
+                      label={
+                        <>
+                          {getReasonLabel(type)}
+                          {isAppeal && (
+                            <span className="ml-1 text-gray-500 dark:text-gray-400">
+                              (always accepted)
+                            </span>
+                          )}
+                        </>
+                      }
+                      className="flex items-center mb-1 break-words"
+                    />
+                  </div>
+                )
+              })}
             </fieldset>
           ) : null,
         )}

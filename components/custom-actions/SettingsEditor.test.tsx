@@ -92,6 +92,9 @@ describe('custom action settings views', () => {
       previous = position
     }
     expect(html).not.toContain('<textarea')
+    for (const row of html.match(/<li>.*?<\/li>/g) || []) {
+      expect(row).toContain('Roles: Moderator, Admin')
+    }
     expect(button(html, 'Edit raw JSON')).toBeDefined()
     expect(button(html, 'Add')).toBeDefined()
     expect(button(html, 'Export settings')).toBeDefined()
@@ -192,7 +195,18 @@ describe('custom action settings views', () => {
     expect(button(markup(empty), 'Edit raw JSON')).not.toContain(' disabled=""')
     const disabled = model()
     disabled.settings.customActions[0].enabled = false
+    disabled.settings.customActions[0].allowedRoles = [
+      'tools.ozone.team.defs#roleTriage',
+      'tools.ozone.team.defs#roleVerifier',
+    ]
     expect(markup(disabled)).toContain('Disabled</span>')
+    expect(markup(disabled).match(/<li>.*?<\/li>/)?.[0]).toContain(
+      'Roles: Triage, Verifier',
+    )
+    disabled.settings.customActions[0].allowedRoles = [ADMIN_ROLE]
+    expect(markup(disabled).match(/<li>.*?<\/li>/)?.[0]).toContain(
+      'Roles: Admin',
+    )
   })
 
   it('does not show an empty configuration during loading or failed reads', () => {
