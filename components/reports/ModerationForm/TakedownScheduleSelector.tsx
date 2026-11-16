@@ -28,30 +28,37 @@ const ScheduledDurations = {
 }
 
 export const TakedownScheduleSelector = (
-  props: { form?: string } & ComponentProps<'div'>,
+  props: {
+    form?: string
+    onScheduledChange?: (scheduled: boolean) => void
+  } & ComponentProps<'div'>,
 ) => {
-  const { form, ...rest } = props
+  const { form, onScheduledChange, ...rest } = props
   const [selectedOption, setSelectedOption] =
     useState<TakedownOption>('permanent')
+  const selectOption = (option: TakedownOption) => {
+    setSelectedOption(option)
+    onScheduledChange?.(option === 'scheduled')
+  }
 
   const buttonGroupItems = [
     {
       id: 'permanent',
       text: 'Permanent',
       isActive: selectedOption === 'permanent',
-      onClick: () => setSelectedOption('permanent'),
+      onClick: () => selectOption('permanent'),
     },
     {
       id: 'suspension',
       text: 'Suspension',
       isActive: selectedOption === 'suspension',
-      onClick: () => setSelectedOption('suspension'),
+      onClick: () => selectOption('suspension'),
     },
     {
       id: 'scheduled',
       text: 'Scheduled',
       isActive: selectedOption === 'scheduled',
-      onClick: () => setSelectedOption('scheduled'),
+      onClick: () => selectOption('scheduled'),
     },
   ]
 

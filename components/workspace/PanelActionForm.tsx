@@ -14,17 +14,24 @@ import { useState } from 'react'
 import { toast } from 'react-toastify'
 import { ModToolForm } from './ModToolForm'
 import { TakedownScheduleSelector } from '@/reports/ModerationForm/TakedownScheduleSelector'
+import { supportsBatchedWorkspaceEvent } from '@/mod-event/helpers/emitEvent'
 
 export const WorkspacePanelActionForm = ({
   handleEmailSubmit,
   modEventType,
   setModEventType,
   onCancel,
+  batchRequests,
+  setBatchRequests,
+  isSubmitting,
 }: {
   handleEmailSubmit: (emailData: EmailComposerData) => Promise<void>
   modEventType: string
   setModEventType: (action: string) => void
   onCancel: () => void
+  batchRequests: boolean
+  setBatchRequests: (enabled: boolean) => void
+  isSubmitting: boolean
 }) => {
   const [currentBatchId, setCurrentBatchId] = useState(getBatchId())
 
@@ -38,7 +45,7 @@ export const WorkspacePanelActionForm = ({
     setBatchId(batchId)
     setCurrentBatchId(batchId)
   }
-  
+
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
@@ -48,6 +55,10 @@ export const WorkspacePanelActionForm = ({
   const isTagEvent = modEventType === MOD_EVENTS.TAG
   const isLabelEvent = modEventType === MOD_EVENTS.LABEL
   const [removeTags, setRemoveTags] = useState(false)
+  const [isScheduledTakedown, setIsScheduledTakedown] = useState(false)
+  const canBatchRequests =
+    supportsBatchedWorkspaceEvent(modEventType) &&
+    !(isTakedownEvent && isScheduledTakedown)
   const shouldShowDurationInHoursField =
     isMuteEvent || isLabelEvent || (isTagEvent && !removeTags)
 
@@ -63,7 +74,10 @@ export const WorkspacePanelActionForm = ({
             MOD_EVENTS.RESOLVE_APPEAL,
             MOD_EVENTS.REVERSE_TAKEDOWN,
           ]}
-          setSelectedAction={(action) => setModEventType(action)}
+          setSelectedAction={(action) => {
+            if (action !== modEventType) setIsScheduledTakedown(false)
+            setModEventType(action)
+          }}
         />
         <ModEventDetailsPopover modEventType={modEventType} />
       </div>
@@ -111,10 +125,10 @@ export const WorkspacePanelActionForm = ({
                     isMuteEvent
                       ? 'Mute duration'
                       : isLabelEvent
-                      ? 'Label duration'
-                      : isTagEvent
-                      ? 'Tag duration'
-                      : ''
+                        ? 'Label duration'
+                        : isTagEvent
+                          ? 'Tag duration'
+                          : ''
                   }
                 />
               </FormLabel>
@@ -127,7 +141,10 @@ export const WorkspacePanelActionForm = ({
                 <ActionPolicySelector name="policies" />
               </div>
               <div className="mt-2 flex flex-row gap-2">
-                <TakedownScheduleSelector form={WORKSPACE_FORM_ID} />
+                <TakedownScheduleSelector
+                  form={WORKSPACE_FORM_ID}
+                  onScheduledChange={setIsScheduledTakedown}
+                />
               </div>
             </div>
           )}
@@ -226,12 +243,24 @@ export const WorkspacePanelActionForm = ({
             onBatchIdChange={handleBatchIdChange}
           />
 
-          <div className="flex flex-row gap-2">
+          {canBatchRequests && (
+            <Checkbox
+              id="workspace-batch-requests"
+              label="Batch requests"
+              className="mb-2"
+              checked={batchRequests}
+              onChange={(e) => setBatchRequests(e.target.checked)}
+              disabled={isSubmitting}
+              title="Send actions together. Turn off to send individual requests."
+            />
+          )}
+          <div className="flex flex-row flex-wrap items-center gap-2">
             <ActionButton
               appearance="primary"
               type="submit"
               size="sm"
               form={WORKSPACE_FORM_ID}
+              disabled={isSubmitting}
             >
               Submit Action
             </ActionButton>

@@ -3,6 +3,7 @@ import { toast, ToastContentProps } from 'react-toastify'
 import {
   Agent,
   ComAtprotoAdminDefs,
+  ComAtprotoRepoStrongRef,
   ComAtprotoModerationDefs,
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
@@ -36,6 +37,9 @@ import {
 } from './strike-expiry'
 
 const DELAY_DURATION_MS = 10000 // 10 seconds
+const BATCH_SUBJECT_LIMIT = 100
+const BATCH_REQUEST_CONCURRENCY = 50
+const SUBJECT_RESOLUTION_CONCURRENCY = 50
 
 export enum ActionPanelNames {
   Workspace = 'workspace',
@@ -259,6 +263,31 @@ type BulkActionResults = {
   failed: string[]
 }
 
+const batchedEventTypes = new Set<string>([
+  MOD_EVENTS.ACKNOWLEDGE,
+  MOD_EVENTS.TAKEDOWN,
+  MOD_EVENTS.LABEL,
+  MOD_EVENTS.REPORT,
+  MOD_EVENTS.REVERSE_TAKEDOWN,
+  MOD_EVENTS.RESOLVE_APPEAL,
+  MOD_EVENTS.TAG,
+  MOD_EVENTS.REVOKE_ACCOUNT_CREDENTIALS,
+])
+
+export const supportsBatchedWorkspaceEvent = (eventType: string) =>
+  batchedEventTypes.has(eventType)
+
+type ResolvedSubject = Awaited<
+  ReturnType<ReturnType<typeof useCreateSubjectFromId>>
+>['subject']
+
+const batchSubjectId = (
+  subject: ToolsOzoneModerationEmitEvent.InputSchema['subject'],
+): string | undefined => {
+  if (ComAtprotoAdminDefs.isRepoRef(subject)) return subject.did
+  if (ComAtprotoRepoStrongRef.isMain(subject)) return subject.uri
+}
+
 const eventForSubject = (
   eventData: Pick<ToolsOzoneModerationEmitEvent.InputSchema, 'event'>,
   subjectData: ToolsOzoneModerationDefs.SubjectView,
@@ -304,6 +333,7 @@ const emitEventsInBulk = async ({
   modTool,
   scheduling,
   prepareStrikeEvent,
+  useBatchedEndpoint,
 }: {
   labelerAgent: Agent
   createSubjectFromId: ReturnType<typeof useCreateSubjectFromId>
@@ -313,12 +343,26 @@ const emitEventsInBulk = async ({
   modTool?: ToolsOzoneModerationEmitEvent.InputSchema['modTool']
   scheduling?: ToolsOzoneModerationScheduleAction.SchedulingConfig
   prepareStrikeEvent: ReturnType<typeof usePrepareStrikeEvent>
+  useBatchedEndpoint: boolean
 }) => {
   const toastId = 'workspace-bulk-action'
   try {
     const results: BulkActionResults = {
       succeeded: [],
       failed: [],
+    }
+
+    const emitSingle = async (id: string, subject: ResolvedSubject) => {
+      const prepared = await prepareStrikeEvent({
+        ...eventForSubject(eventData, subjectData[id]),
+        modTool,
+      })
+      await labelerAgent.tools.ozone.moderation.emitEvent({
+        ...prepared,
+        subject,
+        createdBy: labelerAgent.assertDid,
+      })
+      results.succeeded.push(id)
     }
 
     let actions: PromiseSettledResult<void>[] | Promise<any>
@@ -357,21 +401,97 @@ const emitEventsInBulk = async ({
         .catch(() => {
           results.failed.push(...subjects)
         })
+    } else if (useBatchedEndpoint) {
+      actions = (async () => {
+        const entries = new Map<
+          string,
+          { subject: ResolvedSubject; ids: string[] }
+        >()
+        for (const subjectChunk of chunkArray(
+          subjects,
+          SUBJECT_RESOLUTION_CONCURRENCY,
+        )) {
+          const resolved = await Promise.all(
+            subjectChunk.map(async (id) => {
+              try {
+                const { subject } = await createSubjectFromId(id)
+                const key = batchSubjectId(subject)
+                if (!key) {
+                  // Conversation and message refs still require individual requests.
+                  await emitSingle(id, subject)
+                  return
+                }
+                const valid = ComAtprotoAdminDefs.isRepoRef(subject)
+                  ? ComAtprotoAdminDefs.validateRepoRef(subject).success
+                  : ComAtprotoRepoStrongRef.validateMain(subject).success
+                if (!valid) throw new Error('Invalid subject')
+                return { id, key, subject }
+              } catch {
+                results.failed.push(id)
+              }
+            }),
+          )
+          for (const entry of resolved) {
+            if (!entry) continue
+            const existing = entries.get(entry.key)
+            if (existing) existing.ids.push(entry.id)
+            else
+              entries.set(entry.key, {
+                subject: entry.subject,
+                ids: [entry.id],
+              })
+          }
+        }
+        if (!entries.size) return
+
+        let prepared: StrikeEventInput
+        try {
+          prepared = await prepareStrikeEvent({ ...eventData, modTool })
+        } catch {
+          for (const { ids } of entries.values()) results.failed.push(...ids)
+          return
+        }
+
+        await Promise.all(
+          chunkArray(Array.from(entries), BATCH_SUBJECT_LIMIT).map(
+            async (batch) => {
+              try {
+                const { data } =
+                  await labelerAgent.tools.ozone.moderation.emitEvents({
+                    ...prepared,
+                    createdBy: labelerAgent.assertDid,
+                    subjects: batch.map(([, { subject }]) => ({ subject })),
+                  })
+                const succeeded = new Set(
+                  data.events.map(({ subject }) => batchSubjectId(subject)),
+                )
+                const failed = new Set(
+                  data.failedEvents.map(({ subject }) =>
+                    batchSubjectId(subject),
+                  ),
+                )
+                for (const [key, { ids }] of batch) {
+                  // Missing or contradictory results must not be treated as successes.
+                  const target =
+                    succeeded.has(key) && !failed.has(key)
+                      ? results.succeeded
+                      : results.failed
+                  target.push(...ids)
+                }
+              } catch {
+                // A failed request may already have applied actions. Do not replay it.
+                for (const [, { ids }] of batch) results.failed.push(...ids)
+              }
+            },
+          ),
+        )
+      })()
     } else {
       actions = Promise.allSettled(
         subjects.map(async (sub) => {
           try {
             const { subject } = await createSubjectFromId(sub)
-            const prepared = await prepareStrikeEvent({
-              ...eventForSubject(eventData, subjectData[sub]),
-              modTool,
-            })
-            await labelerAgent.tools.ozone.moderation.emitEvent({
-              ...prepared,
-              subject,
-              createdBy: labelerAgent.assertDid,
-            })
-            results.succeeded.push(sub)
+            await emitSingle(sub, subject)
           } catch (err) {
             results.failed.push(sub)
           }
@@ -420,9 +540,11 @@ export const useActionSubjects = () => {
       {
         externalUrl,
         scheduling,
+        batchRequests = false,
       }: {
         externalUrl?: string
         scheduling?: ToolsOzoneModerationScheduleAction.SchedulingConfig
+        batchRequests?: boolean
       },
     ) => {
       if (!subjects.length) {
@@ -434,6 +556,12 @@ export const useActionSubjects = () => {
         succeeded: [],
         failed: [],
       }
+
+      subjects = Array.from(new Set(subjects))
+      const useBatchedEndpoint =
+        batchRequests &&
+        !scheduling &&
+        supportsBatchedWorkspaceEvent(eventData.event.$type)
 
       const batchId = getBatchId()
       const modTool = buildModToolInfo(ActionPanelNames.Workspace, {
@@ -447,8 +575,11 @@ export const useActionSubjects = () => {
         eventData.event,
       )
         ? 25
-        : 50
-      for (const chunk of chunkArray(subjects, chunkSize)) {
+        : useBatchedEndpoint
+          ? BATCH_SUBJECT_LIMIT * BATCH_REQUEST_CONCURRENCY
+          : 50
+      const chunks = chunkArray(subjects, chunkSize)
+      for (const [index, chunk] of chunks.entries()) {
         const { succeeded, failed } = await emitEventsInBulk({
           labelerAgent,
           createSubjectFromId,
@@ -458,14 +589,16 @@ export const useActionSubjects = () => {
           modTool,
           scheduling,
           prepareStrikeEvent,
+          useBatchedEndpoint,
         })
 
         results.succeeded.push(...succeeded)
         results.failed.push(...failed)
-        if (subjects.length > 300) {
-          // add a delay of 1s between each batch if we are going to be processing more than 6 batches
-          // this is kinda arbitrary and not backed by any particular limit but this gives the server a bit of room
-          // avoids potential rate limiting
+        if (
+          subjects.length > 300 &&
+          (!useBatchedEndpoint || index < chunks.length - 1)
+        ) {
+          // Give the server a pause between waves of requests.
           await new Promise((resolve) => setTimeout(resolve, 1000))
         }
       }
