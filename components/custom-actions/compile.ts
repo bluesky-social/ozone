@@ -199,6 +199,7 @@ function assertExecutable(action: CustomAction, state: Snapshot) {
   const restriction = scopeError(action, {
     moderatorDid: context.moderator.did,
     queueId: context.report?.queueId,
+    reportType: context.report?.reportType,
   })
   if (restriction) throw new Error(restriction)
   if (!action.subjectTypes.includes(type))

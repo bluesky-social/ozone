@@ -77,6 +77,7 @@ export type CustomAction = {
   allowedRoles: NonNullable<ServerConfig['role']>[]
   allowedModeratorDids?: string[]
   queueIds?: number[]
+  reportTypes?: string[]
   subjectTypes: ('account' | 'record')[]
   collections?: string[]
   when?: Condition[]

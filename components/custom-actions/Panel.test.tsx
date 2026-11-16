@@ -9,6 +9,7 @@ const state = vi.hoisted(() => ({
   moderatorDid: 'did:plc:bbbbbbbbbbbbbbbbbbbbbbbb' as string | undefined,
   role: 'tools.ozone.team.defs#roleAdmin',
   queueId: 7 as number | undefined,
+  reportType: 'tools.ozone.report.defs#reasonAppeal' as string | undefined,
   error: false,
   actions: [] as CustomAction[],
   queryKey: [] as unknown[],
@@ -32,7 +33,13 @@ vi.mock('@tanstack/react-query', () => ({
         (state.queueId === undefined
           ? undefined
           : {
-              context: { report: { id: 123, queueId: state.queueId } },
+              context: {
+                report: {
+                  id: 123,
+                  queueId: state.queueId,
+                  reportType: state.reportType,
+                },
+              },
             }),
       isError: state.error,
     }
@@ -65,6 +72,7 @@ beforeEach(() => {
   state.moderatorDid = 'did:plc:bbbbbbbbbbbbbbbbbbbbbbbb'
   state.role = 'tools.ozone.team.defs#roleAdmin'
   state.queueId = 7
+  state.reportType = 'tools.ozone.report.defs#reasonAppeal'
   state.error = false
   state.run = null
   state.snapshot = null
@@ -309,6 +317,34 @@ describe('custom action progress', () => {
 })
 
 describe('custom action menu scoping', () => {
+  it('filters by the fresh report type and requires current report context', () => {
+    const workflow = state.actions[0]
+    const appeal = 'tools.ozone.report.defs#reasonAppeal'
+    const legacyAppeal = 'com.atproto.moderation.defs#reasonAppeal'
+    const spam = 'tools.ozone.report.defs#reasonMisleadingSpam'
+    state.actions = [
+      workflow,
+      { ...workflow, id: 'appeal', reportTypes: [appeal, legacyAppeal] },
+      { ...workflow, id: 'spam', reportTypes: [spam] },
+    ]
+    expect(choices({ id: 123 })).toEqual(['unscoped', 'appeal'])
+    state.reportType = legacyAppeal
+    expect(choices({ id: 123 })).toEqual(['unscoped', 'appeal'])
+    state.reportType = spam
+    expect(choices({ id: 123, reportType: appeal })).toEqual([
+      'unscoped',
+      'spam',
+    ])
+    state.reportType = undefined
+    expect(choices({ id: 123, reportType: appeal })).toEqual(['unscoped'])
+    state.reportType = appeal
+    expect(choices()).toEqual(['unscoped'])
+    state.queueId = undefined
+    expect(choices({ id: 123, reportType: appeal })).toEqual(['unscoped'])
+    state.queueId = 7
+    state.error = true
+    expect(choices({ id: 123, reportType: appeal })).toEqual(['unscoped'])
+  })
   it('hides actions whose action-level tag conditions are unmet or not loaded', () => {
     const action = state.actions[0]
     action.when = [{ target: 'account', requiredTags: ['chat-disabled'] }]
@@ -390,6 +426,15 @@ describe('custom action menu scoping', () => {
       typeof useCustomActionPanel
     >[1]
     choices(report)
+    expect(state.queryKey).not.toEqual(before)
+  })
+  it('changes the snapshot query key when the same report changes type', () => {
+    choices({ id: 123, reportType: 'tools.ozone.report.defs#reasonAppeal' })
+    const before = state.queryKey
+    choices({
+      id: 123,
+      reportType: 'tools.ozone.report.defs#reasonMisleadingSpam',
+    })
     expect(state.queryKey).not.toEqual(before)
   })
 })
