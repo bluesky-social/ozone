@@ -1,6 +1,6 @@
 import { ToolsOzoneReportDefs } from '@atproto/api'
 import { InfiniteData, useQueryClient } from '@tanstack/react-query'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useRef } from 'react'
 import { useLocalStorage } from 'react-use'
 
@@ -46,8 +46,7 @@ function getReportsFromCache(
     null,
   )
   const data = latest?.state.data as
-    | InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }>
-    | undefined
+    InfiniteData<{ reports: ToolsOzoneReportDefs.ReportView[] }> | undefined
 
   if (!data?.pages) return []
 
@@ -135,6 +134,10 @@ export function useReports(reportId: number) {
  */
 export function useReportAutoAdvance(reportId: number, status?: string) {
   const router = useRouter()
+  const reviewSuffix =
+    useSearchParams().get('activityReview') === 'true'
+      ? '?activityReview=true'
+      : ''
   const { nextReportId, autoAdvance } = useReports(reportId)
 
   // Track the report a status belongs to, so navigating between reports (which
@@ -152,13 +155,13 @@ export function useReportAutoAdvance(reportId: number, status?: string) {
     if (prev.reportId !== reportId) return
     if (prev.status && prev.status !== 'closed' && status === 'closed') {
       if (autoAdvance && nextReportId) {
-        router.push(`/reports/${nextReportId}`)
+        router.push(`/reports/${nextReportId}${reviewSuffix}`)
       }
     }
     // advanceToNext is recreated each render; the effect re-runs only on
     // reportId/status change, capturing the latest closure at that point.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [reportId, status])
+  }, [reportId, status, reviewSuffix])
 }
 
 /**
@@ -166,6 +169,10 @@ export function useReportAutoAdvance(reportId: number, status?: string) {
  */
 export function useReportArrowKeyNavigation(reportId: number) {
   const router = useRouter()
+  const reviewSuffix =
+    useSearchParams().get('activityReview') === 'true'
+      ? '?activityReview=true'
+      : ''
   const { prevReportId, nextReportId } = useReports(reportId)
 
   const isEditableTarget = useCallback(
@@ -189,14 +196,14 @@ export function useReportArrowKeyNavigation(reportId: number) {
 
       if (e.key === 'ArrowLeft' && prevReportId !== null) {
         e.preventDefault()
-        router.push(`/reports/${prevReportId}`)
+        router.push(`/reports/${prevReportId}${reviewSuffix}`)
       } else if (e.key === 'ArrowRight' && nextReportId !== null) {
         e.preventDefault()
-        router.push(`/reports/${nextReportId}`)
+        router.push(`/reports/${nextReportId}${reviewSuffix}`)
       }
     }
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [reportId, prevReportId, nextReportId, router])
+  }, [reportId, prevReportId, nextReportId, router, reviewSuffix])
 }

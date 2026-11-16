@@ -616,7 +616,7 @@ const ACTIVITY_TO_STATUS: Record<string, string> = {
 
 type ActivityPayload = { $type: string; previousStatus?: string }
 
-function ActivityItem({
+export function ActivityItem({
   activity,
 }: {
   activity: ToolsOzoneReportDefs.ReportActivityView

@@ -6,6 +6,13 @@ import { ReportTypePanels } from '@/reports/stats/ReportTypePanels'
 import { QueueAging } from '@/reports/stats/QueueAging'
 import { QueueStatsTable } from '@/reports/stats/QueueStatsTable'
 import { StatsTable } from '@/reports/stats/StatsTable'
+import { ModeratorAnalytics } from '@/reports/ModeratorAnalytics'
+import {
+  readModeratorFilters,
+  writeModeratorFilters,
+  type ModeratorFilters,
+} from '@/reports/moderatorActivity'
+import { usePermission } from '@/shell/ConfigurationContext'
 import {
   getStatsWindow,
   STATS_PERIODS,
@@ -15,7 +22,7 @@ import {
 import { useStatsWindow } from '@/reports/stats/useStatsWindow'
 import { useLiveStats } from '@/reports/stats/useReportStats'
 import { Tab, TabGroup, TabList, TabPanel, TabPanels } from '@headlessui/react'
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
 import { useInterval, useTitle } from 'react-use'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
@@ -31,22 +38,66 @@ export function AnalyticsPageContent() {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const canViewModeratorActivity = usePermission('canViewModeratorActivity')
+  const tabs = canViewModeratorActivity
+    ? [...ANALYTICS_TABS, { key: 'moderators', label: 'Moderators' }]
+    : ANALYTICS_TABS
+  const moderatorsActive = searchParams.get('tab') === 'moderators'
   const selectedTab = Math.max(
     0,
-    ANALYTICS_TABS.findIndex((tab) => tab.key === searchParams.get('tab')),
+    tabs.findIndex((tab) => tab.key === searchParams.get('tab')),
   )
   const selectTab = (index: number) => {
     const params = new URLSearchParams(searchParams)
-    params.set('tab', ANALYTICS_TABS[index].key)
+    params.set('tab', tabs[index].key)
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
-  const [period, setPeriod] = useState<StatsPeriod>('Today')
+  const [dashboardPeriod, setDashboardPeriod] = useState<StatsPeriod>('Today')
+  const [reviewDay, setReviewDay] = useState(() =>
+    new Date().toISOString().slice(0, 10),
+  )
+  const moderatorFilters = useMemo(
+    () => readModeratorFilters(searchParams),
+    [searchParams],
+  )
+  const updateModeratorFilters = useCallback(
+    (filters: ModeratorFilters) => {
+      const params = writeModeratorFilters(searchParams, filters)
+      router.push(`${pathname}?${params.toString()}`, {
+        scroll: false,
+      })
+    },
+    [searchParams, pathname, router],
+  )
+  const period = moderatorsActive ? moderatorFilters.period : dashboardPeriod
+  const setPeriod = (period: StatsPeriod) => {
+    if (moderatorsActive) {
+      setReviewDay(new Date().toISOString().slice(0, 10))
+      updateModeratorFilters({ ...moderatorFilters, period })
+    } else setDashboardPeriod(period)
+  }
   const [today, setToday] = useState(() =>
     new Date().toISOString().slice(0, 10),
   )
   useInterval(() => setToday(new Date().toISOString().slice(0, 10)), 60_000)
-  const window = useMemo(() => getStatsWindow(period, today), [period, today])
-  const { data: currentStats } = useLiveStats()
+  const windowDay = moderatorsActive ? reviewDay : today
+  const window = useMemo(
+    () => getStatsWindow(period, windowDay),
+    [period, windowDay],
+  )
+  const { data: currentStats } = useLiveStats(undefined, {
+    enabled: !moderatorsActive,
+  })
+
+  if (moderatorsActive && !canViewModeratorActivity)
+    return (
+      <div className="p-6">
+        <p role="alert">Moderator activity is available to admins only.</p>
+        <Link className="text-blue-600 hover:underline" href="/analytics">
+          Back to Analytics
+        </Link>
+      </div>
+    )
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden text-gray-900 dark:text-gray-100">
@@ -55,19 +106,21 @@ export function AnalyticsPageContent() {
           Analytics
         </h1>
         <div className="flex flex-wrap items-center gap-3">
-          {period === 'Today' && currentStats?.lastUpdated && (
-            <span
-              data-cy="stats-updated-at"
-              className="text-xs text-gray-500 dark:text-gray-400"
-              title={new Date(currentStats.lastUpdated).toLocaleString()}
-            >
-              Updated{' '}
-              {new Date(currentStats.lastUpdated).toLocaleTimeString(
-                undefined,
-                { hour: 'numeric', minute: '2-digit' },
-              )}
-            </span>
-          )}
+          {!moderatorsActive &&
+            period === 'Today' &&
+            currentStats?.lastUpdated && (
+              <span
+                data-cy="stats-updated-at"
+                className="text-xs text-gray-500 dark:text-gray-400"
+                title={new Date(currentStats.lastUpdated).toLocaleString()}
+              >
+                Updated{' '}
+                {new Date(currentStats.lastUpdated).toLocaleTimeString(
+                  undefined,
+                  { hour: 'numeric', minute: '2-digit' },
+                )}
+              </span>
+            )}
           <div
             role="group"
             aria-label="Statistics period"
@@ -98,7 +151,7 @@ export function AnalyticsPageContent() {
           aria-label="Analytics views"
           className="mx-4 flex shrink-0 gap-6 overflow-x-auto border-b border-gray-200 dark:border-slate-700 sm:mx-6 lg:mx-8"
         >
-          {ANALYTICS_TABS.map(({ key, label }) => (
+          {tabs.map(({ key, label }) => (
             <Tab
               key={key}
               className="whitespace-nowrap border-b-[3px] border-transparent pb-3 pt-1 text-[15px] font-medium tracking-tight text-gray-500 hover:text-gray-900 data-[selected]:border-blue-600 data-[selected]:font-semibold data-[selected]:text-gray-900 focus-visible:outline focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-blue-500 dark:text-gray-400 dark:hover:text-gray-100 dark:data-[selected]:border-blue-400 dark:data-[selected]:text-gray-100"
@@ -107,7 +160,10 @@ export function AnalyticsPageContent() {
             </Tab>
           ))}
         </TabList>
-        <TabPanels className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8">
+        <TabPanels
+          data-analytics-scroll
+          className="min-h-0 flex-1 overflow-y-auto px-4 py-6 sm:px-6 lg:px-8"
+        >
           <TabPanel className="[&:focus:not(:focus-visible)]:outline-none">
             <Overview window={window} />
           </TabPanel>
@@ -121,6 +177,18 @@ export function AnalyticsPageContent() {
               window={window}
             />
           </TabPanel>
+          {canViewModeratorActivity && (
+            <TabPanel className="[&:focus:not(:focus-visible)]:outline-none">
+              <ModeratorAnalytics
+                filters={moderatorFilters}
+                onChange={updateModeratorFilters}
+                window={window}
+                onCurrentPeriod={() =>
+                  setReviewDay(new Date().toISOString().slice(0, 10))
+                }
+              />
+            </TabPanel>
+          )}
         </TabPanels>
       </TabGroup>
     </div>
