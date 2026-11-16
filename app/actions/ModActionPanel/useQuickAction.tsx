@@ -917,6 +917,7 @@ export const useQuickAction = (
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
     subject,
+    applyToAccount,
     messageAccountAction,
     selectedPolicyName,
     selectedSeverityLevelName,
@@ -973,11 +974,15 @@ export const useQuickAction = (
       isFirstSev1ForPolicy,
       thresholdCrossed: actionRecommendation?.thresholdCrossed,
     })
+    const isAccountEmail = isSubjectDid || applyToAccount
     const content = compileTakedownEmail({
-      subjectName: isSubjectDid || messageAccountAction
+      subjectName: isAccountEmail
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
-      recordContent: record?.value?.text ? `${record.value.text}` : undefined,
+      recordContent:
+        !isAccountEmail && record?.value?.text
+          ? `${record.value.text}`
+          : undefined,
       handle:
         repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
       totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,

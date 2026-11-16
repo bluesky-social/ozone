@@ -84,7 +84,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
       )
 
   const intro = (() => {
-    if (severityLevelConfig?.strikeCount === 0) {
+    if (!isAccountLevel && severityLevelConfig?.strikeCount === 0) {
       return `Hi,\nWe've reviewed a ${subjectName} on your account @${handle} and removed it. This removal relates to Bluesky's Community Guidelines on ${linkPolicy}. ${
         policyConfig?.emailSummary ?? ''
       }`
@@ -101,7 +101,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     }`
   })()
 
-  const postBlock = recordContent
+  const postBlock = !isAccountLevel && recordContent
     ? `The following ${subjectName} was removed:\n\n> ${recordContent
         .split('\n')
         .map((line) => `*${line}*`)

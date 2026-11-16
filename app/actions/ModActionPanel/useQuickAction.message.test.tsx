@@ -38,7 +38,11 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
     useQuery: ({ queryKey }: { queryKey: string[] }) => ({
       data:
         queryKey[0] === 'modActionSubject'
-          ? { repo: mocks.repo, labels: [{ val: 'message-only' }] }
+          ? {
+              repo: mocks.repo,
+              record: { value: { text: 'Example post content.' } },
+              labels: [{ val: 'message-only' }],
+            }
           : undefined,
       isFetching: false,
       isError: false,
@@ -90,11 +94,12 @@ vi.mock('react-use', async (importOriginal) => ({
 const message = 'at://did:plc:alice/chat.bsky.convo.message/abc'
 const record = 'at://did:plc:alice/app.bsky.feed.post/abc'
 
-function capture(subject: string) {
+function capture(subject: string, applyToAccount = false) {
   let action!: ReturnType<typeof useQuickAction>
   function Capture() {
     action = useQuickAction({
       subject,
+      applyToAccount,
       setSubject: () => {},
       onCancel: () => {},
       onSubmit: mocks.onSubmit,
@@ -240,5 +245,45 @@ describe('message account actions', () => {
     const action = capture(record)
     expect(action.applyToAccount).toBe(false)
     expect(action.messageAccountAction).toBeNull()
+  })
+})
+
+describe('automated takedown email targets', () => {
+  it('uses account copy without record content when targeting the account from a record', () => {
+    mocks.eventType = MOD_EVENTS.TAKEDOWN
+    capture(record, true).onEmailTemplateSelect('')
+    expect(mocks.compileTakedownEmail).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        subjectName: 'account',
+        recordContent: undefined,
+      }),
+    )
+  })
+
+  it.each(['did:plc:alice', message])(
+    'omits record content for the account action on %s',
+    (subject) => {
+      mocks.eventType = MOD_EVENTS.TAKEDOWN
+      capture(subject).onEmailTemplateSelect('')
+      expect(mocks.compileTakedownEmail).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          subjectName: 'account',
+          recordContent: undefined,
+        }),
+      )
+    },
+  )
+
+  it('uses the selected target when switching between content and account actions', () => {
+    mocks.eventType = MOD_EVENTS.TAKEDOWN
+    for (const applyToAccount of [false, true, false]) {
+      capture(record, applyToAccount).onEmailTemplateSelect('')
+      expect(mocks.compileTakedownEmail).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          subjectName: applyToAccount ? 'account' : 'Post',
+          recordContent: applyToAccount ? undefined : 'Example post content.',
+        }),
+      )
+    }
   })
 })
