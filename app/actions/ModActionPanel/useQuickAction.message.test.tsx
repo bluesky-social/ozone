@@ -1,10 +1,13 @@
 import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import type { ActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
 import { useQuickAction } from './useQuickAction'
 
 const mocks = vi.hoisted(() => ({
   eventType: '',
+  effects: [] as Array<() => void | (() => void)>,
+  recommendation: null as ActionRecommendation | null,
   formValues: {} as Record<string, string>,
   onSubmit: vi.fn(),
   createSubject: vi.fn(),
@@ -22,6 +25,9 @@ vi.mock('react', async (importOriginal) => {
   const actual = await importOriginal<typeof import('react')>()
   return {
     ...actual,
+    useEffect: (effect: () => void | (() => void)) => {
+      mocks.effects.push(effect)
+    },
     useState: (initial: unknown) =>
       actual.useState(
         initial === 'tools.ozone.moderation.defs#modEventAcknowledge'
@@ -69,7 +75,7 @@ vi.mock('@/setting/severity-level/useSeverityLevel', () => ({
 vi.mock('@/mod-event/helpers/useActionRecommendation', () => ({
   useActionRecommendation: () => ({
     currentStrikes: 0,
-    getRecommendedAction: () => null,
+    getRecommendedAction: () => mocks.recommendation,
     getLastContentTakedownDetails: () => null,
   }),
 }))
@@ -94,9 +100,10 @@ vi.mock('react-use', async (importOriginal) => ({
 const message = 'at://did:plc:alice/chat.bsky.convo.message/abc'
 const record = 'at://did:plc:alice/app.bsky.feed.post/abc'
 
-function capture(subject: string, applyToAccount = false) {
+function capture(subject: string, applyToAccount = false, selectPolicy = false) {
   let action!: ReturnType<typeof useQuickAction>
   function Capture() {
+    mocks.effects = []
     action = useQuickAction({
       subject,
       applyToAccount,
@@ -104,13 +111,24 @@ function capture(subject: string, applyToAccount = false) {
       onCancel: () => {},
       onSubmit: mocks.onSubmit,
     })
+    if (selectPolicy && !action.selectedPolicyName) {
+      action.handlePolicySelect('Example policy')
+      action.handleSeverityLevelSelect('Example severity')
+    }
     return null
   }
   renderToStaticMarkup(<Capture />)
-  return action
+  const effects = mocks.effects
+  return { ...action, flushEffects: () => effects.forEach((effect) => effect()) }
 }
 
 beforeEach(() => {
+  mocks.effects = []
+  mocks.recommendation = null
+  vi.stubGlobal('window', {
+    addEventListener: vi.fn(),
+    removeEventListener: vi.fn(),
+  })
   mocks.formValues = {
     labels: 'existing,new',
     policies: 'policy',
@@ -285,5 +303,48 @@ describe('automated takedown email targets', () => {
         }),
       )
     }
+  })
+})
+
+describe('account action duration defaults', () => {
+  it.each([
+    { subject: record, applyToAccount: true, duration: 24, expected: '24' },
+    { subject: record, applyToAccount: true, duration: null, expected: '0' },
+    {
+      subject: 'did:plc:alice',
+      applyToAccount: false,
+      duration: 24,
+      expected: '24',
+    },
+    { subject: message, applyToAccount: false, duration: 24, expected: '24' },
+    { subject: record, applyToAccount: false, duration: 24, expected: '168' },
+  ])(
+    'sets $subject duration to $expected with account targeting $applyToAccount',
+    ({ subject, applyToAccount, duration, expected }) => {
+      mocks.eventType = MOD_EVENTS.TAKEDOWN
+      mocks.recommendation = {
+        totalStrikes: 8,
+        recommendedDuration: duration ?? 0,
+        suspensionDurationInHours: duration,
+        isPermanent: duration === null,
+        actualStrikesToApply: 1,
+        message: 'Example recommendation',
+      }
+      const action = capture(subject, applyToAccount, true)
+      const selector = { value: '168' }
+      Object.assign(action.durationSelectorRef, { current: selector })
+      action.flushEffects()
+      expect(selector.value).toBe(expected)
+      expect(action.isAccountAction).toBe(applyToAccount || subject !== record)
+    },
+  )
+
+  it('keeps the selected account duration until a recommendation is available', () => {
+    mocks.eventType = MOD_EVENTS.TAKEDOWN
+    const action = capture(record, true)
+    const selector = { value: '72' }
+    Object.assign(action.durationSelectorRef, { current: selector })
+    action.flushEffects()
+    expect(selector.value).toBe('72')
   })
 })
