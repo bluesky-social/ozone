@@ -360,13 +360,14 @@ export function ReportDetailPageContent() {
     useReport(reportId)
 
   // Register this session as a viewer only after the report read succeeds.
+  const activityReview = searchParams.get('activityReview') === 'true'
   useEffect(() => {
-    if (!report) return
+    if (!report || activityReview) return
     labelerAgent.tools.ozone.report
       .assignModerator({ reportId })
       .then(() => refetchOnlineModerators())
       .catch(() => {})
-  }, [reportId, !!report]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [reportId, !!report, activityReview]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const [subjectOverride, setSubjectOverride] = useState<{
     reportId: number
@@ -455,7 +456,10 @@ export function ReportDetailPageContent() {
               disabled={prevReportId === null}
               className="disabled:opacity-50"
               onClick={() =>
-                prevReportId !== null && router.push(`/reports/${prevReportId}`)
+                prevReportId !== null &&
+                router.push(
+                  `/reports/${prevReportId}${activityReview ? '?activityReview=true' : ''}`,
+                )
               }
             >
               <ChevronLeftIcon className="h-4 w-4" />
@@ -467,7 +471,10 @@ export function ReportDetailPageContent() {
               disabled={nextReportId === null}
               className="disabled:opacity-50"
               onClick={() =>
-                nextReportId !== null && router.push(`/reports/${nextReportId}`)
+                nextReportId !== null &&
+                router.push(
+                  `/reports/${nextReportId}${activityReview ? '?activityReview=true' : ''}`,
+                )
               }
             >
               Next
