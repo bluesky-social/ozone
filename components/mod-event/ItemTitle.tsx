@@ -8,23 +8,34 @@ import { ModEventViewWithDetails } from './useModEventList'
 import { ReviewStateIcon } from '@/subject/ReviewStateMarker'
 import { MOD_EVENTS } from './constants'
 
-import type { JSX } from 'react'
+import type { JSX, ReactNode } from 'react'
 
 const dateFormatter = new Intl.DateTimeFormat('en-US', {
   dateStyle: 'medium',
   timeStyle: 'short',
+})
+const utcDateFormatter = new Intl.DateTimeFormat('en-US', {
+  dateStyle: 'medium',
+  timeStyle: 'medium',
+  timeZone: 'UTC',
 })
 
 export const ItemTitle = ({
   modEvent,
   showContentDetails,
   showContentAuthor,
+  useUtc = false,
+  context,
 }: {
   modEvent: ModEventViewWithDetails
   showContentDetails: boolean
   showContentAuthor: boolean
+  useUtc?: boolean
+  context?: ReactNode
 }) => {
-  const createdAt = dateFormatter.format(new Date(modEvent.createdAt))
+  const createdAt = useUtc
+    ? `${utcDateFormatter.format(new Date(modEvent.createdAt))} UTC`
+    : dateFormatter.format(new Date(modEvent.createdAt))
   let eventTitle: JSX.Element | string = 'Event'
   let eventColor = ''
   if (ToolsOzoneModerationDefs.isModEventEscalate(modEvent.event)) {
@@ -149,7 +160,7 @@ export const ItemTitle = ({
       : undefined
 
   return (
-    <div className="text-gray-500 dark:text-gray-50 flex flex-row justify-between">
+    <div className="text-gray-500 dark:text-gray-50 flex flex-wrap items-center justify-between gap-x-3 gap-y-1">
       <p>
         <span className={eventColor}>{eventTitle}</span>
         <i>
@@ -160,10 +171,11 @@ export const ItemTitle = ({
             className="underline"
             href={`/events/${modEvent.id}`}
           >
-            {createdAt}
+            <time dateTime={modEvent.createdAt}>{createdAt}</time>
           </a>
         </i>
       </p>
+      {context}
       {showContentDetails && (
         <div className="flex flex-row items-center gap-1">
           <SubjectOverview

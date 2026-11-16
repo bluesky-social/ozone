@@ -3,13 +3,14 @@ import { Card } from '@/common/Card'
 import { LabelChip } from '@/common/labels/List'
 import { useActionPanelLink } from '@/common/useActionPanelLink'
 import { ToolsOzoneTeamDefs } from '@atproto/api'
-import { PencilIcon } from '@heroicons/react/20/solid'
+import { ChevronRightIcon, PencilIcon } from '@heroicons/react/20/solid'
 import Link from 'next/link'
 import { RoleTag } from './Role'
 import { SOCIAL_APP_URL } from '@/lib/constants'
 import { ArrowTopRightOnSquareIcon } from '@heroicons/react/24/solid'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { useAuthDid } from '@/shell/AuthContext'
+import { MemberView } from '@/reports/MemberView'
 
 export function MemberList({
   members,
@@ -19,13 +20,15 @@ export function MemberList({
   onEdit,
   canEdit = false,
   searchQuery,
+  onSelect,
 }: {
-  canEdit: boolean
+  canEdit?: boolean
   isInitialLoading: boolean
   members: ToolsOzoneTeamDefs.Member[] | undefined
   fetchNextPage: () => void
   hasNextPage?: boolean
-  onEdit: (member: ToolsOzoneTeamDefs.Member) => void
+  onEdit?: (member: ToolsOzoneTeamDefs.Member) => void
+  onSelect?: (member: ToolsOzoneTeamDefs.Member) => void
   searchQuery?: string
 }) {
   const createActionPanelLink = useActionPanelLink()
@@ -46,6 +49,23 @@ export function MemberList({
             {members?.map((member, i) => {
               const isCurrentMember = authDid === member.did
               const lastItem = i === members.length - 1
+              if (onSelect) {
+                return (
+                  <button
+                    key={member.did}
+                    type="button"
+                    data-member-did={member.did}
+                    className="flex w-full items-center justify-between gap-3 border-b border-gray-100 px-2 py-3 text-left last:border-0 hover:bg-gray-50 focus-visible:outline focus-visible:outline-2 focus-visible:outline-blue-500 dark:border-gray-700 dark:hover:bg-slate-700"
+                    onClick={() => onSelect(member)}
+                  >
+                    <MemberView member={member} />
+                    <ChevronRightIcon
+                      className="h-5 w-5 shrink-0 text-gray-400"
+                      aria-hidden="true"
+                    />
+                  </button>
+                )
+              }
               return (
                 <div
                   key={member.did}
@@ -110,7 +130,7 @@ export function MemberList({
                     </div>
                   </div>
                   <div>
-                    {!isCurrentMember && canEdit && (
+                    {!isCurrentMember && canEdit && onEdit && (
                       <ActionButton
                         size="xs"
                         appearance="outlined"

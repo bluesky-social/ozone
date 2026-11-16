@@ -29,7 +29,7 @@ import { ModToolInfo } from './ModToolInfo'
 import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
 import { CopyButton } from '@/common/CopyButton'
 
-import { useState, type JSX } from 'react'
+import { useState, type JSX, type ReactNode } from 'react'
 import { UserAgent } from '@/common/UserAgent'
 import {
   getVideoTimestampSeconds,
@@ -866,11 +866,15 @@ export const ModEventItem = ({
   showContentDetails,
   showContentAuthor,
   showContentPreview,
+  useUtc,
+  context,
 }: {
   modEvent: ModEventViewWithDetails
   showContentDetails: boolean
   showContentAuthor: boolean
   showContentPreview: boolean
+  useUtc?: boolean
+  context?: ReactNode
 }) => {
   let eventItem: JSX.Element = (
     <p>
@@ -1042,7 +1046,9 @@ export const ModEventItem = ({
 
   return (
     <div className="mt-4">
-      <ItemTitle {...{ modEvent, showContentDetails, showContentAuthor }} />
+      <ItemTitle
+        {...{ modEvent, showContentDetails, showContentAuthor, useUtc, context }}
+      />
       <Card>
         {eventItem}
         {modEvent.modTool && <ModToolInfo modTool={modEvent.modTool} />}

@@ -16,12 +16,13 @@ export const getMembersList = async (
   return data
 }
 
-export const useMemberList = (q?: string) => {
+export const useMemberList = (q?: string, { enabled = true } = {}) => {
   const labelerAgent = useLabelerAgent()
   const [roles, setRoles] = useState<string[]>(Object.keys(MemberRoleNames))
   const [disabled, setDisabled] = useState<boolean | undefined>(false)
 
   const results = useInfiniteQuery({
+    enabled,
     queryKey: ['memberList', { disabled, roles, q }],
     queryFn: async ({ pageParam }) => {
       return getMembersList(labelerAgent, {

@@ -22,6 +22,7 @@ export function PaginatedSelect({
   hasNextPage,
   fetchNextPage,
   className,
+  ariaLabel,
 }: {
   value: string
   onChange: (value: string) => void
@@ -30,13 +31,17 @@ export function PaginatedSelect({
   hasNextPage?: boolean
   fetchNextPage?: () => void
   className?: string
+  ariaLabel?: string
 }) {
   const selected = options.find((o) => o.value === value)
 
   return (
     <Listbox value={value} onChange={onChange}>
       <div className={twMerge('relative mt-1', className)}>
-        <ListboxButton className="relative w-full cursor-default rounded-md dark:bg-slate-700 dark:shadow-slate-700 py-1.5 pl-3 pr-10 text-left sm:text-sm border border-gray-300 dark:border-teal-500 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 focus:outline-none focus:ring-1 dark:text-gray-100">
+        <ListboxButton
+          aria-label={ariaLabel}
+          className="relative w-full cursor-default rounded-md dark:bg-slate-700 dark:shadow-slate-700 py-1.5 pl-3 pr-10 text-left sm:text-sm border border-gray-300 dark:border-teal-500 focus:border-indigo-500 focus:ring-indigo-500 dark:focus:ring-teal-500 focus:outline-none focus:ring-1 dark:text-gray-100"
+        >
           <span className="block truncate">
             {selected ? selected.label : placeholder}
           </span>

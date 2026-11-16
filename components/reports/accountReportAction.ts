@@ -131,7 +131,7 @@ export async function submitAccountReportAction({
 
 export function linksReportToEvent(
   reportId: number,
-  reportAction?: ReportAction,
+  reportAction?: Pick<ReportAction, 'ids' | 'all' | 'allOwned'>,
 ): boolean {
   return !!(reportAction?.allOwned || reportAction?.ids?.includes(reportId))
 }
