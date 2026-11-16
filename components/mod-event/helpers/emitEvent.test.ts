@@ -3,6 +3,7 @@ import { createElement } from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import type {
   ToolsOzoneModerationEmitEvent,
+  ToolsOzoneModerationEmitEvents,
   ToolsOzoneModerationScheduleAction,
 } from '@atproto/api'
 import { MOD_EVENTS } from '../constants'
@@ -11,6 +12,11 @@ import { getEventFromFormData, useActionSubjects } from './emitEvent'
 type Event = ToolsOzoneModerationEmitEvent.InputSchema['event']
 
 const mocks = vi.hoisted(() => ({
+  emitEvents: vi.fn<
+    (input: ToolsOzoneModerationEmitEvents.InputSchema) => Promise<{
+      data: ToolsOzoneModerationEmitEvents.OutputSchema
+    }>
+  >(),
   emitEvent:
     vi.fn<
       (input: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<unknown>
@@ -41,6 +47,7 @@ vi.mock('@/shell/ConfigurationContext', () => ({
       ozone: {
         moderation: {
           emitEvent: mocks.emitEvent,
+          emitEvents: mocks.emitEvents,
           scheduleAction: mocks.scheduleAction,
         },
       },
@@ -109,14 +116,21 @@ const form = (values: Record<string, string>) => {
   return data
 }
 
-function captureActionSubjects() {
+function captureActionSubjects(options: { batchRequests?: boolean } = {}) {
   let action: ReturnType<typeof useActionSubjects> | undefined
   function Capture() {
     action = useActionSubjects()
     return null
   }
   renderToStaticMarkup(createElement(Capture))
-  return action!
+  const invoke: ReturnType<typeof useActionSubjects> = (
+    eventData,
+    subjects,
+    subjectData,
+    actionOptions,
+  ) =>
+    action!(eventData, subjects, subjectData, { ...options, ...actionOptions })
+  return invoke
 }
 
 const resolveSubject = async (id: string) => ({
@@ -126,12 +140,33 @@ const resolveSubject = async (id: string) => ({
       : { $type: 'com.atproto.admin.defs#repoRef', did: id },
 })
 
+const batchResponse = ({
+  subjects,
+  event,
+  createdBy,
+  modTool,
+}: ToolsOzoneModerationEmitEvents.InputSchema) => ({
+  data: {
+    events: subjects.map(({ subject }, i) => ({
+      id: i + 1,
+      subject,
+      event,
+      createdBy,
+      createdAt: '2026-01-01T00:00:00.000Z',
+      subjectBlobCids: [],
+      modTool,
+    })),
+    failedEvents: [],
+  },
+})
+
 beforeEach(() => {
   vi.resetAllMocks()
   vi.useFakeTimers()
   vi.setSystemTime(new Date('2026-01-01T00:00:00.000Z'))
   mocks.createSubject.mockImplementation(resolveSubject)
   mocks.emitEvent.mockResolvedValue({ data: {} })
+  mocks.emitEvents.mockImplementation(async (input) => batchResponse(input))
   mocks.scheduleAction.mockImplementation(async ({ subjects }) => ({
     data: { succeeded: subjects, failed: [] },
   }))
@@ -464,6 +499,328 @@ describe('workspace bulk actions', () => {
       ),
     ).toEqual({ succeeded: [], failed: [account, record] })
     expect(mocks.emitEvent).not.toHaveBeenCalled()
+  })
+})
+
+describe('opt-in batched workspace actions', () => {
+  it('sends accounts and records together with prepared strikes and workspace metadata', async () => {
+    const event = { ...takedown, severityLevel: 'Sev 1', strikeCount: 2 }
+    expect(
+      await captureActionSubjects({ batchRequests: true })(
+        { event },
+        [account, record],
+        {},
+        { externalUrl: 'https://example.test/review' },
+      ),
+    ).toEqual({ succeeded: [account, record], failed: [] })
+    expect(mocks.emitEvents).toHaveBeenCalledOnce()
+    expect(mocks.emitEvents).toHaveBeenCalledWith({
+      event: { ...event, strikeExpiresAt: '2026-01-31T00:00:00.000Z' },
+      subjects: [
+        { subject: { $type: 'com.atproto.admin.defs#repoRef', did: account } },
+        { subject: recordRef },
+      ],
+      createdBy: 'did:plc:moderator',
+      modTool: {
+        name: 'ozone-ui/workspace',
+        meta: {
+          batchId: 'example-batch',
+          batchSize: 2,
+          externalUrl: 'https://example.test/review',
+          strikeExpiryDays: 30,
+        },
+      },
+    })
+    expect(mocks.emitEvent).not.toHaveBeenCalled()
+    expect(event).not.toHaveProperty('strikeExpiresAt')
+  })
+
+  it('sends concurrent batches of at most 100 and removes duplicate targets', async () => {
+    const subjects = Array.from(
+      { length: 201 },
+      (_, i) => `did:plc:example${i}`,
+    )
+    let release!: () => void
+    const firstBatch = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    mocks.emitEvents.mockImplementationOnce(async (input) => {
+      await firstBatch
+      return batchResponse(input)
+    })
+    const pending = captureActionSubjects({ batchRequests: true })(
+      { event: tagging },
+      [...subjects, account, subjects[0], account],
+      {},
+      {},
+    )
+    await vi.advanceTimersByTimeAsync(0)
+    expect(mocks.emitEvents).toHaveBeenCalledTimes(3)
+    expect(mocks.createSubject).toHaveBeenCalledTimes(202)
+    release()
+    const result = await pending
+    expect(result.succeeded.toSorted()).toEqual(
+      [...subjects, account].toSorted(),
+    )
+    expect(result.failed).toEqual([])
+    expect(
+      mocks.emitEvents.mock.calls.map(([input]) => input.subjects.length),
+    ).toEqual([100, 100, 2])
+    for (const [input] of mocks.emitEvents.mock.calls) {
+      expect(input.event).toEqual(tagging)
+      expect(input.modTool?.meta?.batchSize).toBe(202)
+    }
+    expect(mocks.emitEvent).not.toHaveBeenCalled()
+  })
+
+  it('limits subject resolution to 50 concurrent operations', async () => {
+    const subjects = Array.from(
+      { length: 151 },
+      (_, i) => `did:plc:example${i}`,
+    )
+    let release!: () => void
+    const firstSubjects = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let active = 0
+    let peak = 0
+    mocks.createSubject.mockImplementation(async (id) => {
+      active += 1
+      peak = Math.max(peak, active)
+      try {
+        await firstSubjects
+        return await resolveSubject(id)
+      } finally {
+        active -= 1
+      }
+    })
+    const pending = captureActionSubjects({ batchRequests: true })(
+      { event: tagging },
+      subjects,
+      {},
+      {},
+    )
+    await vi.advanceTimersByTimeAsync(0)
+    expect(mocks.createSubject).toHaveBeenCalledTimes(50)
+    expect(mocks.emitEvents).not.toHaveBeenCalled()
+    release()
+    const result = await pending
+    expect(peak).toBe(50)
+    expect(result.succeeded.toSorted()).toEqual(subjects.toSorted())
+    expect(result.failed).toEqual([])
+    expect(mocks.emitEvents).toHaveBeenCalledTimes(2)
+  })
+
+  it('maps out-of-order results and isolates resolution and validation failures', async () => {
+    const invalid = 'invalid-did'
+    mocks.createSubject.mockImplementation(async (id) => {
+      if (id === record) throw new Error('Record unavailable')
+      return resolveSubject(id)
+    })
+    mocks.emitEvents.mockImplementationOnce(async (input) => ({
+      data: {
+        events: batchResponse(input).data.events.slice(1),
+        failedEvents: [
+          { subject: input.subjects[0].subject, error: 'Already taken down' },
+        ],
+      },
+    }))
+    const result = await captureActionSubjects({ batchRequests: true })(
+      { event: takedown },
+      [account, record, otherAccount, invalid],
+      {},
+      {},
+    )
+    expect(result.succeeded).toEqual([otherAccount])
+    expect(result.failed.toSorted()).toEqual(
+      [account, record, invalid].toSorted(),
+    )
+    expect(mocks.emitEvents.mock.calls[0][0].subjects).toHaveLength(2)
+    expect(mocks.emitEvent).not.toHaveBeenCalled()
+  })
+
+  it('maps mixed account and record failures by their returned subject', async () => {
+    mocks.emitEvents.mockImplementationOnce(async (input) => ({
+      data: {
+        events: batchResponse(input).data.events.slice(0, 1),
+        failedEvents: [{ subject: recordRef, error: 'Record unavailable' }],
+      },
+    }))
+    expect(
+      await captureActionSubjects({ batchRequests: true })(
+        { event: tagging },
+        [account, record],
+        {},
+        {},
+      ),
+    ).toEqual({ succeeded: [account], failed: [record] })
+  })
+
+  it('treats missing and contradictory result entries as failures', async () => {
+    mocks.emitEvents.mockImplementationOnce(async (input) => ({
+      data: {
+        events: batchResponse(input).data.events.slice(0, 1),
+        failedEvents: [{ subject: input.subjects[0].subject, error: 'Failed' }],
+      },
+    }))
+    expect(
+      await captureActionSubjects({ batchRequests: true })(
+        { event: tagging },
+        [account, record],
+        {},
+        {},
+      ),
+    ).toEqual({ succeeded: [], failed: [account, record] })
+  })
+
+  it('limits requests to 50 concurrent batches and continues after a failure without replaying', async () => {
+    const subjects = Array.from(
+      { length: 5101 },
+      (_, i) => `did:plc:example${i}`,
+    )
+    let release!: () => void
+    const firstWave = new Promise<void>((resolve) => {
+      release = resolve
+    })
+    let active = 0
+    let peak = 0
+    let started = 0
+    mocks.emitEvents.mockImplementation(async (input) => {
+      const index = started++
+      active += 1
+      peak = Math.max(peak, active)
+      try {
+        if (index < 50) await firstWave
+        if (index === 0) throw new Error('Request timed out')
+        return batchResponse(input)
+      } finally {
+        active -= 1
+      }
+    })
+    const pending = captureActionSubjects({ batchRequests: true })(
+      { event: tagging },
+      subjects,
+      {},
+      {},
+    )
+    await vi.advanceTimersByTimeAsync(0)
+    expect(mocks.emitEvents).toHaveBeenCalledTimes(50)
+    expect(mocks.createSubject).toHaveBeenCalledTimes(5000)
+    release()
+    await vi.advanceTimersByTimeAsync(0)
+    await vi.advanceTimersByTimeAsync(999)
+    expect(mocks.emitEvents).toHaveBeenCalledTimes(50)
+    await vi.advanceTimersByTimeAsync(1)
+    const result = await pending
+    expect(peak).toBe(50)
+    expect(result.succeeded.toSorted()).toEqual(subjects.slice(100).toSorted())
+    expect(result.failed).toEqual(subjects.slice(0, 100))
+    expect(mocks.emitEvents).toHaveBeenCalledTimes(52)
+    expect(mocks.emitEvents.mock.calls.at(-1)?.[0].subjects).toHaveLength(1)
+    expect(mocks.emitEvent).not.toHaveBeenCalled()
+  })
+
+  it('does not submit a batch when all resolutions fail', async () => {
+    mocks.createSubject.mockRejectedValue(new Error('Unavailable'))
+    expect(
+      await captureActionSubjects({ batchRequests: true })(
+        { event: tagging },
+        [record],
+        {},
+        {},
+      ),
+    ).toEqual({ succeeded: [], failed: [record] })
+    expect(mocks.emitEvents).not.toHaveBeenCalled()
+  })
+
+  it('does not submit unprepared strikes when settings cannot load', async () => {
+    mocks.fetchQuery.mockRejectedValue(new Error('Unavailable'))
+    expect(
+      await captureActionSubjects({ batchRequests: true })(
+        { event: { ...takedown, severityLevel: 'Sev 1', strikeCount: 2 } },
+        [account, record],
+        {},
+        {},
+      ),
+    ).toEqual({ succeeded: [], failed: [account, record] })
+    expect(mocks.emitEvents).not.toHaveBeenCalled()
+    expect(mocks.emitEvent).not.toHaveBeenCalled()
+  })
+
+  it('uses the toggle value for each submission', async () => {
+    const action = captureActionSubjects()
+    await action(
+      { event: tagging },
+      [account, record],
+      {},
+      { batchRequests: true },
+    )
+    expect(mocks.emitEvents).toHaveBeenCalledOnce()
+    expect(mocks.emitEvent).not.toHaveBeenCalled()
+    expect(
+      await action(
+        { event: tagging },
+        [account, record],
+        {},
+        { batchRequests: false },
+      ),
+    ).toEqual({ succeeded: [account, record], failed: [] })
+    expect(mocks.emitEvent).toHaveBeenCalledTimes(2)
+    expect(mocks.emitEvents).toHaveBeenCalledOnce()
+  })
+
+  it('keeps scheduled actions on the scheduling endpoint', async () => {
+    await captureActionSubjects({ batchRequests: true })(
+      { event: takedown },
+      [account],
+      {},
+      {
+        scheduling: { executeAt: '2026-02-01T00:00:00.000Z' },
+      },
+    )
+    expect(mocks.scheduleAction).toHaveBeenCalledOnce()
+    expect(mocks.emitEvents).not.toHaveBeenCalled()
+  })
+
+  it.each<Event>([
+    { $type: MOD_EVENTS.EMAIL, subjectLine: 'Review', content: 'Hello' },
+    { $type: MOD_EVENTS.COMMENT, comment: 'Review', sticky: false },
+    { $type: MOD_EVENTS.ESCALATE, comment: 'Review' },
+  ])('keeps $type on individual requests', async (event) => {
+    await captureActionSubjects({ batchRequests: true })(
+      { event },
+      [account],
+      {},
+      {},
+    )
+    expect(mocks.emitEvent).toHaveBeenCalledOnce()
+    expect(mocks.emitEvents).not.toHaveBeenCalled()
+  })
+
+  it('keeps chat refs on individual requests alongside batched accounts', async () => {
+    const convo = `at://${account}/chat.bsky.convo/example`
+    const subject = {
+      $type: 'chat.bsky.convo.defs#convoRef',
+      did: account,
+      convoId: 'example',
+    }
+    mocks.createSubject.mockImplementation(async (id) =>
+      id === convo ? { subject } : resolveSubject(id),
+    )
+    expect(
+      await captureActionSubjects({ batchRequests: true })(
+        { event: takedown },
+        [convo, account],
+        {},
+        {},
+      ),
+    ).toEqual({ succeeded: [convo, account], failed: [] })
+    expect(mocks.emitEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ subject }),
+    )
+    expect(mocks.emitEvents.mock.calls[0][0].subjects).toEqual([
+      { subject: { $type: 'com.atproto.admin.defs#repoRef', did: account } },
+    ])
   })
 })
 

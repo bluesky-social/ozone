@@ -6,10 +6,7 @@ import type {
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { canTargetAllOwned } from './allOwnedScope'
 
-type ReportAction = ToolsOzoneModerationEmitEvent.ReportAction & {
-  allOwned?: boolean
-  subjects?: ComAtprotoRepoStrongRef.Main[]
-}
+type ReportAction = ToolsOzoneModerationEmitEvent.ReportAction
 
 const CLOSING_EVENTS = new Set<string>([
   MOD_EVENTS.LABEL,
