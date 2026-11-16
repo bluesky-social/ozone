@@ -150,6 +150,7 @@ function Form(
     onFormSubmit,
     record,
     isSubjectDid,
+    isAccountAction,
     isMessageSubject,
     messageAccountAction,
     profile,
@@ -536,7 +537,7 @@ function Form(
                       variant="takedown"
                       targetServices={targetServices}
                       setTargetServices={setTargetServices}
-                      isSubjectDid={isSubjectDid || !!messageAccountAction}
+                      isAccountAction={isAccountAction}
                     />
                   )}
 
@@ -704,7 +705,7 @@ function Form(
                       selectedSeverityLevel={selectedSeverityLevelName}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       defaultPolicy={selectedPolicyName}
-                      isSubjectDid={isSubjectDid}
+                      isAccountAction={isAccountAction}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}

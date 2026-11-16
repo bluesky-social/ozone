@@ -880,6 +880,7 @@ function ReportDetailLayout(props: {
     onFormSubmit,
     record,
     isSubjectDid,
+    isAccountAction,
     isMessageSubject,
     applyToAccount,
     messageAccountAction,
@@ -1344,7 +1345,7 @@ function ReportDetailLayout(props: {
                   }
                   targetServices={targetServices}
                   setTargetServices={setTargetServices}
-                  isSubjectDid={isSubjectDid || !!messageAccountAction}
+                  isAccountAction={isAccountAction}
                   recommendedPolicies={report.queue?.recommendedPolicies}
                 />
               )}

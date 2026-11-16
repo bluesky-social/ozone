@@ -136,6 +136,7 @@ export const useQuickAction = (
   } = useSubjectQuery(subject)
 
   const isSubjectDid = subject.startsWith('did:')
+  const isAccountAction = isSubjectDid || applyToAccount
   const recordCreatedAt =
     typeof record?.value?.createdAt === 'string'
       ? record.value.createdAt
@@ -398,7 +399,7 @@ export const useQuickAction = (
   // we need to automatically select the suspension duration based policy and sev level
   useEffect(() => {
     if (
-      (isSubjectDid || !!messageAccountAction) &&
+      isAccountAction &&
       durationSelectorRef.current &&
       actionRecommendation?.suspensionDurationInHours !== undefined
     ) {
@@ -407,8 +408,7 @@ export const useQuickAction = (
       )
     }
   }, [
-    isSubjectDid,
-    messageAccountAction,
+    isAccountAction,
     actionRecommendation?.suspensionDurationInHours,
   ])
 
@@ -917,6 +917,7 @@ export const useQuickAction = (
     actionRecommendation?.suspensionDurationInHours,
     automatedEmailTemplate,
     subject,
+    isAccountAction,
     messageAccountAction,
     selectedPolicyName,
     selectedSeverityLevelName,
@@ -974,10 +975,13 @@ export const useQuickAction = (
       thresholdCrossed: actionRecommendation?.thresholdCrossed,
     })
     const content = compileTakedownEmail({
-      subjectName: isSubjectDid || messageAccountAction
+      subjectName: isAccountAction
         ? 'account'
         : getCollectionName(subject.split('/')[3] || ''),
-      recordContent: record?.value?.text ? `${record.value.text}` : undefined,
+      recordContent:
+        !isAccountAction && record?.value?.text
+          ? `${record.value.text}`
+          : undefined,
       handle:
         repo?.handle || subjectStatus?.subjectRepoHandle || profile?.handle,
       totalStrikes: actionRecommendation?.totalStrikes ?? currentStrikes,
@@ -1017,6 +1021,7 @@ export const useQuickAction = (
     onFormSubmit,
     record,
     isSubjectDid,
+    isAccountAction,
     isMessageSubject,
     applyToAccount,
     messageAccountAction,
