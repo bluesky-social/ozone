@@ -16,7 +16,8 @@ import type { CustomAction, Subject, Step } from './types'
 
 export function useCustomActionPanel(
   subject: string | Subject,
-  report?: Pick<ToolsOzoneReportDefs.ReportView, 'id' | 'queue'>,
+  report?: Pick<ToolsOzoneReportDefs.ReportView, 'id' | 'queue'> &
+    Partial<Pick<ToolsOzoneReportDefs.ReportView, 'reportType'>>,
 ) {
   const reportId = report?.id
   const queueId = report ? (report.queue?.id ?? -1) : undefined
@@ -41,6 +42,7 @@ export function useCustomActionPanel(
       subjectKey,
       reportId,
       queueId,
+      report?.reportType,
       settings.dataUpdatedAt,
     ],
     enabled: settings.actions.length > 0,
@@ -78,6 +80,10 @@ export function useCustomActionPanel(
         queueId:
           report && !state.isError
             ? state.data?.context.report?.queueId
+            : undefined,
+        reportType:
+          report && !state.isError
+            ? state.data?.context.report?.reportType
             : undefined,
       }) &&
       a.subjectTypes.includes(id.startsWith('did:') ? 'account' : 'record') &&

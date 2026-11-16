@@ -95,6 +95,15 @@
             "anyOf": [{ "const": -1 }, { "minimum": 1 }]
           }
         },
+        "reportTypes": {
+          "description": "Limit availability to current reports with one of these exact report reason identifiers. Omit for all report types. Requires report context and is checked again before execution.",
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": {
+            "$ref": "#/definitions/text"
+          }
+        },
         "subjectTypes": {
           "type": "array",
           "minItems": 1,

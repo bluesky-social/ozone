@@ -3,7 +3,11 @@ import type { CustomAction } from './types'
 /** Check configured restrictions in both the menu and execution preflight. */
 export function scopeError(
   action: CustomAction,
-  { moderatorDid, queueId }: { moderatorDid?: string; queueId?: number },
+  {
+    moderatorDid,
+    queueId,
+    reportType,
+  }: { moderatorDid?: string; queueId?: number; reportType?: string },
 ): string | undefined {
   if (
     action.allowedModeratorDids &&
@@ -15,4 +19,9 @@ export function scopeError(
     (queueId === undefined || !action.queueIds.includes(queueId))
   )
     return 'This custom action is not available in the current queue'
+  if (
+    action.reportTypes &&
+    (reportType === undefined || !action.reportTypes.includes(reportType))
+  )
+    return 'This custom action is not available for the current report type'
 }

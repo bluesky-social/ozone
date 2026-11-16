@@ -97,7 +97,8 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                 <li>
                   <code>allowedRoles</code> uses full role identifiers; include
                   admins explicitly. <code>subjectTypes</code> allows accounts,
-                  records, or both. Existing step permissions still apply.
+                  records, or both. Existing step permissions still apply. The
+                  settings list shows the configured roles by name.
                 </li>
                 <li>
                   Optional <code>queueIds</code> limits a workflow to specific
@@ -105,6 +106,19 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   unassigned reports. Omit it for all queues. Scoped actions
                   require a current report and its queue is checked again before
                   execution. Empty lists are invalid.
+                </li>
+                <li>
+                  Optional action-level <code>reportTypes</code> limits a
+                  workflow to the current report type. Use exact report reason
+                  identifiers, such as{' '}
+                  <code>tools.ozone.report.defs#reasonAppeal</code>. Include{' '}
+                  <code>com.atproto.moderation.defs#reasonAppeal</code> as well
+                  for legacy appeals. Omit the list for all report types; empty
+                  lists are invalid. Scoped actions stay hidden while report
+                  state is unavailable and are checked again before execution.
+                  This controls availability, not which reports close. The{' '}
+                  <code>appealed</code> condition checks the subject flag
+                  independently.
                 </li>
                 <li>
                   Optional <code>allowedModeratorDids</code> limits who can run
