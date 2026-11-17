@@ -70,7 +70,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { BlobListFormField } from 'app/actions/ModActionPanel/BlobList'
 import { PolicySeveritySelector } from 'app/actions/ModActionPanel/PolicySeveritySelector'
 import { ModActionPanelQuick } from 'app/actions/ModActionPanel/QuickAction'
-import { useQuickAction } from 'app/actions/ModActionPanel/useQuickAction'
+import {
+  useQuickAction,
+  type QuickActionProps,
+} from 'app/actions/ModActionPanel/useQuickAction'
 import { EmailComposerFields } from 'components/email/Composer'
 import { MemberView } from 'components/reports/MemberView'
 import { MutedBadge } from 'components/reports/MutedBadge'
@@ -585,7 +588,7 @@ export function ReportDetailPageContent() {
   )
 }
 
-function ReportDetailLayout(props: {
+export function ReportDetailLayout(props: {
   report: ToolsOzoneReportDefs.ReportView
   subject: string
   setSubject: (subject: string) => void
@@ -724,6 +727,7 @@ function ReportDetailLayout(props: {
 
   const wrappedOnSubmit = async (
     vals: ToolsOzoneModerationEmitEvent.InputSchema,
+    options?: Parameters<QuickActionProps['onSubmit']>[1],
   ) => {
     let finalVals = vals
 
@@ -744,6 +748,11 @@ function ReportDetailLayout(props: {
     const subj = (finalVals as any).subject
     const event = finalVals.event
     const eventType = event?.$type as string | undefined
+    if (options?.supplementalLabelEvent && eventType === MOD_EVENTS.LABEL) {
+      // Finish removals on older CIDs before the final event closes the report.
+      await onSubmit(finalVals)
+      return
+    }
     const actionComment =
       event && 'comment' in event && typeof event.comment === 'string'
         ? event.comment

@@ -66,7 +66,10 @@ export type QuickActionProps = {
   subjectOptions?: string[]
   report?: { subject: string; eventId: number; reportedBy: string }
   applyToAccount?: boolean
-  onSubmit: (vals: ToolsOzoneModerationEmitEvent.InputSchema) => Promise<void>
+  onSubmit: (
+    vals: ToolsOzoneModerationEmitEvent.InputSchema,
+    options?: { supplementalLabelEvent?: boolean },
+  ) => Promise<void>
 }
 
 const hasAutomatedEmailTemplates = Object.values(
@@ -559,12 +562,6 @@ export const useQuickAction = (
           ? (await createSubjectFromId(subject, props.report)).subject
           : subjectInfo
 
-      // This block handles an edge case where a label may be applied to profile record and then the profile record is updated by the user.
-      // In that state, if the moderator reverts the label, the event is emitted for the latest CID of the profile entry which does NOT revert
-      // the label applied to the old CID.
-      // To work around that, this block checks if any label is being reverted and if so, it checks if the event's CID is different than the CID
-      // associated with the label that's being negated. If yes, it emits separate events for each such label and after that, if there are more labels
-      // left to be created/negated for the current CID, it emits the original event separate event for that.
       if (ToolsOzoneModerationDefs.isModEventLabel(coreEvent)) {
         const labels = diffLabels(
           // Make sure we don't try to negate self labels, and deduplicate
@@ -575,68 +572,84 @@ export const useQuickAction = (
         )
         coreEvent.createLabelVals = labels.createLabelVals
         coreEvent.negateLabelVals = labels.negateLabelVals
-        const negatingLabelsByCid: Record<string, string[]> = {}
+        const labelEvents: ToolsOzoneModerationEmitEvent.InputSchema[] = []
 
         if (recordInfo?.labels?.length && 'cid' in subjectInfo) {
-          // go through each label we intended to remove
-          labels.negateLabelVals.forEach((label) => {
-            // go through each label on the record and check if the same label is being removed from multiple CIDs
-            recordInfo.labels?.forEach(({ val: originalLabel, cid, src }) => {
-              if (
-                // Ignore self labels
-                src === recordInfo.repo.did ||
-                originalLabel !== label ||
-                !cid
-              ) {
-                return
+          const negatingLabelsByCid = new Map<string, Set<string>>()
+          const currentCidNegations = new Set(labels.negateLabelVals)
+          for (const label of labels.negateLabelVals) {
+            const existing = recordInfo.labels.filter(
+              ({ val, src }) => val === label && src !== recordInfo.repo.did,
+            )
+            for (const { cid } of existing) {
+              if (!cid || cid === subjectInfo.cid) continue
+              if (!negatingLabelsByCid.has(cid)) {
+                negatingLabelsByCid.set(cid, new Set())
               }
-              negatingLabelsByCid[cid] ??= []
-
-              // for the same cid, one label can only exist once so we if it's not already in the list, add it
-              if (!negatingLabelsByCid[cid].includes(label)) {
-                negatingLabelsByCid[cid].push(label)
-              }
-              // Since the label being negated is going to be removed from a different CID, let's remove it from the coreEvent
-              coreEvent.negateLabelVals = labels.negateLabelVals.filter(
-                (l) => l !== label,
-              )
-            })
-          })
-        }
-
-        const labelSubmissions: Promise<void>[] = []
-
-        Object.keys(negatingLabelsByCid).forEach((labelCid) => {
-          const negateLabelEvent = {
-            subject: { ...subjectInfo, cid: labelCid },
-            createdBy: accountDid,
-            subjectBlobCids,
-            event: {
-              ...coreEvent,
-              // Here we'd never want to create labels associated with different CID than the current one
-              createLabelVals: [],
-              negateLabelVals: negatingLabelsByCid[labelCid],
-            },
+              negatingLabelsByCid.get(cid)!.add(label)
+            }
+            // A label can exist on both old and current CIDs. Only remove it
+            // from the current event when all matching labels use older CIDs.
+            if (
+              existing.length &&
+              existing.every(({ cid }) => cid && cid !== subjectInfo.cid)
+            ) {
+              currentCidNegations.delete(label)
+            }
           }
-
-          labelSubmissions.push(onSubmit(negateLabelEvent))
-        })
+          coreEvent.negateLabelVals = Array.from(currentCidNegations)
+          for (const [labelCid, labelVals] of negatingLabelsByCid) {
+            const labelSubject = { ...subjectInfo, cid: labelCid }
+            labelEvents.push({
+              subject: labelSubject,
+              createdBy: accountDid,
+              subjectBlobCids,
+              event: {
+                ...coreEvent,
+                createLabelVals: [],
+                negateLabelVals: Array.from(labelVals),
+              },
+            })
+          }
+        }
 
         if (
           coreEvent.negateLabelVals.length ||
           coreEvent.createLabelVals.length
         ) {
-          labelSubmissions.push(
-            onSubmit({
-              subject: subjectInfo,
-              createdBy: accountDid,
-              subjectBlobCids,
-              event: coreEvent,
-            }),
-          )
+          labelEvents.push({
+            subject: subjectInfo,
+            createdBy: accountDid,
+            subjectBlobCids,
+            event: coreEvent,
+          })
         }
 
-        await Promise.all(labelSubmissions)
+        // Finish older-CID removals before closing the report on the final
+        // event. If a removal fails, do not submit the report-closing event.
+        let submittedLabelEvents = 0
+        try {
+          for (const [index, event] of labelEvents.entries()) {
+            if (index < labelEvents.length - 1) {
+              await onSubmit(event, { supplementalLabelEvent: true })
+            } else {
+              await onSubmit(event)
+            }
+            submittedLabelEvents++
+          }
+        } catch (error) {
+          if (submittedLabelEvents > 0) {
+            await Promise.allSettled([
+              refetchSubject(),
+              refetchSubjectStatus(),
+              queryClient.invalidateQueries({ queryKey: ['modEventList'] }),
+            ])
+            throw new Error(
+              `Some label changes were applied before an error. Check the labels and report before retrying. ${error instanceof Error ? error.message : String(error)}`,
+            )
+          }
+          throw error
+        }
       } else {
         await onSubmit({
           subject: subjectInfo,
