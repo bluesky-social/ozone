@@ -7,6 +7,7 @@ import { useQuickAction } from './useQuickAction'
 const mocks = vi.hoisted(() => ({
   eventType: '',
   effects: [] as Array<() => void | (() => void)>,
+  submissions: [] as unknown[],
   recommendation: null as ActionRecommendation | null,
   formValues: {} as Record<string, string>,
   onSubmit: vi.fn(),
@@ -19,6 +20,11 @@ const mocks = vi.hoisted(() => ({
     labels: [{ val: 'existing', src: 'did:plc:labeler' }],
     moderation: { subjectStatus: { tags: [] } },
   },
+  record: {
+    value: { text: 'Example post content.' },
+    repo: { did: 'did:plc:alice' },
+    labels: [] as Array<{ val: string; src: string; cid?: string }>,
+  },
 }))
 
 vi.mock('react', async (importOriginal) => {
@@ -28,12 +34,20 @@ vi.mock('react', async (importOriginal) => {
     useEffect: (effect: () => void | (() => void)) => {
       mocks.effects.push(effect)
     },
-    useState: (initial: unknown) =>
-      actual.useState(
+    useState: (initial: unknown) => {
+      const state = actual.useState(
         initial === 'tools.ozone.moderation.defs#modEventAcknowledge'
           ? mocks.eventType
           : initial,
-      ),
+      )
+      if (initial && typeof initial === 'object' && 'isSubmitting' in initial) {
+        return [state[0], (value: unknown) => {
+          mocks.submissions.push(value)
+          state[1](value)
+        }]
+      }
+      return state
+    },
   }
 })
 vi.mock('@tanstack/react-query', async (importOriginal) => {
@@ -46,7 +60,7 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
         queryKey[0] === 'modActionSubject'
           ? {
               repo: mocks.repo,
-              record: { value: { text: 'Example post content.' } },
+              record: mocks.record,
               labels: [{ val: 'message-only' }],
             }
           : undefined,
@@ -124,7 +138,11 @@ function capture(subject: string, applyToAccount = false, selectPolicy = false) 
 
 beforeEach(() => {
   mocks.effects = []
+  mocks.submissions = []
   mocks.recommendation = null
+  mocks.record.labels = []
+  mocks.refetch.mockClear()
+  mocks.invalidateQueries.mockClear()
   vi.stubGlobal('window', {
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),
@@ -162,6 +180,112 @@ beforeEach(() => {
   )
 })
 afterEach(() => vi.unstubAllGlobals())
+
+describe('record label replacement', () => {
+  const recordSubject = {
+    $type: 'com.atproto.repo.strongRef',
+    uri: record,
+    cid: 'current-cid',
+  }
+  const label = (val: string, cid: string) => ({
+    val,
+    cid,
+    src: 'did:plc:labeler',
+  })
+  const submit = (action: ReturnType<typeof capture>, reset = vi.fn()) =>
+    action.onFormSubmit({
+      preventDefault() {},
+      currentTarget: { reset },
+    } as unknown as React.FormEvent<HTMLFormElement>)
+
+  beforeEach(() => {
+    mocks.eventType = MOD_EVENTS.LABEL
+    mocks.formValues.labels = 'sexual'
+    mocks.createSubject.mockImplementation(async () => ({
+      subject: recordSubject,
+      record: mocks.record,
+    }))
+  })
+
+  it('adds and removes labels in one event for the current CID', async () => {
+    mocks.record.labels = [label('porn', 'current-cid')]
+    await submit(capture(record))
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    expect(mocks.onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: recordSubject,
+        event: expect.objectContaining({
+          createLabelVals: ['sexual'],
+          negateLabelVals: ['porn'],
+        }),
+      }),
+    )
+  })
+
+  it('removes every old CID and also removes a label present on the current CID', async () => {
+    mocks.record.labels = [
+      label('porn', 'old-cid-1'),
+      label('porn', 'current-cid'),
+      label('spam', 'old-cid-2'),
+      label('spam', 'old-cid-2'),
+      label('rude', 'old-cid-2'),
+    ]
+    await submit(capture(record))
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(3)
+    expect(mocks.onSubmit.mock.calls.map(([input, options]) => ({
+      cid: input.subject.cid,
+      create: input.event.createLabelVals,
+      negate: input.event.negateLabelVals,
+      supplemental: options?.supplementalLabelEvent ?? false,
+    }))).toEqual([
+      { cid: 'old-cid-1', create: [], negate: ['porn'], supplemental: true },
+      { cid: 'old-cid-2', create: [], negate: ['spam', 'rude'], supplemental: true },
+      { cid: 'current-cid', create: ['sexual'], negate: ['porn'], supplemental: false },
+    ])
+  })
+
+  it('uses the last old-CID event to close the report when no current event is needed', async () => {
+    mocks.formValues.labels = ''
+    mocks.record.labels = [label('porn', 'old-cid-1'), label('porn', 'old-cid-2')]
+    await submit(capture(record))
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(2)
+    expect(mocks.onSubmit.mock.calls[0][1]).toEqual({ supplementalLabelEvent: true })
+    expect(mocks.onSubmit.mock.calls[1][1]).toBeUndefined()
+    expect(mocks.onSubmit.mock.calls.map(([input]) => input.subject.cid)).toEqual([
+      'old-cid-1',
+      'old-cid-2',
+    ])
+  })
+
+  it('waits for each old-CID event and stops before closing the report on failure', async () => {
+    mocks.record.labels = [label('porn', 'old-cid-1')]
+    let rejectRemoval!: (error: Error) => void
+    mocks.onSubmit.mockImplementationOnce(() => new Promise((_, reject) => {
+      rejectRemoval = reject
+    }))
+    const reset = vi.fn()
+    const pending = submit(capture(record), reset)
+    await vi.waitFor(() => expect(mocks.onSubmit).toHaveBeenCalledTimes(1))
+    expect(mocks.onSubmit.mock.calls[0][1]).toEqual({ supplementalLabelEvent: true })
+    rejectRemoval(new Error('removal failed'))
+    await pending
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    expect(reset).not.toHaveBeenCalled()
+  })
+
+  it('refreshes and warns when a later CID event fails after a removal succeeded', async () => {
+    mocks.record.labels = [label('porn', 'old-cid-1'), label('spam', 'old-cid-2')]
+    mocks.onSubmit.mockResolvedValueOnce(undefined).mockRejectedValueOnce(new Error('removal failed'))
+    await submit(capture(record))
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(2)
+    expect(mocks.refetch).toHaveBeenCalledTimes(2)
+    expect(mocks.invalidateQueries).toHaveBeenCalledWith({ queryKey: ['modEventList'] })
+    expect(mocks.submissions.at(-1)).toEqual({
+      isSubmitting: false,
+      error: expect.stringContaining('Some label changes were applied before an error.'),
+    })
+  })
+})
 
 describe('message account actions', () => {
   it.each([MOD_EVENTS.LABEL, MOD_EVENTS.TAKEDOWN, MOD_EVENTS.REVERSE_TAKEDOWN])(
