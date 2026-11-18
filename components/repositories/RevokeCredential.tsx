@@ -26,6 +26,12 @@ import {
 } from '@/mod-event/helpers/emitEvent'
 import { ModToolForm } from '@/workspace/ModToolForm'
 
+type Account = { did: string; handle: string }
+type Accounts = Account[] | (() => Account[])
+
+const describeAccounts = (accounts: Account[]) =>
+  accounts.length === 1 ? `@${accounts[0].handle}` : `${accounts.length} accounts`
+
 const useRevokeCredentialsMutation = () => {
   const labelerAgent = useLabelerAgent()
   return useMutation({
@@ -36,10 +42,7 @@ const useRevokeCredentialsMutation = () => {
       comment,
       externalUrl,
     }: {
-      accounts: Array<{
-        did: string
-        handle: string
-      }>
+      accounts: Account[]
       emailTemplate?: ToolsOzoneCommunicationDefs.TemplateView
       batchId?: string
       comment?: string
@@ -221,7 +224,7 @@ function useRevokeCredentialsState() {
 }
 
 type RevokeCredentialsFormProps = {
-  accounts: Array<{ did: string; handle: string }>
+  accounts: Accounts
   onClose?: () => void
   onSuccess?: (dids: string[]) => void
   revokeCredentials: ReturnType<typeof useRevokeCredentialsMutation>['mutate']
@@ -241,6 +244,7 @@ export const RevokeCredentialsForm = ({
   revokeCredentialsTemplateId,
   onSuccess,
 }: RevokeCredentialsFormProps) => {
+  const [accountsToRevoke, setAccountsToRevoke] = useState<Account[]>([])
   const {
     isRevokeModalOpen,
     setIsRevokeModalOpen,
@@ -256,12 +260,25 @@ export const RevokeCredentialsForm = ({
 
   const templateName = emailTemplate?.name
 
+  const handleRequestRevoke = () => {
+    const selectedAccounts =
+      typeof accounts === 'function' ? accounts() : accounts
+    if (!selectedAccounts.length) {
+      toast.warning('Please select at least one account to revoke credentials.')
+      return
+    }
+    setAccountsToRevoke(selectedAccounts)
+    setIsRevokeModalOpen(true)
+  }
+
   const handleRevokeCredentials = () => {
+    if (!accountsToRevoke.length) return
+
     revokeCredentials(
       {
         comment,
         externalUrl,
-        accounts,
+        accounts: accountsToRevoke,
         emailTemplate,
         batchId: shouldShowBatchId ? currentBatchId : undefined,
       },
@@ -277,11 +294,11 @@ export const RevokeCredentialsForm = ({
     )
   }
 
-  const shouldShowBatchId = accounts.length > 1
+  const shouldShowBatchId = typeof accounts === 'function' || accounts.length > 1
   const accountText =
-    accounts.length === 1
-      ? `@${accounts[0].handle}`
-      : `${accounts.length} accounts`
+    typeof accounts === 'function'
+      ? 'the selected accounts'
+      : describeAccounts(accounts)
 
   return (
     <div>
@@ -359,7 +376,7 @@ export const RevokeCredentialsForm = ({
       <ActionButton
         appearance="primary"
         size="sm"
-        onClick={() => setIsRevokeModalOpen(true)}
+        onClick={handleRequestRevoke}
         disabled={isLoading || !comment.trim()}
       >
         <LockClosedIcon className="h-3 w-3 mr-1" />
@@ -373,15 +390,15 @@ export const RevokeCredentialsForm = ({
         description={
           <>
             {"You're"} about to revoke all active session tokens and app
-            passwords for {accountText}. This will force{' '}
-            {accounts.length === 1 ? 'the user' : 'these users'} to sign in
+            passwords for {describeAccounts(accountsToRevoke)}. This will force{' '}
+            {accountsToRevoke.length === 1 ? 'the user' : 'these users'} to sign in
             again on all devices and applications.
           </>
         }
         confirmButtonText={
           isLoading ? 'Revoking...' : 'Yes, Revoke Credentials'
         }
-        confirmButtonDisabled={isLoading}
+        confirmButtonDisabled={isLoading || !accountsToRevoke.length}
         onConfirm={handleRevokeCredentials}
         error={error?.message}
       />
@@ -391,7 +408,7 @@ export const RevokeCredentialsForm = ({
 
 // wrappercomponent that combines external dependencies and pure component
 export const RevokeCredentials = (props: {
-  accounts: Array<{ did: string; handle: string }>
+  accounts: Accounts
   onClose?: () => void
   onSuccess?: (dids: string[]) => void
 }) => {
