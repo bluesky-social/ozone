@@ -12,7 +12,11 @@ import {
   subjectKey,
   submitInboxAppeal,
 } from './api'
-import { appealLabel, notificationLabel } from './presentation'
+import {
+  appealLabel,
+  notificationLabel,
+  reportSubjectStatusLabels,
+} from './presentation'
 
 const subject = {
   $type: 'com.atproto.admin.defs#repoRef' as const,
@@ -39,6 +43,21 @@ function request(fetch: ReturnType<typeof vi.fn>, index = 0) {
 }
 
 describe('moderator inbox preview requests', () => {
+  it('retains report subject statuses through the current API client', async () => {
+    const { agent } = mockAgent({
+      report: {
+        ...inbox.report,
+        accountStatus: { enforcement: 'takendown' },
+        subjectStatus: { removed: false, deleted: true },
+      },
+    })
+    const result = await fetchInboxDetail(agent, inbox.did, 'reports', 900)
+    expect(reportSubjectStatusLabels(result.report)).toEqual([
+      'Account taken down',
+      'Content deleted',
+    ])
+  })
+
   it.each(['pending', 'resolved', 'unread'] as const)(
     'filters actioned subjects by %s with explicit sorting',
     async (filter) => {
