@@ -20,6 +20,7 @@ import {
   FolderMinusIcon,
   FolderPlusIcon,
 } from '@heroicons/react/24/outline'
+import { PencilIcon } from '@heroicons/react/20/solid'
 import { LoadMore } from '../LoadMore'
 import {
   buildBlueSkyAppUrl,
@@ -199,6 +200,19 @@ function PostHeader({
             >
               {new Date(item.post.indexedAt).toLocaleString()}
             </Link>
+            {typeof item.post['editedAt'] === 'string' && (
+              <span
+                className="text-gray-500 dark:text-gray-50"
+                title={`Edited ${new Date(item.post['editedAt']).toLocaleString()}`}
+              >
+                &nbsp;&middot;&nbsp;
+                <PencilIcon
+                  className="inline h-3 w-3 align-[-1px]"
+                  aria-hidden="true"
+                />{' '}
+                edited
+              </span>
+            )}
             &nbsp;&middot;&nbsp;
             <a
               href={`${SOCIAL_APP_URL}/profile/${item.post.uri

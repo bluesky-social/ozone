@@ -15,6 +15,7 @@ declare global {
       IMAGE_SEARCH_AUTH_HEADER?: string // image search service token (sent as Authorization)
       NEXT_PUBLIC_IMAGE_SEARCH_DEFAULT_LOOKBACK_DAYS?: string // default lookback window for image search, in days
       NEXT_PUBLIC_SUBJECT_AGE_WARNING_CONFIG?: string // JSON record settings: thresholdDays, severityLevel, and pipe-delimited includedPolicies
+      NEXT_PUBLIC_MOCK_POST_VERSIONS?: string // "true" reads post versions from public/dev-fixtures/post-versions.json instead of the AppView
     }
   }
 }
