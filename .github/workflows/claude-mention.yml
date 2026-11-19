@@ -1,0 +1,23 @@
+name: claude-mention
+
+# The public repo syncs main to ozone-internal; only answer on public PRs here.
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+  pull_request_review:
+    types: [submitted]
+
+permissions: {}
+
+jobs:
+  mention:
+    if: github.repository == 'bluesky-social/ozone'
+    uses: bluesky-social/.github/.github/workflows/claude-mention.yml@v1
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    secrets:
+      AGENT_GATEWAY_CLAUDE_GH_REVIEW_KEY: ${{ secrets.AGENT_GATEWAY_CLAUDE_GH_REVIEW_KEY }}

@@ -1,0 +1,19 @@
+name: claude-review
+
+# The public repo syncs main to ozone-internal; only review public PRs here.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+permissions: {}
+
+jobs:
+  review:
+    if: github.repository == 'bluesky-social/ozone'
+    uses: bluesky-social/.github/.github/workflows/claude-review.yml@v1
+    permissions:
+      contents: read
+      pull-requests: write
+      actions: read
+    secrets:
+      AGENT_GATEWAY_CLAUDE_GH_REVIEW_KEY: ${{ secrets.AGENT_GATEWAY_CLAUDE_GH_REVIEW_KEY }}
