@@ -36,9 +36,17 @@ import {
   useWorkspaceRemoveItemsMutation,
 } from '@/workspace/hooks'
 
-import type { JSX } from 'react'
+import { useState, type JSX } from 'react'
 import { VerificationBadge } from 'components/verification/Badge'
 import { RecordWithSnapshots } from './snapshots/RecordWithSnapshots'
+import {
+  getDefaultVersionCid,
+  isEditedPost,
+  usePostVersions,
+  useReportedCids,
+} from '@/lib/postVersions'
+import { PostVersionsIndicator } from './postVersions/PostVersionsIndicator'
+import { EditedAfterReportNotice } from './postVersions/EditedAfterReportNotice'
 import { ProfileLinkCard } from './profileLinks/ProfileLinkCard'
 import { SiteStandardDocument } from './externalRecords/SiteStandardDocument'
 import { SiteStandardPublication } from './externalRecords/SiteStandardPublication'
@@ -218,6 +226,15 @@ function PostCard({
   isAuthorDeactivated?: boolean
 }) {
   const labelerAgent = useLabelerAgent()
+  const { data: versions } = usePostVersions(uri)
+  const isEdited = isEditedPost(versions)
+  const { data: reportedCids } = useReportedCids(uri, isEdited)
+  const [selectedCid, setSelectedCid] = useState<string>()
+  const viewingCid =
+    selectedCid ??
+    (isEdited && versions
+      ? getDefaultVersionCid(versions, reportedCids)
+      : undefined)
 
   const { error, data } = useQuery({
     retry: false,
@@ -320,9 +337,24 @@ function PostCard({
   }
 
   const thread = data.thread
+  const viewingVersion = isEdited
+    ? (versions?.find((v) => v.cid === viewingCid) ?? versions?.at(-1))
+    : undefined
 
   return (
-    <RecordWithSnapshots uri={uri}>
+    <RecordWithSnapshots
+      uri={uri}
+      extraControls={
+        isEdited && versions ? (
+          <PostVersionsIndicator
+            versions={versions}
+            viewingCid={viewingVersion?.cid}
+            reportedCids={reportedCids}
+            onSelectVersion={setSelectedCid}
+          />
+        ) : undefined
+      }
+    >
       {(selectedSnapshot) => {
         // If a snapshot is selected, modify the post data to show the snapshot
         const postItem = selectedSnapshot
@@ -333,19 +365,30 @@ function PostCard({
                 record: selectedSnapshot.value,
               },
             }
-          : { post: thread.post }
+          : { post: viewingVersion ?? thread.post }
 
         return (
-          <PostAsCard
-            dense
-            showLabels={showLabels}
-            parent={thread.parent}
-            item={postItem}
-            isAuthorTakendown={isAuthorTakendown}
-            isAuthorDeactivated={isAuthorDeactivated}
-            className="p-2 rounded-sm"
-            controls={['like', 'repost', 'workspace']}
-          />
+          <>
+            {isEdited && versions && !selectedSnapshot && (
+              <EditedAfterReportNotice
+                className="mb-2"
+                versions={versions}
+                viewingCid={viewingVersion?.cid}
+                reportedCids={reportedCids}
+                onSelectVersion={setSelectedCid}
+              />
+            )}
+            <PostAsCard
+              dense
+              showLabels={showLabels}
+              parent={thread.parent}
+              item={postItem}
+              isAuthorTakendown={isAuthorTakendown}
+              isAuthorDeactivated={isAuthorDeactivated}
+              className="p-2 rounded-sm"
+              controls={['like', 'repost', 'workspace']}
+            />
+          </>
         )
       }}
     </RecordWithSnapshots>

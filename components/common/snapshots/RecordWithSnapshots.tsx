@@ -6,12 +6,17 @@ interface RecordWithSnapshotsProps {
   uri: string
   children: (snapshot: RecordSnapshot | null) => ReactNode
   className?: string
+  /**
+   * Rendered in the same row as the snapshots control, e.g. post versions.
+   */
+  extraControls?: ReactNode
 }
 
 export function RecordWithSnapshots({
   uri,
   children,
   className = 'pl-10',
+  extraControls,
 }: RecordWithSnapshotsProps) {
   const [selectedSnapshot, setSelectedSnapshot] =
     useState<RecordSnapshot | null>(null)
@@ -34,6 +39,7 @@ export function RecordWithSnapshots({
     <>
       {children(selectedSnapshot)}
       <div className={`flex items-center gap-2 ${className}`}>
+        {extraControls}
         <SnapshotIndicator
           snapshots={snapshotData?.snapshots}
           total={snapshotData?.total}
