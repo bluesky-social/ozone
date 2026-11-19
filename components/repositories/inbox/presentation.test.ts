@@ -39,18 +39,18 @@ describe('inbox presentation', () => {
     expect(
       reportSubjectStatusLabels({
         accountStatus: { enforcement: 'suspended', hosting: 'deleted' },
-        subjectStatus: { removed: true, deleted: true },
+        subjectStatus: { takendown: true, deleted: true },
       }),
     ).toEqual([
       'Account suspended',
       'Account deleted',
-      'Content removed',
+      'Content taken down by moderation',
       'Content deleted',
     ])
     expect(
       reportSubjectStatusLabels({
         accountStatus: { enforcement: 'none', hosting: 'takendown' },
-        subjectStatus: { removed: false },
+        subjectStatus: { takendown: false },
       }),
     ).toEqual(['Account taken down'])
     expect(
@@ -62,7 +62,7 @@ describe('inbox presentation', () => {
     expect(
       reportSubjectStatusLabels({
         accountStatus: null,
-        subjectStatus: { removed: 'true', deleted: false },
+        subjectStatus: { takendown: 'true', deleted: false },
       }),
     ).toEqual([])
   })

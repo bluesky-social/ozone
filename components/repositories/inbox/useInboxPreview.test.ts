@@ -48,7 +48,7 @@ describe('moderator inbox preview requests', () => {
       report: {
         ...inbox.report,
         accountStatus: { enforcement: 'takendown' },
-        subjectStatus: { removed: false, deleted: true },
+        subjectStatus: { takendown: false, deleted: true },
       },
     })
     const result = await fetchInboxDetail(agent, inbox.did, 'reports', 900)

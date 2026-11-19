@@ -77,7 +77,8 @@ export function reportSubjectStatusLabels(report: object): string[] {
   }
   const subject = Reflect.get(report, 'subjectStatus')
   if (subject && typeof subject === 'object') {
-    if (Reflect.get(subject, 'removed') === true) labels.push('Content removed')
+    if (Reflect.get(subject, 'takendown') === true)
+      labels.push('Content taken down by moderation')
     if (Reflect.get(subject, 'deleted') === true) labels.push('Content deleted')
   }
   return labels

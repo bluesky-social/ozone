@@ -34,7 +34,7 @@ it('shows current subject statuses only in report details', () => {
     report: {
       ...item,
       accountStatus: { enforcement: 'takendown' },
-      subjectStatus: { removed: false, deleted: true },
+      subjectStatus: { takendown: false, deleted: true },
     },
   })
   const render = (selected: boolean) =>
@@ -50,5 +50,5 @@ it('shows current subject statuses only in report details', () => {
   expect(detail).toContain('Account taken down')
   expect(detail).toContain('Content deleted')
   expect(detail).toContain('Awaiting review')
-  expect(detail).not.toContain('Content removed')
+  expect(detail).not.toContain('Content taken down by moderation')
 })
