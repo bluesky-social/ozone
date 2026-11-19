@@ -46,6 +46,7 @@ import {
   date,
   readable,
   enforcementLabel,
+  reportSubjectStatusLabels,
   scopeLabel,
   appealLabel,
   appealableActionForSubject,
@@ -461,6 +462,9 @@ export function ReportRow({
       fetchInboxDetail(agent, did, 'reports', item.id, signal),
   })
   const report = detail.data?.report || item
+  const currentStatus = detail.data
+    ? reportSubjectStatusLabels(detail.data.report)
+    : []
   const resolution = detail.data?.resolution
   const actionTaken =
     report.status === 'resolved'
@@ -506,6 +510,14 @@ export function ReportRow({
           hydrated={hydrated}
           record={detail.data?.report.record}
         />
+        {currentStatus.length > 0 && (
+          <div className="mt-4 text-sm">
+            <h4 className="text-gray-500 dark:text-gray-400">Current status</h4>
+            {currentStatus.map((label) => (
+              <p key={label}>{label}</p>
+            ))}
+          </div>
+        )}
         {report.reason && (
           <div className="mt-4 text-sm">
             <h4 className="text-gray-500 dark:text-gray-400">

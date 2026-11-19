@@ -58,6 +58,32 @@ export function enforcementLabel(state: string) {
   )
 }
 
+// @atproto/api does not yet include the optional getReport status fields.
+export function reportSubjectStatusLabels(report: object): string[] {
+  const labels: string[] = []
+  const account = Reflect.get(report, 'accountStatus')
+  if (account && typeof account === 'object') {
+    const enforcement: unknown = Reflect.get(account, 'enforcement')
+    const hosting: unknown = Reflect.get(account, 'hosting')
+    const currentEnforcement =
+      enforcement === 'none' || enforcement === undefined
+        ? hosting
+        : enforcement
+    if (currentEnforcement === 'takendown') labels.push('Account taken down')
+    else if (currentEnforcement === 'suspended')
+      labels.push('Account suspended')
+    if (hosting === 'deleted') labels.push('Account deleted')
+    else if (hosting === 'deactivated') labels.push('Account deactivated')
+  }
+  const subject = Reflect.get(report, 'subjectStatus')
+  if (subject && typeof subject === 'object') {
+    if (Reflect.get(subject, 'takendown') === true)
+      labels.push('Content taken down by moderation')
+    if (Reflect.get(subject, 'deleted') === true) labels.push('Content deleted')
+  }
+  return labels
+}
+
 export function scopeLabel(scope?: string) {
   return (
     (
