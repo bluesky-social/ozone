@@ -47,3 +47,6 @@ cypress/screenshots
 # yarn
 .yarn/*
 service/.yarn/*
+
+# post versions mock data, written by scripts/seed-post-versions.mjs
+/public/dev-fixtures/
