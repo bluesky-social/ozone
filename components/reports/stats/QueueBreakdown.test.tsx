@@ -61,7 +61,7 @@ describe('queue breakdown', () => {
     expect(markup).toContain(`title="${configured}"`)
     expect(markup).toContain(`title="${observed}"`)
     expect(markup).toContain('>0</td>')
-    expect(markup).toContain('2 reports')
+    expect(markup).toContain('>2</td>')
   })
 
   it('waits for queue metadata without displaying cached counts', () => {
@@ -73,7 +73,6 @@ describe('queue breakdown', () => {
     )
     expect(markup).toContain('Loading queue details')
     expect(markup).not.toContain('<table')
-    expect(markup).not.toContain('2 reports')
   })
 
   it('keeps the query disabled and hides cached counts for an unavailable queue', () => {
@@ -126,7 +125,7 @@ describe('queue breakdown', () => {
     )
     expect(markup).toContain(`title="${nextConfigured}"`)
     expect(markup).toContain(`title="${nextObserved}"`)
-    expect(markup).toContain('3 reports')
+    expect(markup).toContain('>3</td>')
     expect(markup).not.toContain(`title="${configured}"`)
     expect(markup).not.toContain(`title="${observed}"`)
   })

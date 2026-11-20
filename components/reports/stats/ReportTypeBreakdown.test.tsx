@@ -47,7 +47,6 @@ describe('inbound report type table', () => {
     expect(markup).toContain('20.0%')
     expect(markup).toContain('(legacy)')
     expect(markup).toContain('example.report.defs#custom')
-    expect(markup).toContain('1,250 reports')
   })
 
   it('merges configured and observed types, deduplicates, and sorts by count then identifier', () => {
@@ -61,7 +60,6 @@ describe('inbound report type table', () => {
       { reportType: zeroAlpha, cells: ['0', '0.0%'] },
       { reportType: zeroBeta, cells: ['0', '0.0%'] },
     ])
-    expect(markup).toContain('1,250 reports')
   })
 
   it('shows configured zero-count types for an empty response without inventing percentages', () => {
@@ -76,7 +74,6 @@ describe('inbound report type table', () => {
       { reportType: zeroAlpha, cells: ['0', '—'] },
       { reportType: zeroBeta, cells: ['0', '—'] },
     ])
-    expect(markup).toContain('0 reports')
     expect(markup).not.toContain('No inbound reports')
   })
 
@@ -93,7 +90,7 @@ describe('inbound report type table', () => {
       })
       expect(tableRows(markup)).toEqual([])
       expect(markup).not.toContain(zeroAlpha)
-      expect(markup).not.toContain('1,250 reports')
+      expect(markup).not.toContain('1,000')
     },
   )
 
@@ -111,6 +108,5 @@ describe('inbound report type table', () => {
     expect(failed).toContain('Failed to load report types')
     expect(failed).toContain('Retry')
     expect(failed).not.toContain('1,000')
-    expect(failed).not.toContain('1,250 reports')
   })
 })

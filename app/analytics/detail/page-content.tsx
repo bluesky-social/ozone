@@ -173,25 +173,11 @@ export function StatsDetailPageContent() {
                 Retry
               </button>
             </p>
-          ) : live.data?.lastUpdated ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Current backlog updated{' '}
-              <time dateTime={live.data.lastUpdated}>
-                {new Date(live.data.lastUpdated).toLocaleString()}
-              </time>
-            </p>
-          ) : (
+          ) : live.data?.lastUpdated ? null : (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               No current backlog snapshot available.
             </p>
           ))}
-        {scope.queueId != null && (
-          <QueueBreakdown
-            queueId={scope.queueId}
-            startDate={filters.dateRange.startDate}
-            endDate={filters.dateRange.endDate}
-          />
-        )}
         <section
           className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"
           aria-label={mode === 'trends' ? 'Daily trends' : 'Closure targets'}
@@ -208,6 +194,13 @@ export function StatsDetailPageContent() {
             onRetry={() => refetch()}
           />
         </section>
+        {scope.queueId != null && (
+          <QueueBreakdown
+            queueId={scope.queueId}
+            startDate={filters.dateRange.startDate}
+            endDate={filters.dateRange.endDate}
+          />
+        )}
       </div>
     </div>
   )
