@@ -3,6 +3,7 @@
 import { useQueueById } from '@/queues/useQueues'
 import { statReasonTypes } from '@/reports/helpers/getType'
 import { REPORT_CATEGORIES } from '@/reports/stats'
+import { QueueBreakdown } from '@/reports/stats/QueueBreakdown'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import {
   OverviewStats,
@@ -172,14 +173,7 @@ export function StatsDetailPageContent() {
                 Retry
               </button>
             </p>
-          ) : live.data?.lastUpdated ? (
-            <p className="text-xs text-gray-500 dark:text-gray-400">
-              Current backlog updated{' '}
-              <time dateTime={live.data.lastUpdated}>
-                {new Date(live.data.lastUpdated).toLocaleString()}
-              </time>
-            </p>
-          ) : (
+          ) : live.data?.lastUpdated ? null : (
             <p className="text-xs text-gray-500 dark:text-gray-400">
               No current backlog snapshot available.
             </p>
@@ -200,6 +194,13 @@ export function StatsDetailPageContent() {
             onRetry={() => refetch()}
           />
         </section>
+        {scope.queueId != null && (
+          <QueueBreakdown
+            queueId={scope.queueId}
+            startDate={filters.dateRange.startDate}
+            endDate={filters.dateRange.endDate}
+          />
+        )}
       </div>
     </div>
   )

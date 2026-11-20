@@ -7,6 +7,7 @@ import type { StatGroup } from '.'
 import { statReasonTypes } from '../helpers/getType'
 import type { StatsWindow } from './statsWindow'
 import { useStatsWindow } from './useStatsWindow'
+import { StatsTableLayout } from './StatsTableLayout'
 
 type StatsGrouping = 'queue' | 'category'
 
@@ -43,60 +44,43 @@ export function StatsTable({
       </div>
       {status ?? (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[60rem] text-sm">
-              <thead className="text-[11px] uppercase tracking-wider text-gray-500 dark:text-gray-400">
-                <tr>
-                  <th scope="col" className="px-5 py-3 text-left font-semibold">
-                    {groupLabel}
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-3 text-right font-semibold"
-                  >
-                    Inbound
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-3 text-right font-semibold"
-                  >
-                    Pending
-                  </th>
-                  <th scope="col" className="px-3 py-3 text-left font-semibold">
-                    Closed · ack / action
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-3 text-right font-semibold"
-                  >
-                    Escalated
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-3 py-3 text-right font-semibold"
-                  >
-                    Avg handling
-                  </th>
-                  <th
-                    scope="col"
-                    className="px-5 py-3 text-right font-semibold"
-                  >
-                    Closure Target
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200 dark:divide-slate-700">
-                {groups.map((group) => (
-                  <StatsTableRow
-                    key={group.queueId ?? group.category ?? group.title}
-                    group={group}
-                    grouping={grouping}
-                    window={window}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <StatsTableLayout
+            className="min-w-[60rem]"
+            headings={
+              <>
+                <th scope="col" className="px-5 py-3 text-left font-semibold">
+                  {groupLabel}
+                </th>
+                <th scope="col" className="px-3 py-3 text-right font-semibold">
+                  Inbound
+                </th>
+                <th scope="col" className="px-3 py-3 text-right font-semibold">
+                  Pending
+                </th>
+                <th scope="col" className="px-3 py-3 text-left font-semibold">
+                  Closed · ack / action
+                </th>
+                <th scope="col" className="px-3 py-3 text-right font-semibold">
+                  Escalated
+                </th>
+                <th scope="col" className="px-3 py-3 text-right font-semibold">
+                  Avg handling
+                </th>
+                <th scope="col" className="px-5 py-3 text-right font-semibold">
+                  Closure Target
+                </th>
+              </>
+            }
+          >
+            {groups.map((group) => (
+              <StatsTableRow
+                key={group.queueId ?? group.category ?? group.title}
+                group={group}
+                grouping={grouping}
+                window={window}
+              />
+            ))}
+          </StatsTableLayout>
           {pagination}
           <p className="border-t border-gray-200 px-5 py-3 text-xs text-gray-500 dark:border-slate-700 dark:text-gray-400">
             Pending and past target are current unmuted snapshots. Closure
