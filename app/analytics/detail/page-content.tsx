@@ -3,6 +3,7 @@
 import { useQueueById } from '@/queues/useQueues'
 import { statReasonTypes } from '@/reports/helpers/getType'
 import { REPORT_CATEGORIES } from '@/reports/stats'
+import { QueueBreakdown } from '@/reports/stats/QueueBreakdown'
 import { HistoricalGraph } from '@/reports/stats/HistoricalGraph'
 import {
   OverviewStats,
@@ -184,6 +185,13 @@ export function StatsDetailPageContent() {
               No current backlog snapshot available.
             </p>
           ))}
+        {scope.queueId != null && (
+          <QueueBreakdown
+            queueId={scope.queueId}
+            startDate={filters.dateRange.startDate}
+            endDate={filters.dateRange.endDate}
+          />
+        )}
         <section
           className="rounded-lg border border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-800 p-4"
           aria-label={mode === 'trends' ? 'Daily trends' : 'Closure targets'}

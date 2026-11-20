@@ -1,10 +1,52 @@
-import { Hover } from '@/common/Hover'
+import { HelpTooltip } from '@/common/HelpTooltip'
 import { formatDuration } from '@/lib/util'
-import { ClockIcon, InformationCircleIcon } from '@heroicons/react/24/outline'
+import { ClockIcon } from '@heroicons/react/24/outline'
 import type { HistoricalReportStats, ReportStats } from './reportStats'
 import { STATS_COLORS } from './statsColors'
 
 export type OverviewStatsMode = 'trends' | 'targets'
+
+const METRIC_HELP = {
+  inboundCount:
+    'Unmuted reports received during the selected UTC period, including reports that have since been closed.',
+  pendingCount:
+    'Unmuted reports still awaiting closure at the latest stats update, including reports received before the selected period. This current backlog is independent of the selected date range.',
+  closedCount:
+    'Reports whose latest closure falls within the selected UTC period, including reports received earlier and muted reports. Acknowledged means closed without a label, tag, or takedown as the closing action; actioned means closed with one. The percentage is actioned reports divided by all closed reports.',
+  acknowledgedCount:
+    'Reports closed during the selected UTC period without a label, tag, or takedown as the closing action. Includes reports received earlier and muted reports.',
+  actionedCount:
+    'Reports closed during the selected UTC period with a label, tag, or takedown as the closing action. Includes reports received earlier and muted reports.',
+  escalatedCount:
+    'Escalation events during the selected UTC period. A report escalated more than once can contribute multiple events.',
+  avgHandlingTimeSec:
+    'Average elapsed time from assignment to closure for reports closed during the selected UTC period. Includes waiting time after assignment. Reports without an assignment are excluded.',
+  avgResolutionTimeSec:
+    'Average elapsed time from report creation to closure for reports closed during the selected UTC period. Includes time spent waiting for assignment.',
+  closureTargetMetCount:
+    'Reports closed during the selected UTC period within their assigned closure target, measured from report creation. Reports without a target are excluded.',
+  closureTargetMissedCount:
+    'Reports closed during the selected UTC period after their assigned closure target, measured from report creation. Reports without a target are excluded.',
+  closureTargetMetRate:
+    'Percentage of targeted reports closed during the selected UTC period that met their assigned closure target, measured from report creation. Calculated as target met divided by target met plus target missed. Reports without a target are excluded.',
+  closureTargetOverdueCount:
+    'Unmuted reports still awaiting closure whose time since creation exceeds their assigned closure target, measured at the latest stats update. Reports without a target are excluded. This current snapshot is independent of the selected date range.',
+} as const
+
+function MetricHelp({
+  metric,
+  label,
+}: {
+  metric: keyof typeof METRIC_HELP
+  label: string
+}) {
+  return (
+    <HelpTooltip
+      label={`About ${label.toLowerCase()}`}
+      content={METRIC_HELP[metric]}
+    />
+  )
+}
 
 export function OverviewStats({
   stats,
@@ -98,25 +140,18 @@ export function OverviewStats({
       ) : (
         <div className="relative flex items-center gap-1">
           <span>Assignment to closure</span>
-          <Hover
-            className="!static shrink-0 cursor-help"
-            panelClassName="text-xs text-gray-600 dark:text-gray-300"
+          <HelpTooltip
+            label="Average resolution time"
             content={
               <>
                 Avg resolution time:{' '}
                 {stats.avgResolutionTimeSec != null
                   ? formatDuration(stats.avgResolutionTimeSec)
                   : '—'}{' '}
-                (time from open to close)
+                — {METRIC_HELP.avgResolutionTimeSec}
               </>
             }
-          >
-            <InformationCircleIcon
-              aria-hidden="true"
-              className="h-4 w-4 text-gray-400 dark:text-gray-500"
-            />
-            <span className="sr-only">Average resolution time</span>
-          </Hover>
+          />
         </div>
       ),
   }
@@ -174,17 +209,10 @@ export function OverviewStats({
             <span className={STATS_COLORS.closureTargetOverdueCount.text}>
               {count(stats.closureTargetOverdueCount)} past closure target
             </span>
-            <Hover
-              className="shrink-0 cursor-help [&>div]:left-auto [&>div]:right-0"
-              panelClassName="text-xs text-gray-600 dark:text-gray-300"
-              content="Unmuted reports still awaiting closure whose time since creation exceeds their assigned closure target, measured at the last stats update. Reports without a target are excluded. This current snapshot is independent of the selected date range."
-            >
-              <InformationCircleIcon
-                aria-hidden="true"
-                className="h-4 w-4 text-gray-400 dark:text-gray-500"
-              />
-              <span className="sr-only">About past closure target</span>
-            </Hover>
+            <HelpTooltip
+              label="About past closure target"
+              content={METRIC_HELP.closureTargetOverdueCount}
+            />
           </div>
         ) : (
           'Unmuted backlog'
@@ -268,14 +296,16 @@ export function OverviewStats({
         className="flex flex-wrap items-center gap-2"
       >
         <dl className="flex flex-wrap items-center gap-2">
-          {visibleCards.map(({ key, label, value, description }) => (
+          {visibleCards.map(({ key, label, value }) => (
             <div
               key={key}
               data-metric={key}
-              title={typeof description === 'string' ? description : undefined}
               className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${STATS_COLORS[key].badge} ${STATS_COLORS[key].text}`}
             >
-              <dt className="order-last">{label}</dt>
+              <dt className="order-last inline-flex items-center gap-1">
+                {label}
+                <MetricHelp metric={key} label={label} />
+              </dt>
               <dd data-cy="metric-value" className="font-bold tabular-nums">
                 {value}
               </dd>
@@ -326,7 +356,8 @@ export function OverviewStats({
                   className="h-2 w-2 shrink-0 rounded-full"
                   style={{ backgroundColor: STATS_COLORS[key].color }}
                 />
-                {label}
+                <span>{label}</span>
+                <MetricHelp metric={key} label={label} />
               </dt>
               <dd
                 data-cy="metric-value"
