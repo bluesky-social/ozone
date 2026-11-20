@@ -16,7 +16,7 @@ import { ActionButton } from '../buttons'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
 
-const getAuthorFeed =
+export const getAuthorFeed =
   ({
     query,
     labelerAgent,
@@ -141,12 +141,12 @@ const getAuthorFeed =
 
       filteredFeed = [...filteredFeed, ...newFilteredItems]
 
+      cursor = data.cursor
+
       // If no more items are available, break the loop to prevent infinite requests
-      if (!data.cursor) {
+      if (!cursor) {
         break
       }
-
-      cursor = data.cursor
     }
 
     // Ensure the feed is exactly 30 items if there are more than 30
