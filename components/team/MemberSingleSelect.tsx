@@ -34,7 +34,7 @@ export function MemberSingleSelect({
   const selected = value ? allMembers.find((m) => m.did === value) : undefined
   const displayLabel = selected
     ? selected.profile?.displayName || selected.profile?.handle || selected.did
-    : label
+    : value || label
 
   return (
     <Popover className="relative">

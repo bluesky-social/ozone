@@ -36,6 +36,10 @@ import { EmailComposer } from 'components/email/Composer'
 import type { EmailComposerData } from 'components/email/helpers'
 import { useEmailRecipientStatus } from 'components/email/useEmailRecipientStatus'
 import { useCloseReports, useCreateActivity, useListActivities } from './hooks'
+import {
+  closeNoActionReports,
+  CurrentReportCloseError,
+} from './closeNoActionReports'
 import { useReports } from './useReports'
 import { getDefaultReportTypes } from './utils'
 
@@ -126,7 +130,6 @@ function TransitionConfirmPanel({
   const createActivity = useCreateActivity()
   const closeReports = useCloseReports()
   const { activityType, confirmLabel } = ACTION_CONFIG[action]
-  const isBulkNoAction = action === 'no-action' && scope !== 'current'
   const isPending =
     isResolving || createActivity.isPending || closeReports.isPending
 
@@ -137,39 +140,22 @@ function TransitionConfirmPanel({
         await onResolveAppeal(note.trim())
         setAppealResolved(true)
       }
-      if (isBulkNoAction) {
-        const result = await closeReports.mutateAsync({
+      if (action === 'no-action' && scope !== 'current') {
+        const internalNote = note.trim() || undefined
+        const closedCount = await closeNoActionReports({
           subject: report.subject.subject,
-          reportTypes: scope === 'types' ? reportTypes : undefined,
-          includeAllOwned: scope === 'allOwned' ? true : undefined,
-          internalNote: note.trim() || undefined,
-        })
-        let closedCount = result.closedCount
-        // Bulk closure protects active reviews, even the selected report.
-        if (scope === 'allOwned' && !result.reportIds.includes(report.id)) {
-          try {
-            await createActivity.mutateAsync({
+          reportId: report.id,
+          scope,
+          reportTypes,
+          internalNote,
+          closeReports: closeReports.mutateAsync,
+          closeCurrentReport: () =>
+            createActivity.mutateAsync({
               reportId: report.id,
               activity: { $type: 'tools.ozone.report.defs#closeActivity' },
-              internalNote: note.trim() || undefined,
-            })
-            closedCount++
-          } catch (error) {
-            setScope('current')
-            toast.error(
-              `Closed ${closedCount} other reports, but could not close this report: ${displayError(error)}. Check this report and retry.`,
-            )
-            return
-          }
-        }
-        if (closedCount === 0) {
-          toast.info(
-            scope === 'types'
-              ? 'No open reports matched the selected types. Choose different types or close this report only.'
-              : 'No reports were closed for this subject.',
-          )
-          return
-        }
+              internalNote,
+            }),
+        })
         toast.success(
           `Closed ${closedCount} ${closedCount === 1 ? 'report' : 'reports'} as no-action`,
         )
@@ -186,7 +172,14 @@ function TransitionConfirmPanel({
       }
       onDone()
     } catch (e) {
-      toast.error(`Error actioning: ${displayError(e)}`)
+      if (e instanceof CurrentReportCloseError) {
+        setScope('current')
+        toast.error(
+          `Closed ${e.closedCount} other reports, but could not close this report: ${displayError(e.cause)}. Check this report and retry.`,
+        )
+      } else {
+        toast.error(`Error actioning: ${displayError(e)}`)
+      }
     } finally {
       setIsResolving(false)
     }
@@ -225,6 +218,12 @@ function TransitionConfirmPanel({
               value={reportTypes}
               onChange={setReportTypes}
             />
+          )}
+          {(scope === 'all' || scope === 'types') && (
+            <p className="text-xs text-gray-600 dark:text-gray-300">
+              This report will be closed. Other reports under active review
+              remain open.
+            </p>
           )}
           {scope === 'allOwned' && (
             <p className="text-xs text-gray-600 dark:text-gray-300">
@@ -617,7 +616,7 @@ const ACTIVITY_TO_STATUS: Record<string, string> = {
 
 type ActivityPayload = { $type: string; previousStatus?: string }
 
-function ActivityItem({
+export function ActivityItem({
   activity,
 }: {
   activity: ToolsOzoneReportDefs.ReportActivityView

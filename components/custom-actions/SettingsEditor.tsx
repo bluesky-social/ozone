@@ -5,6 +5,7 @@ import { ActionButton } from '@/common/buttons'
 import { Card } from '@/common/Card'
 import { FormLabel, Textarea } from '@/common/forms'
 import { useConfigurationContext } from '../shell/ConfigurationContext'
+import { getRoleText } from '../team/helpers'
 import {
   saveSettingsDraft,
   settingsQueryKey,
@@ -209,6 +210,10 @@ export function CustomActionSettingsContent({
                             {customAction.actions.length === 1
                               ? 'step'
                               : 'steps'}
+                            {' · Roles: '}
+                            {customAction.allowedRoles
+                              .map(getRoleText)
+                              .join(', ')}
                           </span>
                         </button>
                       </li>

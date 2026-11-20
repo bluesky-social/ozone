@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "customActions": [
+    {
+      "id": "mark-account-legitimate",
+      "name": "Mark account legitimate",
+      "helpText": "Remove needs-review flags when present. If spam is present, remove it and approve all eligible account appeal reports through that event. Otherwise close all eligible account appeals as no-action (denied). Clear the account's appeal flag when set. Assigned, escalated, and actively assigned reports stay open.",
+      "allowedRoles": [
+        "tools.ozone.team.defs#roleModerator",
+        "tools.ozone.team.defs#roleAdmin"
+      ],
+      "subjectTypes": ["account", "record"],
+      "actions": [
+        {
+          "id": "remove-needs-review-label",
+          "type": "event",
+          "target": "account",
+          "when": [
+            {
+              "target": "account",
+              "requiredLabels": ["needs-review"]
+            }
+          ],
+          "continueOnError": true,
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventLabel",
+            "createLabelVals": [],
+            "negateLabelVals": ["needs-review"],
+            "comment": "Clearing review flags after account review."
+          }
+        },
+        {
+          "id": "remove-needs-review-tag",
+          "type": "event",
+          "target": "account",
+          "when": [
+            {
+              "target": "account",
+              "requiredTags": ["needs-review"]
+            }
+          ],
+          "continueOnError": true,
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventTag",
+            "add": [],
+            "remove": ["needs-review"],
+            "comment": "Clearing review flags after account review."
+          }
+        },
+        {
+          "id": "remove-spam-and-approve-appeals",
+          "type": "event",
+          "target": "account",
+          "when": [
+            {
+              "target": "account",
+              "requiredLabels": ["spam"]
+            }
+          ],
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventLabel",
+            "createLabelVals": [],
+            "negateLabelVals": ["spam"],
+            "comment": "Account reviewed and determined legitimate."
+          },
+          "reportAction": {
+            "scope": "matching",
+            "types": ["tools.ozone.report.defs#reasonAppeal"],
+            "note": "Account reviewed and determined legitimate."
+          }
+        },
+        {
+          "id": "resolve-account-appeal",
+          "type": "event",
+          "target": "account",
+          "when": [
+            {
+              "target": "account",
+              "appealed": true
+            }
+          ],
+          "event": {
+            "$type": "tools.ozone.moderation.defs#modEventResolveAppeal",
+            "comment": "Account reviewed and determined legitimate."
+          }
+        },
+        {
+          "id": "close-appeals-without-spam",
+          "type": "closeReports",
+          "target": "account",
+          "when": [
+            {
+              "target": "account",
+              "absentLabels": ["spam"]
+            }
+          ],
+          "reportTypes": ["tools.ozone.report.defs#reasonAppeal"],
+          "internalNote": "Account reviewed and determined legitimate."
+        }
+      ]
+    }
+  ]
+}

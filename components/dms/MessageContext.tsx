@@ -16,7 +16,14 @@ import { Alert } from '@/common/Alert'
 import { RecordEmbedView } from '@/common/posts/PostsFeed'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
 
-const useMessageContext = ({ messageId, did }) => {
+type MessageContextSubject = Pick<
+  ChatBskyConvoDefs.MessageRef,
+  'did' | 'messageId'
+>
+
+const useMessageContext = ({
+  messageId,
+}: Pick<MessageContextSubject, 'messageId'>) => {
   const labelerAgent = useLabelerAgent()
 
   return useQuery({
@@ -39,7 +46,7 @@ export const MessageContext = ({
   subject,
   ...rest
 }: {
-  subject: ChatBskyConvoDefs.MessageRef
+  subject: MessageContextSubject
 } & ComponentProps<'div'>) => {
   const { data: messages, error, isLoading } = useMessageContext(subject)
   const [showMessageContext, setShowMessageContext] = useState(true)
@@ -132,7 +139,7 @@ const MessageSenderInfo = ({
   message,
   subject,
 }: {
-  subject: ChatBskyConvoDefs.MessageRef
+  subject: MessageContextSubject
   message: ChatBskyConvoDefs.MessageView | ChatBskyConvoDefs.DeletedMessageView
 }) => (
   <p>

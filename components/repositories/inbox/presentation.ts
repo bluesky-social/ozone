@@ -6,6 +6,7 @@ import {
   type InboxNotification,
   type SubjectRef,
   type ActionedSubjectDetail,
+  type ActionedSubject,
 } from './api'
 
 export function readable(value?: string) {
@@ -294,6 +295,7 @@ export function accountNoticeTitle(action: InboxAction) {
 
 export function accountSubjectNotice(detail: ActionedSubjectDetail) {
   const action = detail.actions[0]
+  const latestDecision = detail.actions.find(isAppealDecision)
   if (detail.appeal?.state === 'pending') {
     return {
       title: 'Appeal under review',
@@ -303,8 +305,9 @@ export function accountSubjectNotice(detail: ActionedSubjectDetail) {
   if (
     detail.appeal?.state === 'resolved' &&
     (!detail.appeal.resolvedAt ||
-      !action ||
-      Date.parse(detail.appeal.resolvedAt) >= Date.parse(action.createdAt))
+      !latestDecision ||
+      Date.parse(detail.appeal.resolvedAt) >=
+        Date.parse(latestDecision.createdAt))
   ) {
     const outcome = appealOutcome(detail.appeal, 'outcome')
     return outcome === 'approved'
@@ -324,6 +327,12 @@ export function accountSubjectNotice(detail: ActionedSubjectDetail) {
             description:
               'We reviewed your appeal. The current status of your content or account is shown below.',
           }
+  }
+  if (detail.enforcement.state === 'takendown') {
+    return { title: 'Your account is suspended' }
+  }
+  if (detail.enforcement.state === 'suspended') {
+    return { title: 'Your account is temporarily suspended' }
   }
   return { title: action ? accountNoticeTitle(action) : 'Moderation notice' }
 }
@@ -357,16 +366,36 @@ export function appealLabel(appeal: ToolsOzoneInboxDefs.AppealView) {
   )
 }
 
+export function isAppealDecision(action: InboxAction) {
+  return [
+    'contentRemoved',
+    'accountSuspended',
+    'accountTakedown',
+    'labelApplied',
+  ].includes(action.type)
+}
+
 export function isAppealableAction(action: InboxAction) {
-  return (
-    !action.reversedAt &&
-    [
-      'contentRemoved',
-      'accountSuspended',
-      'accountTakedown',
-      'labelApplied',
-    ].includes(action.type)
-  )
+  return !action.reversedAt && isAppealDecision(action)
+}
+
+export function appealableActionForSubject(
+  subject: ActionedSubject | ActionedSubjectDetail,
+  actions: InboxAction[],
+) {
+  if (subjectKey(subject.subject)?.startsWith('did:')) {
+    const type =
+      subject.enforcement.state === 'takendown'
+        ? 'accountTakedown'
+        : subject.enforcement.state === 'suspended'
+          ? 'accountSuspended'
+          : undefined
+    if (type)
+      return actions.find(
+        (action) => action.type === type && !action.reversedAt,
+      )
+  }
+  return actions.find(isAppealableAction)
 }
 
 export function notificationLabel(notification: InboxNotification) {

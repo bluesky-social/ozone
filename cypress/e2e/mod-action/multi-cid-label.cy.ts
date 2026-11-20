@@ -55,7 +55,7 @@ describe('Mod Action -> Label', () => {
     })
   })
 
-  it('Allows removing and adding a label to a subject', () => {
+  it('Removes the same label from each record CID', () => {
     const PORN_LABEL = 'porn'
     cy.get('table').should('include.text', seedFixture.carla.repo.handle)
     cy.contains('button', 'Take Action').click()
@@ -66,26 +66,33 @@ describe('Mod Action -> Label', () => {
       .contains(PORN_LABEL)
       .click()
 
-    const requestedCids: string[] = []
+    const labeledCids = [
+      ...new Set<string>(
+        seedFixture.carla.multiCidLabeledProfile.labels.map(({ cid }) => cid),
+      ),
+    ]
     cy.intercept(
       'POST',
       `${SERVER_URL}/tools.ozone.moderation.emitEvent`,
       (req) => {
-        requestedCids.push(req.body.subject.cid)
+        expect(req.body.event.createLabelVals).to.be.empty
+        expect(req.body.event.negateLabelVals).to.deep.equal([PORN_LABEL])
+        req.reply({
+          statusCode: 200,
+          body: {
+            ...req.body,
+            id: labeledCids.indexOf(req.body.subject.cid) + 1,
+            createdAt: '2024-07-25T13:18:48.623Z',
+          },
+        })
       },
-    )
+    ).as('emitLabelEvent')
 
     cy.get('#mod-action-panel button[type="submit"]').click()
 
-    const labeledCids = seedFixture.carla.multiCidLabeledProfile.labels.map(
-      ({ cid }) => cid,
-    )
-    // Validate that events were emitted for 2 different cids matching the exact number of labels added to different cids
-    cy.wait(300).then(() => {
-      const uniqueRequestedCids = [...new Set(requestedCids)]
-      const uniqueLabeledCids = [...new Set(labeledCids)]
-      expect(uniqueRequestedCids).to.have.members(uniqueLabeledCids)
-      expect(uniqueRequestedCids).to.have.lengthOf(uniqueLabeledCids.length)
+    cy.wait(labeledCids.map(() => '@emitLabelEvent')).then((requests) => {
+      const requestedCids = requests.map(({ request }) => request.body.subject.cid)
+      expect(requestedCids).to.have.members(labeledCids)
     })
   })
 })

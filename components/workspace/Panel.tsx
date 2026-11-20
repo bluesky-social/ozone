@@ -57,6 +57,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
   const formRef = useRef<HTMLFormElement>(null)
   const [showActionForm, setShowActionForm] = useState(false)
   const [showAccountActions, setShowAccountActions] = useState(false)
+  const [batchRequests, setBatchRequests] = useState(false)
   const removeItemsMutation = useWorkspaceRemoveItemsMutation()
   const emptyWorkspaceMutation = useWorkspaceEmptyMutation()
   const { importFromFiles } = useWorkspaceImport()
@@ -94,8 +95,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         'input[type="checkbox"][name="workspaceItem"]',
       )
       .forEach((checkbox) => {
-        if (items.includes(checkbox.value)) {
-          checkbox.checked = true
+        checkbox.checked = items.includes(checkbox.value)
+        if (checkbox.checked) {
           // There's an event handler on the checkbox for mousedown event that syncs with a react state
           // for last checked index. We need to trigger that event to keep the state in sync
           checkbox.dispatchEvent(new Event('mousedown'))
@@ -312,7 +313,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         { event: coreEvent },
         Array.from(formData.getAll('workspaceItem') as string[]),
         workspaceListStatuses || {},
-        { externalUrl, scheduling },
+        { externalUrl, scheduling, batchRequests },
       )
 
       // After successful submission, reset the form state to clear inputs for previous submission
@@ -322,10 +323,8 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
       setSubmission({ error: '', isSubmitting: false })
 
-      // Select items that were actioned so that user can either clear them or perform the next action on them
-      if (results.succeeded.length) {
-        selectItems(results.succeeded)
-      }
+      // Keep failures selected for review; otherwise select completed items.
+      selectItems(results.failed.length ? results.failed : results.succeeded)
     } catch (err) {
       setSubmission({ error: (err as Error).message, isSubmitting: false })
     }
@@ -345,10 +344,7 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
         { externalUrl: '' }, // No external URL for email events
       )
 
-      // Select items that were actioned so that user can either clear them or perform the next action on them
-      if (results.succeeded.length) {
-        return selectItems(results.succeeded)
-      }
+      selectItems(results.failed.length ? results.failed : results.succeeded)
 
       // This state is not kept in the form and driven by state so we need to reset it manually after submission
       setModEventType(MOD_EVENTS.ACKNOWLEDGE)
@@ -441,6 +437,9 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                       setModEventType={setModEventType}
                       handleEmailSubmit={handleEmailSubmit}
                       onCancel={() => setShowActionForm((current) => !current)}
+                      batchRequests={batchRequests}
+                      setBatchRequests={setBatchRequests}
+                      isSubmitting={submission.isSubmitting}
                     />
                     {submission.error && (
                       <div className="mb-3">
@@ -470,14 +469,16 @@ export function WorkspacePanel(props: PropsOf<typeof ActionPanel>) {
                 {showAccountActions && (
                   <div className="mb-3 md:w-1/2 sm:w-2/3">
                     <RevokeCredentials
-                      accounts={Object.values(workspaceListStatuses || {})
-                        .filter((item) => item.subject.startsWith('did:'))
-                        .map((item) => {
-                          return {
-                            did: item.subject,
-                            handle: item.repo?.handle || 'Unknown Handle',
-                          }
-                        })}
+                      accounts={() =>
+                        getSelectedItems()
+                          .filter(isValidDid)
+                          .map((did) => ({
+                            did,
+                            handle:
+                              workspaceListStatuses?.[did]?.repo?.handle ||
+                              'Unknown Handle',
+                          }))
+                      }
                       onSuccess={(dids) => {
                         removeItemsMutation.mutate(dids)
                       }}

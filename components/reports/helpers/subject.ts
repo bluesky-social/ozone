@@ -1,5 +1,9 @@
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
-import { ComAtprotoRepoStrongRef, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  ChatBskyConvoDefs,
+  ComAtprotoRepoStrongRef,
+  ToolsOzoneModerationDefs,
+} from '@atproto/api'
 import { useCallback } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { WorkspaceListData } from '@/workspace/useWorkspaceListData'
@@ -14,11 +18,13 @@ export const useCreateSubjectFromId = () => {
   return useCallback(
     async (
       id: string,
+      report?: { subject: string; eventId: number; reportedBy: string },
     ): Promise<{
       subject: { $type: string } & (
         | { uri: string; cid: string }
         | { did: string }
         | { did: string; convoId: string }
+        | { did: string; convoId: string; messageId: string }
       )
       record: ToolsOzoneModerationDefs.RecordViewDetail | null
     }> => {
@@ -41,6 +47,61 @@ export const useCreateSubjectFromId = () => {
           }
         }
 
+        if (
+          parsed?.collection === CollectionId.Message &&
+          parsed.did &&
+          parsed.rkey
+        ) {
+          // The synthetic URI omits the conversation ID. Recover it from the
+          // report event instead of treating a chat message as a PDS record.
+          const reportHint = report?.subject === id ? report : undefined
+          const isMatchingMessage = (
+            event: ToolsOzoneModerationDefs.ModEventView,
+          ) =>
+            (!reportHint || event.id === reportHint.eventId) &&
+            ChatBskyConvoDefs.isMessageRef(event.subject) &&
+            event.subject.did === parsed.did &&
+            event.subject.messageId === parsed.rkey
+          // Try the exact URI first, then support servers that cannot filter
+          // message events yet. Bound each scan to avoid blocking submission.
+          for (const exact of [true, false]) {
+            let cursor: string | undefined
+            let messageSubject:
+              (ChatBskyConvoDefs.MessageRef & { $type: string }) | undefined
+            for (let page = 0; page < 10; page++) {
+              const { data } =
+                await labelerAgent.tools.ozone.moderation.queryEvents({
+                  subject: exact ? id : parsed.did,
+                  includeAllUserRecords: exact ? undefined : true,
+                  createdBy: reportHint?.reportedBy,
+                  types: ['tools.ozone.moderation.defs#modEventReport'],
+                  limit: 100,
+                  cursor,
+                })
+              for (const event of data.events.filter(isMatchingMessage)) {
+                if (!ChatBskyConvoDefs.isMessageRef(event.subject)) continue
+                if (
+                  messageSubject &&
+                  messageSubject.convoId !== event.subject.convoId
+                ) {
+                  throw new Error('Message belongs to multiple conversations')
+                }
+                messageSubject = event.subject
+                if (reportHint) return { subject: messageSubject, record: null }
+              }
+              cursor = data.cursor
+              if (!cursor) {
+                if (messageSubject)
+                  return { subject: messageSubject, record: null }
+                break
+              }
+            }
+            if (cursor)
+              throw new Error('Too many report events to identify this message')
+          }
+          throw new Error('Could not find the report event for this message')
+        }
+
         // Check if we have this record data in any workspaceListData cache
         const workspaceQueries = queryClient.getQueryCache().findAll({
           queryKey: ['workspaceListData'],
@@ -48,8 +109,7 @@ export const useCreateSubjectFromId = () => {
 
         for (const query of workspaceQueries) {
           const workspaceData = query.state.data as
-            | WorkspaceListData
-            | undefined
+            WorkspaceListData | undefined
           if (workspaceData?.[id]?.record) {
             const cachedRecord = workspaceData[id].record
             return {
@@ -107,7 +167,7 @@ export const useCreateSubjectFromId = () => {
         record: null,
       }
     },
-    [labelerAgent],
+    [labelerAgent, queryClient],
   )
 }
 
@@ -126,6 +186,7 @@ export enum CollectionId {
   SocialGrainPhoto = 'social.grain.photo',
   PlaceStreamLivestream = 'place.stream.livestream',
   Convo = 'chat.bsky.convo',
+  Message = 'chat.bsky.convo.message',
 }
 export const getProfileUriForDid = (did: string) =>
   `at://${did}/${CollectionId.Profile}/self`
@@ -157,6 +218,9 @@ export const getCollectionName = (collection: string) => {
   }
   if (collection === CollectionId.Convo) {
     return 'Conversation'
+  }
+  if (collection === CollectionId.Message) {
+    return 'Message'
   }
   if (collection === CollectionId.SiteStandardDocument) {
     return 'Standard Site Document'

@@ -130,7 +130,7 @@ export function ActionForm({
           variant="takedown"
           targetServices={targetServices as any}
           setTargetServices={setTargetServices as any}
-          isSubjectDid={isSubjectDid}
+          isAccountAction={isSubjectDid}
         />
       )}
 

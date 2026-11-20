@@ -7,9 +7,17 @@ import {
 } from '@headlessui/react'
 import { ActionButton } from '@/common/buttons'
 import { copyToClipboard } from '@/common/CopyButton'
-import examples from './fixtures/examples.json'
+import basicExamples from './fixtures/examples.json'
+import legitimateAccount from './fixtures/mark-account-legitimate.json'
 import settingsSchema from './schemas/settings.schema.json'
 
+const examples = {
+  ...basicExamples,
+  customActions: [
+    ...basicExamples.customActions,
+    ...legitimateAccount.customActions,
+  ],
+}
 const exampleJson = JSON.stringify(examples, null, 2)
 const schemaJson = JSON.stringify(settingsSchema, null, 2)
 
@@ -89,7 +97,8 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                 <li>
                   <code>allowedRoles</code> uses full role identifiers; include
                   admins explicitly. <code>subjectTypes</code> allows accounts,
-                  records, or both. Existing step permissions still apply.
+                  records, or both. Existing step permissions still apply. The
+                  settings list shows the configured roles by name.
                 </li>
                 <li>
                   Optional <code>queueIds</code> limits a workflow to specific
@@ -97,6 +106,19 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   unassigned reports. Omit it for all queues. Scoped actions
                   require a current report and its queue is checked again before
                   execution. Empty lists are invalid.
+                </li>
+                <li>
+                  Optional action-level <code>reportTypes</code> limits a
+                  workflow to the current report type. Use exact report reason
+                  identifiers, such as{' '}
+                  <code>tools.ozone.report.defs#reasonAppeal</code>. Include{' '}
+                  <code>com.atproto.moderation.defs#reasonAppeal</code> as well
+                  for legacy appeals. Omit the list for all report types; empty
+                  lists are invalid. Scoped actions stay hidden while report
+                  state is unavailable and are checked again before execution.
+                  This controls availability, not which reports close. The{' '}
+                  <code>appealed</code> condition checks the subject flag
+                  independently.
                 </li>
                 <li>
                   Optional <code>allowedModeratorDids</code> limits who can run
@@ -112,12 +134,73 @@ export function CustomActionSettingsHelp({ onClose }: { onClose: () => void }) {
                   owning account, or <code>report</code> for a report activity.
                 </li>
                 <li>
-                  Steps support moderation events, report activities, and
-                  account verification. Report activities and{' '}
-                  <code>reportAction</code> require a current report. Activity{' '}
-                  <code>internalNote</code> is for moderators;{' '}
-                  <code>publicNote</code> and <code>reportAction.note</code> are
-                  visible to the reporter.
+                  Steps support moderation events, report activities, bulk
+                  no-action closure, and account verification. Report activities
+                  and <code>reportAction.scope: &quot;current&quot;</code>{' '}
+                  require a current report. Activity <code>internalNote</code>{' '}
+                  is for moderators; <code>publicNote</code> and{' '}
+                  <code>reportAction.note</code> are visible to the reporter.
+                </li>
+                <li>
+                  Optional action-level <code>when</code> conditions hide a
+                  workflow unless all conditions match. Use{' '}
+                  <code>requiredTags</code>, <code>absentTags</code>,{' '}
+                  <code>requiredLabels</code>, or <code>absentLabels</code> on
+                  the <code>subject</code> or owning <code>account</code>. Label
+                  conditions use active labels from this labeler on that exact
+                  subject. Use <code>appealed: true</code> to require an
+                  unresolved subject appeal flag, or{' '}
+                  <code>appealed: false</code>
+                  to require that flag to be clear. This checks the subject
+                  flag, not whether an appeal report is open. Conditions are
+                  checked again before execution; conditional actions stay
+                  hidden while state is unavailable.
+                </li>
+                <li>
+                  <code>modEventResolveAppeal</code> clears the appeal flag on
+                  the selected subject or account. It does not close reports and
+                  cannot use <code>reportAction</code>. To reject an appeal,
+                  resolve it first, then use a separate report{' '}
+                  <code>closeActivity</code> step to close the current report as
+                  no-action, or <code>closeReports</code> for all eligible
+                  matching reports.
+                </li>
+                <li>
+                  Event and <code>closeReports</code> steps can also use{' '}
+                  <code>when</code>. Unmatched steps are skipped; the preview
+                  shows which steps will run and why others will be skipped.
+                  Conditions use the state read before execution. If refreshed
+                  state changes the selected steps, select the action again and
+                  confirm its updated preview.
+                </li>
+                <li>
+                  <code>reportAction.scope: &quot;matching&quot;</code> selects
+                  eligible reports on the event target using a nonempty{' '}
+                  <code>types</code> list of report reasons. Assigned,
+                  escalated, and actively assigned reports remain open. Set{' '}
+                  <code>includeCurrent: true</code> to also include the current
+                  report when its exact subject and type match, including when
+                  it is assigned or escalated. An account target selects only
+                  account reports, including when run from a record report.
+                </li>
+                <li>
+                  A <code>type: &quot;closeReports&quot;</code> step targets the
+                  <code> subject</code> or owning <code>account</code>, with a
+                  required nonempty <code>reportTypes</code> list of report
+                  reasons and optional <code>internalNote</code>. It closes all
+                  eligible matching reports as no-action; appeal reports are
+                  denied. Assigned, escalated, and actively assigned reports
+                  stay open, including the current report. No matches is a
+                  successful result. This required step cannot link an event,
+                  expand to owned subjects, or continue on failure.
+                </li>
+                <li>
+                  On a content report, an event targeting <code>account</code>
+                  can use <code>reportAction: {`{ "scope": "current" }`}</code>
+                  to close that report and link it to the owning account’s
+                  label, takedown, acknowledgement, or comment event. Other
+                  reports stay open. Escalation must target the report’s own
+                  subject or use a report activity.
                 </li>
                 <li>
                   Steps stop the workflow on error by default. Tag and label

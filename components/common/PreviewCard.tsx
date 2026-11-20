@@ -19,6 +19,7 @@ const PreviewTitleMap = {
   [CollectionId.SocialGrainPhoto]: 'Reported photo',
   [CollectionId.PlaceStreamLivestream]: 'Reported livestream',
   [CollectionId.Convo]: 'Reported conversation',
+  [CollectionId.Message]: 'Reported message',
 }
 
 const getPreviewTitleForAtUri = (uri: string): string => {

@@ -150,16 +150,23 @@ function Form(
     onFormSubmit,
     record,
     isSubjectDid,
+    isAccountAction,
+    isMessageSubject,
+    messageAccountAction,
     profile,
     subjectStatus,
     selectedSeverityLevelName,
     canManageChat,
     currentLabels,
     allLabels,
+    messageLabelsUnavailable,
+    isFetchingSubject,
     repo,
     modEventType,
     shouldShowDurationInHoursField,
     isLabelEvent,
+    areLabelsLoading,
+    areAccountActionsLoading,
     isMuteEvent,
     isTakedownEvent,
     isPriorityScoreEvent,
@@ -359,7 +366,13 @@ function Form(
                   className="flex flex-row items-center gap-2"
                 >
                   <LabelList className="-ml-1 -mt-1 flex-wrap">
-                    {!currentLabels.length && (
+                    {messageLabelsUnavailable ? (
+                      <span>
+                        {isFetchingSubject
+                          ? 'Loading labels...'
+                          : 'Could not load message labels'}
+                      </span>
+                    ) : !currentLabels.length && (
                       <LabelListEmpty className="ml-1" />
                     )}
                     {allLabels.map((label) => {
@@ -472,6 +485,11 @@ function Form(
                     <ModEventSelectorButton
                       isSubjectDid={isSubjectDid}
                       subjectStatus={subjectStatus}
+                      takedownSubjectStatus={
+                        isMessageSubject
+                          ? (repo?.moderation.subjectStatus ?? null)
+                          : undefined
+                      }
                       selectedAction={modEventType}
                       hasBlobs={!!record?.blobs?.length}
                       setSelectedAction={(action) => setModEventType(action)}
@@ -484,6 +502,22 @@ function Form(
                       />
                     )}
                   </div>
+                  {messageAccountAction && (
+                    <div className="mt-3 space-y-2">
+                      <Alert
+                        type="warning"
+                        showIcon
+                        title="Account action"
+                        body={messageAccountAction}
+                      />
+                      <Checkbox
+                        id="messageApplyToAccount"
+                        checked
+                        disabled
+                        label="Apply action to account"
+                      />
+                    </div>
+                  )}
                   {isTakedownEvent && (
                     <PolicySeveritySelector
                       defaultPolicy={selectedPolicyName}
@@ -503,7 +537,7 @@ function Form(
                       variant="takedown"
                       targetServices={targetServices}
                       setTargetServices={setTargetServices}
-                      isSubjectDid={isSubjectDid}
+                      isAccountAction={isAccountAction}
                     />
                   )}
 
@@ -624,7 +658,13 @@ function Form(
 
                   {isLabelEvent && (
                     <div className="mt-2">
+                      {areLabelsLoading && <p>Refreshing labels...</p>}
                       <LabelSelector
+                        key={JSON.stringify([
+                          subject,
+                          currentLabels,
+                          allLabels.map(({ src, val }) => [src, val]),
+                        ])}
                         id="labels"
                         name="labels"
                         form={FORM_ID}
@@ -665,7 +705,7 @@ function Form(
                       selectedSeverityLevel={selectedSeverityLevelName}
                       defaultSeverityLevel={selectedSeverityLevelName}
                       defaultPolicy={selectedPolicyName}
-                      isSubjectDid={isSubjectDid}
+                      isAccountAction={isAccountAction}
                       variant={isEmailEvent ? 'email' : 'reverse-takedown'}
                     />
                   )}
@@ -770,8 +810,11 @@ function Form(
                           Close open or escalated subject reviews for content
                           created by this account.
                           <span className="block text-xs text-gray-500 dark:text-gray-400">
-                            Also resolves appeals on those subjects. Reports in
-                            queues remain open.
+                            Also resolves appeals and closes eligible reports on
+                            this account and its content across all queues and
+                            report types. Assigned or escalated reports stay open.
+                            {isAckEvent &&
+                              ' Closed reports show no action taken.'}
                           </span>
                         </span>
                       }
@@ -833,14 +876,22 @@ function Form(
                         <ButtonPrimary
                           ref={submitButton}
                           type="submit"
-                          disabled={submission.isSubmitting}
+                          disabled={
+                            submission.isSubmitting ||
+                            areLabelsLoading ||
+                            areAccountActionsLoading
+                          }
                           className="mx-1 px-2 sm:px-4"
                         >
                           <span className="text-sm sm:text-base">(S)ubmit</span>
                         </ButtonPrimary>
                         <ButtonPrimary
                           type="button"
-                          disabled={submission.isSubmitting}
+                          disabled={
+                            submission.isSubmitting ||
+                            areLabelsLoading ||
+                            areAccountActionsLoading
+                          }
                           onClick={submitAndGoNext}
                           className="px-2 sm:px-4"
                         >

@@ -13,8 +13,19 @@ import {
   ToolsOzoneReportDefs,
   ToolsOzoneReportGetAssignments,
 } from '@atproto/api'
+import { getQueueMembers } from './queueMembers'
 
 const ASSIGNMENTS_QUERY_KEY = 'assignments'
+
+export const useQueueMembers = (queueId?: number) => {
+  const agent = useLabelerAgent()
+  return useQuery({
+    queryKey: [ASSIGNMENTS_QUERY_KEY, 'queueMembers', queueId],
+    enabled: queueId !== undefined,
+    queryFn: ({ signal }) => getQueueMembers(agent, queueId!, signal),
+    refetchInterval: 5000,
+  })
+}
 
 export const useQueueAssignments = (
   params: ToolsOzoneQueueGetAssignments.QueryParams,

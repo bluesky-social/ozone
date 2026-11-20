@@ -64,7 +64,7 @@ export function MemberView({
   // Resolve it from the moderator DID so the assignee is still identifiable.
   const profile = member.profile ?? fetchedProfile
   const handle = profile?.handle
-  const displayName = profile?.displayName
+  const displayName = profile?.displayName?.trim()
   const avatar = profile?.avatar
 
   const assignedDate = assignedAt ? new Date(assignedAt) : null
@@ -91,11 +91,11 @@ export function MemberView({
               className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate hover:underline hover:text-blue-600 dark:hover:text-blue-400"
               onClick={() => onClickDid(member.did)}
             >
-              {displayName ?? (handle ? `@${handle}` : member.did)}
+              {displayName || (handle ? `@${handle}` : member.did)}
             </button>
           ) : (
             <p className="text-sm font-medium text-gray-800 dark:text-gray-100 truncate">
-              {displayName ?? (handle ? `@${handle}` : member.did)}
+              {displayName || (handle ? `@${handle}` : member.did)}
             </p>
           )}
           <RoleBadge role={member.role} />

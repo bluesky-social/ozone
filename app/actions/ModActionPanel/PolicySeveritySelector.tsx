@@ -36,7 +36,7 @@ type PolicySeveritySelectorProps = {
   setTargetServices?: (services: TakedownTargetService[]) => void
   selectedSeverityLevel?: string
   severityLevelSetting?: SeverityLevelListSetting
-  isSubjectDid?: boolean
+  isAccountAction?: boolean
   recommendedPolicies?: string[]
 
   // Variant-specific behavior
@@ -57,7 +57,7 @@ export function PolicySeveritySelector({
   targetServices = ['appview', 'pds'],
   setTargetServices,
   variant = 'takedown',
-  isSubjectDid,
+  isAccountAction,
   recommendedPolicies,
 }: PolicySeveritySelectorProps) {
   const isReverseTakedown = variant === 'reverse-takedown'
@@ -66,7 +66,7 @@ export function PolicySeveritySelector({
   const shouldShowTargetServices =
     !!setTargetServices &&
     variant === 'takedown' &&
-    (isSubjectDid ||
+    (isAccountAction ||
       !!actionRecommendation?.recommendedDuration ||
       actionRecommendation?.isPermanent)
 

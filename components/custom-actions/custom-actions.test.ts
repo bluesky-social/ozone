@@ -3,7 +3,7 @@ import { XRPCError } from '@atproto/xrpc'
 import { webcrypto } from 'node:crypto'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { parseServerConfig } from '../../lib/server-config'
-import { accountRef, prepare, readSnapshot } from './compile'
+import { accountRef, prepare, prepareConfirmed, readSnapshot } from './compile'
 import {
   createRun,
   dispatch,
@@ -86,6 +86,10 @@ function snapshot(): Snapshot {
     }),
     subjectTags: [],
     accountTags: [],
+    subjectLabels: [],
+    accountLabels: [],
+    subjectAppealed: false,
+    accountAppealed: false,
     protectedTags: {},
     policies: {},
     profile: { handle: 'example.test', displayName: 'Example' },
@@ -193,6 +197,7 @@ describe('configuration contract', () => {
   )
   it.each([
     { queueIds: [7, 12, -1] },
+    { reportTypes: ['tools.ozone.report.defs#reasonAppeal'] },
     { allowedModeratorDids: [moderator] },
     { allowedModeratorDids: [moderator, 'did:web:moderator.example'] },
     { queueIds: [7], allowedModeratorDids: [moderator] },
@@ -203,6 +208,29 @@ describe('configuration contract', () => {
       expect(importSettings(JSON.stringify(value))).toEqual(value)
     },
   )
+  it.each(
+    [
+      [],
+      [''],
+      [' tools.ozone.report.defs#reasonAppeal'],
+      ['tools.ozone.report.defs#reasonAppeal '],
+      [
+        'tools.ozone.report.defs#reasonAppeal',
+        'tools.ozone.report.defs#reasonAppeal',
+      ],
+      [1],
+      [null],
+      null,
+      'tools.ozone.report.defs#reasonAppeal',
+    ].map((reportTypes) => ({ reportTypes })),
+  )('rejects an invalid report-type allowlist: %j', ({ reportTypes }) => {
+    expect(() =>
+      validateSettings({
+        version: 1,
+        customActions: [{ ...action(), reportTypes }],
+      }),
+    ).toThrow()
+  })
   it.each(
     [
       [],
@@ -470,6 +498,66 @@ describe('settings API boundary', () => {
 })
 
 describe('preparation', () => {
+  it.each(['subject', 'account'] as const)(
+    'prepares Resolve Appeal on the %s without closing reports',
+    (target) => {
+      const state = snapshot()
+      state.context.subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/example`,
+        cid: 'bafyexample',
+      }
+      const workflow = action()
+      workflow.actions = [
+        {
+          id: 'resolve',
+          type: 'event',
+          target,
+          event: {
+            $type: 'tools.ozone.moderation.defs#modEventResolveAppeal',
+            comment: 'Reviewed appeal.',
+          },
+        },
+      ]
+      const [op] = prepare(workflow, state)
+      expect(op.request.body).toMatchObject({
+        subject: target === 'account' ? accountRef(did) : state.context.subject,
+        event: { $type: 'tools.ozone.moderation.defs#modEventResolveAppeal' },
+      })
+      expect(op.request.body).not.toHaveProperty('reportAction')
+      state.config.permissions.canLabel = false
+      expect(() => prepare(workflow, state)).toThrow(
+        'permission required to resolve appeals',
+      )
+    },
+  )
+  it('rejects reportAction and soft failures on Resolve Appeal', () => {
+    const workflow = action()
+    const step = {
+      id: 'resolve',
+      type: 'event' as const,
+      target: 'account' as const,
+      event: {
+        $type: 'tools.ozone.moderation.defs#modEventResolveAppeal' as const,
+      },
+    }
+    workflow.actions = [step]
+    expect(() =>
+      validateSettings({ version: 1, customActions: [workflow] }),
+    ).not.toThrow()
+    for (const extra of [
+      { reportAction: { scope: 'current' } },
+      { continueOnError: true },
+      { continueOnError: false },
+    ]) {
+      workflow.actions = [
+        { ...step, ...extra } as CustomAction['actions'][number],
+      ]
+      expect(() =>
+        validateSettings({ version: 1, customActions: [workflow] }),
+      ).toThrow()
+    }
+  })
   it.each([7, -1])(
     'requires the current report to match queue %s',
     (queueId) => {
@@ -494,11 +582,51 @@ describe('preparation', () => {
     state.context.moderator.did = moderator
     expect(() => prepare(workflow, state)).toThrow('this moderator')
   })
-  it('requires both scope filters and retains role and operation permissions', () => {
+  it('requires an exact current report type independently of the appeal flag', () => {
+    const state = snapshot()
+    const reportTypes = [
+      'tools.ozone.report.defs#reasonAppeal',
+      'com.atproto.moderation.defs#reasonAppeal',
+    ]
+    const workflow = { ...action(), reportTypes }
+    for (const reportType of reportTypes) {
+      state.context.report!.reportType = reportType
+      expect(prepare(workflow, state)).toHaveLength(2)
+    }
+    state.subjectAppealed = state.accountAppealed = true
+    for (const reportType of [
+      'tools.ozone.report.defs#reasonMisleadingSpam',
+      'tools.ozone.report.defs#reasonappeal',
+      undefined,
+    ]) {
+      state.context.report!.reportType = reportType
+      expect(() => prepare(workflow, state)).toThrow('current report type')
+    }
+    state.context.report = null
+    expect(() => prepare(workflow, state)).toThrow('current report type')
+    expect(prepare(action(), state)).toHaveLength(2)
+  })
+  it('combines report-type eligibility with tag conditions', () => {
+    const workflow: CustomAction = {
+      ...action(),
+      reportTypes: ['tools.ozone.report.defs#reasonOther'],
+      when: [{ target: 'account', requiredTags: ['review:example'] }],
+    }
+    const state = snapshot()
+    state.context.report!.reportType = 'tools.ozone.report.defs#reasonOther'
+    expect(() => prepare(workflow, state)).toThrow('conditions')
+    state.accountTags = ['review:example']
+    expect(prepare(workflow, state)).toHaveLength(2)
+    state.context.report!.reportType =
+      'tools.ozone.report.defs#reasonMisleadingSpam'
+    expect(() => prepare(workflow, state)).toThrow('current report type')
+  })
+  it('requires every scope filter and retains role and operation permissions', () => {
     const state = snapshot()
     const workflow: CustomAction = {
       ...action(),
       queueIds: [7],
+      reportTypes: ['tools.ozone.report.defs#reasonAppeal'],
       allowedModeratorDids: [moderator],
       actions: [
         {
@@ -513,7 +641,12 @@ describe('preparation', () => {
         },
       ],
     }
+    state.context.report!.reportType = 'tools.ozone.report.defs#reasonAppeal'
     expect(prepare(workflow, state)).toHaveLength(1)
+    state.context.report!.reportType =
+      'tools.ozone.report.defs#reasonMisleadingSpam'
+    expect(() => prepare(workflow, state)).toThrow('current report type')
+    state.context.report!.reportType = 'tools.ozone.report.defs#reasonAppeal'
     state.context.report!.queueId = 8
     expect(() => prepare(workflow, state)).toThrow('current queue')
     state.context.report!.queueId = 7
@@ -545,6 +678,7 @@ describe('preparation', () => {
             data: {
               id: 123,
               subject: { subject: did },
+              reportType: 'tools.ozone.report.defs#reasonAppeal',
               ...(queueId && { queue: { id: queueId } }),
             },
           }),
@@ -558,6 +692,9 @@ describe('preparation', () => {
         123,
       )
       expect(state.context.report?.queueId).toBe(queueId ?? -1)
+      expect(state.context.report?.reportType).toBe(
+        'tools.ozone.report.defs#reasonAppeal',
+      )
     },
   )
   it('stops before writes if the report leaves the allowed queue during preflight', async () => {
@@ -596,6 +733,64 @@ describe('preparation', () => {
     expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
     expect(deps.dispatch).not.toHaveBeenCalled()
   })
+  it.each(['tools.ozone.report.defs#reasonMisleadingSpam', undefined])(
+    'stops before writes if the fresh report type is %s instead of an appeal',
+    async (reportType) => {
+      const workflow = {
+        ...action(),
+        reportTypes: ['tools.ozone.report.defs#reasonAppeal'],
+      }
+      const initial = snapshot()
+      initial.context.report!.reportType = workflow.reportTypes[0]
+      const run = createRun(workflow, initial)
+      const agent = agentWith({
+        server: {
+          getConfig: vi
+            .fn()
+            .mockResolvedValue({ data: { viewer: { role: ADMIN_ROLE } } }),
+        },
+        moderation: {
+          getRepo: vi.fn().mockResolvedValue({ data: { moderation: {} } }),
+        },
+        setting: {
+          listOptions: vi.fn().mockResolvedValue({ data: { options: [] } }),
+        },
+        report: {
+          getReport: vi.fn().mockResolvedValue({
+            data: {
+              id: 123,
+              subject: { subject: did },
+              queue: { id: 7 },
+              reportType,
+            },
+          }),
+        },
+      })
+      const dispatch = vi.fn().mockResolvedValue(eventReceipt())
+      await executeRun(
+        run,
+        {
+          prepare: async () => {
+            const fresh = await readSnapshot(
+              agent,
+              serviceDid,
+              initial.context.uiOrigin,
+              did,
+              123,
+            )
+            prepareConfirmed(workflow, initial, fresh)
+          },
+          dispatch,
+          changed: vi.fn(),
+        },
+        new AbortController(),
+      )
+      expect(run.status).toBe('failed')
+      expect(run.error).toContain('current report type')
+      expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
+      expect(dispatch).not.toHaveBeenCalled()
+    },
+  )
   it('compares record references by URI and CID regardless of property order', async () => {
     const subject: Subject = {
       cid: 'bafyexample',
@@ -729,29 +924,122 @@ describe('preparation', () => {
       },
     ])
   })
-  it('does not let account enforcement link a record report', () => {
-    const a = action()
-    a.actions = [
-      {
-        id: 'label',
-        type: 'event',
-        target: 'account',
-        event: {
-          $type: 'tools.ozone.moderation.defs#modEventLabel',
-          createLabelVals: ['porn'],
-          negateLabelVals: [],
+  it.each([
+    {
+      $type: 'tools.ozone.moderation.defs#modEventLabel',
+      createLabelVals: ['porn'],
+      negateLabelVals: [],
+    },
+    { $type: 'tools.ozone.moderation.defs#modEventTakedown' },
+    { $type: 'tools.ozone.moderation.defs#modEventAcknowledge' },
+    {
+      $type: 'tools.ozone.moderation.defs#modEventComment',
+      comment: 'Reviewed',
+    },
+  ] satisfies ModerationEvent[])(
+    'links the owning account event $type to only the current record report',
+    (event) => {
+      const a = action()
+      a.actions = [
+        {
+          id: 'account-event',
+          type: 'event',
+          target: 'account',
+          event,
+          reportAction: { scope: 'current', note: 'Reviewed account' },
         },
-        reportAction: { scope: 'current' },
-      },
-    ]
+      ]
+      const state = snapshot()
+      state.context.subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/abc`,
+        cid: 'bafyexample',
+      }
+      expect(prepare(a, state)[0].request).toEqual({
+        endpoint: 'tools.ozone.moderation.emitEvent',
+        body: {
+          subject: accountRef(did),
+          createdBy: moderator,
+          event,
+          reportAction: { ids: [123], note: 'Reviewed account' },
+        },
+      })
+      state.context.owningAccountDid = issuer
+      expect(() => prepare(a, state)).toThrow('owning account')
+      state.context.owningAccountDid = did
+      state.context.report = null
+      expect(() => prepare(a, state)).toThrow('current report')
+    },
+  )
+  it('keeps escalation scoped to the current report subject', () => {
     const state = snapshot()
     state.context.subject = {
       $type: 'com.atproto.repo.strongRef',
       uri: `at://${did}/app.bsky.feed.post/abc`,
       cid: 'bafyexample',
     }
+    const a = action()
+    const step: CustomAction['actions'][number] = {
+      id: 'escalate',
+      type: 'event',
+      target: 'account',
+      event: { $type: 'tools.ozone.moderation.defs#modEventEscalate' },
+      reportAction: { scope: 'current' },
+    }
+    a.actions = [step]
     expect(() => prepare(a, state)).toThrow('same subject')
+    step.target = 'subject'
+    expect(prepare(a, state)[0].request.body).toMatchObject({
+      subject: state.context.subject,
+      reportAction: { ids: [123] },
+    })
+    state.context.subject = accountRef(did)
+    step.target = 'account'
+    expect(prepare(a, state)[0].request.body).toMatchObject({
+      subject: accountRef(did),
+      reportAction: { ids: [123] },
+    })
   })
+  it.each([
+    `at://${did}/app.bsky.feed.post/other`,
+    `at://${issuer}/app.bsky.feed.post/abc`,
+    did,
+  ])(
+    'rejects a report on another subject during preflight: %s',
+    async (reportSubject) => {
+      const subject: Subject = {
+        $type: 'com.atproto.repo.strongRef',
+        uri: `at://${did}/app.bsky.feed.post/abc`,
+        cid: 'bafyexample',
+      }
+      const agent = agentWith({
+        server: {
+          getConfig: vi
+            .fn()
+            .mockResolvedValue({ data: { viewer: { role: ADMIN_ROLE } } }),
+        },
+        moderation: {
+          getRepo: vi.fn().mockResolvedValue({ data: { moderation: {} } }),
+          getRecord: vi
+            .fn()
+            .mockResolvedValue({ data: { ...subject, moderation: {} } }),
+        },
+        setting: {
+          listOptions: vi.fn().mockResolvedValue({ data: { options: [] } }),
+        },
+        report: {
+          getReport: vi
+            .fn()
+            .mockResolvedValue({
+              data: { id: 123, subject: { subject: reportSubject } },
+            }),
+        },
+      })
+      await expect(
+        readSnapshot(agent, serviceDid, 'https://ozone.example', subject, 123),
+      ).rejects.toThrow('report does not belong to this subject')
+    },
+  )
   it('expands reportAction at the request root', () => {
     const a = action()
     a.actions = [
@@ -869,6 +1157,66 @@ describe('preparation', () => {
 })
 
 describe('bounded one-shot execution', () => {
+  it.each([{ skipped: [0] }, { skipped: [1] }, { skipped: [0, 1] }])(
+    'keeps pre-skipped operations out of dispatch: $skipped',
+    async ({ skipped }) => {
+      const { execute, deps, run } = runnerFixture()
+      for (const index of skipped) run.operations[index].status = 'skipped'
+      await execute()
+      const runnable = run.operations.filter(
+        (_, index) => !skipped.includes(index),
+      )
+      expect(deps.dispatch.mock.calls.map((call) => call[1].stepId)).toEqual(
+        runnable.map((op) => op.stepId),
+      )
+      expect(run.status).toBe('succeeded')
+      for (const [index, op] of run.operations.entries()) {
+        if (skipped.includes(index)) {
+          expect(op.status).toBe('skipped')
+          expect(op.receipt).toBeUndefined()
+        } else {
+          expect(op.status).toBe('succeeded')
+          expect(op.receipt).toEqual(eventReceipt())
+        }
+      }
+    },
+  )
+  it.each([
+    {
+      error: new Error('State changed. Review again.'),
+      message: 'State changed. Review again.',
+    },
+    { error: null, message: 'Could not complete this action.' },
+  ])(
+    'publishes the preflight failure reason: $message',
+    async ({ error, message }) => {
+      const { execute, deps, run } = runnerFixture()
+      deps.prepare.mockRejectedValue(error)
+      await execute()
+      expect(run.status).toBe('failed')
+      expect(run.error).toBe(message)
+      expect(deps.changed.mock.lastCall?.[0].error).toBe(message)
+      expect(deps.dispatch).not.toHaveBeenCalled()
+      expect(run.operations.every((op) => op.status === 'skipped')).toBe(true)
+    },
+  )
+  it('retains the required-step failure reason alongside earlier confirmed receipts', async () => {
+    const workflow = action()
+    workflow.actions.push(tag('unsent'))
+    const { execute, deps, run } = runnerFixture(workflow)
+    deps.dispatch
+      .mockResolvedValueOnce(eventReceipt())
+      .mockRejectedValueOnce(new Error('Required change failed'))
+    await execute()
+    expect(run.error).toBe('Required change failed')
+    expect(run.operations.map((op) => op.status)).toEqual([
+      'succeeded',
+      'failed',
+      'skipped',
+    ])
+    expect(run.operations[0].receipt).toEqual(eventReceipt())
+    expect(deps.dispatch).toHaveBeenCalledTimes(2)
+  })
   it('runs in order and publishes running state and confirmed receipts', async () => {
     const { execute, deps, run } = runnerFixture()
     deps.dispatch.mockImplementation(async (_run, op) => {

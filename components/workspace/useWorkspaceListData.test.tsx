@@ -1,9 +1,18 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { ToolsOzoneModerationDefs } from '@atproto/api'
-import { useWorkspaceListData, WorkspaceListData } from './useWorkspaceListData'
+import {
+  focusManager,
+  QueryClient,
+  QueryClientProvider,
+  QueryObserver,
+} from '@tanstack/react-query'
+import { Agent, ToolsOzoneModerationDefs } from '@atproto/api'
+import {
+  useWorkspaceListData,
+  workspaceDataOptions,
+  WorkspaceListData,
+} from './useWorkspaceListData'
 import {
   useWorkspaceAddItemsMutation,
   useWorkspaceImport,
@@ -97,8 +106,153 @@ beforeEach(() => {
   )
 })
 afterEach(() => {
+  vi.restoreAllMocks()
   client.clear()
   vi.unstubAllGlobals()
+})
+
+describe('workspace metadata cache', () => {
+  const staleMs = 5 * 60 * 1000
+  const agent = {
+    tools: { ozone: { moderation: { getSubjects: state.getSubjects } } },
+  } as unknown as Agent
+  let now: number
+  let cache: NonNullable<Parameters<typeof workspaceDataOptions>[3]>
+  let observer: QueryObserver<WorkspaceListData>
+  let unsubscribe: (() => void) | undefined
+  const options = (ids: string[]) =>
+    workspaceDataOptions(client, agent, ids, cache)
+  const show = async (ids: string[]) => {
+    if (observer) observer.setOptions(options(ids))
+    else {
+      observer = new QueryObserver<WorkspaceListData>(client, options(ids))
+      unsubscribe = observer.subscribe(() => {})
+    }
+    return (await observer.refetch({ cancelRefetch: false })).data!
+  }
+
+  beforeEach(() => {
+    now = Date.now()
+    vi.spyOn(Date, 'now').mockImplementation(() => now)
+    cache = { data: {}, fetchedAt: 0, subjects: [] }
+    observer = undefined!
+  })
+  afterEach(() => {
+    unsubscribe?.()
+    unsubscribe = undefined
+    client.unmount()
+    focusManager.setFocused(undefined)
+  })
+
+  it('removes without fetching, prunes cached entries, and fetches only an added subject', async () => {
+    const ids = subjects(3)
+    await show(ids.slice(0, 2))
+    state.getSubjects.mockClear()
+
+    expect(await show([ids[0]])).toEqual(asData([account(0)]))
+    expect(state.getSubjects).not.toHaveBeenCalled()
+    expect(cache.data).toEqual(asData([account(0)]))
+
+    expect(await show([ids[0], ids[2]])).toEqual(
+      asData([account(0), account(2)]),
+    )
+    expect(
+      state.getSubjects.mock.calls.map(([params]) => params.subjects),
+    ).toEqual([[ids[2]]])
+    expect(Object.keys(cache.data)).toEqual([ids[0], ids[2]])
+  })
+
+  it('repolls a previously visited list after expiry without renewing the clock on removal', async () => {
+    const ids = subjects(3)
+    await show(ids)
+    now += staleMs - 1
+    await show(ids.slice(0, 2))
+    state.getSubjects.mockClear()
+    now += 1
+
+    await show(ids)
+    expect(
+      state.getSubjects.mock.calls.map(([params]) => params.subjects),
+    ).toEqual([ids])
+  })
+
+  it('starts the freshness window when a slow full load finishes', async () => {
+    const ids = subjects(51)
+    state.getSubjects.mockImplementationOnce(async ({ subjects: batch }) => {
+      now += staleMs * 2
+      return {
+        data: {
+          subjects: batch.map((subject: string) => ({ type: 'account', subject })),
+        },
+      }
+    })
+    await show(ids)
+    state.getSubjects.mockClear()
+    now += staleMs - 1
+    await show(ids.slice(1))
+    expect(state.getSubjects).not.toHaveBeenCalled()
+    now += 1
+    await show(ids.slice(2))
+    expect(state.getSubjects).toHaveBeenCalledOnce()
+  })
+
+  it('uses the same freshness rule on window focus', async () => {
+    client.mount()
+    const ids = subjects(2)
+    await show(ids)
+    state.getSubjects.mockClear()
+    focusManager.setFocused(false)
+    focusManager.setFocused(true)
+    await observer.refetch({ cancelRefetch: false })
+    expect(state.getSubjects).not.toHaveBeenCalled()
+
+    now += staleMs
+    focusManager.setFocused(false)
+    focusManager.setFocused(true)
+    await vi.waitFor(() => expect(state.getSubjects).toHaveBeenCalledOnce())
+    expect(state.getSubjects.mock.calls[0][0].subjects).toEqual(ids)
+  })
+
+  it('adds incrementally through the mutation without reloading the new query key', async () => {
+    const ids = subjects(3)
+    state.list = ids[0]
+    await show([ids[0]])
+    state.getSubjects.mockClear()
+    await add().mutateAsync(ids.slice(1))
+    expect(await show(ids)).toEqual(asData([account(0), account(1), account(2)]))
+    expect(
+      state.getSubjects.mock.calls.map(([params]) => params.subjects),
+    ).toEqual([ids.slice(1)])
+  })
+
+  it('repolls and replaces old metadata when an add occurs after expiry', async () => {
+    const ids = subjects(2)
+    state.list = ids[0]
+    await show([ids[0]])
+    now += staleMs
+    state.getSubjects.mockClear()
+    const updated = { ...account(0), status: { tags: ['updated'] } } as Subject
+    state.getSubjects.mockResolvedValueOnce({
+      data: { subjects: [updated, account(1)] },
+    })
+    await add().mutateAsync([ids[1]])
+    expect(await show(ids)).toEqual(asData([updated, account(1)]))
+    expect(
+      state.getSubjects.mock.calls.map(([params]) => params.subjects),
+    ).toEqual([ids])
+  })
+
+  it('refreshes on a new panel session even when the query key is still cached', async () => {
+    const ids = subjects(2)
+    await show(ids)
+    state.getSubjects.mockClear()
+    cache = { data: {}, fetchedAt: 0, subjects: [] }
+    observer.setOptions({ ...options(ids), enabled: false })
+    await show(ids)
+    expect(
+      state.getSubjects.mock.calls.map(([params]) => params.subjects),
+    ).toEqual([ids])
+  })
 })
 
 describe('workspace partial loading and re-import', () => {
