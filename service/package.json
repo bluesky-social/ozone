@@ -5,7 +5,7 @@
   "packageManager": "yarn@4.8.1",
   "dependencies": {
     "@atproto/ozone": "0.10.9",
-    "next": "15.5.28",
+    "next": "15.5.29",
     "react": "19.2.5"
   }
 }
