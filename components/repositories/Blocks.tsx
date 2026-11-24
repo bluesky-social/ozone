@@ -3,6 +3,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { AccountsGrid } from './AccountView'
 import { getProfiles, listRecords } from './api'
 import { useLabelerAgent } from '@/shell/ConfigurationContext'
+import { usePdsAgent } from '@/shell/AuthContext'
 import { useEffect, useRef, useState } from 'react'
 import { useWorkspaceAddItemsMutation } from '@/workspace/hooks'
 import { toast } from 'react-toastify'
@@ -12,6 +13,7 @@ import { Alert } from '@/common/Alert'
 
 export function Blocks({ did }: { did: string }) {
   const labelerAgent = useLabelerAgent()
+  const pdsAgent = usePdsAgent()
   const abortController = useRef<AbortController | null>(null)
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false)
   const [isAdding, setIsAdding] = useState(false)
@@ -21,9 +23,12 @@ export function Blocks({ did }: { did: string }) {
     useInfiniteQuery({
       queryKey: ['blocks', { did }],
       queryFn: async ({ pageParam }) => {
-        const data = await listRecords(did, 'app.bsky.graph.block', {
-          cursor: pageParam,
-        })
+        const data = await listRecords(
+          did,
+          'app.bsky.graph.block',
+          { cursor: pageParam },
+          { pdsAgent },
+        )
 
         if (data.error) {
           throw new Error(data.message || 'Error fetching blocks')
@@ -65,7 +70,7 @@ export function Blocks({ did }: { did: string }) {
           did,
           'app.bsky.graph.block',
           { cursor },
-          { signal: abortController.current?.signal },
+          { signal: abortController.current?.signal, pdsAgent },
         )
 
         await addItemsToWorkspace(

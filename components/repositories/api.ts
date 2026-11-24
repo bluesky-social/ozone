@@ -1,13 +1,24 @@
 import { getServiceUrlFromDoc } from '@/lib/client-config'
 import { resolveDidDocData } from '@/lib/identity'
 import { chunkArray } from '@/lib/util'
-import { Agent, AppBskyActorDefs } from '@atproto/api'
+import { Agent, AppBskyActorDefs, CredentialSession } from '@atproto/api'
 
+/**
+ * Lists a repo's records straight from the account's PDS.
+ *
+ * When `pdsAgent` is given and the account lives on the PDS that the
+ * signed-in moderator's own session belongs to, the request is made through
+ * that session, so a PDS that restricts anonymous reads still answers. The
+ * session only ever talks to its own PDS: the request is handed to it as a
+ * path, never as the URL built from the account's DID document, and a
+ * redirect is refused, so the token cannot reach another host. Any other
+ * account is read with no credential, as before.
+ */
 export async function listRecords(
   did: string,
   collection: string,
   { cursor, limit = 25 }: { cursor?: string; limit?: number },
-  options?: { signal?: AbortSignal },
+  options?: { signal?: AbortSignal; pdsAgent?: Agent },
 ) {
   const doc = await resolveDidDocData(did)
   if (!doc) {
@@ -24,7 +35,18 @@ export async function listRecords(
   if (cursor) {
     url.searchParams.set('cursor', `${cursor}`)
   }
-  const res = await fetch(url, options)
+  const session = options?.pdsAgent?.sessionManager
+  if (
+    session instanceof CredentialSession &&
+    session.dispatchUrl.origin === url.origin
+  ) {
+    const res = await session.fetchHandler(`${url.pathname}${url.search}`, {
+      signal: options?.signal,
+      redirect: 'error',
+    })
+    return res.json()
+  }
+  const res = await fetch(url, { signal: options?.signal })
   return res.json()
 }
 
