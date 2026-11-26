@@ -626,7 +626,9 @@ export function ReportDetailLayout(props: {
     'none' | 'current' | 'all' | 'types' | 'allOwned' | null
   >(null)
   const [reportActionTypes, setReportActionTypes] = useState<string[]>(() =>
-    getDefaultReportTypes(report),
+    report.subject.type === 'message' && report.reportType
+      ? [report.reportType]
+      : getDefaultReportTypes(report),
   )
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
   const appealLabelActionStarted = useRef(false)
@@ -781,11 +783,25 @@ export function ReportDetailLayout(props: {
           isCascaded &&
           canCloseOwnedContentReport(report.subject.type, eventType)
         ) {
+          const messageSubject =
+            report.subject.type === 'message' &&
+            reportActionScope === 'types' &&
+            reportActionTypes.length > 0 &&
+            report.status !== 'closed'
+              ? (
+                  await createSubjectFromId(report.subject.subject, {
+                    subject: report.subject.subject,
+                    eventId: report.eventId,
+                    reportedBy: report.reportedBy,
+                  })
+                ).subject
+              : undefined
           await submitAccountReportAction({
             report,
             input: finalVals,
             scope: reportActionScope,
             reportTypes: reportActionTypes,
+            messageSubject,
             reportActionStarted: accountReportActionStarted,
             onSubmit,
             onLinked: isAppealReport(report.reportType)
@@ -1002,7 +1018,9 @@ export function ReportDetailLayout(props: {
   const reportActionScope = messageAccountAction
     ? chosenReportActionScope === 'allOwned' && showAllOwned
       ? 'allOwned'
-      : 'current'
+      : chosenReportActionScope === 'types' && showAccountReportClosure
+        ? 'types'
+        : 'current'
     : applyToAccount
       ? chosenReportActionScope === 'all' ||
         (chosenReportActionScope === 'allOwned' && !showAllOwned)
@@ -1022,7 +1040,7 @@ export function ReportDetailLayout(props: {
       : 'Closes this report and leaves other reports open.',
     all: 'Closes this report and all eligible reports on this subject.',
     types: applyToAccount
-      ? 'Close reports on this subject and its account that have the selected types'
+      ? 'Closes this report plus eligible reports of the selected types on this subject and its account.'
       : 'Closes this report plus eligible reports of the selected types on this subject.',
     allOwned:
       'Closes this report and eligible reports on the account and its subjects.',
@@ -1490,17 +1508,15 @@ export function ReportDetailLayout(props: {
                           : 'Keep this message report open'
                         : 'Close this report only'}
                     </option>
-                    {!messageAccountAction && (
-                      <>
-                        {!applyToAccount && (
-                          <option value="all">
-                            Close all open reports on subject
-                          </option>
-                        )}
-                        <option value="types">
-                          Close reports of specific types
-                        </option>
-                      </>
+                    {!applyToAccount && (
+                      <option value="all">
+                        Close all open reports on subject
+                      </option>
+                    )}
+                    {(!messageAccountAction || showAccountReportClosure) && (
+                      <option value="types">
+                        Close reports of specific types
+                      </option>
                     )}
                     {showAllOwned && (
                       <option value="allOwned">

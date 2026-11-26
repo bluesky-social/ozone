@@ -1,4 +1,4 @@
-import { AtUri, ComAtprotoRepoStrongRef } from '@atproto/api'
+import { AtUri, ChatBskyConvoDefs, ComAtprotoRepoStrongRef } from '@atproto/api'
 import type {
   ToolsOzoneModerationEmitEvent,
   ToolsOzoneReportDefs,
@@ -32,21 +32,24 @@ export function getAccountReportAction({
   eventType,
   scope,
   reportTypes,
+  messageSubject,
 }: {
   report: Pick<ToolsOzoneReportDefs.ReportView, 'id' | 'subject' | 'status'>
   subject: ToolsOzoneModerationEmitEvent.InputSchema['subject']
   eventType: string
   scope: 'none' | 'current' | 'all' | 'types' | 'allOwned'
   reportTypes?: string[]
+  messageSubject?: ToolsOzoneModerationEmitEvent.InputSchema['subject']
 }): ReportAction | undefined {
   if (scope === 'none' || report.status === 'closed') return undefined
   if (!canCloseOwnedContentReport(report.subject.type, eventType)) {
     throw new Error('This account action cannot close the current report')
   }
+  const reportUri = new AtUri(report.subject.subject)
   if (
     subject.$type !== 'com.atproto.admin.defs#repoRef' ||
     !('did' in subject) ||
-    subject.did !== new AtUri(report.subject.subject).host
+    subject.did !== reportUri.host
   ) {
     throw new Error(
       'The account action must target the reported subject’s owner',
@@ -60,15 +63,30 @@ export function getAccountReportAction({
     }
     return { ids: [report.id], allOwned: true }
   }
-  if (report.subject.type === 'message' && scope === 'current') {
+  if (scope !== 'current' && scope !== 'types') {
+    throw new Error('Choose a report closure scope for this account action')
+  }
+  if (report.subject.type === 'message') {
+    if (scope === 'types' && reportTypes?.length) {
+      const ref = ChatBskyConvoDefs.validateMessageRef(messageSubject)
+      if (
+        !ref.success ||
+        ref.value.$type !== 'chat.bsky.convo.defs#messageRef' ||
+        ref.value.did !== reportUri.host ||
+        ref.value.messageId !== reportUri.rkey
+      ) {
+        throw new Error(
+          'Cannot determine the reported message for closing matching reports',
+        )
+      }
+      return {
+        ids: [report.id],
+        types: reportTypes,
+        subjects: [ref.value],
+      }
+    }
     // Include message reports in the match, then restrict it to the explicit ID.
     return { ids: [report.id], subjectTypes: ['message'] }
-  }
-  if (
-    (scope !== 'current' && scope !== 'types') ||
-    report.subject.type !== 'record'
-  ) {
-    throw new Error('Choose a report closure scope for this account action')
   }
   if (scope === 'types' && reportTypes?.length) {
     const record = report.subject.record

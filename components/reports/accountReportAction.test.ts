@@ -95,6 +95,40 @@ describe('closing a message report with an account takedown', () => {
     ).toEqual({ ids: [messageReport.id], allOwned: true })
   })
 
+  it('includes the exact message and sender account for selected report types', () => {
+    const messageSubject = {
+      $type: 'chat.bsky.convo.defs#messageRef',
+      did,
+      messageId: 'example',
+      convoId: 'example-conversation',
+    }
+    const reportTypes = ['com.atproto.moderation.defs#reasonSpam']
+    expect(
+      getAccountReportAction({
+        ...options,
+        report: messageReport,
+        scope: 'types',
+        reportTypes,
+        messageSubject,
+      }),
+    ).toEqual({
+      ids: [messageReport.id],
+      types: reportTypes,
+      subjects: [messageSubject],
+    })
+  })
+
+  it('requires a message reference to close matching types', () => {
+    expect(() =>
+      getAccountReportAction({
+        ...options,
+        report: messageReport,
+        scope: 'types',
+        reportTypes: ['com.atproto.moderation.defs#reasonSpam'],
+      }),
+    ).toThrow('Cannot determine the reported message')
+  })
+
   it('requires the takedown to target the sender', () => {
     expect(() =>
       getAccountReportAction({
