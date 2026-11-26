@@ -190,6 +190,7 @@ function Form(
     selectedPolicyName,
     moveToNextSubjectRef,
     durationSelectorRef,
+    messageTakedownDurationProps,
     submitButton,
     submitAndGoNext,
     handleEmailSubmit,
@@ -570,13 +571,22 @@ function Form(
                         className={`mb-1 mt-2`}
                       >
                         <ActionDurationSelector
+                          key={
+                            messageTakedownDurationProps && 'message-takedown'
+                          }
                           ref={durationSelectorRef}
                           action={modEventType}
                           required={isLabelEvent || isTagEvent ? false : true}
                           showPermanent={!isMuteEvent}
-                          defaultValue={!isMuteEvent ? 0 : 6}
+                          defaultValue={isMuteEvent ? 6 : 0}
+                          {...messageTakedownDurationProps}
                           onChange={(e) => {
-                            if (e.target.value === '0' && isTakedownEvent) {
+                            messageTakedownDurationProps?.onChange(e)
+                            if (
+                              e.target.value === '0' &&
+                              isTakedownEvent &&
+                              isSubjectDid
+                            ) {
                               // When permanent takedown is selected, auto check ack all checkbox
                               const ackAllCheckbox =
                                 document.querySelector<HTMLInputElement>(

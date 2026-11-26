@@ -4,7 +4,14 @@ import {
   ToolsOzoneModerationDefs,
   ToolsOzoneModerationEmitEvent,
 } from '@atproto/api'
-import { FormEvent, useCallback, useEffect, useRef, useState } from 'react'
+import {
+  ChangeEvent,
+  FormEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from 'react'
 import { diffLabels, toLabelVal, isSelfLabel } from '@/common/labels/util'
 import { useKeyPressEvent } from 'react-use'
 import {
@@ -306,6 +313,7 @@ export const useQuickAction = (
   const isPriorityScoreEvent = modEventType === MOD_EVENTS.SET_PRIORITY
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
+  const isMessageTakedown = isMessageSubject && isTakedownEvent
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isReverseTakedownEvent = modEventType === MOD_EVENTS.REVERSE_TAKEDOWN
   const isAgeAssuranceOverrideEvent =
@@ -398,11 +406,34 @@ export const useQuickAction = (
   const willPermanentlyTakedownAccount =
     willTakedownAccount && !!actionRecommendation?.isPermanent
 
+  const [selectedMessageDuration, setSelectedMessageDuration] = useState<
+    string | null
+  >(null)
+  useEffect(() => {
+    setSelectedMessageDuration(null)
+  }, [subject, modEventType, selectedPolicyName, selectedSeverityLevelName])
+
+  // Only preselect a temporary suspension. Permanent requires an explicit choice.
+  const recommendedMessageDuration = actionRecommendation?.thresholdCrossed
+    ? actionRecommendation.suspensionDurationInHours
+    : null
+  const messageDuration =
+    selectedMessageDuration ?? String(recommendedMessageDuration || '')
+  const messageTakedownDurationProps = isMessageTakedown
+    ? {
+        value: messageDuration,
+        includeStrikeSuspensionDurations: true,
+        onChange: (event: ChangeEvent<HTMLSelectElement>) =>
+          setSelectedMessageDuration(event.target.value),
+      }
+    : undefined
+
   // When action recommendation changes, if we're taking down an account,
   // we need to automatically select the suspension duration based policy and sev level
   useEffect(() => {
     if (
       isAccountAction &&
+      !isMessageTakedown &&
       durationSelectorRef.current &&
       actionRecommendation?.suspensionDurationInHours !== undefined
     ) {
@@ -412,6 +443,7 @@ export const useQuickAction = (
     }
   }, [
     isAccountAction,
+    isMessageTakedown,
     actionRecommendation?.suspensionDurationInHours,
   ])
 
@@ -511,6 +543,9 @@ export const useQuickAction = (
         throw new Error('Could not load labels for the selected subject')
       }
       const formData = new FormData(form)
+      if (isMessageTakedown && !formData.get('durationInHours')) {
+        throw new Error('Select a duration for the account takedown.')
+      }
       const nextLabels = String(formData.get('labels'))!.split(',')
       const shouldMoveToNextSubject = formData.get('moveToNextSubject') === '1'
 
@@ -1082,6 +1117,7 @@ export const useQuickAction = (
     isAckEvent,
     moveToNextSubjectRef,
     durationSelectorRef,
+    messageTakedownDurationProps,
     submitButton,
     automatedEmailTemplate,
     communicationTemplates,

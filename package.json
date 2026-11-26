@@ -55,13 +55,14 @@
     "remark-html": "^15.0.2",
     "tailwind-merge": "^3.5.0",
     "typescript": "^5.4.5",
+    "uuid": "^8.3.2",
     "yet-another-react-lightbox": "^3.20.0"
   },
   "devDependencies": {
     "@tailwindcss/forms": "^0.5.3",
     "@tailwindcss/typography": "^0.5.8",
     "autoprefixer": "^10.4.13",
-    "cypress": "^14.3.0",
+    "cypress": "^15.21.2",
     "eslint-plugin-cypress": "^4.2.1",
     "postcss": "^8.4.20",
     "tailwindcss": "^3.2.4",
