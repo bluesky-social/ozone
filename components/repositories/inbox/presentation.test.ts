@@ -4,6 +4,7 @@ import {
   countGraphemes,
   date,
   enforcementLabel,
+  reportSubjectStatusLabels,
   isAppealableAction,
   mergeActions,
   notificationHref,
@@ -34,6 +35,38 @@ const notification = (
 })
 
 describe('inbox presentation', () => {
+  it('shows independent current report subject states when known', () => {
+    expect(
+      reportSubjectStatusLabels({
+        accountStatus: { enforcement: 'suspended', hosting: 'deleted' },
+        subjectStatus: { takendown: true, deleted: true },
+      }),
+    ).toEqual([
+      'Account suspended',
+      'Account deleted',
+      'Content taken down by moderation',
+      'Content deleted',
+    ])
+    expect(
+      reportSubjectStatusLabels({
+        accountStatus: { enforcement: 'none', hosting: 'takendown' },
+        subjectStatus: { takendown: false },
+      }),
+    ).toEqual(['Account taken down'])
+    expect(
+      reportSubjectStatusLabels({
+        accountStatus: { hosting: 'suspended' },
+      }),
+    ).toEqual(['Account suspended'])
+    expect(reportSubjectStatusLabels({})).toEqual([])
+    expect(
+      reportSubjectStatusLabels({
+        accountStatus: null,
+        subjectStatus: { takendown: 'true', deleted: false },
+      }),
+    ).toEqual([])
+  })
+
   it('matches app account status copy while distinguishing strikes from enforcement', () => {
     expect(accountStatusCopy({ standing: 'good' })).toBeUndefined()
     expect(
