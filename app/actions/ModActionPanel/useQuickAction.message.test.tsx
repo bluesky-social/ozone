@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import type { ActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
+import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
 import { useQuickAction } from './useQuickAction'
 
 const mocks = vi.hoisted(() => ({
@@ -74,6 +75,10 @@ vi.mock('@/shell/ConfigurationContext', () => ({
   useConfigurationContext: () => ({ config: { did: 'did:plc:labeler' } }),
   useLabelerAgent: () => ({ assertDid: 'did:plc:labeler' }),
   usePermission: () => false,
+}))
+vi.mock('@/lib/constants', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('@/lib/constants')>()),
+  STRIKE_TO_SUSPENSION_DURATION_IN_HOURS: { 4: 48, 9: 336, 20: Infinity },
 }))
 vi.mock('@/reports/helpers/subject', async (importOriginal) => {
   const actual =
@@ -440,7 +445,6 @@ describe('account action duration defaults', () => {
       duration: 24,
       expected: '24',
     },
-    { subject: message, applyToAccount: false, duration: 24, expected: '24' },
     { subject: record, applyToAccount: false, duration: 24, expected: '168' },
   ])(
     'sets $subject duration to $expected with account targeting $applyToAccount',
@@ -471,4 +475,89 @@ describe('account action duration defaults', () => {
     action.flushEffects()
     expect(selector.value).toBe('72')
   })
+})
+
+describe('message takedown duration', () => {
+  beforeEach(() => {
+    mocks.eventType = MOD_EVENTS.TAKEDOWN
+  })
+
+  it.each([false, true])(
+    'leaves duration unset when the recommendation has no suspension (permanent: %s)',
+    (isPermanent) => {
+      mocks.recommendation = {
+        totalStrikes: 2,
+        recommendedDuration: 0,
+        suspensionDurationInHours: null,
+        isPermanent,
+        thresholdCrossed: isPermanent ? Infinity : undefined,
+        actualStrikesToApply: 2,
+        message: 'Example recommendation',
+      }
+      const action = capture(message, false, true)
+      expect(action.messageTakedownDurationProps?.value).toBe('')
+    },
+  )
+
+  it('preselects a recommended temporary suspension from configuration', () => {
+    mocks.recommendation = {
+      totalStrikes: 9,
+      recommendedDuration: 336,
+      suspensionDurationInHours: 336,
+      isPermanent: false,
+      thresholdCrossed: 9,
+      actualStrikesToApply: 2,
+      message: 'Example recommendation',
+    }
+    const action = capture(message, false, true)
+    const markup = renderToStaticMarkup(
+      <ActionDurationSelector
+        showPermanent
+        {...action.messageTakedownDurationProps}
+      />,
+    )
+    expect(markup).toContain('<option value="336" selected="">14 Days</option>')
+  })
+
+  it.each(['', undefined])('rejects an unset duration (%s)', async (duration) => {
+    if (duration === undefined) delete mocks.formValues.durationInHours
+    else mocks.formValues.durationInHours = duration
+    await capture(message).onFormSubmit({
+      preventDefault() {},
+      currentTarget: { reset() {} },
+    } as unknown as React.FormEvent<HTMLFormElement>)
+    expect(mocks.onSubmit).not.toHaveBeenCalled()
+    expect(mocks.submissions.at(-1)).toMatchObject({
+      error: 'Select a duration for the account takedown.',
+    })
+  })
+
+  it.each(['48', '0'])(
+    'submits the chosen duration (%s) with policy, severity, and strikes',
+    async (durationInHours) => {
+      mocks.formValues = {
+        ...mocks.formValues,
+        durationInHours,
+        severityLevel: 'example-level',
+        strikeCount: '2',
+        targetServices: 'appview',
+      }
+      await capture(message).onFormSubmit({
+        preventDefault() {},
+        currentTarget: { reset() {} },
+      } as unknown as React.FormEvent<HTMLFormElement>)
+      expect(mocks.onSubmit).toHaveBeenCalledWith(
+        expect.objectContaining({
+          event: expect.objectContaining({
+            $type: MOD_EVENTS.TAKEDOWN,
+            durationInHours: Number(durationInHours),
+            policies: ['policy'],
+            severityLevel: 'example-level',
+            strikeCount: 2,
+            targetServices: ['appview'],
+          }),
+        }),
+      )
+    },
+  )
 })

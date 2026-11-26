@@ -35,7 +35,7 @@ import { ReportTypeMultiselect } from '@/reports/ReportTypeMultiselect'
 import { canTargetAllOwned } from '@/reports/allOwnedScope'
 import { CollectionId, useCreateSubjectFromId } from '@/reports/helpers/subject'
 import {
-  canCloseOwnedRecordReport,
+  canCloseOwnedContentReport,
   linksReportToEvent,
   submitAccountReportAction,
 } from '@/reports/accountReportAction'
@@ -776,7 +776,11 @@ export function ReportDetailLayout(props: {
 
     try {
       if (eventType && REPORT_STATUS_EVENT_TYPES.has(eventType as any)) {
-        if (applyToAccount && report.subject.type === 'record' && isCascaded) {
+        if (
+          applyToAccount &&
+          isCascaded &&
+          canCloseOwnedContentReport(report.subject.type, eventType)
+        ) {
           await submitAccountReportAction({
             report,
             input: finalVals,
@@ -919,6 +923,7 @@ export function ReportDetailLayout(props: {
     severityLevelStrikeCount,
     selectedPolicyName,
     durationSelectorRef,
+    messageTakedownDurationProps,
     submitButton,
     handlePolicySelect,
     handleSeverityLevelSelect,
@@ -967,8 +972,10 @@ export function ReportDetailLayout(props: {
     } else if (selectedAction === 'revert-takedown') {
       setModEventType(MOD_EVENTS.REVERSE_TAKEDOWN)
       setDefaultReportActionScope('current')
+    } else if (report.subject.type === 'message') {
+      setModEventType(MOD_EVENTS.ACKNOWLEDGE)
     }
-  }, [selectedAction, report.reportType, setModEventType])
+  }, [selectedAction, report.reportType, report.subject.type, setModEventType])
 
   const showReportAction = (REPORT_STATUS_EVENT_TYPES as Set<string>).has(
     modEventType,
@@ -977,7 +984,7 @@ export function ReportDetailLayout(props: {
     applyToAccount &&
     isSubjectRecord &&
     report.status !== 'closed' &&
-    canCloseOwnedRecordReport(report.subject.type, modEventType)
+    canCloseOwnedContentReport(report.subject.type, modEventType)
   const showReportClosureScope =
     showReportAction &&
     (!applyToAccount || showAccountReportClosure || !!messageAccountAction)
@@ -1008,11 +1015,11 @@ export function ReportDetailLayout(props: {
 
   const reportClosureHelp = {
     none: 'Applies the action and leaves all reports open.',
-    current: messageAccountAction
+    current: messageAccountAction && !showAccountReportClosure
       ? isAppealReport(report.reportType)
         ? 'Resolves this appeal and closes this report.'
         : 'Applies the account action and leaves this message report open.'
-      : 'Closes this report and leave other reports open.',
+      : 'Closes this report and leaves other reports open.',
     all: 'Closes this report and all eligible reports on this subject.',
     types: applyToAccount
       ? 'Close reports on this subject and its account that have the selected types'
@@ -1367,12 +1374,14 @@ export function ReportDetailLayout(props: {
                     className="mb-1 mt-2"
                   >
                     <ActionDurationSelector
+                      key={messageTakedownDurationProps && 'message-takedown'}
                       ref={durationSelectorRef}
                       action={modEventType}
                       required={!isLabelEvent}
                       showPermanent
                       defaultValue={0}
                       labelText={isLabelEvent ? 'Label duration' : ''}
+                      {...messageTakedownDurationProps}
                     />
                   </FormLabel>
                 </div>
@@ -1475,7 +1484,7 @@ export function ReportDetailLayout(props: {
                       <option value="none">Keep all reports open</option>
                     )}
                     <option value="current">
-                      {messageAccountAction
+                      {messageAccountAction && !showAccountReportClosure
                         ? isAppealReport(report.reportType)
                           ? 'Resolve and close this appeal'
                           : 'Keep this message report open'

@@ -5,7 +5,7 @@ import type {
 import { describe, expect, it, vi } from 'vitest'
 import { MOD_EVENTS } from '../mod-event/constants'
 import {
-  canCloseOwnedRecordReport,
+  canCloseOwnedContentReport,
   getAccountReportAction,
   linksReportToEvent,
   submitAccountReportAction,
@@ -55,6 +55,57 @@ const options = {
   scope: 'current' as const,
 }
 
+describe('closing a message report with an account takedown', () => {
+  const messageReport = {
+    ...report,
+    subject: {
+      type: 'message',
+      subject: `at://${did}/chat.bsky.convo.message/example`,
+    },
+  }
+
+  it('links only the current report to the account takedown', async () => {
+    const input = {
+      subject,
+      createdBy: 'did:plc:moderator',
+      event: { $type: MOD_EVENTS.TAKEDOWN, durationInHours: 72 },
+    }
+    const onSubmit = vi.fn().mockResolvedValue(345)
+    await submitAccountReportAction({
+      report: messageReport,
+      scope: 'current',
+      input,
+      reportActionStarted: { current: false },
+      onSubmit,
+    })
+    expect(onSubmit).toHaveBeenCalledTimes(1)
+    expect(onSubmit).toHaveBeenCalledWith({
+      ...input,
+      reportAction: { ids: [messageReport.id], subjectTypes: ['message'] },
+    })
+  })
+
+  it('preserves explicit account-wide closure', () => {
+    expect(
+      getAccountReportAction({
+        ...options,
+        report: messageReport,
+        scope: 'allOwned',
+      }),
+    ).toEqual({ ids: [messageReport.id], allOwned: true })
+  })
+
+  it('requires the takedown to target the sender', () => {
+    expect(() =>
+      getAccountReportAction({
+        ...options,
+        report: messageReport,
+        subject: { ...subject, did: 'did:plc:another' },
+      }),
+    ).toThrow('must target the reported subject’s owner')
+  })
+})
+
 describe('closing a record report with an account action', () => {
   it.each([
     MOD_EVENTS.LABEL,
@@ -63,7 +114,7 @@ describe('closing a record report with an account action', () => {
     MOD_EVENTS.ACKNOWLEDGE,
     MOD_EVENTS.COMMENT,
   ])('links only the current report for %s', (eventType) => {
-    expect(canCloseOwnedRecordReport('record', eventType)).toBe(true)
+    expect(canCloseOwnedContentReport('record', eventType)).toBe(true)
     expect(getAccountReportAction({ ...options, eventType })).toEqual({
       ids: [123],
     })
@@ -200,7 +251,7 @@ describe('closing a record report with an account action', () => {
             did: 'did:plc:bbbbbbbbbbbbbbbbbbbbbbbb',
           },
         }),
-      ).toThrow('must target the reported record’s owner')
+      ).toThrow('must target the reported subject’s owner')
     },
   )
 
@@ -214,13 +265,13 @@ describe('closing a record report with an account action', () => {
           cid: 'bafyexample',
         },
       }),
-    ).toThrow('must target the reported record’s owner')
+    ).toThrow('must target the reported subject’s owner')
   })
 
-  it.each(['account', 'message', 'conversation'])(
+  it.each(['account', 'conversation'])(
     'does not enable this closure path for a %s report',
     (type) => {
-      expect(canCloseOwnedRecordReport(type, MOD_EVENTS.TAKEDOWN)).toBe(false)
+      expect(canCloseOwnedContentReport(type, MOD_EVENTS.TAKEDOWN)).toBe(false)
       expect(() =>
         getAccountReportAction({
           ...options,
@@ -233,7 +284,7 @@ describe('closing a record report with an account action', () => {
   it.each([MOD_EVENTS.ESCALATE, MOD_EVENTS.RESOLVE_APPEAL, MOD_EVENTS.EMAIL])(
     'does not offer closure for %s',
     (eventType) => {
-      expect(canCloseOwnedRecordReport('record', eventType)).toBe(false)
+      expect(canCloseOwnedContentReport('record', eventType)).toBe(false)
       expect(() => getAccountReportAction({ ...options, eventType })).toThrow(
         'cannot close the current report',
       )

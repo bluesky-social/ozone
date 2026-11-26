@@ -1,4 +1,5 @@
 import { Select } from '@/common/forms'
+import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ComponentProps } from 'react'
 
@@ -47,15 +48,32 @@ export const MuteActionDurations = {
   },
 }
 
+const strikeSuspensionDurations = Object.fromEntries(
+  Object.values(STRIKE_TO_SUSPENSION_DURATION_IN_HOURS)
+    .filter((hours) => Number.isFinite(hours) && hours > 0)
+    .map((hours) => [
+      hours,
+      { text: hours % 24 === 0 ? `${hours / 24} Days` : `${hours} Hrs` },
+    ]),
+)
+
 export const ActionDurationSelector = (
   props: {
     labelText?: string
     action?: string
     // only valid for takedown durations
     showPermanent?: boolean
+    includeStrikeSuspensionDurations?: boolean
   } & ComponentProps<typeof Select>,
 ) => {
-  const { labelText, action, showPermanent, ...rest } = props
+  const {
+    labelText,
+    action,
+    showPermanent,
+    includeStrikeSuspensionDurations,
+    defaultValue = '',
+    ...rest
+  } = props
 
   let options: Record<number, { text: string }> = {}
   if (action === MOD_EVENTS.MUTE) {
@@ -65,20 +83,23 @@ export const ActionDurationSelector = (
   } else {
     options = TakedownActionDurations
   }
+  if (includeStrikeSuspensionDurations) {
+    options = { ...strikeSuspensionDurations, ...options }
+  }
 
   return (
     <Select
       id="durationInHours"
       name="durationInHours"
       required
-      defaultValue={''}
+      defaultValue={rest.value === undefined ? defaultValue : undefined}
       {...rest}
     >
       <option hidden value="">
         {labelText || 'Suspension Period'}
       </option>
       {Object.entries(options).map(([key, info]) => (
-        <option selected={rest.defaultValue === key} key={key} value={key}>
+        <option key={key} value={key}>
           {info.text}
         </option>
       ))}

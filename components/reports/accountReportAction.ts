@@ -16,11 +16,14 @@ const CLOSING_EVENTS = new Set<string>([
   MOD_EVENTS.COMMENT,
 ])
 
-export function canCloseOwnedRecordReport(
+export function canCloseOwnedContentReport(
   subjectType: string,
   eventType: string,
 ): boolean {
-  return subjectType === 'record' && CLOSING_EVENTS.has(eventType)
+  return (
+    (subjectType === 'record' && CLOSING_EVENTS.has(eventType)) ||
+    (subjectType === 'message' && eventType === MOD_EVENTS.TAKEDOWN)
+  )
 }
 
 export function getAccountReportAction({
@@ -37,7 +40,7 @@ export function getAccountReportAction({
   reportTypes?: string[]
 }): ReportAction | undefined {
   if (scope === 'none' || report.status === 'closed') return undefined
-  if (!canCloseOwnedRecordReport(report.subject.type, eventType)) {
+  if (!canCloseOwnedContentReport(report.subject.type, eventType)) {
     throw new Error('This account action cannot close the current report')
   }
   if (
@@ -46,7 +49,7 @@ export function getAccountReportAction({
     subject.did !== new AtUri(report.subject.subject).host
   ) {
     throw new Error(
-      'The account action must target the reported record’s owner',
+      'The account action must target the reported subject’s owner',
     )
   }
   if (scope === 'allOwned') {
@@ -57,7 +60,14 @@ export function getAccountReportAction({
     }
     return { ids: [report.id], allOwned: true }
   }
-  if (scope !== 'current' && scope !== 'types') {
+  if (report.subject.type === 'message' && scope === 'current') {
+    // Include message reports in the match, then restrict it to the explicit ID.
+    return { ids: [report.id], subjectTypes: ['message'] }
+  }
+  if (
+    (scope !== 'current' && scope !== 'types') ||
+    report.subject.type !== 'record'
+  ) {
     throw new Error('Choose a report closure scope for this account action')
   }
   if (scope === 'types' && reportTypes?.length) {
