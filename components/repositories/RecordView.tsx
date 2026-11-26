@@ -33,9 +33,19 @@ import { CollectionId } from '@/reports/helpers/subject'
 import ListAccounts from 'components/list/Accounts'
 import { useCopyRecordDetails } from './useCopyRecordDetails'
 import { ReportsReceived } from './ReportsReceived'
+import {
+  isEditedPost,
+  PostVersion,
+  usePostVersions,
+  useReportedCids,
+} from '@/lib/postVersions'
+import { PostVersionsList } from '@/common/postVersions/PostVersionsList'
+import { EditedBadge } from '@/common/postVersions/VersionBadges'
+import { EditedAfterReportNotice } from '@/common/postVersions/EditedAfterReportNotice'
 
 enum Views {
   Details,
+  Versions,
   Profiles,
   Thread,
   Blobs,
@@ -47,6 +57,7 @@ enum Views {
 
 const TabKeys = {
   details: Views.Details,
+  versions: Views.Versions,
   profiles: Views.Profiles,
   thread: Views.Thread,
   blobs: Views.Blobs,
@@ -91,6 +102,9 @@ export function RecordView({
     ? `@${record.repo.handle}`
     : 'unknown'
   const isListRecord = atUri?.collection === CollectionId.List
+  const { data: versions } = usePostVersions(uri)
+  const isEdited = isEditedPost(versions)
+  const { data: reportedCids } = useReportedCids(uri, isEdited)
 
   const currentView =
     TabKeys[searchParams.get('tab') || 'details'] || TabKeys.details
@@ -103,6 +117,13 @@ export function RecordView({
 
   const getTabViews = () => {
     const views: TabView<Views>[] = [{ view: Views.Details, label: 'Details' }]
+    if (isEdited && versions) {
+      views.push({
+        view: Views.Versions,
+        label: 'Versions',
+        sublabel: String(versions.length),
+      })
+    }
     if (isListRecord) {
       views.push({
         view: Views.Profiles,
@@ -171,9 +192,22 @@ export function RecordView({
               <Header
                 record={record}
                 fallback={fallback}
+                versions={isEdited ? versions : undefined}
+                onShowVersions={() => setCurrentView(Views.Versions)}
                 onReport={onReport}
                 onShowActionPanel={onShowActionPanel}
               />
+              {isEdited && versions && (
+                <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
+                  <EditedAfterReportNotice
+                    className="mt-4"
+                    versions={versions}
+                    viewingCid={record?.cid}
+                    reportedCids={reportedCids}
+                    onSelectVersion={() => setCurrentView(Views.Versions)}
+                  />
+                </div>
+              )}
               <Tabs
                 views={getTabViews()}
                 currentView={currentView}
@@ -182,6 +216,12 @@ export function RecordView({
               />
               {currentView === Views.Details && (
                 <Details record={record} fallback={fallback} />
+              )}
+              {currentView === Views.Versions && isEdited && versions && (
+                <PostVersionsList
+                  versions={versions}
+                  reportedCids={reportedCids}
+                />
               )}
               {currentView === Views.Profiles && uri && (
                 <ListAccounts uri={uri} />
@@ -227,11 +267,18 @@ export function RecordView({
 function Header({
   record,
   fallback,
+  versions,
+  onShowVersions,
   onReport,
   onShowActionPanel,
 }: {
   record?: GetRecord.OutputSchema
   fallback?: RecordFallback
+  /**
+   * Set only for posts that were edited.
+   */
+  versions?: PostVersion[]
+  onShowVersions: () => void
   onReport: (uri: string) => void
   onShowActionPanel: (subject: string) => void
 }) {
@@ -260,6 +307,15 @@ function Header({
             subjectStatus={subjectStatus}
             className="h-5 w-5 ml-1"
           />
+        )}
+        {!!versions && (
+          <button
+            type="button"
+            className="ml-2 align-middle"
+            onClick={onShowVersions}
+          >
+            <EditedBadge />
+          </button>
         )}
       </h1>
       <div>

@@ -6,6 +6,12 @@ import {
 } from './useModEventList'
 import { LoadMoreButton } from '@/common/LoadMoreButton'
 import { ModEventItem } from './EventItem'
+import {
+  EventVersionChip,
+  mergePostEdits,
+  PostEditedItem,
+} from './PostEditedItem'
+import { isEditedPost, usePostVersions } from '@/lib/postVersions'
 import { Dropdown, DropdownItem } from '@/common/Dropdown'
 import { ArchiveBoxXMarkIcon, ChevronDownIcon } from '@heroicons/react/20/solid'
 import { getSubjectTitle } from './helpers/subject'
@@ -184,6 +190,10 @@ export const ModEventList = (
 
   const [showFiltersPanel, setShowFiltersPanel] = useState(false)
   const isEntireHistoryView = !props.subject && !props.createdBy
+  const { data: postVersions } = usePostVersions(props.subject)
+  const editedPostVersions = isEditedPost(postVersions)
+    ? postVersions
+    : undefined
   const subjectTitle = getSubjectTitle(modEvents?.[0]?.subject)
   const noEvents = modEvents.length === 0 && !isInitialLoadingModEvents
   const isShowingEventsByCreator = !!props.createdBy
@@ -404,11 +414,34 @@ export const ModEventList = (
       {listState === 'loaded' && (
         <div>
           <ModToolProvider>
-            {modEvents.map((modEvent) => {
+            {mergePostEdits(
+              modEvents,
+              editedPostVersions,
+              !!hasMoreModEvents,
+            ).map((item) => {
+              if (item.kind === 'edit') {
+                return (
+                  <PostEditedItem
+                    key={`edit-${item.version.cid}`}
+                    uri={props.subject ?? ''}
+                    version={item.version}
+                    previous={item.previous}
+                  />
+                )
+              }
+              const { modEvent } = item
               return (
                 <ModEventItem
                   key={modEvent.id}
                   modEvent={modEvent}
+                  context={
+                    editedPostVersions ? (
+                      <EventVersionChip
+                        modEvent={modEvent}
+                        versions={editedPostVersions}
+                      />
+                    ) : undefined
+                  }
                   showContentAuthor={
                     // isEntireHistoryView means user is viewing the events page so
                     // we need to provide context for each event and link to content details

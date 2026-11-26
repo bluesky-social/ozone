@@ -18,7 +18,8 @@
     "cypress": "cypress open",
     "e2e:run": "$(yarn bin)/cypress run --browser chrome",
     "link-atproto": "node scripts/toggle-atproto.js --link",
-    "unlink-atproto": "node scripts/toggle-atproto.js --unlink"
+    "unlink-atproto": "node scripts/toggle-atproto.js --unlink",
+    "seed-post-versions": "node scripts/seed-post-versions.mjs"
   },
   "dependencies": {
     "@atproto/api": "^0.32.1",
