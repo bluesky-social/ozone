@@ -2,11 +2,8 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import type { ActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
-import {
-  ActionDurationSelector,
-  NO_SUSPENSION,
-} from '@/reports/ModerationForm/ActionDurationSelector'
-import { useQuickAction, type QuickActionProps } from './useQuickAction'
+import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
+import { useQuickAction } from './useQuickAction'
 
 const mocks = vi.hoisted(() => ({
   eventType: '',
@@ -15,8 +12,6 @@ const mocks = vi.hoisted(() => ({
   recommendation: null as ActionRecommendation | null,
   formValues: {} as Record<string, string>,
   onSubmit: vi.fn(),
-  onSubmitMessageStrikeEmail: vi.fn(),
-  canSendEmail: false,
   createSubject: vi.fn(),
   compileTakedownEmail: vi.fn().mockReturnValue('email'),
   invalidateQueries: vi.fn().mockResolvedValue(undefined),
@@ -79,13 +74,11 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
 vi.mock('@/shell/ConfigurationContext', () => ({
   useConfigurationContext: () => ({ config: { did: 'did:plc:labeler' } }),
   useLabelerAgent: () => ({ assertDid: 'did:plc:labeler' }),
-  usePermission: (permission: string) =>
-    permission === 'canSendEmail' && mocks.canSendEmail,
+  usePermission: () => false,
 }))
 vi.mock('@/lib/constants', async (importOriginal) => ({
   ...(await importOriginal<typeof import('@/lib/constants')>()),
   STRIKE_TO_SUSPENSION_DURATION_IN_HOURS: { 4: 48, 9: 336, 20: Infinity },
-  AUTOMATED_ACTION_EMAIL_IDS: { strike: 'notification' },
 }))
 vi.mock('@/reports/helpers/subject', async (importOriginal) => {
   const actual =
@@ -106,9 +99,7 @@ vi.mock('@/mod-event/helpers/useActionRecommendation', () => ({
   }),
 }))
 vi.mock('components/communication-template/hooks', () => ({
-  useCommunicationTemplateList: ({ enabled }: { enabled: boolean }) => ({
-    data: enabled ? [{ id: 'notification', name: 'Notification' }] : undefined,
-  }),
+  useCommunicationTemplateList: () => ({}),
 }))
 vi.mock('@/email/useEmailRecipientStatus', () => ({
   useEmailRecipientStatus: () => ({}),
@@ -128,12 +119,7 @@ vi.mock('react-use', async (importOriginal) => ({
 const message = 'at://did:plc:alice/chat.bsky.convo.message/abc'
 const record = 'at://did:plc:alice/app.bsky.feed.post/abc'
 
-function capture(
-  subject: string,
-  applyToAccount = false,
-  selectPolicy = false,
-  onSubmitMessageStrikeEmail?: QuickActionProps['onSubmitMessageStrikeEmail'],
-) {
+function capture(subject: string, applyToAccount = false, selectPolicy = false) {
   let action!: ReturnType<typeof useQuickAction>
   function Capture() {
     mocks.effects = []
@@ -143,12 +129,10 @@ function capture(
       setSubject: () => {},
       onCancel: () => {},
       onSubmit: mocks.onSubmit,
-      onSubmitMessageStrikeEmail,
     })
     if (selectPolicy && !action.selectedPolicyName) {
       action.handlePolicySelect('Example policy')
       action.handleSeverityLevelSelect('Example severity')
-      if (onSubmitMessageStrikeEmail) action.onEmailTemplateSelect('Notification')
     }
     return null
   }
@@ -175,8 +159,6 @@ beforeEach(() => {
   }
   mocks.compileTakedownEmail.mockClear()
   mocks.onSubmit.mockReset().mockResolvedValue(undefined)
-  mocks.onSubmitMessageStrikeEmail.mockReset().mockResolvedValue(undefined)
-  mocks.canSendEmail = false
   mocks.createSubject
     .mockReset()
     .mockImplementation(async (subject: string) => ({
@@ -311,39 +293,31 @@ describe('record label replacement', () => {
 })
 
 describe('message account actions', () => {
-  it.each([MOD_EVENTS.LABEL, MOD_EVENTS.TAKEDOWN, MOD_EVENTS.REVERSE_TAKEDOWN])(
-    'shows the account target and submits %s to the account',
-    async (eventType) => {
-      mocks.eventType = eventType
-      const action = capture(message)
-      expect(action.applyToAccount).toBe(true)
-      expect(action.messageAccountAction).toContain('account')
-      await action.onFormSubmit({
-        preventDefault() {},
-        currentTarget: { reset() {} },
-      } as unknown as React.FormEvent<HTMLFormElement>)
-      expect(mocks.createSubject).toHaveBeenCalledWith(
-        'did:plc:alice',
-        undefined,
-      )
-      expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
-      expect(mocks.onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          subject: {
-            $type: 'com.atproto.admin.defs#repoRef',
-            did: 'did:plc:alice',
-          },
-          event: expect.objectContaining({ $type: eventType }),
-        }),
-      )
-      if (eventType === MOD_EVENTS.LABEL) {
-        expect(mocks.onSubmit.mock.calls[0][0].event).toMatchObject({
+  it('shows the account target and submits labels to the account', async () => {
+    mocks.eventType = MOD_EVENTS.LABEL
+    const action = capture(message)
+    expect(action.applyToAccount).toBe(true)
+    expect(action.messageAccountAction).toContain('account')
+    await action.onFormSubmit({
+      preventDefault() {},
+      currentTarget: { reset() {} },
+    } as unknown as React.FormEvent<HTMLFormElement>)
+    expect(mocks.createSubject).toHaveBeenCalledWith('did:plc:alice', undefined)
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    expect(mocks.onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: {
+          $type: 'com.atproto.admin.defs#repoRef',
+          did: 'did:plc:alice',
+        },
+        event: expect.objectContaining({
+          $type: MOD_EVENTS.LABEL,
           createLabelVals: ['new'],
           negateLabelVals: [],
-        })
-      }
-    },
-  )
+        }),
+      }),
+    )
+  })
 
   it('keeps supported message actions on the message', async () => {
     mocks.eventType = MOD_EVENTS.ACKNOWLEDGE
@@ -360,12 +334,15 @@ describe('message account actions', () => {
     )
   })
 
-  it('describes the account in an automated message takedown email', () => {
+  it('describes the message in an automated message takedown email', () => {
     mocks.eventType = MOD_EVENTS.TAKEDOWN
     const action = capture(message)
     action.onEmailTemplateSelect('')
     expect(mocks.compileTakedownEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ subjectName: 'account' }),
+      expect.objectContaining({
+        subjectName: 'message',
+        recordContent: undefined,
+      }),
     )
   })
 
@@ -429,7 +406,7 @@ describe('automated takedown email targets', () => {
     'omits record content for the account action on %s',
     (subject) => {
       mocks.eventType = MOD_EVENTS.TAKEDOWN
-      capture(subject).onEmailTemplateSelect('')
+      capture(subject, subject === message).onEmailTemplateSelect('')
       expect(mocks.compileTakedownEmail).toHaveBeenLastCalledWith(
         expect.objectContaining({
           subjectName: 'account',
@@ -495,10 +472,53 @@ describe('account action duration defaults', () => {
   })
 })
 
-describe('message takedown duration', () => {
+describe('message takedowns', () => {
   beforeEach(() => {
     mocks.eventType = MOD_EVENTS.TAKEDOWN
   })
+
+  it.each([undefined, 4])(
+    'applies strikes to the message and suspends only when the threshold is crossed (%s)',
+    async (thresholdCrossed) => {
+      mocks.recommendation = {
+        totalStrikes: thresholdCrossed ?? 2,
+        recommendedDuration: thresholdCrossed ? 48 : 0,
+        suspensionDurationInHours: thresholdCrossed ? 48 : null,
+        isPermanent: false,
+        thresholdCrossed,
+        actualStrikesToApply: 2,
+        message: 'Example recommendation',
+      }
+      delete mocks.formValues.durationInHours
+      mocks.formValues.strikeCount = '2'
+      const action = capture(message, false, true)
+      expect(action.applyToAccount).toBe(false)
+      expect(action.shouldShowDurationInHoursField).toBe(false)
+      await action.onFormSubmit({
+        preventDefault() {},
+        currentTarget: { reset() {} },
+      } as unknown as React.FormEvent<HTMLFormElement>)
+      expect(mocks.onSubmit).toHaveBeenCalledTimes(thresholdCrossed ? 2 : 1)
+      const [messageAction, accountAction] = mocks.onSubmit.mock.calls.map(
+        ([action]) => action,
+      )
+      expect(messageAction).toMatchObject({
+        subject: { $type: 'chat.bsky.convo.defs#messageRef', messageId: 'abc' },
+        event: { $type: MOD_EVENTS.TAKEDOWN, strikeCount: 2 },
+      })
+      expect(messageAction.event).not.toHaveProperty('durationInHours')
+      if (thresholdCrossed) {
+        expect(accountAction).toMatchObject({
+          subject: {
+            $type: 'com.atproto.admin.defs#repoRef',
+            did: 'did:plc:alice',
+          },
+          event: { $type: MOD_EVENTS.TAKEDOWN, durationInHours: 48 },
+        })
+        expect(accountAction.event).not.toHaveProperty('strikeCount')
+      }
+    },
+  )
 
   it.each([false, true])(
     'leaves duration unset when the recommendation has no suspension (permanent: %s)',
@@ -512,7 +532,7 @@ describe('message takedown duration', () => {
         actualStrikesToApply: 2,
         message: 'Example recommendation',
       }
-      const action = capture(message, false, true)
+      const action = capture(message, true, true)
       expect(action.messageTakedownDurationProps?.value).toBe('')
     },
   )
@@ -527,8 +547,7 @@ describe('message takedown duration', () => {
       actualStrikesToApply: 2,
       message: 'Example recommendation',
     }
-    const action = capture(message, false, true, mocks.onSubmitMessageStrikeEmail)
-    expect(action.messageTakedownDurationProps?.allowNoSuspension).toBe(false)
+    const action = capture(message, true, true)
     const markup = renderToStaticMarkup(
       <ActionDurationSelector
         showPermanent
@@ -538,63 +557,10 @@ describe('message takedown duration', () => {
     expect(markup).toContain('<option value="336" selected="">14 Days</option>')
   })
 
-  it.each([true, false])(
-    'defaults to no suspension and submits a strike email only with email permission (%s)',
-    async (canSendEmail) => {
-      mocks.canSendEmail = canSendEmail
-      mocks.recommendation = {
-        totalStrikes: 2,
-        recommendedDuration: 0,
-        suspensionDurationInHours: null,
-        isPermanent: false,
-        actualStrikesToApply: 2,
-        message: 'No suspension recommended',
-      }
-      mocks.formValues.durationInHours = NO_SUSPENSION
-      mocks.formValues.subjectLine = 'Account notice'
-      const action = capture(
-        message,
-        false,
-        true,
-        mocks.onSubmitMessageStrikeEmail,
-      )
-      expect(action.messageTakedownDurationProps?.value).toBe(NO_SUSPENSION)
-      await action.onFormSubmit({
-        preventDefault() {},
-        currentTarget: { reset() {} },
-      } as unknown as React.FormEvent<HTMLFormElement>)
-      expect(mocks.onSubmit).not.toHaveBeenCalled()
-      if (canSendEmail) {
-        expect(mocks.onSubmitMessageStrikeEmail).toHaveBeenCalledTimes(1)
-        expect(mocks.onSubmitMessageStrikeEmail).toHaveBeenCalledWith({
-          subject: {
-            $type: 'com.atproto.admin.defs#repoRef',
-            did: 'did:plc:alice',
-          },
-          createdBy: 'did:plc:labeler',
-          event: {
-            $type: MOD_EVENTS.EMAIL,
-            comment: undefined,
-            subjectLine: 'Account notice',
-            content: '<p>email</p>\n',
-            policies: ['Example policy'],
-            severityLevel: 'Example severity',
-            strikeCount: 2,
-          },
-        })
-      } else {
-        expect(mocks.onSubmitMessageStrikeEmail).not.toHaveBeenCalled()
-        expect(mocks.submissions.at(-1)).toMatchObject({
-          error: 'The strike notification email is unavailable.',
-        })
-      }
-    },
-  )
-
   it.each(['', undefined])('rejects an unset duration (%s)', async (duration) => {
     if (duration === undefined) delete mocks.formValues.durationInHours
     else mocks.formValues.durationInHours = duration
-    await capture(message).onFormSubmit({
+    await capture(message, true).onFormSubmit({
       preventDefault() {},
       currentTarget: { reset() {} },
     } as unknown as React.FormEvent<HTMLFormElement>)
@@ -614,7 +580,7 @@ describe('message takedown duration', () => {
         strikeCount: '2',
         targetServices: 'appview',
       }
-      await capture(message).onFormSubmit({
+      await capture(message, true).onFormSubmit({
         preventDefault() {},
         currentTarget: { reset() {} },
       } as unknown as React.FormEvent<HTMLFormElement>)

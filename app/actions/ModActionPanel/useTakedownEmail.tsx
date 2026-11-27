@@ -66,6 +66,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
   } = input
 
   const isAccountLevel = subjectName === 'account'
+  const isMessage = subjectName === 'message'
 
   const linkPolicy = policyConfig?.url
     ? `[${policyConfig?.name}](${policyConfig?.url})`
@@ -84,7 +85,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
       )
 
   const intro = (() => {
-    if (!isAccountLevel && severityLevelConfig?.strikeCount === 0) {
+    if (!isAccountLevel && !isMessage && severityLevelConfig?.strikeCount === 0) {
       return `Hi,\nWe've reviewed a ${subjectName} on your account @${handle} and removed it. This removal relates to Bluesky's Community Guidelines on ${linkPolicy}. ${
         policyConfig?.emailSummary ?? ''
       }`
@@ -120,6 +121,7 @@ export function compileTakedownEmail(input: CompileTemplateInput): string {
     }
 
     if (!severityLevelConfig?.strikeCount) {
+      if (isMessage) return 'No new strikes have been applied to your account.'
       return `Your ${subjectName} was removed, but no new strikes have been applied to your account.`
     }
 

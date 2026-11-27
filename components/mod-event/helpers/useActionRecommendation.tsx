@@ -1,9 +1,11 @@
 import { useQuery } from '@tanstack/react-query'
 import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
-import { HOUR, DAY, pluralize, getDidFromUri } from '@/lib/util'
+import { HOUR, DAY, pluralize, getDidFromUri, parseAtUri } from '@/lib/util'
+import { CollectionId } from '@/reports/helpers/subject'
 import {
   Agent,
   AtUri,
+  ChatBskyConvoDefs,
   ComAtprotoAdminDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
@@ -460,16 +462,28 @@ export const useActionRecommendation = (
   }
 
   // Get the most recent TAKEDOWN/suspension event with policy/severity level for auto-selection
-  const getLastContentTakedownDetails = () => {
+  const getLastContentTakedownDetails = (
+    subjectRef?: ToolsOzoneModerationDefs.SubjectStatusView['subject'],
+  ) => {
     if (!strikeData?.events?.length) {
       return null
     }
 
-    // Find the most recent event with policy and severity level for current subject
+    const isMessage = parseAtUri(subject)?.collection === CollectionId.Message
     const lastEventWithPolicyDetails = strikeData.events.find((event) => {
+      if (!ToolsOzoneModerationDefs.isModEventTakedown(event.event)) return false
+      if (isMessage) {
+        return (
+          ChatBskyConvoDefs.isMessageRef(subjectRef) &&
+          ChatBskyConvoDefs.isMessageRef(event.subject) &&
+          event.subject.did === subjectRef.did &&
+          event.subject.convoId === subjectRef.convoId &&
+          event.subject.messageId === subjectRef.messageId
+        )
+      }
+      if (ChatBskyConvoDefs.isMessageRef(event.subject)) return false
       // Only consider account events for DID subjects and record events for at-uri subjects
       if (
-        !ToolsOzoneModerationDefs.isModEventTakedown(event.event) ||
         (!isSubjectDid && ComAtprotoAdminDefs.isRepoRef(event.subject)) ||
         (isSubjectDid && ComAtprotoRepoStrongRef.isMain(event.subject))
       ) {

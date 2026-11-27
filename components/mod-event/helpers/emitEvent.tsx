@@ -126,15 +126,7 @@ export function useEmitEvent() {
         const eventId = data?.id
         const eventType = data?.event.$type as string
         const actionTypeString = eventType && eventTexts[eventType]
-        const event = data?.event
-        const emailFailed =
-          ToolsOzoneModerationDefs.isModEventEmail(event) &&
-          event.isDelivered === false
-        const title = emailFailed
-          ? (event.strikeCount ?? 0) > 0
-            ? 'Strikes applied. Email delivery failed.'
-            : 'Email delivery failed.'
-          : `${subjectType} was ${actionTypeString ?? 'actioned'}`
+        const title = `${subjectType} was ${actionTypeString ?? 'actioned'}`
 
         return (
           <div>
@@ -158,7 +150,7 @@ export function useEmitEvent() {
         } else {
           toast.error(`Error taking action: ${displayError(err)}`)
         }
-        return err
+        throw err
       }
 
       // Define the query invalidation to reuse
@@ -184,13 +176,15 @@ export function useEmitEvent() {
           invalidateQueries()
           return data
         } catch (err) {
-          throw handleError(err)
+          return handleError(err)
         }
       }
 
       // For delayed action, show toast with timer and undo button
-      if (pendingTimeoutRef.current !== null) {
-        throw new Error('An email action is already pending.')
+      // Clear any existing timeout
+      if (pendingTimeoutRef.current) {
+        clearTimeout(pendingTimeoutRef.current)
+        pendingTimeoutRef.current = null
       }
 
       return new Promise((resolve, reject) => {
@@ -256,8 +250,6 @@ export function useEmitEvent() {
             resolve(result)
           } catch (err) {
             reject(handleError(err))
-          } finally {
-            pendingTimeoutRef.current = null
           }
         }, DELAY_DURATION_MS)
       })
