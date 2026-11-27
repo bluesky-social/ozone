@@ -1,3 +1,4 @@
+import { MOD_EVENTS } from '@/mod-event/constants'
 import { useQuery } from '@tanstack/react-query'
 import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { HOUR, DAY, pluralize, getDidFromUri } from '@/lib/util'
@@ -331,8 +332,11 @@ export const useActionRecommendation = (
       previousOccurrences = (strikeData?.events || []).filter((event) => {
         const isSameEvent =
           (ToolsOzoneModerationDefs.isModEventTakedown(event.event) ||
-            ToolsOzoneModerationDefs.isModEventEmail(event.event)) &&
-          event.event.policies?.includes(policyName)
+            ToolsOzoneModerationDefs.isModEventEmail(event.event) ||
+            event.event.$type === MOD_EVENTS.STRIKE) &&
+          'policies' in event.event &&
+          Array.isArray(event.event.policies) &&
+          event.event.policies.includes(policyName)
         return isSameEvent
       }).length
     }

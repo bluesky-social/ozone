@@ -2,7 +2,10 @@ import { renderToStaticMarkup } from 'react-dom/server'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import type { ActionRecommendation } from '@/mod-event/helpers/useActionRecommendation'
-import { ActionDurationSelector } from '@/reports/ModerationForm/ActionDurationSelector'
+import {
+  ActionDurationSelector,
+  NO_SUSPENSION,
+} from '@/reports/ModerationForm/ActionDurationSelector'
 import { useQuickAction } from './useQuickAction'
 
 const mocks = vi.hoisted(() => ({
@@ -10,6 +13,7 @@ const mocks = vi.hoisted(() => ({
   effects: [] as Array<() => void | (() => void)>,
   submissions: [] as unknown[],
   recommendation: null as ActionRecommendation | null,
+  supportsStrikeOnly: true,
   formValues: {} as Record<string, string>,
   onSubmit: vi.fn(),
   createSubject: vi.fn(),
@@ -64,7 +68,9 @@ vi.mock('@tanstack/react-query', async (importOriginal) => {
               record: mocks.record,
               labels: [{ val: 'message-only' }],
             }
-          : undefined,
+          : queryKey[0] === 'ozoneStrikeOnlyCapability'
+            ? mocks.supportsStrikeOnly
+            : undefined,
       isFetching: false,
       isError: false,
       refetch: mocks.refetch,
@@ -119,12 +125,18 @@ vi.mock('react-use', async (importOriginal) => ({
 const message = 'at://did:plc:alice/chat.bsky.convo.message/abc'
 const record = 'at://did:plc:alice/app.bsky.feed.post/abc'
 
-function capture(subject: string, applyToAccount = false, selectPolicy = false) {
+function capture(
+  subject: string,
+  applyToAccount = false,
+  selectPolicy = false,
+  report?: Parameters<typeof useQuickAction>[0]['report'],
+) {
   let action!: ReturnType<typeof useQuickAction>
   function Capture() {
     mocks.effects = []
     action = useQuickAction({
       subject,
+      report,
       applyToAccount,
       setSubject: () => {},
       onCancel: () => {},
@@ -145,6 +157,7 @@ beforeEach(() => {
   mocks.effects = []
   mocks.submissions = []
   mocks.recommendation = null
+  mocks.supportsStrikeOnly = true
   mocks.record.labels = []
   mocks.refetch.mockClear()
   mocks.invalidateQueries.mockClear()
@@ -518,6 +531,75 @@ describe('message takedown duration', () => {
     )
     expect(markup).toContain('<option value="336" selected="">14 Days</option>')
   })
+
+  it('preselects no suspension and submits two strikes for a reported message', async () => {
+    mocks.recommendation = {
+      totalStrikes: 2,
+      recommendedDuration: 0,
+      suspensionDurationInHours: null,
+      isPermanent: false,
+      actualStrikesToApply: 2,
+      message: 'No suspension recommended',
+    }
+    const action = capture(message, false, true, {
+      subject: message,
+      reportedBy: 'did:plc:reporter',
+      eventId: 123,
+    })
+    expect(action.messageTakedownDurationProps?.value).toBe(NO_SUSPENSION)
+    expect(action.messageTakedownDurationProps?.allowNoSuspension).toBe(true)
+    mocks.formValues = {
+      ...mocks.formValues,
+      durationInHours: NO_SUSPENSION,
+      strikeCount: '2',
+      severityLevel: 'sev-2',
+      comment: 'Example moderation note',
+      targetServices: 'appview',
+    }
+    await action.onFormSubmit({
+      preventDefault() {},
+      currentTarget: { reset() {} },
+    } as unknown as React.FormEvent<HTMLFormElement>)
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    expect(mocks.onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: { $type: 'com.atproto.admin.defs#repoRef', did: 'did:plc:alice' },
+        event: {
+          $type: MOD_EVENTS.STRIKE,
+          policies: ['policy'],
+          severityLevel: 'sev-2',
+          strikeCount: 2,
+          comment: 'Example moderation note',
+        },
+      }),
+    )
+  })
+
+  it.each([
+    { capability: false, threshold: undefined, duration: '' },
+    { capability: true, threshold: 4, duration: '72' },
+  ])(
+    'withholds no suspension if the server lacks support or a threshold is crossed (%j)',
+    ({ capability, threshold, duration }) => {
+      mocks.supportsStrikeOnly = capability
+      mocks.recommendation = {
+        totalStrikes: threshold ?? 2,
+        recommendedDuration: threshold ? 72 : 0,
+        suspensionDurationInHours: threshold ? 72 : null,
+        isPermanent: false,
+        thresholdCrossed: threshold,
+        actualStrikesToApply: 2,
+        message: 'Example recommendation',
+      }
+      const action = capture(message, false, true, {
+        subject: message,
+        reportedBy: 'did:plc:reporter',
+        eventId: 123,
+      })
+      expect(action.messageTakedownDurationProps?.allowNoSuspension).toBe(false)
+      expect(action.messageTakedownDurationProps?.value).toBe(duration)
+    },
+  )
 
   it.each(['', undefined])('rejects an unset duration (%s)', async (duration) => {
     if (duration === undefined) delete mocks.formValues.durationInHours

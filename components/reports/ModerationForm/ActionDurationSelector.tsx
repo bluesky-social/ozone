@@ -3,6 +3,8 @@ import { STRIKE_TO_SUSPENSION_DURATION_IN_HOURS } from '@/lib/constants'
 import { MOD_EVENTS } from '@/mod-event/constants'
 import { ComponentProps } from 'react'
 
+export const NO_SUSPENSION = 'no-suspension'
+
 export const TakedownActionDurations = {
   24: {
     text: '1 Day',
@@ -64,6 +66,7 @@ export const ActionDurationSelector = (
     // only valid for takedown durations
     showPermanent?: boolean
     includeStrikeSuspensionDurations?: boolean
+    allowNoSuspension?: boolean
   } & ComponentProps<typeof Select>,
 ) => {
   const {
@@ -71,6 +74,7 @@ export const ActionDurationSelector = (
     action,
     showPermanent,
     includeStrikeSuspensionDurations,
+    allowNoSuspension,
     defaultValue = '',
     ...rest
   } = props
@@ -98,6 +102,9 @@ export const ActionDurationSelector = (
       <option hidden value="">
         {labelText || 'Suspension Period'}
       </option>
+      {allowNoSuspension && (
+        <option value={NO_SUSPENSION}>No suspension</option>
+      )}
       {Object.entries(options).map(([key, info]) => (
         <option key={key} value={key}>
           {info.text}

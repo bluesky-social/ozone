@@ -28,6 +28,7 @@ import { TextWithLinks } from '@/common/TextWithLinks'
 import { ModToolInfo } from './ModToolInfo'
 import { AgeAssuranceBadge } from './AgeAssuranceStateBadge'
 import { CopyButton } from '@/common/CopyButton'
+import { MOD_EVENTS } from './constants'
 
 import { useState, type JSX, type ReactNode } from 'react'
 import { UserAgent } from '@/common/UserAgent'
@@ -102,11 +103,16 @@ const Comment = ({
   )
 }
 
-const ReverseTakedown = ({
+type StrikeDetails = Pick<
+  ToolsOzoneModerationDefs.ModEventReverseTakedown,
+  'comment' | 'policies' | 'strikeCount' | 'severityLevel' | 'strikeExpiresAt'
+>
+
+const StrikeChange = ({
   modEvent,
 }: {
   modEvent: Omit<ModEventViewWithDetails, 'event'> & {
-    event: $Typed<ToolsOzoneModerationDefs.ModEventReverseTakedown>
+    event: StrikeDetails
   }
 }) => {
   return (
@@ -126,6 +132,7 @@ const ReverseTakedown = ({
       <StrikeInfo
         strikeCount={modEvent.event.strikeCount}
         severityLevel={modEvent.event.severityLevel}
+        strikeExpiresAt={modEvent.event.strikeExpiresAt}
       />
     </>
   )
@@ -909,10 +916,13 @@ export const ModEventItem = ({
   if (
     asPredicate(ToolsOzoneModerationDefs.validateModEventReverseTakedown)(
       modEvent.event,
-    )
+    ) ||
+    modEvent.event.$type === MOD_EVENTS.STRIKE
   ) {
     eventItem = (
-      <ReverseTakedown modEvent={{ ...modEvent, event: modEvent.event }} />
+      <StrikeChange
+        modEvent={{ ...modEvent, event: modEvent.event as StrikeDetails }}
+      />
     )
   }
   if (

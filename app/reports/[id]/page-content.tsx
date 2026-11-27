@@ -130,6 +130,7 @@ const FORM_ID = 'report-detail-action-panel'
 const REPORT_STATUS_EVENT_TYPES = new Set([
   MOD_EVENTS.ACKNOWLEDGE,
   MOD_EVENTS.TAKEDOWN,
+  MOD_EVENTS.STRIKE,
   MOD_EVENTS.LABEL,
   MOD_EVENTS.COMMENT,
   MOD_EVENTS.ESCALATE,
@@ -940,6 +941,7 @@ export function ReportDetailLayout(props: {
     selectedPolicyName,
     durationSelectorRef,
     messageTakedownDurationProps,
+    isStrikeOnlySelection,
     submitButton,
     handlePolicySelect,
     handleSeverityLevelSelect,
@@ -1321,12 +1323,16 @@ export function ReportDetailLayout(props: {
                   {selectedAction === 'label'
                     ? 'Label'
                     : selectedAction === 'takedown'
-                      ? 'Takedown'
+                      ? isStrikeOnlySelection
+                        ? 'Apply strikes'
+                        : 'Takedown'
                       : selectedAction === 'revert-takedown'
                         ? 'Revert Takedown'
                         : 'Action'}
                 </span>
-                <ModEventDetailsPopover modEventType={modEventType} />
+                {!isStrikeOnlySelection && (
+                  <ModEventDetailsPopover modEventType={modEventType} />
+                )}
               </div>
 
               {isSubjectRecord && (
@@ -1378,7 +1384,9 @@ export function ReportDetailLayout(props: {
                     isReverseTakedownEvent ? 'reverse-takedown' : 'takedown'
                   }
                   targetServices={targetServices}
-                  setTargetServices={setTargetServices}
+                  setTargetServices={
+                    isStrikeOnlySelection ? undefined : setTargetServices
+                  }
                   isAccountAction={isAccountAction}
                   recommendedPolicies={report.queue?.recommendedPolicies}
                 />

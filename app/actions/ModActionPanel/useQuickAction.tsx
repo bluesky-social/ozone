@@ -24,6 +24,7 @@ import {
   unique,
 } from '@/lib/util'
 import { MOD_EVENTS } from '@/mod-event/constants'
+import { NO_SUSPENSION } from '@/reports/ModerationForm/ActionDurationSelector'
 import {
   CollectionId,
   getCollectionName,
@@ -218,6 +219,7 @@ export const useQuickAction = (
     getRecommendedAction,
     getLastContentTakedownDetails,
     strikeDataError,
+    isLoading: isStrikeDataLoading,
   } = useActionRecommendation(
     labelerAgent,
     messageAccountAction ? subjectDid : subject,
@@ -413,16 +415,43 @@ export const useQuickAction = (
     setSelectedMessageDuration(null)
   }, [subject, modEventType, selectedPolicyName, selectedSeverityLevelName])
 
-  // Only preselect a temporary suspension. Permanent requires an explicit choice.
+  const isReportedMessageTakedown =
+    isMessageTakedown && props.report?.subject === subject
+  const { data: supportsStrikeOnly } = useQuery({
+    queryKey: ['ozoneStrikeOnlyCapability', config.did],
+    enabled: isReportedMessageTakedown,
+    queryFn: async () => {
+      const { data } = await labelerAgent.tools.ozone.server.getCapabilities()
+      return 'strikeOnly' in data && data.strikeOnly === true
+    },
+  })
+  const allowNoSuspension =
+    isReportedMessageTakedown &&
+    supportsStrikeOnly === true &&
+    !isStrikeDataLoading &&
+    !strikeDataError &&
+    !!actionRecommendation &&
+    actionRecommendation.actualStrikesToApply > 0 &&
+    !actionRecommendation.thresholdCrossed &&
+    !actionRecommendation.isPermanent
+  // A permanent takedown always requires an explicit choice.
   const recommendedMessageDuration = actionRecommendation?.thresholdCrossed
     ? actionRecommendation.suspensionDurationInHours
     : null
   const messageDuration =
-    selectedMessageDuration ?? String(recommendedMessageDuration || '')
+    selectedMessageDuration === NO_SUSPENSION && !allowNoSuspension
+      ? ''
+      : (selectedMessageDuration ??
+        (allowNoSuspension
+          ? NO_SUSPENSION
+          : String(recommendedMessageDuration || '')))
+  const isStrikeOnlySelection =
+    isMessageTakedown && messageDuration === NO_SUSPENSION
   const messageTakedownDurationProps = isMessageTakedown
     ? {
         value: messageDuration,
         includeStrikeSuspensionDurations: true,
+        allowNoSuspension,
         onChange: (event: ChangeEvent<HTMLSelectElement>) =>
           setSelectedMessageDuration(event.target.value),
       }
@@ -468,10 +497,12 @@ export const useQuickAction = (
   const showAutomatedEmailComposer =
     !!automatedEmailTemplate &&
     isTakedownEvent &&
+    !isStrikeOnlySelection &&
     !emailRecipientStatus?.cantReceive
   const showCantEmailError =
     !!automatedEmailTemplate &&
     isTakedownEvent &&
+    !isStrikeOnlySelection &&
     emailRecipientStatus?.cantReceive
 
   // navigate to next or prev report
@@ -543,7 +574,12 @@ export const useQuickAction = (
         throw new Error('Could not load labels for the selected subject')
       }
       const formData = new FormData(form)
-      if (isMessageTakedown && !formData.get('durationInHours')) {
+      const duration = formData.get('durationInHours')
+      const applyStrikesOnly = isMessageTakedown && duration === NO_SUSPENSION
+      if (applyStrikesOnly && !allowNoSuspension) {
+        throw new Error('Review the account’s strike recommendation before submitting.')
+      }
+      if (isMessageTakedown && !duration) {
         throw new Error('Select a duration for the account takedown.')
       }
       const nextLabels = String(formData.get('labels'))!.split(',')
@@ -564,7 +600,7 @@ export const useQuickAction = (
         .map((cid) => String(cid))
 
       const coreEvent = getEventFromFormData(
-        modEventType,
+        applyStrikesOnly ? MOD_EVENTS.STRIKE : modEventType,
         formData,
         subjectStatus || undefined,
       )
@@ -738,7 +774,7 @@ export const useQuickAction = (
           }
         }
 
-        if (showAutomatedEmailComposer && emailContent) {
+        if (!applyStrikesOnly && showAutomatedEmailComposer && emailContent) {
           const emailEvent = await buildEmailEventFromFormData(
             formData,
             emailContent,
@@ -836,6 +872,7 @@ export const useQuickAction = (
         refetchSubjectStatus(),
         refetchSubject(),
         queryClient.invalidateQueries({ queryKey: ['modEventList'] }),
+        queryClient.invalidateQueries({ queryKey: ['strikeEvents', subjectDid] }),
         queryClient.invalidateQueries({
           queryKey: ['modActionAccountForLabels', subjectDid],
         }),
@@ -1118,6 +1155,7 @@ export const useQuickAction = (
     moveToNextSubjectRef,
     durationSelectorRef,
     messageTakedownDurationProps,
+    isStrikeOnlySelection,
     submitButton,
     automatedEmailTemplate,
     communicationTemplates,
