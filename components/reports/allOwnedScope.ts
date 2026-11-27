@@ -8,7 +8,6 @@ export function canTargetAllOwned(
     isAccount &&
     (eventType === MOD_EVENTS.LABEL ||
       eventType === MOD_EVENTS.TAKEDOWN ||
-      eventType === MOD_EVENTS.STRIKE ||
       eventType === MOD_EVENTS.REVERSE_TAKEDOWN)
   )
 }

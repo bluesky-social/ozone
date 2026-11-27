@@ -9,7 +9,7 @@ export function getMessageAccountAction(subject: string, eventType: string) {
     return 'Labels cannot be applied to messages. This action will label the account.'
   }
   if (eventType === MOD_EVENTS.TAKEDOWN) {
-    return 'This action applies to the sender’s account.'
+    return 'This takedown applies to the sender’s account. To issue a warning with strikes, use Email on the sender’s account.'
   }
   if (eventType === MOD_EVENTS.REVERSE_TAKEDOWN) {
     return 'Message takedowns cannot be reversed. This action will reverse the account takedown.'

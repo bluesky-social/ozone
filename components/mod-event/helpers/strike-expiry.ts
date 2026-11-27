@@ -14,12 +14,9 @@ export function needsStrikeExpiry(
   event: Event,
 ): event is Event & { strikeCount: number; severityLevel: string } {
   return (
-    [
-      MOD_EVENTS.TAKEDOWN,
-      MOD_EVENTS.REVERSE_TAKEDOWN,
-      MOD_EVENTS.EMAIL,
-      MOD_EVENTS.STRIKE,
-    ].some((type) => type === event.$type) &&
+    [MOD_EVENTS.TAKEDOWN, MOD_EVENTS.REVERSE_TAKEDOWN, MOD_EVENTS.EMAIL].some(
+      (type) => type === event.$type,
+    ) &&
     'strikeCount' in event &&
     typeof event.strikeCount === 'number' &&
     event.strikeCount !== 0 &&

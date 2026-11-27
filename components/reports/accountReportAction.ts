@@ -22,8 +22,7 @@ export function canCloseOwnedContentReport(
 ): boolean {
   return (
     (subjectType === 'record' && CLOSING_EVENTS.has(eventType)) ||
-    (subjectType === 'message' &&
-      (eventType === MOD_EVENTS.TAKEDOWN || eventType === MOD_EVENTS.STRIKE))
+    (subjectType === 'message' && eventType === MOD_EVENTS.TAKEDOWN)
   )
 }
 

@@ -126,10 +126,15 @@ export function useEmitEvent() {
         const eventId = data?.id
         const eventType = data?.event.$type as string
         const actionTypeString = eventType && eventTexts[eventType]
-        const title =
-          eventType === MOD_EVENTS.STRIKE
-            ? 'Strikes applied to the account'
-            : `${subjectType} was ${actionTypeString ?? 'actioned'}`
+        const event = data?.event
+        const emailFailed =
+          ToolsOzoneModerationDefs.isModEventEmail(event) &&
+          event.isDelivered === false
+        const title = emailFailed
+          ? (event.strikeCount ?? 0) > 0
+            ? 'Strikes applied. Email delivery failed.'
+            : 'Email delivery failed.'
+          : `${subjectType} was ${actionTypeString ?? 'actioned'}`
 
         return (
           <div>
@@ -153,7 +158,7 @@ export function useEmitEvent() {
         } else {
           toast.error(`Error taking action: ${displayError(err)}`)
         }
-        throw err
+        return err
       }
 
       // Define the query invalidation to reuse
@@ -179,15 +184,13 @@ export function useEmitEvent() {
           invalidateQueries()
           return data
         } catch (err) {
-          return handleError(err)
+          throw handleError(err)
         }
       }
 
       // For delayed action, show toast with timer and undo button
-      // Clear any existing timeout
-      if (pendingTimeoutRef.current) {
-        clearTimeout(pendingTimeoutRef.current)
-        pendingTimeoutRef.current = null
+      if (pendingTimeoutRef.current !== null) {
+        throw new Error('An email action is already pending.')
       }
 
       return new Promise((resolve, reject) => {
@@ -253,6 +256,8 @@ export function useEmitEvent() {
             resolve(result)
           } catch (err) {
             reject(handleError(err))
+          } finally {
+            pendingTimeoutRef.current = null
           }
         }, DELAY_DURATION_MS)
       })
@@ -676,29 +681,6 @@ export const getEventFromFormData = (
 
   if ($type === MOD_EVENTS.MUTE_REPORTER) {
     return { $type, comment, durationInHours }
-  }
-
-  if ($type === MOD_EVENTS.STRIKE) {
-    const strikeCountNum = Number(strikeCount)
-    if (
-      typeof policies !== 'string' ||
-      !policies.trim() ||
-      typeof severityLevel !== 'string' ||
-      !severityLevel.trim() ||
-      !Number.isSafeInteger(strikeCountNum) ||
-      strikeCountNum < 1
-    ) {
-      throw new Error('Select a policy and severity level that applies strikes.')
-    }
-
-    const event = {
-      $type,
-      policies: [policies],
-      severityLevel,
-      strikeCount: strikeCountNum,
-      comment: formData.get('comment')?.toString() || undefined,
-    }
-    return event
   }
 
   if ($type === MOD_EVENTS.TAKEDOWN) {

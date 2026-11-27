@@ -1,6 +1,6 @@
 'use client'
 import { Alert } from '@/common/Alert'
-import { Loading } from '@/common/Loader'
+import { displayError, Loading } from '@/common/Loader'
 import { PreviewCard } from '@/common/PreviewCard'
 import { TextWithLinks } from '@/common/TextWithLinks'
 import { ActionButton, ButtonPrimary, ButtonSecondary } from '@/common/buttons'
@@ -55,6 +55,7 @@ import {
 } from '@/subject/ReviewStateMarker'
 import { useRefetchOnlineModerators } from '@/team/useOnlineModerators'
 import {
+  ComAtprotoAdminDefs,
   ComAtprotoModerationDefs,
   ComAtprotoRepoStrongRef,
   ToolsOzoneModerationDefs,
@@ -130,7 +131,6 @@ const FORM_ID = 'report-detail-action-panel'
 const REPORT_STATUS_EVENT_TYPES = new Set([
   MOD_EVENTS.ACKNOWLEDGE,
   MOD_EVENTS.TAKEDOWN,
-  MOD_EVENTS.STRIKE,
   MOD_EVENTS.LABEL,
   MOD_EVENTS.COMMENT,
   MOD_EVENTS.ESCALATE,
@@ -617,6 +617,7 @@ export function ReportDetailLayout(props: {
   const labelerAgent = useLabelerAgent()
   const createSubjectFromId = useCreateSubjectFromId()
   const closeReport = useCreateActivity()
+  const queryClient = useQueryClient()
   useReportArrowKeyNavigation(report.id)
   useReportAutoAdvance(report.id, report.status)
 
@@ -632,10 +633,70 @@ export function ReportDetailLayout(props: {
       : getDefaultReportTypes(report),
   )
   const [selectedAction, setSelectedAction] = useState<ReportActionType>(null)
+  const [messageStrikeEventId, setMessageStrikeEventId] = useState<number>()
+  const messageStrikePending = useRef(false)
   const appealLabelActionStarted = useRef(false)
   const accountReportActionStarted = useRef(false)
   const [requestedApplyToAccount, setApplyToAccount] = useState(false)
   const isSubjectRecord = subject.startsWith('at://')
+  const canApplyMessageStrikes =
+    report.status !== 'closed' &&
+    report.subject.type === 'message' &&
+    subject === report.subject.subject &&
+    !isAppealReport(report.reportType)
+  const messageSender = canApplyMessageStrikes ? getDidFromUri(subject) : ''
+  const recordedMessageStrikeEmail = messageSender
+    ? (messageStrikeEventId ??
+      report.actions?.find(
+        ({ event, subject }) =>
+          ToolsOzoneModerationDefs.isModEventEmail(event) &&
+          (event.strikeCount ?? 0) > 0 &&
+          ComAtprotoAdminDefs.isRepoRef(subject) &&
+          subject.did === messageSender,
+      )?.id)
+    : undefined
+
+  const submitMessageStrikeEmail = async (
+    input?: ToolsOzoneModerationEmitEvent.InputSchema,
+  ) => {
+    if (!messageSender || messageStrikePending.current) return
+    messageStrikePending.current = true
+    try {
+      let eventId = recordedMessageStrikeEmail
+      if (!eventId && input) {
+        const result = await onSubmit({
+          ...input,
+          reportAction: { ids: [report.id] },
+        })
+        if (!result) {
+          throw new Error(
+            'Ozone did not confirm the email action. Check the report before retrying.',
+          )
+        }
+        eventId = result
+        setMessageStrikeEventId(eventId)
+        queryClient.invalidateQueries({
+          queryKey: ['strikeEvents', messageSender],
+        })
+        queryClient.invalidateQueries({ queryKey: ['modEventList'] })
+      }
+      if (!eventId) return
+      try {
+        await closeReport.mutateAsync({
+          reportId: report.id,
+          activity: { $type: 'tools.ozone.report.defs#closeActivity' },
+          internalNote: `Strikes applied via email action #${eventId}.`,
+        })
+      } catch (error) {
+        if (error?.['error'] !== 'AlreadyInTargetState') throw error
+        queryClient.invalidateQueries({ queryKey: ['report', report.id] })
+      }
+      queryClient.invalidateQueries({ queryKey: ['betaReports'] })
+      setSelectedAction(null)
+    } finally {
+      messageStrikePending.current = false
+    }
+  }
 
   const resolveAppealForReport = async (createdBy: string, comment?: string) => {
     const { data: creationEvent } =
@@ -942,6 +1003,7 @@ export function ReportDetailLayout(props: {
     durationSelectorRef,
     messageTakedownDurationProps,
     isStrikeOnlySelection,
+    strikeEmailUnavailable,
     submitButton,
     handlePolicySelect,
     handleSeverityLevelSelect,
@@ -965,6 +1027,9 @@ export function ReportDetailLayout(props: {
   } = useQuickAction({
     onCancel,
     onSubmit: wrappedOnSubmit,
+    onSubmitMessageStrikeEmail: messageSender
+      ? submitMessageStrikeEmail
+      : undefined,
     subject,
     setSubject,
     subjectOptions,
@@ -1316,6 +1381,30 @@ export function ReportDetailLayout(props: {
             }
           />
 
+          {recordedMessageStrikeEmail && (
+            <div className="mb-3">
+              <Alert
+                type="info"
+                title="Strikes applied"
+                body={
+                  <ActionButton
+                    appearance="outlined"
+                    disabled={closeReport.isPending}
+                    onClick={() =>
+                      submitMessageStrikeEmail().catch((error) =>
+                        toast.error(
+                          `Could not close report: ${displayError(error)}`,
+                        ),
+                      )
+                    }
+                  >
+                    Close this report
+                  </ActionButton>
+                }
+              />
+            </div>
+          )}
+
           <div className={selectedAction ? '' : 'hidden'}>
             <form id={FORM_ID} onSubmit={onFormSubmit}>
               <div className="relative flex flex-row gap-3 items-center mb-3">
@@ -1330,14 +1419,16 @@ export function ReportDetailLayout(props: {
                         ? 'Revert Takedown'
                         : 'Action'}
                 </span>
-                {!isStrikeOnlySelection && (
-                  <ModEventDetailsPopover modEventType={modEventType} />
-                )}
+                <ModEventDetailsPopover
+                  modEventType={
+                    isStrikeOnlySelection ? MOD_EVENTS.EMAIL : modEventType
+                  }
+                />
               </div>
 
               {isSubjectRecord && (
                 <>
-                  {messageAccountAction && (
+                  {messageAccountAction && !isStrikeOnlySelection && (
                     <div className="mb-3">
                       <Alert
                         type="warning"
@@ -1481,8 +1572,18 @@ export function ReportDetailLayout(props: {
                   />
                 </div>
               )}
+              {strikeEmailUnavailable && !showCantEmailError && (
+                <p className="my-2 text-sm text-gray-600 dark:text-gray-300">
+                  Applying strikes without a suspension requires a notification
+                  email.
+                </p>
+              )}
 
-              {showReportClosureScope && (
+              {isStrikeOnlySelection ? (
+                <p className="mt-2 mb-3 text-xs text-gray-500 dark:text-gray-400">
+                  Sends the notification, applies strikes, and closes this report.
+                </p>
+              ) : showReportClosureScope && (
                 <div className="mt-2 mb-3 space-y-2">
                   <Select
                     className="w-full"
@@ -1577,11 +1678,15 @@ export function ReportDetailLayout(props: {
                   disabled={
                     submission.isSubmitting ||
                     areLabelsLoading ||
-                    areAccountActionsLoading
+                    areAccountActionsLoading ||
+                    strikeEmailUnavailable ||
+                    (isStrikeOnlySelection && !!recordedMessageStrikeEmail)
                   }
                   className="px-4"
                 >
-                  Submit
+                  {isStrikeOnlySelection
+                    ? 'Send email and apply strikes'
+                    : 'Submit'}
                 </ButtonPrimary>
               </div>
             </form>

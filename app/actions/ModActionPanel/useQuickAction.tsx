@@ -78,6 +78,9 @@ export type QuickActionProps = {
     vals: ToolsOzoneModerationEmitEvent.InputSchema,
     options?: { supplementalLabelEvent?: boolean },
   ) => Promise<void>
+  onSubmitMessageStrikeEmail?: (
+    input: ToolsOzoneModerationEmitEvent.InputSchema,
+  ) => Promise<void>
 }
 
 const hasAutomatedEmailTemplates = Object.values(
@@ -415,36 +418,27 @@ export const useQuickAction = (
     setSelectedMessageDuration(null)
   }, [subject, modEventType, selectedPolicyName, selectedSeverityLevelName])
 
-  const isReportedMessageTakedown =
-    isMessageTakedown && props.report?.subject === subject
-  const { data: supportsStrikeOnly } = useQuery({
-    queryKey: ['ozoneStrikeOnlyCapability', config.did],
-    enabled: isReportedMessageTakedown,
-    queryFn: async () => {
-      const { data } = await labelerAgent.tools.ozone.server.getCapabilities()
-      return 'strikeOnly' in data && data.strikeOnly === true
-    },
-  })
-  const allowNoSuspension =
-    isReportedMessageTakedown &&
-    supportsStrikeOnly === true &&
-    !isStrikeDataLoading &&
-    !strikeDataError &&
-    !!actionRecommendation &&
-    actionRecommendation.actualStrikesToApply > 0 &&
-    !actionRecommendation.thresholdCrossed &&
-    !actionRecommendation.isPermanent
-  // A permanent takedown always requires an explicit choice.
+  // Only preselect a temporary suspension. Permanent requires an explicit choice.
   const recommendedMessageDuration = actionRecommendation?.thresholdCrossed
     ? actionRecommendation.suspensionDurationInHours
     : null
+  const allowNoSuspension = !!(
+    isMessageTakedown &&
+    props.onSubmitMessageStrikeEmail &&
+    !isStrikeDataLoading &&
+    !strikeDataError &&
+    actionRecommendation &&
+    actionRecommendation.actualStrikesToApply > 0 &&
+    !actionRecommendation.thresholdCrossed &&
+    !actionRecommendation.isPermanent
+  )
+  const defaultMessageDuration = allowNoSuspension
+    ? NO_SUSPENSION
+    : String(recommendedMessageDuration || '')
   const messageDuration =
     selectedMessageDuration === NO_SUSPENSION && !allowNoSuspension
-      ? ''
-      : (selectedMessageDuration ??
-        (allowNoSuspension
-          ? NO_SUSPENSION
-          : String(recommendedMessageDuration || '')))
+      ? defaultMessageDuration
+      : (selectedMessageDuration ?? defaultMessageDuration)
   const isStrikeOnlySelection =
     isMessageTakedown && messageDuration === NO_SUSPENSION
   const messageTakedownDurationProps = isMessageTakedown
@@ -497,13 +491,16 @@ export const useQuickAction = (
   const showAutomatedEmailComposer =
     !!automatedEmailTemplate &&
     isTakedownEvent &&
-    !isStrikeOnlySelection &&
     !emailRecipientStatus?.cantReceive
   const showCantEmailError =
     !!automatedEmailTemplate &&
     isTakedownEvent &&
-    !isStrikeOnlySelection &&
     emailRecipientStatus?.cantReceive
+  const canSubmitStrikeEmail =
+    canSendEmail &&
+    showAutomatedEmailComposer &&
+    !emailRecipientStatus.isLoading &&
+    !emailRecipientStatus.error
 
   // navigate to next or prev report
   const navigateQueue = (delta: 1 | -1) => {
@@ -575,9 +572,43 @@ export const useQuickAction = (
       }
       const formData = new FormData(form)
       const duration = formData.get('durationInHours')
-      const applyStrikesOnly = isMessageTakedown && duration === NO_SUSPENSION
-      if (applyStrikesOnly && !allowNoSuspension) {
-        throw new Error('Review the account’s strike recommendation before submitting.')
+      if (isMessageTakedown && duration === NO_SUSPENSION) {
+        if (
+          !allowNoSuspension ||
+          !actionRecommendation ||
+          !props.onSubmitMessageStrikeEmail
+        ) {
+          throw new Error(
+            'Review the account’s strike recommendation before submitting.',
+          )
+        }
+        if (!canSubmitStrikeEmail) {
+          throw new Error('The strike notification email is unavailable.')
+        }
+        if (
+          !formData.get('subjectLine')?.toString().trim() ||
+          !emailContent?.trim()
+        ) {
+          throw new Error(
+            'Enter a subject and message for the strike notification email.',
+          )
+        }
+        const emailEvent = await buildEmailEventFromFormData(
+          formData,
+          emailContent,
+        )
+        await props.onSubmitMessageStrikeEmail({
+          subject: { $type: 'com.atproto.admin.defs#repoRef', did: subjectDid },
+          createdBy: accountDid,
+          event: {
+            ...emailEvent,
+            policies: [selectedPolicyName],
+            severityLevel: selectedSeverityLevelName,
+            strikeCount: actionRecommendation.actualStrikesToApply,
+          },
+        })
+        setSubmission({ isSubmitting: false, error: '' })
+        return
       }
       if (isMessageTakedown && !duration) {
         throw new Error('Select a duration for the account takedown.')
@@ -600,7 +631,7 @@ export const useQuickAction = (
         .map((cid) => String(cid))
 
       const coreEvent = getEventFromFormData(
-        applyStrikesOnly ? MOD_EVENTS.STRIKE : modEventType,
+        modEventType,
         formData,
         subjectStatus || undefined,
       )
@@ -774,7 +805,7 @@ export const useQuickAction = (
           }
         }
 
-        if (!applyStrikesOnly && showAutomatedEmailComposer && emailContent) {
+        if (showAutomatedEmailComposer && emailContent) {
           const emailEvent = await buildEmailEventFromFormData(
             formData,
             emailContent,
@@ -872,7 +903,6 @@ export const useQuickAction = (
         refetchSubjectStatus(),
         refetchSubject(),
         queryClient.invalidateQueries({ queryKey: ['modEventList'] }),
-        queryClient.invalidateQueries({ queryKey: ['strikeEvents', subjectDid] }),
         queryClient.invalidateQueries({
           queryKey: ['modActionAccountForLabels', subjectDid],
         }),
@@ -1156,6 +1186,7 @@ export const useQuickAction = (
     durationSelectorRef,
     messageTakedownDurationProps,
     isStrikeOnlySelection,
+    strikeEmailUnavailable: isStrikeOnlySelection && !canSubmitStrikeEmail,
     submitButton,
     automatedEmailTemplate,
     communicationTemplates,
