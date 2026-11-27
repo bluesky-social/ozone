@@ -811,14 +811,12 @@ export function ReportDetailLayout(props: {
           setSelectedAction(null)
           return
         }
-        // The record event must not close the report before the permanent
+        // The content event must not close the report before the permanent
         // account takedown can link it and the other owned reports.
         if (
           reportActionScope === 'allOwned' &&
-          willPermanentlyTakedownAccount &&
-          !applyToAccount &&
-          report.subject.type === 'record' &&
-          subj.$type === 'com.atproto.repo.strongRef' &&
+          permanentAccountTakedownFromContent &&
+          !isCascaded &&
           eventType === MOD_EVENTS.TAKEDOWN
         ) {
           await onSubmit(finalVals)
@@ -1004,14 +1002,14 @@ export function ReportDetailLayout(props: {
   const showReportClosureScope =
     showReportAction &&
     (!applyToAccount || showAccountReportClosure || !!messageAccountAction)
-  const permanentAccountTakedownFromRecord =
+  const permanentAccountTakedownFromContent =
     selectedAction === 'takedown' &&
-    report.subject.type === 'record' &&
+    (report.subject.type === 'record' || report.subject.type === 'message') &&
     isSubjectRecord &&
     !applyToAccount &&
     willPermanentlyTakedownAccount
   const showAllOwned = canTargetAllOwned(
-    isSubjectDid || applyToAccount || permanentAccountTakedownFromRecord,
+    isSubjectDid || applyToAccount || permanentAccountTakedownFromContent,
     modEventType,
   )
 
@@ -1283,9 +1281,7 @@ export function ReportDetailLayout(props: {
             currentUserDid={labelerAgent.did}
             selectedAction={selectedAction}
             onActionSelect={setSelectedAction}
-            subjectStatus={
-              isMessageSubject ? repo?.moderation.subjectStatus : subjectStatus
-            }
+            subjectStatus={subjectStatus}
             onResolveAppeal={
               isAppealReport(report.reportType)
                 ? (comment) => resolveAppealForReport(config.did, comment)
@@ -1326,7 +1322,10 @@ export function ReportDetailLayout(props: {
                         ? 'Revert Takedown'
                         : 'Action'}
                 </span>
-                <ModEventDetailsPopover modEventType={modEventType} />
+                <ModEventDetailsPopover
+                  modEventType={modEventType}
+                  isMessage={isMessageSubject && !applyToAccount}
+                />
               </div>
 
               {isSubjectRecord && (

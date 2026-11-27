@@ -220,7 +220,7 @@ export const useQuickAction = (
     strikeDataError,
   } = useActionRecommendation(
     labelerAgent,
-    messageAccountAction ? subjectDid : subject,
+    isMessageSubject && applyToAccount ? subjectDid : subject,
     severityLevelData?.value,
   )
 
@@ -274,7 +274,7 @@ export const useQuickAction = (
       return
     }
 
-    const lastDetails = getLastContentTakedownDetails()
+    const lastDetails = getLastContentTakedownDetails(subjectStatus?.subject)
     if (!lastDetails?.policy || !lastDetails?.severityLevel) {
       return
     }
@@ -288,13 +288,13 @@ export const useQuickAction = (
     const policy = policyData?.value?.[policyKey]
     setPolicyDetails(policy ? { severityLevels: policy.severityLevels } : null)
 
-    if (!isSubjectDid && !messageAccountAction) {
+    if (!isAccountAction) {
       setSelectedSeverityLevelName(lastDetails.severityLevel)
       if (lastDetails.strikeCount) {
         setSeverityLevelStrikeCount(lastDetails.strikeCount)
       }
     }
-  }, [modEventType])
+  }, [modEventType, subjectStatus?.subject, strikeData, applyToAccount])
 
   const isEmailEvent = modEventType === MOD_EVENTS.EMAIL
   const isTagEvent = modEventType === MOD_EVENTS.TAG
@@ -306,14 +306,18 @@ export const useQuickAction = (
         ? isFetchingSubject
         : isFetchingAccountForLabels
       : false)
-  const areAccountActionsLoading = !!messageAccountAction && isFetchingSubject
+  const areAccountActionsLoading =
+    isMessageSubject && applyToAccount && isFetchingSubject
   const isDivertEvent = modEventType === MOD_EVENTS.DIVERT
   const isMuteEvent = modEventType === MOD_EVENTS.MUTE
   const isMuteReporterEvent = modEventType === MOD_EVENTS.MUTE_REPORTER
   const isPriorityScoreEvent = modEventType === MOD_EVENTS.SET_PRIORITY
   const isCommentEvent = modEventType === MOD_EVENTS.COMMENT
   const isTakedownEvent = modEventType === MOD_EVENTS.TAKEDOWN
-  const isMessageTakedown = isMessageSubject && isTakedownEvent
+  const isMessageTakedown =
+    isMessageSubject && isTakedownEvent && !applyToAccount
+  const isMessageAccountTakedown =
+    isMessageSubject && isTakedownEvent && applyToAccount
   const isAckEvent = modEventType === MOD_EVENTS.ACKNOWLEDGE
   const isReverseTakedownEvent = modEventType === MOD_EVENTS.REVERSE_TAKEDOWN
   const isAgeAssuranceOverrideEvent =
@@ -367,7 +371,7 @@ export const useQuickAction = (
     setHasManuallySelectedSeverity(false)
   }, [subject])
   const shouldShowDurationInHoursField =
-    isTakedownEvent ||
+    (isTakedownEvent && !isMessageTakedown) ||
     isMuteEvent ||
     isMuteReporterEvent ||
     isLabelEvent ||
@@ -411,7 +415,13 @@ export const useQuickAction = (
   >(null)
   useEffect(() => {
     setSelectedMessageDuration(null)
-  }, [subject, modEventType, selectedPolicyName, selectedSeverityLevelName])
+  }, [
+    subject,
+    modEventType,
+    applyToAccount,
+    selectedPolicyName,
+    selectedSeverityLevelName,
+  ])
 
   // Only preselect a temporary suspension. Permanent requires an explicit choice.
   const recommendedMessageDuration = actionRecommendation?.thresholdCrossed
@@ -419,7 +429,7 @@ export const useQuickAction = (
     : null
   const messageDuration =
     selectedMessageDuration ?? String(recommendedMessageDuration || '')
-  const messageTakedownDurationProps = isMessageTakedown
+  const messageTakedownDurationProps = isMessageAccountTakedown
     ? {
         value: messageDuration,
         includeStrikeSuspensionDurations: true,
@@ -433,7 +443,7 @@ export const useQuickAction = (
   useEffect(() => {
     if (
       isAccountAction &&
-      !isMessageTakedown &&
+      !isMessageAccountTakedown &&
       durationSelectorRef.current &&
       actionRecommendation?.suspensionDurationInHours !== undefined
     ) {
@@ -443,7 +453,7 @@ export const useQuickAction = (
     }
   }, [
     isAccountAction,
-    isMessageTakedown,
+    isMessageAccountTakedown,
     actionRecommendation?.suspensionDurationInHours,
   ])
 
@@ -530,7 +540,7 @@ export const useQuickAction = (
       if (areLabelsLoading) {
         throw new Error('Labels are still loading. Try again in a moment.')
       }
-      if (messageAccountAction && (!repo || subjectQueryFailed)) {
+      if (isMessageSubject && applyToAccount && (!repo || subjectQueryFailed)) {
         throw new Error('Could not load the account for this action')
       }
       if (
@@ -543,7 +553,7 @@ export const useQuickAction = (
         throw new Error('Could not load labels for the selected subject')
       }
       const formData = new FormData(form)
-      if (isMessageTakedown && !formData.get('durationInHours')) {
+      if (isMessageAccountTakedown && !formData.get('durationInHours')) {
         throw new Error('Select a duration for the account takedown.')
       }
       const nextLabels = String(formData.get('labels'))!.split(',')
@@ -586,6 +596,12 @@ export const useQuickAction = (
         !coreEvent.policies
       ) {
         throw new Error('policy-selection-required')
+      }
+      if (
+        isMessageTakedown &&
+        ToolsOzoneModerationDefs.isModEventTakedown(coreEvent)
+      ) {
+        delete coreEvent.durationInHours
       }
 
       // The optional follow-up acts on the displayed message, not the account.
@@ -693,7 +709,7 @@ export const useQuickAction = (
           event: coreEvent,
         })
 
-        // If this is a record takedown and we have reached a suspension/ban threshold,
+        // If this is a content takedown and we have reached a suspension/ban threshold,
         // emit an additional account-level takedown event
         if (
           ToolsOzoneModerationDefs.isModEventTakedown(coreEvent) &&
@@ -733,7 +749,7 @@ export const useQuickAction = (
             })
           } catch (error) {
             throw new Error(
-              `The record takedown was submitted, but the account takedown or report updates may not have completed. Check both before retrying. ${error instanceof Error ? error.message : String(error)}`,
+              `The ${isMessageTakedown ? 'message' : 'record'} takedown was submitted, but the account takedown or report updates may not have completed. Check both before retrying. ${error instanceof Error ? error.message : String(error)}`,
             )
           }
         }
@@ -836,6 +852,11 @@ export const useQuickAction = (
         refetchSubjectStatus(),
         refetchSubject(),
         queryClient.invalidateQueries({ queryKey: ['modEventList'] }),
+        isMessageSubject && (isTakedownEvent || isReverseTakedownEvent)
+          ? queryClient.invalidateQueries({
+              queryKey: ['strikeEvents', subjectDid],
+            })
+          : undefined,
         queryClient.invalidateQueries({
           queryKey: ['modActionAccountForLabels', subjectDid],
         }),
@@ -1025,9 +1046,11 @@ export const useQuickAction = (
     const content = compileTakedownEmail({
       subjectName: isAccountAction
         ? 'account'
-        : getCollectionName(subject.split('/')[3] || ''),
+        : isMessageSubject
+          ? 'message'
+          : getCollectionName(subject.split('/')[3] || ''),
       recordContent:
-        !isAccountAction && record?.value?.text
+        !isAccountAction && !isMessageSubject && record?.value?.text
           ? `${record.value.text}`
           : undefined,
       handle:

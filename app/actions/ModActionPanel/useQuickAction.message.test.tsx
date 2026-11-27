@@ -293,39 +293,31 @@ describe('record label replacement', () => {
 })
 
 describe('message account actions', () => {
-  it.each([MOD_EVENTS.LABEL, MOD_EVENTS.TAKEDOWN, MOD_EVENTS.REVERSE_TAKEDOWN])(
-    'shows the account target and submits %s to the account',
-    async (eventType) => {
-      mocks.eventType = eventType
-      const action = capture(message)
-      expect(action.applyToAccount).toBe(true)
-      expect(action.messageAccountAction).toContain('account')
-      await action.onFormSubmit({
-        preventDefault() {},
-        currentTarget: { reset() {} },
-      } as unknown as React.FormEvent<HTMLFormElement>)
-      expect(mocks.createSubject).toHaveBeenCalledWith(
-        'did:plc:alice',
-        undefined,
-      )
-      expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
-      expect(mocks.onSubmit).toHaveBeenCalledWith(
-        expect.objectContaining({
-          subject: {
-            $type: 'com.atproto.admin.defs#repoRef',
-            did: 'did:plc:alice',
-          },
-          event: expect.objectContaining({ $type: eventType }),
-        }),
-      )
-      if (eventType === MOD_EVENTS.LABEL) {
-        expect(mocks.onSubmit.mock.calls[0][0].event).toMatchObject({
+  it('shows the account target and submits labels to the account', async () => {
+    mocks.eventType = MOD_EVENTS.LABEL
+    const action = capture(message)
+    expect(action.applyToAccount).toBe(true)
+    expect(action.messageAccountAction).toContain('account')
+    await action.onFormSubmit({
+      preventDefault() {},
+      currentTarget: { reset() {} },
+    } as unknown as React.FormEvent<HTMLFormElement>)
+    expect(mocks.createSubject).toHaveBeenCalledWith('did:plc:alice', undefined)
+    expect(mocks.onSubmit).toHaveBeenCalledTimes(1)
+    expect(mocks.onSubmit).toHaveBeenCalledWith(
+      expect.objectContaining({
+        subject: {
+          $type: 'com.atproto.admin.defs#repoRef',
+          did: 'did:plc:alice',
+        },
+        event: expect.objectContaining({
+          $type: MOD_EVENTS.LABEL,
           createLabelVals: ['new'],
           negateLabelVals: [],
-        })
-      }
-    },
-  )
+        }),
+      }),
+    )
+  })
 
   it('keeps supported message actions on the message', async () => {
     mocks.eventType = MOD_EVENTS.ACKNOWLEDGE
@@ -342,12 +334,15 @@ describe('message account actions', () => {
     )
   })
 
-  it('describes the account in an automated message takedown email', () => {
+  it('describes the message in an automated message takedown email', () => {
     mocks.eventType = MOD_EVENTS.TAKEDOWN
     const action = capture(message)
     action.onEmailTemplateSelect('')
     expect(mocks.compileTakedownEmail).toHaveBeenCalledWith(
-      expect.objectContaining({ subjectName: 'account' }),
+      expect.objectContaining({
+        subjectName: 'message',
+        recordContent: undefined,
+      }),
     )
   })
 
@@ -411,7 +406,7 @@ describe('automated takedown email targets', () => {
     'omits record content for the account action on %s',
     (subject) => {
       mocks.eventType = MOD_EVENTS.TAKEDOWN
-      capture(subject).onEmailTemplateSelect('')
+      capture(subject, subject === message).onEmailTemplateSelect('')
       expect(mocks.compileTakedownEmail).toHaveBeenLastCalledWith(
         expect.objectContaining({
           subjectName: 'account',
@@ -477,10 +472,53 @@ describe('account action duration defaults', () => {
   })
 })
 
-describe('message takedown duration', () => {
+describe('message takedowns', () => {
   beforeEach(() => {
     mocks.eventType = MOD_EVENTS.TAKEDOWN
   })
+
+  it.each([undefined, 4])(
+    'applies strikes to the message and suspends only when the threshold is crossed (%s)',
+    async (thresholdCrossed) => {
+      mocks.recommendation = {
+        totalStrikes: thresholdCrossed ?? 2,
+        recommendedDuration: thresholdCrossed ? 48 : 0,
+        suspensionDurationInHours: thresholdCrossed ? 48 : null,
+        isPermanent: false,
+        thresholdCrossed,
+        actualStrikesToApply: 2,
+        message: 'Example recommendation',
+      }
+      delete mocks.formValues.durationInHours
+      mocks.formValues.strikeCount = '2'
+      const action = capture(message, false, true)
+      expect(action.applyToAccount).toBe(false)
+      expect(action.shouldShowDurationInHoursField).toBe(false)
+      await action.onFormSubmit({
+        preventDefault() {},
+        currentTarget: { reset() {} },
+      } as unknown as React.FormEvent<HTMLFormElement>)
+      expect(mocks.onSubmit).toHaveBeenCalledTimes(thresholdCrossed ? 2 : 1)
+      const [messageAction, accountAction] = mocks.onSubmit.mock.calls.map(
+        ([action]) => action,
+      )
+      expect(messageAction).toMatchObject({
+        subject: { $type: 'chat.bsky.convo.defs#messageRef', messageId: 'abc' },
+        event: { $type: MOD_EVENTS.TAKEDOWN, strikeCount: 2 },
+      })
+      expect(messageAction.event).not.toHaveProperty('durationInHours')
+      if (thresholdCrossed) {
+        expect(accountAction).toMatchObject({
+          subject: {
+            $type: 'com.atproto.admin.defs#repoRef',
+            did: 'did:plc:alice',
+          },
+          event: { $type: MOD_EVENTS.TAKEDOWN, durationInHours: 48 },
+        })
+        expect(accountAction.event).not.toHaveProperty('strikeCount')
+      }
+    },
+  )
 
   it.each([false, true])(
     'leaves duration unset when the recommendation has no suspension (permanent: %s)',
@@ -494,7 +532,7 @@ describe('message takedown duration', () => {
         actualStrikesToApply: 2,
         message: 'Example recommendation',
       }
-      const action = capture(message, false, true)
+      const action = capture(message, true, true)
       expect(action.messageTakedownDurationProps?.value).toBe('')
     },
   )
@@ -509,7 +547,7 @@ describe('message takedown duration', () => {
       actualStrikesToApply: 2,
       message: 'Example recommendation',
     }
-    const action = capture(message, false, true)
+    const action = capture(message, true, true)
     const markup = renderToStaticMarkup(
       <ActionDurationSelector
         showPermanent
@@ -522,7 +560,7 @@ describe('message takedown duration', () => {
   it.each(['', undefined])('rejects an unset duration (%s)', async (duration) => {
     if (duration === undefined) delete mocks.formValues.durationInHours
     else mocks.formValues.durationInHours = duration
-    await capture(message).onFormSubmit({
+    await capture(message, true).onFormSubmit({
       preventDefault() {},
       currentTarget: { reset() {} },
     } as unknown as React.FormEvent<HTMLFormElement>)
@@ -542,7 +580,7 @@ describe('message takedown duration', () => {
         strikeCount: '2',
         targetServices: 'appview',
       }
-      await capture(message).onFormSubmit({
+      await capture(message, true).onFormSubmit({
         preventDefault() {},
         currentTarget: { reset() {} },
       } as unknown as React.FormEvent<HTMLFormElement>)

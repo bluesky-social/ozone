@@ -486,16 +486,14 @@ function Form(
                     <ModEventSelectorButton
                       isSubjectDid={isSubjectDid}
                       subjectStatus={subjectStatus}
-                      takedownSubjectStatus={
-                        isMessageSubject
-                          ? (repo?.moderation.subjectStatus ?? null)
-                          : undefined
-                      }
                       selectedAction={modEventType}
                       hasBlobs={!!record?.blobs?.length}
                       setSelectedAction={(action) => setModEventType(action)}
                     />
-                    <ModEventDetailsPopover modEventType={modEventType} />
+                    <ModEventDetailsPopover
+                      modEventType={modEventType}
+                      isMessage={isMessageSubject && !isAccountAction}
+                    />
                     {isSubjectDid && profile && (
                       <VerificationActionButton
                         did={subject}

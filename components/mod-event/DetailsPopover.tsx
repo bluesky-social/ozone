@@ -10,8 +10,10 @@ import { MOD_EVENTS, MOD_EVENT_TITLES } from './constants'
 
 export const ModEventDetailsPopover = ({
   modEventType,
+  isMessage,
 }: {
   modEventType: string
+  isMessage?: boolean
 }) => {
   return (
     <Popover className="relative">
@@ -38,7 +40,10 @@ export const ModEventDetailsPopover = ({
                     </h3>
                   </div>
                   <div className="bg-gray-50 dark:bg-slate-600 px-4 py-3">
-                    <ModEventDetails modEventType={modEventType} />
+                    <ModEventDetails
+                      modEventType={modEventType}
+                      isMessage={isMessage}
+                    />
                   </div>
                 </div>
               </div>
@@ -50,7 +55,13 @@ export const ModEventDetailsPopover = ({
   )
 }
 
-const ModEventDetails = ({ modEventType }: { modEventType: string }) => {
+const ModEventDetails = ({
+  modEventType,
+  isMessage,
+}: {
+  modEventType: string
+  isMessage?: boolean
+}) => {
   if (modEventType === MOD_EVENTS.REPORT) {
     return (
       <p>
@@ -131,6 +142,15 @@ const ModEventDetails = ({ modEventType }: { modEventType: string }) => {
   }
 
   if (modEventType === MOD_EVENTS.TAKEDOWN) {
+    if (isMessage) {
+      return (
+        <p>
+          This records the takedown decision on the message and applies any
+          selected strikes to the sender. The message stays in the
+          conversation.
+        </p>
+      )
+    }
     return (
       <p>
         This event changes the review state of the subject to <b>Takendown</b>.
@@ -153,6 +173,9 @@ const ModEventDetails = ({ modEventType }: { modEventType: string }) => {
   }
 
   if (modEventType === MOD_EVENTS.REVERSE_TAKEDOWN) {
+    if (isMessage) {
+      return <p>This reverses the recorded takedown on the message.</p>
+    }
     return (
       <p>
         This event changes the review state of a Takendown subject to Reviewed.
